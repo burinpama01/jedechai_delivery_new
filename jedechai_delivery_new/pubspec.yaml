@@ -1,0 +1,48 @@
+name: jedechai_delivery_new
+description: Super App for Food Delivery, Parcel Delivery, and Passenger Transport
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  package_info_plus: 8.0.0  # หรือเวอร์ชั่นล่าสุด
+  # Supabase
+  supabase_flutter: ^2.12.0
+  
+  # State Management
+  provider: ^6.1.5
+  
+  # Utilities
+  intl: ^0.19.0
+  geolocator: 11.0.0
+  google_maps_flutter: 2.10.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+dependency_overrides:
+  # กลุ่ม Android Core
+  url_launcher_android: 6.3.6           # ขยับจาก 6.3.1 เป็น 6.3.6 (ผ่านชัวร์)
+  shared_preferences_android: 2.3.0     # ใช้ 2.3.0 (ปลอดภัยกว่า 2.2.3)
+  path_provider_android: 2.2.6          # ใช้ 2.2.6
+  flutter_plugin_android_lifecycle: 2.0.21
+  
+  # แก้ Registrar: ต้องใช้ 2.9.0 ขึ้นไป (เราใช้ 2.10.0 เพื่อความชัวร์)
+  google_maps_flutter_android: 2.10.0
+  
+  # ตัวการสำคัญที่ฟ้อง SDK 36 เราล็อคไว้ที่นี่
+  app_links: 6.1.1 
+  
+  # แถม: ล็อคกลุ่ม Google Maps ให้อยู่ในโซนปลอดภัย
+  geolocator_android: 4.5.5
+  package_info_plus: 8.0.0
+
+flutter:
+  uses-material-design: true
