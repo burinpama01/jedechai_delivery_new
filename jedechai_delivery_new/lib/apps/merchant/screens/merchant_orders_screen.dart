@@ -1,11 +1,21 @@
+import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:async';
 import 'package:jedechai_delivery_new/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
+import 'package:vibration/vibration.dart';
 import '../../../common/services/auth_service.dart';
+import '../../../common/services/location_service.dart';
+import '../../../common/services/notification_sender.dart';
+import 'order_detail_screen.dart';
 
 /// Merchant Orders Screen
-/// 
+///
 /// Displays incoming food orders for merchants with Parallel Flow
 /// Features: Shop open/close toggle, order management, driver status
 class MerchantOrdersScreen extends StatefulWidget {
@@ -16,26 +26,165 @@ class MerchantOrdersScreen extends StatefulWidget {
 }
 
 class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
+  static const MethodChannel _merchantAlarmChannel =
+      MethodChannel('jedechai/alarm_sound');
+
   bool _isShopOpen = false;
   bool _isLoading = true;
   String? _error;
   List<Map<String, dynamic>> _orders = [];
-  Stream<List<Map<String, dynamic>>>? _ordersStream;
+  StreamSubscription<List<Map<String, dynamic>>>? _ordersStreamSubscription;
   SharedPreferences? _prefs;
-  Set<String> _completedOrderIds = {}; // Track completed orders
   bool _showHistory = false; // Toggle between active and history
+  Timer? _autoRefreshTimer;
+
+  // Alarm notification state variables
+  Set<String> _notifiedOrderIds = {}; // Track alerted orders
+  bool _isAlarmPlaying = false;
+  Timer? _alarmReplayTimer;
+
+  // Auto shop schedule timer
+  Timer? _shopScheduleTimer;
+  String? _shopOpenTime;
+  String? _shopCloseTime;
+  List<String> _shopOpenDays = [];
+  bool _shopAutoScheduleEnabled = true;
+  String _orderAcceptMode = _acceptModeManual;
+  final Set<String> _autoAcceptingOrderIds = <String>{};
+
+  static const String _acceptModeManual = 'manual';
+  static const String _acceptModeAuto = 'auto';
+  static const List<String> _weekdayKeys = [
+    'mon',
+    'tue',
+    'wed',
+    'thu',
+    'fri',
+    'sat',
+    'sun'
+  ];
 
   @override
   void initState() {
     super.initState();
     _initializePrefs();
+    _requestLocationPermissionAndUpdateProfile();
     _fetchShopStatus();
+    _fetchShopSchedule();
     _setupOrdersStream();
+    _startAutoRefresh();
+    _startShopScheduleTimer();
+  }
+
+  Future<void> _autoAcceptPendingOrders(
+      List<Map<String, dynamic>> orders) async {
+    if (!_isShopOpen) return;
+    if (_orderAcceptMode != _acceptModeAuto) return;
+
+    for (final order in orders) {
+      final orderId = order['id']?.toString();
+      final status = order['status']?.toString() ?? '';
+      if (orderId == null || orderId.isEmpty) continue;
+      if (!(status == 'pending_merchant' || status == 'pending')) continue;
+      if (_autoAcceptingOrderIds.contains(orderId)) continue;
+
+      _autoAcceptingOrderIds.add(orderId);
+      try {
+        debugLog(
+            '🤖 Auto-accepting order: $orderId (mode=$_orderAcceptMode, shopOpen=$_isShopOpen)');
+        await _acceptOrder(orderId, triggeredAutomatically: true);
+      } finally {
+        _autoAcceptingOrderIds.remove(orderId);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _ordersStreamSubscription?.cancel();
+    _autoRefreshTimer?.cancel();
+    _shopScheduleTimer?.cancel();
+    _stopAlarm(); // Stop alarm when screen is disposed
+    super.dispose();
   }
 
   Future<void> _initializePrefs() async {
     _prefs = await SharedPreferences.getInstance();
     _loadSavedShopStatus();
+  }
+
+  Future<void> _requestLocationPermissionAndUpdateProfile() async {
+    try {
+      debugLog('📍 Requesting location permission...');
+
+      // Check if location services are enabled
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        debugLog('⚠️ Location services are disabled');
+        return;
+      }
+
+      // Check location permission
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          debugLog('⚠️ Location permission denied');
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        debugLog('⚠️ Location permission denied forever');
+        return;
+      }
+
+      // Get current location
+      debugLog('📍 Getting current location...');
+      final position = await LocationService.getCurrentLocation();
+      if (position == null) {
+        debugLog('⚠️ Unable to get current location');
+        return;
+      }
+
+      debugLog(
+          '📍 Current location: ${position.latitude}, ${position.longitude}');
+
+      // Update merchant profile with current location
+      final userId = AuthService.userId;
+      if (userId == null) {
+        debugLog('⚠️ User ID is null, cannot update location');
+        return;
+      }
+
+      await Supabase.instance.client.from('profiles').update({
+        'latitude': position.latitude,
+        'longitude': position.longitude,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', userId);
+
+      debugLog(
+          '✅ Merchant location updated: ${position.latitude}, ${position.longitude}');
+    } catch (e) {
+      debugLog(
+          '❌ Error requesting location permission or updating profile: $e');
+    }
+  }
+
+  bool _isTodayOpenDay() {
+    final weekday = DateTime.now().weekday;
+    final keyByWeekday = {
+      DateTime.monday: 'mon',
+      DateTime.tuesday: 'tue',
+      DateTime.wednesday: 'wed',
+      DateTime.thursday: 'thu',
+      DateTime.friday: 'fri',
+      DateTime.saturday: 'sat',
+      DateTime.sunday: 'sun',
+    };
+    final todayKey = keyByWeekday[weekday];
+    if (todayKey == null) return true;
+    return _shopOpenDays.contains(todayKey);
   }
 
   Future<void> _loadSavedShopStatus() async {
@@ -52,83 +201,430 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
   Future<void> _saveShopStatus(bool status) async {
     if (_prefs != null) {
       await _prefs!.setBool('shop_open', status);
-      print('💾 Shop status saved: $status');
+      debugLog('💾 Shop status saved: $status');
     }
   }
 
-  @override
-  void dispose() {
-    super.dispose();
+  // -------------------------------------------------------------------------
+  // 🔊 ฟังก์ชันแจ้งเตือน (แก้ไขสำหรับ Version 4.0.0)
+  // -------------------------------------------------------------------------
+  Future<void> _startAlarm() async {
+    if (_isAlarmPlaying) return;
+
+    setState(() {
+      _isAlarmPlaying = true;
+    });
+
+    debugLog('🚨 Starting alarm: Sound + Vibration');
+
+    // ✅ 1. ส่วนของเสียง
+    final usesCustomSound = await _playAlarmSound();
+    if (!usesCustomSound) {
+      _startAlarmReplayLoop();
+    }
+
+    // ✅ 2. ส่วนของการสั่น
+    try {
+      bool? hasVibrator = await Vibration.hasVibrator();
+      if (hasVibrator == true) {
+        Vibration.vibrate(
+          pattern: [500, 1000, 500, 1000],
+          repeat: 0,
+        );
+      }
+    } catch (e) {
+      debugLog('❌ Error vibrating: $e');
+    }
+
+    // ✅ 3. แสดง Dialog
+    _showAlarmDialog();
+  }
+
+  Future<bool> _playAlarmSound() async {
+    if (await _playCustomMerchantAlarmSound()) {
+      return true;
+    }
+
+    try {
+      await FlutterRingtonePlayer().playAlarm(
+        looping: true,
+        volume: 1.0,
+        asAlarm: true,
+      );
+      return false;
+    } catch (e) {
+      debugLog('❌ Error playing alarm sound: $e');
+      try {
+        await FlutterRingtonePlayer().playRingtone(looping: true);
+      } catch (e2) {
+        debugLog('❌ Error playing backup ringtone: $e2');
+      }
+      return false;
+    }
+  }
+
+  Future<bool> _playCustomMerchantAlarmSound() async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
+      return false;
+    }
+
+    try {
+      await _merchantAlarmChannel.invokeMethod('playMerchantAlarm');
+      return true;
+    } catch (e) {
+      debugLog('⚠️ Custom merchant alarm sound unavailable, fallback: $e');
+      return false;
+    }
+  }
+
+  Future<void> _stopCustomMerchantAlarmSound() async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
+      return;
+    }
+
+    try {
+      await _merchantAlarmChannel.invokeMethod('stopMerchantAlarm');
+    } catch (e) {
+      debugLog('⚠️ Error stopping custom merchant alarm sound: $e');
+    }
+  }
+
+  void _startAlarmReplayLoop() {
+    _alarmReplayTimer?.cancel();
+    _alarmReplayTimer = Timer.periodic(const Duration(seconds: 8), (_) async {
+      if (!_isAlarmPlaying) return;
+
+      // Keep-alive replay: some devices stop alarm audio unexpectedly.
+      await _playAlarmSound();
+    });
+  }
+
+  Future<void> _stopAlarm() async {
+    _alarmReplayTimer?.cancel();
+    _alarmReplayTimer = null;
+
+    if (!_isAlarmPlaying) {
+      return;
+    }
+
+    debugLog('🔇 Stopping alarm');
+
+    setState(() {
+      _isAlarmPlaying = false;
+    });
+
+    // ✅ สั่งหยุดเสียง (แก้เป็น Instance Method)
+    await _stopCustomMerchantAlarmSound();
+
+    try {
+      await FlutterRingtonePlayer().stop();
+    } catch (e) {
+      debugLog('❌ Error stopping sound: $e');
+    }
+
+    // ✅ สั่งหยุดสั่น
+    try {
+      Vibration.cancel();
+    } catch (e) {
+      debugLog('❌ Error stopping vibration: $e');
+    }
+  }
+
+  void _showAlarmDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Cannot dismiss by tapping outside
+      builder: (context) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          title: Row(
+            children: [
+              Icon(
+                Icons.notifications_active,
+                color: Colors.red,
+                size: 32,
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                '🚨 ออเดอร์ใหม่!',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red,
+                ),
+              ),
+            ],
+          ),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.delivery_dining,
+                size: 64,
+                color: Colors.red,
+              ),
+              SizedBox(height: 16),
+              Text(
+                'คุณมีออเดอร์ใหม่รอการยืนยัน!',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 8),
+              Text(
+                'เสียงจะแจ้งเตือนซ้ำต่อเนื่องจนกว่าคุณกดหยุด',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close dialog
+                  _stopAlarm(); // Stop alarm
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.stop),
+                    SizedBox(width: 8),
+                    Text(
+                      'หยุดเสียง / รับทราบ',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _setupOrdersStream() {
     final merchantId = AuthService.userId;
     if (merchantId == null) {
-      setState(() {
-        _isLoading = false;
-        _error = 'ไม่พบข้อมูลผู้ใช้';
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _error = 'ไม่พบข้อมูลผู้ใช้';
+        });
+      }
       return;
     }
 
-    print('🏪 Setting up orders stream for merchant: $merchantId');
+    debugLog('🏪 Setting up orders stream for merchant: $merchantId');
 
-    _ordersStream = Supabase.instance.client
+    _ordersStreamSubscription = Supabase.instance.client
         .from('bookings')
         .stream(primaryKey: ['id'])
         .eq('service_type', 'food')
-        .order('created_at', ascending: false)
-        .map((data) {
-          print('📊 Raw merchant orders data: ${data.length} items');
-          
-          // Filter by merchant_id in the map function
+        .listen((data) {
+          debugLog('📡 Stream received data: ${data.length} total bookings');
+
+          final merchantId = AuthService.userId;
           final merchantOrders = data.where((item) {
             final itemMerchantId = item['merchant_id'];
-            return itemMerchantId != null && itemMerchantId.toString() == merchantId.toString();
+            return itemMerchantId != null &&
+                itemMerchantId.toString() == merchantId.toString();
           }).toList();
-          
+
+          debugLog(
+              '📊 Raw merchant orders data: ${merchantOrders.length} items');
+
+          // Log all orders with their status for debugging
+          //for (final order in merchantOrders) {
+          //  print('📦 Order ${order['id']?.toString().substring(0, 8)}: status=${order['status']}, merchant_id=${order['merchant_id']}');
+          //}
+
           // Filter based on whether we're showing active or history
           final filteredOrders = merchantOrders.where((item) {
             final status = item['status'] as String? ?? '';
-            final bookingId = item['id'] as String;
-            
-            // Check if order was picked up by driver (only for active orders)
-            if (!_showHistory && status != 'completed' && status != 'cancelled') {
-              _checkDriverPickupStatus(item, bookingId);
-            }
-            
+
             if (_showHistory) {
               // Show completed and cancelled orders for history
               return status == 'completed' || status == 'cancelled';
             } else {
-              // Show only active orders for main view (exclude orders that have been taken by drivers)
-              return status != 'completed' && status != 'cancelled' && status != 'matched' && status != 'driver_accepted' && status != 'traveling_to_merchant' && status != 'arrived_at_merchant' && status != 'picking_up_order' && status != 'in_transit';
+              // Show only orders that merchant needs to handle
+              // ร้านค้าจบงานเมื่อคนขับรับอาหารแล้ว (picking_up_order ไม่แสดง)
+              final activeStatuses = [
+                'pending_merchant', // รอร้านค้ายืนยัน (ออเดอร์ใหม่)
+                'pending', // รอดำเนินการ
+                'preparing', // กำลังเตรียมอาหาร
+                'driver_accepted', // คนขับรับงานแล้ว (กำลังมาร้าน)
+                'arrived_at_merchant', // คนขับถึงร้านแล้ว (รออาหารพร้อม)
+                'ready_for_pickup', // อาหารพร้อมรับ
+              ];
+              final isActive = activeStatuses.contains(status);
+              if (isActive) {
+                debugLog(
+                    '✅ Active order: ${item['id']?.toString().substring(0, 8)} - $status');
+              }
+              return isActive;
             }
           }).toList();
-          
-          print('📋 Filtered orders (${_showHistory ? "history" : "active"}): ${filteredOrders.length} items');
-          return filteredOrders;
+
+          // Check for new pending_merchant orders and trigger alarm if needed
+          debugLog('🔍 Checking for new orders - Shop is open: $_isShopOpen');
+          debugLog('🔍 Notified orders count: ${_notifiedOrderIds.length}');
+
+          _checkAndTriggerNewOrderAlarm(merchantOrders);
+          _autoAcceptPendingOrders(merchantOrders);
+
+          debugLog(
+              '📋 Filtered orders (${_showHistory ? "history" : "active"}): ${filteredOrders.length} items');
+
+          if (mounted) {
+            setState(() {
+              _orders = filteredOrders;
+            });
+          }
         });
-    
-    print('✅ Stream setup complete');
-    
-    // Add periodic refresh as fallback for stream issues
-    _setupPeriodicRefresh();
+
+    debugLog('✅ Stream setup complete');
   }
 
-  void _setupPeriodicRefresh() {
-    // Refresh every 5 seconds as backup for stream issues (increased from 3)
-    Future.delayed(const Duration(seconds: 5), () {
-      if (mounted && !_showHistory) {
-        print('🔄 Periodic refresh - setting up stream again');
+  void _startAutoRefresh() {
+    _autoRefreshTimer?.cancel();
+    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
+      if (!mounted) return;
+
+      debugLog('🔄 Auto refreshing merchant orders...');
+
+      // Focus on orders only - don't refresh shop status to avoid UI flicker
+      // Orders stream should handle real-time updates automatically
+
+      // Refresh orders stream if needed
+      if (_ordersStreamSubscription == null) {
         _setupOrdersStream();
-        _setupPeriodicRefresh(); // Schedule next refresh
       }
+
+      // Fallback: fetch latest orders snapshot in case realtime misses events
+      await _fetchLatestOrdersSnapshot();
+
+      debugLog('🔄 Orders refresh completed');
     });
+
+    debugLog('✅ Auto refresh started (2 seconds interval - orders only)');
+  }
+
+  Future<void> _fetchLatestOrdersSnapshot() async {
+    try {
+      final merchantId = AuthService.userId;
+      if (merchantId == null) {
+        debugLog('⚠️ Merchant ID is null, cannot fetch orders');
+        return;
+      }
+
+      debugLog('📥 Fetching orders snapshot for merchant: $merchantId');
+
+      final response = await Supabase.instance.client
+          .from('bookings')
+          .select()
+          .eq('service_type', 'food')
+          .eq('merchant_id', merchantId)
+          .order('created_at', ascending: false);
+
+      final data = List<Map<String, dynamic>>.from(response);
+
+      debugLog('📊 Total orders fetched: ${data.length}');
+
+      // Log all orders with their status
+      //for (final order in data) {
+      //  print('📦 Order ${order['id']?.toString().substring(0, 8)}: status=${order['status']}, merchant_id=${order['merchant_id']}');
+      //}
+
+      final filteredOrders = data.where((item) {
+        final status = item['status'] as String? ?? '';
+
+        if (_showHistory) {
+          return status == 'completed' || status == 'cancelled';
+        } else {
+          final activeStatuses = [
+            'pending_merchant', // รอร้านค้ายืนยัน (ออเดอร์ใหม่)
+            'pending', // รอดำเนินการ
+            'preparing', // กำลังเตรียมอาหาร
+            'driver_accepted', // คนขับรับงานแล้ว (กำลังมาร้าน)
+            'arrived_at_merchant', // คนขับถึงร้านแล้ว (รออาหารพร้อม)
+            'ready_for_pickup', // อาหารพร้อมรับ
+            'picking_up_order', // คนขับรับอาหารแล้ว — จบงานร้านค้า
+          ];
+          final isActive = activeStatuses.contains(status);
+          if (isActive) {
+            debugLog(
+                '✅ Active order found: ${item['id']?.toString().substring(0, 8)} - $status');
+          }
+          return isActive;
+        }
+      }).toList();
+
+      _checkAndTriggerNewOrderAlarm(data);
+      _autoAcceptPendingOrders(data);
+
+      debugLog('📋 Filtered active orders: ${filteredOrders.length}');
+
+      if (mounted) {
+        setState(() {
+          _orders = filteredOrders;
+        });
+        debugLog('✅ UI updated with ${filteredOrders.length} orders');
+      }
+    } catch (e) {
+      debugLog('❌ Failed to fetch latest orders snapshot: $e');
+      debugLog('❌ Error type: ${e.runtimeType}');
+    }
+  }
+
+  // ✅ ฟังก์ชันกลางสำหรับตรวจสอบและแจ้งเตือนออเดอร์ใหม่
+  void _checkAndTriggerNewOrderAlarm(List<Map<String, dynamic>> orders) {
+    if (!_isShopOpen) return;
+    if (_orderAcceptMode == _acceptModeAuto) return;
+
+    for (final order in orders) {
+      final orderId = order['id']?.toString() ?? '';
+      final status = order['status'] as String? ?? '';
+
+      // ถ้าเป็นออเดอร์ใหม่ (pending_merchant) และยังไม่เคยแจ้งเตือน
+      if (status == 'pending_merchant' &&
+          !_notifiedOrderIds.contains(orderId)) {
+        debugLog('🚨 NEW PENDING ORDER DETECTED: $orderId');
+
+        // จดจำว่าเตือนแล้ว
+        _notifiedOrderIds.add(orderId);
+
+        // สั่งแจ้งเตือนทันที!
+        _startAlarm();
+
+        // เตือนแค่ออเดอร์ล่าสุดอันเดียวพอ (กันเสียงตีกัน)
+        break;
+      }
+    }
   }
 
   Future<void> _fetchShopStatus() async {
     try {
+      if (!mounted) return;
+
       setState(() {
         _isLoading = true;
         _error = null;
@@ -141,23 +637,28 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
 
       final response = await Supabase.instance.client
           .from('profiles')
-          .select('shop_status')
+          .select('shop_status, order_accept_mode, shop_auto_schedule_enabled')
           .eq('id', userId)
           .single();
 
       if (mounted) {
-        final serverStatus = response['shop_status'] ?? false;
+        final raw = response['shop_status'];
+        final bool serverStatus = raw == true || raw == 1 || raw == 'true';
         setState(() {
           _isShopOpen = serverStatus;
+          _orderAcceptMode =
+              (response['order_accept_mode'] as String?) ?? _acceptModeManual;
+          _shopAutoScheduleEnabled =
+              (response['shop_auto_schedule_enabled'] as bool?) ?? true;
           _isLoading = false;
         });
-        
+
         // Save server status to local storage
         await _saveShopStatus(serverStatus);
-        print('🔄 Shop status synced from server: $serverStatus');
+        debugLog('🔄 Shop status synced from server: $serverStatus');
       }
     } catch (e) {
-      print('❌ Error fetching shop status: $e');
+      debugLog('❌ Error fetching shop status: $e');
       // If server fails, use local saved status
       if (mounted) {
         setState(() {
@@ -167,8 +668,104 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
     }
   }
 
+  /// ดึงเวลาเปิด-ปิดร้านจาก DB
+  Future<void> _fetchShopSchedule() async {
+    try {
+      final userId = AuthService.userId;
+      if (userId == null) return;
+
+      final response = await Supabase.instance.client
+          .from('profiles')
+          .select(
+              'shop_open_time, shop_close_time, shop_open_days, order_accept_mode, shop_auto_schedule_enabled')
+          .eq('id', userId)
+          .maybeSingle();
+
+      if (response != null && mounted) {
+        setState(() {
+          _shopOpenTime = response['shop_open_time'] as String?;
+          _shopCloseTime = response['shop_close_time'] as String?;
+          final rawDays = response['shop_open_days'];
+          if (rawDays is List) {
+            _shopOpenDays = rawDays
+                .map((e) => e.toString().toLowerCase().trim())
+                .where((e) => _weekdayKeys.contains(e))
+                .toList();
+          } else {
+            _shopOpenDays = [];
+          }
+          _orderAcceptMode =
+              (response['order_accept_mode'] as String?) ?? _acceptModeManual;
+          _shopAutoScheduleEnabled =
+              (response['shop_auto_schedule_enabled'] as bool?) ?? true;
+        });
+        debugLog(
+            '⏰ Shop schedule loaded: $_shopOpenTime - $_shopCloseTime, days=$_shopOpenDays, mode=$_orderAcceptMode, autoSchedule=$_shopAutoScheduleEnabled');
+      }
+    } catch (e) {
+      debugLog('⚠️ Error fetching shop schedule: $e');
+    }
+  }
+
+  /// ตรวจสอบเวลาเปิด-ปิดร้านทุก 60 วินาที
+  void _startShopScheduleTimer() {
+    _shopScheduleTimer?.cancel();
+    _shopScheduleTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+      if (!mounted) return;
+      _checkShopSchedule();
+    });
+    // ตรวจสอบครั้งแรกทันที (หลัง fetch เสร็จ)
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) _checkShopSchedule();
+    });
+  }
+
+  void _checkShopSchedule() {
+    if (!_shopAutoScheduleEnabled) return;
+    if (_shopOpenTime == null || _shopCloseTime == null) return;
+
+    final now = TimeOfDay.now();
+    final openParts = _shopOpenTime!.split(':');
+    final closeParts = _shopCloseTime!.split(':');
+    if (openParts.length < 2 || closeParts.length < 2) return;
+
+    final openTime = TimeOfDay(
+      hour: int.tryParse(openParts[0]) ?? 8,
+      minute: int.tryParse(openParts[1]) ?? 0,
+    );
+    final closeTime = TimeOfDay(
+      hour: int.tryParse(closeParts[0]) ?? 22,
+      minute: int.tryParse(closeParts[1]) ?? 0,
+    );
+
+    final nowMinutes = now.hour * 60 + now.minute;
+    final openMinutes = openTime.hour * 60 + openTime.minute;
+    final closeMinutes = closeTime.hour * 60 + closeTime.minute;
+
+    bool shouldBeOpen;
+    if (openMinutes <= closeMinutes) {
+      // ปกติ เช่น 08:00 - 22:00
+      shouldBeOpen = nowMinutes >= openMinutes && nowMinutes < closeMinutes;
+    } else {
+      // ข้ามวัน เช่น 22:00 - 06:00
+      shouldBeOpen = nowMinutes >= openMinutes || nowMinutes < closeMinutes;
+    }
+
+    if (_shopOpenDays.isNotEmpty && !_isTodayOpenDay()) {
+      shouldBeOpen = false;
+    }
+
+    if (shouldBeOpen != _isShopOpen) {
+      debugLog(
+          '⏰ Auto-toggle shop: ${_isShopOpen ? "เปิด→ปิด" : "ปิด→เปิด"} (now=$nowMinutes, open=$openMinutes, close=$closeMinutes)');
+      _toggleShopStatus(shouldBeOpen);
+    }
+  }
+
   Future<void> _toggleShopStatus(bool value) async {
     try {
+      if (!mounted) return;
+
       setState(() {
         _isShopOpen = value;
       });
@@ -181,10 +778,28 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
         throw Exception('ไม่พบข้อมูลผู้ใช้');
       }
 
-      await Supabase.instance.client
+      final updateData = {
+        'shop_status': value,
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+
+      final updated = await Supabase.instance.client
           .from('profiles')
-          .update({'shop_status': value})
-          .eq('id', userId);
+          .update(updateData)
+          .eq('id', userId)
+          .select('shop_status')
+          .maybeSingle();
+
+      final updatedRaw = updated?['shop_status'];
+      final bool updatedStatus =
+          updatedRaw == true || updatedRaw == 1 || updatedRaw == 'true';
+      debugLog(
+          '✅ Shop status updated in DB: $updatedStatus (requested: $value)');
+
+      if (mounted && updated != null && updatedStatus != value) {
+        debugLog(
+            '⚠️ Shop status mismatch after update. DB=$updatedStatus, requested=$value');
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -196,6 +811,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
         );
       }
     } catch (e) {
+      debugLog('❌ Error updating shop status: $e');
       // Revert on error
       if (mounted) {
         setState(() {
@@ -203,7 +819,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
         });
         // Revert saved status
         await _saveShopStatus(!value);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('ไม่สามารถเปลี่ยนสถานะร้าน: $e'),
@@ -218,11 +834,13 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
   Future<void> _saveOrderStatus(String bookingId, String status) async {
     if (_prefs != null) {
       await _prefs!.setString('order_status_$bookingId', status);
-      await _prefs!.setString('order_updated_$bookingId', DateTime.now().toIso8601String());
-      print('💾 Order status saved: $bookingId -> $status');
+      await _prefs!.setString(
+          'order_updated_$bookingId', DateTime.now().toIso8601String());
+      debugLog('💾 Order status saved: $bookingId -> $status');
     }
   }
 
+  // ignore: unused_element
   Future<String?> _getSavedOrderStatus(String bookingId) async {
     if (_prefs != null) {
       return _prefs!.getString('order_status_$bookingId');
@@ -242,186 +860,18 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
     if (_prefs != null) {
       await _prefs!.remove('order_status_$bookingId');
       await _prefs!.remove('order_updated_$bookingId');
-      print('🗑️ Order status cleared: $bookingId');
+      debugLog('🗑️ Order status cleared: $bookingId');
     }
   }
 
-  void _checkDriverPickupStatus(Map<String, dynamic> item, String bookingId) {
+  Future<void> _acceptOrder(String bookingId,
+      {bool triggeredAutomatically = false}) async {
     try {
-      final status = item['status'] as String? ?? '';
-      
-      // Check if driver picked up the order (status changed to picking_up_order)
-      if (status == 'picking_up_order') {
-        // Only show notification if we haven't shown it before for this order
-        if (!_completedOrderIds.contains(bookingId)) {
-          print('💰 Driver picked up order: $bookingId - showing payment dialog');
-          _completedOrderIds.add(bookingId);
-          
-          if (mounted) {
-            // Show payment success notification
-            _showPaymentSuccessDialog(item);
-          }
-        } else {
-          print('🔄 Dialog already shown for order: $bookingId - skipping');
-        }
-      }
-    } catch (e) {
-      print('❌ Error in _checkDriverPickupStatus: $e');
-      // Don't crash the app, just log the error
-    }
-  }
+      debugLog('🏪 Merchant accepting order: $bookingId');
 
-  void _showPaymentSuccessDialog(Map<String, dynamic> order) {
-    final bookingId = order['id'] as String;
-    final customerName = order['customer_name'] as String? ?? 'ลูกค้า';
-    final price = order['price'] as num? ?? 0;
-    
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(
-              Icons.check_circle,
-              color: Colors.green,
-              size: 28,
-            ),
-            const SizedBox(width: 12),
-            const Text('รับเงินสำเร็จ!'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.green[50],
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.green[200]!),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.money,
-                    color: Colors.green[600],
-                    size: 32,
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '฿${price.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green[700],
-                          ),
-                        ),
-                        Text(
-                          'จากคุณ $customerName',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.green[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'คนขับได้รับออเดอร์และกำลังนำส่งให้ลูกค้าแล้ว',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[700],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'ร้านค้าสามารถรับออเดอร์ใหม่ได้ทันที',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              // Reset to accept new orders
-              _resetForNewOrders();
-            },
-            style: TextButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text(
-              'รับออเดอร์ใหม่',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('ปิด'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _resetForNewOrders() {
-    if (mounted) {
-      print('🔄 Resetting for new orders - clearing completedOrderIds');
-      
-      setState(() {
-        // Clear any pending order statuses
-        _completedOrderIds.clear();
-      });
-      
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('พร้อมรับออเดอร์ใหม่!'),
-          backgroundColor: AppTheme.accentOrange,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-      
-      // Add delay to prevent immediate re-trigger
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (mounted) {
-          print('🔄 Reset complete - refreshing stream');
-          _setupOrdersStream();
-        }
-      });
-    }
-  }
-
-  Future<void> _acceptOrder(String bookingId) async {
-    try {
-      print('🏪 Merchant accepting order: $bookingId');
-      
       // Save pending status immediately
       await _saveOrderStatus(bookingId, 'preparing');
-      
+
       // Get current booking to check status
       final bookingData = await Supabase.instance.client
           .from('bookings')
@@ -429,29 +879,24 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           .eq('id', bookingId)
           .single();
 
-      if (bookingData == null) {
-        _showErrorSnackBar('Order not found');
-        await _clearOrderStatus(bookingId);
-        return;
-      }
-
       final currentStatus = bookingData['status'] as String;
       String newStatus;
-      
+
       // Parallel Flow Logic
-      if (currentStatus == 'pending') {
+      if (currentStatus == 'pending' || currentStatus == 'pending_merchant') {
         newStatus = 'preparing'; // Merchant accepts first
       } else if (currentStatus == 'driver_accepted') {
         newStatus = 'matched'; // Driver already accepted
       } else if (currentStatus == 'arrived_at_merchant') {
-        newStatus = 'ready_for_pickup'; // Driver arrived, merchant marks food ready
+        newStatus =
+            'ready_for_pickup'; // Driver arrived, merchant marks food ready
       } else {
         _showErrorSnackBar('Order not available for acceptance');
         await _clearOrderStatus(bookingId);
         return;
       }
 
-      print('🔄 Updating order status from $currentStatus to $newStatus');
+      debugLog('🔄 Updating order status from $currentStatus to $newStatus');
 
       // Update booking with parallel flow logic
       final result = await Supabase.instance.client
@@ -464,7 +909,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           .eq('status', currentStatus)
           .select();
 
-      print('✅ Order accepted successfully: $result');
+      debugLog('✅ Order accepted successfully: $result');
 
       if (result.isEmpty) {
         _showErrorSnackBar('Order already taken or not available');
@@ -475,32 +920,36 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
       // Update saved status with confirmed status
       await _saveOrderStatus(bookingId, newStatus);
 
+      // Send notification to customer
+      await _notifyCustomerOrderAccepted(result[0]);
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('ออเดอร์ได้รับการยืนยันแล้ว!'),
-            backgroundColor: const Color(0xFF10B981), // Green
-            duration: const Duration(seconds: 2),
-          ),
-        );
-        
-        // Force UI refresh
-        setState(() {
-          print('🔄 UI refreshed after accepting order');
-        });
+        if (!triggeredAutomatically) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('ออเดอร์ได้รับการยืนยันแล้ว!'),
+              backgroundColor: const Color(0xFF10B981), // Green
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+
+        // Don't force UI refresh - let stream handle updates naturally
+        debugLog('🔄 Order accepted - stream will update UI automatically');
       }
     } catch (e) {
-      print('❌ Failed to accept order: $e');
+      debugLog('❌ Failed to accept order: $e');
       await _clearOrderStatus(bookingId);
       _showErrorSnackBar('Cannot accept order: ${e.toString()}');
     }
   }
 
+  // ignore: unused_element
   Future<void> _markFoodReady(String bookingId) async {
     try {
       // Save pending status immediately
       await _saveOrderStatus(bookingId, 'ready_for_pickup');
-      
+
       final result = await Supabase.instance.client
           .from('bookings')
           .update({'status': 'ready_for_pickup'})
@@ -515,13 +964,17 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
       }
 
       _showSuccessSnackBar('Food marked as ready for pickup');
+
+      // Send notification to customer and driver
+      await _notifyFoodReady(result[0]);
     } catch (e) {
-      print('❌ Failed to mark food ready: $e');
+      debugLog('❌ Failed to mark food ready: $e');
       await _clearOrderStatus(bookingId);
       _showErrorSnackBar('Failed to mark food ready: $e');
     }
   }
 
+  // ignore: unused_element
   Future<void> _finishOrder(String bookingId) async {
     try {
       final result = await Supabase.instance.client
@@ -566,35 +1019,51 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
     }
   }
 
+  // ignore: unused_element
   String _getDriverStatus(String status, Map<String, dynamic> booking) {
-    if (status == 'pending') {
-      return 'Driver: Waiting...';
+    if (status == 'pending' || status == 'pending_merchant') {
+      return 'คนขับ: รอคนขับรับงาน...';
     } else if (status == 'driver_accepted' || status == 'matched') {
-      final driverName = booking['driver_name'] ?? 'Driver';
-      return 'Driver: $driverName is coming';
+      final driverName = booking['driver_name'] ?? 'คนขับ';
+      return 'คนขับ: $driverName กำลังมา';
     } else if (status == 'in_transit') {
-      final driverName = booking['driver_name'] ?? 'Driver';
-      return 'Driver: $driverName at restaurant';
+      final driverName = booking['driver_name'] ?? 'คนขับ';
+      return 'คนขับ: $driverName ถึงร้านแล้ว';
+    } else if (status == 'preparing') {
+      return 'คนขับ: รอร้านทำอาหาร';
+    } else if (status == 'ready_for_pickup') {
+      return 'คนขับ: รออาหารพร้อม';
     } else {
-      return 'Driver: Waiting...';
+      return 'คนขับ: รอดำเนินการ';
     }
   }
 
-  String _getRestaurantStatus(String status) {
+  String _getStatusText(String status) {
     switch (status) {
+      case 'pending_merchant':
+        return 'ออเดอร์ใหม่';
       case 'pending':
-        return 'Waiting for confirmation';
+        return 'รอยืนยัน';
       case 'preparing':
+        return 'กำลังทำอาหาร';
       case 'driver_accepted':
-        return 'Cooking';
+        return 'คนขับรับงานแล้ว';
+      case 'arrived_at_merchant':
+        return 'คนขับถึงร้านแล้ว';
       case 'matched':
-        return 'Cooking';
+        return 'จับคู่คนขับแล้ว';
       case 'ready_for_pickup':
-        return 'Food Ready';
+        return 'อาหารพร้อมแล้ว';
+      case 'picking_up_order':
+        return 'คนขับกำลังรับอาหาร';
       case 'in_transit':
-        return 'Food Ready';
+        return 'กำลังจัดส่ง';
+      case 'completed':
+        return 'เสร็จสิ้น';
+      case 'cancelled':
+        return 'ยกเลิก';
       default:
-        return 'Unknown';
+        return 'ไม่ทราบสถานะ';
     }
   }
 
@@ -612,11 +1081,23 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           IconButton(
             icon: Icon(_showHistory ? Icons.list : Icons.history),
             onPressed: _toggleView,
-            tooltip: _showHistory ? 'ดูออเดอร์ที่กำลังดำเนินการ' : 'ดูประวัติออเดอร์',
+            tooltip: _showHistory
+                ? 'ดูออเดอร์ที่กำลังดำเนินการ'
+                : 'ดูประวัติออเดอร์',
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _fetchShopStatus,
+            onPressed: () async {
+              await _fetchShopStatus();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('รีเฟรชข้อมูลแล้ว'),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+              }
+            },
           ),
         ],
       ),
@@ -683,136 +1164,107 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           // Shop Status Card
           _buildShopStatusCard(),
           const SizedBox(height: 24),
-          
+
           // Orders Section
-          StreamBuilder<List<Map<String, dynamic>>>(
-            stream: _ordersStream,
-            builder: (context, snapshot) {
-              try {
-                print('🔄 Merchant Stream Debug:');
-                print('👤 Merchant ID: ${AuthService.userId}');
-                print('📊 Orders Count: ${snapshot.data?.length ?? 0}');
-                print('🔍 Stream Error: ${snapshot.error}');
-                print('🔗 Connection State: ${snapshot.connectionState}');
-
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accentOrange),
-                    ),
-                  );
-                }
-
-                if (snapshot.hasError) {
-                  print('🚨 Stream Error: ${snapshot.error}');
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Stream Error: ${snapshot.error}',
-                          style: const TextStyle(color: Colors.red),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            setState(() {
-                              _setupOrdersStream();
-                            });
-                          },
-                          child: const Text('Retry'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                final orders = snapshot.data ?? [];
-                print('📊 Orders count in merchant UI: ${orders.length}');
-
-                if (orders.isEmpty) {
-                  return Container(
-                    padding: const EdgeInsets.all(32),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
-                          blurRadius: 4,
-                          spreadRadius: 1,
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: AppTheme.accentOrange.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.restaurant_outlined,
-                            size: 64,
-                            color: AppTheme.accentOrange,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        const Text(
-                          'ไม่มีออเดอร์ใหม่',
-                          style: TextStyle(
-                            fontSize: 20,
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _isShopOpen ? 'ออเดอร์ใหม่จะปรากฏที่นี่ทันที' : 'เปิดร้านเพื่อรับออเดอร์',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return Column(
-                  children: orders.map((order) {
-                    print('🎨 Building order card for: ${order['id']}');
-                    return _buildOrderCard(order);
-                  }).toList(),
-                );
-              } catch (e) {
-                print('❌ Error in StreamBuilder: $e');
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Error: $e',
-                        style: const TextStyle(color: Colors.red),
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            _setupOrdersStream();
-                          });
-                        },
-                        child: const Text('Retry'),
-                      ),
-                    ],
-                  ),
-                );
-              }
-            },
-          ),
+          _buildOrdersList(),
         ],
       ),
+    );
+  }
+
+  Widget _buildOrdersList() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accentOrange),
+        ),
+      );
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              _error!,
+              style: const TextStyle(color: Colors.red),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () async {
+                if (!mounted) return;
+
+                setState(() {
+                  _error = null;
+                  _isLoading = true;
+                });
+                await _fetchShopStatus();
+                _setupOrdersStream();
+              },
+              child: const Text('ลองใหม่'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_orders.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withValues(alpha: 0.1),
+              blurRadius: 4,
+              spreadRadius: 1,
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppTheme.accentOrange.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.restaurant_outlined,
+                size: 64,
+                color: AppTheme.accentOrange,
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'ไม่มีออเดอร์ใหม่',
+              style: TextStyle(
+                fontSize: 20,
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _isShopOpen
+                  ? 'ออเดอร์ใหม่จะปรากฏที่นี่ทันที'
+                  : 'เปิดร้านเพื่อรับออเดอร์',
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: _orders.map((order) {
+        return _buildOrderCard(order);
+      }).toList(),
     );
   }
 
@@ -827,17 +1279,18 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           colors: _isShopOpen
               ? [
                   AppTheme.accentOrange,
-                  AppTheme.accentOrange.withOpacity(0.8),
+                  AppTheme.accentOrange.withValues(alpha: 0.8),
                 ]
               : [
                   Colors.grey,
-                  Colors.grey.withOpacity(0.8),
+                  Colors.grey.withValues(alpha: 0.8),
                 ],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: (_isShopOpen ? AppTheme.accentOrange : Colors.grey).withOpacity(0.3),
+            color: (_isShopOpen ? AppTheme.accentOrange : Colors.grey)
+                .withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -867,10 +1320,10 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               Switch(
                 value: _isShopOpen,
                 onChanged: _toggleShopStatus,
-                activeColor: Colors.white,
+                activeThumbColor: Colors.white,
                 inactiveThumbColor: Colors.grey[300],
-                activeTrackColor: Colors.white.withOpacity(0.5),
-                inactiveTrackColor: Colors.white.withOpacity(0.3),
+                activeTrackColor: Colors.white.withValues(alpha: 0.5),
+                inactiveTrackColor: Colors.white.withValues(alpha: 0.3),
               ),
             ],
           ),
@@ -889,9 +1342,55 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 ? 'ลูกค้าสามารถสั่งอาหารได้'
                 : 'ร้านปิดให้บริการชั่วคราว',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withValues(alpha: 0.9),
               fontSize: 14,
             ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Icon(
+                _orderAcceptMode == _acceptModeAuto
+                    ? Icons.auto_mode_outlined
+                    : Icons.pan_tool_alt_outlined,
+                color: Colors.white.withValues(alpha: 0.9),
+                size: 16,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                _orderAcceptMode == _acceptModeAuto
+                    ? 'รับออเดอร์อัตโนมัติ'
+                    : 'รับออเดอร์ด้วยตนเอง',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.95),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Icon(
+                _shopAutoScheduleEnabled
+                    ? Icons.av_timer
+                    : Icons.av_timer_outlined,
+                color: Colors.white.withValues(alpha: 0.9),
+                size: 16,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                _shopAutoScheduleEnabled
+                    ? 'เปิด-ปิดร้านอัตโนมัติ: เปิดใช้งาน'
+                    : 'เปิด-ปิดร้านอัตโนมัติ: ปิดใช้งาน',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.95),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -899,166 +1398,285 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
   }
 
   Widget _buildOrderCard(Map<String, dynamic> order) {
-    final status = order['status'] as String;
-    final price = order['price'] is int 
+    final status = order['status'] as String? ?? '';
+    final price = order['price'] is int
         ? (order['price'] as int).toDouble()
-        : order['price'] as double;
-    final createdAt = DateTime.parse(order['created_at'] as String);
-    
-    print('🎨 Building order card for: ${order['id']}');
-    print('🎨 Order price: $price (type: ${price.runtimeType})');
-    print('🎨 Order data keys: ${order.keys.toList()}');
-    print('🎨 Pickup address: ${order['pickup_address']}');
-    print('🎨 Destination address: ${order['destination_address']}');
-    
-    // Check if we have saved status that might be newer
+        : (order['price'] as num?)?.toDouble() ?? 0.0;
+    final distanceKm = order['distance_km'] is int
+        ? (order['distance_km'] as int).toDouble()
+        : (order['distance_km'] as num?)?.toDouble() ?? 0.0;
+    final createdAtStr = order['created_at'] as String?;
+    final scheduledAtStr = order['scheduled_at'] as String?;
+    final scheduledAt =
+        scheduledAtStr != null ? DateTime.tryParse(scheduledAtStr) : null;
+    if (createdAtStr == null) {
+      debugLog('❌ Missing created_at for order: ${order['id']}');
+      return const SizedBox.shrink();
+    }
+    final createdAt = DateTime.parse(createdAtStr);
+
     final savedStatus = _getSavedOrderStatusSync(order['id']);
     final displayStatus = savedStatus ?? status;
-    
-    print('🎨 Order status - Stream: $status, Saved: $savedStatus, Display: $displayStatus');
+    final isNewOrder =
+        displayStatus == 'pending_merchant' || displayStatus == 'pending';
+    final statusColor = _getStatusColor(displayStatus);
 
-    final orderCard = Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => MerchantOrderDetailScreen(order: order),
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: isNewOrder
+              ? Border.all(color: Colors.red.withValues(alpha: 0.4), width: 2)
+              : null,
+          boxShadow: [
+            BoxShadow(
+              color: (isNewOrder ? Colors.red : Colors.black)
+                  .withValues(alpha: 0.08),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(displayStatus).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6),
+            // ── Gradient Status Header ──
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: isNewOrder
+                      ? [Colors.red, Colors.red.shade300]
+                      : [statusColor, statusColor.withValues(alpha: 0.7)],
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    isNewOrder
+                        ? Icons.notifications_active
+                        : _getStatusIcon(displayStatus),
+                    color: Colors.white,
+                    size: 18,
                   ),
-                  child: Text(
+                  const SizedBox(width: 8),
+                  Text(
                     _getStatusText(displayStatus),
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '#${order['id'].toString().substring(0, 8)}',
                     style: TextStyle(
-                      color: _getStatusColor(displayStatus),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  '฿${price.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            
-            // Order ID and Time
-            Row(
-              children: [
-                Icon(
-                  Icons.receipt_long_outlined,
-                  size: 16,
-                  color: Colors.grey[600],
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  'ออเดอร์ #${order['id'].toString().substring(0, 8)}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                const Spacer(),
-                Icon(
-                  Icons.access_time,
-                  size: 16,
-                  color: Colors.grey[600],
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  _getTimeAgo(DateTime.now().difference(createdAt)),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            
-            // Pickup Address
-            if (order['pickup_address'] != null) ...[
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.store_outlined,
-                    size: 16,
-                    color: Colors.grey[600],
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      'รับที่: ${order['pickup_address']}',
-                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.85),
                         fontSize: 12,
-                        color: Colors.grey[700],
-                      ),
-                    ),
+                        fontWeight: FontWeight.w500),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-            ],
-            
-            // Destination Address
-            if (order['destination_address'] != null) ...[
-              Row(
+            ),
+
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.location_on_outlined,
-                    size: 16,
-                    color: Colors.grey[600],
+                  // ── Price + Time Row ──
+                  Row(
+                    children: [
+                      // ยอดรวม
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppTheme.accentOrange.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.receipt_long,
+                                size: 16, color: AppTheme.accentOrange),
+                            const SizedBox(width: 6),
+                            Text(
+                              '฿${price.toStringAsFixed(0)}',
+                              style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.accentOrange),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // ค่าส่งไม่แสดงฝั่งร้านค้า (เป็นข้อมูลของลูกค้า/คนขับ)
+                      const Spacer(),
+                      Icon(Icons.access_time_rounded,
+                          size: 14, color: Colors.grey[400]),
+                      const SizedBox(width: 4),
+                      Text(
+                        _getTimeAgo(DateTime.now().difference(createdAt)),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      'ส่งที่: ${order['destination_address']}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[700],
+                  const SizedBox(height: 12),
+
+                  if (scheduledAt != null) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.amber.shade300),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.schedule,
+                              size: 16, color: Colors.orange),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              scheduledAt.isAfter(DateTime.now())
+                                  ? 'ออเดอร์นัดเวลา: ${_formatScheduledDateTime(scheduledAt)}'
+                                  : 'เวลานัดรับ: ${_formatScheduledDateTime(scheduledAt)}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+                    const SizedBox(height: 14),
+                  ],
+
+                  // ── Address + Distance ──
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                  color: Colors.red.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(6)),
+                              child: const Icon(Icons.location_on,
+                                  size: 14, color: Colors.red),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _formatAddress(order['destination_address']),
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.grey[800]),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (distanceKm > 0) ...[
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Container(
+                                width: 24,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                    color: Colors.green.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(6)),
+                                child: const Icon(Icons.straighten,
+                                    size: 14, color: Colors.green),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'ระยะทาง ${distanceKm.toStringAsFixed(1)} กม.',
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.grey[600]),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
+                  const SizedBox(height: 14),
+
+                  // ── Action Buttons ──
+                  _buildActionButtons(order, displayStatus),
                 ],
               ),
-              const SizedBox(height: 12),
-            ],
-            
-            // Action buttons
-            _buildActionButtons(order, displayStatus),
+            ),
           ],
         ),
       ),
     );
-    
-    print('🎨 Order card built successfully for: ${order['id']}');
-    return orderCard;
+  }
+
+  IconData _getStatusIcon(String status) {
+    switch (status) {
+      case 'pending_merchant':
+      case 'pending':
+        return Icons.notifications_active;
+      case 'preparing':
+        return Icons.restaurant;
+      case 'driver_accepted':
+      case 'matched':
+        return Icons.person_pin_circle;
+      case 'arrived_at_merchant':
+        return Icons.store;
+      case 'ready_for_pickup':
+        return Icons.check_circle;
+      case 'picking_up_order':
+        return Icons.delivery_dining;
+      case 'in_transit':
+        return Icons.local_shipping;
+      case 'completed':
+        return Icons.done_all;
+      case 'cancelled':
+        return Icons.cancel;
+      default:
+        return Icons.receipt_long;
+    }
+  }
+
+  String _formatAddress(dynamic address) {
+    if (address == null) return 'ไม่ระบุ';
+    if (address is String) {
+      // Check if address string contains "Instance of" or "AddressPlacemark"
+      if (address.contains('Instance of') ||
+          address.contains('AddressPlacemark')) {
+        return '📍 ตำแหน่งตามหมุดปักของลูกค้า';
+      }
+      return address;
+    }
+    if (address.toString() == 'Instance of \'AddressPlacemark\'') {
+      return '📍 ตำแหน่งตามหมุดปักของลูกค้า';
+    }
+    return address.toString();
   }
 
   Widget _buildActionButtons(Map<String, dynamic> order, String status) {
@@ -1086,26 +1704,42 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           ],
         );
       case 'preparing':
-        return Row(
-          children: [
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () => _markFoodReady(order['id']),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  'อาหารพร้อม',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                ),
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.green[50],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.green[200]!),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                Icons.restaurant,
+                color: Colors.green[600],
+                size: 32,
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                'กำลังเตรียมอาหาร',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green[700],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'กดเข้าไปดูรายละเอียด',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.green[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         );
       case 'driver_accepted':
         return Container(
@@ -1146,26 +1780,42 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           ),
         );
       case 'matched':
-        return Row(
-          children: [
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () => _markFoodReady(order['id']),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  'อาหารพร้อม',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                ),
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.green[50],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.green[200]!),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                Icons.check_circle,
+                color: Colors.green[600],
+                size: 32,
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                'จับคู่คนขับแล้ว',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green[700],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'กดเข้าไปดูรายละเอียด',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.green[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         );
       case 'traveling_to_merchant':
         return Container(
@@ -1206,26 +1856,42 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           ),
         );
       case 'arrived_at_merchant':
-        return Row(
-          children: [
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () => _markFoodReady(order['id']),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  'อาหารพร้อม',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                ),
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.orange[50],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.orange[200]!),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                Icons.store,
+                color: Colors.orange[600],
+                size: 32,
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                'คนขับถึงร้านแล้ว',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.orange[700],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'กดเข้าไปดูรายละเอียด',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.orange[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         );
       case 'picking_up_order':
         return Container(
@@ -1346,59 +2012,25 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
     }
   }
 
-  String _getStatusText(String status) {
-    switch (status) {
-      case 'pending':
-        return 'รอการยืนยัน';
-      case 'driver_accepted':
-        return 'คนขับรับแล้ว';
-      case 'preparing':
-        return 'กำลังประกอบ';
-      case 'matched':
-        return 'จับคู่แล้ว';
-      case 'ready_for_pickup':
-        return 'อาหารพร้อม';
-      case 'traveling_to_merchant':
-        return 'คนขับกำลังเดินทาง';
-      case 'arrived_at_merchant':
-        return 'คนขับถึงร้านแล้ว';
-      case 'picking_up_order':
-        return 'คนขับรับออเดอร์แล้ว';
-      case 'in_transit':
-        return 'กำลังนำส่ง';
-      case 'completed':
-        return 'เสร็จสิ้น';
-      case 'cancelled':
-        return 'ยกเลิก';
-      default:
-        return status;
-    }
-  }
-
   Color _getStatusColor(String status) {
     switch (status) {
+      case 'pending_merchant':
+        return Colors.red; // Urgent/New Order
       case 'pending':
         return Colors.orange;
-      case 'driver_accepted':
-        return Colors.blue;
       case 'preparing':
         return Colors.purple;
-      case 'matched':
-        return Colors.green;
       case 'ready_for_pickup':
         return Colors.teal;
-      case 'traveling_to_merchant':
-        return Colors.indigo;
+      case 'driver_accepted':
+      case 'matched':
+        return Colors.green; // ✅ Treat as Finished/Success
       case 'arrived_at_merchant':
-        return Colors.amber;
-      case 'picking_up_order':
-        return Colors.lime;
-      case 'in_transit':
-        return Colors.cyan;
+        return Colors.green; // ✅ Also Success
       case 'completed':
-        return Colors.grey;
+        return Colors.green;
       case 'cancelled':
-        return Colors.red;
+        return Colors.grey;
       default:
         return Colors.grey;
     }
@@ -1416,6 +2048,17 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
     }
   }
 
+  String _formatScheduledDateTime(DateTime dateTime) {
+    final local = dateTime.toLocal();
+    final day = local.day.toString().padLeft(2, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    final year = local.year;
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    return '$day/$month/$year $hour:$minute';
+  }
+
+  // ignore: unused_element
   String _formatTimeAgo(Duration duration) {
     if (duration.inMinutes < 1) {
       return 'Just now';
@@ -1428,11 +2071,128 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
     }
   }
 
+  /// Send notification to customer when merchant accepts order
+  Future<void> _notifyCustomerOrderAccepted(
+      Map<String, dynamic> booking) async {
+    try {
+      final customerId = booking['customer_id'] as String?;
+      if (customerId == null || customerId.isEmpty) {
+        debugLog('❌ No customer ID found in booking');
+        return;
+      }
+
+      debugLog('📤 Sending notification to customer: $customerId');
+
+      // Get merchant profile for notification
+      final merchantProfile = await _getMerchantProfile();
+      final merchantName = merchantProfile?['full_name'] ?? 'ร้านค้า';
+
+      final success = await NotificationSender.sendNotification(
+        targetUserId: customerId,
+        title: '✅ ร้านยืนยันออเดอร์แล้ว!',
+        body: '$merchantName กำลังเตรียมอาหารของคุณ',
+        data: {
+          'type': 'merchant_accepted',
+          'booking_id': booking['id'] as String,
+          'merchant_id': booking['merchant_id'] as String,
+          'status': booking['status'] as String,
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+      );
+
+      if (success) {
+        debugLog('✅ Notification sent to customer successfully');
+      } else {
+        debugLog('❌ Failed to send notification to customer');
+      }
+    } catch (e) {
+      debugLog('❌ Error notifying customer: $e');
+    }
+  }
+
+  /// Send notification when food is ready
+  Future<void> _notifyFoodReady(Map<String, dynamic> booking) async {
+    try {
+      final customerId = booking['customer_id'] as String?;
+      final driverId = booking['driver_id'] as String?;
+
+      // Get merchant profile
+      final merchantProfile = await _getMerchantProfile();
+      final merchantName = merchantProfile?['full_name'] ?? 'ร้านค้า';
+
+      // Notify customer
+      if (customerId != null && customerId.isNotEmpty) {
+        debugLog('📤 Sending food ready notification to customer: $customerId');
+        await NotificationSender.sendNotification(
+          targetUserId: customerId,
+          title: '🍔 อาหารพร้อมแล้ว!',
+          body: '$merchantName เตรียมอาหารเสร็จแล้ว รอคนขับมารับ',
+          data: {
+            'type': 'food_ready',
+            'booking_id': booking['id'] as String,
+            'merchant_id': booking['merchant_id'] as String,
+            'timestamp': DateTime.now().toIso8601String(),
+          },
+        );
+      }
+
+      // Notify driver
+      if (driverId != null && driverId.isNotEmpty) {
+        debugLog('📤 Sending food ready notification to driver: $driverId');
+        await NotificationSender.sendNotification(
+          targetUserId: driverId,
+          title: '🍔 อาหารพร้อมรับแล้ว!',
+          body: '$merchantName เตรียมอาหารเสร็จแล้ว พร้อมรับได้เลย',
+          data: {
+            'type': 'food_ready_driver',
+            'booking_id': booking['id'] as String,
+            'merchant_id': booking['merchant_id'] as String,
+            'timestamp': DateTime.now().toIso8601String(),
+          },
+        );
+      }
+    } catch (e) {
+      debugLog('❌ Error notifying food ready: $e');
+    }
+  }
+
+  /// Get current merchant profile
+  Future<Map<String, dynamic>?> _getMerchantProfile() async {
+    try {
+      final userId = AuthService.userId;
+      if (userId == null) return null;
+
+      final profile = await Supabase.instance.client
+          .from('profiles')
+          .select('full_name, phone_number')
+          .eq('id', userId)
+          .single();
+
+      return profile;
+    } catch (e) {
+      debugLog('❌ Error fetching merchant profile: $e');
+      return null;
+    }
+  }
+
   void _toggleView() {
+    if (!mounted) return;
+
     setState(() {
       _showHistory = !_showHistory;
     });
     // Re-setup stream with new filter
     _setupOrdersStream();
+
+    // Show feedback
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              _showHistory ? 'ดูประวัติออเดอร์' : 'ดูออเดอร์ที่กำลังดำเนินการ'),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
   }
 }

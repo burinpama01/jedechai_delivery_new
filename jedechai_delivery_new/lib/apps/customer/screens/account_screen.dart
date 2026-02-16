@@ -2,58 +2,33 @@ import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:jedechai_delivery_new/theme/app_theme.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../common/services/auth_service.dart';
 import '../../../common/services/profile_service.dart';
 import '../../../common/services/image_picker_service.dart';
 import '../../../common/services/storage_service.dart';
 import '../../../common/services/account_deletion_service.dart';
 import '../../../common/utils/platform_adaptive.dart';
+import '../../../common/screens/profile_screen.dart';
 import '../../../common/widgets/app_network_image.dart';
-import '../../customer/screens/auth/login_screen.dart';
-import 'merchant_coupon_management_screen.dart';
-import 'profile/edit_merchant_profile_screen.dart';
+import '../../../theme/app_theme.dart';
+import 'auth/login_screen.dart';
 
-/// Merchant Settings Screen — Account & Settings
-class MerchantSettingsScreen extends StatefulWidget {
-  const MerchantSettingsScreen({super.key});
+/// Account Screen — Customer
+class AccountScreen extends StatefulWidget {
+  const AccountScreen({super.key});
 
   @override
-  State<MerchantSettingsScreen> createState() => _MerchantSettingsScreenState();
+  State<AccountScreen> createState() => _AccountScreenState();
 }
 
-class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
+class _AccountScreenState extends State<AccountScreen> {
   final ProfileService _profileService = ProfileService();
   Map<String, dynamic>? _userProfile;
   bool _isLoading = true;
   String? _error;
 
-  static const Color _accent = AppTheme.accentOrange;
-  static const List<Color> _gradient = [
-    AppTheme.accentOrange,
-    Color(0xFFE65100),
-  ];
-  static const List<String> _weekdayKeys = [
-    'mon',
-    'tue',
-    'wed',
-    'thu',
-    'fri',
-    'sat',
-    'sun',
-  ];
-  static const Map<String, String> _weekdayThai = {
-    'mon': 'จ',
-    'tue': 'อ',
-    'wed': 'พ',
-    'thu': 'พฤ',
-    'fri': 'ศ',
-    'sat': 'ส',
-    'sun': 'อา',
-  };
-  static const String _acceptModeManual = 'manual';
-  static const String _acceptModeAuto = 'auto';
+  static const Color _accent = AppTheme.accentBlue;
+  static const List<Color> _gradient = [AppTheme.accentBlue, Color(0xFF1E3A8A)];
 
   @override
   void initState() {
@@ -129,10 +104,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
   }
 
   Future<void> _editProfileField(String field) async {
-    final labels = {'full_name': 'ชื่อร้าน', 'phone_number': 'เบอร์โทร'};
-    final hints = {'full_name': 'ชื่อร้านค้า', 'phone_number': 'เบอร์โทรศัพท์'};
-    final label = labels[field] ?? field;
-    final hint = hints[field] ?? '';
+    final label = field == 'full_name' ? 'ชื่อ' : 'เบอร์โทร';
+    final hint = field == 'full_name' ? 'ชื่อ-นามสกุล' : 'เบอร์โทรศัพท์';
     final controller = TextEditingController(text: _userProfile?[field] ?? '');
     final result = await showDialog<String>(
       context: context,
@@ -144,7 +117,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
               ? TextInputType.phone
               : TextInputType.name,
           decoration: InputDecoration(
-            hintText: hint,
+            hintText: 'กรอก$hint',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           ),
         ),
@@ -255,6 +228,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
     try {
       await AccountDeletionService.requestDeletion(reason: reason);
       if (mounted) {
+        // Navigate to auth gate which will show pending deletion screen
         Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
       }
     } catch (e) {
@@ -316,16 +290,39 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
     }
   }
 
-  void _navigateToEditProfile() async {
-    final result = await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => EditMerchantProfileScreen(
-          currentName: _userProfile?['full_name'] ?? '',
-          currentEmail: _userProfile?['email'] ?? '',
-        ),
-      ),
+  Future<void> _openPrivacyPolicy() async {
+    final uri = Uri.parse(
+      'https://sites.google.com/view/jdc-delivery-privacy-policy',
     );
-    if (result == true) _fetchUserProfile();
+    try {
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('ไม่สามารถเปิดลิงก์ได้'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugLog('❌ Error opening privacy policy: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('เกิดข้อผิดพลาด: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _navigateToEditProfile() async {
+    final result = await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const ProfileScreen()));
+    if (result == true || result == null) _fetchUserProfile();
   }
 
   // ============================================================
@@ -380,7 +377,12 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: _fetchUserProfile,
-              icon: const Icon(Icons.refresh),
+              icon: Icon(
+                PlatformAdaptive.icon(
+                  android: Icons.refresh,
+                  ios: CupertinoIcons.refresh,
+                ),
+              ),
               label: const Text('ลองใหม่'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _accent,
@@ -419,10 +421,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
 
   Widget _buildProfileHeader() {
     final avatarUrl = _userProfile?['avatar_url'] as String?;
-    final shopPhotoUrl = _userProfile?['shop_photo_url'] as String?;
-    final displayUrl =
-        avatarUrl != null && avatarUrl.isNotEmpty ? avatarUrl : shopPhotoUrl;
-    final hasImage = displayUrl != null && displayUrl.isNotEmpty;
+    final hasAvatar = avatarUrl != null && avatarUrl.isNotEmpty;
 
     return Container(
       width: double.infinity,
@@ -455,9 +454,9 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                     ],
                   ),
                   child: ClipOval(
-                    child: hasImage
+                    child: hasAvatar
                         ? AppNetworkImage(
-                            imageUrl: displayUrl,
+                            imageUrl: avatarUrl,
                             width: 80,
                             height: 80,
                             fit: BoxFit.cover,
@@ -496,7 +495,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
           ),
           const SizedBox(height: 14),
           Text(
-            _userProfile?['full_name'] ?? 'ร้านค้า',
+            _userProfile?['full_name'] ?? 'ผู้ใช้',
             style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
@@ -511,7 +510,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Text(
-              'ร้านค้า',
+              'ลูกค้า',
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.white,
@@ -529,22 +528,15 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
   // ============================================================
 
   Widget _buildInfoCard() {
-    final shopStatus = _userProfile?['shop_status'] as bool?;
-    final shopOpenDays = _extractShopOpenDays(_userProfile?['shop_open_days']);
-    final orderAcceptMode =
-        (_userProfile?['order_accept_mode'] as String?) ?? _acceptModeManual;
-    final autoScheduleEnabled =
-        (_userProfile?['shop_auto_schedule_enabled'] as bool?) ?? true;
-
     return _card(
-      title: 'ข้อมูลร้านค้า',
+      title: 'ข้อมูลส่วนตัว',
       children: [
         _infoRow(
           PlatformAdaptive.icon(
-            android: Icons.store,
-            ios: CupertinoIcons.building_2_fill,
+            android: Icons.person,
+            ios: CupertinoIcons.person,
           ),
-          'ชื่อร้าน',
+          'ชื่อ',
           _userProfile?['full_name'] ?? 'ยังไม่ได้ตั้งค่า',
           () => _editProfileField('full_name'),
         ),
@@ -568,384 +560,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
           AuthService.currentUser?.email ?? '-',
           null,
         ),
-        _divider(),
-        _infoRow(
-          PlatformAdaptive.icon(
-            android: Icons.location_on_outlined,
-            ios: CupertinoIcons.location,
-          ),
-          'ที่อยู่ร้าน',
-          _userProfile?['shop_address'] ?? 'ยังไม่ได้ตั้งค่า',
-          null,
-        ),
-        _divider(),
-        _infoRow(
-          shopStatus == true
-              ? PlatformAdaptive.icon(
-                  android: Icons.check_circle,
-                  ios: CupertinoIcons.check_mark_circled_solid,
-                )
-              : PlatformAdaptive.icon(
-                  android: Icons.cancel,
-                  ios: CupertinoIcons.xmark_circle_fill,
-                ),
-          'สถานะร้าน',
-          shopStatus == true ? 'เปิดรับออเดอร์' : 'ปิดร้าน',
-          null,
-        ),
-        _divider(),
-        _infoRow(
-          PlatformAdaptive.icon(
-            android: Icons.schedule,
-            ios: CupertinoIcons.clock,
-          ),
-          'เวลาเปิด-ปิดร้าน',
-          '${_userProfile?['shop_open_time'] ?? '08:00'} - ${_userProfile?['shop_close_time'] ?? '22:00'}',
-          _showEditShopHoursDialog,
-        ),
-        _divider(),
-        _infoRow(
-          PlatformAdaptive.icon(
-            android: Icons.calendar_today_outlined,
-            ios: CupertinoIcons.calendar,
-          ),
-          'วันเปิดร้าน',
-          _formatOpenDaysText(shopOpenDays),
-          _showEditShopHoursDialog,
-        ),
-        _divider(),
-        _infoRow(
-          PlatformAdaptive.icon(
-            android: Icons.rule_folder_outlined,
-            ios: CupertinoIcons.doc_text,
-          ),
-          'รูปแบบรับออเดอร์',
-          _formatOrderAcceptMode(orderAcceptMode),
-          _showEditShopHoursDialog,
-        ),
-        _divider(),
-        _infoRow(
-          PlatformAdaptive.icon(
-            android: Icons.av_timer_outlined,
-            ios: CupertinoIcons.timer,
-          ),
-          'เปิด-ปิดร้านอัตโนมัติ',
-          autoScheduleEnabled ? 'เปิดใช้งาน' : 'ปิดใช้งาน',
-          _showEditShopHoursDialog,
-        ),
       ],
     );
-  }
-
-  List<String> _extractShopOpenDays(dynamic rawValue) {
-    if (rawValue is List) {
-      return rawValue
-          .map((e) => e.toString().toLowerCase().trim())
-          .where((e) => _weekdayKeys.contains(e))
-          .toSet()
-          .toList();
-    }
-    return [];
-  }
-
-  String _formatOpenDaysText(List<String> days) {
-    if (days.isEmpty) return 'ทุกวัน';
-    return days.map((d) => _weekdayThai[d] ?? d).join(' ');
-  }
-
-  String _formatOrderAcceptMode(String mode) {
-    switch (mode) {
-      case _acceptModeAuto:
-        return 'รับออเดอร์อัตโนมัติ';
-      case _acceptModeManual:
-      default:
-        return 'รับออเดอร์ด้วยตนเอง';
-    }
-  }
-
-  Future<void> _showEditShopHoursDialog() async {
-    final openTime = _userProfile?['shop_open_time'] as String? ?? '08:00';
-    final closeTime = _userProfile?['shop_close_time'] as String? ?? '22:00';
-
-    TimeOfDay parseTime(String t) {
-      final parts = t.split(':');
-      return TimeOfDay(
-        hour: int.tryParse(parts[0]) ?? 8,
-        minute: int.tryParse(parts[1]) ?? 0,
-      );
-    }
-
-    String formatTime(TimeOfDay t) {
-      return '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
-    }
-
-    TimeOfDay selectedOpen = parseTime(openTime);
-    TimeOfDay selectedClose = parseTime(closeTime);
-    final selectedDays = _extractShopOpenDays(
-      _userProfile?['shop_open_days'],
-    ).toSet();
-    String selectedAcceptMode =
-        (_userProfile?['order_accept_mode'] as String?) ?? _acceptModeManual;
-    bool autoScheduleEnabled =
-        (_userProfile?['shop_auto_schedule_enabled'] as bool?) ?? true;
-
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              title: const Text(
-                'ตั้งเวลาเปิด-ปิดร้าน',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ListTile(
-                    leading: Icon(Icons.wb_sunny, color: _accent),
-                    title: const Text('เวลาเปิดร้าน'),
-                    trailing: Text(
-                      formatTime(selectedOpen),
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: _accent,
-                      ),
-                    ),
-                    onTap: () async {
-                      final picked = await PlatformAdaptive.pickTime(
-                        context: context,
-                        initialTime: selectedOpen,
-                        title: 'เวลาเปิดร้าน',
-                      );
-                      if (picked != null) {
-                        setDialogState(() => selectedOpen = picked);
-                      }
-                    },
-                  ),
-                  const Divider(),
-                  ListTile(
-                    leading: Icon(Icons.nights_stay, color: Colors.indigo[400]),
-                    title: const Text('เวลาปิดร้าน'),
-                    trailing: Text(
-                      formatTime(selectedClose),
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.indigo[400],
-                      ),
-                    ),
-                    onTap: () async {
-                      final picked = await PlatformAdaptive.pickTime(
-                        context: context,
-                        initialTime: selectedClose,
-                        title: 'เวลาปิดร้าน',
-                      );
-                      if (picked != null) {
-                        setDialogState(() => selectedClose = picked);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'วันที่เปิดร้าน',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey[800],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _weekdayKeys.map((day) {
-                      final isSelected = selectedDays.contains(day);
-                      return FilterChip(
-                        label: Text(_weekdayThai[day] ?? day),
-                        selected: isSelected,
-                        selectedColor: _accent.withValues(alpha: 0.15),
-                        checkmarkColor: _accent,
-                        labelStyle: TextStyle(
-                          color: isSelected ? _accent : Colors.black87,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        side: BorderSide(
-                          color: isSelected ? _accent : Colors.grey.shade300,
-                        ),
-                        onSelected: (selected) {
-                          setDialogState(() {
-                            if (selected) {
-                              selectedDays.add(day);
-                            } else {
-                              selectedDays.remove(day);
-                            }
-                          });
-                        },
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 14),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'รูปแบบการรับออเดอร์',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey[800],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  SegmentedButton<String>(
-                    segments: const [
-                      ButtonSegment<String>(
-                        value: _acceptModeManual,
-                        icon: Icon(Icons.pan_tool_alt_outlined),
-                        label: Text('รับเอง'),
-                      ),
-                      ButtonSegment<String>(
-                        value: _acceptModeAuto,
-                        icon: Icon(Icons.auto_mode_outlined),
-                        label: Text('อัตโนมัติ'),
-                      ),
-                    ],
-                    selected: {selectedAcceptMode},
-                    style: ButtonStyle(
-                      backgroundColor: WidgetStateProperty.resolveWith<Color?>((
-                        states,
-                      ) {
-                        if (states.contains(WidgetState.selected)) {
-                          return _accent.withValues(alpha: 0.18);
-                        }
-                        return Colors.white;
-                      }),
-                      side: WidgetStateProperty.resolveWith<BorderSide?>((
-                        states,
-                      ) {
-                        if (states.contains(WidgetState.selected)) {
-                          return BorderSide(color: _accent);
-                        }
-                        return BorderSide(color: Colors.grey.shade300);
-                      }),
-                      foregroundColor: WidgetStateProperty.resolveWith<Color?>((
-                        states,
-                      ) {
-                        if (states.contains(WidgetState.selected)) {
-                          return _accent;
-                        }
-                        return Colors.black87;
-                      }),
-                    ),
-                    onSelectionChanged: (selected) {
-                      setDialogState(() {
-                        selectedAcceptMode = selected.first;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  SwitchListTile.adaptive(
-                    value: autoScheduleEnabled,
-                    activeThumbColor: _accent,
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text(
-                      'เปิด-ปิดร้านอัตโนมัติตามวันและเวลา',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    subtitle: Text(
-                      autoScheduleEnabled
-                          ? 'ระบบจะสลับสถานะร้านให้อัตโนมัติ'
-                          : 'ปิดไว้ จะเปิด/ปิดร้านด้วยตนเองเท่านั้น',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                    ),
-                    onChanged: (value) {
-                      setDialogState(() {
-                        autoScheduleEnabled = value;
-                      });
-                    },
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(false),
-                  child: const Text('ยกเลิก'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    if (selectedDays.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('กรุณาเลือกวันเปิดร้านอย่างน้อย 1 วัน'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      return;
-                    }
-                    Navigator.of(ctx).pop(true);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _accent,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: const Text('บันทึก'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-
-    if (result == true) {
-      try {
-        final userId = AuthService.userId;
-        if (userId == null) return;
-
-        final openStr = formatTime(selectedOpen);
-        final closeStr = formatTime(selectedClose);
-
-        await Supabase.instance.client.from('profiles').update({
-          'shop_open_time': openStr,
-          'shop_close_time': closeStr,
-          'shop_open_days': selectedDays.toList(),
-          'order_accept_mode': selectedAcceptMode,
-          'shop_auto_schedule_enabled': autoScheduleEnabled,
-        }).eq('id', userId);
-
-        await _fetchUserProfile();
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'ตั้งเวลาเปิด-ปิดร้าน: $openStr - $closeStr (${_formatOpenDaysText(selectedDays.toList())})',
-              ),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      } catch (e) {
-        debugLog('❌ Error updating shop hours: $e');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('บันทึกไม่สำเร็จ: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    }
   }
 
   // ============================================================
@@ -961,23 +577,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             android: Icons.edit,
             ios: CupertinoIcons.pencil,
           ),
-          'แก้ไขข้อมูลร้าน',
+          'แก้ไขโปรไฟล์',
           _navigateToEditProfile,
-        ),
-        _divider(),
-        _menuItem(
-          PlatformAdaptive.icon(
-            android: Icons.local_offer_outlined,
-            ios: CupertinoIcons.ticket,
-          ),
-          'คูปองร้านค้า',
-          () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => const MerchantCouponManagementScreen(),
-              ),
-            );
-          },
         ),
         _divider(),
         _menuItem(
@@ -1016,34 +617,6 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
         ),
       ],
     );
-  }
-
-  Future<void> _openPrivacyPolicy() async {
-    final uri = Uri.parse(
-      'https://sites.google.com/view/jdc-delivery-privacy-policy',
-    );
-    try {
-      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('ไม่สามารถเปิดลิงก์ได้'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      debugLog('❌ Error opening privacy policy: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('เกิดข้อผิดพลาด: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
 
   // ============================================================
