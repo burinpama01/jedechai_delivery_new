@@ -9,8 +9,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   cupertino_icons: ^1.0.8
-  package_info_plus: 8.0.0  # หรือเวอร์ชั่นล่าสุด
+  package_info_plus: ^8.2.0  # หรือเวอร์ชั่นล่าสุด
   # Supabase
   supabase_flutter: ^2.12.0
   
@@ -18,14 +20,51 @@ dependencies:
   provider: ^6.1.5
   
   # Utilities
-  intl: ^0.19.0
+  intl: ^0.20.2
   geolocator: 11.0.0
+  geocoding: ^3.0.0
   google_maps_flutter: 2.10.0
+  googleapis_auth: ^1.4.1
+  
+  # HTTP and Polyline
+  http: ^1.2.0
+  flutter_polyline_points: ^2.0.0
+  
+  # UI Enhancement
+  lottie: ^3.1.0
+  
+  # Firebase Push Notifications
+  firebase_core: ^3.4.0
+  firebase_messaging: ^15.0.0
+  flutter_local_notifications: ^18.0.1
+  
+  # Alarm and Vibration
+  flutter_ringtone_player: ^4.0.0
+  vibration: ^2.0.0
+  
+  # Image Picker & Compression
+  image_picker: ^1.0.7
+  flutter_image_compress: ^2.1.0
+  path_provider: ^2.1.2
+  
+  # URL Launcher (for Google Maps Navigation)
+  url_launcher: ^6.2.5
+
+  # Local key-value storage
+  shared_preferences: ^2.3.2
+
+  # Share files (CSV export)
+  share_plus: ^7.2.2
+
+  # Environment Variables
+  flutter_dotenv: ^5.1.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.4.0
 
 dependency_overrides:
   # กลุ่ม Android Core
@@ -37,12 +76,40 @@ dependency_overrides:
   # แก้ Registrar: ต้องใช้ 2.9.0 ขึ้นไป (เราใช้ 2.10.0 เพื่อความชัวร์)
   google_maps_flutter_android: 2.10.0
   
+  # ล็อค image_picker_android ให้ใช้กับ compileSdk 35
+  image_picker_android: 0.8.12+17
+  
   # ตัวการสำคัญที่ฟ้อง SDK 36 เราล็อคไว้ที่นี่
   app_links: 6.1.1 
   
   # แถม: ล็อคกลุ่ม Google Maps ให้อยู่ในโซนปลอดภัย
   geolocator_android: 4.5.5
-  package_info_plus: 8.0.0
+  
+  # แก้ไขปัญหา Guava/AndroidX concurrent futures conflict
+  collection: ^1.19.0
+  async: ^2.11.0
+  
+  # บังคับใช้ Guava เวอร์ชั่นที่เข้ากันได้
+  # สำหรับแก้ NoClassDefFoundError: AbstractResolvableFuture
+
+# Flutter Native Splash configuration
+flutter_native_splash:
+  color: "#ffffff"
+  image: "assets/images/logo_bg.png"
+  android_12:
+    image: "assets/images/logo_bg.png"
+    icon_background_color: "#ffffff"
+
+# Flutter Launcher Icons configuration
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/logo.png"
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/images/logo.png"
 
 flutter:
   uses-material-design: true
+  assets:
+    - .env
+    - assets/images/
