@@ -108,11 +108,30 @@ AndroidNotificationDetails _buildAndroidNotificationDetails({
   );
 }
 
+DarwinNotificationDetails _buildDarwinNotificationDetails({
+  required bool isMerchantNewOrder,
+}) {
+  return DarwinNotificationDetails(
+    presentAlert: true,
+    presentBadge: true,
+    presentSound: true,
+    sound: isMerchantNewOrder ? 'AlertNewOrder.mp3' : null,
+  );
+}
+
 Future<void> _showBackgroundLocalNotification(RemoteMessage message) async {
   final localNotifications = FlutterLocalNotificationsPlugin();
 
   const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-  const settings = InitializationSettings(android: androidSettings);
+  const darwinSettings = DarwinInitializationSettings(
+    requestAlertPermission: false,
+    requestBadgePermission: false,
+    requestSoundPermission: false,
+  );
+  const settings = InitializationSettings(
+    android: androidSettings,
+    iOS: darwinSettings,
+  );
 
   await localNotifications.initialize(settings);
   await _ensureAndroidNotificationChannels(localNotifications);
@@ -120,6 +139,9 @@ Future<void> _showBackgroundLocalNotification(RemoteMessage message) async {
   final isMerchantNewOrder = message.data['type'] == 'merchant_new_order';
   final notificationId = message.messageId?.hashCode ??
       DateTime.now().millisecondsSinceEpoch.remainder(1 << 31);
+  final darwinDetails = _buildDarwinNotificationDetails(
+    isMerchantNewOrder: isMerchantNewOrder,
+  );
 
   await localNotifications.show(
     notificationId,
@@ -130,6 +152,7 @@ Future<void> _showBackgroundLocalNotification(RemoteMessage message) async {
         isMerchantNewOrder: isMerchantNewOrder,
         insistent: isMerchantNewOrder,
       ),
+      iOS: darwinDetails,
     ),
     payload: jsonEncode(message.data),
   );
@@ -154,7 +177,12 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   debugLog('📦 Data: ${message.data}');
   debugLog('🌙 ===== END OF BACKGROUND MESSAGE =====');
 
-  await Firebase.initializeApp();
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugLog('❌ Background Firebase initialization failed: $e');
+    return;
+  }
 
   if (message.notification == null) {
     try {
@@ -193,6 +221,8 @@ class FCMNotificationService {
       _firebaseMessaging = FirebaseMessaging.instance;
       debugLog('✅ Firebase Messaging initialized');
 
+      await _configureForegroundPresentationOptions();
+
       // Request notification permissions
       debugLog('🔍 Step 3: Requesting notification permissions...');
       await _requestPermissions();
@@ -214,6 +244,23 @@ class FCMNotificationService {
     } catch (e) {
       debugLog('❌ Error initializing FCM service: $e');
       debugLog('   └─ Stack trace: ${StackTrace.current}');
+    }
+  }
+
+  Future<void> _configureForegroundPresentationOptions() async {
+    if (_firebaseMessaging == null) {
+      return;
+    }
+
+    try {
+      await _firebaseMessaging!.setForegroundNotificationPresentationOptions(
+        alert: false,
+        badge: false,
+        sound: false,
+      );
+      debugLog('✅ Foreground presentation options configured');
+    } catch (e) {
+      debugLog('⚠️ Could not configure foreground presentation options: $e');
     }
   }
 
@@ -337,7 +384,15 @@ class FCMNotificationService {
   Future<void> _initializeLocalNotifications() async {
     const androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
-    const settings = InitializationSettings(android: androidSettings);
+    const darwinSettings = DarwinInitializationSettings(
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+    );
+    const settings = InitializationSettings(
+      android: androidSettings,
+      iOS: darwinSettings,
+    );
 
     await _localNotifications.initialize(
       settings,
@@ -462,8 +517,14 @@ class FCMNotificationService {
         isMerchantNewOrder: isMerchantNewOrder,
         insistent: false,
       );
+      final darwinDetails = _buildDarwinNotificationDetails(
+        isMerchantNewOrder: isMerchantNewOrder,
+      );
 
-      final notificationDetails = NotificationDetails(android: androidDetails);
+      final notificationDetails = NotificationDetails(
+        android: androidDetails,
+        iOS: darwinDetails,
+      );
 
       debugLog('🔔 Showing notification with ID: ${message.hashCode}');
 
