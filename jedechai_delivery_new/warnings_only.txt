@@ -1,0 +1,119 @@
+﻿The '!' will have no effect because the receiver can't be null|lib\apps\customer\screens\account_screen.dart:262:72 - unnecessary_non_null_assertion
+The '!' will have no effect because the receiver can't be null|lib\apps\customer\screens\activity_screen.dart:502:82 - unnecessary_non_null_assertion
+The '!' will have no effect because the receiver can't be null|lib\apps\customer\screens\services\customer_order_detail_screen.dart:1098:49 - unnecessary_non_null_assertion
+The '!' will have no effect because the receiver can't be null|lib\apps\customer\screens\services\waiting_for_driver_screen.dart:217:34 - unnecessary_non_null_assertion
+The '!' will have no effect because the receiver can't be null|lib\apps\driver\screens\driver_navigation_screen.dart:331:34 - unnecessary_non_null_assertion
+The '!' will have no effect because the receiver can't be null|lib\apps\driver\screens\driver_navigation_screen.dart:334:34 - unnecessary_non_null_assertion
+The '!' will have no effect because the receiver can't be null|lib\apps\driver\screens\driver_navigation_screen.dart:342:32 - unnecessary_non_null_assertion
+The '!' will have no effect because the receiver can't be null|lib\apps\driver\screens\driver_navigation_screen.dart:345:32 - unnecessary_non_null_assertion
+The '!' will have no effect because the receiver can't be null|lib\apps\driver\screens\driver_navigation_screen.dart:390:36 - unnecessary_non_null_assertion
+The '!' will have no effect because the receiver can't be null|lib\apps\driver\screens\driver_navigation_screen.dart:393:36 - unnecessary_non_null_assertion
+The '!' will have no effect because the receiver can't be null|lib\apps\driver\screens\driver_navigation_screen.dart:400:34 - unnecessary_non_null_assertion
+The '!' will have no effect because the receiver can't be null|lib\apps\driver\screens\driver_navigation_screen.dart:403:34 - unnecessary_non_null_assertion
+The '!' will have no effect because the receiver can't be null|lib\apps\driver\screens\driver_navigation_screen.dart:477:47 - unnecessary_non_null_assertion
+The '!' will have no effect because the receiver can't be null|lib\apps\driver\screens\driver_navigation_screen.dart:480:47 - unnecessary_non_null_assertion
+The '!' will have no effect because the receiver can't be null|lib\apps\driver\screens\driver_navigation_screen.dart:487:45 - unnecessary_non_null_assertion
+The '!' will have no effect because the receiver can't be null|lib\apps\driver\screens\driver_navigation_screen.dart:490:45 - unnecessary_non_null_assertion
+The '!' will have no effect because the receiver can't be null|lib\apps\driver\screens\profile\driver_profile_screen.dart:276:72 - unnecessary_non_null_assertion
+The '!' will have no effect because the receiver can't be null|lib\apps\merchant\screens\merchant_settings_screen.dart:277:73 - unnecessary_non_null_assertion
+The '!' will have no effect because the receiver can't be null|lib\common\screens\profile_screen.dart:342:70 - unnecessary_non_null_assertion
+The declaration '_buildCompactDetailCard' isn't referenced|lib\apps\driver\screens\driver_navigation_screen.dart:2293:10 - unused_element
+The declaration '_buildDetailRow' isn't referenced|lib\apps\driver\screens\driver_navigation_screen.dart:2382:10 - unused_element
+The declaration '_buildMiniDetailCard' isn't referenced|lib\apps\driver\screens\driver_navigation_screen.dart:2329:10 - unused_element
+The declaration '_buildTripDetailCard' isn't referenced|lib\apps\driver\screens\driver_navigation_screen.dart:2249:10 - unused_element
+The declaration '_finishOrder' isn't referenced|lib\apps\merchant\screens\merchant_orders_screen.dart:727:16 - unused_element
+The declaration '_formatAddress' isn't referenced|lib\common\services\geocoding_service.dart:56:17 - unused_element
+The declaration '_formatTimeAgo' isn't referenced|lib\apps\merchant\screens\merchant_orders_screen.dart:1611:10 - unused_element
+The declaration '_getActionButtonColor' isn't referenced|lib\apps\driver\screens\driver_navigation_screen.dart:1238:9 - unused_element
+The declaration '_getActionIcon' isn't referenced|lib\apps\driver\screens\driver_navigation_screen.dart:2232:12 - unused_element
+The declaration '_getCustomerPhone' isn't referenced|lib\apps\driver\screens\driver_navigation_screen.dart:2378:10 - unused_element
+The declaration '_getDriverStatus' isn't referenced|lib\apps\merchant\screens\merchant_orders_screen.dart:771:10 - unused_element
+The declaration '_getSavedOrderStatus' isn't referenced|lib\apps\merchant\screens\merchant_orders_screen.dart:592:19 - unused_element
+The declaration '_markFoodReady' isn't referenced|lib\apps\merchant\screens\merchant_orders_screen.dart:698:16 - unused_element
+The declaration '_notifyCustomerDriverAccepted' isn't referenced|lib\apps\driver\screens\driver_dashboard_screen.dart:1782:16 - unused_element
+The declaration '_notifyMerchantDriverAccepted' isn't referenced|lib\apps\driver\screens\driver_dashboard_screen.dart:1851:16 - unused_element
+The declaration '_quickAdd' isn't referenced|lib\apps\customer\screens\services\restaurant_detail_screen.dart:823:8 - unused_element
+The left operand can't be null, so the right operand is never executed|lib\apps\customer\screens\services\customer_ride_status_screen.dart:350:38 - dead_null_aware_expression
+The left operand can't be null, so the right operand is never executed|lib\apps\customer\screens\services\customer_ride_status_screen.dart:420:38 - dead_null_aware_expression
+The left operand can't be null, so the right operand is never executed|lib\apps\customer\screens\services\customer_ride_status_screen.dart:720:56 - dead_null_aware_expression
+The left operand can't be null, so the right operand is never executed|lib\apps\customer\screens\services\customer_ride_status_screen.dart:928:39 - dead_null_aware_expression
+The left operand can't be null, so the right operand is never executed|lib\apps\customer\screens\services\customer_ride_status_screen.dart:930:77 - dead_null_aware_expression
+The left operand can't be null, so the right operand is never executed|lib\apps\driver\screens\driver_dashboard_screen.dart:1045:38 - dead_null_aware_expression
+The operand can't be 'null', so the condition is always 'false'|lib\apps\merchant\screens\merchant_orders_screen.dart:630:23 - unnecessary_null_comparison
+The operand can't be 'null', so the condition is always 'true'|lib\apps\customer\screens\activity_screen.dart:501:37 - unnecessary_null_comparison
+The operand can't be 'null', so the condition is always 'true'|lib\apps\customer\screens\ride\ride_home_screen.dart:300:19 - unnecessary_null_comparison
+The operand can't be 'null', so the condition is always 'true'|lib\apps\customer\screens\services\customer_order_detail_screen.dart:1091:43 - unnecessary_null_comparison
+The operand can't be 'null', so the condition is always 'true'|lib\apps\driver\screens\driver_navigation_screen.dart:475:44 - unnecessary_null_comparison
+The operand can't be 'null', so the condition is always 'true'|lib\apps\driver\screens\driver_navigation_screen.dart:475:80 - unnecessary_null_comparison
+The operand can't be 'null', so the condition is always 'true'|lib\apps\driver\screens\driver_navigation_screen.dart:485:42 - unnecessary_null_comparison
+The operand can't be 'null', so the condition is always 'true'|lib\apps\driver\screens\driver_navigation_screen.dart:485:76 - unnecessary_null_comparison
+The operand can't be 'null', so the condition is always 'true'|lib\apps\merchant\screens\menu\merchant_add_edit_menu_screen.dart:163:48 - unnecessary_null_comparison
+The operand can't be 'null', so the condition is always 'true'|lib\apps\merchant\screens\menu\merchant_add_edit_menu_screen.dart:180:22 - unnecessary_null_comparison
+The operand can't be 'null', so the condition is always 'true'|lib\apps\merchant\screens\order_detail_screen.dart:66:33 - unnecessary_null_comparison
+The operand can't be 'null', so the condition is always 'true'|lib\common\services\realtime_service.dart:88:35 - unnecessary_null_comparison
+The receiver can't be null, so the null-aware operator '?.' is unnecessary|lib\apps\customer\screens\ride\ride_home_screen.dart:359:37 - invalid_null_aware_operator
+The receiver can't be null, so the null-aware operator '?.' is unnecessary|lib\apps\customer\screens\ride\ride_home_screen.dart:360:48 - invalid_null_aware_operator
+The receiver can't be null, so the null-aware operator '?.' is unnecessary|lib\apps\customer\screens\services\customer_ride_status_screen.dart:709:70 - invalid_null_aware_operator
+The receiver can't be null, so the null-aware operator '?.' is unnecessary|lib\apps\customer\screens\services\customer_ride_status_screen.dart:713:73 - invalid_null_aware_operator
+The receiver can't be null, so the null-aware operator '?.' is unnecessary|lib\apps\customer\screens\services\customer_ride_status_screen.dart:730:73 - invalid_null_aware_operator
+The receiver can't be null, so the null-aware operator '?.' is unnecessary|lib\apps\customer\screens\services\customer_ride_status_screen.dart:737:50 - invalid_null_aware_operator
+The value of the field '_bookingService' isn't used|lib\apps\customer\screens\customer_home_screen.dart:29:24 - unused_field
+The value of the field '_customerProfile' isn't used|lib\apps\driver\screens\driver_navigation_screen.dart:57:25 - unused_field
+The value of the field '_isLoading' isn't used|lib\apps\merchant\screens\menu\merchant_option_group_detail_screen.dart:36:8 - unused_field
+The value of the field '_isLoadingBooking' isn't used|lib\apps\customer\screens\services\customer_ride_status_screen.dart:47:8 - unused_field
+The value of the field '_isLoadingLocation' isn't used|lib\apps\customer\screens\services\customer_ride_status_screen.dart:41:8 - unused_field
+The value of the field '_isLoadingProfile' isn't used|lib\apps\customer\screens\customer_home_screen.dart:31:8 - unused_field
+The value of the field '_pulseAnimation' isn't used|lib\apps\driver\screens\driver_navigation_screen.dart:63:26 - unused_field
+The value of the field '_totalEarnings' isn't used|lib\apps\driver\screens\driver_dashboard_screen.dart:40:10 - unused_field
+The value of the field '_userRole' isn't used|lib\apps\driver\screens\driver_dashboard_screen.dart:28:11 - unused_field
+The value of the local variable 'client' isn't used|lib\utils\supabase_health_checker.dart:42:13 - unused_local_variable
+The value of the local variable 'index' isn't used|lib\apps\merchant\screens\menu\merchant_add_edit_menu_screen.dart:598:19 - unused_local_variable
+The value of the local variable 'isWaiting' isn't used|lib\apps\customer\screens\services\waiting_for_driver_screen.dart:428:11 - unused_local_variable
+The value of the local variable 'phone' isn't used|lib\apps\customer\screens\services\food_home_screen.dart:607:11 - unused_local_variable
+The value of the local variable 'realDuration' isn't used|lib\apps\customer\screens\ride\ride_home_screen.dart:179:15 - unused_local_variable
+The value of the local variable 'response' isn't used|lib\utils\mock_data_service.dart:10:13 - unused_local_variable
+The value of the local variable 'result' isn't used|lib\common\services\fcm_notification_service.dart:171:13 - unused_local_variable
+The value of the local variable 'status' isn't used|lib\apps\customer\screens\services\customer_ride_status_screen.dart:350:11 - unused_local_variable
+The value of the local variable 'totalCollect' isn't used|lib\apps\driver\screens\driver_earnings_screen.dart:444:11 - unused_local_variable
+The value of the local variable 'userEmail' isn't used|lib\apps\driver\screens\driver_dashboard_screen.dart:467:11 - unused_local_variable
+This case is covered by the previous cases|lib\apps\driver\screens\driver_dashboard_screen.dart:1370:7 - unreachable_switch_case
+This case is covered by the previous cases|lib\apps\driver\screens\driver_dashboard_screen.dart:1435:7 - unreachable_switch_case
+This case is covered by the previous cases|lib\apps\driver\screens\driver_dashboard_screen.dart:1500:7 - unreachable_switch_case
+This case is covered by the previous cases|lib\apps\driver\screens\driver_dashboard_screen.dart:1565:7 - unreachable_switch_case
+This case is covered by the previous cases|lib\apps\driver\screens\driver_dashboard_screen.dart:1630:7 - unreachable_switch_case
+Unnecessary type check; the result is always 'true'|lib\apps\driver\screens\driver_navigation_screen.dart:330:27 - unnecessary_type_check
+Unnecessary type check; the result is always 'true'|lib\apps\driver\screens\driver_navigation_screen.dart:333:27 - unnecessary_type_check
+Unnecessary type check; the result is always 'true'|lib\apps\driver\screens\driver_navigation_screen.dart:341:25 - unnecessary_type_check
+Unnecessary type check; the result is always 'true'|lib\apps\driver\screens\driver_navigation_screen.dart:344:25 - unnecessary_type_check
+Unnecessary type check; the result is always 'true'|lib\apps\driver\screens\driver_navigation_screen.dart:389:29 - unnecessary_type_check
+Unnecessary type check; the result is always 'true'|lib\apps\driver\screens\driver_navigation_screen.dart:392:29 - unnecessary_type_check
+Unnecessary type check; the result is always 'true'|lib\apps\driver\screens\driver_navigation_screen.dart:399:27 - unnecessary_type_check
+Unnecessary type check; the result is always 'true'|lib\apps\driver\screens\driver_navigation_screen.dart:402:27 - unnecessary_type_check
+Unnecessary type check; the result is always 'true'|lib\apps\driver\screens\driver_navigation_screen.dart:476:35 - unnecessary_type_check
+Unnecessary type check; the result is always 'true'|lib\apps\driver\screens\driver_navigation_screen.dart:479:35 - unnecessary_type_check
+Unnecessary type check; the result is always 'true'|lib\apps\driver\screens\driver_navigation_screen.dart:486:33 - unnecessary_type_check
+Unnecessary type check; the result is always 'true'|lib\apps\driver\screens\driver_navigation_screen.dart:489:33 - unnecessary_type_check
+Unused import: '../../../../common/services/auth_service.dart'|lib\apps\customer\screens\services\customer_ride_status_screen.dart:12:8 - unused_import
+Unused import: '../../../../common/services/auth_service.dart'|lib\apps\customer\screens\services\waiting_for_driver_screen.dart:7:8 - unused_import
+Unused import: '../../../common/services/auth_service.dart'|lib\apps\customer\screens\activity_screen.dart:6:8 - unused_import
+Unused import: '../../../common/services/auth_service.dart'|lib\apps\driver\screens\driver_main_screen.dart:2:8 - unused_import
+Unused import: '../../../common/services/auth_service.dart'|lib\apps\merchant\screens\order_detail_screen.dart:6:8 - unused_import
+Unused import: '../../../theme/app_theme.dart'|lib\apps\admin\screens\admin_dashboard_screen.dart:5:8 - unused_import
+Unused import: '../../../theme/app_theme.dart'|lib\apps\driver\screens\driver_dashboard_screen.dart:10:8 - unused_import
+Unused import: '../../../theme/app_theme.dart'|lib\apps\driver\screens\driver_main_screen.dart:4:8 - unused_import
+Unused import: '../../customer/screens/auth/login_screen.dart'|lib\apps\driver\screens\driver_main_screen.dart:5:8 - unused_import
+Unused import: '../auth/login_screen.dart'|lib\apps\customer\screens\ride\ride_home_screen.dart:15:8 - unused_import
+Unused import: '../auth/login_screen.dart'|lib\apps\customer\screens\services\customer_ride_status_screen.dart:16:8 - unused_import
+Unused import: '../auth/login_screen.dart'|lib\apps\customer\screens\services\waiting_for_driver_screen.dart:10:8 - unused_import
+Unused import: '../customer_home_screen.dart'|lib\apps\customer\screens\services\customer_ride_status_screen.dart:17:8 - unused_import
+Unused import: 'auth/login_screen.dart'|lib\apps\customer\screens\map_screen.dart:7:8 - unused_import
+Unused import: 'dart:io'|lib\apps\customer\screens\account_screen.dart:1:8 - unused_import
+Unused import: 'dart:io'|lib\apps\driver\screens\profile\driver_profile_screen.dart:1:8 - unused_import
+Unused import: 'dart:io'|lib\apps\merchant\screens\merchant_settings_screen.dart:1:8 - unused_import
+Unused import: 'package:supabase_flutter/supabase_flutter.dart'|lib\apps\customer\screens\ride\ride_home_screen.dart:8:8 - unused_import
+Unused import: 'package:supabase_flutter/supabase_flutter.dart'|lib\apps\customer\screens\services\customer_ride_status_screen.dart:9:8 - unused_import
+Unused import: 'package:supabase_flutter/supabase_flutter.dart'|lib\apps\customer\screens\services\waiting_for_driver_screen.dart:4:8 - unused_import
+Unused import: 'package:supabase_flutter/supabase_flutter.dart'|lib\apps\driver\screens\driver_dashboard_screen.dart:4:8 - unused_import
+Unused import: 'package:supabase_flutter/supabase_flutter.dart'|lib\apps\merchant\screens\menu\merchant_option_group_detail_screen.dart:3:8 - unused_import
+Unused import: 'package:supabase_flutter/supabase_flutter.dart'|lib\apps\merchant\screens\menu\merchant_option_library_screen.dart:3:8 - unused_import
+Unused import: 'services/waiting_for_driver_screen.dart'|lib\apps\customer\screens\customer_home_screen.dart:13:8 - unused_import

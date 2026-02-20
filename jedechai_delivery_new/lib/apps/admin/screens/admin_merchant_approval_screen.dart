@@ -446,30 +446,48 @@ class _AdminMerchantApprovalScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('จัดการร้านค้า'),
-        backgroundColor: const Color(0xFF1565C0),
-        foregroundColor: Colors.white,
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white60,
-          tabs: [
-            Tab(text: 'รออนุมัติ (${_pendingMerchants.length})'),
-            Tab(text: 'ทั้งหมด (${_allMerchants.length})'),
-          ],
-        ),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : TabBarView(
-              controller: _tabController,
+      backgroundColor: const Color(0xFFF1F5F9),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+            child: Row(
               children: [
-                _buildMerchantList(_pendingMerchants, isPending: true),
-                _buildMerchantList(_allMerchants, isPending: false),
+                const Icon(Icons.store_rounded, color: Color(0xFF1565C0), size: 28),
+                const SizedBox(width: 12),
+                const Text('จัดการร้านค้า', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                const Spacer(),
+                IconButton(onPressed: _loadMerchants, icon: const Icon(Icons.refresh_rounded), tooltip: 'รีเฟรช'),
               ],
             ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: TabBar(
+              controller: _tabController,
+              indicatorColor: const Color(0xFF1565C0),
+              labelColor: const Color(0xFF1565C0),
+              unselectedLabelColor: const Color(0xFF64748B),
+              tabs: [
+                Tab(text: 'รออนุมัติ (${_pendingMerchants.length})'),
+                Tab(text: 'ทั้งหมด (${_allMerchants.length})'),
+              ],
+            ),
+          ),
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator(color: Color(0xFF1565C0)))
+                : TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildMerchantList(_pendingMerchants, isPending: true),
+                      _buildMerchantList(_allMerchants, isPending: false),
+                    ],
+                  ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -504,7 +522,7 @@ class _AdminMerchantApprovalScreenState
 
   Widget _buildMerchantCard(Map<String, dynamic> merchant, bool isPending) {
     final name = merchant['full_name'] ?? 'ไม่ระบุชื่อ';
-    final phone = merchant['phone'] ?? '-';
+    final phone = merchant['phone_number'] ?? '-';
     final status = merchant['approval_status'] ?? 'pending';
     final shopAddress = merchant['shop_address'] ?? '-';
     final lat = (merchant['latitude'] as num?)?.toDouble();

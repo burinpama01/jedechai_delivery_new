@@ -1,4 +1,4 @@
-package com.example.jedechai_delivery_new
+package com.jedechai.delivery
 
 import android.media.AudioAttributes
 import android.media.AudioManager
@@ -6,10 +6,21 @@ import android.media.MediaPlayer
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import com.google.android.gms.maps.MapsInitializer
 
 class MainActivity : FlutterActivity() {
     private val alarmChannelName = "jedechai/alarm_sound"
     private var merchantAlarmPlayer: MediaPlayer? = null
+
+    override fun onCreate(savedInstanceState: android.os.Bundle?) {
+        super.onCreate(savedInstanceState)
+        // Initialize Google Maps
+        try {
+            MapsInitializer.initialize(this)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)

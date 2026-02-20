@@ -1,0 +1,29 @@
+# Global ignores for monorepo / Flutter workspace
+
+# Build outputs
+/build/
+**/build/
+
+# Dart / Flutter tooling
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.pub-cache/
+**/.pub/
+
+# iOS / macOS CocoaPods and ephemeral generated files
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/ephemeral/
+**/macos/Pods/
+**/macos/Flutter/ephemeral/
+**/linux/flutter/ephemeral/
+**/windows/flutter/ephemeral/
+
+# IDE / OS
+**/.idea/
+**/.vscode/
+**/.DS_Store
+
+# Supabase local temp/runtime artifacts
+supabase/.temp/

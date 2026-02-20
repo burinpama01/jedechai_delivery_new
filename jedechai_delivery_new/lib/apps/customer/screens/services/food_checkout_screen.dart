@@ -16,6 +16,7 @@ import 'delivery_map_picker_screen.dart';
 import '../../../../common/widgets/coupon_entry_widget.dart';
 import '../../../../common/models/coupon.dart';
 import '../../../../common/services/coupon_service.dart';
+import '../../../../common/services/merchant_food_config_service.dart';
 import '../../../../common/services/system_config_service.dart';
 import '../../../../common/utils/platform_adaptive.dart';
 import 'saved_addresses_screen.dart';
@@ -66,8 +67,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
   double _minDeliveryFee = 15.0;
   double _maxDeliveryRadius = 20.0;
   bool _distanceWarningShown = false;
-  // ignore: unused_field
-  double? _merchantCustomServiceFee;
+  MerchantFoodConfig? _merchantFoodConfig;
 
   double _calculateFinalTotal(double subtotal, double deliveryFee) {
     final total = subtotal + deliveryFee - _couponDiscount;
@@ -222,7 +222,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
     try {
       final configService = SystemConfigService();
       await configService.fetchSettings();
-      _maxDeliveryRadius = configService.maxDeliveryRadius;
+      _maxDeliveryRadius = configService.customerToMerchantRadiusKm;
       final rate = configService.getServiceRate('food');
       if (rate != null) {
         _baseFare = rate.basePrice.toDouble();
@@ -235,7 +235,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         debugLog(
             '⚠️ No food rate in DB, using defaults: base=฿$_baseFare, perKm=฿$_perKmCharge');
       }
-      debugLog('📏 Max delivery radius: ${_maxDeliveryRadius}km');
+      debugLog('📏 Customer-to-merchant radius: ${_maxDeliveryRadius}km');
     } catch (e) {
       debugLog('⚠️ Error loading food rates: $e (using defaults)');
     }
@@ -250,7 +250,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       final profile = await Supabase.instance.client
           .from('profiles')
           .select(
-              'latitude, longitude, shop_address, custom_delivery_fee, custom_service_fee, custom_base_fare, custom_base_distance, custom_per_km')
+              'latitude, longitude, shop_address, gp_rate, custom_delivery_fee, custom_service_fee, custom_base_fare, custom_base_distance, custom_per_km')
           .eq('id', merchantId)
           .maybeSingle();
 
@@ -259,40 +259,43 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         _merchantLng = (profile['longitude'] as num?)?.toDouble();
         debugLog('📍 Merchant location: $_merchantLat, $_merchantLng');
 
-        // Apply per-merchant custom fees if set by admin
-        final customBaseFare =
-            (profile['custom_base_fare'] as num?)?.toDouble();
-        final customBaseDist =
-            (profile['custom_base_distance'] as num?)?.toDouble();
-        final customPerKm = (profile['custom_per_km'] as num?)?.toDouble();
-        final customDeliveryFee =
-            (profile['custom_delivery_fee'] as num?)?.toDouble();
+        final configService = SystemConfigService();
+        await configService.fetchSettings();
+        _merchantFoodConfig = MerchantFoodConfigService.resolve(
+          merchantProfile: profile,
+          defaultMerchantSystemRate: configService.merchantGpRate,
+          defaultDeliverySystemRate: configService.platformFeeRate,
+        );
+
+        final merchantConfig = _merchantFoodConfig!;
+        debugLog('🏠 Merchant food config: ${merchantConfig.summary}');
+
+        if (merchantConfig.baseFare != null) {
+          _baseFare = merchantConfig.baseFare!;
+          _minDeliveryFee = merchantConfig.baseFare!;
+          debugLog('🏠 Merchant base fare: ฿${merchantConfig.baseFare}');
+        }
+        if (merchantConfig.baseDistanceKm != null) {
+          _baseDistance = merchantConfig.baseDistanceKm!;
+          debugLog('🏠 Merchant base distance: ${merchantConfig.baseDistanceKm}km');
+        }
+        if (merchantConfig.perKmCharge != null) {
+          _perKmCharge = merchantConfig.perKmCharge!;
+          debugLog('🏠 Merchant per-km: ฿${merchantConfig.perKmCharge}');
+        }
+        if (merchantConfig.fixedDeliveryFee != null) {
+          // Fixed delivery fee overrides distance-based calculation
+          _baseFare = merchantConfig.fixedDeliveryFee!;
+          _perKmCharge = 0;
+          _minDeliveryFee = merchantConfig.fixedDeliveryFee!;
+          debugLog(
+            '🏠 Merchant fixed delivery fee: ฿${merchantConfig.fixedDeliveryFee} (ignores distance)',
+          );
+        }
+
         final customServiceFee =
             (profile['custom_service_fee'] as num?)?.toDouble();
-
-        if (customBaseFare != null) {
-          _baseFare = customBaseFare;
-          _minDeliveryFee = customBaseFare;
-          debugLog('🏠 Merchant custom base fare: ฿$customBaseFare');
-        }
-        if (customBaseDist != null) {
-          _baseDistance = customBaseDist;
-          debugLog('🏠 Merchant custom base distance: ${customBaseDist}km');
-        }
-        if (customPerKm != null) {
-          _perKmCharge = customPerKm;
-          debugLog('🏠 Merchant custom per-km: ฿$customPerKm');
-        }
-        if (customDeliveryFee != null) {
-          // Fixed delivery fee overrides distance-based calculation
-          _baseFare = customDeliveryFee;
-          _perKmCharge = 0;
-          _minDeliveryFee = customDeliveryFee;
-          debugLog(
-              '🏠 Merchant fixed delivery fee: ฿$customDeliveryFee (ignores distance)');
-        }
         if (customServiceFee != null) {
-          _merchantCustomServiceFee = customServiceFee;
           debugLog('🏠 Merchant custom service fee: ฿$customServiceFee');
         }
       }
@@ -1159,6 +1162,9 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       }
       if (scheduledAt != null) {
         debugLog('   └─ scheduled_at: ${scheduledAt.toIso8601String()}');
+      }
+      if (_merchantFoodConfig != null) {
+        debugLog('   └─ merchant config: ${_merchantFoodConfig!.summary}');
       }
       debugLog('   └─ status: pending_merchant');
 

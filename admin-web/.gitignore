@@ -1,0 +1,9 @@
+# Production config (contains service key)
+config.production.js
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="Jedechai Delivery Admin Dashboard">
+  <meta name="theme-color" content="#6366f1">
+  <title>Jedechai Admin Dashboard</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛵</text></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+  window.supabaseClient = createClient;
+</script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            primary: { 50:'#e8f5e9',100:'#c8e6c9',200:'#a5d6a7',300:'#81c784',400:'#66bb6a',500:'#4caf50',600:'#43a047',700:'#388e3c',800:'#2e7d32',900:'#1b5e20' },
+            admin: { 50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81' },
+            accent: { pink:'#ec4899', teal:'#14b8a6', orange:'#f59e0b', sky:'#0ea5e9', violet:'#8b5cf6', rose:'#f43f5e', emerald:'#10b981', cyan:'#06b6d4' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+
+    /* Sidebar */
+    .sidebar-link { transition: all 0.2s ease; border-radius: 12px; }
+    .sidebar-link:hover { background: rgba(255,255,255,0.12); transform: translateX(4px); }
+    .sidebar-link.active { background: rgba(255,255,255,0.2); box-shadow: 0 0 0 1px rgba(255,255,255,0.15); }
+    .sidebar-section-label { font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: rgba(255,255,255,0.35); padding: 8px 16px 4px; font-weight: 600; }
+    .sidebar-scroll::-webkit-scrollbar { width: 4px; }
+    .sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+    .sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+
+    /* Cards */
+    .glass-card { background: white; border-radius: 20px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 6px 24px rgba(0,0,0,0.03); transition: all 0.25s ease; }
+    .glass-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.06), 0 12px 36px rgba(0,0,0,0.06); transform: translateY(-2px); }
+    .stat-card { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.1); }
+
+    /* Tables */
+    .table-row { transition: background 0.15s ease; }
+    .table-row:hover { background: #f8faff; }
+
+    /* Animation */
+    .fade-in { animation: fadeIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .slide-in { animation: slideIn 0.35s ease; }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: translateX(0); } }
+
+    /* Loader */
+    .loader { border: 3px solid #e0e7ff; border-top: 3px solid #6366f1; border-radius: 50%; width: 36px; height: 36px; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 6px; }
+    ::-webkit-scrollbar-thumb:hover { background: #a5b4fc; }
+
+    /* Top bar */
+    .topbar { backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); background: rgba(255,255,255,0.85); }
+
+    /* Gradient text */
+    .gradient-text { background: linear-gradient(135deg, #6366f1, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+    /* Input focus */
+    input:focus, select:focus, textarea:focus { outline: none; box-shadow: 0 0 0 3px rgba(99,102,241,0.15); border-color: #818cf8; }
+
+    /* Pulse dot */
+    .pulse-dot { animation: pulseDot 2s infinite; }
+    @keyframes pulseDot { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.3); } }
+
+    /* Fix Leaflet map popup z-index so popups appear above zoom controls */
+    .leaflet-popup-pane { z-index: 800 !important; }
+    .leaflet-tooltip-pane { z-index: 800 !important; }
+    .leaflet-popup { z-index: 800 !important; }
+    /* Ensure map container doesn't overflow into adjacent panels */
+    #adminMap { position: relative; z-index: 0; }
+    #adminMap .leaflet-control-container .leaflet-top { z-index: 400 !important; }
+  </style>
+</head>
+<body class="min-h-screen overflow-x-hidden" style="background: linear-gradient(135deg, #f5f3ff 0%, #eff6ff 50%, #fdf2f8 100%);">
+
+  <!-- Login Screen -->
+  <div id="loginScreen" class="min-h-screen flex items-center justify-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);">
+    <div class="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-10 w-full max-w-md fade-in border border-white/50">
+      <div class="text-center mb-8">
+        <div class="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg" style="background: linear-gradient(135deg, #6366f1, #a855f7);">
+          <span class="material-icons-round text-white text-4xl">delivery_dining</span>
+        </div>
+        <h1 class="text-3xl font-extrabold gradient-text">Jedechai Admin</h1>
+        <p class="text-gray-400 mt-2 text-sm">ระบบจัดการหลังบ้าน</p>
+      </div>
+      <form id="loginForm" class="space-y-5">
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">อีเมล</label>
+          <input type="email" id="loginEmail" required class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl bg-gray-50/50 text-sm placeholder-gray-300 transition-all" placeholder="admin@jedechai.com">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">รหัสผ่าน</label>
+          <input type="password" id="loginPassword" required class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl bg-gray-50/50 text-sm placeholder-gray-300 transition-all" placeholder="••••••••">
+        </div>
+        <div id="loginError" class="hidden text-red-600 text-sm bg-red-50 p-3.5 rounded-2xl border border-red-100"></div>
+        <button type="submit" id="loginBtn" class="w-full text-white py-3.5 rounded-2xl font-bold text-sm tracking-wide hover:opacity-90 transition-all shadow-lg shadow-indigo-200" style="background: linear-gradient(135deg, #6366f1, #a855f7);">
+          เข้าสู่ระบบ
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div id="mainApp" class="hidden min-h-screen">
+    <div id="sidebarBackdrop" class="hidden fixed inset-0 bg-black/40 z-10 xl:hidden"></div>
+    <!-- Sidebar -->
+    <aside id="appSidebar" class="w-[260px] text-white flex flex-col fixed h-full z-20 shadow-2xl transition-transform duration-300 -translate-x-full xl:translate-x-0" style="background: linear-gradient(180deg, #1e1b4b 0%, #312e81 40%, #4338ca 100%);">
+      <!-- Brand -->
+      <div class="p-5 pb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl flex items-center justify-center shadow-lg" style="background: linear-gradient(135deg, #818cf8, #c084fc);">
+            <span class="material-icons-round text-white text-xl">delivery_dining</span>
+          </div>
+          <div>
+            <h2 class="font-extrabold text-lg leading-tight tracking-tight">Jedechai</h2>
+            <p class="text-[11px] text-indigo-300/70 font-medium">Admin Dashboard</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex-1 px-3 pb-3 sidebar-scroll overflow-y-auto space-y-0.5" id="sidebarNav">
+        <div class="sidebar-section-label">หลัก</div>
+        <a href="#" class="sidebar-link active flex items-center gap-3 px-3.5 py-2.5 text-[13px] font-medium" data-page="dashboard">
+          <span class="material-icons-round text-[20px]">space_dashboard</span> แดชบอร์ด
+        </a>
+        <a href="#" class="sidebar-link flex items-center gap-3 px-3.5 py-2.5 text-[13px] font-medium" data-page="orders">
+          <span class="material-icons-round text-[20px]">receipt_long</span> ออเดอร์ทั้งหมด
+        </a>
+        <a href="#" class="sidebar-link flex items-center gap-3 px-3.5 py-2.5 text-[13px] font-medium" data-page="map">
+          <span class="material-icons-round text-[20px]">map</span> แผนที่ Realtime
+        </a>
+        <a href="#" class="sidebar-link flex items-center gap-3 px-3.5 py-2.5 text-[13px] font-medium" data-page="pending_orders">
+          <span class="material-icons-round text-[20px]">pending_actions</span> ออเดอร์รอจัดการ
+        </a>
+
+        <div class="sidebar-section-label mt-3">จัดการ</div>
+        <a href="#" class="sidebar-link flex items-center gap-3 px-3.5 py-2.5 text-[13px] font-medium" data-page="drivers">
+          <span class="material-icons-round text-[20px]">directions_car</span> จัดการคนขับ
+        </a>
+        <a href="#" class="sidebar-link flex items-center gap-3 px-3.5 py-2.5 text-[13px] font-medium" data-page="merchants">
+          <span class="material-icons-round text-[20px]">store</span> จัดการร้านค้า
+        </a>
+        <a href="#" class="sidebar-link flex items-center gap-3 px-3.5 py-2.5 text-[13px] font-medium" data-page="users">
+          <span class="material-icons-round text-[20px]">people</span> ผู้ใช้ทั้งหมด
+        </a>
+        <a href="#" class="sidebar-link flex items-center gap-3 px-3.5 py-2.5 text-[13px] font-medium" data-page="menus">
+          <span class="material-icons-round text-[20px]">restaurant_menu</span> จัดการเมนู
+        </a>
+
+        <div class="sidebar-section-label mt-3">การเงิน</div>
+        <a href="#" class="sidebar-link flex items-center gap-3 px-3.5 py-2.5 text-[13px] font-medium" data-page="revenue">
+          <span class="material-icons-round text-[20px]">bar_chart</span> รายได้
+        </a>
+        <a href="#" class="sidebar-link flex items-center gap-3 px-3.5 py-2.5 text-[13px] font-medium" data-page="withdrawals">
+          <span class="material-icons-round text-[20px]">account_balance_wallet</span> คำขอถอนเงิน
+        </a>
+        <a href="#" class="sidebar-link flex items-center gap-3 px-3.5 py-2.5 text-[13px] font-medium" data-page="topups">
+          <span class="material-icons-round text-[20px]">add_card</span> คำขอเติมเงิน
+        </a>
+
+        <div class="sidebar-section-label mt-3">อื่นๆ</div>
+        <a href="#" class="sidebar-link flex items-center gap-3 px-3.5 py-2.5 text-[13px] font-medium" data-page="promos">
+          <span class="material-icons-round text-[20px]">confirmation_number</span> โค้ดส่วนลด
+        </a>
+        <a href="#" class="sidebar-link flex items-center gap-3 px-3.5 py-2.5 text-[13px] font-medium" data-page="complaints">
+          <span class="material-icons-round text-[20px]">support_agent</span> ร้องเรียน
+        </a>
+        <a href="#" class="sidebar-link flex items-center gap-3 px-3.5 py-2.5 text-[13px] font-medium" data-page="account_deletions">
+          <span class="material-icons-round text-[20px]">person_remove</span> คำขอลบบัญชี
+        </a>
+
+        <div class="sidebar-section-label mt-3">ระบบ</div>
+        <a href="#" class="sidebar-link flex items-center gap-3 px-3.5 py-2.5 text-[13px] font-medium" data-page="settings">
+          <span class="material-icons-round text-[20px]">tune</span> ตั้งค่าระบบ
+        </a>
+      </nav>
+
+      <!-- User / Logout -->
+      <div class="p-4 border-t border-white/10">
+        <div class="flex items-center gap-3 px-2 py-1.5">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, #818cf8, #c084fc);">
+            <span class="material-icons-round text-white text-sm">person</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p id="sidebarAdminName" class="text-sm font-semibold truncate">Admin</p>
+            <p class="text-[10px] text-indigo-300/60">ผู้ดูแลระบบ</p>
+          </div>
+          <button onclick="logout()" class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors" title="ออกจากระบบ">
+            <span class="material-icons-round text-[18px] text-indigo-300/70">logout</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="min-h-screen xl:ml-[260px] xl:w-[calc(100%-260px)]">
+      <!-- Top Bar -->
+      <header class="topbar border-b border-gray-200/50 px-4 lg:px-8 py-4 flex items-center justify-between sticky top-0 z-10 gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <button id="menuToggleBtn" class="xl:hidden w-9 h-9 rounded-lg border border-gray-200 bg-white text-gray-600 flex items-center justify-center" title="เปิดเมนู">
+            <span class="material-icons-round text-[20px]">menu</span>
+          </button>
+          <div class="min-w-0">
+          <h1 id="pageTitle" class="text-xl font-extrabold text-gray-800 tracking-tight">แดชบอร์ด</h1>
+          <p id="pageSubtitle" class="text-xs text-gray-400 mt-0.5">ภาพรวมระบบทั้งหมด</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 lg:gap-3">
+          <button onclick="refreshCurrentPage()" class="flex items-center gap-1.5 text-sm text-gray-400 hover:text-admin-500 transition-colors bg-white rounded-xl px-3 lg:px-4 py-2 border border-gray-200/80 shadow-sm hover:shadow">
+            <span class="material-icons-round text-[18px]">refresh</span> รีเฟรช
+          </button>
+          <div class="hidden sm:flex items-center gap-2.5 bg-white rounded-xl px-4 py-2 border border-gray-200/80 shadow-sm">
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, #818cf8, #c084fc);">
+              <span class="material-icons-round text-white text-[14px]">person</span>
+            </div>
+            <span id="adminName" class="text-sm font-semibold text-gray-700">Admin</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <div id="pageContent" class="p-4 lg:p-8">
+        <!-- Dynamic content loaded here -->
+      </div>
+    </main>
+  </div>
+
+  <script src="config.production.js" onerror=""></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

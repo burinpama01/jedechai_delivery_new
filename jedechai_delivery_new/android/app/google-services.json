@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "739379898703",
+    "firebase_url": "https://storied-smile-239316-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "storied-smile-239316",
+    "storage_bucket": "storied-smile-239316.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:739379898703:android:7355554ed5faf795157d3a",
+        "android_client_info": {
+          "package_name": "com.example.jedechai_delivery_new"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAAVQPL2TR_nV4VQd5udcducBDlJpkGJis"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:739379898703:android:63e41996460d99d8157d3a",
+        "android_client_info": {
+          "package_name": "com.jedechai.delivery"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAAVQPL2TR_nV4VQd5udcducBDlJpkGJis"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

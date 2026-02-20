@@ -1,0 +1,7 @@
+/admin             /index.html            200
+/admin/            /index.html            200
+/reset-password    /reset-password.html   200
+/reset-password/   /reset-password.html   200
+/landing           /landing.html          200
+/landing/          /landing.html          200
+/*    /landing.html   200

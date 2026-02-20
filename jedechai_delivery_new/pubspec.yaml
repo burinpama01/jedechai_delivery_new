@@ -1,7 +1,7 @@
 name: jedechai_delivery_new
 description: Super App for Food Delivery, Parcel Delivery, and Passenger Transport
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.5+8
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -23,7 +23,7 @@ dependencies:
   intl: ^0.20.2
   geolocator: 11.0.0
   geocoding: ^3.0.0
-  google_maps_flutter: 2.10.0
+  google_maps_flutter: 2.9.0
   googleapis_auth: ^1.4.1
   
   # HTTP and Polyline
@@ -50,6 +50,9 @@ dependencies:
   # URL Launcher (for Google Maps Navigation)
   url_launcher: ^6.2.5
 
+  # Background Foreground Service (persistent notification for driver tracking)
+  flutter_foreground_task: ^8.13.2
+
   # Local key-value storage
   shared_preferences: ^2.3.2
 
@@ -59,12 +62,14 @@ dependencies:
   # Environment Variables
   flutter_dotenv: ^5.1.0
 
+  # Native Splash (must be in dependencies for Android plugin registration)
+  flutter_native_splash: ^2.4.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.13.1
-  flutter_native_splash: ^2.4.0
 
 dependency_overrides:
   # กลุ่ม Android Core
@@ -73,8 +78,8 @@ dependency_overrides:
   path_provider_android: 2.2.6          # ใช้ 2.2.6
   flutter_plugin_android_lifecycle: 2.0.21
   
-  # แก้ Registrar: ต้องใช้ 2.9.0 ขึ้นไป (เราใช้ 2.10.0 เพื่อความชัวร์)
-  google_maps_flutter_android: 2.10.0
+  # ใช้ 2.14.0 ที่ implement updateHeatmaps() แล้ว (แก้ crash: updateHeatmaps unimplemented)
+  google_maps_flutter_android: 2.14.0
   
   # ล็อค image_picker_android ให้ใช้กับ compileSdk 35
   image_picker_android: 0.8.12+17

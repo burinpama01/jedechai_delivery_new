@@ -1,0 +1,23 @@
+# PROJECT OVERVIEW
+This is a Flutter Super App (Ride & Food) using Supabase.
+Architecture: Modular Monolith.
+
+# FOLDER STRUCTURE (STRICT)
+1. lib/common/
+   - SHARED resources only.
+   - Contains: AuthService, SupabaseService, BookingService, shared Models, and shared Widgets.
+   - RULE: Always check this folder first. If a service/widget exists here, IMPORT it. Do not recreate it.
+
+2. lib/apps/customer/
+   - Code specific to the Customer Role (Ride hailing, Food ordering).
+
+3. lib/apps/driver/
+   - Code specific to the Driver Role (Job feed, Navigation).
+
+4. lib/apps/merchant/
+   - Code specific to the Merchant Role (Menu management, Incoming orders).
+
+# CODING RULES
+- Do not cross-import logic between apps (e.g., Driver app should not import Customer screens).
+- Use `Supabase.instance.client` from `lib/common/services/supabase_service.dart`.
+- When fixing bugs, read the existing file context first.

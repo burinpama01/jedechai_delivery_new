@@ -1,54 +1,150 @@
+import org.gradle.api.GradleException
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
+    id("com.google.gms.google-services")
+}
+
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    FileInputStream(keystorePropertiesFile).use { keystoreProperties.load(it) }
+}
+
+val requiredSigningKeys = listOf("storeFile", "storePassword", "keyAlias", "keyPassword")
+val hasReleaseKeystoreConfig = requiredSigningKeys.all {
+    !keystoreProperties.getProperty(it).isNullOrBlank()
+}
+
+val isReleaseBuildRequested = gradle.startParameter.taskNames.any {
+    it.contains("Release", ignoreCase = true)
+}
+
+fun firstNonBlank(vararg values: String?): String {
+    return values
+        .asSequence()
+        .mapNotNull { value ->
+            value
+                ?.trim()
+                ?.trim('"', '\'')
+                ?.takeIf { it.isNotBlank() }
+        }
+        .firstOrNull()
+        ?: ""
+}
+
+val envProperties = Properties()
+val envFile = rootProject.file("../.env")
+if (envFile.exists()) {
+    FileInputStream(envFile).use { envProperties.load(it) }
+}
+
+val mapsApiKey =
+    firstNonBlank(
+        project.findProperty("GOOGLE_MAPS_API_KEY") as String?,
+        System.getenv("GOOGLE_MAPS_API_KEY"),
+        envProperties.getProperty("GOOGLE_MAPS_API_KEY"),
+    )
+
+
+if (isReleaseBuildRequested && !hasReleaseKeystoreConfig) {
+    throw GradleException(
+        "Missing android/key.properties for release signing. " +
+            "Copy android/key.properties.example and fill real keystore values before building release.",
+    )
+}
+
+if (isReleaseBuildRequested && mapsApiKey.isBlank()) {
+    throw GradleException(
+        "Missing GOOGLE_MAPS_API_KEY for release build. " +
+            "Provide it via Gradle property or environment variable.",
+    )
 }
 
 android {
-    namespace = "com.example.jedechai_delivery_new"
-    compileSdk = 34
+    namespace = "com.jedechai.delivery"
+    compileSdk = 35
     ndkVersion = flutter.ndkVersion
-	
-	buildToolsVersion = "34.0.0"
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
+    }
+
+    signingConfigs {
+        create("release") {
+            if (hasReleaseKeystoreConfig) {
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
     }
 
     defaultConfig {
-        applicationId = "com.example.jedechai_delivery_new"
-        minSdk = flutter.minSdkVersion
-        targetSdk = 34
+        applicationId = "com.jedechai.delivery"
+        minSdk = 24
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        
         multiDexEnabled = true
-    }
-
-    packaging {
-        resources {
-            pickFirsts += "META-INF/DEPENDENCIES"
-            pickFirsts += "META-INF/LICENSE"
-            pickFirsts += "META-INF/LICENSE.txt"
-            pickFirsts += "META-INF/license.txt"
-            pickFirsts += "META-INF/NOTICE"
-            pickFirsts += "META-INF/NOTICE.txt"
-            pickFirsts += "META-INF/notice.txt"
-            pickFirsts += "META-INF/ASL2.0"
-            pickFirsts += "META-INF/*.kotlin_module"
-            pickFirsts += "**/kotlin-stdlib-common-*.jar"
-            pickFirsts += "**/libc++_shared.so"
-        }
+        manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = mapsApiKey
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = false
+            isShrinkResources = false
+        }
+        debug {
+            isDebuggable = true
+            isShrinkResources = false
+        }
+    }
+
+    // Simplified packaging configuration
+    packaging {
+        resources {
+            // Exclude problematic duplicate files
+            excludes += "META-INF/DEPENDENCIES"
+            excludes += "META-INF/LICENSE"
+            excludes += "META-INF/LICENSE.txt"
+            excludes += "META-INF/NOTICE"
+            excludes += "META-INF/NOTICE.txt"
+            excludes += "META-INF/gradle/**"
+            excludes += "META-INF/gradle-wrapper/**"
+            excludes += "META-INF/gradle-plugins/**"
+            excludes += "META-INF/INDEX.LIST"
+            excludes += "META-INF/io.netty.versions.properties"
+            excludes += "**/module-info.class"
+            excludes += "META-INF/versions/**"
+            excludes += "META-INF/proguard/**"
+            excludes += "META-INF/maven/**"
+            excludes += "META-INF/error_prone/**"
+            excludes += "google/protobuf/**"
+            excludes += "META-INF/com.google.guava/**"
+            excludes += "META-INF/*.kotlin_module"
+            excludes += "**/*.kotlin_builtins"
+            excludes += "**/*.kotlin_metadata"
+            excludes += "META-INF/AL2.0"
+            excludes += "META-INF/LGPL2.1"
+            
+            // Keep essential files
+            pickFirsts += "META-INF/services/**"
+            pickFirsts += "**/libc++_shared.so"
+            pickFirsts += "**/libcrypto.so"
+            pickFirsts += "**/libssl.so"
         }
     }
 }
@@ -57,91 +153,63 @@ flutter {
     source = "../.."
 }
 
-// Workaround for VerifyException in mergeDebugJavaResource/mergeReleaseJavaResource
-// This ensures files have valid MS-DOS timestamps (1980-2099) before merging
-tasks.configureEach {
-    if (name.contains("merge") && (name.contains("JavaResource") || name.contains("GlobalSynthetics") || name.contains("Resources"))) {
-        doFirst {
-            try {
-                // Use a safe timestamp (January 1, 2000 00:00:00 UTC) to ensure MS-DOS compatibility
-                val safeTimestamp = 946684800000L
-                
-                val buildDir = project.buildDir
-                val mergeDirs = listOf(
-                    buildDir.resolve("intermediates/merge_java_res"),
-                    buildDir.resolve("intermediates/merged_java_res"),
-                    buildDir.resolve("intermediates/incremental/mergeDebugJavaResource"),
-                    buildDir.resolve("intermediates/incremental/mergeReleaseJavaResource"),
-                    buildDir.resolve("intermediates/processed_res"),
-                    buildDir.resolve("intermediates/merged_res"),
-                    file("${rootProject.projectDir}/../build"),
-                    file("${rootProject.projectDir}/build")
+// Force-replace Google Maps API key in merged manifests AFTER google-services plugin
+// The google-services plugin overrides com.google.android.geo.API_KEY with a wrong key
+afterEvaluate {
+    android.applicationVariants.all {
+        val variantName = name.replaceFirstChar { it.uppercase() }
+        
+        // Hook into processManifest task (runs after google-services)
+        tasks.findByName("process${variantName}Manifest")?.doLast {
+            val manifestDir = layout.buildDirectory.dir(
+                "intermediates/merged_manifests/$name/process${variantName}Manifest"
+            ).get().asFile
+            
+            manifestDir.listFiles()?.filter { it.name == "AndroidManifest.xml" }?.forEach { manifest ->
+                val content = manifest.readText()
+                val fixed = content.replace(
+                    Regex("""(android:name="com\.google\.android\.geo\.API_KEY"\s+android:value=")([^"]+)(")"""),
+                    "\${1}${mapsApiKey}\${3}"
                 )
-                
-                // Fix timestamps in all merge directories
-                mergeDirs.forEach { baseDir ->
-                    if (baseDir.exists()) {
-                        try {
-                            baseDir.walkTopDown().forEach { file ->
-                                if (file.isFile) {
-                                    try {
-                                        file.setLastModified(safeTimestamp)
-                                    } catch (e: Exception) {
-                                        // Ignore individual file errors
-                                    }
-                                }
-                            }
-                        } catch (e: Exception) {
-                            // Ignore directory errors
-                        }
-                    }
+                if (content != fixed) {
+                    manifest.writeText(fixed)
+                    println(">>> [FIX] Replaced Maps API key in ${manifest.path}")
                 }
-                
-                // Try to fix timestamps in dependency JARs/AARs
-                try {
-                    val dependencyJars = configurations
-                        .filter { it.isCanBeResolved }
-                        .flatMap { config ->
-                            try {
-                                config.resolvedConfiguration.resolvedArtifacts.mapNotNull { it.file }
-                            } catch (e: Exception) {
-                                emptyList()
-                            }
-                        }
-                        .filter { it.extension == "jar" || it.extension == "aar" }
-                        .distinct()
-                    
-                    dependencyJars.forEach { jarFile ->
-                        try {
-                            if (jarFile.exists()) {
-                                jarFile.setLastModified(safeTimestamp)
-                            }
-                        } catch (e: Exception) {
-                            // Ignore errors
-                        }
-                    }
-                } catch (e: Exception) {
-                    // Ignore if configurations are not resolved yet
+            }
+        }
+
+        // Also fix packaged manifests
+        tasks.findByName("process${variantName}ManifestForPackage")?.doLast {
+            val manifestDir = layout.buildDirectory.dir(
+                "intermediates/packaged_manifests/$name/process${variantName}ManifestForPackage"
+            ).get().asFile
+            
+            manifestDir.listFiles()?.filter { it.name == "AndroidManifest.xml" }?.forEach { manifest ->
+                val content = manifest.readText()
+                val fixed = content.replace(
+                    Regex("""(android:name="com\.google\.android\.geo\.API_KEY"\s+android:value=")([^"]+)(")"""),
+                    "\${1}${mapsApiKey}\${3}"
+                )
+                if (content != fixed) {
+                    manifest.writeText(fixed)
+                    println(">>> [FIX] Replaced Maps API key in ${manifest.path}")
                 }
-            } catch (e: Exception) {
-                // Ignore all errors - let task continue
             }
         }
     }
 }
 
-// ✅ ส่วนที่เพิ่มมาเพื่อแก้ Error ล่าสุด
-configurations.all {
-    resolutionStrategy {
-        // ของเดิมที่คุณใส่ไว้ (ถูกต้องแล้ว เก็บไว้ครับ)
-        force("androidx.browser:browser:1.8.0")
-        force("androidx.core:core:1.13.1")
-        force("androidx.core:core-ktx:1.13.1")
-
-        // 🚩 แก้ตรงนี้: เปลี่ยนเป็น 2.0.21 ให้หมดครับ
-        force("org.jetbrains.kotlin:kotlin-stdlib:2.0.21")
-        force("org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.0.21")
-        force("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.0.21")
-        force("org.jetbrains.kotlin:kotlin-stdlib-common:2.0.21")
-    }
+dependencies {
+    // Core dependencies
+    implementation("com.google.guava:listenablefuture:1.0")
+    
+    // แก้ไขปัญหา NoClassDefFoundError: AbstractResolvableFuture
+    implementation("androidx.concurrent:concurrent-futures:1.2.0")
+    implementation("com.google.guava:guava:32.1.2-android")
+    
+    // Google Maps Play Services
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+    
+    // Core library desugaring for flutter_local_notifications
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 }

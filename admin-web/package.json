@@ -1,0 +1,10 @@
+{
+  "name": "jedechai-admin-web",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve .",
+    "start": "npx serve ."
+  },
+  "description": "Jedechai Delivery Admin Dashboard Web App"
+}

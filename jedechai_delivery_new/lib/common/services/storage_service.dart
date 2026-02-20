@@ -12,13 +12,15 @@ class StorageService {
     required File file,
     required String path,
     Map<String, String>? metadata,
+    String? bucketName,
   }) async {
     try {
       final String fileName =
           '${DateTime.now().millisecondsSinceEpoch}_${_extractFileName(file.path)}';
       final String filePath = '$path/$fileName';
+      final String targetBucket = bucketName ?? _bucketName;
 
-      await Supabase.instance.client.storage.from(_bucketName).upload(
+      await Supabase.instance.client.storage.from(targetBucket).upload(
             filePath,
             file,
             fileOptions: FileOptions(
@@ -28,7 +30,7 @@ class StorageService {
           );
 
       final String publicUrl = Supabase.instance.client.storage
-          .from(_bucketName)
+          .from(targetBucket)
           .getPublicUrl(filePath);
 
       return publicUrl;
@@ -42,17 +44,20 @@ class StorageService {
     required File imageFile,
     required String folder,
     Map<String, String>? metadata,
+    String? bucketName,
   }) async {
     return await uploadFile(
       file: imageFile,
       path: folder,
       metadata: metadata,
+      bucketName: bucketName,
     );
   }
 
-  static Future<bool> deleteFile(String path) async {
+  static Future<bool> deleteFile(String path, {String? bucketName}) async {
     try {
-      await Supabase.instance.client.storage.from(_bucketName).remove([path]);
+      final String targetBucket = bucketName ?? _bucketName;
+      await Supabase.instance.client.storage.from(targetBucket).remove([path]);
       return true;
     } catch (e) {
       debugLog('Error deleting file: $e');
@@ -60,10 +65,11 @@ class StorageService {
     }
   }
 
-  static Future<String?> getPublicUrl(String path) async {
+  static Future<String?> getPublicUrl(String path, {String? bucketName}) async {
     try {
+      final String targetBucket = bucketName ?? _bucketName;
       return Supabase.instance.client.storage
-          .from(_bucketName)
+          .from(targetBucket)
           .getPublicUrl(path);
     } catch (e) {
       debugLog('Error getting public URL: $e');

@@ -12,6 +12,7 @@ import 'package:vibration/vibration.dart';
 import '../../../common/services/auth_service.dart';
 import '../../../common/services/location_service.dart';
 import '../../../common/services/notification_sender.dart';
+import '../../../common/widgets/location_disclosure_dialog.dart';
 import 'order_detail_screen.dart';
 
 /// Merchant Orders Screen
@@ -127,6 +128,10 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
       // Check location permission
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
+        if (mounted) {
+          final accepted = await LocationDisclosureHelper.showIfNeeded(context);
+          if (!accepted) return;
+        }
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
           debugLog('⚠️ Location permission denied');
@@ -1408,12 +1413,12 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
     final createdAtStr = order['created_at'] as String?;
     final scheduledAtStr = order['scheduled_at'] as String?;
     final scheduledAt =
-        scheduledAtStr != null ? DateTime.tryParse(scheduledAtStr) : null;
+        scheduledAtStr != null ? DateTime.tryParse(scheduledAtStr)?.toLocal() : null;
     if (createdAtStr == null) {
       debugLog('❌ Missing created_at for order: ${order['id']}');
       return const SizedBox.shrink();
     }
-    final createdAt = DateTime.parse(createdAtStr);
+    final createdAt = DateTime.parse(createdAtStr).toLocal();
 
     final savedStatus = _getSavedOrderStatusSync(order['id']);
     final displayStatus = savedStatus ?? status;

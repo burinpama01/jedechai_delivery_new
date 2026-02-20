@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 /// App Theme Configuration
-/// Modern design with Green primary color (like Grab/LineMan)
+/// Modern design with brass-gold primary color (Phra That inspired)
 class AppTheme {
-  // Primary Colors - Green
-  static const Color primaryGreen = Color(0xFF00B14F);
-  static const Color primaryGreenDark = Color(0xFF008F3F);
-  static const Color primaryGreenLight = Color(0xFF4ADE80);
+  // Primary Colors - Customer (Brass Gold)
+  static const Color primaryGreen = Color(0xFFC79A3B);
+  static const Color primaryGreenDark = Color(0xFF8C6A1F);
+  static const Color primaryGreenLight = Color(0xFFE8C878);
 
   // Accent Colors
   static const Color accentOrange = Color(0xFFFF6B35);

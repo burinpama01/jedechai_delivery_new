@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="JDC Delivery - เรียกรถ ส่งอาหาร ส่งพัสดุ จบในแอปเดียว">
+  <meta name="theme-color" content="#6366f1">
+  <title>JDC Delivery | Landing Page</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;700;800;900&family=Sora:wght@500;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --brand-main: #6366f1;
+      --brand-dark: #4338ca;
+      --brand-light: #a5b4fc;
+      --accent-orange: #f59e0b;
+      --accent-blue: #3b82f6;
+      --text-main: #1e1b4b;
+      --text-sub: #6b7280;
+      --surface: #ffffff;
+      --surface-muted: #f8fafc;
+      --line: #e5e7eb;
+      --radius-xl: 24px;
+      --radius-lg: 18px;
+      --shadow-soft: 0 20px 60px rgba(99, 102, 241, 0.16);
+      --shadow-card: 0 12px 30px rgba(99, 102, 241, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      font-family: 'Noto Sans Thai', sans-serif;
+      color: var(--text-main);
+      background:
+        radial-gradient(circle at 5% 10%, rgba(99, 102, 241, 0.18), transparent 26%),
+        radial-gradient(circle at 90% 82%, rgba(168, 85, 247, 0.15), transparent 34%),
+        radial-gradient(circle at 48% 24%, rgba(236, 72, 153, 0.10), transparent 38%),
+        linear-gradient(160deg, #f5f3ff 0%, #eff6ff 54%, #fdf2f8 100%);
+      overflow-x: hidden;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .container {
+      width: min(1120px, 100% - 40px);
+      margin-inline: auto;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(10px);
+      background: rgba(245, 243, 255, 0.88);
+      border-bottom: 1px solid rgba(99, 102, 241, 0.10);
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 13px 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: 'Sora', sans-serif;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      color: #fff;
+      font-size: 20px;
+      background: linear-gradient(140deg, var(--brand-main), var(--brand-dark));
+      box-shadow: 0 10px 24px rgba(99, 102, 241, 0.35);
+      overflow: hidden;
+    }
+
+    .brand-mark img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #fff;
+      padding: 2px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 14px;
+      padding: 10px 16px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .btn-outline {
+      color: var(--text-main);
+      background: #fff;
+      border: 1px solid rgba(31, 41, 55, 0.14);
+    }
+
+    .hero {
+      padding: 54px 0 26px;
+      position: relative;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.06fr 0.94fr;
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    .hero-copy {
+      background: linear-gradient(160deg, rgba(255, 255, 255, 0.97), rgba(255, 253, 247, 0.93));
+      border: 1px solid rgba(31, 41, 55, 0.09);
+      border-radius: var(--radius-xl);
+      padding: 28px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #4338ca;
+      background: rgba(165, 180, 252, 0.30);
+      border: 1px solid rgba(99, 102, 241, 0.24);
+    }
+
+    .hero h1 {
+      margin: 16px 0 10px;
+      font-family: 'Sora', 'Noto Sans Thai', sans-serif;
+      font-size: clamp(31px, 4.6vw, 58px);
+      line-height: 1.04;
+      letter-spacing: -0.6px;
+      color: #1e1b4b;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--text-sub);
+      font-size: clamp(15px, 1.8vw, 18px);
+      line-height: 1.72;
+      max-width: 560px;
+    }
+
+    .store-row {
+      margin-top: 22px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .store-btn {
+      min-width: 188px;
+      background: #101828;
+      color: #fff;
+      border-radius: 14px;
+      border: 1px solid #111827;
+      padding: 9px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 24px rgba(30, 27, 75, 0.28);
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .store-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 28px rgba(30, 27, 75, 0.32);
+    }
+
+    .store-btn small {
+      display: block;
+      opacity: 0.8;
+      font-size: 10px;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .store-btn strong {
+      display: block;
+      margin-top: 1px;
+      font-size: 15px;
+      letter-spacing: 0.1px;
+    }
+
+    .store-icon {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.15);
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .store-note {
+      margin-top: 12px;
+      font-size: 12px;
+      color: #7c8592;
+      font-weight: 600;
+    }
+
+    .hero-stats {
+      margin-top: 18px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+    }
+
+    .chip {
+      font-size: 12px;
+      font-weight: 700;
+      color: #4338ca;
+      background: #eef2ff;
+      border: 1px solid #c7d2fe;
+      border-radius: 999px;
+      padding: 7px 11px;
+    }
+
+    .hero-visual {
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      position: relative;
+      background: linear-gradient(162deg, #1e1b4b, #312e81 55%, #4338ca 100%);
+      color: #f8fcff;
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 22px;
+      min-height: 100%;
+    }
+
+    .hero-image-container {
+      width: 100%;
+      height: 100%;
+      min-height: 300px;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .hero-image-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .visual-title {
+      font-size: 14px;
+      opacity: 0.84;
+      margin-bottom: 14px;
+      font-weight: 700;
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .mini-card {
+      background: rgba(255, 255, 255, 0.09);
+      border: 1px solid rgba(255, 255, 255, 0.17);
+      border-radius: 14px;
+      padding: 11px;
+      min-height: 116px;
+      display: grid;
+      align-content: space-between;
+    }
+
+    .mini-card .emoji {
+      font-size: 22px;
+    }
+
+    .mini-card h4 {
+      margin: 8px 0 4px;
+      font-size: 14px;
+      line-height: 1.3;
+    }
+
+    .mini-card p {
+      margin: 0;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.78);
+      line-height: 1.5;
+    }
+
+    .section {
+      padding: 30px 0 8px;
+    }
+
+    .section-title {
+      margin: 0 0 14px;
+      font-size: clamp(24px, 3vw, 34px);
+      font-family: 'Sora', 'Noto Sans Thai', sans-serif;
+      line-height: 1.1;
+      letter-spacing: -0.4px;
+      color: #1e1b4b;
+    }
+
+    .section-sub {
+      margin: 0;
+      color: var(--text-sub);
+      font-size: 15px;
+      line-height: 1.7;
+      max-width: 680px;
+    }
+
+    .features {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .feature {
+      background: rgba(255, 255, 255, 0.94);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      border: 1px solid rgba(31, 41, 55, 0.1);
+      box-shadow: var(--shadow-card);
+    }
+
+    .feature h3 {
+      margin: 8px 0 6px;
+      font-size: 18px;
+      color: #1e1b4b;
+    }
+
+    .feature p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.65;
+      color: var(--text-sub);
+    }
+
+    .feature-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 20px;
+      font-family: 'Sora', sans-serif;
+      font-weight: 800;
+    }
+
+    .feature-icon.one { background: linear-gradient(140deg, var(--accent-blue), #2563eb); }
+    .feature-icon.two { background: linear-gradient(140deg, var(--brand-main), var(--brand-dark)); }
+    .feature-icon.three { background: linear-gradient(140deg, var(--accent-orange), #c2410c); }
+
+    .reviews {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .review-card {
+      background: linear-gradient(165deg, #ffffff, #f5f3ff);
+      border: 1px solid rgba(99, 102, 241, 0.11);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(31, 41, 55, 0.08);
+      display: grid;
+      gap: 10px;
+    }
+
+    .review-quote {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #3f4a5b;
+      min-height: 95px;
+    }
+
+    .review-person {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .review-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      background: linear-gradient(140deg, var(--brand-main), var(--brand-dark));
+      letter-spacing: 0.2px;
+    }
+
+    .review-name {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 800;
+      color: #1e1b4b;
+    }
+
+    .review-role {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: #7a8596;
+      font-weight: 600;
+    }
+
+    .cta-band {
+      margin: 34px 0 46px;
+      border-radius: 22px;
+      padding: 24px;
+      color: #fff;
+      background:
+        radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.2), transparent 25%),
+        linear-gradient(145deg, #1e1b4b, #312e81 56%, #4338ca 100%);
+      box-shadow: 0 24px 60px rgba(30, 27, 75, 0.38);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .cta-band h3 {
+      margin: 0;
+      font-size: clamp(23px, 3vw, 34px);
+      font-family: 'Sora', 'Noto Sans Thai', sans-serif;
+      line-height: 1.15;
+      max-width: 620px;
+    }
+
+    .cta-band p {
+      margin: 8px 0 0;
+      color: rgba(255, 255, 255, 0.84);
+      font-size: 14px;
+    }
+
+    .cta-store-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .footer {
+      border-top: 1px solid rgba(31, 41, 55, 0.12);
+      padding: 18px 0 26px;
+      color: var(--text-sub);
+      font-size: 13px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(14px);
+      animation: reveal 0.6s ease forwards;
+    }
+
+    .reveal.delay-1 { animation-delay: 0.1s; }
+    .reveal.delay-2 { animation-delay: 0.2s; }
+    .reveal.delay-3 { animation-delay: 0.3s; }
+
+    @keyframes reveal {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 980px) {
+      .hero-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .features,
+      .reviews {
+        grid-template-columns: 1fr;
+      }
+
+      .mini-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 680px) {
+      .container {
+        width: min(1120px, 100% - 24px);
+      }
+
+      .header-inner {
+        flex-wrap: wrap;
+      }
+
+      .header-actions {
+        width: 100%;
+      }
+
+      .header-actions .btn {
+        width: 100%;
+      }
+
+      .hero-copy,
+      .hero-visual,
+      .cta-band {
+        padding: 18px;
+      }
+
+      .mini-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .store-btn {
+        min-width: 100%;
+      }
+
+      .footer {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="landing.html" class="brand" aria-label="JDC Delivery landing page">
+        <span class="brand-mark" id="brandMark">🚚</span>
+        <span id="brandName">JDC Delivery</span>
+      </a>
+      <div class="header-actions">
+        <a class="btn btn-outline" href="reset-password.html">รีเซ็ตรหัสผ่าน</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <article class="hero-copy reveal">
+          <span class="hero-badge" id="heroBadge">บริการขนส่งครบวงจรในจังหวัดน่าน</span>
+          <h1 id="heroTitle">ส่งไว เรียกง่าย จบในแอปเดียว</h1>
+          <p id="heroSubtitle">
+            JDC Delivery รวมบริการเรียกรถ ส่งอาหาร และพัสดุแบบเรียลไทม์
+            ให้ลูกค้า คนขับ และร้านค้า ทำงานร่วมกันได้ในแพลตฟอร์มเดียว
+            พร้อมระบบติดตามที่โปร่งใสทุกขั้นตอน
+          </p>
+
+          <div class="store-row">
+            <a id="playStoreBtn" class="store-btn" href="https://play.google.com/store/apps/details?id=com.jedechai.delivery" target="_blank" rel="noopener noreferrer">
+              <span class="store-icon">▶</span>
+              <span>
+                <small>GET IT ON</small>
+                <strong>Google Play</strong>
+              </span>
+            </a>
+            <a id="appStoreBtn" class="store-btn" href="https://apps.apple.com/th/" target="_blank" rel="noopener noreferrer">
+              <span class="store-icon"></span>
+              <span>
+                <small>Download on the</small>
+                <strong>App Store</strong>
+              </span>
+            </a>
+          </div>
+
+          <p class="store-note">ดาวน์โหลดแอปเพื่อใช้งานฝั่งลูกค้า ร้านค้า และคนขับได้ทันที</p>
+
+          <div class="hero-stats">
+            <span class="chip">Ride • Food • Parcel</span>
+            <span class="chip">ติดตามสถานะทันที</span>
+            <span class="chip">รองรับธุรกิจท้องถิ่น</span>
+          </div>
+        </article>
+
+        <aside class="hero-visual reveal delay-1" aria-label="บริการในแอป">
+          <div id="heroImageContainer" class="hero-image-container hidden">
+            <img id="heroImage" alt="ภาพโปรโมต JDC Delivery">
+          </div>
+
+          <div id="serviceCards">
+            <div class="visual-title">บริการยอดนิยม</div>
+            <div class="mini-grid">
+              <div class="mini-card">
+                <div class="emoji" id="rideIcon">🛵</div>
+                <h4>Ride</h4>
+                <p>เรียกรถสะดวก พร้อม ETA ชัดเจน</p>
+              </div>
+              <div class="mini-card">
+                <div class="emoji" id="foodIcon">🍲</div>
+                <h4>Food</h4>
+                <p>สั่งอาหารร้านท้องถิ่น ส่งถึงบ้าน</p>
+              </div>
+              <div class="mini-card">
+                <div class="emoji" id="parcelIcon">📦</div>
+                <h4>Parcel</h4>
+                <p>ส่งด่วน เอกสารและพัสดุทุกขนาด</p>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="features" class="section">
+      <div class="container">
+        <h2 class="section-title reveal">ทำไมต้องเลือก JDC Delivery</h2>
+        <p class="section-sub reveal delay-1">
+          ออกแบบมาเพื่อการใช้งานจริงของเมืองและชุมชน ทั้งฝั่งลูกค้า ร้านค้า และทีมขนส่ง
+          พร้อมระบบบริหารหลังบ้านที่เห็นภาพรวมได้ชัดเจน
+        </p>
+
+        <div class="features">
+          <article class="feature reveal delay-1">
+            <div class="feature-icon one">R</div>
+            <h3>Realtime Visibility</h3>
+            <p>มองเห็นสถานะออเดอร์และตำแหน่งคนขับแบบสด ลดเวลารอและลดงานติดตามซ้ำซ้อน</p>
+          </article>
+
+          <article class="feature reveal delay-2">
+            <div class="feature-icon two">F</div>
+            <h3>Fair to Local Business</h3>
+            <p>รองรับการเติบโตของร้านค้าในพื้นที่ พร้อมโมเดลรายได้ที่ยืดหยุ่นและโปร่งใส</p>
+          </article>
+
+          <article class="feature reveal delay-3">
+            <div class="feature-icon three">S</div>
+            <h3>Safer Operations</h3>
+            <p>มี workflow การอนุมัติ บันทึกเหตุการณ์ และการตรวจสอบย้อนหลังได้ครบในระบบเดียว</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="reviews" class="section">
+      <div class="container">
+        <h2 class="section-title reveal" id="reviewsTitle">เสียงจากลูกค้าและร้านค้า</h2>
+        <p class="section-sub reveal delay-1" id="reviewsSubtitle">ความเห็นจริงจากผู้ใช้งานที่เติบโตไปกับระบบของเรา</p>
+
+        <div class="reviews">
+          <article class="review-card reveal delay-1">
+            <p class="review-quote" id="review1Text">“สั่งอาหารช่วงค่ำได้ไวมาก คนขับโทรแจ้งทุกครั้ง และติดตามสถานะได้แบบเรียลไทม์”</p>
+            <div class="review-person">
+              <div class="review-avatar" id="review1Avatar">อ</div>
+              <div>
+                <p class="review-name" id="review1Name">คุณออม</p>
+                <p class="review-role" id="review1Role">ลูกค้า - เมืองน่าน</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="review-card reveal delay-2">
+            <p class="review-quote" id="review2Text">“ระบบหลังบ้านใช้ง่าย อัปเดตสถานะออเดอร์ชัดเจน ทำให้จัดการร้านได้คล่องขึ้น”</p>
+            <div class="review-person">
+              <div class="review-avatar" id="review2Avatar">ร</div>
+              <div>
+                <p class="review-name" id="review2Name">ร้านครัวเหนือ</p>
+                <p class="review-role" id="review2Role">พาร์ทเนอร์ร้านค้า</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="review-card reveal delay-3">
+            <p class="review-quote" id="review3Text">“มีงานต่อเนื่องและดูประวัติรายได้ได้ง่าย ช่วยวางแผนการวิ่งงานทั้งวัน”</p>
+            <div class="review-person">
+              <div class="review-avatar" id="review3Avatar">ต</div>
+              <div>
+                <p class="review-name" id="review3Name">คุณต้น</p>
+                <p class="review-role" id="review3Role">คนขับพาร์ทเนอร์</p>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="container cta-band reveal delay-2" aria-label="Call to action">
+      <div>
+        <h3>พร้อมใช้งาน JDC Delivery แล้วหรือยัง?</h3>
+        <p>ดาวน์โหลดแอปเพื่อเริ่มเรียกรถ สั่งอาหาร หรือส่งพัสดุได้ทันที</p>
+      </div>
+      <div class="cta-store-row">
+        <a id="ctaPlayStoreBtn" class="store-btn" href="https://play.google.com/store/apps/details?id=com.jedechai.delivery" target="_blank" rel="noopener noreferrer">
+          <span class="store-icon">▶</span>
+          <span>
+            <small>GET IT ON</small>
+            <strong>Google Play</strong>
+          </span>
+        </a>
+        <a id="ctaAppStoreBtn" class="store-btn" href="https://apps.apple.com/th/" target="_blank" rel="noopener noreferrer">
+          <span class="store-icon"></span>
+          <span>
+            <small>Download on the</small>
+            <strong>App Store</strong>
+          </span>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="container footer">
+    <span>© <span id="year"></span> <span id="footerBrand">JDC Delivery</span>. All rights reserved.</span>
+    <span>Jedechai Delivery Platform • Nan, Thailand</span>
+  </footer>
+
+  <script src="config.production.js" onerror=""></script>
+  <script src="config.js"></script>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    const DEFAULT_LANDING_CONFIG = {
+      brand_name: 'JDC Delivery',
+      badge_text: 'บริการขนส่งครบวงจรในจังหวัดน่าน',
+      hero_title: 'ส่งไว เรียกง่าย จบในแอปเดียว',
+      hero_subtitle:
+        'JDC Delivery รวมบริการเรียกรถ ส่งอาหาร และพัสดุแบบเรียลไทม์ ให้ลูกค้า คนขับ และร้านค้า ทำงานร่วมกันได้ในแพลตฟอร์มเดียว พร้อมระบบติดตามที่โปร่งใสทุกขั้นตอน',
+      play_store_url: 'https://play.google.com/store/apps/details?id=com.jedechai.delivery',
+      app_store_url: 'https://apps.apple.com/th/',
+      ride_icon: '🛵',
+      food_icon: '🍲',
+      parcel_icon: '📦',
+      reviews_title: 'เสียงจากลูกค้าและร้านค้า',
+      reviews_subtitle: 'ความเห็นจริงจากผู้ใช้งานที่เติบโตไปกับระบบของเรา',
+      review_1_name: 'คุณออม',
+      review_1_role: 'ลูกค้า - เมืองน่าน',
+      review_1_text: 'สั่งอาหารช่วงค่ำได้ไวมาก คนขับโทรแจ้งทุกครั้ง และติดตามสถานะได้แบบเรียลไทม์',
+      review_2_name: 'ร้านครัวเหนือ',
+      review_2_role: 'พาร์ทเนอร์ร้านค้า',
+      review_2_text: 'ระบบหลังบ้านใช้ง่าย อัปเดตสถานะออเดอร์ชัดเจน ทำให้จัดการร้านได้คล่องขึ้น',
+      review_3_name: 'คุณต้น',
+      review_3_role: 'คนขับพาร์ทเนอร์',
+      review_3_text: 'มีงานต่อเนื่องและดูประวัติรายได้ได้ง่าย ช่วยวางแผนการวิ่งงานทั้งวัน',
+      logo_url: '',
+      hero_image_url: '',
+    };
+
+    function isHttpUrl(value) {
+      if (!value || typeof value !== 'string') return false;
+      try {
+        const parsed = new URL(value);
+        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function safeSetText(id, value) {
+      const el = document.getElementById(id);
+      if (!el || typeof value !== 'string') return;
+      el.textContent = value;
+    }
+
+    function buildAvatar(name) {
+      const text = String(name || '').trim();
+      if (!text) return 'JD';
+      const first = text[0] || '';
+      const second = text.length > 1 ? text[1] : '';
+      return (first + second).toUpperCase();
+    }
+
+    function applyStoreLink(ids, url, fallback) {
+      const finalUrl = isHttpUrl(url) ? url : fallback;
+      ids.forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.href = finalUrl;
+      });
+    }
+
+    function applyBrandLogo(logoUrl, brandName) {
+      const mark = document.getElementById('brandMark');
+      if (!mark) return;
+
+      if (isHttpUrl(logoUrl)) {
+        mark.innerHTML = `<img src="${logoUrl}" alt="${brandName || 'JDC Delivery'} logo" />`;
+      } else {
+        mark.textContent = '🚚';
+      }
+    }
+
+    function applyHeroImage(heroImageUrl) {
+      const heroImageContainer = document.getElementById('heroImageContainer');
+      const heroImage = document.getElementById('heroImage');
+      const serviceCards = document.getElementById('serviceCards');
+      if (!heroImageContainer || !heroImage || !serviceCards) return;
+
+      if (isHttpUrl(heroImageUrl)) {
+        heroImage.src = heroImageUrl;
+        heroImageContainer.classList.remove('hidden');
+        serviceCards.classList.add('hidden');
+      } else {
+        heroImage.src = '';
+        heroImageContainer.classList.add('hidden');
+        serviceCards.classList.remove('hidden');
+      }
+    }
+
+    function applyLandingConfig(rawConfig, fallbackLogoUrl = '') {
+      const config = {
+        ...DEFAULT_LANDING_CONFIG,
+        ...(rawConfig && typeof rawConfig === 'object' && !Array.isArray(rawConfig) ? rawConfig : {}),
+      };
+
+      if (!config.logo_url && isHttpUrl(fallbackLogoUrl)) {
+        config.logo_url = fallbackLogoUrl;
+      }
+
+      safeSetText('brandName', config.brand_name);
+      safeSetText('footerBrand', config.brand_name);
+      safeSetText('heroBadge', config.badge_text);
+      safeSetText('heroTitle', config.hero_title);
+      safeSetText('heroSubtitle', config.hero_subtitle);
+
+      safeSetText('rideIcon', config.ride_icon || DEFAULT_LANDING_CONFIG.ride_icon);
+      safeSetText('foodIcon', config.food_icon || DEFAULT_LANDING_CONFIG.food_icon);
+      safeSetText('parcelIcon', config.parcel_icon || DEFAULT_LANDING_CONFIG.parcel_icon);
+
+      safeSetText('reviewsTitle', config.reviews_title);
+      safeSetText('reviewsSubtitle', config.reviews_subtitle);
+
+      safeSetText('review1Name', config.review_1_name);
+      safeSetText('review1Role', config.review_1_role);
+      safeSetText('review1Text', `“${config.review_1_text}”`);
+      safeSetText('review1Avatar', buildAvatar(config.review_1_name));
+
+      safeSetText('review2Name', config.review_2_name);
+      safeSetText('review2Role', config.review_2_role);
+      safeSetText('review2Text', `“${config.review_2_text}”`);
+      safeSetText('review2Avatar', buildAvatar(config.review_2_name));
+
+      safeSetText('review3Name', config.review_3_name);
+      safeSetText('review3Role', config.review_3_role);
+      safeSetText('review3Text', `“${config.review_3_text}”`);
+      safeSetText('review3Avatar', buildAvatar(config.review_3_name));
+
+      applyStoreLink(
+        ['playStoreBtn', 'ctaPlayStoreBtn'],
+        config.play_store_url,
+        DEFAULT_LANDING_CONFIG.play_store_url,
+      );
+      applyStoreLink(
+        ['appStoreBtn', 'ctaAppStoreBtn'],
+        config.app_store_url,
+        DEFAULT_LANDING_CONFIG.app_store_url,
+      );
+
+      applyBrandLogo(config.logo_url, config.brand_name);
+      applyHeroImage(config.hero_image_url);
+    }
+
+    async function loadLandingConfig() {
+      const supabaseUrl = window.JEDECHAI_CONFIG?.SUPABASE_URL || '';
+      const supabaseAnonKey = window.JEDECHAI_CONFIG?.SUPABASE_ANON_KEY || '';
+      if (!supabaseUrl || !supabaseAnonKey || supabaseAnonKey === 'your-anon-key-here') {
+        applyLandingConfig(DEFAULT_LANDING_CONFIG);
+        return;
+      }
+
+      try {
+        const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+          auth: { detectSessionInUrl: false, flowType: 'implicit' },
+        });
+        const { data, error } = await supabase
+          .from('system_config')
+          .select('landing_config, logo_url')
+          .maybeSingle();
+
+        if (error) throw error;
+
+        applyLandingConfig(data?.landing_config, data?.logo_url || '');
+      } catch (error) {
+        console.warn('Landing config load failed:', error);
+        applyLandingConfig(DEFAULT_LANDING_CONFIG);
+      }
+    }
+
+    document.getElementById('year').textContent = new Date().getFullYear();
+    loadLandingConfig();
+  </script>
+</body>
+</html>
