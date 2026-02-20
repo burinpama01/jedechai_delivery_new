@@ -27,3 +27,9 @@
 
 # Supabase local temp/runtime artifacts
 supabase/.temp/
+
+# Secrets
+**/.env
+**/.env.*
+**/google-services.json
+**/GoogleService-Info.plist

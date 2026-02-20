@@ -59,6 +59,8 @@ app.*.map.json
 # Environment variables (secrets)
 .env
 .env.*
+google-services.json
+GoogleService-Info.plist
 
 # APK files
 *.apk
