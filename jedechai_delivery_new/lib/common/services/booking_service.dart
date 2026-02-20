@@ -3,9 +3,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/booking.dart';
 import 'mock_auth_service.dart';
 import 'auth_service.dart';
-import 'system_config_service.dart';
 import 'wallet_service.dart';
+import 'system_config_service.dart';
 import 'merchant_food_config_service.dart';
+import 'fare_adjustment_service.dart';
 import 'notification_sender.dart';
 
 /// Booking Service
@@ -97,11 +98,89 @@ class BookingService {
       }
     }
 
+    final splitDefaults = await _loadMerchantGpSplitDefaults(
+      configService,
+      merchantId: merchantId,
+    );
+
     return MerchantFoodConfigService.resolve(
       merchantProfile: merchantProfile,
-      defaultMerchantSystemRate: configService.merchantGpRate,
+      defaultMerchantSystemRate: splitDefaults['systemRate']!,
+      defaultMerchantDriverRate: splitDefaults['driverRate']!,
       defaultDeliverySystemRate: configService.platformFeeRate,
     );
+  }
+
+  Future<Map<String, double>> _loadMerchantGpSplitDefaults(
+    SystemConfigService configService,
+    {String? merchantId}
+  ) async {
+    final fallbackSystem = configService.merchantGpRate;
+    final fallbackDriver = 0.0;
+
+    try {
+      final rows = await _client
+          .from('system_config')
+          .select('key, value')
+          .inFilter('key', [
+        if (merchantId != null && merchantId.trim().isNotEmpty)
+          'merchant_gp_system_rate_${merchantId.trim()}',
+        if (merchantId != null && merchantId.trim().isNotEmpty)
+          'merchant_gp_driver_rate_${merchantId.trim()}',
+        'merchant_gp_system_rate_default',
+        'merchant_gp_driver_rate_default',
+      ]);
+
+      final map = <String, String>{};
+      for (final row in rows) {
+        final key = row['key'] as String?;
+        final value = row['value'] as String?;
+        if (key != null && value != null) {
+          map[key] = value;
+        }
+      }
+
+      final merchantIdKey = (merchantId ?? '').trim();
+      final merchantSystemRaw = merchantIdKey.isNotEmpty
+          ? map['merchant_gp_system_rate_$merchantIdKey']
+          : null;
+      final merchantDriverRaw = merchantIdKey.isNotEmpty
+          ? map['merchant_gp_driver_rate_$merchantIdKey']
+          : null;
+
+      final systemRate = _parseRate(
+        merchantSystemRaw,
+        _parseRate(
+          map['merchant_gp_system_rate_default'],
+          fallbackSystem,
+        ),
+      );
+      final driverRate = _parseRate(
+        merchantDriverRaw,
+        _parseRate(
+          map['merchant_gp_driver_rate_default'],
+          fallbackDriver,
+        ),
+      );
+
+      return {
+        'systemRate': systemRate,
+        'driverRate': driverRate,
+      };
+    } catch (e) {
+      debugLog('⚠️ Failed to load merchant GP split defaults: $e');
+      return {
+        'systemRate': fallbackSystem,
+        'driverRate': fallbackDriver,
+      };
+    }
+  }
+
+  double _parseRate(String? raw, double fallback) {
+    final parsed = double.tryParse((raw ?? '').trim());
+    if (parsed == null || parsed.isNaN || parsed < 0) return fallback;
+    if (parsed > 1) return 1.0;
+    return parsed;
   }
 
   /// Get all bookings for current user
@@ -492,10 +571,24 @@ class BookingService {
     // ── Risk Prevention: Per-job wallet balance check ──
     final walletService = WalletService();
 
+    final updates = <String, dynamic>{};
+
     if (booking.serviceType == 'food') {
       // Food order: check against estimated deduction
-      final deliveryFee = booking.deliveryFee ?? 0;
+      var deliveryFee = booking.deliveryFee ?? 0;
       final foodPrice = booking.price; // price field = food cost for food orders
+
+      final foodPickupSurcharge = await FareAdjustmentService
+          .calculateFoodFarPickupSurcharge(
+        merchantId: booking.merchantId ?? '',
+        driverId: driverId,
+        merchantLat: booking.originLat,
+        merchantLng: booking.originLng,
+      );
+      if (foodPickupSurcharge > 0) {
+        deliveryFee += foodPickupSurcharge;
+        updates['delivery_fee'] = deliveryFee;
+      }
 
       // ตรวจสอบให้แน่ใจว่ามีข้อมูล config
       final configService = SystemConfigService();
@@ -528,6 +621,7 @@ class BookingService {
       debugLog('   └─ Delivery Fee: $deliveryFee');
       debugLog('   └─ Food Price: $foodPrice');
       debugLog('   └─ Merchant mode: ${merchantFoodConfig.summary}');
+      debugLog('   └─ Far pickup surcharge: $foodPickupSurcharge');
       debugLog('   └─ Estimated Deduction: $estimatedDeduction');
 
       final canAccept = await walletService.canAcceptFoodJob(
@@ -553,6 +647,28 @@ class BookingService {
         final minWallet = configService.driverMinWallet;
         throw Exception('ยอดเงินในกระเป๋าไม่พอรับงานนี้ กรุณาเติมเงินอย่างน้อย $minWallet บาท');
       }
+
+      if (booking.serviceType == 'ride') {
+        final config = await FareAdjustmentService.loadRideFarPickupConfig();
+        final distanceKm = await FareAdjustmentService.getDriverToPickupDistanceKm(
+          driverId: driverId,
+          pickupLat: booking.originLat,
+          pickupLng: booking.originLng,
+        );
+        if (distanceKm != null) {
+          final surcharge = FareAdjustmentService.calculateRideFarPickupSurcharge(
+            driverToPickupDistanceKm: distanceKm,
+            vehicleType: booking.notes ?? booking.serviceType,
+            config: config,
+          );
+          if (surcharge > 0) {
+            final adjustedPrice = booking.price + surcharge;
+            updates['price'] = adjustedPrice;
+            updates['notes'] =
+                '${booking.notes ?? ''} | ปรับราคาเพิ่มจากระยะคนขับ→จุดรับ ${distanceKm.toStringAsFixed(2)} กม. (+฿${surcharge.toStringAsFixed(2)})';
+          }
+        }
+      }
     }
 
     // Determine new status based on service_type
@@ -570,6 +686,7 @@ class BookingService {
       'driver_id': driverId,
       'status': newStatus,
       'assigned_at': DateTime.now().toIso8601String(),
+      ...updates,
     }).eq('id', bookingId);
     
     debugLog('✅ Driver accepted job: $bookingId with status: $newStatus');
