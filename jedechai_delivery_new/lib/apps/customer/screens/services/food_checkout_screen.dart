@@ -264,6 +264,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         _merchantFoodConfig = MerchantFoodConfigService.resolve(
           merchantProfile: profile,
           defaultMerchantSystemRate: configService.merchantGpRate,
+          defaultMerchantDriverRate: 0.0,
           defaultDeliverySystemRate: configService.platformFeeRate,
         );
 

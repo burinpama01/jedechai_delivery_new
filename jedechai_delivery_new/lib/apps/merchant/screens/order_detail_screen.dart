@@ -7,6 +7,7 @@ import 'package:jedechai_delivery_new/theme/app_theme.dart';
 import '../../../common/services/notification_sender.dart';
 import '../../../common/services/auth_service.dart';
 import '../../../common/services/system_config_service.dart';
+import '../../../common/utils/order_code_formatter.dart';
 
 /// Merchant Order Detail Screen
 /// 
@@ -263,7 +264,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
             'updated_at': DateTime.now().toIso8601String(),
           })
           .eq('id', widget.order['id'])
-          .eq('status', 'pending_merchant')
+          .inFilter('status', ['pending_merchant', 'pending'])
           .select();
 
       if (result.isEmpty) {
@@ -324,7 +325,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
             'updated_at': DateTime.now().toIso8601String(),
           })
           .eq('id', widget.order['id'])
-          .eq('status', 'pending_merchant')
+          .inFilter('status', ['pending_merchant', 'pending'])
           .select();
 
       if (result.isEmpty) {
@@ -391,7 +392,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
             'updated_at': DateTime.now().toIso8601String(),
           })
           .eq('id', widget.order['id'])
-          .inFilter('status', ['preparing', 'driver_accepted', 'arrived_at_merchant', 'matched'])
+          .inFilter('status', ['preparing', 'driver_accepted', 'arrived_at_merchant', 'matched', 'accepted', 'arrived'])
           .select();
 
       if (result.isEmpty) {
@@ -482,7 +483,9 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: Text('ออเดอร์ #${order['id'].toString().substring(0, 8)}'),
+        title: Text(
+          'ออเดอร์ ${OrderCodeFormatter.formatByServiceType(order['id']?.toString(), serviceType: order['service_type']?.toString())}',
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: Colors.black,
@@ -556,7 +559,13 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        _buildInfoRow('รหัสออเดอร์', '#${order['id'].toString().substring(0, 8)}'),
+                        _buildInfoRow(
+                          'รหัสออเดอร์',
+                          OrderCodeFormatter.formatByServiceType(
+                            order['id']?.toString(),
+                            serviceType: order['service_type']?.toString(),
+                          ),
+                        ),
                         _buildInfoRow('เวลาสั่ง', _formatDateTime(createdAt)),
                         _buildInfoRow('ชำระเงิน', paymentMethod == 'cash' ? 'เงินสด' : 'โอนเงิน'),
                         _buildInfoRow('ระยะทาง', '${distanceKm.toStringAsFixed(1)} กม.'),
@@ -892,7 +901,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                   const SizedBox(height: 24),
 
                   // Action Buttons
-                  if (status == 'pending_merchant') ...[
+                  if (status == 'pending_merchant' || status == 'pending') ...[
                     Row(
                       children: [
                         Expanded(
@@ -987,7 +996,8 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                         ],
                       ),
                     ),
-                  ] else if (hasDriver && (status == 'driver_accepted' || status == 'arrived_at_merchant' || status == 'preparing')) ...[                    // ปุ่มโทรหาคนขับ
+                  ] else if (hasDriver && (status == 'driver_accepted' || status == 'arrived_at_merchant' || status == 'preparing' || status == 'matched' || status == 'accepted' || status == 'arrived')) ...[
+                    // ปุ่มโทรหาคนขับ
                     if (_driverName != null || _driverPhone != null) ...[                      Container(
                         width: double.infinity,
                         margin: const EdgeInsets.only(bottom: 12),
@@ -1032,38 +1042,43 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                         ),
                       ),
                     ],
-                  ] else if (status == 'driver_accepted' || status == 'arrived_at_merchant') ...[
-                    // Driver accepted - can mark food ready
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _markFoodReady,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                    if (status == 'driver_accepted' ||
+                        status == 'arrived_at_merchant' ||
+                        status == 'matched' ||
+                        status == 'preparing' ||
+                        status == 'accepted' ||
+                        status == 'arrived') ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _markFoodReady,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                )
+                              : const Text(
+                                  'อาหารพร้อม',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                         ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                ),
-                              )
-                            : const Text(
-                                'อาหารพร้อม',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
                       ),
-                    ),
+                    ],
                   ] else ...[
                     Container(
                       width: double.infinity,
@@ -1295,7 +1310,10 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '#${bookingId.substring(0, 8)}',
+                            OrderCodeFormatter.formatByServiceType(
+                              bookingId,
+                              serviceType: order['service_type']?.toString(),
+                            ),
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,

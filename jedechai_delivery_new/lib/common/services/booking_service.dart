@@ -4,8 +4,10 @@ import '../models/booking.dart';
 import 'mock_auth_service.dart';
 import 'auth_service.dart';
 import 'wallet_service.dart';
+import 'wallet_service.dart';
 import 'system_config_service.dart';
 import 'merchant_food_config_service.dart';
+import 'fare_adjustment_service.dart';
 import 'fare_adjustment_service.dart';
 import 'notification_sender.dart';
 
@@ -669,6 +671,28 @@ class BookingService {
           }
         }
       }
+
+      if (booking.serviceType == 'ride') {
+        final config = await FareAdjustmentService.loadRideFarPickupConfig();
+        final distanceKm = await FareAdjustmentService.getDriverToPickupDistanceKm(
+          driverId: driverId,
+          pickupLat: booking.originLat,
+          pickupLng: booking.originLng,
+        );
+        if (distanceKm != null) {
+          final surcharge = FareAdjustmentService.calculateRideFarPickupSurcharge(
+            driverToPickupDistanceKm: distanceKm,
+            vehicleType: booking.notes ?? booking.serviceType,
+            config: config,
+          );
+          if (surcharge > 0) {
+            final adjustedPrice = booking.price + surcharge;
+            updates['price'] = adjustedPrice;
+            updates['notes'] =
+                '${booking.notes ?? ''} | ปรับราคาเพิ่มจากระยะคนขับ→จุดรับ ${distanceKm.toStringAsFixed(2)} กม. (+฿${surcharge.toStringAsFixed(2)})';
+          }
+        }
+      }
     }
 
     // Determine new status based on service_type
@@ -686,6 +710,7 @@ class BookingService {
       'driver_id': driverId,
       'status': newStatus,
       'assigned_at': DateTime.now().toIso8601String(),
+      ...updates,
       ...updates,
     }).eq('id', bookingId);
     

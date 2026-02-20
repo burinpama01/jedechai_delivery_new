@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../models/chat_message.dart';
 import '../services/chat_service.dart';
 import '../services/auth_service.dart';
+import '../utils/order_code_formatter.dart';
 import 'app_network_image.dart';
 import '../../theme/app_theme.dart';
 
@@ -120,7 +121,9 @@ class _ChatScreenState extends State<ChatScreen> {
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                   Text(
-                    isSupport ? 'ฝ่ายสนับสนุน' : 'ออเดอร์ #${widget.bookingId.substring(0, 8)}',
+                    isSupport
+                        ? 'ฝ่ายสนับสนุน'
+                        : 'ออเดอร์ ${OrderCodeFormatter.format(widget.bookingId)}',
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.white.withValues(alpha: 0.8),

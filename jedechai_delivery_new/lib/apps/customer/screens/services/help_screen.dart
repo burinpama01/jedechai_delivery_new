@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../theme/app_theme.dart';
+import 'support_tickets_screen.dart';
 
 /// Help Screen
 /// 
@@ -196,7 +197,14 @@ class _HelpScreenState extends State<HelpScreen> {
               width: double.infinity,
               height: 52,
               child: ElevatedButton.icon(
-                onPressed: _showReportDialog,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const SupportTicketsScreen(),
+                    ),
+                  );
+                },
                 icon: const Icon(Icons.report_problem_outlined),
                 label: const Text('รายงานปัญหา', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
@@ -246,63 +254,6 @@ class _HelpScreenState extends State<HelpScreen> {
             Text(detail, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
           ],
         ),
-      ),
-    );
-  }
-
-  void _showReportDialog() {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.report_problem, color: AppTheme.accentOrange, size: 24),
-            SizedBox(width: 8),
-            Text('รายงานปัญหา'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('กรุณาอธิบายปัญหาที่พบ ทีมงานจะติดต่อกลับโดยเร็ว',
-                style: TextStyle(fontSize: 14, color: Colors.grey)),
-            const SizedBox(height: 14),
-            TextField(
-              controller: controller,
-              maxLines: 4,
-              maxLength: 500,
-              decoration: InputDecoration(
-                hintText: 'รายละเอียดปัญหา...',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                contentPadding: const EdgeInsets.all(12),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('ยกเลิก', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('ส่งรายงานปัญหาเรียบร้อยแล้ว'),
-                  backgroundColor: AppTheme.primaryGreen,
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.accentOrange,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('ส่ง'),
-          ),
-        ],
       ),
     );
   }

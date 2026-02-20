@@ -2186,6 +2186,7 @@ class _BookingServiceHelper {
         merchantFoodConfig = MerchantFoodConfigService.resolve(
           merchantProfile: merchantProfile,
           defaultMerchantSystemRate: configService.merchantGpRate,
+          defaultMerchantDriverRate: 0.0,
           defaultDeliverySystemRate: configService.platformFeeRate,
         );
       } catch (_) {}

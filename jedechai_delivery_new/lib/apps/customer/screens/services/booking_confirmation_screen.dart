@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../common/models/booking.dart';
+import '../../../../common/utils/order_code_formatter.dart';
 import 'tracking_screen.dart';
 
 /// Booking Confirmation Screen
@@ -53,7 +54,8 @@ class BookingConfirmationScreen extends StatelessWidget {
                     const Text('จองสำเร็จ!',
                         style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 6),
-                    Text('ออเดอร์ #${booking.id.substring(0, 8).toUpperCase()}',
+                    Text(
+                        'ออเดอร์ ${OrderCodeFormatter.formatByServiceType(booking.id, serviceType: booking.serviceType)}',
                         style: const TextStyle(fontSize: 15, color: Colors.grey)),
 
                     const SizedBox(height: 28),

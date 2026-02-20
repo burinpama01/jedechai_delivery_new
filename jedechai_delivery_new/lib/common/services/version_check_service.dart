@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -16,6 +17,7 @@ import '../../utils/debug_logger.dart';
 ///   key: 'app_update_message' value: 'กรุณาอัปเดตแอป...'
 class VersionCheckService {
   static final SupabaseClient _client = Supabase.instance.client;
+  static bool _isDialogVisible = false;
 
   /// Check version on app startup. Call this from AuthGate or main().
   /// Returns true if the app is up-to-date, false if force update is needed.
@@ -24,40 +26,33 @@ class VersionCheckService {
       final packageInfo = await PackageInfo.fromPlatform();
       final currentVersion = packageInfo.version; // e.g. "1.0.0"
 
-      // Fetch minimum version from DB
-      final configRow = await _client
-          .from('system_config')
-          .select('value')
-          .eq('key', 'app_min_version')
-          .maybeSingle();
+      final configs = await _loadConfigMap();
+      final latestVersion = configs['app_latest_version'];
+      final minVersion = configs['app_min_version'];
+      final targetVersion =
+          (latestVersion != null && latestVersion.trim().isNotEmpty)
+              ? latestVersion.trim()
+              : minVersion?.trim();
 
-      if (configRow == null) {
-        debugLog('ℹ️ No app_min_version in system_config — skipping check');
+      if (targetVersion == null || targetVersion.isEmpty) {
+        debugLog('ℹ️ No app_latest_version/app_min_version in system_config — skipping check');
         return true;
       }
 
-      final minVersion = configRow['value'] as String? ?? '1.0.0';
-      debugLog('📱 Version check: current=$currentVersion, min=$minVersion');
+      debugLog('📱 Version check: current=$currentVersion, target=$targetVersion');
 
-      if (_isVersionLower(currentVersion, minVersion)) {
-        // Fetch optional update URL and message
-        final urlRow = await _client
-            .from('system_config')
-            .select('value')
-            .eq('key', 'app_update_url')
-            .maybeSingle();
-        final msgRow = await _client
-            .from('system_config')
-            .select('value')
-            .eq('key', 'app_update_message')
-            .maybeSingle();
-
-        final updateUrl = urlRow?['value'] as String?;
-        final updateMessage = msgRow?['value'] as String? ??
-            'แอปเวอร์ชันนี้ไม่รองรับแล้ว กรุณาอัปเดตเป็นเวอร์ชันล่าสุด';
+      if (_isVersionLower(currentVersion, targetVersion)) {
+        final updateUrl = _resolveUpdateUrl(configs);
+        final updateMessage = configs['app_update_message'] ??
+            'มีเวอร์ชันใหม่แล้ว กรุณาอัปเดตเป็นเวอร์ชันล่าสุดจาก Store';
 
         if (context.mounted) {
-          _showForceUpdateDialog(context, updateMessage, updateUrl);
+          _showForceUpdateDialog(
+            context,
+            updateMessage,
+            updateUrl,
+            targetVersion,
+          );
         }
         return false;
       }
@@ -67,6 +62,40 @@ class VersionCheckService {
       debugLog('⚠️ Version check failed (non-blocking): $e');
       return true; // Don't block on network errors
     }
+  }
+
+  static Future<Map<String, String>> _loadConfigMap() async {
+    final rows = await _client
+        .from('system_config')
+        .select('key, value')
+        .inFilter('key', [
+          'app_latest_version',
+          'app_min_version',
+          'app_update_url',
+          'app_update_url_android',
+          'app_update_url_ios',
+          'app_update_message',
+        ]);
+
+    final map = <String, String>{};
+    for (final row in rows) {
+      final key = (row['key'] as String?)?.trim();
+      final value = (row['value'] as String?)?.trim();
+      if (key != null && key.isNotEmpty && value != null && value.isNotEmpty) {
+        map[key] = value;
+      }
+    }
+    return map;
+  }
+
+  static String? _resolveUpdateUrl(Map<String, String> configs) {
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return configs['app_update_url_android'] ?? configs['app_update_url'];
+    }
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      return configs['app_update_url_ios'] ?? configs['app_update_url'];
+    }
+    return configs['app_update_url'];
   }
 
   /// Compare two semver strings. Returns true if [current] < [minimum].
@@ -94,7 +123,11 @@ class VersionCheckService {
     BuildContext context,
     String message,
     String? updateUrl,
+    String targetVersion,
   ) {
+    if (_isDialogVisible) return;
+    _isDialogVisible = true;
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -113,9 +146,11 @@ class VersionCheckService {
                 child: const Icon(Icons.system_update, color: Colors.orange, size: 28),
               ),
               const SizedBox(width: 12),
-              const Text(
-                'อัปเดตแอป',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              Expanded(
+                child: Text(
+                  'อัปเดตแอป ($targetVersion)',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                ),
               ),
             ],
           ),
@@ -158,6 +193,8 @@ class VersionCheckService {
           ],
         ),
       ),
-    );
+    ).then((_) {
+      _isDialogVisible = false;
+    });
   }
 }

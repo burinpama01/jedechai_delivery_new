@@ -110,6 +110,7 @@ class MerchantFoodConfigService {
   static MerchantFoodConfig resolve({
     required Map<String, dynamic>? merchantProfile,
     required double defaultMerchantSystemRate,
+    required double defaultMerchantDriverRate,
     required double defaultDeliverySystemRate,
   }) {
     final gpRate = _toDouble(merchantProfile?['gp_rate']);
@@ -132,7 +133,7 @@ class MerchantFoodConfigService {
       preset?.merchantSystemRate ?? gpRate ?? defaultMerchantSystemRate,
     );
     final resolvedDriverRate = _clampRate(
-      preset?.merchantDriverRate ?? 0,
+      preset?.merchantDriverRate ?? defaultMerchantDriverRate,
     );
     final resolvedDeliverySystemRate = _clampRate(
       preset?.deliverySystemRate ?? defaultDeliverySystemRate,

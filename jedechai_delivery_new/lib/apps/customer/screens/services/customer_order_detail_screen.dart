@@ -10,6 +10,7 @@ import '../../../../common/services/supabase_service.dart';
 import '../../../../common/services/booking_service.dart';
 import '../../../../common/services/chat_service.dart';
 import '../../../../common/services/auth_service.dart';
+import '../../../../common/utils/order_code_formatter.dart';
 import '../../../../common/widgets/chat_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'customer_ride_status_screen.dart';
@@ -417,7 +418,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                       ),
                     ),
                     Text(
-                      'ออเดอร์ #${widget.booking.id.substring(0, 8)}',
+                      'ออเดอร์ ${OrderCodeFormatter.format(widget.booking.id)}',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey[600],
@@ -1424,7 +1425,13 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text('หมายเลขออเดอร์', style: TextStyle(fontSize: 11, color: Colors.black54)),
-                      Text('#${bookingId.substring(0, 8)}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey[700])),
+                      Text(
+                        OrderCodeFormatter.formatByServiceType(
+                          bookingId,
+                          serviceType: booking.serviceType,
+                        ),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey[700]),
+                      ),
                     ],
                   ),
                 ],
@@ -1561,7 +1568,13 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text('หมายเลขออเดอร์', style: TextStyle(fontSize: 11, color: Colors.black54)),
-                        Text('#${bookingId.substring(0, 8)}', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.blue[700])),
+                        Text(
+                          OrderCodeFormatter.formatByServiceType(
+                            bookingId,
+                            serviceType: booking.serviceType,
+                          ),
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.blue[700]),
+                        ),
                       ],
                     ),
                   ],

@@ -24,6 +24,11 @@ function reportFilename(prefix, ext, from, to) {
   return `${prefix}_${clean(from)}_${clean(to)}.${ext}`;
 }
 
+function reportFilename(prefix, ext, from, to) {
+  const clean = (v) => (v || '').toString().replace(/[^0-9a-zA-Z_-]/g, '') || 'all';
+  return `${prefix}_${clean(from)}_${clean(to)}.${ext}`;
+}
+
 async function setUserOnlineStatus(id, isOnline, role = '') {
   try {
     const nowIso = new Date().toISOString();
@@ -318,6 +323,82 @@ async function loadPage(page) {
 // --- Helpers ---
 function fmt(n) { return new Intl.NumberFormat('th-TH').format(n || 0); }
 function fmtDate(d) { return d ? new Date(d).toLocaleDateString('th-TH', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '-'; }
+
+function _csvCell(value) {
+  const v = value == null ? '' : String(value);
+  return `"${v.replace(/"/g, '""')}"`;
+}
+
+function exportRowsToCsv(filename, headers, rows) {
+  const csv = [
+    headers.map(_csvCell).join(','),
+    ...(rows || []).map((row) => headers.map((h) => _csvCell(row[h])).join(',')),
+  ].join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportRowsToExcel(filename, headers, rows) {
+  const headHtml = headers.map((h) => `<th style="border:1px solid #d1d5db;padding:8px;background:#f9fafb">${h}</th>`).join('');
+  const bodyHtml = (rows || []).map((row) => {
+    const cols = headers.map((h) => `<td style="border:1px solid #e5e7eb;padding:8px">${row[h] ?? ''}</td>`).join('');
+    return `<tr>${cols}</tr>`;
+  }).join('');
+  const html = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head><meta charset="UTF-8"></head>
+      <body>
+        <table>
+          <thead><tr>${headHtml}</tr></thead>
+          <tbody>${bodyHtml}</tbody>
+        </table>
+      </body>
+    </html>`;
+  const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function renderMiniBarChart(title, subtitle, rows, colorHex = '#6366f1') {
+  const safeRows = rows || [];
+  const maxValue = Math.max(...safeRows.map((r) => Number(r.value || 0)), 1);
+  return `
+    <div class="glass-card p-5">
+      <div class="mb-4">
+        <h4 class="font-bold text-gray-800">${title}</h4>
+        <p class="text-xs text-gray-400">${subtitle}</p>
+      </div>
+      <div class="space-y-2.5">
+        ${safeRows.length === 0 ? '<p class="text-sm text-gray-400 py-3">ไม่มีข้อมูลในช่วงวันที่ที่เลือก</p>' : safeRows.map((r) => {
+          const pct = Math.round((Number(r.value || 0) / maxValue) * 100);
+          return `
+            <div>
+              <div class="flex items-center justify-between text-xs mb-1">
+                <span class="text-gray-500">${r.label}</span>
+                <span class="font-semibold text-gray-700">${r.displayValue || fmt(Math.round(r.value || 0))}</span>
+              </div>
+              <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div class="h-full rounded-full" style="width:${pct}%;background:${colorHex};"></div>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
 
 function _csvCell(value) {
   const v = value == null ? '' : String(value);
@@ -704,13 +785,48 @@ function exportDashboardExcel() {
   );
 }
 
+function exportWithdrawalsCsv() {
+  const rows = window._allWithdrawals || [];
+  exportRowsToCsv(reportFilename('withdrawals_report', 'csv', '', ''), ['ผู้ขอ', 'บทบาท', 'จำนวน', 'ธนาคาร', 'เลขบัญชี', 'สถานะ', 'วันที่'], rows);
+}
+
+function exportWithdrawalsExcel() {
+  const rows = window._allWithdrawals || [];
+  exportRowsToExcel(reportFilename('withdrawals_report', 'xls', '', ''), ['ผู้ขอ', 'บทบาท', 'จำนวน', 'ธนาคาร', 'เลขบัญชี', 'สถานะ', 'วันที่'], rows);
+}
+
+function exportDashboardCsv() {
+  const from = document.getElementById('dashDateFrom')?.value || '';
+  const to = document.getElementById('dashDateTo')?.value || '';
+  const rows = window._dashboardRecentRows || [];
+  exportRowsToCsv(
+    reportFilename('dashboard_recent_orders', 'csv', from, to),
+    ['เลขออเดอร์', 'ประเภท', 'ราคา', 'สถานะ', 'เวลา'],
+    rows,
+  );
+}
+
+function exportDashboardExcel() {
+  const from = document.getElementById('dashDateFrom')?.value || '';
+  const to = document.getElementById('dashDateTo')?.value || '';
+  const rows = window._dashboardRecentRows || [];
+  exportRowsToExcel(
+    reportFilename('dashboard_recent_orders', 'xls', from, to),
+    ['เลขออเดอร์', 'ประเภท', 'ราคา', 'สถานะ', 'เวลา'],
+    rows,
+  );
+}
+
 function statCard(icon, title, value, gradient) {
   const gradients = {
     'bg-blue-500': 'from-blue-500 to-cyan-400',
     'bg-green-500': 'from-emerald-500 to-teal-400',
     'bg-emerald-500': 'from-emerald-500 to-green-400',
+    'bg-emerald-500': 'from-emerald-500 to-green-400',
     'bg-orange-500': 'from-orange-500 to-amber-400',
     'bg-purple-500': 'from-violet-500 to-purple-400',
+    'bg-cyan-500': 'from-cyan-500 to-sky-400',
+    'bg-rose-500': 'from-rose-500 to-pink-400',
     'bg-cyan-500': 'from-cyan-500 to-sky-400',
     'bg-rose-500': 'from-rose-500 to-pink-400',
     'bg-pink-500': 'from-pink-500 to-rose-400',
@@ -808,6 +924,7 @@ async function loadOrders() {
   });
   const statusChartRows = Object.keys(statusCounts).map((k) => ({ label: k, value: statusCounts[k], displayValue: fmt(statusCounts[k]) }));
   const typeChartRows = Object.keys(typeCounts).map((k) => ({ label: k, value: typeCounts[k], displayValue: fmt(typeCounts[k]) }));
+  window._filteredOrders = orders || [];
 
   // Fetch driver names for orders
   const driverIds = [...new Set((orders||[]).map(o => o.driver_id).filter(Boolean))];
@@ -1821,6 +1938,7 @@ async function refreshMerchantOrderManager(merchantId) {
   if (!bodyEl) return;
 
   const managedStatuses = [
+    'pending',
     'pending',
     'pending_merchant',
     'preparing',
@@ -3078,7 +3196,37 @@ async function renderAccountDeletions(el) {
         ${rejected.length ? rejected.map(r => buildCard(r, false)).join('') : '<div class="glass-card p-8 text-center"><span class="material-icons-round text-gray-200 text-4xl">inbox</span><p class="text-gray-400 text-sm mt-2">ไม่มีคำขอ</p></div>'}
       </div>
       </div>
+      </div>
     </div>`;
+  window._allAccountDeletionRequests = requests || [];
+}
+
+function exportAccountDeletionsCsv() {
+  const rows = (window._allAccountDeletionRequests || []).map((r) => ({
+    ชื่อผู้ใช้: r.user_name || '-',
+    อีเมล: r.user_email || '-',
+    บทบาท: r.user_role || '-',
+    สถานะ: r.status || '-',
+    เหตุผล: r.reason || '-',
+    เหตุผลปฏิเสธ: r.rejection_reason || '-',
+    วันที่ขอ: fmtDate(r.requested_at),
+    วันที่ตรวจสอบ: fmtDate(r.reviewed_at),
+  }));
+  exportRowsToCsv(reportFilename('account_deletions_report', 'csv', '', ''), ['ชื่อผู้ใช้', 'อีเมล', 'บทบาท', 'สถานะ', 'เหตุผล', 'เหตุผลปฏิเสธ', 'วันที่ขอ', 'วันที่ตรวจสอบ'], rows);
+}
+
+function exportAccountDeletionsExcel() {
+  const rows = (window._allAccountDeletionRequests || []).map((r) => ({
+    ชื่อผู้ใช้: r.user_name || '-',
+    อีเมล: r.user_email || '-',
+    บทบาท: r.user_role || '-',
+    สถานะ: r.status || '-',
+    เหตุผล: r.reason || '-',
+    เหตุผลปฏิเสธ: r.rejection_reason || '-',
+    วันที่ขอ: fmtDate(r.requested_at),
+    วันที่ตรวจสอบ: fmtDate(r.reviewed_at),
+  }));
+  exportRowsToExcel(reportFilename('account_deletions_report', 'xls', '', ''), ['ชื่อผู้ใช้', 'อีเมล', 'บทบาท', 'สถานะ', 'เหตุผล', 'เหตุผลปฏิเสธ', 'วันที่ขอ', 'วันที่ตรวจสอบ'], rows);
   window._allAccountDeletionRequests = requests || [];
 }
 
@@ -3456,6 +3604,49 @@ async function renderSettings(el) {
               <input type="number" id="settMerchantGP" value="${config.merchant_gp_rate ? (config.merchant_gp_rate * 100).toFixed(0) : 10}" class="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm bg-white transition-all" step="1" min="0" max="50">
               <p class="text-xs text-gray-400 mt-1.5">ปรับเฉพาะร้านได้ที่หน้าร้านค้า</p>
             </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Merchant GP เข้าระบบ (%)</label>
+              <input type="number" id="settMerchantGpSystemRate" value="${merchantGpSystemDefault.toFixed(1)}" class="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm bg-white transition-all" step="0.1" min="0" max="100">
+              <p class="text-xs text-gray-400 mt-1.5">ส่วนนี้หักจาก wallet คนขับเข้าระบบ</p>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Merchant GP ให้คนขับ (%)</label>
+              <input type="number" id="settMerchantGpDriverRate" value="${merchantGpDriverDefault.toFixed(1)}" class="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm bg-white transition-all" step="0.1" min="0" max="100">
+              <p class="text-xs text-gray-400 mt-1.5">เพิ่มรายได้คนขับ แต่ไม่หัก wallet</p>
+            </div>
+          </div>
+          <p class="text-xs text-orange-600 mt-2">Merchant GP รวม ต้องเท่ากับ (เข้าระบบ + ให้คนขับ) เช่น 20% = ระบบ 10% + คนขับ 10%</p>
+        </div>
+      </div>
+
+      <div class="glass-card p-6">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center"><span class="material-icons-round text-indigo-500">route</span></div>
+          <div>
+            <h3 class="font-bold text-gray-800">ค่าปรับเมื่อคนขับไกลจุดรับ</h3>
+            <p class="text-xs text-gray-400">ตั้งค่า Ride/Food แบบ key-value ใน system_config</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Ride Threshold (กม.)</label>
+            <input type="number" id="settRideFarPickupThreshold" value="${kvConfig.ride_far_pickup_threshold_km ?? 3}" class="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm bg-white transition-all" step="0.1" min="0">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Ride Rate/km (มอเตอร์ไซค์)</label>
+            <input type="number" id="settRideFarPickupMotoRate" value="${kvConfig.ride_far_pickup_rate_per_km_motorcycle ?? 5}" class="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm bg-white transition-all" step="0.1" min="0">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Ride Rate/km (รถยนต์)</label>
+            <input type="number" id="settRideFarPickupCarRate" value="${kvConfig.ride_far_pickup_rate_per_km_car ?? 7}" class="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm bg-white transition-all" step="0.1" min="0">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Food Default Threshold (กม.)</label>
+            <input type="number" id="settFoodFarPickupThreshold" value="${kvConfig.food_far_pickup_threshold_km_default ?? 3}" class="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm bg-white transition-all" step="0.1" min="0">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Food Default Rate/km</label>
+            <input type="number" id="settFoodFarPickupRate" value="${kvConfig.food_far_pickup_rate_per_km_default ?? 5}" class="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm bg-white transition-all" step="0.1" min="0">
             <div>
               <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Merchant GP เข้าระบบ (%)</label>
               <input type="number" id="settMerchantGpSystemRate" value="${merchantGpSystemDefault.toFixed(1)}" class="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm bg-white transition-all" step="0.1" min="0" max="100">
@@ -4329,6 +4520,58 @@ async function loadRevenue() {
       </div>
     </div>
 
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-6">
+      ${renderMiniBarChart('สรุปรายได้ตามบริการ', `${from || '-'} ถึง ${to || '-'}`, revenueTypeChartRows, '#10b981')}
+      ${renderMiniBarChart('สรุปกระเป๋าคนขับ', `${selectedDriverId ? 'รายบุคคล' : 'ทุกคนขับ'}`, walletChartRows, '#06b6d4')}
+    </div>
+
+    <!-- Wallet Credit Summary -->
+    <div class="glass-card p-6 mt-6">
+      <div class="flex items-center gap-3 mb-5">
+        <div class="w-10 h-10 bg-cyan-50 rounded-xl flex items-center justify-center"><span class="material-icons-round text-cyan-600">account_balance_wallet</span></div>
+        <div>
+          <h3 class="font-bold text-gray-800">รายงานยอดเครดิต (Wallet)</h3>
+          <p class="text-xs text-gray-400">${selectedDriverId ? 'รายบุคคล' : 'คนขับทั้งหมด'} • ${from || '-'} ถึง ${to || '-'}</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        ${statCard('wallet', 'ยอดเครดิตรวมทั้งหมดของคนขับ', '฿' + fmt(Math.round(totalDriverWalletBalance)), 'bg-cyan-500')}
+        ${statCard('trending_down', 'ยอดเครดิตที่หักแล้ว', '฿' + fmt(Math.round(totalDeducted)), 'bg-rose-500')}
+        ${statCard('add_circle', 'ยอดเติมทั้งหมด', '฿' + fmt(Math.round(totalTopup)), 'bg-emerald-500')}
+        ${statCard('north_east', 'ยอดถอนทั้งหมด', '฿' + fmt(Math.round(totalWithdraw)), 'bg-amber-500')}
+      </div>
+
+      <div class="overflow-x-auto mt-5 border border-gray-100 rounded-2xl">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-gray-50/80">
+              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">คนขับ</th>
+              <th class="px-5 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">เครดิตคงเหลือ</th>
+              <th class="px-5 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">หักแล้ว</th>
+              <th class="px-5 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">เติมทั้งหมด</th>
+              <th class="px-5 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">ถอนทั้งหมด</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            ${walletRows.length === 0
+              ? '<tr><td colspan="5" class="px-5 py-8 text-center text-gray-400">ไม่พบข้อมูล Wallet ของคนขับในเงื่อนไขที่เลือก</td></tr>'
+              : walletRows.map(row => `
+                <tr class="table-row">
+                  <td class="px-5 py-3.5">
+                    <div class="font-semibold text-gray-700">${row.name}</div>
+                    <div class="text-xs text-gray-400">${row.phone}</div>
+                  </td>
+                  <td class="px-5 py-3.5 text-right font-bold text-cyan-700">฿${fmt(Math.round(row.balance))}</td>
+                  <td class="px-5 py-3.5 text-right font-semibold text-rose-600">฿${fmt(Math.round(row.deducted))}</td>
+                  <td class="px-5 py-3.5 text-right font-semibold text-emerald-600">฿${fmt(Math.round(row.topup))}</td>
+                  <td class="px-5 py-3.5 text-right font-semibold text-amber-600">฿${fmt(Math.round(row.withdraw))}</td>
+                </tr>
+              `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- Platform Income Breakdown -->
     <div class="glass-card p-6 mt-6">
       <div class="flex items-center gap-3 mb-5">
@@ -4405,6 +4648,20 @@ async function loadRevenue() {
       </div>
     </div>
   `;
+}
+
+function exportRevenueCsv() {
+  const from = document.getElementById('revDateFrom')?.value || '';
+  const to = document.getElementById('revDateTo')?.value || '';
+  const rows = window._revenueExportRows || [];
+  exportRowsToCsv(reportFilename('revenue_wallet_report', 'csv', from, to), ['คนขับ', 'เบอร์โทร', 'เครดิตคงเหลือ', 'หักแล้ว', 'เติมทั้งหมด', 'ถอนทั้งหมด'], rows);
+}
+
+function exportRevenueExcel() {
+  const from = document.getElementById('revDateFrom')?.value || '';
+  const to = document.getElementById('revDateTo')?.value || '';
+  const rows = window._revenueExportRows || [];
+  exportRowsToExcel(reportFilename('revenue_wallet_report', 'xls', from, to), ['คนขับ', 'เบอร์โทร', 'เครดิตคงเหลือ', 'หักแล้ว', 'เติมทั้งหมด', 'ถอนทั้งหมด'], rows);
 }
 
 function exportRevenueCsv() {
@@ -5391,9 +5648,34 @@ function filterComplaints(status) {
   let filtered = window._allComplaints || [];
   if (status) filtered = filtered.filter(t => t.status === status);
   window._filteredComplaints = filtered;
+  window._filteredComplaints = filtered;
   document.getElementById('complaintsTableBody').innerHTML = renderComplaintRows(
     filtered, window._complaintUserMap, window._complaintStatusMap, window._complaintCategoryMap
   );
+}
+
+function exportComplaintsCsv() {
+  const rows = (window._filteredComplaints || window._allComplaints || []).map((t) => ({
+    ผู้ร้องเรียน: window._complaintUserMap?.[t.user_id]?.full_name || '-',
+    บทบาท: window._complaintUserMap?.[t.user_id]?.role || '-',
+    หมวดหมู่: window._complaintCategoryMap?.[t.category] || t.category || '-',
+    หัวข้อ: t.subject || '-',
+    สถานะ: t.status || '-',
+    วันที่: fmtDate(t.created_at),
+  }));
+  exportRowsToCsv(reportFilename('complaints_report', 'csv', '', ''), ['ผู้ร้องเรียน', 'บทบาท', 'หมวดหมู่', 'หัวข้อ', 'สถานะ', 'วันที่'], rows);
+}
+
+function exportComplaintsExcel() {
+  const rows = (window._filteredComplaints || window._allComplaints || []).map((t) => ({
+    ผู้ร้องเรียน: window._complaintUserMap?.[t.user_id]?.full_name || '-',
+    บทบาท: window._complaintUserMap?.[t.user_id]?.role || '-',
+    หมวดหมู่: window._complaintCategoryMap?.[t.category] || t.category || '-',
+    หัวข้อ: t.subject || '-',
+    สถานะ: t.status || '-',
+    วันที่: fmtDate(t.created_at),
+  }));
+  exportRowsToExcel(reportFilename('complaints_report', 'xls', '', ''), ['ผู้ร้องเรียน', 'บทบาท', 'หมวดหมู่', 'หัวข้อ', 'สถานะ', 'วันที่'], rows);
 }
 
 function exportComplaintsCsv() {

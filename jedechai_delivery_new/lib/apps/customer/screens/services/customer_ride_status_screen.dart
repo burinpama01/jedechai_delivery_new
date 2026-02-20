@@ -13,6 +13,7 @@ import '../../../../common/services/supabase_service.dart';
 import '../../../../common/config/env_config.dart';
 import '../../../../common/services/auth_service.dart';
 import '../../../../common/services/chat_service.dart';
+import '../../../../common/utils/order_code_formatter.dart';
 import '../../../../common/widgets/location_disclosure_dialog.dart';
 import '../../../../common/widgets/chat_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -1195,7 +1196,13 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text('หมายเลขออเดอร์', style: TextStyle(fontSize: 11, color: Colors.black54)),
-                        Text('#${bookingId.substring(0, 8)}', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.blue[700])),
+                        Text(
+                          OrderCodeFormatter.formatByServiceType(
+                            bookingId,
+                            serviceType: booking.serviceType,
+                          ),
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.blue[700]),
+                        ),
                       ],
                     ),
                   ],

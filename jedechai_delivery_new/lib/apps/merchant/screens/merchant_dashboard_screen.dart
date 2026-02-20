@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../common/services/auth_service.dart';
 import '../../../common/services/system_config_service.dart';
+import '../../../common/utils/order_code_formatter.dart';
 import '../../../theme/app_theme.dart';
 import 'order_detail_screen.dart';
 
@@ -548,7 +549,10 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
   Widget _buildOrderCard(Map<String, dynamic> order) {
     final status = order['status'] as String? ?? 'unknown';
     final price = (order['price'] as num?)?.toDouble() ?? 0;
-    final orderId = (order['id'] as String?)?.substring(0, 8) ?? '-';
+    final orderId = OrderCodeFormatter.formatByServiceType(
+      order['id']?.toString(),
+      serviceType: order['service_type']?.toString(),
+    );
     final createdAt = _formatDate(order['created_at']);
     final notes = order['notes'] as String?;
 

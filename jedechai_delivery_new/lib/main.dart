@@ -93,6 +93,8 @@ class _MyAppState extends State<MyApp> {
         navigatorKey: AppNavigationService.navigatorKey,
         restorationScopeId: 'app',
         theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.system,
         locale: const Locale('th', 'TH'),
         supportedLocales: const [
           Locale('th', 'TH'),

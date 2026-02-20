@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../../../theme/app_theme.dart';
 import '../../../../common/services/auth_service.dart';
+import '../../../../common/services/fare_adjustment_service.dart';
 import '../../../../common/services/supabase_service.dart';
 import '../../../../common/services/system_config_service.dart';
 import '../../../../common/models/booking.dart';
@@ -50,6 +51,13 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
   // Online driver counts per vehicle type
   Map<String, int> _onlineDriverCounts = {'มอเตอร์ไซค์': 0, 'รถยนต์': 0};
   double _driverSearchRadiusKm = 30.0;
+  RideFarPickupConfig _rideFarPickupConfig = const RideFarPickupConfig(
+    thresholdKm: 3,
+    motorcycleRatePerKm: 5,
+    carRatePerKm: 7,
+  );
+  double _estimatedDriverToPickupKm = 0.0;
+  double _estimatedPickupSurcharge = 0.0;
 
   // Vehicle types with rate keys for service_rates table
   final List<Map<String, dynamic>> _vehicleTypes = [
@@ -80,6 +88,23 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
     _loadDriverSearchRadius();
     _checkOnlineDrivers();
     _loadRideRates();
+    _loadRideFarPickupConfig();
+  }
+
+  Future<void> _loadRideFarPickupConfig() async {
+    try {
+      final config = await FareAdjustmentService.loadRideFarPickupConfig();
+      if (!mounted) return;
+      setState(() {
+        _rideFarPickupConfig = config;
+      });
+
+      if (_estimatedDistance > 0 && _selectedVehicleIndex >= 0) {
+        await _recalculateEstimatedFareWithNearestDriver();
+      }
+    } catch (e) {
+      debugLog('⚠️ Could not load ride far pickup config: $e');
+    }
   }
 
   Future<void> _loadDriverSearchRadius() async {
@@ -122,10 +147,49 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
       debugLog('📊 Loaded ride rates: ${_rideRates.keys.join(', ')}');
       // Recalculate price if distance already known
       if (_estimatedDistance > 0 && _selectedVehicleIndex >= 0) {
-        setState(() => _estimatedPrice = _calculatePrice(_estimatedDistance));
+        await _recalculateEstimatedFareWithNearestDriver();
       }
     } catch (e) {
       debugLog('⚠️ Could not load ride rates: $e');
+    }
+  }
+
+  Future<void> _recalculateEstimatedFareWithNearestDriver() async {
+    if (_selectedVehicleIndex < 0 || _currentLocation == null) return;
+
+    final basePrice = _calculatePrice(_estimatedDistance);
+    final vehicleName = _vehicleTypes[_selectedVehicleIndex]['name'] as String;
+
+    try {
+      final nearestDriverDistanceKm =
+          await FareAdjustmentService.findNearestOnlineDriverDistanceKm(
+        pickupLat: _currentLocation!.latitude,
+        pickupLng: _currentLocation!.longitude,
+        vehicleType: vehicleName,
+      );
+
+      final surcharge = nearestDriverDistanceKm == null
+          ? 0.0
+          : FareAdjustmentService.calculateRideFarPickupSurcharge(
+              driverToPickupDistanceKm: nearestDriverDistanceKm,
+              vehicleType: vehicleName,
+              config: _rideFarPickupConfig,
+            );
+
+      if (!mounted) return;
+      setState(() {
+        _estimatedDriverToPickupKm = nearestDriverDistanceKm ?? 0.0;
+        _estimatedPickupSurcharge = surcharge;
+        _estimatedPrice = basePrice + surcharge;
+      });
+    } catch (e) {
+      debugLog('⚠️ Could not estimate nearest driver surcharge: $e');
+      if (!mounted) return;
+      setState(() {
+        _estimatedDriverToPickupKm = 0.0;
+        _estimatedPickupSurcharge = 0.0;
+        _estimatedPrice = basePrice;
+      });
     }
   }
 
@@ -373,8 +437,8 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
 
           // Use real distance for price calculation
           _estimatedDistance = realDistance;
-          _estimatedPrice = _calculatePrice(_estimatedDistance);
         });
+        await _recalculateEstimatedFareWithNearestDriver();
       } else {
         // Fallback to straight line if API fails
         _getStraightLineRoute();
@@ -415,8 +479,8 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
         _selectedDestination!.latitude,
         _selectedDestination!.longitude,
       );
-      _estimatedPrice = _calculatePrice(_estimatedDistance);
     });
+    _recalculateEstimatedFareWithNearestDriver();
   }
 
   double _calculateDistance(
@@ -554,7 +618,16 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
           '   └─ Destination: ${_selectedDestination!.latitude}, ${_selectedDestination!.longitude}');
       debugLog('   └─ Distance: $_estimatedDistance km');
       debugLog('   └─ Price: ฿$_estimatedPrice');
+      debugLog('   └─ Driver→Pickup: ${_estimatedDriverToPickupKm.toStringAsFixed(2)} km');
+      debugLog('   └─ Pickup surcharge: ฿${_estimatedPickupSurcharge.toStringAsFixed(2)}');
       debugLog('   └─ Vehicle: $vehicleName');
+
+      final noteLines = <String>['ประเภทรถ: $vehicleName'];
+      if (_estimatedPickupSurcharge > 0) {
+        noteLines.add(
+          'เพิ่มระยะคนขับ→จุดรับ ${_estimatedDriverToPickupKm.toStringAsFixed(2)} กม. (+฿${_estimatedPickupSurcharge.toStringAsFixed(2)})',
+        );
+      }
 
       final response = await SupabaseService.client
           .from('bookings')
@@ -572,7 +645,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
             'price': _estimatedPrice,
             'status': 'pending',
             'payment_method': _paymentMethod,
-            'notes': 'ประเภทรถ: $vehicleName',
+            'notes': noteLines.join(' | '),
           })
           .select()
           .single();
@@ -745,10 +818,10 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
   void _onVehicleChanged(int index) {
     setState(() {
       _selectedVehicleIndex = index;
-      if (_estimatedDistance > 0) {
-        _estimatedPrice = _calculatePrice(_estimatedDistance);
-      }
     });
+    if (_estimatedDistance > 0) {
+      _recalculateEstimatedFareWithNearestDriver();
+    }
   }
 
   @override

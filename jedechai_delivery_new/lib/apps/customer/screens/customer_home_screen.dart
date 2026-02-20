@@ -7,6 +7,7 @@ import '../../../common/services/auth_service.dart';
 import '../../../common/services/profile_service.dart';
 import '../../../common/models/booking.dart';
 import '../../../common/services/supabase_service.dart';
+import '../../../common/utils/order_code_formatter.dart';
 import '../../../common/widgets/app_network_image.dart';
 import 'ride/ride_home_screen.dart';
 import 'services/food_home_screen.dart';
@@ -981,7 +982,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'ออเดอร์ #${booking.id.substring(0, 8)}',
+                          'ออเดอร์ ${OrderCodeFormatter.formatByServiceType(booking.id, serviceType: booking.serviceType)}',
                           style: TextStyle(
                             fontSize: 11,
                             color: Colors.grey[600],

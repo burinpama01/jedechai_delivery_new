@@ -12,6 +12,7 @@ import 'package:vibration/vibration.dart';
 import '../../../common/services/auth_service.dart';
 import '../../../common/services/location_service.dart';
 import '../../../common/services/notification_sender.dart';
+import '../../../common/utils/order_code_formatter.dart';
 import '../../../common/widgets/location_disclosure_dialog.dart';
 import 'order_detail_screen.dart';
 
@@ -459,7 +460,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
 
           // Log all orders with their status for debugging
           //for (final order in merchantOrders) {
-          //  print('📦 Order ${order['id']?.toString().substring(0, 8)}: status=${order['status']}, merchant_id=${order['merchant_id']}');
+          //  print('📦 Order ${OrderCodeFormatter.format(order['id']?.toString())}: status=${order['status']}, merchant_id=${order['merchant_id']}');
           //}
 
           // Filter based on whether we're showing active or history
@@ -483,7 +484,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               final isActive = activeStatuses.contains(status);
               if (isActive) {
                 debugLog(
-                    '✅ Active order: ${item['id']?.toString().substring(0, 8)} - $status');
+                    '✅ Active order: ${OrderCodeFormatter.format(item['id']?.toString())} - $status');
               }
               return isActive;
             }
@@ -556,7 +557,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
 
       // Log all orders with their status
       //for (final order in data) {
-      //  print('📦 Order ${order['id']?.toString().substring(0, 8)}: status=${order['status']}, merchant_id=${order['merchant_id']}');
+      //  print('📦 Order ${OrderCodeFormatter.format(order['id']?.toString())}: status=${order['status']}, merchant_id=${order['merchant_id']}');
       //}
 
       final filteredOrders = data.where((item) {
@@ -577,7 +578,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           final isActive = activeStatuses.contains(status);
           if (isActive) {
             debugLog(
-                '✅ Active order found: ${item['id']?.toString().substring(0, 8)} - $status');
+                '✅ Active order found: ${OrderCodeFormatter.format(item['id']?.toString())} - $status');
           }
           return isActive;
         }
@@ -1484,7 +1485,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                   ),
                   const Spacer(),
                   Text(
-                    '#${order['id'].toString().substring(0, 8)}',
+                    OrderCodeFormatter.format(order['id']?.toString()),
                     style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.85),
                         fontSize: 12,
@@ -1686,6 +1687,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
 
   Widget _buildActionButtons(Map<String, dynamic> order, String status) {
     switch (status) {
+      case 'pending_merchant':
       case 'pending':
         return Row(
           children: [

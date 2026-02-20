@@ -7,6 +7,7 @@ import '../../../../common/services/profile_service.dart';
 import '../../../../common/services/supabase_service.dart';
 import '../../../../common/services/auth_service.dart';
 import '../../../../common/services/chat_service.dart';
+import '../../../../common/utils/order_code_formatter.dart';
 import '../../../../common/widgets/chat_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../customer_home_screen.dart';
@@ -40,6 +41,8 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
   Timer? _autoRefreshTimer;
   String? _lastKnownStatus;
   String? _lastKnownDriverId;
+  bool _isHandlingPriceAdjustment = false;
+  late double _initialQuotedPrice;
   
   bool _isDriverFound = false;
   bool _isDriverAssigned = false;
@@ -78,6 +81,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
     
     _radarAnimationController.repeat();
     _pulseAnimationController.repeat();
+    _initialQuotedPrice = widget.booking.price;
     
     // Listen to real-time booking updates
     _listenToBookingUpdates();
@@ -118,6 +122,71 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
     } catch (e) {
       debugLog('❌ Auto refresh status error: $e');
     }
+  }
+
+  Future<bool> _confirmAdjustedPriceIfNeeded(Booking booking) async {
+    if (booking.serviceType != 'ride') return true;
+    if (_isHandlingPriceAdjustment) return false;
+
+    final adjustedPrice = booking.price;
+    if (adjustedPrice <= _initialQuotedPrice) {
+      _initialQuotedPrice = adjustedPrice;
+      return true;
+    }
+
+    _isHandlingPriceAdjustment = true;
+
+    final proceed = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            title: const Text('ราคาอัปเดตใหม่'),
+            content: Text(
+              'ราคาถูกปรับใหม่เนื่องจากคนขับที่รับงานอยู่เกินระยะที่กำหนด\n\n'
+              'ราคาเดิม: ฿${_initialQuotedPrice.toStringAsFixed(2)}\n'
+              'ราคาใหม่: ฿${adjustedPrice.toStringAsFixed(2)}\n\n'
+              'ต้องการดำเนินการต่อหรือไม่?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('ยกเลิกงาน'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('ดำเนินการต่อ'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (proceed) {
+      _initialQuotedPrice = adjustedPrice;
+      _isHandlingPriceAdjustment = false;
+      return true;
+    }
+
+    try {
+      await SupabaseService.client
+          .from('bookings')
+          .update({
+            'status': 'cancelled',
+            'notes': '${booking.notes ?? ''} | ลูกค้ายกเลิกหลังปรับราคาจากระยะคนขับ',
+          })
+          .eq('id', booking.id);
+    } catch (e) {
+      debugLog('❌ Failed to cancel adjusted booking: $e');
+    }
+
+    _isHandlingPriceAdjustment = false;
+    if (!mounted) return false;
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
+      (route) => false,
+    );
+    return false;
   }
 
   void _listenToBookingUpdates() {
@@ -233,6 +302,10 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
             if (!mounted) return;
             final fullBooking = await _fetchFullBooking(bookingData['id'] as String);
             if (!mounted || fullBooking == null) return;
+
+            final canContinue = await _confirmAdjustedPriceIfNeeded(fullBooking);
+            if (!mounted || !canContinue) return;
+
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
                 builder: (context) => CustomerRideStatusScreen(
@@ -248,6 +321,10 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
             if (!mounted) return;
             final fullBooking = await _fetchFullBooking(bookingData['id'] as String);
             if (!mounted || fullBooking == null) return;
+
+            final canContinue = await _confirmAdjustedPriceIfNeeded(fullBooking);
+            if (!mounted || !canContinue) return;
+
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
                 builder: (context) => CustomerRideStatusScreen(
@@ -263,6 +340,10 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
           if (!mounted) return;
           final fullBooking = await _fetchFullBooking(bookingData['id'] as String);
           if (!mounted || fullBooking == null) return;
+
+          final canContinue = await _confirmAdjustedPriceIfNeeded(fullBooking);
+          if (!mounted || !canContinue) return;
+
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (context) => CustomerRideStatusScreen(
@@ -900,7 +981,9 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('รหัสออเดอร์: ${widget.booking.id.substring(0, 8)}'),
+            Text(
+              'รหัสออเดอร์: ${OrderCodeFormatter.formatByServiceType(widget.booking.id, serviceType: widget.booking.serviceType)}',
+            ),
             const SizedBox(height: 8),
             Text('ประเภท: ${widget.booking.serviceType}'),
             const SizedBox(height: 8),

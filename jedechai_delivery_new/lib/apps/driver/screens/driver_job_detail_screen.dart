@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../common/models/booking.dart';
 import '../../../common/config/env_config.dart';
 import '../../../common/services/supabase_service.dart';
+import '../../../common/utils/order_code_formatter.dart';
 import '../../../theme/app_theme.dart';
 import '../../../utils/debug_logger.dart';
 
@@ -83,7 +84,7 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
       Marker(
         markerId: const MarkerId('origin'),
         position: LatLng(b.originLat, b.originLng),
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
         infoWindow: InfoWindow(title: b.pickupAddress ?? 'จุดรับ'),
       ),
       Marker(
@@ -143,18 +144,38 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
   // Compute trip duration from timestamps or stored value
   String _tripDuration() {
     final b = widget.booking;
-    if (b.tripDurationMinutes != null) return '${b.tripDurationMinutes} นาที';
+    if (b.tripDurationMinutes != null) {
+      final mins = b.tripDurationMinutes!.abs();
+      if (mins >= 60) {
+        return '${mins ~/ 60} ชม. ${mins % 60} น.';
+      }
+      return '$mins นาที';
+    }
     if (b.startedAt != null && b.completedAt != null) {
-      final dur = b.completedAt!.difference(b.startedAt!);
+      final dur = b.completedAt!.difference(b.startedAt!).abs();
       if (dur.inHours > 0) return '${dur.inHours} ชม. ${dur.inMinutes % 60} น.';
       return '${dur.inMinutes} นาที';
     }
     if (b.assignedAt != null && b.completedAt != null) {
-      final dur = b.completedAt!.difference(b.assignedAt!);
+      final dur = b.completedAt!.difference(b.assignedAt!).abs();
       if (dur.inHours > 0) return '${dur.inHours} ชม. ${dur.inMinutes % 60} น.';
       return '${dur.inMinutes} นาที';
     }
     return '-';
+  }
+
+  String _serviceDateTimeSummary() {
+    final b = widget.booking;
+    final dateText = DateFormat('dd MMM yyyy').format(b.createdAt.toLocal());
+
+    final assigned = b.assignedAt?.toLocal();
+    final completed = b.completedAt?.toLocal();
+    if (assigned != null && completed != null) {
+      return '$dateText, ${DateFormat('HH:mm').format(assigned)} - ${DateFormat('HH:mm').format(completed)}';
+    }
+
+    final created = b.createdAt.toLocal();
+    return '$dateText, ${DateFormat('HH:mm').format(created)}';
   }
 
   double _displayDistance() {
@@ -190,7 +211,7 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
           // ── Map Section ──
           if (_hasValidCoordinates)
             SizedBox(
-              height: 220,
+              height: 180,
               child: GoogleMap(
                 initialCameraPosition: CameraPosition(
                   target: LatLng(
@@ -265,13 +286,17 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
                       children: [
                         Icon(Icons.calendar_today, size: 14, color: AppTheme.textSecondary),
                         const SizedBox(width: 6),
-                        Text(
-                          DateFormat('d MMM yyyy, HH:mm').format(b.createdAt),
-                          style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                        Expanded(
+                          child: Text(
+                            _serviceDateTimeSummary(),
+                            style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                          ),
                         ),
-                        const Spacer(),
                         Text(
-                          '#${b.id.substring(0, 8).toUpperCase()}',
+                          OrderCodeFormatter.formatByServiceType(
+                            b.id,
+                            serviceType: b.serviceType,
+                          ),
                           style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary, fontFamily: 'monospace'),
                         ),
                       ],

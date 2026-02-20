@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../common/models/booking.dart';
+import '../../../common/utils/order_code_formatter.dart';
 import '../../../common/widgets/status_badge.dart';
 import '../../../theme/app_theme.dart';
 import '../../../utils/connection_helper.dart';
@@ -837,7 +838,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'รหัส #${_shortBookingId(booking.id)}',
+                          'รหัส ${_shortBookingId(booking.id, booking.serviceType)}',
                           style: TextStyle(
                             fontSize: 11,
                             color: Colors.grey[500],
@@ -1017,9 +1018,11 @@ class _ActivityScreenState extends State<ActivityScreen> {
     );
   }
 
-  String _shortBookingId(String id) {
-    if (id.length <= 8) return id;
-    return id.substring(0, 8);
+  String _shortBookingId(String id, String serviceType) {
+    return OrderCodeFormatter.formatByServiceType(
+      id,
+      serviceType: serviceType,
+    );
   }
 
   Widget _buildMetaChip(IconData icon, String label) {

@@ -1,6 +1,7 @@
 ﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'system_config_service.dart';
+import '../utils/order_code_formatter.dart';
 
 /// WalletService - Service สำหรับจัดการกระเป๋าเงินคนขับ
 /// 
@@ -264,12 +265,12 @@ class WalletService {
       debugLog('   └─ ยอดเงินใหม่: $newBalance บาท');
 
       // 1. บันทึกประวัติการทำรายการ
-      final shortId = bookingId.length > 8 ? bookingId.substring(0, 8) : bookingId;
+      final shortId = OrderCodeFormatter.format(bookingId);
       await _supabase.from('wallet_transactions').insert({
         'wallet_id': wallet.id,
         'amount': -totalDeduction,
         'type': 'commission',
-        'description': 'หักค่าบริการระบบ ออเดอร์ #$shortId',
+        'description': 'หักค่าบริการระบบ ออเดอร์ $shortId',
         'related_booking_id': bookingId,
       });
 

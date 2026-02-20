@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:geolocator/geolocator.dart';
 import '../../../common/services/services.dart';
 import '../../../common/models/models.dart';
+import '../../../common/utils/order_code_formatter.dart';
 import '../../../common/widgets/location_disclosure_dialog.dart';
 import '../../../common/services/driver_foreground_service.dart';
 import '../../customer/screens/auth/login_screen.dart';
@@ -907,6 +908,44 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+            child: InkWell(
+              onTap: _toggleOnlineStatus,
+              borderRadius: BorderRadius.circular(999),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _isOnline
+                      ? Colors.green.withValues(alpha: 0.18)
+                      : Colors.white.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: _isOnline
+                        ? Colors.greenAccent.withValues(alpha: 0.6)
+                        : Colors.white.withValues(alpha: 0.35),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _isOnline ? Icons.toggle_on : Icons.toggle_off,
+                      size: 18,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _isOnline ? 'ออนไลน์' : 'ออฟไลน์',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
           // Profile button
           IconButton(
             icon: const Icon(Icons.person),
@@ -939,296 +978,159 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                     AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6)), // Blue
               ),
             )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Driver Welcome Section
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFF1E3A8A),
-                          Color(0xFF3B82F6)
-                        ], // Deep blue to blue
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.blue.withValues(alpha: 0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+          : RefreshIndicator(
+              onRefresh: _manualRefresh,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildCompactDriverHeader(),
+                    const SizedBox(height: 14),
+
+                    // Job Feed Section
+                    Row(
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.work,
-                                        size: 32,
-                                        color: Colors.white,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            const Text(
-                                              'ยินดีต้อนรับ!',
-                                              style: TextStyle(
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                            Text(
-                                              _driverProfile?['full_name'] ??
-                                                  'คนขับ',
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: _isOnline
-                                              ? Colors.green
-                                                  .withValues(alpha: 0.3)
-                                              : Colors.grey
-                                                  .withValues(alpha: 0.3),
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Container(
-                                              width: 8,
-                                              height: 8,
-                                              decoration: BoxDecoration(
-                                                color: _isOnline
-                                                    ? Colors.green
-                                                    : Colors.grey,
-                                                shape: BoxShape.circle,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              _isOnline ? 'ออนไลน์' : 'ออฟไลน์',
-                                              style: const TextStyle(
-                                                fontSize: 10,
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      if (_driverProfile?['vehicle_type'] !=
-                                          null) ...[
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 8, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white
-                                                .withValues(alpha: 0.2),
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                          ),
-                                          child: Text(
-                                            _displayVehicleType(
-                                              _driverProfile!['vehicle_type']
-                                                  as String?,
-                                            ),
-                                            style: const TextStyle(
-                                              fontSize: 10,
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(
-                                Icons.person,
-                                color: Colors.white,
-                                size: 28,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildQuickStat(
-                                'งานรอรับ',
-                                '${_availableJobs.length}',
-                                Icons.pending_actions,
-                                Colors.white.withValues(alpha: 0.9),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildQuickStat(
-                                'รายได้วันนี้',
-                                '฿${_todayEarnings.toStringAsFixed(0)}',
-                                Icons.attach_money,
-                                Colors.white.withValues(alpha: 0.9),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Quick Actions
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildQuickActionCard(
-                          icon: Icons.refresh,
-                          title: 'รีเฟรช',
-                          subtitle: 'งานใหม่',
-                          color: _isRefreshing ? Colors.grey : Colors.blue,
-                          onTap: _isRefreshing ? null : _manualRefresh,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildQuickActionCard(
-                          icon: _isOnline ? Icons.toggle_on : Icons.toggle_off,
-                          title: _isOnline ? 'ออนไลน์' : 'ออฟไลน์',
-                          subtitle: 'สถานะ',
-                          color: _isOnline ? Colors.green : Colors.grey,
-                          onTap: _toggleOnlineStatus,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildQuickActionCard(
-                          icon: Icons.person,
-                          title: 'โปรไฟล์',
-                          subtitle: 'ข้อมูล',
-                          color: Colors.purple,
-                          onTap: () async {
-                            // Navigate to driver profile screen
-                            await Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const DriverProfileScreen(),
-                              ),
-                            );
-
-                            if (mounted) {
-                              await _loadDriverProfile();
-                            }
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Statistics Section
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatCard(
-                          'งานรอรับ',
-                          '${_availableJobs.length}',
-                          Icons.work,
-                          const Color(0xFF3B82F6), // Blue
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildStatCard(
-                          'เสร็จวันนี้',
-                          '$_todayCompletedJobs',
-                          Icons.check_circle,
-                          Colors.green,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Job Feed Section
-                  Row(
-                    children: [
-                      const Text(
-                        'รายการงาน',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          'เรียลไทม์',
+                        const Text(
+                          'รายการงาน',
                           style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.blue,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  _buildJobFeed(),
-                ],
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            _isRefreshing ? 'กำลังรีเฟรช...' : 'เรียลไทม์',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.blue,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _buildJobFeed(),
+                  ],
+                ),
               ),
             ),
+    );
+  }
+
+  Widget _buildCompactDriverHeader() {
+    final driverName = _driverProfile?['full_name'] ?? 'คนขับ';
+    final vehicle = _displayVehicleType(_driverProfile?['vehicle_type'] as String?);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1E3A8A), Color(0xFF3B82F6)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.work_outline, color: Colors.white, size: 22),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      driverName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      vehicle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              InkWell(
+                borderRadius: BorderRadius.circular(999),
+                onTap: () async {
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const DriverProfileScreen(),
+                    ),
+                  );
+                  if (mounted) {
+                    await _loadDriverProfile();
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.18),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.person, color: Colors.white, size: 18),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _buildQuickStat(
+                  'งานรอรับ',
+                  '${_availableJobs.length}',
+                  Icons.pending_actions,
+                  Colors.white,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildQuickStat(
+                  'เสร็จวันนี้',
+                  '$_todayCompletedJobs',
+                  Icons.check_circle,
+                  Colors.white,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildQuickStat(
+                  'รายได้วันนี้',
+                  '฿${_todayEarnings.toStringAsFixed(0)}',
+                  Icons.payments,
+                  Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -1264,102 +1166,6 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildStatCard(
-      String title, String value, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
-            blurRadius: 4,
-            spreadRadius: 1,
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Icon(
-            icon,
-            color: color,
-            size: 32,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickActionCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Color color,
-    required VoidCallback? onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withValues(alpha: 0.1),
-              blurRadius: 4,
-              spreadRadius: 1,
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              color: color,
-              size: 24,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-              ),
-            ),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 10,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -1474,7 +1280,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                         isOfflineEmpty ? Colors.grey : const Color(0xFF3B82F6),
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
                 Text(
                   isOfflineEmpty ? 'คุณอยู่ในโหมดออฟไลน์' : 'ไม่มีงานใหม่',
                   style: const TextStyle(
@@ -1542,10 +1348,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     final serviceColor = _getServiceColor(job.serviceType);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withValues(alpha: 0.1),
@@ -1555,7 +1361,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1564,8 +1370,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               children: [
                 // Service Icon
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 38,
+                  height: 38,
                   decoration: BoxDecoration(
                     color: serviceColor.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
@@ -1573,10 +1379,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                   child: Icon(
                     serviceIcon,
                     color: serviceColor,
-                    size: 24,
+                    size: 19,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
 
                 // Center: Service Name with Type
                 Expanded(
@@ -1586,7 +1392,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                       Text(
                         _getJobTypeText(job.serviceType),
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: serviceColor,
                         ),
@@ -1594,7 +1400,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                       Text(
                         _getServiceLabel(job.serviceType),
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: Colors.black87,
                         ),
@@ -1607,20 +1413,20 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                 Text(
                   timeAgo,
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: 11,
                     color: Colors.grey,
                   ),
                 ),
               ],
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
 
             if (job.scheduledAt != null) ...[
               Container(
                 width: double.infinity,
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(
                   color: Colors.amber.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
@@ -1636,7 +1442,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                             ? 'งานนัดเวลา: รับได้ตั้งแต่ ${_formatScheduledDateTime(job.scheduledAt!)}'
                             : 'งานนัดเวลา: ${_formatScheduledDateTime(job.scheduledAt!)}',
                         style: const TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: Colors.black87,
                         ),
@@ -1645,13 +1451,13 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
             ],
 
             // Row 2: Financial Details
             _buildFinancialSummary(job),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 10),
 
             // Row 3: Route Details (Step-like UI)
             Column(
@@ -1677,7 +1483,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                           Text(
                             job.serviceType == 'food' ? 'ร้านอาหาร' : 'จุดรับ',
                             style: const TextStyle(
-                              fontSize: 12,
+                              fontSize: 11,
                               color: Colors.grey,
                               fontWeight: FontWeight.w500,
                             ),
@@ -1687,10 +1493,12 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                                 ? (job.pickupAddress ?? 'ตำแหน่งร้านอาหาร')
                                 : (job.pickupAddress ?? 'ตำแหน่งปัจจุบัน'),
                             style: const TextStyle(
-                              fontSize: 14,
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: Colors.black87,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
@@ -1703,7 +1511,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                   padding: const EdgeInsets.only(left: 7),
                   child: Container(
                     width: 2,
-                    height: 20,
+                    height: 14,
                     color: Colors.grey[300],
                   ),
                 ),
@@ -1731,7 +1539,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                                 ? 'ตำแหน่งลูกค้า'
                                 : 'จุดหมาย',
                             style: const TextStyle(
-                              fontSize: 12,
+                              fontSize: 11,
                               color: Colors.grey,
                               fontWeight: FontWeight.w500,
                             ),
@@ -1739,10 +1547,12 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                           Text(
                             job.destinationAddress ?? 'จุดหมายปลายทาง',
                             style: const TextStyle(
-                              fontSize: 14,
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: Colors.black87,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
@@ -1752,7 +1562,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               ],
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 10),
 
             // Row 4: Accept Button or Status
             _buildActionButtons(job),
@@ -2094,11 +1904,15 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       final driverProfile = await _getDriverProfile();
 
       // Send notification to merchant
+      final orderCode = OrderCodeFormatter.formatByServiceType(
+        booking['id']?.toString(),
+        serviceType: booking['service_type']?.toString(),
+      );
       final success = await NotificationSender.sendNotification(
         targetUserId: merchantId,
         title: '🚗 คนขับรับออเดอร์แล้ว!',
         body: driverProfile != null
-            ? 'คนขับ ${driverProfile['full_name'] ?? 'กำลังมา'} กำลังมารับอาหารออเดอร์ #${booking['id']?.toString().substring(0, 8) ?? ''}'
+            ? 'คนขับ ${driverProfile['full_name'] ?? 'กำลังมา'} กำลังมารับอาหารออเดอร์ $orderCode'
             : 'คนขับกำลังมารับอาหารออเดอร์ของคุณ',
         data: {
           'type': 'driver_accepted_food',

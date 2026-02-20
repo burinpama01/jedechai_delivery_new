@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../common/models/booking.dart';
 import '../../../../common/services/booking_service.dart';
+import '../../../../common/utils/order_code_formatter.dart';
 import '../../../../utils/debug_logger.dart';
 
 /// Cancellation Screen
@@ -189,7 +190,11 @@ class _CancellationScreenState extends State<CancellationScreen> {
                               Text(serviceLabel,
                                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                               const SizedBox(height: 4),
-                              Text('#${widget.booking.id.substring(0, 8).toUpperCase()}',
+                              Text(
+                                  OrderCodeFormatter.formatByServiceType(
+                                    widget.booking.id,
+                                    serviceType: widget.booking.serviceType,
+                                  ),
                                   style: const TextStyle(fontSize: 13, color: Colors.grey)),
                             ],
                           ),

@@ -8,6 +8,7 @@ import 'driver_job_detail_screen.dart';
 import '../../../common/models/booking.dart';
 import '../../../common/services/wallet_service.dart';
 import '../../../common/services/auth_service.dart';
+import '../../../common/utils/order_code_formatter.dart';
 
 /// Driver Earnings Screen
 ///
@@ -508,7 +509,10 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
     // final price = (job['price'] as num?)?.toDouble() ?? 0;
     // final deliveryFee = (job['delivery_fee'] as num?)?.toDouble() ?? 0;
     final serviceType = job['service_type'] as String? ?? 'unknown';
-    final jobId = (job['id'] as String?)?.substring(0, 8) ?? '-';
+    final jobId = OrderCodeFormatter.formatByServiceType(
+      job['id']?.toString(),
+      serviceType: serviceType,
+    );
     final createdAt = _formatDate(job['created_at']);
     // final totalCollect = serviceType == 'food' ? price + deliveryFee : price;
 
@@ -545,7 +549,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                 style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
               const Spacer(),
-              Text('#$jobId', style: TextStyle(fontSize: 12, color: Colors.grey[500], fontFamily: 'monospace')),
+              Text(jobId, style: TextStyle(fontSize: 12, color: Colors.grey[500], fontFamily: 'monospace')),
             ],
           ),
           const SizedBox(height: 10),

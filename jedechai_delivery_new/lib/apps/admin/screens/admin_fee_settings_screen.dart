@@ -33,6 +33,13 @@ class _AdminFeeSettingsScreenState extends State<AdminFeeSettingsScreen> {
   final _commissionController = TextEditingController();
   final _maxRadiusController = TextEditingController();
   final _promptPayController = TextEditingController();
+  final _merchantGpSystemRateController = TextEditingController();
+  final _merchantGpDriverRateController = TextEditingController();
+  final _rideFarPickupThresholdController = TextEditingController();
+  final _rideFarPickupMotoRateController = TextEditingController();
+  final _rideFarPickupCarRateController = TextEditingController();
+  final _foodFarPickupThresholdController = TextEditingController();
+  final _foodFarPickupRateController = TextEditingController();
 
   // Service rates
   List<Map<String, dynamic>> _serviceRates = [];
@@ -51,6 +58,13 @@ class _AdminFeeSettingsScreenState extends State<AdminFeeSettingsScreen> {
     _commissionController.dispose();
     _maxRadiusController.dispose();
     _promptPayController.dispose();
+    _merchantGpSystemRateController.dispose();
+    _merchantGpDriverRateController.dispose();
+    _rideFarPickupThresholdController.dispose();
+    _rideFarPickupMotoRateController.dispose();
+    _rideFarPickupCarRateController.dispose();
+    _foodFarPickupThresholdController.dispose();
+    _foodFarPickupRateController.dispose();
     super.dispose();
   }
 
@@ -68,6 +82,27 @@ class _AdminFeeSettingsScreenState extends State<AdminFeeSettingsScreen> {
           .from('service_rates')
           .select()
           .order('service_type');
+
+      final pickupAdjustRows = await Supabase.instance.client
+          .from('system_config')
+          .select('key, value')
+          .inFilter('key', [
+        'ride_far_pickup_threshold_km',
+        'ride_far_pickup_rate_per_km_motorcycle',
+        'ride_far_pickup_rate_per_km_car',
+        'food_far_pickup_threshold_km_default',
+        'food_far_pickup_rate_per_km_default',
+        'merchant_gp_system_rate_default',
+        'merchant_gp_driver_rate_default',
+      ]);
+      final pickupAdjustMap = <String, String>{};
+      for (final row in pickupAdjustRows) {
+        final key = row['key'] as String?;
+        final value = row['value'] as String?;
+        if (key != null && value != null) {
+          pickupAdjustMap[key] = value;
+        }
+      }
 
       // Load promptpay number
       String promptPay = '';
@@ -87,6 +122,26 @@ class _AdminFeeSettingsScreenState extends State<AdminFeeSettingsScreen> {
           _commissionController.text = _configService.commissionRate.toStringAsFixed(1);
           _maxRadiusController.text = _configService.maxDeliveryRadius.toStringAsFixed(1);
           _promptPayController.text = promptPay;
+          _merchantGpSystemRateController.text =
+              ((double.tryParse(pickupAdjustMap['merchant_gp_system_rate_default'] ?? '') ??
+                          _configService.merchantGpRate) *
+                      100)
+                  .toStringAsFixed(1);
+          _merchantGpDriverRateController.text =
+              ((double.tryParse(pickupAdjustMap['merchant_gp_driver_rate_default'] ?? '') ??
+                          0.0) *
+                      100)
+                  .toStringAsFixed(1);
+          _rideFarPickupThresholdController.text =
+              pickupAdjustMap['ride_far_pickup_threshold_km'] ?? '3';
+          _rideFarPickupMotoRateController.text =
+              pickupAdjustMap['ride_far_pickup_rate_per_km_motorcycle'] ?? '5';
+          _rideFarPickupCarRateController.text =
+              pickupAdjustMap['ride_far_pickup_rate_per_km_car'] ?? '7';
+          _foodFarPickupThresholdController.text =
+              pickupAdjustMap['food_far_pickup_threshold_km_default'] ?? '3';
+          _foodFarPickupRateController.text =
+              pickupAdjustMap['food_far_pickup_rate_per_km_default'] ?? '5';
           _serviceRates = List<Map<String, dynamic>>.from(ratesResponse);
           _isLoading = false;
         });
@@ -113,6 +168,19 @@ class _AdminFeeSettingsScreenState extends State<AdminFeeSettingsScreen> {
       final minWallet = int.parse(_minWalletController.text);
       final commissionRate = double.parse(_commissionController.text) / 100;
       final maxRadius = double.parse(_maxRadiusController.text);
+      final merchantGpSystemRate =
+          double.parse(_merchantGpSystemRateController.text) / 100;
+      final merchantGpDriverRate =
+          double.parse(_merchantGpDriverRateController.text) / 100;
+      final rideFarThreshold =
+          double.parse(_rideFarPickupThresholdController.text);
+      final rideFarMotoRate =
+          double.parse(_rideFarPickupMotoRateController.text);
+      final rideFarCarRate =
+          double.parse(_rideFarPickupCarRateController.text);
+      final foodFarThreshold =
+          double.parse(_foodFarPickupThresholdController.text);
+      final foodFarRate = double.parse(_foodFarPickupRateController.text);
 
       // Validate ranges
       if (platformFeeRate < 0 || platformFeeRate > 1) {
@@ -120,6 +188,19 @@ class _AdminFeeSettingsScreenState extends State<AdminFeeSettingsScreen> {
       }
       if (merchantGpRate < 0 || merchantGpRate > 1) {
         throw Exception('Merchant GP ต้องอยู่ระหว่าง 0-100%');
+      }
+      if (merchantGpSystemRate < 0 || merchantGpSystemRate > 1) {
+        throw Exception('Merchant GP เข้าระบบ ต้องอยู่ระหว่าง 0-100%');
+      }
+      if (merchantGpDriverRate < 0 || merchantGpDriverRate > 1) {
+        throw Exception('Merchant GP ให้คนขับ ต้องอยู่ระหว่าง 0-100%');
+      }
+      final splitTotal = merchantGpSystemRate + merchantGpDriverRate;
+      if ((splitTotal - merchantGpRate).abs() > 0.0001) {
+        throw Exception(
+          'Merchant GP รวมต้องเท่ากับ (เข้าระบบ + ให้คนขับ)\n'
+          'ปัจจุบันรวม ${(merchantGpRate * 100).toStringAsFixed(1)}% แต่ split เป็น ${(splitTotal * 100).toStringAsFixed(1)}%',
+        );
       }
       if (commissionRate < 0 || commissionRate > 1) {
         throw Exception('Commission ต้องอยู่ระหว่าง 0-100%');
@@ -129,6 +210,13 @@ class _AdminFeeSettingsScreenState extends State<AdminFeeSettingsScreen> {
       }
       if (maxRadius <= 0) {
         throw Exception('รัศมีจัดส่งต้องมากกว่า 0');
+      }
+      if (rideFarThreshold < 0 ||
+          rideFarMotoRate < 0 ||
+          rideFarCarRate < 0 ||
+          foodFarThreshold < 0 ||
+          foodFarRate < 0) {
+        throw Exception('ค่าระยะและราคาเพิ่มต่อกม. ต้องมากกว่าหรือเท่ากับ 0');
       }
 
       // Update system_config table
@@ -147,6 +235,44 @@ class _AdminFeeSettingsScreenState extends State<AdminFeeSettingsScreen> {
           .from('system_config')
           .update(configUpdate)
           .eq('id', 1);
+
+      await Supabase.instance.client.from('system_config').upsert([
+        {
+          'key': 'ride_far_pickup_threshold_km',
+          'value': rideFarThreshold.toStringAsFixed(2),
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+        {
+          'key': 'ride_far_pickup_rate_per_km_motorcycle',
+          'value': rideFarMotoRate.toStringAsFixed(2),
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+        {
+          'key': 'ride_far_pickup_rate_per_km_car',
+          'value': rideFarCarRate.toStringAsFixed(2),
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+        {
+          'key': 'food_far_pickup_threshold_km_default',
+          'value': foodFarThreshold.toStringAsFixed(2),
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+        {
+          'key': 'food_far_pickup_rate_per_km_default',
+          'value': foodFarRate.toStringAsFixed(2),
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+        {
+          'key': 'merchant_gp_system_rate_default',
+          'value': merchantGpSystemRate.toStringAsFixed(4),
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+        {
+          'key': 'merchant_gp_driver_rate_default',
+          'value': merchantGpDriverRate.toStringAsFixed(4),
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+      ], onConflict: 'key');
 
       // Update service rates
       for (final rate in _serviceRates) {
@@ -243,6 +369,89 @@ class _AdminFeeSettingsScreenState extends State<AdminFeeSettingsScreen> {
                         icon: Icons.store,
                         color: AppTheme.primaryGreen,
                         suffix: '%',
+                      ),
+                      const SizedBox(height: 12),
+
+                      _buildFeeCard(
+                        title: 'Merchant GP เข้าระบบ (ส่วนหัก wallet)',
+                        subtitle: '% จากราคาอาหารที่หัก wallet คนขับเข้าระบบ',
+                        controller: _merchantGpSystemRateController,
+                        icon: Icons.account_balance,
+                        color: Colors.redAccent,
+                        suffix: '%',
+                      ),
+                      const SizedBox(height: 12),
+
+                      _buildFeeCard(
+                        title: 'Merchant GP ให้คนขับ (ไม่หัก wallet)',
+                        subtitle: '% จากราคาอาหารที่เพิ่มรายได้ให้คนขับเท่านั้น',
+                        controller: _merchantGpDriverRateController,
+                        icon: Icons.volunteer_activism,
+                        color: Colors.green,
+                        suffix: '%',
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'หมายเหตุ: Merchant GP รวม ต้องเท่ากับ เข้าระบบ + ให้คนขับ เช่น 20% = ระบบ 10% + คนขับ 10%',
+                        style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                      ),
+                      const SizedBox(height: 24),
+
+                      _buildSectionHeader('ตั้งค่าปรับราคาเมื่อคนขับไกลจุดรับ'),
+                      const SizedBox(height: 16),
+                      _buildFeeCard(
+                        title: 'Ride: ระยะฟรีก่อนคิดเพิ่ม',
+                        subtitle: 'หากคนขับไกลจุดรับเกินค่านี้ จะคิดเพิ่มตามราคาต่อกม.',
+                        controller: _rideFarPickupThresholdController,
+                        icon: Icons.route,
+                        color: Colors.indigo,
+                        suffix: 'กม.',
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildFeeCard(
+                        title: 'Ride: ราคาส่วนเพิ่ม/กม. (มอเตอร์ไซค์)',
+                        subtitle: 'ค่าเริ่มต้น 5 บาท/กม.',
+                        controller: _rideFarPickupMotoRateController,
+                        icon: Icons.two_wheeler,
+                        color: Colors.indigo,
+                        suffix: '฿',
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildFeeCard(
+                        title: 'Ride: ราคาส่วนเพิ่ม/กม. (รถยนต์)',
+                        subtitle: 'ค่าเริ่มต้น 7 บาท/กม.',
+                        controller: _rideFarPickupCarRateController,
+                        icon: Icons.directions_car,
+                        color: Colors.indigo,
+                        suffix: '฿',
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildFeeCard(
+                        title: 'Food (ค่าเริ่มต้น): ระยะฟรีก่อนคิดเพิ่ม',
+                        subtitle: 'ใช้เมื่อร้านไม่มีตั้งค่ารายร้าน',
+                        controller: _foodFarPickupThresholdController,
+                        icon: Icons.store_mall_directory,
+                        color: Colors.deepOrange,
+                        suffix: 'กม.',
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildFeeCard(
+                        title: 'Food (ค่าเริ่มต้น): ราคาส่วนเพิ่ม/กม.',
+                        subtitle: 'ใช้เมื่อร้านไม่มีตั้งค่ารายร้าน',
+                        controller: _foodFarPickupRateController,
+                        icon: Icons.payments,
+                        color: Colors.deepOrange,
+                        suffix: '฿',
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'หมายเหตุ: การตั้งค่ารายร้านใช้ค่าจากโปรไฟล์ร้าน custom_base_distance และ custom_per_km (แอดมินปรับรายร้านได้)',
+                        style: TextStyle(fontSize: 12, color: Colors.grey[700]),
                       ),
                       const SizedBox(height: 24),
 

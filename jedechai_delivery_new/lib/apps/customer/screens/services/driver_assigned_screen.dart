@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../common/models/booking.dart';
+import '../../../../common/utils/order_code_formatter.dart';
 
 /// Driver Assigned Screen
 /// 
@@ -96,7 +97,7 @@ class _DriverAssignedScreenState extends State<DriverAssignedScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  'Booking ID: ${widget.booking.id.substring(0, 8)}...',
+                  'Booking ID: ${OrderCodeFormatter.formatByServiceType(widget.booking.id, serviceType: widget.booking.serviceType)}',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[600],

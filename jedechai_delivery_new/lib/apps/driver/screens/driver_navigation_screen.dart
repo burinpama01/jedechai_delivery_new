@@ -19,8 +19,10 @@ import '../../../common/services/chat_service.dart';
 import '../../../common/widgets/chat_screen.dart';
 import '../../../common/services/merchant_food_config_service.dart';
 import '../../../common/models/booking.dart';
+import '../../../common/utils/order_code_formatter.dart';
 import '../../../theme/app_theme.dart';
 import '../../../common/config/env_config.dart';
+import '../../customer/screens/services/support_tickets_screen.dart';
 import 'driver_main_screen.dart';
 import 'driver_job_detail_screen.dart';
 
@@ -56,6 +58,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   bool _isLoading = true;
   bool _isUpdatingStatus = false;
   String? _lastKnownStatus;
+  bool _isInfoPanelCollapsed = false;
   
   // Customer info
   // ignore: unused_field
@@ -203,6 +206,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       final config = MerchantFoodConfigService.resolve(
         merchantProfile: merchantProfile,
         defaultMerchantSystemRate: configService.merchantGpRate,
+        defaultMerchantDriverRate: 0.0,
         defaultDeliverySystemRate: configService.platformFeeRate,
       );
 
@@ -627,36 +631,13 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   Future<void> _openSupportChat() async {
     if (_booking == null) return;
-    final driverId = AuthService.userId;
-    if (driverId == null) {
-      _showErrorSnackBar('ไม่สามารถเปิดแชทได้');
-      return;
-    }
-    try {
-      final chatService = ChatService();
-      final room = await chatService.getOrCreateSupportChatRoom(
-        bookingId: _booking!.id,
-        customerId: driverId,
-      );
-      if (room != null && mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ChatScreen(
-              bookingId: _booking!.id,
-              chatRoomId: room.id,
-              otherPartyName: 'ฝ่ายสนับสนุน',
-              roomType: 'support',
-            ),
-          ),
-        );
-      } else {
-        _showErrorSnackBar('ไม่สามารถเปิดห้องแชทได้');
-      }
-    } catch (e) {
-      debugLog('❌ Error opening support chat: $e');
-      _showErrorSnackBar('เกิดข้อผิดพลาดในการเปิดแชท');
-    }
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SupportTicketsScreen(bookingId: _booking!.id),
+      ),
+    );
   }
 
   Future<void> _cancelJob() async {
@@ -2246,6 +2227,10 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     final distanceText = booking.distanceKm > 0
         ? '${booking.distanceKm.toStringAsFixed(1)} km'
         : '—';
+    final showMerchantCallButton = booking.serviceType == 'food' &&
+        _merchantPhone.isNotEmpty &&
+        !['picking_up_order', 'in_transit', 'completed', 'cancelled']
+            .contains(booking.status);
 
     return PopScope(
       canPop: false,
@@ -2262,7 +2247,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('งานที่กำลังดำเนินการ', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-            Text('#${booking.id.substring(0, 8)}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w400)),
+            Text(OrderCodeFormatter.format(booking.id), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w400)),
           ],
         ),
         backgroundColor: AppTheme.accentBlue,
@@ -2346,12 +2331,47 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                     ],
                   ),
                 ),
+                Positioned(
+                  left: 12,
+                  right: 72,
+                  top: 12,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _buildFloatingInfoChip(
+                          _getServiceTypeIcon(),
+                          'ประเภท',
+                          _getServiceTypeName(),
+                          Colors.blue,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildFloatingInfoChip(
+                          Icons.route_rounded,
+                          'ระยะทาง',
+                          distanceText,
+                          Colors.orange,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
 
           // ===== Bottom Panel =====
-          Container(
+          GestureDetector(
+            onVerticalDragEnd: (details) {
+              if (details.primaryVelocity == null) return;
+              if (details.primaryVelocity! > 120) {
+                setState(() => _isInfoPanelCollapsed = true);
+              } else if (details.primaryVelocity! < -120) {
+                setState(() => _isInfoPanelCollapsed = false);
+              }
+            },
+            child: Container(
             width: double.infinity,
             decoration: BoxDecoration(
               color: Colors.white,
@@ -2371,6 +2391,41 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Center(
+                            child: Container(
+                              width: 56,
+                              height: 5,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                borderRadius: BorderRadius.circular(99),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => setState(() {
+                              _isInfoPanelCollapsed = !_isInfoPanelCollapsed;
+                            }),
+                            borderRadius: BorderRadius.circular(20),
+                            child: Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: Icon(
+                                _isInfoPanelCollapsed
+                                    ? Icons.keyboard_arrow_up_rounded
+                                    : Icons.keyboard_arrow_down_rounded,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
                     // ─── แถบสถานะ + นำทาง + โทร ───
                     Row(
                       children: [
@@ -2425,7 +2480,6 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                     ),
                     const SizedBox(height: 10),
 
-                    // ─── ปุ่ม Action หลัก ───
                     SizedBox(
                       width: double.infinity,
                       height: 52,
@@ -2452,6 +2506,9 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                         ),
                       ),
                     ),
+                    if (_isInfoPanelCollapsed) ...[
+                      const SizedBox(height: 2),
+                    ] else ...[
                     // ─── ปุ่มดูรายการอาหาร (เฉพาะ food) ───
                     if (booking.serviceType == 'food') ...[
                       const SizedBox(height: 8),
@@ -2469,30 +2526,6 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                         ),
                       ),
                     ],
-                    const SizedBox(height: 10),
-
-                    // ─── การ์ดข้อมูลงาน: ประเภท + ระยะทาง ───
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildInfoCard(
-                            _getServiceTypeIcon(),
-                            'ประเภท',
-                            _getServiceTypeName(),
-                            Colors.blue,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _buildInfoCard(
-                            Icons.route_rounded,
-                            'ระยะทาง',
-                            distanceText,
-                            Colors.orange,
-                          ),
-                        ),
-                      ],
-                    ),
                     const SizedBox(height: 10),
 
                     // ─── ข้อมูลลูกค้า ───
@@ -2581,7 +2614,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                 ],
                               ),
                             ),
-                            if (_merchantPhone.isNotEmpty)
+                            if (showMerchantCallButton)
                               InkWell(
                                 onTap: _callMerchant,
                                 borderRadius: BorderRadius.circular(20),
@@ -2636,10 +2669,12 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                         ),
                       ],
                     ),
+                    ],
                   ],
                 ),
               ),
             ),
+          ),
           ),
         ],
       ),
@@ -2684,25 +2719,55 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     );
   }
 
-  /// การ์ดข้อมูลงาน (ประเภท, ระยะทาง)
-  Widget _buildInfoCard(IconData icon, String label, String value, Color color) {
+  Widget _buildFloatingInfoChip(
+    IconData icon,
+    String label,
+    String value,
+    Color color,
+  ) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: Colors.white.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: Colors.white),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Column(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 22, color: color),
-          const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[500], fontWeight: FontWeight.w500)),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey[800]),
-            textAlign: TextAlign.center,
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[800],
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
