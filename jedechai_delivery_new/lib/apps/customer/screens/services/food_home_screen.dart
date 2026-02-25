@@ -359,7 +359,13 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
               // Header + Search
               _buildHeader(),
               // Categories
-              SliverToBoxAdapter(child: _buildCategories()),
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _FixedHeightSliverHeaderDelegate(
+                  height: 122,
+                  child: _buildCategories(),
+                ),
+              ),
               // Promo Banner
               SliverToBoxAdapter(child: _buildPromoBanner()),
               // Top Selling Items
@@ -553,22 +559,27 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                             ? Border.all(color: cat.color, width: 2)
                             : null,
                       ),
-                      child: Icon(cat.icon,
-                          color: isSelected ? cat.color : colorScheme.onSurfaceVariant,
-                          size: 28),
+                      child: Icon(
+                        cat.icon,
+                        color:
+                            isSelected ? cat.color : colorScheme.onSurfaceVariant,
+                        size: 28,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       cat.name,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 12,
                         fontWeight:
                             isSelected ? FontWeight.bold : FontWeight.w500,
-                        color: isSelected ? cat.color : colorScheme.onSurfaceVariant,
+                        color: isSelected
+                            ? cat.color
+                            : colorScheme.onSurfaceVariant,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -622,7 +633,9 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                             fit: BoxFit.cover,
                             width: double.infinity,
                             height: 120,
-                            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                            backgroundColor: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest,
                           )
                         : const GrayscaleLogoPlaceholder(
                             width: double.infinity,
@@ -641,19 +654,20 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
-                    _foodBanners.length,
-                    (i) => AnimatedContainer(
-                          duration: const Duration(milliseconds: 250),
-                          width: i == _currentBannerIndex ? 16 : 6,
-                          height: 6,
-                          margin: const EdgeInsets.symmetric(horizontal: 2),
-                          decoration: BoxDecoration(
-                            color: i == _currentBannerIndex
-                                ? AppTheme.accentOrange
-                                : Theme.of(context).colorScheme.outlineVariant,
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                        )),
+                  _foodBanners.length,
+                  (i) => AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    width: i == _currentBannerIndex ? 16 : 6,
+                    height: 6,
+                    margin: const EdgeInsets.symmetric(horizontal: 2),
+                    decoration: BoxDecoration(
+                      color: i == _currentBannerIndex
+                          ? AppTheme.accentOrange
+                          : Theme.of(context).colorScheme.outlineVariant,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                ),
               ),
             ),
         ],
@@ -1215,6 +1229,32 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => const _CartBottomSheet(),
     );
+  }
+}
+
+class _FixedHeightSliverHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double height;
+  final Widget child;
+
+  _FixedHeightSliverHeaderDelegate({
+    required this.height,
+    required this.child,
+  });
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return child;
+  }
+
+  @override
+  bool shouldRebuild(covariant _FixedHeightSliverHeaderDelegate oldDelegate) {
+    return oldDelegate.height != height || oldDelegate.child != child;
   }
 }
 
