@@ -94,6 +94,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final isSupport = widget.roomType == 'support';
 
     return Scaffold(
@@ -126,7 +127,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         : 'ออเดอร์ ${OrderCodeFormatter.format(widget.bookingId)}',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.white.withValues(alpha: 0.8),
+                      color: colorScheme.onPrimary.withValues(alpha: 0.85),
                     ),
                   ),
                 ],
@@ -156,6 +157,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildEmptyChat(bool isSupport) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -163,7 +165,7 @@ class _ChatScreenState extends State<ChatScreen> {
           Icon(
             Icons.chat_bubble_outline_rounded,
             size: 64,
-            color: Colors.grey[300],
+            color: colorScheme.outlineVariant,
           ),
           const SizedBox(height: 16),
           Text(
@@ -173,13 +175,13 @@ class _ChatScreenState extends State<ChatScreen> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w500,
-              color: Colors.grey[600],
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'ส่งข้อความเพื่อเริ่มสนทนา',
-            style: TextStyle(fontSize: 13, color: Colors.grey[400]),
+            style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
           ),
         ],
       ),
@@ -215,6 +217,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildDateDivider(DateTime date) {
+    final colorScheme = Theme.of(context).colorScheme;
     final now = DateTime.now();
     String label;
     if (_isSameDay(date, now)) {
@@ -229,19 +232,19 @@ class _ChatScreenState extends State<ChatScreen> {
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         children: [
-          Expanded(child: Divider(color: Colors.grey[300])),
+          Expanded(child: Divider(color: colorScheme.outlineVariant)),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Text(
               label,
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey[500],
+                color: colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w500,
               ),
             ),
           ),
-          Expanded(child: Divider(color: Colors.grey[300])),
+          Expanded(child: Divider(color: colorScheme.outlineVariant)),
         ],
       ),
     );
@@ -260,7 +263,7 @@ class _ChatScreenState extends State<ChatScreen> {
         decoration: BoxDecoration(
           color: isMe
               ? AppTheme.primaryGreen
-              : Colors.grey[200],
+              : colorScheme.surfaceContainer,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
@@ -296,7 +299,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     imageUrl: message.imageUrl,
                     width: 200,
                     fit: BoxFit.cover,
-                    backgroundColor: Colors.grey[300],
+                    backgroundColor: colorScheme.surfaceContainerHighest,
                   ),
                 ),
               ),
@@ -369,6 +372,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildInputBar() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: EdgeInsets.only(
         left: 12,
@@ -377,10 +381,10 @@ class _ChatScreenState extends State<ChatScreen> {
         bottom: MediaQuery.of(context).padding.bottom + 8,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.12),
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),
@@ -398,9 +402,9 @@ class _ChatScreenState extends State<ChatScreen> {
               onSubmitted: (_) => _sendMessage(),
               decoration: InputDecoration(
                 hintText: 'พิมพ์ข้อความ...',
-                hintStyle: TextStyle(color: Colors.grey[400]),
+                hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
                 filled: true,
-                fillColor: Colors.grey[100],
+                fillColor: colorScheme.surfaceContainerHighest,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 10,

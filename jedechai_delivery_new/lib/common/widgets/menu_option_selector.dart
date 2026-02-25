@@ -106,17 +106,19 @@ class _MenuOptionSelectorState extends State<MenuOptionSelector> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: widget.padding ?? const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
-          const Text(
+          Text(
             'ปรับแต่งออเดอร์',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 16),
@@ -133,17 +135,18 @@ class _MenuOptionSelectorState extends State<MenuOptionSelector> {
   }
 
   Widget _buildOptionGroup(MenuOptionGroup group) {
+    final colorScheme = Theme.of(context).colorScheme;
     final hasError = _validationErrors.containsKey(group.id);
     
     return Container(
       margin: const EdgeInsets.only(bottom: 24.0),
       decoration: BoxDecoration(
         border: Border.all(
-          color: hasError ? Colors.red : Colors.grey.shade300,
+          color: hasError ? colorScheme.error : colorScheme.outlineVariant,
           width: hasError ? 2 : 1,
         ),
         borderRadius: BorderRadius.circular(8),
-        color: hasError ? Colors.red.shade50 : null,
+        color: hasError ? colorScheme.errorContainer : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -165,11 +168,14 @@ class _MenuOptionSelectorState extends State<MenuOptionSelector> {
   }
 
   Widget _buildGroupHeader(MenuOptionGroup group, bool hasError) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: hasError ? Colors.red.shade100 : Colors.grey.shade100,
+        color: hasError
+            ? colorScheme.errorContainer
+            : colorScheme.surfaceContainerHighest,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(8),
           topRight: Radius.circular(8),
@@ -186,7 +192,7 @@ class _MenuOptionSelectorState extends State<MenuOptionSelector> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: hasError ? Colors.red.shade700 : null,
+                    color: hasError ? colorScheme.onErrorContainer : colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -194,7 +200,9 @@ class _MenuOptionSelectorState extends State<MenuOptionSelector> {
                   group.selectionType,
                   style: TextStyle(
                     fontSize: 12,
-                    color: hasError ? Colors.red.shade600 : Colors.grey.shade600,
+                    color: hasError
+                        ? colorScheme.onErrorContainer.withValues(alpha: 0.85)
+                        : colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -204,7 +212,7 @@ class _MenuOptionSelectorState extends State<MenuOptionSelector> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: hasError ? Colors.red : Colors.orange,
+                color: hasError ? colorScheme.error : colorScheme.secondary,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Text(
@@ -230,6 +238,7 @@ class _MenuOptionSelectorState extends State<MenuOptionSelector> {
   }
 
   Widget _buildRadioOption(MenuOptionGroup group, MenuOption option) {
+    final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: () => _onOptionChanged(group, option, true),
       child: Padding(
@@ -240,14 +249,14 @@ class _MenuOptionSelectorState extends State<MenuOptionSelector> {
               value: option.id,
               groupValue: group.options?.firstWhere((o) => o.isSelected, orElse: () => MenuOption(id: '', groupId: '', name: '', price: 0, isAvailable: true, createdAt: DateTime.now(), updatedAt: DateTime.now())).id,
               onChanged: (value) => _onOptionChanged(group, option, value != null),
-              activeColor: Theme.of(context).primaryColor,
+              activeColor: colorScheme.primary,
             ),
             Expanded(
               child: Text(
                 option.displayName,
                 style: TextStyle(
                   fontSize: 14,
-                  color: option.canSelect ? null : Colors.grey,
+                  color: option.canSelect ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
                   decoration: option.canSelect ? null : TextDecoration.lineThrough,
                 ),
               ),
@@ -258,7 +267,7 @@ class _MenuOptionSelectorState extends State<MenuOptionSelector> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).primaryColor,
+                  color: colorScheme.primary,
                 ),
               ),
           ],
@@ -268,6 +277,7 @@ class _MenuOptionSelectorState extends State<MenuOptionSelector> {
   }
 
   Widget _buildCheckboxOption(MenuOptionGroup group, MenuOption option) {
+    final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: () => _onOptionChanged(group, option, !option.isSelected),
       child: Padding(
@@ -277,14 +287,14 @@ class _MenuOptionSelectorState extends State<MenuOptionSelector> {
             Checkbox(
               value: option.isSelected,
               onChanged: (value) => _onOptionChanged(group, option, value),
-              activeColor: Theme.of(context).primaryColor,
+              activeColor: colorScheme.primary,
             ),
             Expanded(
               child: Text(
                 option.displayName,
                 style: TextStyle(
                   fontSize: 14,
-                  color: option.canSelect ? null : Colors.grey,
+                  color: option.canSelect ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
                   decoration: option.canSelect ? null : TextDecoration.lineThrough,
                 ),
               ),
@@ -295,7 +305,7 @@ class _MenuOptionSelectorState extends State<MenuOptionSelector> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).primaryColor,
+                  color: colorScheme.primary,
                 ),
               ),
           ],
@@ -305,12 +315,13 @@ class _MenuOptionSelectorState extends State<MenuOptionSelector> {
   }
 
   Widget _buildValidationSummary() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(top: 16.0),
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: Colors.red.shade50,
-        border: Border.all(color: Colors.red.shade200),
+        color: colorScheme.errorContainer,
+        border: Border.all(color: colorScheme.error.withValues(alpha: 0.35)),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -318,12 +329,12 @@ class _MenuOptionSelectorState extends State<MenuOptionSelector> {
         children: [
           Row(
             children: [
-              Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+              Icon(Icons.error_outline, color: colorScheme.onErrorContainer, size: 20),
               const SizedBox(width: 8),
               Text(
                 'กรุณาเลือกตัวเลือกที่จำเป็นให้ครบ',
                 style: TextStyle(
-                  color: Colors.red.shade700,
+                  color: colorScheme.onErrorContainer,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -335,7 +346,7 @@ class _MenuOptionSelectorState extends State<MenuOptionSelector> {
             child: Text(
               '• ${entry.value}',
               style: TextStyle(
-                color: Colors.red.shade600,
+                color: colorScheme.onErrorContainer.withValues(alpha: 0.9),
                 fontSize: 14,
               ),
             ),
@@ -387,6 +398,7 @@ class MenuOptionSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final selectedOptions = <MenuOption>[];
     int optionsTotal = 0;
 
@@ -408,9 +420,9 @@ class MenuOptionSummary extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -419,6 +431,7 @@ class MenuOptionSummary extends StatelessWidget {
             'ตัวเลือกที่เลือก',
             style: (textStyle ?? const TextStyle(fontSize: 14)).copyWith(
               fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 8),
@@ -438,7 +451,7 @@ class MenuOptionSummary extends StatelessWidget {
                     '+฿${option.price}',
                     style: (textStyle ?? const TextStyle(fontSize: 14)).copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Theme.of(context).primaryColor,
+                      color: colorScheme.primary,
                     ),
                   ),
               ],
@@ -459,7 +472,7 @@ class MenuOptionSummary extends StatelessWidget {
                   '+฿$optionsTotal',
                   style: (textStyle ?? const TextStyle(fontSize: 14)).copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).primaryColor,
+                    color: colorScheme.primary,
                   ),
                 ),
               ],
@@ -478,7 +491,7 @@ class MenuOptionSummary extends StatelessWidget {
                   '฿${basePrice + optionsTotal}',
                   style: (textStyle ?? const TextStyle(fontSize: 16)).copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).primaryColor,
+                    color: colorScheme.primary,
                   ),
                 ),
               ],

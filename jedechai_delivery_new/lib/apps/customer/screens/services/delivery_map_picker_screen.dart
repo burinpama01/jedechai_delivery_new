@@ -112,6 +112,7 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         title: const Text('เลือกตำแหน่งจัดส่ง'),
@@ -162,11 +163,11 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: colorScheme.surface,
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
+                              color: colorScheme.shadow.withValues(alpha: 0.12),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -179,9 +180,13 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
                               children: [
                                 Icon(Icons.location_on, color: Colors.red.shade700, size: 20),
                                 const SizedBox(width: 8),
-                                const Text(
+                                Text(
                                   'ตำแหน่งจัดส่ง',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: colorScheme.onSurface,
+                                  ),
                                 ),
                               ],
                             ),
@@ -194,18 +199,24 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
                                         height: 14,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
-                                          color: Colors.grey[400],
+                                          color: colorScheme.onSurfaceVariant,
                                         ),
                                       ),
                                       const SizedBox(width: 8),
-                                      Text('กำลังค้นหาที่อยู่...', style: TextStyle(color: Colors.grey[500], fontSize: 13)),
+                                      Text(
+                                        'กำลังค้นหาที่อยู่...',
+                                        style: TextStyle(
+                                          color: colorScheme.onSurfaceVariant,
+                                          fontSize: 13,
+                                        ),
+                                      ),
                                     ],
                                   )
                                 : Text(
                                     _addressText,
                                     style: TextStyle(
                                       fontSize: 13,
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      color: colorScheme.onSurfaceVariant,
                                     ),
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,

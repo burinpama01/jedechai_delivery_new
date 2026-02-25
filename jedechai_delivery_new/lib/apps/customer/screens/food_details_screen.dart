@@ -527,7 +527,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
         color: colorScheme.surfaceContainer,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: colorScheme.shadow.withValues(alpha: 0.12),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -547,8 +547,8 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
                     ? _addToCart
                     : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
-                  foregroundColor: Colors.white,
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -556,12 +556,12 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
                   elevation: 0,
                 ),
                 child: _isAddingToCart
-                    ? const SizedBox(
+                    ? SizedBox(
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(colorScheme.onPrimary),
                         ),
                       )
                     : Text(

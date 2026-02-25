@@ -222,6 +222,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
   }
 
   Widget _buildCoverImage() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -229,7 +230,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
             ? AppNetworkImage(
                 imageUrl: _shopPhotoUrl,
                 fit: BoxFit.cover,
-                backgroundColor: Colors.grey[200],
+                backgroundColor: colorScheme.surfaceContainerHighest,
               )
             : _buildCoverPlaceholder(),
         // Gradient overlay
@@ -265,10 +266,11 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
   }
 
   Widget _buildCoverPlaceholder() {
-    return const GrayscaleLogoPlaceholder(
+    final colorScheme = Theme.of(context).colorScheme;
+    return GrayscaleLogoPlaceholder(
       fit: BoxFit.contain,
-      backgroundColor: Colors.white,
-      padding: EdgeInsets.all(24),
+      backgroundColor: colorScheme.surfaceContainerHighest,
+      padding: const EdgeInsets.all(24),
     );
   }
 
@@ -330,18 +332,22 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: Colors.red[50],
+                color: colorScheme.errorContainer,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.red[100]!),
+                border: Border.all(color: colorScheme.error.withValues(alpha: 0.35)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.local_offer, size: 14, color: Colors.red[400]),
+                  Icon(Icons.local_offer, size: 14, color: colorScheme.onErrorContainer),
                   const SizedBox(width: 4),
                   Text(
                     _promoText!,
-                    style: TextStyle(fontSize: 12, color: Colors.red[600], fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colorScheme.onErrorContainer,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
@@ -414,13 +420,17 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
   }
 
   Widget _buildEmptyMenu() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.restaurant_menu, size: 64, color: Colors.grey[300]),
+          Icon(Icons.restaurant_menu, size: 64, color: colorScheme.outlineVariant),
           const SizedBox(height: 16),
-          Text('ไม่มีเมนูในขณะนี้', style: TextStyle(fontSize: 16, color: Colors.grey[500])),
+          Text(
+            'ไม่มีเมนูในขณะนี้',
+            style: TextStyle(fontSize: 16, color: colorScheme.onSurfaceVariant),
+          ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
             onPressed: _fetchData,
@@ -437,17 +447,28 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
   }
 
   Widget _buildErrorState() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+            Icon(Icons.error_outline, size: 64, color: colorScheme.error),
             const SizedBox(height: 16),
-            const Text('ไม่สามารถโหลดเมนูได้', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(
+              'ไม่สามารถโหลดเมนูได้',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+              ),
+            ),
             const SizedBox(height: 8),
-            Text('กรุณาลองใหม่อีกครั้ง', style: TextStyle(color: Colors.grey[500])),
+            Text(
+              'กรุณาลองใหม่อีกครั้ง',
+              style: TextStyle(color: colorScheme.onSurfaceVariant),
+            ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: _fetchData,
@@ -509,11 +530,12 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
   }
 
   void _showAddedSnackBar(String name) {
+    final colorScheme = Theme.of(context).colorScheme;
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('✅ เพิ่ม $name ลงตะกร้าแล้ว'),
-        backgroundColor: Colors.green,
+        backgroundColor: colorScheme.tertiary,
         duration: const Duration(seconds: 1),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -534,7 +556,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
             color: colorScheme.surfaceContainer,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
+                color: colorScheme.shadow.withValues(alpha: 0.12),
                 blurRadius: 10,
                 offset: const Offset(0, -4),
               ),
@@ -639,7 +661,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                             cart.clearCart();
                             Navigator.of(context).pop();
                           },
-                          child: const Text('ล้าง', style: TextStyle(color: Colors.red)),
+                          child: Text('ล้าง', style: TextStyle(color: colorScheme.error)),
                         ),
                       ],
                     ),
@@ -663,12 +685,12 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                               child: Container(
                                 width: 50,
                                 height: 50,
-                                color: Colors.grey[100],
+                                color: colorScheme.surfaceContainerHighest,
                                 child: item.imageUrl != null
                                     ? AppNetworkImage(
                                         imageUrl: item.imageUrl,
                                         fit: BoxFit.cover,
-                                        backgroundColor: Colors.grey[100],
+                                        backgroundColor: colorScheme.surfaceContainerHighest,
                                       )
                                     : const GrayscaleLogoPlaceholder(fit: BoxFit.contain),
                               ),
@@ -757,7 +779,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: colorScheme.outlineVariant),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -811,6 +833,7 @@ class _MenuItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final name = item['name'] ?? 'ไม่ระบุชื่อ';
     final description = item['description'] ?? '';
     final price = (item['price'] as num?)?.toDouble() ?? 0.0;
@@ -819,10 +842,14 @@ class _MenuItemCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2)),
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.08),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: InkWell(
@@ -838,12 +865,22 @@ class _MenuItemCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    Text(
+                      name,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
                     if (description.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Text(
                         description,
-                        style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -861,13 +898,17 @@ class _MenuItemCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Colors.orange.shade50,
+                          color: colorScheme.secondaryContainer,
                           borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: Colors.orange.shade200),
+                          border: Border.all(color: colorScheme.secondary.withValues(alpha: 0.35)),
                         ),
                         child: Text(
                           'ต้องเลือกตัวเลือก',
-                          style: TextStyle(fontSize: 10, color: Colors.orange.shade700, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: colorScheme.onSecondaryContainer,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
@@ -881,12 +922,12 @@ class _MenuItemCard extends StatelessWidget {
                 child: Container(
                   width: 90,
                   height: 90,
-                  color: Colors.grey[100],
+                  color: colorScheme.surfaceContainerHighest,
                   child: imageUrl != null
                       ? AppNetworkImage(
                           imageUrl: imageUrl,
                           fit: BoxFit.cover,
-                          backgroundColor: Colors.grey[100],
+                          backgroundColor: colorScheme.surfaceContainerHighest,
                         )
                       : _placeholder(),
                 ),
@@ -901,7 +942,6 @@ class _MenuItemCard extends StatelessWidget {
   Widget _placeholder() {
     return const GrayscaleLogoPlaceholder(
       fit: BoxFit.contain,
-      backgroundColor: Colors.white,
       padding: EdgeInsets.all(10),
     );
   }
@@ -980,8 +1020,9 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      color: Colors.white,
+      color: colorScheme.surface,
       child: tabBar,
     );
   }
