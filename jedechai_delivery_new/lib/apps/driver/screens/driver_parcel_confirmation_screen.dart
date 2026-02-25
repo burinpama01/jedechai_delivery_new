@@ -452,7 +452,7 @@ class _DriverParcelConfirmationScreenState
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Image.file(photo, fit: BoxFit.cover),
+                    AppFileImage(file: photo),
                     Positioned(
                       top: 8,
                       right: 8,

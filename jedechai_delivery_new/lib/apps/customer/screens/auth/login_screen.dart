@@ -137,6 +137,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final onSurface = theme.colorScheme.onSurface;
+    final secondaryText = onSurface.withValues(alpha: 0.82);
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -191,21 +195,21 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 32),
 
                 // Welcome Text
-                const Text(
+                Text(
                   'ยินดีต้อนรับ',
-                  style: TextStyle(
+                  style: theme.textTheme.headlineMedium?.copyWith(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
+                    color: onSurface,
                   ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'เข้าสู่ระบบเพื่อเริ่มใช้งาน',
-                  style: TextStyle(
+                  style: theme.textTheme.bodyLarge?.copyWith(
                     fontSize: 16,
-                    color: Colors.grey.shade600,
+                    color: secondaryText,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -317,7 +321,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('ยังไม่มีบัญชี? '),
+                    Text(
+                      'ยังไม่มีบัญชี? ',
+                      style: TextStyle(color: secondaryText),
+                    ),
                     TextButton(
                       onPressed: _isLoading
                           ? null

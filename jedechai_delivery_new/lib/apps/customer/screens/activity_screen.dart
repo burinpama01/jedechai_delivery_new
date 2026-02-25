@@ -346,44 +346,46 @@ class _ActivityScreenState extends State<ActivityScreen> {
     }
   }
 
-  Color _getServiceColor(String serviceType) {
+  Color _getServiceColor(BuildContext context, String serviceType) {
+    final colorScheme = Theme.of(context).colorScheme;
     switch (serviceType.toLowerCase()) {
       case 'ride':
       case 'taxi':
-        return Colors.blue;
+        return colorScheme.primary;
       case 'delivery':
       case 'parcel':
-        return Colors.orange;
+        return colorScheme.tertiary;
       case 'food':
-        return Colors.red;
+        return colorScheme.error;
       default:
-        return Colors.green;
+        return colorScheme.secondary;
     }
   }
 
-  Color _getStatusColor(String status) {
+  Color _getStatusColor(BuildContext context, String status) {
+    final colorScheme = Theme.of(context).colorScheme;
     switch (status.toLowerCase()) {
       case 'completed':
-        return Colors.green;
+        return colorScheme.secondary;
       case 'cancelled':
-        return Colors.red;
+        return colorScheme.error;
       case 'confirmed':
       case 'accepted':
       case 'driver_assigned':
       case 'driver_accepted':
-        return Colors.blue;
+        return colorScheme.primary;
       case 'in_progress':
       case 'in_transit':
       case 'preparing':
       case 'ready_for_pickup':
-        return Colors.purple;
+        return colorScheme.tertiary;
       case 'arrived':
-        return Colors.orange;
+        return colorScheme.tertiary;
       case 'pending':
       case 'searching':
-        return Colors.amber;
+        return colorScheme.tertiary;
       default:
-        return Colors.grey;
+        return colorScheme.onSurfaceVariant;
     }
   }
 
@@ -421,13 +423,14 @@ class _ActivityScreenState extends State<ActivityScreen> {
   @override
   Widget build(BuildContext context) {
     final filteredBookings = _getFilteredBookings();
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: const Text('ประวัติการใช้งาน'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: colorScheme.surface,
+        foregroundColor: colorScheme.onSurface,
         elevation: 0,
         actions: [
           IconButton(
@@ -492,15 +495,16 @@ class _ActivityScreenState extends State<ActivityScreen> {
   }
 
   Widget _buildDateFilterSection() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: colorScheme.shadow.withValues(alpha: 0.12),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -546,11 +550,11 @@ class _ActivityScreenState extends State<ActivityScreen> {
                     selectedColor: AppTheme.accentBlue,
                     labelStyle: TextStyle(
                       color: _dateFilter == _ActivityDateFilter.custom
-                          ? Colors.white
-                          : Colors.black87,
+                          ? colorScheme.onPrimary
+                          : colorScheme.onSurface,
                       fontWeight: FontWeight.w600,
                     ),
-                    backgroundColor: Colors.grey[100],
+                    backgroundColor: colorScheme.surfaceContainerHighest,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -565,6 +569,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
   }
 
   Widget _buildDateFilterChip(_ActivityDateFilter filter, String label) {
+    final colorScheme = Theme.of(context).colorScheme;
     final isSelected = _dateFilter == filter;
     return Padding(
       padding: const EdgeInsets.only(right: 8),
@@ -577,10 +582,10 @@ class _ActivityScreenState extends State<ActivityScreen> {
         },
         selectedColor: AppTheme.accentBlue,
         labelStyle: TextStyle(
-          color: isSelected ? Colors.white : Colors.black87,
+          color: isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
           fontWeight: FontWeight.w600,
         ),
-        backgroundColor: Colors.grey[100],
+        backgroundColor: colorScheme.surfaceContainerHighest,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
@@ -589,6 +594,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
   }
 
   Widget _buildStatsSection(List<Booking> filteredBookings) {
+    final colorScheme = Theme.of(context).colorScheme;
     final totalOrders = filteredBookings.length;
     final completedCount = _getCompletedCount(filteredBookings);
     final cancelledCount = _getCancelledCount(filteredBookings);
@@ -599,15 +605,18 @@ class _ActivityScreenState extends State<ActivityScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF3B82F6), Color(0xFF60A5FA)],
+        gradient: LinearGradient(
+          colors: [
+            colorScheme.primary,
+            colorScheme.primary.withValues(alpha: 0.78),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF3B82F6).withValues(alpha: 0.25),
+            color: colorScheme.primary.withValues(alpha: 0.28),
             blurRadius: 12,
             offset: const Offset(0, 5),
           ),
@@ -616,10 +625,10 @@ class _ActivityScreenState extends State<ActivityScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'สถิติการสั่งซื้อ',
             style: TextStyle(
-              color: Colors.white,
+              color: colorScheme.onPrimary,
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
@@ -627,8 +636,8 @@ class _ActivityScreenState extends State<ActivityScreen> {
           const SizedBox(height: 4),
           Text(
             'ช่วงเวลา: ${_getDateFilterText()}',
-            style: const TextStyle(
-              color: Colors.white70,
+            style: TextStyle(
+              color: colorScheme.onPrimary.withValues(alpha: 0.85),
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
@@ -651,10 +660,11 @@ class _ActivityScreenState extends State<ActivityScreen> {
   }
 
   Widget _buildStatChip(String label, String value) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.16),
+        color: colorScheme.onPrimary.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -662,18 +672,18 @@ class _ActivityScreenState extends State<ActivityScreen> {
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
-              color: Colors.white70,
+              color: colorScheme.onPrimary.withValues(alpha: 0.85),
               fontWeight: FontWeight.w500,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: Colors.white,
+              color: colorScheme.onPrimary,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -683,6 +693,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
   }
 
   Widget _buildFilteredEmptyWidget() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -692,7 +703,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.blue.withValues(alpha: 0.08),
+                color: colorScheme.primary.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -716,7 +727,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
-                color: Colors.grey[600],
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -734,6 +745,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
   }
 
   Widget _buildEmptyWidget() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -751,20 +763,20 @@ class _ActivityScreenState extends State<ActivityScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'ยังไม่มีประวัติ',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
-              color: Colors.black87,
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'ประวัติการจองของคุณจะแสดงที่นี่',
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey,
+              color: colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -773,6 +785,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
   }
 
   Widget _buildHistoryCard(Booking booking) {
+    final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: () {
         _handleBookingTap(booking);
@@ -780,11 +793,11 @@ class _ActivityScreenState extends State<ActivityScreen> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: colorScheme.shadow.withValues(alpha: 0.12),
               blurRadius: 10,
               spreadRadius: 0,
             ),
@@ -803,13 +816,13 @@ class _ActivityScreenState extends State<ActivityScreen> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: _getServiceColor(booking.serviceType)
+                      color: _getServiceColor(context, booking.serviceType)
                           .withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       _getServiceIcon(booking.serviceType),
-                      color: _getServiceColor(booking.serviceType),
+                      color: _getServiceColor(context, booking.serviceType),
                       size: 24,
                     ),
                   ),
@@ -825,15 +838,15 @@ class _ActivityScreenState extends State<ActivityScreen> {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: _getServiceColor(booking.serviceType),
+                            color: _getServiceColor(context, booking.serviceType),
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           _formatDateTime(booking.createdAt),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey,
+                            color: colorScheme.onSurfaceVariant,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -841,7 +854,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                           'รหัส ${_shortBookingId(booking.id, booking.serviceType)}',
                           style: TextStyle(
                             fontSize: 11,
-                            color: Colors.grey[500],
+                            color: colorScheme.onSurfaceVariant,
                             fontFamily: 'monospace',
                           ),
                         ),
@@ -864,19 +877,19 @@ class _ActivityScreenState extends State<ActivityScreen> {
               // Destination
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.location_on,
-                    color: Colors.grey,
+                    color: colorScheme.onSurfaceVariant,
                     size: 20,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       _formatAddress(booking.destinationAddress),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: Colors.black87,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -904,24 +917,29 @@ class _ActivityScreenState extends State<ActivityScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
-                    color: Colors.amber.withValues(alpha: 0.12),
+                    color: colorScheme.tertiaryContainer.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.amber.shade300),
+                    border: Border.all(
+                      color: colorScheme.tertiary.withValues(alpha: 0.45),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.schedule,
-                          size: 16, color: Colors.orange),
+                      Icon(
+                        Icons.schedule,
+                        size: 16,
+                        color: colorScheme.tertiary,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           booking.scheduledAt!.isAfter(DateTime.now())
                               ? 'นัดหมายรับบริการ: ${_formatScheduledDateTime(booking.scheduledAt!)}'
                               : 'ออเดอร์นัดหมาย: ${_formatScheduledDateTime(booking.scheduledAt!)}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: Colors.black87,
+                            color: colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -943,15 +961,15 @@ class _ActivityScreenState extends State<ActivityScreen> {
                         'ยอดชำระ',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey[600],
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
                       Text(
                         '฿${_getTotalPrice(booking).ceil()}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: colorScheme.onSurface,
                         ),
                       ),
                     ],
@@ -963,14 +981,14 @@ class _ActivityScreenState extends State<ActivityScreen> {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: Colors.grey[600],
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
                       const SizedBox(width: 2),
                       Icon(
                         Icons.chevron_right,
                         size: 18,
-                        color: Colors.grey[500],
+                        color: colorScheme.onSurfaceVariant,
                       ),
                     ],
                   ),
@@ -982,7 +1000,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: _getStatusColor(booking.status),
+                  color: _getStatusColor(context, booking.status),
                 ),
               ),
 
@@ -994,17 +1012,18 @@ class _ActivityScreenState extends State<ActivityScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.green.withValues(alpha: 0.1),
+                        color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(999),
                         border: Border.all(
-                            color: Colors.green.withValues(alpha: 0.3)),
+                          color: colorScheme.secondary.withValues(alpha: 0.45),
+                        ),
                       ),
                       child: Text(
                         _buildCouponLabel(booking),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: Colors.green,
+                          color: colorScheme.onSecondaryContainer,
                         ),
                       ),
                     ),
@@ -1026,23 +1045,24 @@ class _ActivityScreenState extends State<ActivityScreen> {
   }
 
   Widget _buildMetaChip(IconData icon, String label) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: Colors.grey[700]),
+          Icon(icon, size: 14, color: colorScheme.onSurfaceVariant),
           const SizedBox(width: 4),
           Text(
             label,
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: Colors.grey[700],
+              color: colorScheme.onSurfaceVariant,
             ),
           ),
         ],

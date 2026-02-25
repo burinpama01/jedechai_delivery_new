@@ -12,18 +12,19 @@ class PublicLandingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final isWide = width >= 900;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colorScheme.surface,
       body: SingleChildScrollView(
         child: Column(
           children: [
             _buildNavBar(context, isWide),
             _buildHeroSection(context, isWide),
-            _buildServicesSection(isWide),
-            _buildHowItWorksSection(isWide),
+            _buildServicesSection(context, isWide),
+            _buildHowItWorksSection(context, isWide),
             _buildDriverCTASection(context, isWide),
-            _buildFooter(isWide),
+            _buildFooter(context, isWide),
           ],
         ),
       ),
@@ -32,13 +33,14 @@ class PublicLandingScreen extends StatelessWidget {
 
   // ─── Navigation Bar ─────────────────────────────────
   Widget _buildNavBar(BuildContext context, bool isWide) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: isWide ? 80 : 24,
         vertical: 16,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
         boxShadow: [
           BoxShadow(color: Color(0x0A000000), blurRadius: 8, offset: Offset(0, 2)),
         ],
@@ -58,12 +60,12 @@ class PublicLandingScreen extends StatelessWidget {
                 child: const Icon(Icons.local_shipping_rounded, color: Colors.white, size: 20),
               ),
               const SizedBox(width: 10),
-              const Text(
+              Text(
                 'Jedechai',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
+                  color: colorScheme.onSurface,
                   letterSpacing: -0.5,
                 ),
               ),
@@ -89,6 +91,7 @@ class PublicLandingScreen extends StatelessWidget {
 
   // ─── Hero Section ───────────────────────────────────
   Widget _buildHeroSection(BuildContext context, bool isWide) {
+    final colorScheme = Theme.of(context).colorScheme;
     final content = Column(
       crossAxisAlignment: isWide ? CrossAxisAlignment.start : CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.center,
@@ -99,7 +102,7 @@ class PublicLandingScreen extends StatelessWidget {
           style: TextStyle(
             fontSize: isWide ? 48 : 32,
             fontWeight: FontWeight.w800,
-            color: AppTheme.textPrimary,
+            color: colorScheme.onSurface,
             height: 1.2,
             letterSpacing: -0.5,
           ),
@@ -110,7 +113,7 @@ class PublicLandingScreen extends StatelessWidget {
           textAlign: isWide ? TextAlign.left : TextAlign.center,
           style: TextStyle(
             fontSize: isWide ? 18 : 15,
-            color: AppTheme.textSecondary,
+            color: colorScheme.onSurfaceVariant,
             height: 1.6,
           ),
         ),
@@ -183,7 +186,8 @@ class PublicLandingScreen extends StatelessWidget {
   }
 
   // ─── Services Section ───────────────────────────────
-  Widget _buildServicesSection(bool isWide) {
+  Widget _buildServicesSection(BuildContext context, bool isWide) {
+    final colorScheme = Theme.of(context).colorScheme;
     final services = [
       _ServiceItem(
         icon: Icons.local_taxi_rounded,
@@ -210,38 +214,39 @@ class PublicLandingScreen extends StatelessWidget {
         horizontal: isWide ? 80 : 24,
         vertical: 64,
       ),
-      color: Colors.white,
+      color: colorScheme.surface,
       child: Column(
         children: [
-          const Text(
+          Text(
             'บริการของเรา',
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.w800,
-              color: AppTheme.textPrimary,
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'ครบทุกบริการในแอปเดียว',
-            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 16, color: colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 40),
           isWide
               ? Row(
                   children: services
-                      .map((s) => Expanded(child: _buildServiceCard(s)))
+                      .map((s) => Expanded(child: _buildServiceCard(context, s)))
                       .toList(),
                 )
               : Column(
-                  children: services.map((s) => _buildServiceCard(s)).toList(),
+                  children: services.map((s) => _buildServiceCard(context, s)).toList(),
                 ),
         ],
       ),
     );
   }
 
-  Widget _buildServiceCard(_ServiceItem item) {
+  Widget _buildServiceCard(BuildContext context, _ServiceItem item) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.all(8),
       padding: const EdgeInsets.all(28),
@@ -277,7 +282,7 @@ class PublicLandingScreen extends StatelessWidget {
           Text(
             item.description,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: Colors.grey[600], height: 1.5),
+            style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant, height: 1.5),
           ),
         ],
       ),
@@ -285,7 +290,8 @@ class PublicLandingScreen extends StatelessWidget {
   }
 
   // ─── How It Works ───────────────────────────────────
-  Widget _buildHowItWorksSection(bool isWide) {
+  Widget _buildHowItWorksSection(BuildContext context, bool isWide) {
+    final colorScheme = Theme.of(context).colorScheme;
     final steps = [
       _StepItem(number: '1', title: 'สมัครสมาชิก', description: 'ลงทะเบียนด้วยเบอร์โทร'),
       _StepItem(number: '2', title: 'เลือกบริการ', description: 'เรียกรถ สั่งอาหาร หรือส่งพัสดุ'),
@@ -301,26 +307,27 @@ class PublicLandingScreen extends StatelessWidget {
       color: const Color(0xFFF8FAFC),
       child: Column(
         children: [
-          const Text(
+          Text(
             'ใช้งานง่าย 4 ขั้นตอน',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: colorScheme.onSurface),
           ),
           const SizedBox(height: 40),
           isWide
               ? Row(
                   children: steps
-                      .map((s) => Expanded(child: _buildStepCard(s)))
+                      .map((s) => Expanded(child: _buildStepCard(context, s)))
                       .toList(),
                 )
               : Column(
-                  children: steps.map((s) => _buildStepCard(s)).toList(),
+                  children: steps.map((s) => _buildStepCard(context, s)).toList(),
                 ),
         ],
       ),
     );
   }
 
-  Widget _buildStepCard(_StepItem item) {
+  Widget _buildStepCard(BuildContext context, _StepItem item) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Column(
@@ -352,7 +359,7 @@ class PublicLandingScreen extends StatelessWidget {
           Text(
             item.description,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
           ),
         ],
       ),
@@ -406,7 +413,7 @@ class PublicLandingScreen extends StatelessWidget {
   }
 
   // ─── Footer ─────────────────────────────────────────
-  Widget _buildFooter(bool isWide) {
+  Widget _buildFooter(BuildContext context, bool isWide) {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: isWide ? 80 : 24,

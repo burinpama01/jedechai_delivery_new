@@ -87,6 +87,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -96,16 +97,16 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         decoration: BoxDecoration(
           color: isSelected
               ? Colors.orange.withValues(alpha: 0.08)
-              : Colors.grey[50],
+              : colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppTheme.accentOrange : Colors.grey.shade300,
+            color: isSelected ? AppTheme.accentOrange : colorScheme.outlineVariant,
           ),
         ),
         child: Row(
           children: [
             Icon(icon,
-                color: isSelected ? AppTheme.accentOrange : Colors.grey[600]),
+                color: isSelected ? AppTheme.accentOrange : colorScheme.onSurfaceVariant),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
@@ -116,7 +117,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -250,7 +251,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       final profile = await Supabase.instance.client
           .from('profiles')
           .select(
-              'latitude, longitude, shop_address, gp_rate, custom_delivery_fee, custom_service_fee, custom_base_fare, custom_base_distance, custom_per_km')
+              'latitude, longitude, shop_address, gp_rate, merchant_gp_system_rate, merchant_gp_driver_rate, custom_delivery_fee, custom_service_fee, custom_base_fare, custom_base_distance, custom_per_km')
           .eq('id', merchantId)
           .maybeSingle();
 
@@ -557,8 +558,9 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
   Widget build(BuildContext context) {
     return Consumer<CartProvider>(
       builder: (context, cart, _) {
+        final colorScheme = Theme.of(context).colorScheme;
         return Scaffold(
-          backgroundColor: Colors.grey[50],
+          backgroundColor: colorScheme.surface,
           appBar: AppBar(
             title: const Text('ยืนยันคำสั่งซื้อ'),
             backgroundColor: AppTheme.accentOrange,
@@ -611,7 +613,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                                             item.selectedOptions.join(', '),
                                             style: TextStyle(
                                                 fontSize: 12,
-                                                color: Colors.grey[500]),
+                                                color: colorScheme.onSurfaceVariant),
                                           ),
                                       ],
                                     ),
@@ -666,7 +668,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                           controller: _noteController,
                           decoration: InputDecoration(
                             hintText: 'เช่น ไม่ใส่ผัก, เผ็ดน้อย...',
-                            hintStyle: TextStyle(color: Colors.grey[400]),
+                            hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
                             border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10)),
                             contentPadding: const EdgeInsets.symmetric(
@@ -715,7 +717,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
               : Container(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: colorScheme.surfaceContainer,
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.08),
@@ -762,6 +764,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
 
   // ── Widget: เลือกที่อยู่จัดส่ง ──
   Widget _buildDeliveryAddressSelector() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       children: [
         // ตัวเลือก 1: ตำแหน่งปัจจุบัน
@@ -822,11 +825,11 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
           const SizedBox(height: 8),
           Row(
             children: [
-              Icon(Icons.directions_car, size: 14, color: Colors.grey[400]),
+              Icon(Icons.directions_car, size: 14, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: 4),
               Text(
                 'ระยะทาง: ${_distanceKm.toStringAsFixed(1)} กม.',
-                style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
               ),
             ],
           ),
@@ -841,6 +844,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
@@ -849,18 +853,18 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? AppTheme.accentOrange : Colors.grey.shade300,
+            color: isSelected ? AppTheme.accentOrange : colorScheme.outlineVariant,
             width: isSelected ? 2 : 1,
           ),
           color: isSelected
               ? AppTheme.accentOrange.withValues(alpha: 0.05)
-              : Colors.white,
+              : colorScheme.surfaceContainer,
         ),
         child: Row(
           children: [
             Icon(icon,
                 size: 20,
-                color: isSelected ? AppTheme.accentOrange : Colors.grey[500]),
+                color: isSelected ? AppTheme.accentOrange : colorScheme.onSurfaceVariant),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -868,7 +872,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  color: isSelected ? AppTheme.accentOrange : Colors.grey[700],
+                  color: isSelected ? AppTheme.accentOrange : colorScheme.onSurface,
                 ),
               ),
             ),
@@ -882,11 +886,12 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
 
   // ── Widget: สรุปราคา ──
   Widget _buildPriceSummary(CartProvider cart) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -899,12 +904,12 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                   children: [
                     Text('ค่าจัดส่ง',
                         style:
-                            TextStyle(fontSize: 14, color: Colors.grey[600])),
+                            TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
                     SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.grey[400]),
+                          strokeWidth: 2, color: colorScheme.onSurfaceVariant),
                     ),
                   ],
                 )
@@ -933,11 +938,12 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
 
   Widget _buildSection(
       {required IconData icon, required String title, required Widget child}) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -960,13 +966,14 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
   }
 
   Widget _buildPaymentOption(String value, String label, IconData icon) {
+    final colorScheme = Theme.of(context).colorScheme;
     return RadioListTile<String>(
       value: value,
       groupValue: _paymentMethod,
       onChanged: (v) => setState(() => _paymentMethod = v!),
       title: Row(
         children: [
-          Icon(icon, size: 20, color: Colors.grey[600]),
+          Icon(icon, size: 20, color: colorScheme.onSurfaceVariant),
           const SizedBox(width: 8),
           Text(label),
         ],
@@ -978,7 +985,8 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
   }
 
   Widget _buildPriceRow(String label, String price,
-      {bool isBold = false, bool isOrange = false, bool isGreen = false}) {
+      {bool isBold = false, bool isGreen = false, bool isOrange = false}) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -989,7 +997,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                 fontSize: isBold ? 16 : 14,
                 color: isGreen
                     ? Colors.green[700]
-                    : (isBold ? null : Colors.grey[600]),
+                    : (isBold ? null : colorScheme.onSurfaceVariant),
               )),
         ),
         Text(price,

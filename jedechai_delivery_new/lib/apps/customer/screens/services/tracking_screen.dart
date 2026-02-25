@@ -77,6 +77,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       body: Stack(
         children: [
@@ -119,7 +120,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
             child: CircleAvatar(
               backgroundColor: Colors.white,
               child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ),
@@ -213,6 +214,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
   }
 
   Widget _buildTimeline() {
+    final colorScheme = Theme.of(context).colorScheme;
     final steps = _getTimelineSteps();
     return Column(
       children: List.generate(steps.length, (i) {
@@ -249,7 +251,9 @@ class _TrackingScreenState extends State<TrackingScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-                      color: isActive ? Colors.black87 : Colors.grey,
+                      color: isActive
+                          ? colorScheme.onSurface
+                          : colorScheme.onSurfaceVariant,
                     )),
               ),
             ),

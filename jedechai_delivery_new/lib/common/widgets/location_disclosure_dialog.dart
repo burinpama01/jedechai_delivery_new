@@ -38,10 +38,11 @@ class LocationDisclosureHelper {
   }
 
   static Future<bool> _showDisclosureDialog(BuildContext context) async {
+    final colorScheme = Theme.of(context).colorScheme;
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      barrierColor: Colors.black87,
+      barrierColor: colorScheme.scrim.withValues(alpha: 0.75),
       builder: (ctx) => const _LocationDisclosureDialog(),
     );
 
@@ -59,6 +60,7 @@ class _LocationDisclosureDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
@@ -73,35 +75,38 @@ class _LocationDisclosureDialog extends StatelessWidget {
                 width: 72,
                 height: 72,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF4CAF50), Color(0xFF2E7D32)],
+                  gradient: LinearGradient(
+                    colors: [
+                      colorScheme.primary,
+                      colorScheme.primary.withValues(alpha: 0.78),
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF4CAF50).withValues(alpha: 0.3),
+                      color: colorScheme.primary.withValues(alpha: 0.32),
                       blurRadius: 16,
                       offset: const Offset(0, 6),
                     ),
                   ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.location_on_rounded,
-                  color: Colors.white,
+                  color: colorScheme.onPrimary,
                   size: 36,
                 ),
               ),
               const SizedBox(height: 20),
 
               // Title
-              const Text(
+              Text(
                 'การเข้าถึงตำแหน่งที่ตั้ง',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1B5E20),
+                  color: colorScheme.onSurface,
                   letterSpacing: -0.3,
                 ),
                 textAlign: TextAlign.center,
@@ -113,14 +118,14 @@ class _LocationDisclosureDialog extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F8E9),
+                  color: colorScheme.primaryContainer.withValues(alpha: 0.35),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: const Color(0xFFC8E6C9),
+                    color: colorScheme.primary.withValues(alpha: 0.28),
                     width: 1,
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   'JDC Delivery เก็บข้อมูลตำแหน่งที่ตั้งของคุณ '
                   'แม้ในขณะที่ปิดหน้าจอหรือไม่ได้ใช้งานแอป '
                   'เพื่อใช้ในการติดตามสถานะการจัดส่ง'
@@ -128,7 +133,7 @@ class _LocationDisclosureDialog extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 15,
                     height: 1.6,
-                    color: Color(0xFF33691E),
+                    color: colorScheme.onPrimaryContainer,
                     fontWeight: FontWeight.w500,
                   ),
                   textAlign: TextAlign.center,
@@ -138,18 +143,21 @@ class _LocationDisclosureDialog extends StatelessWidget {
 
               // Details
               _buildDetailRow(
+                colorScheme,
                 Icons.delivery_dining_rounded,
                 'ติดตามสถานะการจัดส่ง',
                 'แสดงตำแหน่งคนขับให้ลูกค้าและร้านค้าเห็นแบบเรียลไทม์',
               ),
               const SizedBox(height: 10),
               _buildDetailRow(
+                colorScheme,
                 Icons.route_rounded,
                 'คำนวณระยะทาง',
                 'คำนวณค่าบริการตามระยะทางจริงระหว่างจุดรับ-ส่ง',
               ),
               const SizedBox(height: 10),
               _buildDetailRow(
+                colorScheme,
                 Icons.shield_rounded,
                 'ความปลอดภัย',
                 'ข้อมูลตำแหน่งถูกเข้ารหัสและใช้เฉพาะในระบบเท่านั้น',
@@ -163,14 +171,13 @@ class _LocationDisclosureDialog extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () => Navigator.of(context).pop(true),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4CAF50),
-                    foregroundColor: Colors.white,
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: colorScheme.onPrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                     elevation: 2,
-                    shadowColor:
-                        const Color(0xFF4CAF50).withValues(alpha: 0.4),
+                    shadowColor: colorScheme.primary.withValues(alpha: 0.4),
                   ),
                   child: const Text(
                     'ยอมรับและดำเนินการต่อ',
@@ -190,7 +197,7 @@ class _LocationDisclosureDialog extends StatelessWidget {
                 child: TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
                   style: TextButton.styleFrom(
-                    foregroundColor: Colors.grey[600],
+                    foregroundColor: colorScheme.onSurfaceVariant,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -209,7 +216,11 @@ class _LocationDisclosureDialog extends StatelessWidget {
   }
 
   static Widget _buildDetailRow(
-      IconData icon, String title, String description) {
+    ColorScheme colorScheme,
+    IconData icon,
+    String title,
+    String description,
+  ) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -217,10 +228,10 @@ class _LocationDisclosureDialog extends StatelessWidget {
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: const Color(0xFFE8F5E9),
+            color: colorScheme.primaryContainer.withValues(alpha: 0.45),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, size: 18, color: const Color(0xFF43A047)),
+          child: Icon(icon, size: 18, color: colorScheme.primary),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -229,10 +240,10 @@ class _LocationDisclosureDialog extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF2E7D32),
+                  color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 2),
@@ -240,7 +251,7 @@ class _LocationDisclosureDialog extends StatelessWidget {
                 description,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey[600],
+                  color: colorScheme.onSurfaceVariant,
                   height: 1.4,
                 ),
               ),

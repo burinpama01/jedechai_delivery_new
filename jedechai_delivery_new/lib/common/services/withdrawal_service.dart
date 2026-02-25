@@ -29,6 +29,18 @@ class WithdrawalService {
       return false;
     }
 
+    // Phase 6: Validate withdrawal amount (min/max)
+    const double minWithdrawal = 100.0;
+    const double maxWithdrawal = 50000.0;
+    if (amount < minWithdrawal) {
+      debugLog('❌ จำนวนเงินต่ำกว่าขั้นต่ำ: $amount < $minWithdrawal');
+      return false;
+    }
+    if (amount > maxWithdrawal) {
+      debugLog('❌ จำนวนเงินเกินขีดจำกัด: $amount > $maxWithdrawal');
+      return false;
+    }
+
     try {
       // 1. ตรวจสอบยอดเงินคงเหลือ
       final balance = await _walletService.getBalance(userId);
@@ -46,28 +58,17 @@ class WithdrawalService {
         'status': 'pending',
       });
 
-      // 3. หักเงินจาก wallet หลังจาก insert สำเร็จ
-      final wallet = await _walletService.getDriverWallet(userId);
-      if (wallet == null) {
-        debugLog('❌ ไม่พบกระเป๋าเงิน');
+      // 3. Phase 2: Atomic wallet deduction via RPC
+      final rpcResult = await _client.rpc('wallet_deduct', params: {
+        'p_user_id': userId,
+        'p_amount': amount,
+        'p_description': 'แจ้งถอนเงิน ฿${amount.ceil()} ไปยัง $bankName $bankAccountNumber',
+        'p_type': 'withdrawal',
+      });
+      if (rpcResult is Map && rpcResult['success'] != true) {
+        debugLog('❌ Wallet deduction failed: ${rpcResult['error']}');
         return false;
       }
-
-      final newBalance = wallet.balance - amount;
-
-      // บันทึก transaction
-      await _client.from('wallet_transactions').insert({
-        'wallet_id': wallet.id,
-        'amount': -amount,
-        'type': 'withdrawal',
-        'description': 'แจ้งถอนเงิน ฿${amount.ceil()} ไปยัง $bankName $bankAccountNumber',
-      });
-
-      // อัปเดตยอดเงิน
-      await _client
-          .from('wallets')
-          .update({'balance': newBalance})
-          .eq('id', wallet.id);
 
       debugLog('✅ Withdrawal request created: ฿$amount');
       return true;

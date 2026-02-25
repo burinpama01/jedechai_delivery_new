@@ -82,7 +82,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
               primary: AppTheme.accentBlue,
               onPrimary: Colors.white,
               surface: Colors.white,
-              onSurface: Colors.black87,
+              onSurface: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           child: child!,
@@ -209,8 +209,9 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: const Text('รายได้'),
         backgroundColor: AppTheme.accentBlue,
@@ -281,8 +282,9 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
   // ============================================================
 
   Widget _buildPeriodFilter() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      color: Colors.white,
+      color: colorScheme.surfaceContainer,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -320,10 +322,10 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                 },
                 selectedColor: AppTheme.accentBlue,
                 labelStyle: TextStyle(
-                  color: isSelected ? Colors.white : Colors.black87,
+                  color: isSelected ? Colors.white : colorScheme.onSurface,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                 ),
-                backgroundColor: Colors.grey[100],
+                backgroundColor: colorScheme.surfaceContainerHighest,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               ),
             );
@@ -397,10 +399,11 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
   }
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 2)),
@@ -412,7 +415,11 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
           const SizedBox(height: 8),
           Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: color)),
           const SizedBox(height: 4),
-          Text(title, style: TextStyle(fontSize: 11, color: Colors.grey[600]), textAlign: TextAlign.center),
+          Text(
+            title,
+            style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
@@ -423,11 +430,12 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
   // ============================================================
 
   Widget _buildWalletCard() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2))],
       ),
@@ -443,13 +451,26 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('กระเป๋าเงิน', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey[800])),
+                Text(
+                  'กระเป๋าเงิน',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
                 const SizedBox(height: 2),
                 FutureBuilder<double>(
                   future: WalletService().getBalance(AuthService.userId!),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Text('กำลังโหลด...', style: TextStyle(fontSize: 12, color: Colors.grey[500]));
+                      return Text(
+                        'กำลังโหลด...',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      );
                     }
                     final balance = snapshot.data ?? 0.0;
                     return Text(
@@ -475,23 +496,41 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
   // ============================================================
 
   Widget _buildJobHistorySection() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('ประวัติงาน', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+          Text(
+            'ประวัติงาน',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
+          ),
           const SizedBox(height: 12),
           if (_jobHistory.isEmpty)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(32),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Column(
                 children: [
-                  Icon(Icons.work_outline, size: 48, color: Colors.grey[300]),
+                  Icon(
+                    Icons.work_outline,
+                    size: 48,
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.45),
+                  ),
                   const SizedBox(height: 12),
-                  Text('ไม่มีงานในช่วงเวลานี้', style: TextStyle(color: Colors.grey[500])),
+                  Text(
+                    'ไม่มีงานในช่วงเวลานี้',
+                    style: TextStyle(color: colorScheme.onSurfaceVariant),
+                  ),
                 ],
               ),
             )
@@ -503,6 +542,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
   }
 
   Widget _buildJobCard(Map<String, dynamic> job) {
+    final colorScheme = Theme.of(context).colorScheme;
     final status = job['status'] as String? ?? 'unknown';
     final driverEarnings = (job['driver_earnings'] as num?)?.toDouble() ?? 0;
     final appEarnings = (job['app_earnings'] as num?)?.toDouble() ?? 0;
@@ -522,7 +562,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 4, offset: const Offset(0, 2))],
       ),
@@ -546,10 +586,17 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
               const SizedBox(width: 8),
               Text(
                 '${_getServiceIcon(serviceType)} ${serviceType == 'ride' ? 'รับส่ง' : serviceType == 'food' ? 'อาหาร' : serviceType == 'parcel' ? 'พัสดุ' : 'อื่นๆ'}',
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
               ),
               const Spacer(),
-              Text(jobId, style: TextStyle(fontSize: 12, color: Colors.grey[500], fontFamily: 'monospace')),
+              Text(
+                jobId,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: colorScheme.onSurfaceVariant,
+                  fontFamily: 'monospace',
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -566,9 +613,12 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                 Text('(ค่าบริการระบบ ${_formatCurrency(appEarnings)})', style: TextStyle(fontSize: 12, color: Colors.red[400])),
               ],
               const Spacer(),
-              Icon(Icons.access_time, size: 14, color: Colors.grey[400]),
+              Icon(Icons.access_time, size: 14, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: 4),
-              Text(createdAt, style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+              Text(
+                createdAt,
+                style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+              ),
             ],
           ),
 
@@ -577,12 +627,16 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.location_on_outlined, size: 14, color: Colors.grey[400]),
+                Icon(
+                  Icons.location_on_outlined,
+                  size: 14,
+                  color: colorScheme.onSurfaceVariant,
+                ),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     '${job['pickup_address'] ?? '?'} → ${job['destination_address'] ?? '?'}',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

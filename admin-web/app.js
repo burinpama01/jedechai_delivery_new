@@ -6,14 +6,42 @@
 // Read from config.js or fallback
 const SUPABASE_URL = window.JEDECHAI_CONFIG?.SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = window.JEDECHAI_CONFIG?.SUPABASE_ANON_KEY || '';
-const SUPABASE_SERVICE_KEY = window.JEDECHAI_CONFIG?.SUPABASE_SERVICE_KEY || '';
 
 let supabase = null;
-let supabaseAdmin = null;
 let supabaseAuth = null;
 let currentUser = null;
 let currentPage = 'dashboard';
 const MOBILE_BREAKPOINT = 1280;
+
+// --- Edge Function Helper ---
+// All privileged admin actions go through the admin-actions Edge Function
+async function callAdminAction(actionBody) {
+  const session = (await supabaseAuth.auth.getSession())?.data?.session;
+  if (!session?.access_token) throw new Error('ไม่พบ session กรุณาเข้าสู่ระบบใหม่');
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-actions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify(actionBody),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
+}
+
+// --- XSS Prevention ---
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 function isMobileViewport() {
   return window.innerWidth < MOBILE_BREAKPOINT;
@@ -24,40 +52,13 @@ function reportFilename(prefix, ext, from, to) {
   return `${prefix}_${clean(from)}_${clean(to)}.${ext}`;
 }
 
-function reportFilename(prefix, ext, from, to) {
-  const clean = (v) => (v || '').toString().replace(/[^0-9a-zA-Z_-]/g, '') || 'all';
-  return `${prefix}_${clean(from)}_${clean(to)}.${ext}`;
-}
-
 async function setUserOnlineStatus(id, isOnline, role = '') {
   try {
-    const nowIso = new Date().toISOString();
-    const { error } = await supabase
-      .from('profiles')
-      .update({ is_online: !!isOnline, updated_at: nowIso })
-      .eq('id', id);
-    if (error) throw error;
-
-    if (role === 'driver') {
-      const driverLocationPatch = {
-        is_online: !!isOnline,
-        updated_at: nowIso,
-      };
-      if (!isOnline) {
-        driverLocationPatch.is_available = false;
-      }
-
-      const { error: locError } = await supabase
-        .from('driver_locations')
-        .update(driverLocationPatch)
-        .eq('driver_id', id);
-      if (locError) throw locError;
-    }
-
+    await callAdminAction({ action: 'set_online_status', id, is_online: !!isOnline, role });
     showToast(isOnline ? 'ตั้งสถานะออนไลน์แล้ว' : 'ตั้งสถานะออฟไลน์แล้ว', 'success');
     refreshCurrentPage();
   } catch (e) {
-    showToast('อัปเดตสถานะออนไลน์ไม่สำเร็จ: ' + (e.message || JSON.stringify(e)), 'error');
+    showToast('อัปเดตสถานะออนไลน์ไม่สำเร็จ: ' + escapeHtml(e.message || JSON.stringify(e)), 'error');
   }
 }
 
@@ -129,19 +130,12 @@ function initSupabase() {
     document.getElementById('loginError').classList.remove('hidden');
     return false;
   }
-  if (!SUPABASE_SERVICE_KEY) {
-    document.getElementById('loginError').textContent =
-      'ไม่พบ SUPABASE_SERVICE_KEY: กรุณาตั้งค่าใน config.production.js (ไฟล์นี้ต้องไม่ commit)';
-    document.getElementById('loginError').classList.remove('hidden');
-    return false;
-  }
   // Check if Supabase client is loaded
   if (typeof window.supabaseClient === 'undefined') {
     document.getElementById('loginError').textContent = 'Supabase library ไม่โหลดสำเร็จ';
     document.getElementById('loginError').classList.remove('hidden');
     return false;
   }
-  // Use the imported createClient function
   try {
     const authClientOptions = {
       auth: {
@@ -155,13 +149,8 @@ function initSupabase() {
       SUPABASE_ANON_KEY,
       authClientOptions,
     );
-    supabaseAdmin = window.supabaseClient(
-      SUPABASE_URL,
-      SUPABASE_SERVICE_KEY,
-      authClientOptions,
-    );
-    // Use service role key for ALL data operations (bypasses RLS completely)
-    supabase = supabaseAdmin;
+    // Use anon key + RLS for data reads; privileged writes go through Edge Functions
+    supabase = supabaseAuth;
     return true;
   } catch (e) {
     document.getElementById('loginError').textContent = 'เชื่อมต่อ Supabase ไม่สำเร็จ: ' + e.message;
@@ -188,8 +177,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const { data, error } = await supabaseAuth.auth.signInWithPassword({ email, password });
     if (error) throw error;
 
-    // Check admin role (use supabaseAdmin to bypass RLS)
-    const { data: profile } = await supabaseAdmin.from('profiles').select('role, full_name').eq('id', data.user.id).single();
+    // Check admin role via RLS-protected query
+    const { data: profile } = await supabase.from('profiles').select('role, full_name').eq('id', data.user.id).single();
     if (profile?.role !== 'admin') {
       await supabaseAuth.auth.signOut();
       throw new Error('บัญชีนี้ไม่มีสิทธิ์ Admin');
@@ -233,7 +222,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   try {
     const { data: { session } } = await supabaseAuth.auth.getSession();
     if (session) {
-      const { data: profile } = await supabaseAdmin.from('profiles').select('role, full_name').eq('id', session.user.id).single();
+      const { data: profile } = await supabase.from('profiles').select('role, full_name').eq('id', session.user.id).single();
       if (profile?.role === 'admin') {
         currentUser = { ...session.user, profile };
         showMainApp();
@@ -399,82 +388,6 @@ function renderMiniBarChart(title, subtitle, rows, colorHex = '#6366f1') {
     </div>`;
 }
 
-
-function _csvCell(value) {
-  const v = value == null ? '' : String(value);
-  return `"${v.replace(/"/g, '""')}"`;
-}
-
-function exportRowsToCsv(filename, headers, rows) {
-  const csv = [
-    headers.map(_csvCell).join(','),
-    ...(rows || []).map((row) => headers.map((h) => _csvCell(row[h])).join(',')),
-  ].join('\n');
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-function exportRowsToExcel(filename, headers, rows) {
-  const headHtml = headers.map((h) => `<th style="border:1px solid #d1d5db;padding:8px;background:#f9fafb">${h}</th>`).join('');
-  const bodyHtml = (rows || []).map((row) => {
-    const cols = headers.map((h) => `<td style="border:1px solid #e5e7eb;padding:8px">${row[h] ?? ''}</td>`).join('');
-    return `<tr>${cols}</tr>`;
-  }).join('');
-  const html = `
-    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-      <head><meta charset="UTF-8"></head>
-      <body>
-        <table>
-          <thead><tr>${headHtml}</tr></thead>
-          <tbody>${bodyHtml}</tbody>
-        </table>
-      </body>
-    </html>`;
-  const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-function renderMiniBarChart(title, subtitle, rows, colorHex = '#6366f1') {
-  const safeRows = rows || [];
-  const maxValue = Math.max(...safeRows.map((r) => Number(r.value || 0)), 1);
-  return `
-    <div class="glass-card p-5">
-      <div class="mb-4">
-        <h4 class="font-bold text-gray-800">${title}</h4>
-        <p class="text-xs text-gray-400">${subtitle}</p>
-      </div>
-      <div class="space-y-2.5">
-        ${safeRows.length === 0 ? '<p class="text-sm text-gray-400 py-3">ไม่มีข้อมูลในช่วงวันที่ที่เลือก</p>' : safeRows.map((r) => {
-          const pct = Math.round((Number(r.value || 0) / maxValue) * 100);
-          return `
-            <div>
-              <div class="flex items-center justify-between text-xs mb-1">
-                <span class="text-gray-500">${r.label}</span>
-                <span class="font-semibold text-gray-700">${r.displayValue || fmt(Math.round(r.value || 0))}</span>
-              </div>
-              <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div class="h-full rounded-full" style="width:${pct}%;background:${colorHex};"></div>
-              </div>
-            </div>`;
-        }).join('')}
-      </div>
-    </div>`;
-}
-
 function statusBadge(status) {
   const map = {
     pending: ['รอดำเนินการ','bg-amber-50 text-amber-600 border border-amber-200'], pending_merchant: ['รอร้านค้า','bg-amber-50 text-amber-600 border border-amber-200'],
@@ -556,17 +469,10 @@ window._emailMap = {};
 async function fetchUserEmails() {
   if (Object.keys(window._emailMap).length > 0) return window._emailMap;
   try {
-    let allUsers = [];
-    let page = 1;
-    while (true) {
-      const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 500 });
-      if (error) break;
-      if (!data?.users?.length) break;
-      allUsers = allUsers.concat(data.users);
-      if (data.users.length < 500) break;
-      page++;
+    const result = await callAdminAction({ action: 'fetch_user_emails' });
+    if (result.email_map) {
+      window._emailMap = result.email_map;
     }
-    allUsers.forEach(u => { window._emailMap[u.id] = u.email || ''; });
   } catch(e) { console.error('fetchUserEmails error:', e); }
   return window._emailMap;
 }
@@ -751,38 +657,6 @@ async function dashboardFilter() {
       </div>
     </div>
   `;
-}
-
-function exportWithdrawalsCsv() {
-  const rows = window._allWithdrawals || [];
-  exportRowsToCsv(reportFilename('withdrawals_report', 'csv', '', ''), ['ผู้ขอ', 'บทบาท', 'จำนวน', 'ธนาคาร', 'เลขบัญชี', 'สถานะ', 'วันที่'], rows);
-}
-
-function exportWithdrawalsExcel() {
-  const rows = window._allWithdrawals || [];
-  exportRowsToExcel(reportFilename('withdrawals_report', 'xls', '', ''), ['ผู้ขอ', 'บทบาท', 'จำนวน', 'ธนาคาร', 'เลขบัญชี', 'สถานะ', 'วันที่'], rows);
-}
-
-function exportDashboardCsv() {
-  const from = document.getElementById('dashDateFrom')?.value || '';
-  const to = document.getElementById('dashDateTo')?.value || '';
-  const rows = window._dashboardRecentRows || [];
-  exportRowsToCsv(
-    reportFilename('dashboard_recent_orders', 'csv', from, to),
-    ['เลขออเดอร์', 'ประเภท', 'ราคา', 'สถานะ', 'เวลา'],
-    rows,
-  );
-}
-
-function exportDashboardExcel() {
-  const from = document.getElementById('dashDateFrom')?.value || '';
-  const to = document.getElementById('dashDateTo')?.value || '';
-  const rows = window._dashboardRecentRows || [];
-  exportRowsToExcel(
-    reportFilename('dashboard_recent_orders', 'xls', from, to),
-    ['เลขออเดอร์', 'ประเภท', 'ราคา', 'สถานะ', 'เวลา'],
-    rows,
-  );
 }
 
 function exportWithdrawalsCsv() {
@@ -1113,10 +987,10 @@ function renderDriverRows(drivers) {
   if (!drivers.length) return '<tr><td colspan="8" class="px-4 py-8 text-center text-gray-400">ไม่มีข้อมูล</td></tr>';
   return drivers.map(d => `
     <tr class="table-row border-b border-gray-50">
-      <td class="px-4 py-3 font-medium">${d.full_name || '-'}</td>
-      <td class="px-4 py-3 text-xs text-gray-500">${window._emailMap[d.id] || '-'}</td>
-      <td class="px-4 py-3">${d.phone_number || '-'}</td>
-      <td class="px-4 py-3">${d.license_plate || '-'}</td>
+      <td class="px-4 py-3 font-medium">${escapeHtml(d.full_name) || '-'}</td>
+      <td class="px-4 py-3 text-xs text-gray-500">${escapeHtml(window._emailMap[d.id]) || '-'}</td>
+      <td class="px-4 py-3">${escapeHtml(d.phone_number) || '-'}</td>
+      <td class="px-4 py-3">${escapeHtml(d.license_plate) || '-'}</td>
       <td class="px-4 py-3">${statusBadge(d.approval_status || 'pending')}</td>
       <td class="px-4 py-3">${onlineBadge(_truthyFlag(d.is_online))}</td>
       <td class="px-4 py-3 text-gray-500 text-xs">${fmtDate(d.created_at)}</td>
@@ -1132,7 +1006,7 @@ function renderDriverRows(drivers) {
         ` : ''}
         <button onclick="showDriverDetail('${d.id}')" class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-xs font-medium hover:bg-indigo-200 mr-1">ดูข้อมูล</button>
         <button onclick="editDriverProfile('${d.id}')" class="px-3 py-1 bg-blue-500 text-white rounded-lg text-xs font-medium hover:bg-blue-600 mr-1">แก้ไข</button>
-        <button onclick="deleteUser('${d.id}','${(d.full_name||'').replace(/'/g,'')}')" class="px-3 py-1 bg-red-100 text-red-600 rounded-lg text-xs font-medium hover:bg-red-200">ลบ</button>
+        <button onclick="deleteUser('${d.id}','${escapeHtml((d.full_name||'').replace(/'/g,''))}')" class="px-3 py-1 bg-red-100 text-red-600 rounded-lg text-xs font-medium hover:bg-red-200">ลบ</button>
       </td>
     </tr>
   `).join('');
@@ -1188,37 +1062,21 @@ function exportDriversExcel() {
 
 async function approveDriver(id) {
   if (!confirm('อนุมัติคนขับนี้?')) return;
-  const { error } = await supabase.from('profiles').update({ approval_status: 'approved', approved_at: new Date().toISOString() }).eq('id', id);
-  if (error) return showToast('เกิดข้อผิดพลาด: ' + error.message, 'error');
-  await _notifyAdminActionTargets([
-    {
-      user_id: id,
-      title: '✅ บัญชีคนขับได้รับอนุมัติแล้ว',
-      body: 'แอดมินอนุมัติบัญชีคนขับของคุณแล้ว สามารถเริ่มรับงานได้',
-      type: 'admin_approve_driver',
-      data: { type: 'admin_approve_driver', user_id: id },
-    },
-  ]);
-  showToast('อนุมัติคนขับสำเร็จ', 'success');
-  refreshCurrentPage();
+  try {
+    await callAdminAction({ action: 'approve_driver', id });
+    showToast('อนุมัติคนขับสำเร็จ', 'success');
+    refreshCurrentPage();
+  } catch (e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 async function rejectDriver(id) {
   const reason = prompt('เหตุผลที่ปฏิเสธ:');
   if (!reason) return;
-  const { error } = await supabase.from('profiles').update({ approval_status: 'rejected', rejection_reason: reason }).eq('id', id);
-  if (error) return showToast('เกิดข้อผิดพลาด: ' + error.message, 'error');
-  await _notifyAdminActionTargets([
-    {
-      user_id: id,
-      title: '❌ บัญชีคนขับถูกปฏิเสธ',
-      body: `แอดมินปฏิเสธการอนุมัติบัญชีคนขับ: ${reason}`,
-      type: 'admin_reject_driver',
-      data: { type: 'admin_reject_driver', user_id: id, reason },
-    },
-  ]);
-  showToast('ปฏิเสธคนขับแล้ว', 'info');
-  refreshCurrentPage();
+  try {
+    await callAdminAction({ action: 'reject_driver', id, reason });
+    showToast('ปฏิเสธคนขับแล้ว', 'info');
+    refreshCurrentPage();
+  } catch (e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 function showAddDriverForm() {
@@ -1250,22 +1108,20 @@ async function submitAddDriver() {
   const pass = document.getElementById('addDrvPass').value;
   if (!email || !pass) return alert('กรุณากรอกอีเมลและรหัสผ่าน');
   try {
-    const { data, error } = await supabase.auth.signUp({ email, password: pass, options: { data: { role: 'driver' } } });
-    if (error) throw error;
-    if (data.user) {
-      await supabase.from('profiles').upsert({
-        id: data.user.id, role: 'driver', approval_status: 'approved',
+    await callAdminAction({
+      action: 'add_driver',
+      email,
+      password: pass,
+      profile_data: {
         full_name: document.getElementById('addDrvName').value,
         phone_number: document.getElementById('addDrvPhone').value,
         license_plate: document.getElementById('addDrvPlate').value,
         vehicle_type: document.getElementById('addDrvVehicle').value,
-        created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-      });
-      await supabase.from('wallets').insert({ user_id: data.user.id, balance: 0 });
-    }
-    alert('เพิ่มคนขับสำเร็จ!');
+      },
+    });
+    showToast('เพิ่มคนขับสำเร็จ!', 'success');
     refreshCurrentPage();
-  } catch(e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 async function editDriverProfile(id) {
@@ -1296,15 +1152,15 @@ async function editDriverProfile(id) {
       <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
         <div>
           <h3 class="font-bold text-gray-800 text-lg">แก้ไขข้อมูลคนขับ</h3>
-          <p class="text-xs text-gray-500">${d.full_name || 'ไม่ระบุชื่อ'}</p>
+          <p class="text-xs text-gray-500">${escapeHtml(d.full_name) || 'ไม่ระบุชื่อ'}</p>
         </div>
         <button onclick="document.getElementById('editDriverModal')?.remove()" class="text-gray-400 hover:text-gray-600"><span class="material-icons-round">close</span></button>
       </div>
       <div class="p-6 overflow-y-auto flex-1 space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div><label class="block text-sm font-medium mb-1">ชื่อ-นามสกุล</label><input id="editDrvName" value="${(d.full_name||'').replace(/"/g,'&quot;')}" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
-          <div><label class="block text-sm font-medium mb-1">เบอร์โทร</label><input id="editDrvPhone" value="${d.phone_number||''}" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
-          <div><label class="block text-sm font-medium mb-1">ทะเบียนรถ</label><input id="editDrvPlate" value="${d.license_plate||''}" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
+          <div><label class="block text-sm font-medium mb-1">เบอร์โทร</label><input id="editDrvPhone" value="${escapeHtml(d.phone_number)}" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
+          <div><label class="block text-sm font-medium mb-1">ทะเบียนรถ</label><input id="editDrvPlate" value="${escapeHtml(d.license_plate)}" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
           <div><label class="block text-sm font-medium mb-1">ประเภทรถ</label>
             <select id="editDrvVehicle" class="w-full border rounded-lg px-3 py-2 text-sm">
               <option value="มอเตอร์ไซค์" ${d.vehicle_type==='มอเตอร์ไซค์'?'selected':''}>มอเตอร์ไซค์</option>
@@ -1336,8 +1192,8 @@ async function editDriverProfile(id) {
         <div class="border-t pt-4">
           <p class="text-sm font-bold mb-3">ข้อมูลธนาคาร</p>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div><label class="block text-xs mb-1">ธนาคาร</label><input id="editDrvBank" value="${d.bank_name||''}" class="w-full border rounded-lg px-3 py-1.5 text-sm" /></div>
-            <div><label class="block text-xs mb-1">เลขบัญชี</label><input id="editDrvAccNum" value="${d.bank_account_number||''}" class="w-full border rounded-lg px-3 py-1.5 text-sm" /></div>
+            <div><label class="block text-xs mb-1">ธนาคาร</label><input id="editDrvBank" value="${escapeHtml(d.bank_name)}" class="w-full border rounded-lg px-3 py-1.5 text-sm" /></div>
+            <div><label class="block text-xs mb-1">เลขบัญชี</label><input id="editDrvAccNum" value="${escapeHtml(d.bank_account_number)}" class="w-full border rounded-lg px-3 py-1.5 text-sm" /></div>
             <div><label class="block text-xs mb-1">ชื่อบัญชี</label><input id="editDrvAccName" value="${(d.bank_account_name||'').replace(/"/g,'&quot;')}" class="w-full border rounded-lg px-3 py-1.5 text-sm" /></div>
           </div>
         </div>
@@ -1376,12 +1232,11 @@ async function submitEditDriver(id) {
     if (reason) updateData.rejection_reason = reason;
     if (updateData.approval_status === 'approved') updateData.approved_at = new Date().toISOString();
     
-    const { error } = await supabase.from('profiles').update(updateData).eq('id', id);
-    if (error) throw error;
+    await callAdminAction({ action: 'edit_driver', id, update_data: updateData });
     document.getElementById('editDriverModal')?.remove();
     showToast('บันทึกข้อมูลคนขับสำเร็จ!', 'success');
     refreshCurrentPage();
-  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + (e.message || JSON.stringify(e)), 'error'); }
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message || JSON.stringify(e)), 'error'); }
 }
 
 async function uploadMerchantImage(merchantId, field, input) {
@@ -1395,31 +1250,14 @@ async function uploadMerchantImage(merchantId, field, input) {
 }
 
 async function deleteUser(id, name) {
-  if (!confirm(`ลบผู้ใช้ "${name}" ?\nข้อมูลจะถูกลบถาวร`)) return;
+  if (!confirm(`ลบผู้ใช้ "${escapeHtml(name)}" ?\nข้อมูลจะถูกลบถาวร`)) return;
   try {
-    const { data: profile, error: profileReadErr } = await supabase
-      .from('profiles')
-      .select('id, role')
-      .eq('id', id)
-      .maybeSingle();
-    if (profileReadErr) throw profileReadErr;
-    if (profile?.role === 'admin') {
-      throw new Error('ไม่อนุญาตให้ลบบัญชีแอดมิน');
-    }
-
-    const { error: profileDeleteErr } = await supabase.from('profiles').delete().eq('id', id);
-    if (profileDeleteErr) throw profileDeleteErr;
-
-    const { error: authDeleteErr } = await supabase.auth.admin.deleteUser(id);
-    if (authDeleteErr && !String(authDeleteErr.message || '').toLowerCase().includes('not found')) {
-      throw authDeleteErr;
-    }
-
+    await callAdminAction({ action: 'delete_user', id });
     showToast('ลบสำเร็จ!', 'success');
     _removeProfileFromLocalCaches(id);
     _rerenderCurrentManagementRows();
     setTimeout(refreshCurrentPage, 0);
-  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + (e.message || JSON.stringify(e)), 'error'); }
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message || JSON.stringify(e)), 'error'); }
 }
 
 // ============================================
@@ -1490,11 +1328,16 @@ function renderMerchantRows(merchants) {
   if (!merchants.length) return '<tr><td colspan="8" class="px-4 py-8 text-center text-gray-400">ไม่มีข้อมูล</td></tr>';
   return merchants.map(m => `
     <tr class="table-row border-b border-gray-50">
-      <td class="px-4 py-3 font-medium">${m.full_name || '-'}</td>
-      <td class="px-4 py-3 text-xs text-gray-500">${window._emailMap[m.id] || '-'}</td>
-      <td class="px-4 py-3">${m.phone_number || '-'}</td>
-      <td class="px-4 py-3 text-gray-600 max-w-[200px] truncate">${m.shop_address || '-'}</td>
-      <td class="px-4 py-3">${statusBadge(m.approval_status || 'pending')}</td>
+      <td class="px-4 py-3 font-medium">${escapeHtml(m.full_name) || '-'}</td>
+      <td class="px-4 py-3 text-xs text-gray-500">${escapeHtml(window._emailMap[m.id]) || '-'}</td>
+      <td class="px-4 py-3">${escapeHtml(m.phone_number) || '-'}</td>
+      <td class="px-4 py-3 text-gray-600 max-w-[200px] truncate">${escapeHtml(m.shop_address) || '-'}</td>
+      <td class="px-4 py-3">
+        ${statusBadge(m.approval_status || 'pending')}
+        ${_truthyFlag(m.shop_status)
+          ? '<span class="ml-1 inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700">ร้านเปิด</span>'
+          : '<span class="ml-1 inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-200 text-slate-700">ร้านปิด</span>'}
+      </td>
       <td class="px-4 py-3">${onlineBadge(_truthyFlag(m.is_online))}</td>
       <td class="px-4 py-3 text-gray-500 text-xs">${fmtDate(m.created_at)}</td>
       <td class="px-4 py-3">
@@ -1503,7 +1346,8 @@ function renderMerchantRows(merchants) {
           <button onclick="approveMerchant('${m.id}')" class="px-3 py-1 bg-green-500 text-white rounded-lg text-xs font-medium hover:bg-green-600 mr-1">อนุมัติ</button>
           <button onclick="rejectMerchant('${m.id}')" class="px-3 py-1 bg-red-500 text-white rounded-lg text-xs font-medium hover:bg-red-600 mr-1">ปฏิเสธ</button>
         ` : m.approval_status === 'approved' ? `
-          <button onclick="suspendUser('${m.id}')" class="px-3 py-1 bg-gray-500 text-white rounded-lg text-xs font-medium hover:bg-gray-600 mr-1">ระงับ</button>
+          <button onclick="toggleMerchantShopStatus('${m.id}', ${_truthyFlag(m.shop_status) ? 'true' : 'false'})" class="px-3 py-1 ${_truthyFlag(m.shop_status) ? 'bg-slate-500 hover:bg-slate-600' : 'bg-cyan-600 hover:bg-cyan-700'} text-white rounded-lg text-xs font-medium mr-1">${_truthyFlag(m.shop_status) ? 'ระงับ(ปิดร้าน)' : 'เปิดร้าน'}</button>
+          <button onclick="suspendUser('${m.id}')" class="px-3 py-1 bg-amber-500 text-white rounded-lg text-xs font-medium hover:bg-amber-600 mr-1">ระงับบัญชี</button>
         ` : m.approval_status === 'suspended' || m.approval_status === 'rejected' ? `
           <button onclick="approveMerchant('${m.id}')" class="px-3 py-1 bg-green-500 text-white rounded-lg text-xs font-medium hover:bg-green-600 mr-1">อนุมัติ</button>
         ` : ''}
@@ -1594,37 +1438,21 @@ function _rerenderCurrentManagementRows() {
 
 async function approveMerchant(id) {
   if (!confirm('อนุมัติร้านค้านี้?')) return;
-  const { error } = await supabase.from('profiles').update({ approval_status: 'approved', approved_at: new Date().toISOString() }).eq('id', id);
-  if (error) return showToast('เกิดข้อผิดพลาด: ' + error.message, 'error');
-  await _notifyAdminActionTargets([
-    {
-      user_id: id,
-      title: '✅ บัญชีร้านค้าได้รับอนุมัติแล้ว',
-      body: 'แอดมินอนุมัติร้านค้าของคุณแล้ว สามารถเปิดร้านได้',
-      type: 'admin_approve_merchant',
-      data: { type: 'admin_approve_merchant', user_id: id },
-    },
-  ]);
-  showToast('อนุมัติร้านค้าสำเร็จ', 'success');
-  refreshCurrentPage();
+  try {
+    await callAdminAction({ action: 'approve_merchant', id });
+    showToast('อนุมัติร้านค้าสำเร็จ', 'success');
+    refreshCurrentPage();
+  } catch (e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 async function rejectMerchant(id) {
   const reason = prompt('เหตุผลที่ปฏิเสธ:');
   if (!reason) return;
-  const { error } = await supabase.from('profiles').update({ approval_status: 'rejected', rejection_reason: reason }).eq('id', id);
-  if (error) return showToast('เกิดข้อผิดพลาด: ' + error.message, 'error');
-  await _notifyAdminActionTargets([
-    {
-      user_id: id,
-      title: '❌ บัญชีร้านค้าถูกปฏิเสธ',
-      body: `แอดมินปฏิเสธการอนุมัติร้านค้า: ${reason}`,
-      type: 'admin_reject_merchant',
-      data: { type: 'admin_reject_merchant', user_id: id, reason },
-    },
-  ]);
-  showToast('ปฏิเสธร้านค้าแล้ว', 'info');
-  refreshCurrentPage();
+  try {
+    await callAdminAction({ action: 'reject_merchant', id, reason });
+    showToast('ปฏิเสธร้านค้าแล้ว', 'info');
+    refreshCurrentPage();
+  } catch (e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 function showAddMerchantForm() {
@@ -1652,39 +1480,37 @@ async function submitAddMerchant() {
   const pass = document.getElementById('addMrcPass').value;
   if (!email || !pass) return alert('กรุณากรอกอีเมลและรหัสผ่าน');
   try {
-    const { data, error } = await supabase.auth.signUp({ email, password: pass, options: { data: { role: 'merchant' } } });
-    if (error) throw error;
-    if (data.user) {
-      await supabase.from('profiles').upsert({
-        id: data.user.id, role: 'merchant', approval_status: 'approved',
+    await callAdminAction({
+      action: 'add_merchant',
+      email,
+      password: pass,
+      profile_data: {
         full_name: document.getElementById('addMrcName').value || document.getElementById('addMrcShop').value,
         phone_number: document.getElementById('addMrcPhone').value,
         shop_address: document.getElementById('addMrcAddr').value,
-        created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-      });
-    }
-    alert('เพิ่มร้านค้าสำเร็จ!');
+      },
+    });
+    showToast('เพิ่มร้านค้าสำเร็จ!', 'success');
     refreshCurrentPage();
-  } catch(e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 async function editMerchantProfile(id) {
   const { data: m } = await supabase.from('profiles').select('*').eq('id', id).single();
   if (!m) return;
-  let merchantSystemSplitPct = '';
-  let merchantDriverSplitPct = '';
+  let merchantSystemSplitPct =
+    m.merchant_gp_system_rate != null
+      ? (parseFloat(m.merchant_gp_system_rate) * 100).toFixed(1)
+      : '';
+  let merchantDriverSplitPct =
+    m.merchant_gp_driver_rate != null
+      ? (parseFloat(m.merchant_gp_driver_rate) * 100).toFixed(1)
+      : '';
   try {
-    const { data: splitRows } = await supabase
-      .from('system_config')
-      .select('key,value')
-      .in('key', [
-        `merchant_gp_system_rate_${id}`,
-        `merchant_gp_driver_rate_${id}`,
-      ]);
-    const splitMap = {};
-    (splitRows || []).forEach((row) => {
-      if (row?.key) splitMap[row.key] = row.value;
-    });
+    const splitMap = await _fetchSystemConfigKeyValues([
+      `merchant_gp_system_rate_${id}`,
+      `merchant_gp_driver_rate_${id}`,
+    ]);
     const splitSystemRaw = splitMap[`merchant_gp_system_rate_${id}`];
     const splitDriverRaw = splitMap[`merchant_gp_driver_rate_${id}`];
     if (splitSystemRaw != null && splitSystemRaw !== '') {
@@ -1707,13 +1533,13 @@ async function editMerchantProfile(id) {
       <div class="mb-5">
         <p class="text-sm font-semibold text-gray-600 mb-2 border-b pb-1">📋 ข้อมูลร้าน</p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div><label class="block text-sm font-medium mb-1">ชื่อร้าน / เจ้าของ</label><input id="editMrcName" value="${m.full_name||''}" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
-          <div><label class="block text-sm font-medium mb-1">เบอร์โทร</label><input id="editMrcPhone" value="${m.phone_number||''}" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
-          <div class="md:col-span-2"><label class="block text-sm font-medium mb-1">ที่อยู่ร้าน</label><input id="editMrcAddr" value="${m.shop_address||''}" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
+          <div><label class="block text-sm font-medium mb-1">ชื่อร้าน / เจ้าของ</label><input id="editMrcName" value="${escapeHtml(m.full_name)}" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
+          <div><label class="block text-sm font-medium mb-1">เบอร์โทร</label><input id="editMrcPhone" value="${escapeHtml(m.phone_number)}" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
+          <div class="md:col-span-2"><label class="block text-sm font-medium mb-1">ที่อยู่ร้าน</label><input id="editMrcAddr" value="${escapeHtml(m.shop_address)}" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
           <div><label class="block text-sm font-medium mb-1">สถานะร้าน</label>
             <select id="editMrcOpenStatus" class="w-full border rounded-lg px-3 py-2 text-sm">
               <option value="open" ${m.shop_status !== false ? 'selected' : ''}>เปิด</option>
-              <option value="closed" ${m.shop_status === false ? 'selected' : ''}>ปิด (ระงับ)</option>
+              <option value="closed" ${m.shop_status === false ? 'selected' : ''}>ปิดร้าน</option>
             </select>
           </div>
         </div>
@@ -1859,6 +1685,14 @@ async function submitEditMerchant(id) {
       phone_number: document.getElementById('editMrcPhone').value,
       shop_address: document.getElementById('editMrcAddr').value,
       gp_rate: gpRaw !== '' && gpRaw != null ? parseFloat(gpRaw) / 100 : null,
+      merchant_gp_system_rate:
+        gpSystemRaw !== '' && gpSystemRaw != null
+          ? parseFloat(gpSystemRaw) / 100
+          : null,
+      merchant_gp_driver_rate:
+        gpDriverRaw !== '' && gpDriverRaw != null
+          ? parseFloat(gpDriverRaw) / 100
+          : null,
       custom_base_fare: baseFareVal !== '' ? parseFloat(baseFareVal) : null,
       custom_base_distance: baseDistVal !== '' ? parseFloat(baseDistVal) : null,
       custom_per_km: perKmVal !== '' ? parseFloat(perKmVal) : null,
@@ -1878,29 +1712,21 @@ async function submitEditMerchant(id) {
     const gpDriver = gpDriverRaw !== '' && gpDriverRaw != null ? parseFloat(gpDriverRaw) / 100 : null;
     if (gpTotal != null && gpSystem != null && gpDriver != null) {
       const splitTotal = gpSystem + gpDriver;
-      if (Math.abs(splitTotal - gpTotal) > 0.0001) {
-        throw new Error(`GP Share รวมต้องเท่ากับ GP เข้าระบบ + GP ให้คนขับ (รวม ${(gpTotal * 100).toFixed(1)}%, split ${(splitTotal * 100).toFixed(1)}%)`);
+      if (splitTotal - gpTotal > 0.0001) {
+        throw new Error(`GP Share รวมต้องไม่เกิน GP ที่ตั้งไว้ (GP ${(gpTotal * 100).toFixed(1)}%, split ${(splitTotal * 100).toFixed(1)}%)`);
       }
     }
 
-    const { error } = await supabase.from('profiles').update(updateData).eq('id', id);
-    if (error) throw error;
+    const result = await callAdminAction({ action: 'edit_merchant', id, update_data: updateData });
 
-    await _upsertSystemConfigKeyValues([
-      {
-        key: `merchant_gp_system_rate_${id}`,
-        value: gpSystem != null ? gpSystem.toFixed(4) : '',
-      },
-      {
-        key: `merchant_gp_driver_rate_${id}`,
-        value: gpDriver != null ? gpDriver.toFixed(4) : '',
-      },
-    ]);
-
-    showToast('บันทึกข้อมูลร้านค้าสำเร็จ!', 'success');
+    if (result.split_persisted === false) {
+      showToast('บันทึกข้อมูลร้านค้าสำเร็จ แต่ schema นี้ไม่รองรับการบันทึก GP split รายร้าน (ระบบจะใช้ค่า default)', 'warning');
+    } else {
+      showToast('บันทึกข้อมูลร้านค้าสำเร็จ!', 'success');
+    }
     document.getElementById('merchantFormContainer').innerHTML = '';
     refreshCurrentPage();
-  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + (e.message || JSON.stringify(e)), 'error'); }
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message || JSON.stringify(e)), 'error'); }
 }
 
 async function showMerchantOrderManager(merchantId, merchantName = '') {
@@ -2216,9 +2042,9 @@ function renderUserRows(users) {
   const roleColor = { customer: 'blue', driver: 'green', merchant: 'orange', admin: 'purple' };
   return users.map(u => `
     <tr class="table-row border-b border-gray-50">
-      <td class="px-4 py-3 font-medium">${u.full_name || '-'}</td>
-      <td class="px-4 py-3 text-xs text-gray-500">${window._emailMap[u.id] || '-'}</td>
-      <td class="px-4 py-3">${u.phone_number || '-'}</td>
+      <td class="px-4 py-3 font-medium">${escapeHtml(u.full_name) || '-'}</td>
+      <td class="px-4 py-3 text-xs text-gray-500">${escapeHtml(window._emailMap[u.id]) || '-'}</td>
+      <td class="px-4 py-3">${escapeHtml(u.phone_number) || '-'}</td>
       <td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs font-semibold bg-${roleColor[u.role]||'gray'}-100 text-${roleColor[u.role]||'gray'}-700">${roleMap[u.role] || u.role}</span></td>
       <td class="px-4 py-3">${statusBadge(u.approval_status || 'approved')}</td>
       <td class="px-4 py-3">${onlineBadge(_truthyFlag(u.is_online))}</td>
@@ -2228,7 +2054,7 @@ function renderUserRows(users) {
           <button onclick="setUserOnlineStatus('${u.id}', ${_truthyFlag(u.is_online) ? 'false' : 'true'}, '${u.role || ''}')" class="px-3 py-1 ${_truthyFlag(u.is_online) ? 'bg-orange-100 text-orange-700 hover:bg-orange-200' : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'} rounded-lg text-xs font-medium mr-1">${_truthyFlag(u.is_online) ? 'ออฟไลน์' : 'ออนไลน์'}</button>
           <button onclick="editUserProfile('${u.id}')" class="px-3 py-1 bg-blue-500 text-white rounded-lg text-xs font-medium hover:bg-blue-600 mr-1">แก้ไข</button>
           <button onclick="suspendUser('${u.id}')" class="px-3 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium hover:bg-gray-200 mr-1">ระงับ</button>
-          <button onclick="deleteUser('${u.id}','${(u.full_name||'').replace(/'/g,'')}')" class="px-3 py-1 bg-red-100 text-red-600 rounded-lg text-xs font-medium hover:bg-red-200">ลบ</button>
+          <button onclick="deleteUser('${u.id}','${escapeHtml((u.full_name||'').replace(/'/g,''))}')" class="px-3 py-1 bg-red-100 text-red-600 rounded-lg text-xs font-medium hover:bg-red-200">ลบ</button>
         ` : '<span class="text-gray-300 text-xs">-</span>'}
       </td>
     </tr>
@@ -2248,14 +2074,14 @@ async function editUserProfile(id) {
       <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
         <div>
           <h3 class="font-bold text-gray-800 text-lg">แก้ไขข้อมูลผู้ใช้</h3>
-          <p class="text-xs text-gray-500">${u.full_name || '-'} • ${u.role || '-'}</p>
+          <p class="text-xs text-gray-500">${escapeHtml(u.full_name) || '-'} • ${escapeHtml(u.role) || '-'}</p>
         </div>
         <button onclick="document.getElementById('editUserModal')?.remove()" class="text-gray-400 hover:text-gray-600"><span class="material-icons-round">close</span></button>
       </div>
       <div class="p-6 overflow-y-auto flex-1 space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div><label class="block text-sm font-medium mb-1">ชื่อ-นามสกุล</label><input id="editUsrName" value="${(u.full_name||'').replace(/"/g,'&quot;')}" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
-          <div><label class="block text-sm font-medium mb-1">เบอร์โทร</label><input id="editUsrPhone" value="${u.phone_number||''}" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
+          <div><label class="block text-sm font-medium mb-1">เบอร์โทร</label><input id="editUsrPhone" value="${escapeHtml(u.phone_number)}" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
           <div><label class="block text-sm font-medium mb-1">ประเภทผู้ใช้</label>
             <select id="editUsrRole" class="w-full border rounded-lg px-3 py-2 text-sm" ${u.role === 'admin' ? 'disabled' : ''}>
               <option value="customer" ${u.role==='customer'?'selected':''}>ลูกค้า</option>
@@ -2341,28 +2167,7 @@ async function submitEditUser(id) {
       updateData.vehicle_type = null;
     }
 
-    const { error } = await supabase.from('profiles').update(updateData).eq('id', id);
-    if (error) throw error;
-
-    if (originalRole !== 'driver' && nextRole === 'driver') {
-      const { error: locUpsertErr } = await supabase
-        .from('driver_locations')
-        .upsert({
-          driver_id: id,
-          is_online: updateData.is_online,
-          is_available: false,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'driver_id' });
-      if (locUpsertErr) throw locUpsertErr;
-    }
-
-    if (originalRole === 'driver' && nextRole !== 'driver') {
-      const { error: locPatchErr } = await supabase
-        .from('driver_locations')
-        .update({ is_online: false, is_available: false, updated_at: new Date().toISOString() })
-        .eq('driver_id', id);
-      if (locPatchErr) throw locPatchErr;
-    }
+    await callAdminAction({ action: 'edit_user', id, update_data: updateData, original_role: originalRole });
 
     _patchProfileInLocalCaches(id, updateData);
     _rerenderCurrentManagementRows();
@@ -2370,7 +2175,7 @@ async function submitEditUser(id) {
     document.getElementById('editUserModal')?.remove();
     showToast('บันทึกข้อมูลผู้ใช้สำเร็จ!', 'success');
   } catch (e) {
-    showToast('เกิดข้อผิดพลาด: ' + (e.message || JSON.stringify(e)), 'error');
+    showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message || JSON.stringify(e)), 'error');
   }
 }
 
@@ -2386,31 +2191,30 @@ function filterUsers() {
 async function suspendUser(id) {
   const reason = prompt('เหตุผลที่ระงับบัญชี:');
   if (!reason) return;
-  const patch = {
-    approval_status: 'suspended',
-    rejection_reason: reason,
-    updated_at: new Date().toISOString(),
-  };
-  const { error } = await supabase.from('profiles').update(patch).eq('id', id);
-  if (error) return showToast('เกิดข้อผิดพลาด: ' + error.message, 'error');
   try {
-    await _notifyAdminActionTargets([
-      {
-        user_id: id,
-        title: '⛔ บัญชีถูกระงับโดยแอดมิน',
-        body: `บัญชีของคุณถูกระงับชั่วคราว: ${reason}`,
-        type: 'admin_suspend_user',
-        data: { type: 'admin_suspend_user', user_id: id, reason },
-      },
-    ]);
-  } catch (notifyErr) {
-    console.warn('Suspend notify warning:', notifyErr);
-  }
+    await callAdminAction({ action: 'suspend_user', id, reason });
+    const patch = { approval_status: 'suspended', rejection_reason: reason, updated_at: new Date().toISOString() };
+    _patchProfileInLocalCaches(id, patch);
+    _rerenderCurrentManagementRows();
+    showToast('ระงับบัญชีแล้ว', 'info');
+  } catch (e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
+}
 
-  _patchProfileInLocalCaches(id, patch);
-  _rerenderCurrentManagementRows();
-
-  showToast('ระงับบัญชีแล้ว', 'info');
+async function toggleMerchantShopStatus(id, currentlyOpen) {
+  const makeOpen = !currentlyOpen;
+  const confirmed = confirm(
+    makeOpen
+      ? 'ต้องการเปิดร้านนี้ใช่หรือไม่?'
+      : 'ต้องการระงับการเปิดร้าน (ปิดร้านชั่วคราว) ใช่หรือไม่?',
+  );
+  if (!confirmed) return;
+  try {
+    await callAdminAction({ action: 'toggle_shop_status', id, make_open: makeOpen });
+    const patch = { shop_status: makeOpen, updated_at: new Date().toISOString() };
+    _patchProfileInLocalCaches(id, patch);
+    _rerenderCurrentManagementRows();
+    showToast(makeOpen ? 'เปิดร้านสำเร็จ' : 'ปิดร้านสำเร็จ', 'info');
+  } catch (e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 // ============================================
@@ -2474,11 +2278,11 @@ async function renderWithdrawals(el) {
                 const user = userMap[r.user_id] || {};
                 return `
                   <tr class="table-row border-b border-gray-50">
-                    <td class="px-4 py-3 font-medium">${user.full_name || '-'}</td>
-                    <td class="px-4 py-3 text-gray-500">${user.role || '-'}</td>
+                    <td class="px-4 py-3 font-medium">${escapeHtml(user.full_name) || '-'}</td>
+                    <td class="px-4 py-3 text-gray-500">${escapeHtml(user.role) || '-'}</td>
                     <td class="px-4 py-3 font-semibold text-green-600">฿${fmt(r.amount)}</td>
-                    <td class="px-4 py-3">${r.bank_name || '-'}</td>
-                    <td class="px-4 py-3 font-mono text-xs">${r.bank_account_number || '-'}</td>
+                    <td class="px-4 py-3">${escapeHtml(r.bank_name) || '-'}</td>
+                    <td class="px-4 py-3 font-mono text-xs">${escapeHtml(r.bank_account_number) || '-'}</td>
                     <td class="px-4 py-3">${statusBadge(r.status)}</td>
                     <td class="px-4 py-3 text-gray-500 text-xs">${fmtDate(r.created_at)}</td>
                     <td class="px-4 py-3">
@@ -2513,51 +2317,23 @@ async function renderWithdrawals(el) {
 
 async function approveWithdrawal(id) {
   if (!confirm('อนุมัติการถอนเงินนี้?')) return;
-  const { data: req, error: reqErr } = await supabase
-    .from('withdrawal_requests')
-    .select('user_id, amount')
-    .eq('id', id)
-    .single();
-  if (reqErr) return showToast('เกิดข้อผิดพลาด: ' + reqErr.message, 'error');
-
-  const { error } = await supabase.from('withdrawal_requests').update({ status: 'completed', processed_at: new Date().toISOString() }).eq('id', id);
-  if (error) return showToast('เกิดข้อผิดพลาด: ' + error.message, 'error');
-  await _notifyAdminActionTargets([
-    {
-      user_id: req.user_id,
-      title: '✅ อนุมัติถอนเงินแล้ว',
-      body: `คำขอถอนเงิน ฿${fmt(req.amount || 0)} ได้รับการอนุมัติแล้ว`,
-      type: 'admin_approve_withdrawal',
-      data: { type: 'admin_approve_withdrawal', request_id: id, amount: String(req.amount || 0) },
-    },
-  ]);
-  showToast('อนุมัติการถอนเงินสำเร็จ', 'success');
-  refreshCurrentPage();
+  try {
+    const result = await callAdminAction({ action: 'approve_withdrawal', id });
+    if (result.already_processed) return showToast('คำขอนี้ถูกดำเนินการไปแล้ว', 'info');
+    showToast('อนุมัติการถอนเงินสำเร็จ', 'success');
+    refreshCurrentPage();
+  } catch (e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 async function rejectWithdrawal(id, userId, amount) {
   const reason = prompt('เหตุผลที่ปฏิเสธ:');
   if (!reason) return;
-  // Refund to wallet
   try {
-    const { data: wallet } = await supabase.from('wallets').select('id, balance').eq('user_id', userId).single();
-    if (wallet) {
-      await supabase.from('wallets').update({ balance: (wallet.balance || 0) + amount }).eq('id', wallet.id);
-    }
-  } catch(e) { console.error('Refund error:', e); }
-  const { error } = await supabase.from('withdrawal_requests').update({ status: 'rejected', admin_note: reason, processed_at: new Date().toISOString() }).eq('id', id);
-  if (error) return showToast('เกิดข้อผิดพลาด: ' + error.message, 'error');
-  await _notifyAdminActionTargets([
-    {
-      user_id: userId,
-      title: '❌ ปฏิเสธคำขอถอนเงิน',
-      body: `คำขอถอนเงิน ฿${fmt(amount || 0)} ถูกปฏิเสธ: ${reason}`,
-      type: 'admin_reject_withdrawal',
-      data: { type: 'admin_reject_withdrawal', request_id: id, amount: String(amount || 0), reason },
-    },
-  ]);
-  showToast('ปฏิเสธการถอนเงิน + คืนเงินเข้า Wallet แล้ว', 'info');
-  refreshCurrentPage();
+    const result = await callAdminAction({ action: 'reject_withdrawal', id, reason });
+    if (result.already_processed) return showToast('คำขอนี้ถูกดำเนินการไปแล้ว', 'info');
+    showToast('ปฏิเสธการถอนเงิน + คืนเงินเข้า Wallet แล้ว', 'info');
+    refreshCurrentPage();
+  } catch (e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 // ============================================
@@ -2574,7 +2350,7 @@ async function renderPromos(el) {
   _promoMerchants = merchants || [];
   const all = coupons || [];
   const merchantOptions = ['<option value="">คูปองส่วนกลาง (ทุกคนใช้ได้)</option>']
-    .concat(_promoMerchants.map(m => `<option value="${m.id}">${m.full_name || m.id}</option>`))
+    .concat(_promoMerchants.map(m => `<option value="${m.id}">${escapeHtml(m.full_name) || m.id}</option>`))
     .join('');
 
   const now = new Date().toISOString();
@@ -2829,7 +2605,7 @@ function renderPromoList(coupons) {
             <span class="text-xs text-gray-400">${serviceLabel}</span>
           </div>
           <p class="text-sm font-medium text-gray-700 truncate">${c.name}</p>
-          ${c.description ? `<p class="text-xs text-gray-400 truncate">${c.description}</p>` : ''}
+          ${c.description ? `<p class="text-xs text-gray-400 truncate">${escapeHtml(c.description)}</p>` : ''}
           <div class="flex flex-wrap gap-3 mt-1 text-xs text-gray-500">
             <span>💰 ${typeLabel}</span>
             ${merchantName ? `<span>🏪 ร้าน: ${merchantName}</span>` : '<span>🌐 ส่วนกลาง</span>'}
@@ -2913,46 +2689,40 @@ async function createPromoCode() {
       used_count: 0,
     };
 
-    const { error } = await supabase.from('coupons').insert(insertData);
-    if (error) {
-      if (error.message.includes('duplicate') || error.message.includes('unique')) {
-        return alert('โค้ดนี้มีอยู่แล้ว กรุณาใช้โค้ดอื่น');
-      }
-      throw error;
-    }
+    await callAdminAction({ action: 'create_coupon', coupon_data: insertData });
 
     showToast('สร้างโค้ดส่วนลดสำเร็จ!', 'success');
     refreshCurrentPage();
   } catch (e) {
+    if (e.message && (e.message.includes('duplicate') || e.message.includes('unique'))) {
+      return alert('โค้ดนี้มีอยู่แล้ว กรุณาใช้โค้ดอื่น');
+    }
     alert('เกิดข้อผิดพลาด: ' + e.message);
   }
 }
 
 async function togglePromoActive(id, newState) {
   try {
-    const { error } = await supabase.from('coupons').update({ is_active: newState }).eq('id', id);
-    if (error) throw error;
+    await callAdminAction({ action: 'toggle_coupon', id, is_active: newState });
     showToast(newState ? 'เปิดใช้งานโค้ดแล้ว' : 'ปิดใช้งานโค้ดแล้ว', 'success');
     refreshCurrentPage();
-  } catch (e) { showToast('เกิดข้อผิดพลาด: ' + (e.message || JSON.stringify(e)), 'error'); }
+  } catch (e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message || JSON.stringify(e)), 'error'); }
 }
 
 async function deletePromoCode(id, code) {
-  if (!confirm(`ลบโค้ด "${code}" ?\nการลบจะไม่สามารถกู้คืนได้`)) return;
+  if (!confirm(`ลบโค้ด "${escapeHtml(code)}" ?\nการลบจะไม่สามารถกู้คืนได้`)) return;
   try {
-    // Delete usages first
-    await supabase.from('coupon_usages').delete().eq('coupon_id', id);
-    await supabase.from('coupons').delete().eq('id', id);
+    await callAdminAction({ action: 'delete_coupon', id });
     showToast('ลบโค้ดสำเร็จ', 'success');
     refreshCurrentPage();
-  } catch (e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
+  } catch (e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 async function editPromoCode(id) {
   const { data: c } = await supabase.from('coupons').select('*').eq('id', id).single();
   if (!c) return;
   const merchantOptions = ['<option value="">คูปองส่วนกลาง</option>']
-    .concat(_promoMerchants.map(m => `<option value="${m.id}" ${c.merchant_id===m.id?'selected':''}>${m.full_name || m.id}</option>`))
+    .concat(_promoMerchants.map(m => `<option value="${m.id}" ${c.merchant_id===m.id?'selected':''}>${escapeHtml(m.full_name) || m.id}</option>`))
     .join('');
 
   const toLocal = (iso) => {
@@ -2975,7 +2745,7 @@ async function editPromoCode(id) {
         </div>
         <div>
           <label class="block text-xs font-medium text-gray-600 mb-1">คำอธิบาย</label>
-          <input id="editPromoDesc" type="text" value="${c.description||''}" class="w-full px-3 py-2 border rounded-lg text-sm">
+          <input id="editPromoDesc" type="text" value="${escapeHtml(c.description)}" class="w-full px-3 py-2 border rounded-lg text-sm">
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
@@ -3091,14 +2861,13 @@ async function submitEditPromo(id) {
 
     if (!updateData.name) return alert('กรุณากรอกชื่อโปรโมชั่น');
 
-    const { error } = await supabase.from('coupons').update(updateData).eq('id', id);
-    if (error) throw error;
+    await callAdminAction({ action: 'update_coupon', id, update_data: updateData });
 
     document.getElementById('promoEditModal')?.remove();
     showToast('แก้ไขโค้ดสำเร็จ!', 'success');
     refreshCurrentPage();
   } catch (e) {
-    alert('เกิดข้อผิดพลาด: ' + e.message);
+    showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error');
   }
 }
 
@@ -3133,13 +2902,13 @@ async function renderAccountDeletions(el) {
             <span class="material-icons-round text-${rc}-500">${ri}</span>
           </div>
           <div class="flex-1 min-w-0">
-            <div class="font-bold text-gray-800 truncate">${r.user_name || 'ไม่ทราบชื่อ'}</div>
-            <div class="text-xs text-gray-400 truncate">${r.user_email || ''}</div>
+            <div class="font-bold text-gray-800 truncate">${escapeHtml(r.user_name) || 'ไม่ทราบชื่อ'}</div>
+            <div class="text-xs text-gray-400 truncate">${escapeHtml(r.user_email) || ''}</div>
           </div>
           <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-${rc}-50 text-${rc}-600 border border-${rc}-200">${roleLabels[r.user_role] || r.user_role}</span>
         </div>
-        ${r.reason ? `<div class="bg-gray-50 rounded-xl p-3 text-sm text-gray-600 mb-3 border border-gray-100"><span class="font-semibold text-gray-500">เหตุผล:</span> ${r.reason}</div>` : ''}
-        ${r.rejection_reason ? `<div class="bg-rose-50 rounded-xl p-3 text-sm text-rose-600 mb-3 border border-rose-100"><span class="font-semibold">เหตุผลปฏิเสธ:</span> ${r.rejection_reason}</div>` : ''}
+        ${r.reason ? `<div class="bg-gray-50 rounded-xl p-3 text-sm text-gray-600 mb-3 border border-gray-100"><span class="font-semibold text-gray-500">เหตุผล:</span> ${escapeHtml(r.reason)}</div>` : ''}
+        ${r.rejection_reason ? `<div class="bg-rose-50 rounded-xl p-3 text-sm text-rose-600 mb-3 border border-rose-100"><span class="font-semibold">เหตุผลปฏิเสธ:</span> ${escapeHtml(r.rejection_reason)}</div>` : ''}
         <div class="flex items-center gap-2 text-xs text-gray-400">
           <span class="material-icons-round text-sm">schedule</span> ${dt} ${reviewDt ? `<span class="mx-1">•</span> ตรวจสอบ: ${reviewDt}` : ''}
         </div>
@@ -3227,63 +2996,24 @@ function exportAccountDeletionsExcel() {
     วันที่ตรวจสอบ: fmtDate(r.reviewed_at),
   }));
   exportRowsToExcel(reportFilename('account_deletions_report', 'xls', '', ''), ['ชื่อผู้ใช้', 'อีเมล', 'บทบาท', 'สถานะ', 'เหตุผล', 'เหตุผลปฏิเสธ', 'วันที่ขอ', 'วันที่ตรวจสอบ'], rows);
-  window._allAccountDeletionRequests = requests || [];
-}
-
-function exportAccountDeletionsCsv() {
-  const rows = (window._allAccountDeletionRequests || []).map((r) => ({
-    ชื่อผู้ใช้: r.user_name || '-',
-    อีเมล: r.user_email || '-',
-    บทบาท: r.user_role || '-',
-    สถานะ: r.status || '-',
-    เหตุผล: r.reason || '-',
-    เหตุผลปฏิเสธ: r.rejection_reason || '-',
-    วันที่ขอ: fmtDate(r.requested_at),
-    วันที่ตรวจสอบ: fmtDate(r.reviewed_at),
-  }));
-  exportRowsToCsv(reportFilename('account_deletions_report', 'csv', '', ''), ['ชื่อผู้ใช้', 'อีเมล', 'บทบาท', 'สถานะ', 'เหตุผล', 'เหตุผลปฏิเสธ', 'วันที่ขอ', 'วันที่ตรวจสอบ'], rows);
-}
-
-function exportAccountDeletionsExcel() {
-  const rows = (window._allAccountDeletionRequests || []).map((r) => ({
-    ชื่อผู้ใช้: r.user_name || '-',
-    อีเมล: r.user_email || '-',
-    บทบาท: r.user_role || '-',
-    สถานะ: r.status || '-',
-    เหตุผล: r.reason || '-',
-    เหตุผลปฏิเสธ: r.rejection_reason || '-',
-    วันที่ขอ: fmtDate(r.requested_at),
-    วันที่ตรวจสอบ: fmtDate(r.reviewed_at),
-  }));
-  exportRowsToExcel(reportFilename('account_deletions_report', 'xls', '', ''), ['ชื่อผู้ใช้', 'อีเมล', 'บทบาท', 'สถานะ', 'เหตุผล', 'เหตุผลปฏิเสธ', 'วันที่ขอ', 'วันที่ตรวจสอบ'], rows);
 }
 
 async function approveDeletion(id) {
   if (!confirm('ยืนยันอนุมัติลบบัญชีนี้?')) return;
   try {
-    const { data: req } = await supabase.from('account_deletion_requests').select('user_id').eq('id', id).single();
-    const adminId = (await supabase.auth.getUser()).data?.user?.id;
-    await supabase.from('account_deletion_requests').update({
-      status: 'approved', reviewed_at: new Date().toISOString(), reviewed_by: adminId
-    }).eq('id', id);
-    await supabase.from('profiles').update({ deletion_status: 'approved' }).eq('id', req.user_id);
+    await callAdminAction({ action: 'approve_deletion', id });
     showToast('อนุมัติลบบัญชีแล้ว', 'success');
     refreshCurrentPage();
-  } catch (e) { showToast('เกิดข้อผิดพลาด: ' + e.message, 'error'); }
+  } catch (e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 async function rejectDeletion(id) {
   const reason = prompt('เหตุผลในการปฏิเสธ (ไม่บังคับ):') || '';
   try {
-    const { data: req } = await supabase.from('account_deletion_requests').select('user_id').eq('id', id).single();
-    const adminId = (await supabase.auth.getUser()).data?.user?.id;
-    await supabase.from('account_deletion_requests').update({
-      status: 'rejected', reviewed_at: new Date().toISOString(), reviewed_by: adminId, rejection_reason: reason
-    }).eq('id', id);
-    await supabase.from('profiles').update({ deletion_status: null }).eq('id', req.user_id);
+    await callAdminAction({ action: 'reject_deletion', id, reason });
     showToast('ปฏิเสธคำขอแล้ว (บัญชีกลับมาใช้งานได้)', 'info');
     refreshCurrentPage();
-  } catch (e) { showToast('เกิดข้อผิดพลาด: ' + e.message, 'error'); }
+  } catch (e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 // ============================================
@@ -3355,23 +3085,15 @@ async function renderSettings(el) {
     config = data || {};
   } catch(e) { /* might not exist */ }
   try {
-    const { data: kvRows } = await supabase
-      .from('system_config')
-      .select('key,value')
-      .in('key', [
-        'ride_far_pickup_threshold_km',
-        'ride_far_pickup_rate_per_km_motorcycle',
-        'ride_far_pickup_rate_per_km_car',
-        'food_far_pickup_threshold_km_default',
-        'food_far_pickup_rate_per_km_default',
-        'merchant_gp_system_rate_default',
-        'merchant_gp_driver_rate_default',
-      ]);
-    (kvRows || []).forEach((row) => {
-      if (row?.key && row?.value != null) {
-        kvConfig[row.key] = row.value;
-      }
-    });
+    kvConfig = await _fetchSystemConfigKeyValues([
+      'ride_far_pickup_threshold_km',
+      'ride_far_pickup_rate_per_km_motorcycle',
+      'ride_far_pickup_rate_per_km_car',
+      'food_far_pickup_threshold_km_default',
+      'food_far_pickup_rate_per_km_default',
+      'merchant_gp_system_rate_default',
+      'merchant_gp_driver_rate_default',
+    ]);
   } catch(e) { /* key-value rows may not exist yet */ }
   try {
     const { data } = await supabase.from('service_rates').select('*').order('service_type');
@@ -3984,33 +3706,95 @@ async function renderSettings(el) {
   loadAppAssets();
 }
 
+let _systemConfigSupportsKeyColumn = null;
+let _systemConfigSupportsIdColumn = null;
+
+function _isMissingSystemConfigIdColumnError(error) {
+  const msg = String(error?.message || error || '').toLowerCase();
+  return (
+    msg.includes("could not find the 'id' column") ||
+    msg.includes('column system_config.id does not exist') ||
+    msg.includes('system_config.id')
+  );
+}
+
 async function _getSystemConfigId() {
-  const { data: existing } = await supabase.from('system_config').select('id').maybeSingle();
-  return existing?.id ?? 1;
+  if (_systemConfigSupportsIdColumn === false) return null;
+  try {
+    const { data: existing, error } = await supabase
+      .from('system_config')
+      .select('id')
+      .maybeSingle();
+    if (error) throw error;
+    _systemConfigSupportsIdColumn = true;
+    return existing?.id ?? 1;
+  } catch (error) {
+    if (!_isMissingSystemConfigIdColumnError(error)) throw error;
+    _systemConfigSupportsIdColumn = false;
+    return null;
+  }
 }
 
 async function _upsertSystemConfig(patch) {
-  const configId = await _getSystemConfigId();
-  const payload = {
-    id: configId,
-    ...patch,
-    updated_at: new Date().toISOString(),
+  await callAdminAction({ action: 'upsert_system_config', config_data: patch });
+}
+
+function _isMissingSystemConfigKeyColumnError(error) {
+  const msg = String(error?.message || error || '').toLowerCase();
+  return (
+    msg.includes("could not find the 'key' column") ||
+    msg.includes('column system_config.key does not exist') ||
+    msg.includes('system_config.key')
+  );
+}
+
+async function _fetchSystemConfigKeyValues(keys) {
+  const list = Array.isArray(keys) ? keys.filter(Boolean) : [];
+  if (!list.length) return {};
+
+  const fetchFromSingleRow = async () => {
+    const { data: row, error: fallbackError } = await supabase
+      .from('system_config')
+      .select('*')
+      .maybeSingle();
+    if (fallbackError) throw fallbackError;
+    const result = {};
+    list.forEach((key) => {
+      if (row && Object.prototype.hasOwnProperty.call(row, key)) {
+        result[key] = row[key];
+      }
+    });
+    return result;
   };
-  const { error } = await supabase.from('system_config').upsert(payload, { onConflict: 'id' });
-  if (error) throw error;
+
+  if (_systemConfigSupportsKeyColumn === false) {
+    return fetchFromSingleRow();
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('system_config')
+      .select('key,value')
+      .in('key', list);
+    if (error) throw error;
+    _systemConfigSupportsKeyColumn = true;
+    const result = {};
+    (data || []).forEach((row) => {
+      if (row?.key && row?.value != null) {
+        result[row.key] = row.value;
+      }
+    });
+    return result;
+  } catch (error) {
+    if (!_isMissingSystemConfigKeyColumnError(error)) throw error;
+    _systemConfigSupportsKeyColumn = false;
+    return fetchFromSingleRow();
+  }
 }
 
 async function _upsertSystemConfigKeyValues(rows) {
   if (!rows || !rows.length) return;
-  const payload = rows.map((row) => ({
-    key: row.key,
-    value: String(row.value),
-    updated_at: new Date().toISOString(),
-  }));
-  const { error } = await supabase
-    .from('system_config')
-    .upsert(payload, { onConflict: 'key' });
-  if (error) throw error;
+  await callAdminAction({ action: 'upsert_system_config_kv', rows });
 }
 
 async function saveGeneralSettings() {
@@ -4068,8 +3852,8 @@ async function saveServiceRatesSettings() {
     const merchantGpSystem = (parseFloat(document.getElementById('settMerchantGpSystemRate')?.value) || 0) / 100;
     const merchantGpDriver = (parseFloat(document.getElementById('settMerchantGpDriverRate')?.value) || 0) / 100;
     const splitTotal = merchantGpSystem + merchantGpDriver;
-    if (Math.abs(splitTotal - merchantGp) > 0.0001) {
-      throw new Error(`Merchant GP รวมต้องเท่ากับ เข้าระบบ + ให้คนขับ (รวม ${(merchantGp * 100).toFixed(1)}%, split ${(splitTotal * 100).toFixed(1)}%)`);
+    if (splitTotal - merchantGp > 0.0001) {
+      throw new Error(`Merchant GP split รวมต้องไม่เกิน Merchant GP (รวม ${(merchantGp * 100).toFixed(1)}%, split ${(splitTotal * 100).toFixed(1)}%)`);
     }
 
     await _upsertSystemConfig({
@@ -4107,6 +3891,19 @@ async function saveServiceRatesSettings() {
         value: (parseFloat(document.getElementById('settFoodFarPickupRate')?.value) || 5).toFixed(2),
       },
     ]);
+
+    const verifyDefaults = await _fetchSystemConfigKeyValues([
+      'merchant_gp_system_rate_default',
+      'merchant_gp_driver_rate_default',
+    ]);
+    if (
+      String(verifyDefaults.merchant_gp_system_rate_default ?? '') !== merchantGpSystem.toFixed(4) ||
+      String(verifyDefaults.merchant_gp_driver_rate_default ?? '') !== merchantGpDriver.toFixed(4)
+    ) {
+      throw new Error(
+        'บันทึกค่า Merchant GP split default ไม่สำเร็จใน schema ปัจจุบัน',
+      );
+    }
 
     const rateEls = document.querySelectorAll('[data-rate-type]');
     for (const el of rateEls) {
@@ -4188,22 +3985,11 @@ async function saveAdminEmail() {
   console.log('💾 Saving admin email:', { adminEmail, adminEmailCC });
 
   try {
-    const { data: existing } = await supabase.from('system_config').select('id').maybeSingle();
-    const configId = existing?.id ?? 1;
-
-    const { data, error } = await supabase.from('system_config').upsert({
-      id: configId,
+    await _upsertSystemConfig({
       admin_notification_email: adminEmail || null,
       admin_notification_email_cc: adminEmailCC || null,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'id' });
+    });
 
-    console.log('💾 Save result:', { data, error });
-    if (error) {
-      console.error('Save email error:', error);
-      showToast('บันทึกไม่สำเร็จ: ' + error.message + ' (อาจยังไม่ได้รัน migration เพิ่มคอลัมน์)', 'error');
-      return;
-    }
     showToast('บันทึกอีเมลสำเร็จ!', 'success');
   } catch (e) {
     console.error('Save email exception:', e);
@@ -4276,7 +4062,7 @@ async function renderRevenue(el) {
         <input type="date" id="revDateTo" value="${today.toISOString().split('T')[0]}" class="border border-gray-200 rounded-xl px-3.5 py-2 text-sm bg-gray-50/50 transition-all" />
         <select id="revWalletDriver" class="border border-gray-200 rounded-xl px-3.5 py-2 text-sm bg-gray-50/50 transition-all min-w-[260px]">
           <option value="">คนขับทั้งหมด</option>
-          ${(drivers || []).map(d => `<option value="${d.id}">${d.full_name || 'ไม่ระบุชื่อ'}${d.phone_number ? ' (' + d.phone_number + ')' : ''}</option>`).join('')}
+          ${(drivers || []).map(d => `<option value="${d.id}">${escapeHtml(d.full_name) || 'ไม่ระบุชื่อ'}${d.phone_number ? ' (' + escapeHtml(d.phone_number) + ')' : ''}</option>`).join('')}
         </select>
         <button onclick="loadRevenue()" class="text-white px-5 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-indigo-200" style="background:linear-gradient(135deg,#6366f1,#818cf8);">กรอง</button>
         <button onclick="exportRevenueCsv()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors">Export CSV</button>
@@ -4664,20 +4450,6 @@ function exportRevenueExcel() {
   exportRowsToExcel(reportFilename('revenue_wallet_report', 'xls', from, to), ['คนขับ', 'เบอร์โทร', 'เครดิตคงเหลือ', 'หักแล้ว', 'เติมทั้งหมด', 'ถอนทั้งหมด'], rows);
 }
 
-function exportRevenueCsv() {
-  const from = document.getElementById('revDateFrom')?.value || '';
-  const to = document.getElementById('revDateTo')?.value || '';
-  const rows = window._revenueExportRows || [];
-  exportRowsToCsv(reportFilename('revenue_wallet_report', 'csv', from, to), ['คนขับ', 'เบอร์โทร', 'เครดิตคงเหลือ', 'หักแล้ว', 'เติมทั้งหมด', 'ถอนทั้งหมด'], rows);
-}
-
-function exportRevenueExcel() {
-  const from = document.getElementById('revDateFrom')?.value || '';
-  const to = document.getElementById('revDateTo')?.value || '';
-  const rows = window._revenueExportRows || [];
-  exportRowsToExcel(reportFilename('revenue_wallet_report', 'xls', from, to), ['คนขับ', 'เบอร์โทร', 'เครดิตคงเหลือ', 'หักแล้ว', 'เติมทั้งหมด', 'ถอนทั้งหมด'], rows);
-}
-
 // ============================================
 // Menu Management Page
 // ============================================
@@ -4691,7 +4463,7 @@ async function renderMenus(el) {
         <span class="material-icons-round text-indigo-400 text-lg">store</span>
         <select id="menuMerchantSelect" onchange="loadMerchantMenus()" class="border border-gray-200 rounded-xl px-3.5 py-2 text-sm flex-1 max-w-md bg-gray-50/50 transition-all">
           <option value="">-- เลือกร้านค้า --</option>
-          ${(merchants || []).map(m => `<option value="${m.id}" ${m.id===preselected?'selected':''}>${m.full_name}${m.shop_address ? ' — '+m.shop_address : ''}</option>`).join('')}
+          ${(merchants || []).map(m => `<option value="${m.id}" ${m.id===preselected?'selected':''}>${escapeHtml(m.full_name)}${m.shop_address ? ' — '+escapeHtml(m.shop_address) : ''}</option>`).join('')}
         </select>
         <div class="relative min-w-[260px]">
           <span class="material-icons-round text-gray-400 text-sm absolute left-3 top-1/2 -translate-y-1/2">search</span>
@@ -4887,13 +4659,13 @@ async function createOptionGroupForAddMenu(merchantId) {
   const max = parseInt(document.getElementById('newAddGroupMax')?.value) || 1;
   if (!name) return alert('กรุณากรอกชื่อกลุ่ม');
   try {
-    const { data: grp } = await supabase.from('menu_option_groups').insert({ merchant_id: merchantId, name, min_selection: min, max_selection: max }).select().single();
-    if (grp) window._addMenuSelectedGroups.push(grp);
+    const result = await callAdminAction({ action: 'create_menu_option_group', merchant_id: merchantId, name, min_selection: min, max_selection: max });
+    if (result.group) window._addMenuSelectedGroups.push(result.group);
     document.getElementById('addMenuOptionGroupPickerModal')?.remove();
     showAddMenuOptionGroupPicker(merchantId);
     renderAddMenuOptionGroups();
     showToast('สร้างกลุ่มตัวเลือกสำเร็จ!', 'success');
-  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + e.message, 'error'); }
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 function toggleAddMenuGroup(groupId, add, merchantId) {
@@ -4971,32 +4743,33 @@ async function addMenuOptionStandalone(groupId, groupName, merchantId) {
   const price = parseInt(document.getElementById('newOptPriceSA')?.value) || 0;
   if (!name) return alert('กรุณากรอกชื่อตัวเลือก');
   try {
-    await supabase.from('menu_options').insert({ group_id: groupId, name, price, is_available: true });
+    await callAdminAction({ action: 'create_menu_option', group_id: groupId, name, price, is_available: true });
     document.getElementById('manageOptionsStandaloneModal')?.remove();
     showManageOptionsModalStandalone(groupId, groupName, merchantId);
-  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + e.message, 'error'); }
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 async function toggleOptSA(optionId, newState, groupId, groupName, merchantId) {
-  const { error } = await supabase.from('menu_options').update({ is_available: newState }).eq('id', optionId);
-  if (error) return showToast('เกิดข้อผิดพลาด: ' + error.message, 'error');
-  document.getElementById('manageOptionsStandaloneModal')?.remove();
-  showManageOptionsModalStandalone(groupId, groupName, merchantId);
+  try {
+    await callAdminAction({ action: 'update_menu_option', id: optionId, update_data: { is_available: newState } });
+    document.getElementById('manageOptionsStandaloneModal')?.remove();
+    showManageOptionsModalStandalone(groupId, groupName, merchantId);
+  } catch (e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 async function deleteOptSA(optionId, groupId, groupName, merchantId) {
   if (!confirm('ลบตัวเลือกนี้?')) return;
-  await supabase.from('menu_options').delete().eq('id', optionId);
-  document.getElementById('manageOptionsStandaloneModal')?.remove();
-  showManageOptionsModalStandalone(groupId, groupName, merchantId);
+  try {
+    await callAdminAction({ action: 'delete_menu_option', id: optionId });
+    document.getElementById('manageOptionsStandaloneModal')?.remove();
+    showManageOptionsModalStandalone(groupId, groupName, merchantId);
+  } catch (e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 async function deleteOptionGroup(groupId, merchantId) {
   if (!confirm('ลบกลุ่มตัวเลือกนี้ทั้งหมด? (รวมตัวเลือกทั้งหมดในกลุ่ม)')) return;
   try {
-    await supabase.from('menu_options').delete().eq('group_id', groupId);
-    await supabase.from('menu_item_option_links').delete().eq('option_group_id', groupId);
-    await supabase.from('menu_option_groups').delete().eq('id', groupId);
+    await callAdminAction({ action: 'delete_option_group', id: groupId });
     window._addMenuSelectedGroups = window._addMenuSelectedGroups.filter(g => g.id !== groupId);
     renderAddMenuOptionGroups();
     document.getElementById('addMenuOptionGroupPickerModal')?.remove();
@@ -5058,32 +4831,25 @@ async function submitAddMenu(merchantId) {
     if (fileInput?.files?.length) {
       imageUrl = await uploadMenuImage(fileInput.files[0], merchantId);
     }
-    const { data: newItem } = await supabase.from('menu_items').insert({
+    const optionGroupIds = window._addMenuSelectedGroups.map(g => g.id);
+    await callAdminAction({
+      action: 'create_menu_item',
       merchant_id: merchantId,
-      name: document.getElementById('addMenuName').value,
-      category: document.getElementById('addMenuCat').value,
-      price: parseFloat(document.getElementById('addMenuPrice').value) || 0,
-      description: document.getElementById('addMenuDesc').value,
-      image_url: imageUrl,
-      is_available: true,
-    }).select().single();
-
-    // Link selected option groups
-    if (newItem && window._addMenuSelectedGroups.length > 0) {
-      for (let i = 0; i < window._addMenuSelectedGroups.length; i++) {
-        const g = window._addMenuSelectedGroups[i];
-        await supabase.from('menu_item_option_links').insert({
-          menu_item_id: newItem.id,
-          option_group_id: g.id,
-          sort_order: i,
-        });
-      }
-    }
+      item_data: {
+        name: document.getElementById('addMenuName').value,
+        category: document.getElementById('addMenuCat').value,
+        price: parseFloat(document.getElementById('addMenuPrice').value) || 0,
+        description: document.getElementById('addMenuDesc').value,
+        image_url: imageUrl,
+        is_available: true,
+      },
+      option_group_ids: optionGroupIds,
+    });
 
     document.getElementById('menuFormContainer').innerHTML = '';
     showToast('เพิ่มเมนูสำเร็จ!', 'success');
     loadMerchantMenus();
-  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + e.message, 'error'); }
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 async function editMenuItem(id) {
@@ -5172,26 +4938,30 @@ async function submitEditMenu(id, merchantId) {
     if (fileInput?.files?.length) {
       imageUrl = await uploadMenuImage(fileInput.files[0], merchantId || 'unknown');
     }
-    await supabase.from('menu_items').update({
-      name: document.getElementById('editMenuName').value,
-      category: document.getElementById('editMenuCat').value,
-      price: parseFloat(document.getElementById('editMenuPrice').value) || 0,
-      description: document.getElementById('editMenuDesc').value,
-      image_url: imageUrl,
-      is_available: document.getElementById('editMenuAvail').checked,
-    }).eq('id', id);
+    await callAdminAction({
+      action: 'update_menu_item',
+      id,
+      update_data: {
+        name: document.getElementById('editMenuName').value,
+        category: document.getElementById('editMenuCat').value,
+        price: parseFloat(document.getElementById('editMenuPrice').value) || 0,
+        description: document.getElementById('editMenuDesc').value,
+        image_url: imageUrl,
+        is_available: document.getElementById('editMenuAvail').checked,
+      },
+    });
     document.getElementById('editMenuModal')?.remove();
     showToast('บันทึกเมนูสำเร็จ!', 'success');
     loadMerchantMenus();
-  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + e.message, 'error'); }
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 async function unlinkOptionGroupFromMenu(menuItemId, groupId) {
   if (!confirm('ลบกลุ่มตัวเลือกนี้ออกจากเมนู?')) return;
   try {
-    await supabase.from('menu_item_option_links').delete().eq('menu_item_id', menuItemId).eq('option_group_id', groupId);
+    await callAdminAction({ action: 'unlink_option_group', menu_item_id: menuItemId, option_group_id: groupId });
     editMenuItem(menuItemId); // Refresh
-  } catch(e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 async function showLinkOptionGroupModal(menuItemId, merchantId) {
@@ -5258,27 +5028,20 @@ async function createOptionGroupAndLink(menuItemId, merchantId) {
   const max = parseInt(document.getElementById('newGroupMax')?.value) || 1;
   if (!name) return alert('กรุณากรอกชื่อกลุ่ม');
   try {
-    const { data: grp } = await supabase.from('menu_option_groups').insert({ merchant_id: merchantId, name, min_selection: min, max_selection: max }).select().single();
-    if (grp) {
-      await supabase.from('menu_item_option_links').insert({ menu_item_id: menuItemId, option_group_id: grp.id, sort_order: 0 });
-    }
+    await callAdminAction({ action: 'create_option_group_and_link', merchant_id: merchantId, menu_item_id: menuItemId, name, min_selection: min, max_selection: max });
     document.getElementById('optionGroupModal')?.remove();
     editMenuItem(menuItemId);
-    alert('สร้างกลุ่มตัวเลือกสำเร็จ!');
-  } catch(e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
+    showToast('สร้างกลุ่มตัวเลือกสำเร็จ!', 'success');
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 async function toggleLinkGroup(menuItemId, groupId, link) {
   try {
-    if (link) {
-      await supabase.from('menu_item_option_links').insert({ menu_item_id: menuItemId, option_group_id: groupId, sort_order: 0 });
-    } else {
-      await supabase.from('menu_item_option_links').delete().eq('menu_item_id', menuItemId).eq('option_group_id', groupId);
-    }
+    await callAdminAction({ action: 'toggle_link_group', menu_item_id: menuItemId, option_group_id: groupId, link });
     document.getElementById('optionGroupModal')?.remove();
     showLinkOptionGroupModal(menuItemId, document.getElementById('menuMerchantSelect')?.value || '');
     editMenuItem(menuItemId);
-  } catch(e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 async function showManageOptionsModal(groupId, groupName, merchantId, menuItemId) {
@@ -5325,36 +5088,36 @@ async function addMenuOption(groupId, groupName, merchantId, menuItemId) {
   const price = parseInt(document.getElementById('newOptPrice')?.value) || 0;
   if (!name) return alert('กรุณากรอกชื่อตัวเลือก');
   try {
-    await supabase.from('menu_options').insert({ group_id: groupId, name, price, is_available: true });
+    await callAdminAction({ action: 'create_menu_option', group_id: groupId, name, price, is_available: true });
     document.getElementById('manageOptionsModal')?.remove();
     showManageOptionsModal(groupId, groupName, merchantId, menuItemId);
-  } catch(e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 async function toggleOptionAvail(optionId, newState, groupId, groupName, merchantId, menuItemId) {
   try {
-    await supabase.from('menu_options').update({ is_available: newState }).eq('id', optionId);
+    await callAdminAction({ action: 'update_menu_option', id: optionId, update_data: { is_available: newState } });
     document.getElementById('manageOptionsModal')?.remove();
     showManageOptionsModal(groupId, groupName, merchantId, menuItemId);
-  } catch(e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 async function deleteMenuOption(optionId, groupId, groupName, merchantId, menuItemId) {
   if (!confirm('ลบตัวเลือกนี้?')) return;
   try {
-    await supabase.from('menu_options').delete().eq('id', optionId);
+    await callAdminAction({ action: 'delete_menu_option', id: optionId });
     document.getElementById('manageOptionsModal')?.remove();
     showManageOptionsModal(groupId, groupName, merchantId, menuItemId);
-  } catch(e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 async function deleteMenuItem(id, name) {
-  if (!confirm(`ลบเมนู "${name}" ?`)) return;
+  if (!confirm(`ลบเมนู "${escapeHtml(name)}" ?`)) return;
   try {
-    await supabase.from('menu_items').delete().eq('id', id);
-    alert('ลบสำเร็จ!');
+    await callAdminAction({ action: 'delete_menu_item', id });
+    showToast('ลบสำเร็จ!', 'success');
     loadMerchantMenus();
-  } catch(e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 // ============================================
@@ -5445,7 +5208,7 @@ async function renderTopups(el) {
                 const user = userMap[r.user_id] || {};
                 return `
                   <tr class="table-row border-b border-gray-50">
-                    <td class="px-4 py-3 font-medium">${user.full_name || r.user_id?.substring(0,8) || '-'}</td>
+                    <td class="px-4 py-3 font-medium">${escapeHtml(user.full_name) || r.user_id?.substring(0,8) || '-'}</td>
                     <td class="px-4 py-3 font-semibold text-green-600">฿${fmt(r.amount)}</td>
                     <td class="px-4 py-3">${statusBadge(r.status)}</td>
                     <td class="px-4 py-3 text-gray-500 text-xs">${fmtDate(r.created_at)}</td>
@@ -5485,40 +5248,30 @@ function exportTopupsExcel() {
 async function approveTopup(id, userId, amount) {
   if (!confirm(`อนุมัติเติมเงิน ฿${fmt(amount)} ?`)) return;
   try {
-    // Get or create wallet
-    let { data: wallet } = await supabase.from('wallets').select('id, balance').eq('user_id', userId).maybeSingle();
-    if (!wallet) {
-      const { data: newW } = await supabase.from('wallets').insert({ user_id: userId, balance: 0 }).select().single();
-      wallet = newW;
-    }
-    if (wallet) {
-      await supabase.from('wallets').update({ balance: (wallet.balance || 0) + amount }).eq('id', wallet.id);
-      await supabase.from('wallet_transactions').insert({ wallet_id: wallet.id, amount, type: 'topup', description: 'เติมเงินผ่าน Admin (฿' + amount + ')' });
-    }
-    await supabase.from('topup_requests').update({ status: 'completed', processed_at: new Date().toISOString() }).eq('id', id);
-    alert('อนุมัติเติมเงินสำเร็จ!');
+    const result = await callAdminAction({ action: 'approve_topup', id, user_id: userId, amount });
+    if (result.already_processed) return showToast('คำขอนี้ถูกดำเนินการไปแล้ว', 'info');
+    showToast('อนุมัติเติมเงินสำเร็จ!', 'success');
     refreshCurrentPage();
-  } catch(e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 async function rejectTopup(id) {
   const reason = prompt('เหตุผลที่ปฏิเสธ:');
   if (!reason) return;
-  await supabase.from('topup_requests').update({ status: 'rejected', admin_note: reason, processed_at: new Date().toISOString() }).eq('id', id);
-  refreshCurrentPage();
+  try {
+    await callAdminAction({ action: 'reject_topup', id, reason });
+    refreshCurrentPage();
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 async function quickSwitchTopupMode(newMode) {
   const label = newMode === 'omise' ? 'Omise (อัตโนมัติ)' : 'แอดมินอนุมัติ';
   if (!confirm(`สลับโหมดเติมเงินเป็น "${label}" ?\n\nแอปคนขับจะเปลี่ยนโหมดอัตโนมัติในครั้งถัดไปที่เปิดหน้าเติมเงิน`)) return;
   try {
-    const { data: existing } = await supabase.from('system_config').select('id').maybeSingle();
-    const configId = existing?.id ?? 1;
-    const { error } = await supabase.from('system_config').upsert({ id: configId, topup_mode: newMode, updated_at: new Date().toISOString() }, { onConflict: 'id' });
-    if (error) throw error;
+    await callAdminAction({ action: 'upsert_system_config', config_data: { topup_mode: newMode } });
     showToast(`เปลี่ยนโหมดเติมเงินเป็น "${label}" สำเร็จ`, 'success');
     refreshCurrentPage();
-  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + (e.message || JSON.stringify(e)), 'error'); }
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message || JSON.stringify(e)), 'error'); }
 }
 
 // ============================================
@@ -5621,10 +5374,10 @@ function renderComplaintRows(tickets, userMap, statusMap, categoryMap) {
     const catLabel = categoryMap[t.category] || t.category || '-';
     return `
       <tr class="table-row border-b border-gray-50">
-        <td class="px-4 py-3 font-medium">${user.full_name || '-'}</td>
-        <td class="px-4 py-3 text-gray-500">${roleMap[user.role] || user.role || '-'}</td>
-        <td class="px-4 py-3">${catLabel}</td>
-        <td class="px-4 py-3 max-w-[200px] truncate">${t.subject || t.description?.substring(0,50) || '-'}</td>
+        <td class="px-4 py-3 font-medium">${escapeHtml(user.full_name) || '-'}</td>
+        <td class="px-4 py-3 text-gray-500">${roleMap[user.role] || escapeHtml(user.role) || '-'}</td>
+        <td class="px-4 py-3">${escapeHtml(catLabel)}</td>
+        <td class="px-4 py-3 max-w-[200px] truncate">${escapeHtml(t.subject) || escapeHtml(t.description?.substring(0,50)) || '-'}</td>
         <td class="px-4 py-3"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${statusCls}">${statusLabel}</span></td>
         <td class="px-4 py-3 text-gray-500 text-xs">${fmtDate(t.created_at)}</td>
         <td class="px-4 py-3 whitespace-nowrap">
@@ -5678,46 +5431,20 @@ function exportComplaintsExcel() {
   exportRowsToExcel(reportFilename('complaints_report', 'xls', '', ''), ['ผู้ร้องเรียน', 'บทบาท', 'หมวดหมู่', 'หัวข้อ', 'สถานะ', 'วันที่'], rows);
 }
 
-function exportComplaintsCsv() {
-  const rows = (window._filteredComplaints || window._allComplaints || []).map((t) => ({
-    ผู้ร้องเรียน: window._complaintUserMap?.[t.user_id]?.full_name || '-',
-    บทบาท: window._complaintUserMap?.[t.user_id]?.role || '-',
-    หมวดหมู่: window._complaintCategoryMap?.[t.category] || t.category || '-',
-    หัวข้อ: t.subject || '-',
-    สถานะ: t.status || '-',
-    วันที่: fmtDate(t.created_at),
-  }));
-  exportRowsToCsv(reportFilename('complaints_report', 'csv', '', ''), ['ผู้ร้องเรียน', 'บทบาท', 'หมวดหมู่', 'หัวข้อ', 'สถานะ', 'วันที่'], rows);
-}
-
-function exportComplaintsExcel() {
-  const rows = (window._filteredComplaints || window._allComplaints || []).map((t) => ({
-    ผู้ร้องเรียน: window._complaintUserMap?.[t.user_id]?.full_name || '-',
-    บทบาท: window._complaintUserMap?.[t.user_id]?.role || '-',
-    หมวดหมู่: window._complaintCategoryMap?.[t.category] || t.category || '-',
-    หัวข้อ: t.subject || '-',
-    สถานะ: t.status || '-',
-    วันที่: fmtDate(t.created_at),
-  }));
-  exportRowsToExcel(reportFilename('complaints_report', 'xls', '', ''), ['ผู้ร้องเรียน', 'บทบาท', 'หมวดหมู่', 'หัวข้อ', 'สถานะ', 'วันที่'], rows);
-}
-
 async function updateComplaintStatus(id, status) {
   try {
-    await supabase.from('support_tickets').update({ status, updated_at: new Date().toISOString() }).eq('id', id);
+    await callAdminAction({ action: 'update_ticket_status', id, status });
     refreshCurrentPage();
-  } catch(e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 async function resolveComplaint(id) {
   const resolution = prompt('วิธีแก้ไข / หมายเหตุ:');
   if (!resolution) return;
   try {
-    await supabase.from('support_tickets').update({
-      status: 'resolved', resolution, resolved_at: new Date().toISOString(), updated_at: new Date().toISOString()
-    }).eq('id', id);
+    await callAdminAction({ action: 'resolve_ticket', id, resolution });
     refreshCurrentPage();
-  } catch(e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 async function viewComplaintDetail(id) {
@@ -5726,7 +5453,7 @@ async function viewComplaintDetail(id) {
   let userName = '-';
   if (t.user_id) {
     const { data: p } = await supabase.from('profiles').select('full_name, role').eq('id', t.user_id).maybeSingle();
-    if (p) userName = `${p.full_name} (${p.role})`;
+    if (p) userName = `${escapeHtml(p.full_name)} (${escapeHtml(p.role)})`;
   }
   alert(
     `📋 รายละเอียดร้องเรียน\n\n` +
@@ -5745,91 +5472,12 @@ async function viewComplaintDetail(id) {
 // Order Reassignment (T4)
 // ============================================
 async function _notifyAdminActionTargets(rows = []) {
-  const validRows = rows.filter(r => r && r.user_id && r.title && r.body);
-  if (!validRows.length) return;
-
-  const { error } = await supabase.from('notifications').insert(validRows);
-  if (error) {
-    console.warn('Admin action notification insert failed:', error.message || error);
-  }
+  // Legacy stub — notifications are now sent server-side by the Edge Function
+  console.log('_notifyAdminActionTargets: delegated to Edge Function', rows.length, 'rows');
 }
 
 async function _applyAdminOrderReassign(orderId, newDriverId, updateFields = {}) {
-  const { data: booking, error: bookingErr } = await supabase
-    .from('bookings')
-    .select('id, customer_id, merchant_id, driver_id, service_type, status')
-    .eq('id', orderId)
-    .single();
-  if (bookingErr) throw bookingErr;
-
-  const previousDriverId = booking.driver_id;
-  if (previousDriverId && previousDriverId === newDriverId) {
-    throw new Error('คนขับที่เลือกเป็นคนเดิมของออเดอร์นี้');
-  }
-  const reassignAt = new Date().toISOString();
-  const payload = {
-    driver_id: newDriverId,
-    assigned_at: reassignAt,
-    ...updateFields,
-  };
-
-  const { error: updateErr } = await supabase
-    .from('bookings')
-    .update(payload)
-    .eq('id', orderId);
-  if (updateErr) throw updateErr;
-
-  const notifyRows = [];
-  const shortId = (orderId || '').substring(0, 8);
-  const baseData = {
-    type: 'admin_reassign',
-    booking_id: orderId,
-    new_driver_id: newDriverId,
-    old_driver_id: previousDriverId || '',
-    service_type: booking.service_type || '',
-    status_after: payload.status || booking.status || '',
-    reassigned_at: reassignAt,
-  };
-
-  notifyRows.push({
-    user_id: newDriverId,
-    title: '📌 แอดมินมอบหมายงานใหม่',
-    body: `คุณได้รับงาน #${shortId} จากแอดมินแล้ว`,
-    type: 'admin_reassign_new_driver',
-    data: { ...baseData, role: 'new_driver' },
-  });
-
-  if (previousDriverId && previousDriverId !== newDriverId) {
-    notifyRows.push({
-      user_id: previousDriverId,
-      title: '🔄 แอดมินย้ายงาน',
-      body: `งาน #${shortId} ถูกย้ายไปให้คนขับท่านอื่น`,
-      type: 'admin_reassign_old_driver',
-      data: { ...baseData, role: 'old_driver' },
-    });
-  }
-
-  if (booking.customer_id) {
-    notifyRows.push({
-      user_id: booking.customer_id,
-      title: '🚗 เปลี่ยนคนขับโดยแอดมิน',
-      body: `ออเดอร์ #${shortId} มีการมอบหมายคนขับใหม่แล้ว`,
-      type: 'admin_reassign_customer',
-      data: { ...baseData, role: 'customer' },
-    });
-  }
-
-  if (booking.merchant_id && booking.service_type === 'food') {
-    notifyRows.push({
-      user_id: booking.merchant_id,
-      title: '🍔 เปลี่ยนคนขับออเดอร์',
-      body: `ออเดอร์ #${shortId} มีการเปลี่ยนคนขับโดยแอดมิน`,
-      type: 'admin_reassign_merchant',
-      data: { ...baseData, role: 'merchant' },
-    });
-  }
-
-  await _notifyAdminActionTargets(notifyRows);
+  await callAdminAction({ action: 'reassign_order', order_id: orderId, new_driver_id: newDriverId, update_fields: updateFields });
 }
 
 async function showReassignModal(orderId, currentDriverName) {
@@ -5874,8 +5522,8 @@ async function showReassignModal(orderId, currentDriverName) {
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center"><span class="material-icons-round text-blue-600 text-sm">person</span></div>
                 <div>
-                  <p class="font-medium text-sm">${d.full_name || '-'}</p>
-                  <p class="text-xs text-gray-500">${d.phone_number || ''} ${d.license_plate ? '• '+d.license_plate : ''}</p>
+                  <p class="font-medium text-sm">${escapeHtml(d.full_name) || '-'}</p>
+                  <p class="text-xs text-gray-500">${escapeHtml(d.phone_number) || ''} ${d.license_plate ? '• '+escapeHtml(d.license_plate) : ''}</p>
                 </div>
               </div>
               <span class="material-icons-round text-gray-300 text-lg">chevron_right</span>
@@ -6252,8 +5900,8 @@ async function pendingDispatch(orderId, excludeDriverId) {
                 ${d.jobs > 0 ? d.jobs : '🏍'}
               </div>
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium truncate">${d.full_name||'-'}</p>
-                <p class="text-[10px] text-gray-400">${d.license_plate||''} • ${d.phone_number||''}</p>
+                <p class="text-sm font-medium truncate">${escapeHtml(d.full_name)||'-'}</p>
+                <p class="text-[10px] text-gray-400">${escapeHtml(d.license_plate)||''} • ${escapeHtml(d.phone_number)||''}</p>
               </div>
               <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
                 ${jobBadge}
@@ -6270,12 +5918,11 @@ async function pendingDispatch(orderId, excludeDriverId) {
 async function pendingAssign(orderId, driverId, driverName) {
   if (!confirm(`มอบหมาย #${orderId.substring(0,8)} ให้ "${driverName}" ?`)) return;
   try {
-    const { error } = await supabase.from('bookings').update({ driver_id: driverId, status: 'driver_accepted', assigned_at: new Date().toISOString() }).eq('id', orderId);
-    if (error) throw error;
+    await callAdminAction({ action: 'assign_order', order_id: orderId, driver_id: driverId });
     document.getElementById('pendingDispatchModal')?.remove();
     showToast('มอบหมายงานสำเร็จ!', 'success');
     _refreshPendingOrders();
-  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + (e.message || JSON.stringify(e)), 'error'); }
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message || JSON.stringify(e)), 'error'); }
 }
 
 async function pendingCancel(orderId) {
@@ -6334,12 +5981,11 @@ async function _doPendingCancel(orderId) {
   }
   if (!reason) return;
   try {
-    const { error } = await supabase.from('bookings').update({ status: 'cancelled', cancellation_reason: reason, updated_at: new Date().toISOString() }).eq('id', orderId);
-    if (error) throw error;
+    await callAdminAction({ action: 'cancel_order', order_id: orderId, reason });
     document.getElementById('poCancelModal')?.remove();
     showToast('ยกเลิกออเดอร์สำเร็จ', 'success');
     _refreshPendingOrders();
-  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + (e.message || JSON.stringify(e)), 'error'); }
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message || JSON.stringify(e)), 'error'); }
 }
 
 // ============================================
@@ -6653,18 +6299,7 @@ function _pickBestDriverForAutoDispatch(order) {
 }
 
 async function _autoAssignOrderToDriver(orderId, driverId, meta) {
-  const nowIso = new Date().toISOString();
-  const payload = {
-    driver_id: driverId,
-    status: 'driver_accepted',
-    assigned_at: nowIso,
-    updated_at: nowIso,
-  };
-
-  const { error } = await supabase.from('bookings').update(payload).eq('id', orderId);
-  if (error) throw error;
-
-  // optional: log into console only (no DB schema assumptions)
+  await callAdminAction({ action: 'assign_order', order_id: orderId, driver_id: driverId });
   debugLog('✅ AutoDispatch assigned', orderId.substring(0,8), '→', driverId.substring(0,8), meta);
 }
 
@@ -6879,7 +6514,7 @@ async function refreshMapData() {
       if (!_mapInstance) return;
       const marker = L.marker([lat, lng], { icon }).addTo(_mapInstance);
       const statusBadge = isPending ? '<br/><span style="background:#FEF3C7;color:#92400E;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:600;">⏳ รออนุมัติ</span>' : '';
-      marker.bindPopup(`<b>${d.full_name || '-'}</b>${statusBadge}<br/>📞 ${d.phone_number || '-'}<br/>🚗 ${d.license_plate || '-'}<br/>📦 งาน: ${jobCount}<br/>${isOnline ? '🟢 ออนไลน์' : '🔴 ออฟไลน์'}${distText ? '<br/>' + distText : ''}`);
+      marker.bindPopup(`<b>${escapeHtml(d.full_name) || '-'}</b>${statusBadge}<br/>📞 ${escapeHtml(d.phone_number) || '-'}<br/>🚗 ${escapeHtml(d.license_plate) || '-'}<br/>📦 งาน: ${jobCount}<br/>${isOnline ? '🟢 ออนไลน์' : '🔴 ออฟไลน์'}${distText ? '<br/>' + distText : ''}`);
       window._mapDriverMarkers.push(marker);
     });
 
@@ -6903,7 +6538,7 @@ async function refreshMapData() {
 
       if (!_mapInstance) return;
       const marker = L.marker([lat, lng], { icon }).addTo(_mapInstance);
-      marker.bindPopup(`<b>🏪 ${m.full_name || '-'}</b><br/>📍 ${m.shop_address || '-'}<br/>📦 ออเดอร์: ${oCount}`);
+      marker.bindPopup(`<b>🏪 ${escapeHtml(m.full_name) || '-'}</b><br/>📍 ${escapeHtml(m.shop_address) || '-'}<br/>📦 ออเดอร์: ${oCount}`);
       window._mapMerchantMarkers.push(marker);
     });
 
@@ -7396,19 +7031,19 @@ async function showDriverDetail(id) {
         <div class="grid grid-cols-2 gap-4">
           <div class="bg-gray-50 rounded-lg p-3">
             <p class="text-xs text-gray-500">ชื่อ-นามสกุล</p>
-            <p class="font-semibold">${d.full_name || '-'}</p>
+            <p class="font-semibold">${escapeHtml(d.full_name) || '-'}</p>
           </div>
           <div class="bg-gray-50 rounded-lg p-3">
             <p class="text-xs text-gray-500">เบอร์โทร</p>
-            <p class="font-semibold">${d.phone_number || '-'}</p>
+            <p class="font-semibold">${escapeHtml(d.phone_number) || '-'}</p>
           </div>
           <div class="bg-gray-50 rounded-lg p-3">
             <p class="text-xs text-gray-500">ทะเบียนรถ</p>
-            <p class="font-semibold">${d.license_plate || '-'}</p>
+            <p class="font-semibold">${escapeHtml(d.license_plate) || '-'}</p>
           </div>
           <div class="bg-gray-50 rounded-lg p-3">
             <p class="text-xs text-gray-500">ประเภทรถ</p>
-            <p class="font-semibold">${d.vehicle_type || '-'}</p>
+            <p class="font-semibold">${escapeHtml(d.vehicle_type) || '-'}</p>
           </div>
           <div class="bg-gray-50 rounded-lg p-3">
             <p class="text-xs text-gray-500">สถานะ</p>
@@ -7430,11 +7065,11 @@ async function showDriverDetail(id) {
           <div class="grid grid-cols-3 gap-3">
             <div class="bg-gray-50 rounded-lg p-3">
               <p class="text-xs text-gray-500">ธนาคาร</p>
-              <p class="font-medium text-sm">${d.bank_name || '-'}</p>
+              <p class="font-medium text-sm">${escapeHtml(d.bank_name) || '-'}</p>
             </div>
             <div class="bg-gray-50 rounded-lg p-3">
               <p class="text-xs text-gray-500">เลขบัญชี</p>
-              <p class="font-mono text-sm">${d.bank_account_number || '-'}</p>
+              <p class="font-mono text-sm">${escapeHtml(d.bank_account_number) || '-'}</p>
             </div>
             <div class="bg-gray-50 rounded-lg p-3">
               <p class="text-xs text-gray-500">ชื่อบัญชี</p>
@@ -7480,49 +7115,13 @@ async function openDriverWalletAdjust(driverId, currentBalance = 0) {
   const reason = prompt('เหตุผลการปรับยอด (เช่น คนขับชำระเงินสด):') || 'Admin wallet adjustment';
 
   try {
-    let { data: wallet, error: walletErr } = await supabase
-      .from('wallets')
-      .select('id, balance')
-      .eq('user_id', driverId)
-      .maybeSingle();
-
-    if (walletErr) throw walletErr;
-
-    if (!wallet) {
-      const { data: newWallet, error: createErr } = await supabase
-        .from('wallets')
-        .insert({ user_id: driverId, balance: 0 })
-        .select('id, balance')
-        .single();
-      if (createErr) throw createErr;
-      wallet = newWallet;
-    }
-
-    const before = wallet.balance || 0;
-    const after = before + amount;
-    if (after < 0 && !confirm(`ยอดคงเหลือใหม่จะติดลบ (฿${fmt(Math.round(after))}) ต้องการทำต่อหรือไม่?`)) {
-      return;
-    }
-
-    const { error: updateErr } = await supabase
-      .from('wallets')
-      .update({ balance: after, updated_at: new Date().toISOString() })
-      .eq('id', wallet.id);
-    if (updateErr) throw updateErr;
-
-    const { error: txErr } = await supabase.from('wallet_transactions').insert({
-      wallet_id: wallet.id,
-      amount,
-      type: 'admin_adjustment',
-      description: `${reason} (Admin ปรับยอดจาก ฿${fmt(Math.round(before))} เป็น ฿${fmt(Math.round(after))})`,
-    });
-    if (txErr) throw txErr;
+    await callAdminAction({ action: 'wallet_adjust', user_id: driverId, amount, reason });
 
     showToast(`ปรับยอด Wallet สำเร็จ (${amount > 0 ? '+' : ''}${fmt(Math.round(amount))})`, 'success');
     document.getElementById('driverDetailModal')?.remove();
     await showDriverDetail(driverId);
   } catch (e) {
-    showToast('ปรับยอด Wallet ไม่สำเร็จ: ' + (e.message || JSON.stringify(e)), 'error');
+    showToast('ปรับยอด Wallet ไม่สำเร็จ: ' + escapeHtml(e.message || JSON.stringify(e)), 'error');
   }
 }
 
@@ -7534,36 +7133,10 @@ async function forceCancelOrder(orderId, customerId, price) {
   if (!reason) return;
   const doRefund = confirm('คืนเงินเข้า Wallet ลูกค้าด้วยหรือไม่?');
   try {
-    // Update booking status
-    const { error: cancelErr } = await supabase.from('bookings').update({
-      status: 'cancelled',
-      cancellation_reason: 'admin_force_cancel: ' + reason,
-      updated_at: new Date().toISOString(),
-    }).eq('id', orderId);
-    if (cancelErr) throw cancelErr;
-
-    // Refund to customer wallet if requested
-    if (doRefund && customerId && price > 0) {
-      try {
-        let { data: wallet } = await supabase.from('wallets').select('id, balance').eq('user_id', customerId).maybeSingle();
-        if (!wallet) {
-          const { data: newW } = await supabase.from('wallets').insert({ user_id: customerId, balance: 0 }).select().single();
-          wallet = newW;
-        }
-        if (wallet) {
-          await supabase.from('wallets').update({ balance: (wallet.balance || 0) + price }).eq('id', wallet.id);
-          await supabase.from('wallet_transactions').insert({
-            wallet_id: wallet.id,
-            amount: price,
-            type: 'refund',
-            description: 'คืนเงินจากยกเลิกออเดอร์ #' + orderId.substring(0,8) + ' (Admin)',
-          });
-        }
-      } catch(e) { console.error('Refund error:', e); }
-    }
-    alert('ยกเลิกออเดอร์สำเร็จ!' + (doRefund ? ' (คืนเงินแล้ว)' : ''));
+    await callAdminAction({ action: 'force_cancel_order', order_id: orderId, customer_id: customerId, price, reason, do_refund: doRefund });
+    showToast('ยกเลิกออเดอร์สำเร็จ!' + (doRefund ? ' (คืนเงินแล้ว)' : ''), 'success');
     loadOrders();
-  } catch(e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 // ============================================
@@ -7572,22 +7145,10 @@ async function forceCancelOrder(orderId, customerId, price) {
 async function rebroadcastOrder(orderId, serviceType) {
   if (!confirm(`โยนออเดอร์ #${orderId.substring(0,8)} ใหม่?\n\nระบบจะลบคนขับเดิมออก แล้วโยนออเดอร์ให้คนขับทุกคนเห็นอีกครั้ง`)) return;
   try {
-    // Determine the correct initial status based on service type
-    // food → pending_merchant (needs merchant to accept first)
-    // ride/parcel → pending (goes directly to drivers)
-    const resetStatus = serviceType === 'food' ? 'pending_merchant' : 'pending';
-
-    const { error } = await supabase.from('bookings').update({
-      driver_id: null,
-      status: resetStatus,
-      assigned_at: null,
-      updated_at: new Date().toISOString(),
-    }).eq('id', orderId);
-    if (error) throw error;
-
+    await callAdminAction({ action: 'rebroadcast_order', order_id: orderId, service_type: serviceType });
     showToast('โยนออเดอร์ใหม่สำเร็จ! คนขับทุกคนจะเห็นออเดอร์นี้', 'success');
     loadOrders();
-  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + (e.message || JSON.stringify(e)), 'error'); }
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message || JSON.stringify(e)), 'error'); }
 }
 
 // ============================================
@@ -7600,20 +7161,10 @@ async function showManualTopup() {
   if (!amount || amount <= 0) return alert('จำนวนเงินไม่ถูกต้อง');
   const desc = prompt('เหตุผล/หมายเหตุ:') || 'Admin เติมเงินด้วยมือ';
   try {
-    let { data: wallet } = await supabase.from('wallets').select('id, balance').eq('user_id', userId).maybeSingle();
-    if (!wallet) {
-      const { data: newW } = await supabase.from('wallets').insert({ user_id: userId, balance: 0 }).select().single();
-      wallet = newW;
-    }
-    if (!wallet) throw new Error('ไม่สามารถสร้าง wallet ได้');
-    await supabase.from('wallets').update({ balance: (wallet.balance || 0) + amount }).eq('id', wallet.id);
-    await supabase.from('wallet_transactions').insert({
-      wallet_id: wallet.id, amount, type: 'topup',
-      description: desc + ' (Admin Manual)',
-    });
-    alert(`เติมเงิน ฿${fmt(amount)} สำเร็จ!`);
+    await callAdminAction({ action: 'manual_topup', user_id: userId, amount, description: desc });
+    showToast(`เติมเงิน ฿${fmt(amount)} สำเร็จ!`, 'success');
     refreshCurrentPage();
-  } catch(e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 // ============================================
@@ -7632,19 +7183,15 @@ async function approveWithdrawalWithSlip(id) {
       try {
         const ext = file.name.split('.').pop();
         const path = `withdrawal-slips/${id}_${Date.now()}.${ext}`;
-        const { error } = await supabaseAdmin.storage.from('admin-uploads').upload(path, file);
+        const { error } = await supabase.storage.from('admin-uploads').upload(path, file);
         if (!error) {
-          const { data: urlData } = supabaseAdmin.storage.from('admin-uploads').getPublicUrl(path);
+          const { data: urlData } = supabase.storage.from('admin-uploads').getPublicUrl(path);
           slipUrl = urlData?.publicUrl;
         }
       } catch(err) { console.error('Slip upload error:', err); }
     }
-    await supabase.from('withdrawal_requests').update({
-      status: 'completed',
-      processed_at: new Date().toISOString(),
-      transfer_slip_url: slipUrl,
-    }).eq('id', id);
-    alert('อนุมัติสำเร็จ!' + (slipUrl ? ' (แนบสลิปแล้ว)' : ''));
+    await callAdminAction({ action: 'approve_withdrawal_with_slip', id, transfer_slip_url: slipUrl });
+    showToast('อนุมัติสำเร็จ!' + (slipUrl ? ' (แนบสลิปแล้ว)' : ''), 'success');
     refreshCurrentPage();
   };
   // If user cancels file picker, still approve without slip
@@ -7756,22 +7303,7 @@ async function uploadBanner() {
     if (page) insertData.page = page;
     if (couponCode) insertData.coupon_code = couponCode;
     
-    const { error: insertError } = await supabase.from('banners').insert(insertData);
-    if (insertError) {
-      console.error('Banner insert error:', insertError);
-      // If column doesn't exist, retry with minimal fields
-      if (insertError.message?.includes('column') || insertError.code === '42703') {
-        const { error: retryError } = await supabase.from('banners').insert({
-          title: title || 'Banner',
-          image_url: imageUrl,
-          is_active: true,
-          sort_order: 0,
-        });
-        if (retryError) throw retryError;
-      } else {
-        throw insertError;
-      }
-    }
+    await callAdminAction({ action: 'create_banner', banner_data: insertData });
     fileInput.value = '';
     if (document.getElementById('bannerTitle')) document.getElementById('bannerTitle').value = '';
     showToast('อัปโหลด Banner สำเร็จ!', 'success');
@@ -7780,16 +7312,20 @@ async function uploadBanner() {
 }
 
 async function toggleBanner(id, currentActive) {
-  await supabase.from('banners').update({ is_active: !currentActive }).eq('id', id);
-  showToast(currentActive ? 'ซ่อน Banner แล้ว' : 'แสดง Banner แล้ว', 'success');
-  loadBanners();
+  try {
+    await callAdminAction({ action: 'toggle_banner', id, is_active: !currentActive });
+    showToast(currentActive ? 'ซ่อน Banner แล้ว' : 'แสดง Banner แล้ว', 'success');
+    loadBanners();
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 async function deleteBanner(id) {
   if (!confirm('ลบ Banner นี้?')) return;
-  await supabase.from('banners').delete().eq('id', id);
-  showToast('ลบ Banner แล้ว', 'success');
-  loadBanners();
+  try {
+    await callAdminAction({ action: 'delete_banner', id });
+    showToast('ลบ Banner แล้ว', 'success');
+    loadBanners();
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
 // ============================================
@@ -7891,10 +7427,7 @@ async function uploadAppAsset(type) {
     const imageUrl = urlData?.publicUrl;
     if (!imageUrl) throw new Error('ไม่สามารถดึง URL ได้');
     const updateField = type === 'logo' ? 'logo_url' : 'splash_url';
-    const { data: cfgRow } = await supabase.from('system_config').select('id').maybeSingle();
-    const cfgId = cfgRow?.id ?? 1;
-    const { error: updateErr } = await supabase.from('system_config').upsert({ id: cfgId, [updateField]: imageUrl }, { onConflict: 'id' });
-    if (updateErr) { console.error('Asset save error:', updateErr); throw updateErr; }
+    await _upsertSystemConfig({ [updateField]: imageUrl });
     
     // Update preview immediately
     if (previewEl) previewEl.innerHTML = `<img src="${imageUrl}" class="w-24 h-24 object-contain rounded-xl border" />`;
@@ -7935,29 +7468,26 @@ async function uploadLandingAsset(type) {
     const imageUrl = urlData?.publicUrl;
     if (!imageUrl) throw new Error('ไม่สามารถดึง URL ได้');
 
-    const { data: cfgRow } = await supabase.from('system_config').select('id, landing_config').maybeSingle();
-    const cfgId = cfgRow?.id ?? 1;
+    const { data: cfgRow } = await supabase
+      .from('system_config')
+      .select('landing_config')
+      .maybeSingle();
     const landingConfig = normalizeLandingConfig(cfgRow?.landing_config);
     landingConfig[configField] = imageUrl;
 
-    const { error: updateErr } = await supabase.from('system_config').upsert({
-      id: cfgId,
+    await _upsertSystemConfig({
       landing_config: landingConfig,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'id' });
-
-    if (updateErr) {
-      if (String(updateErr.message || '').toLowerCase().includes('landing_config')) {
-        throw new Error('ยังไม่พบคอลัมน์ landing_config (กรุณารัน migration 20260307_add_landing_page_config.sql)');
-      }
-      throw updateErr;
-    }
+    });
 
     setLandingAssetPreview(type, imageUrl);
     document.getElementById(inputId).value = '';
     showToast(`อัปโหลด${displayName}สำเร็จ!`, 'success');
   } catch (e) {
     setLandingAssetPreview(type, previousUrl);
+    if (String(e.message || '').toLowerCase().includes('landing_config')) {
+      showToast('ยังไม่พบคอลัมน์ landing_config (กรุณารัน migration 20260307_add_landing_page_config.sql)', 'error');
+      return;
+    }
     showToast('เกิดข้อผิดพลาด: ' + e.message, 'error');
   }
 }

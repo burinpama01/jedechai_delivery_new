@@ -20,6 +20,9 @@ class RealtimeService {
   String? _lastDriverId;
   String? _lastBookingId;
   bool _isRefreshingToken = false;
+  // Phase 5: Guards to prevent channel leak during unsubscribe
+  bool _isUnsubscribingDriver = false;
+  bool _isUnsubscribingBooking = false;
 
   bool _isJwtExpiredError(Object error) {
     final message = error.toString();

@@ -265,7 +265,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: const Text('สมัครสมาชิก'),
       ),
@@ -279,12 +281,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 16),
               
               // Welcome Text
-              const Text(
+              Text(
                 'สร้างบัญชีใหม่',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
+                  color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 8),
@@ -292,18 +294,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 'กรุณากรอกข้อมูลเพื่อสมัครสมาชิก',
                 style: TextStyle(
                   fontSize: 16,
-                  color: Colors.grey.shade600,
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 32),
 
               // Role Selection
-              const Text(
+              Text(
                 'เลือกประเภทบัญชี',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary,
+                  color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 12),
@@ -480,7 +482,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('มีบัญชีแล้ว? '),
+                  Text(
+                    'มีบัญชีแล้ว? ',
+                    style: TextStyle(color: colorScheme.onSurfaceVariant),
+                  ),
                   TextButton(
                     onPressed: () {
                       Navigator.of(context).pushReplacement(
@@ -520,15 +525,20 @@ class _RoleChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 0.1) : Colors.grey.shade100,
+          color: isSelected
+              ? color.withValues(alpha: 0.1)
+              : colorScheme.surfaceContainerHighest,
           border: Border.all(
-            color: isSelected ? color : Colors.grey.shade300,
+            color: isSelected
+                ? color
+                : colorScheme.outlineVariant.withValues(alpha: 0.8),
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
@@ -537,7 +547,7 @@ class _RoleChip extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: isSelected ? color : Colors.grey.shade600,
+              color: isSelected ? color : colorScheme.onSurfaceVariant,
               size: 32,
             ),
             const SizedBox(height: 8),
@@ -546,7 +556,7 @@ class _RoleChip extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                color: isSelected ? color : Colors.grey.shade700,
+                color: isSelected ? color : colorScheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
             ),

@@ -242,7 +242,9 @@ class _CancellationScreenState extends State<CancellationScreen> {
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                                      color: isSelected ? Colors.red.shade700 : Colors.black87,
+                                      color: isSelected
+                                          ? Colors.red.shade700
+                                          : Theme.of(context).colorScheme.onSurface,
                                     )),
                               ),
                               Icon(

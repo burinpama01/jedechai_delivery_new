@@ -5,6 +5,7 @@ import '../../utils/debug_logger.dart';
 import '../services/auth_service.dart';
 import '../services/image_picker_service.dart';
 import '../services/storage_service.dart';
+import 'app_network_image.dart';
 import '../../theme/app_theme.dart';
 
 /// หน้ากรอกข้อมูลโปรไฟล์หลังจากแอดมินอนุมัติ (ใช้ครั้งแรก)
@@ -179,7 +180,6 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('✅ บันทึกข้อมูลโปรไฟล์สำเร็จ'),
-            backgroundColor: Colors.green,
           ),
         );
         widget.onCompleted();
@@ -190,7 +190,6 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('❌ เกิดข้อผิดพลาด: $e'),
-            backgroundColor: Colors.red,
           ),
         );
       }
@@ -201,25 +200,36 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final roleText = _isDriver ? 'คนขับ' : 'ร้านค้า';
     final steps = _isDriver
         ? ['ข้อมูลส่วนตัว', 'ข้อมูลรถ', 'เอกสาร', 'ธนาคาร']
         : ['ข้อมูลร้านค้า', 'ข้อมูลธนาคาร'];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: Text('กรอกข้อมูล$roleText'),
         backgroundColor: AppTheme.primaryGreen,
-        foregroundColor: Colors.white,
+        foregroundColor: colorScheme.onPrimary,
         automaticallyImplyLeading: false,
         actions: [
           TextButton.icon(
             onPressed: () async {
               await AuthService.signOut();
             },
-            icon: const Icon(Icons.logout, color: Colors.white70, size: 18),
-            label: const Text('ออกจากระบบ', style: TextStyle(color: Colors.white70, fontSize: 12)),
+            icon: Icon(
+              Icons.logout,
+              color: colorScheme.onPrimary.withValues(alpha: 0.8),
+              size: 18,
+            ),
+            label: Text(
+              'ออกจากระบบ',
+              style: TextStyle(
+                color: colorScheme.onPrimary.withValues(alpha: 0.8),
+                fontSize: 12,
+              ),
+            ),
           ),
         ],
       ),
@@ -229,7 +239,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
           children: [
             // Stepper header
             Container(
-              color: Colors.white,
+              color: colorScheme.surface,
               padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
               child: Row(
                 children: List.generate(steps.length, (i) {
@@ -242,7 +252,9 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                           Expanded(
                             child: Container(
                               height: 2,
-                              color: isDone ? AppTheme.primaryGreen : Colors.grey[300],
+                              color: isDone
+                                  ? AppTheme.primaryGreen
+                                  : colorScheme.outlineVariant,
                             ),
                           ),
                         GestureDetector(
@@ -254,13 +266,19 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                                 backgroundColor: isActive
                                     ? AppTheme.primaryGreen
                                     : isDone
-                                        ? Colors.green[300]
-                                        : Colors.grey[300],
+                                        ? colorScheme.primaryContainer
+                                        : colorScheme.outlineVariant,
                                 child: isDone
-                                    ? const Icon(Icons.check, color: Colors.white, size: 16)
+                                    ? Icon(
+                                        Icons.check,
+                                        color: colorScheme.onPrimaryContainer,
+                                        size: 16,
+                                      )
                                     : Text('${i + 1}',
                                         style: TextStyle(
-                                          color: isActive ? Colors.white : Colors.grey[600],
+                                          color: isActive
+                                              ? colorScheme.onPrimary
+                                              : colorScheme.onSurfaceVariant,
                                           fontSize: 13,
                                           fontWeight: FontWeight.bold,
                                         )),
@@ -269,7 +287,9 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                               Text(steps[i],
                                   style: TextStyle(
                                     fontSize: 11,
-                                    color: isActive ? AppTheme.primaryGreen : Colors.grey[500],
+                                    color: isActive
+                                        ? AppTheme.primaryGreen
+                                        : colorScheme.onSurfaceVariant,
                                     fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
                                   )),
                             ],
@@ -279,7 +299,9 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                           Expanded(
                             child: Container(
                               height: 2,
-                              color: isDone || isActive ? AppTheme.primaryGreen : Colors.grey[300],
+                              color: isDone || isActive
+                                  ? AppTheme.primaryGreen
+                                  : colorScheme.outlineVariant,
                             ),
                           ),
                       ],
@@ -304,10 +326,10 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: colorScheme.surface,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: colorScheme.shadow.withValues(alpha: 0.12),
                     blurRadius: 10,
                     offset: const Offset(0, -2),
                   ),
@@ -333,12 +355,19 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                       onPressed: _isSaving ? null : _onNext,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryGreen,
-                        foregroundColor: Colors.white,
+                        foregroundColor: colorScheme.onPrimary,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       child: _isSaving
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          ? SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: colorScheme.onPrimary,
+                              ),
+                            )
                           : Text(
                               _currentStep < steps.length - 1 ? 'ถัดไป' : 'บันทึกและเริ่มใช้งาน',
                               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -369,7 +398,6 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('กรุณาอัปโหลด: ${missing.join(", ")}'),
-            backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
         );
@@ -496,7 +524,11 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
         const SizedBox(height: 8),
         Text(
           '* กรุณาอัปโหลดเอกสารทั้ง 4 รายการ',
-          style: TextStyle(fontSize: 12, color: Colors.red[400], fontWeight: FontWeight.w500),
+          style: TextStyle(
+            fontSize: 12,
+            color: Theme.of(context).colorScheme.error,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ],
     );
@@ -508,6 +540,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
     required File? file,
     required VoidCallback onTap,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     final hasFile = file != null;
     return InkWell(
       onTap: onTap,
@@ -517,14 +550,20 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: hasFile ? AppTheme.primaryGreen : Colors.grey[300]!,
+            color: hasFile ? AppTheme.primaryGreen : colorScheme.outlineVariant,
             width: hasFile ? 2 : 1,
           ),
-          color: hasFile ? AppTheme.primaryGreen.withValues(alpha: 0.05) : Colors.white,
+          color: hasFile
+              ? AppTheme.primaryGreen.withValues(alpha: 0.05)
+              : colorScheme.surface,
         ),
         child: Row(
           children: [
-            Icon(icon, color: hasFile ? AppTheme.primaryGreen : Colors.grey[400], size: 28),
+            Icon(
+              icon,
+              color: hasFile ? AppTheme.primaryGreen : colorScheme.onSurfaceVariant,
+              size: 28,
+            ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -532,12 +571,17 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                 children: [
                   Text(label, style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: hasFile ? AppTheme.primaryGreen : Colors.grey[700],
+                    color: hasFile ? AppTheme.primaryGreen : colorScheme.onSurface,
                   )),
                   const SizedBox(height: 2),
                   Text(
                     hasFile ? 'เลือกรูปแล้ว ✓' : 'แตะเพื่อถ่ายรูปหรือเลือกจากแกลเลอรี',
-                    style: TextStyle(fontSize: 12, color: hasFile ? Colors.green[600] : Colors.grey[500]),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: hasFile
+                          ? colorScheme.tertiary
+                          : colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -545,10 +589,10 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
             if (hasFile)
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.file(file, width: 48, height: 48, fit: BoxFit.cover),
+                child: AppFileImage(file: file, width: 48, height: 48),
               )
             else
-              Icon(Icons.add_a_photo, color: Colors.grey[400]),
+              Icon(Icons.add_a_photo, color: colorScheme.onSurfaceVariant),
           ],
         ),
       ),
@@ -556,19 +600,28 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
   }
 
   Widget _vehicleChip(String value, String label, IconData icon) {
+    final colorScheme = Theme.of(context).colorScheme;
     final isSelected = _selectedVehicleType == value;
     return ChoiceChip(
       label: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 18, color: isSelected ? Colors.white : Colors.grey[600]),
+          Icon(
+            icon,
+            size: 18,
+            color: isSelected
+                ? colorScheme.onPrimary
+                : colorScheme.onSurfaceVariant,
+          ),
           const SizedBox(width: 6),
           Text(label),
         ],
       ),
       selected: isSelected,
       selectedColor: AppTheme.primaryGreen,
-      labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.grey[700]),
+      labelStyle: TextStyle(
+        color: isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
+      ),
       onSelected: (_) => setState(() => _selectedVehicleType = value),
     );
   }
@@ -677,11 +730,12 @@ class _StepCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey[200]!),
+        side: BorderSide(color: colorScheme.outlineVariant),
       ),
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -706,7 +760,13 @@ class _StepCard extends StatelessWidget {
                     children: [
                       Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 2),
-                      Text(subtitle, style: TextStyle(fontSize: 13, color: Colors.grey[500])),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
                     ],
                   ),
                 ),

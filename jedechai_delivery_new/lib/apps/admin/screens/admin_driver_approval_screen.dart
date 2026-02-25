@@ -316,6 +316,7 @@ class _AdminDriverApprovalScreenState extends State<AdminDriverApprovalScreen>
   }
 
   Widget _infoChip(IconData icon, String text) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -327,7 +328,7 @@ class _AdminDriverApprovalScreenState extends State<AdminDriverApprovalScreen>
         children: [
           Icon(icon, size: 14, color: Colors.grey[600]),
           const SizedBox(width: 4),
-          Text(text, style: TextStyle(fontSize: 12, color: Colors.grey[700])),
+          Text(text, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
         ],
       ),
     );

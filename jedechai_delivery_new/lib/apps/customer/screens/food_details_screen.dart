@@ -283,21 +283,23 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
   }
 
   Widget _buildFoodImage() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       height: 250,
-      color: Colors.grey.shade200,
+      color: colorScheme.surfaceContainerHighest,
       child: AppNetworkImage(
         imageUrl: widget.menuItem.imageUrl,
         fit: BoxFit.cover,
         width: double.infinity,
         height: 250,
-        backgroundColor: Colors.grey.shade300,
+        backgroundColor: colorScheme.surfaceContainerHighest,
       ),
     );
   }
 
   Widget _buildFoodHeader() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -327,14 +329,14 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
+                  color: colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   widget.menuItem.category!,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey.shade700,
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -366,6 +368,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
   }
 
   Widget _buildOptionsSection() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -389,18 +392,18 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.grey.shade100,
+              color: colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(color: colorScheme.outlineVariant),
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline, color: Colors.grey.shade600),
+                Icon(Icons.info_outline, color: colorScheme.onSurfaceVariant),
                 const SizedBox(width: 8),
                 Text(
                   'ไม่มีตัวเลือกเพิ่มเติมสำหรับเมนูนี้',
                   style: TextStyle(
-                    color: Colors.grey.shade600,
+                    color: colorScheme.onSurfaceVariant,
                     fontSize: 14,
                   ),
                 ),
@@ -444,6 +447,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
   }
 
   Widget _buildDescriptionSection() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -459,7 +463,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
           widget.menuItem.description ?? '',
           style: TextStyle(
             fontSize: 14,
-            color: Colors.grey.shade700,
+            color: colorScheme.onSurfaceVariant,
             height: 1.4,
           ),
         ),
@@ -468,6 +472,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
   }
 
   Widget _buildRestaurantSection() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -482,7 +487,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
+            border: Border.all(color: colorScheme.outlineVariant),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
@@ -491,7 +496,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
+                  color: colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Icon(Icons.store, size: 20),
@@ -515,10 +520,11 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
   }
 
   Widget _buildBottomBar() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainer,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),
@@ -574,9 +580,10 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
   }
 
   Widget _buildQuantityCounter() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: colorScheme.outlineVariant),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(

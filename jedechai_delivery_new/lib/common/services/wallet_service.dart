@@ -264,21 +264,18 @@ class WalletService {
       debugLog('   └─ ยอดเงินเดิม: ${wallet.balance} บาท');
       debugLog('   └─ ยอดเงินใหม่: $newBalance บาท');
 
-      // 1. บันทึกประวัติการทำรายการ
+      // Atomic deduction via RPC (Phase 2)
       final shortId = OrderCodeFormatter.format(bookingId);
-      await _supabase.from('wallet_transactions').insert({
-        'wallet_id': wallet.id,
-        'amount': -totalDeduction,
-        'type': 'commission',
-        'description': 'หักค่าบริการระบบ ออเดอร์ $shortId',
-        'related_booking_id': bookingId,
+      final rpcResult = await _supabase.rpc('wallet_deduct', params: {
+        'p_user_id': driverId,
+        'p_amount': totalDeduction,
+        'p_description': 'หักค่าบริการระบบ ออเดอร์ $shortId',
+        'p_type': 'commission',
+        'p_related_booking_id': bookingId,
       });
-
-      // 2. อัปเดตยอดเงินในกระเป๋า
-      await _supabase
-          .from('wallets')
-          .update({'balance': newBalance})
-          .eq('id', wallet.id);
+      if (rpcResult is Map && rpcResult['success'] != true) {
+        throw Exception(rpcResult['error'] ?? 'wallet_deduct failed');
+      }
 
       debugLog('✅ หักค่าคอมมิชชั่น Food Order สำเร็จ');
 
@@ -336,21 +333,17 @@ class WalletService {
       debugLog('   └─ ยอดเงินเดิม: ${wallet.balance} บาท');
       debugLog('   └─ ยอดเงินใหม่: $newBalance บาท');
 
-      // ใช้ Database Transaction เพื่อความปลอดภัย
-      // 1. บันทึกประวัติการทำรายการ
-      await _supabase.from('wallet_transactions').insert({
-        'wallet_id': wallet.id,
-        'amount': -commission, // ลบเพราะเป็นการหักเงิน
-        'type': 'commission',
-        'description': 'หักค่าบริการระบบ จากงาน $bookingId',
-        'related_booking_id': bookingId,
+      // Atomic deduction via RPC (Phase 2)
+      final rpcResult = await _supabase.rpc('wallet_deduct', params: {
+        'p_user_id': driverId,
+        'p_amount': commission,
+        'p_description': 'หักค่าบริการระบบ จากงาน $bookingId',
+        'p_type': 'commission',
+        'p_related_booking_id': bookingId,
       });
-
-      // 2. อัปเดตยอดเงินในกระเป๋า
-      await _supabase
-          .from('wallets')
-          .update({'balance': newBalance})
-          .eq('id', wallet.id);
+      if (rpcResult is Map && rpcResult['success'] != true) {
+        throw Exception(rpcResult['error'] ?? 'wallet_deduct failed');
+      }
 
       debugLog('✅ หักค่าคอมมิชชั่นสำเร็จ');
       return true;
@@ -377,22 +370,16 @@ class WalletService {
         throw Exception('ไม่พบกระเป๋าเงินของคนขับ');
       }
 
-      // ยอดเงินใหม่
-      final newBalance = wallet.balance + amount;
-
-      // บันทึกประวัติการทำรายการ
-      await _supabase.from('wallet_transactions').insert({
-        'wallet_id': wallet.id,
-        'amount': amount,
-        'type': 'topup',
-        'description': description ?? 'เติมเงินเข้ากระเป๋า',
+      // Atomic top-up via RPC (Phase 2)
+      final rpcResult = await _supabase.rpc('wallet_topup', params: {
+        'p_user_id': driverId,
+        'p_amount': amount,
+        'p_description': description ?? 'เติมเงินเข้ากระเป๋า',
       });
-
-      // อัปเดตยอดเงินในกระเป๋า
-      await _supabase
-          .from('wallets')
-          .update({'balance': newBalance})
-          .eq('id', wallet.id);
+      final newBalance = (rpcResult is Map) ? rpcResult['new_balance'] ?? (wallet.balance + amount) : wallet.balance + amount;
+      if (rpcResult is Map && rpcResult['success'] != true) {
+        throw Exception(rpcResult['error'] ?? 'wallet_topup failed');
+      }
 
       debugLog('✅ เติมเงินสำเร็จ: ยอดเงินใหม่ $newBalance บาท');
       return true;

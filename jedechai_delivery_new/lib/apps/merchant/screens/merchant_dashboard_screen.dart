@@ -86,7 +86,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
               primary: AppTheme.accentOrange,
               onPrimary: Colors.white,
               surface: Colors.white,
-              onSurface: Colors.black87,
+              onSurface: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           child: child!,
@@ -240,8 +240,9 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: const Text('รายงานการขาย'),
         backgroundColor: AppTheme.accentOrange,
@@ -292,6 +293,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
   }
 
   Widget _buildErrorState() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -300,9 +302,20 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
           children: [
             Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
             const SizedBox(height: 16),
-            const Text('ไม่สามารถโหลดข้อมูลได้', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(
+              'ไม่สามารถโหลดข้อมูลได้',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+              ),
+            ),
             const SizedBox(height: 8),
-            Text(_error ?? '', style: TextStyle(color: Colors.grey[500], fontSize: 13), textAlign: TextAlign.center),
+            Text(
+              _error ?? '',
+              style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: _loadData,
@@ -320,8 +333,9 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
   }
 
   Widget _buildPeriodFilter() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      color: Colors.white,
+      color: colorScheme.surface,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -362,10 +376,10 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
                     },
                     selectedColor: AppTheme.accentOrange,
                     labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : Colors.black87,
+                      color: isSelected ? Colors.white : colorScheme.onSurface,
                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                     ),
-                    backgroundColor: Colors.grey[100],
+                    backgroundColor: colorScheme.surfaceContainerHighest,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   ),
                 );
@@ -477,10 +491,11 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
   }
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -501,7 +516,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
           const SizedBox(height: 4),
           Text(
             title,
-            style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
         ],
@@ -510,14 +525,19 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
   }
 
   Widget _buildOrderHistorySection() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'ประวัติออเดอร์',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
           ),
           const SizedBox(height: 12),
           if (_orderHistory.isEmpty)
@@ -525,14 +545,21 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: colorScheme.surfaceContainer,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
                 children: [
-                  Icon(Icons.receipt_long, size: 48, color: Colors.grey[300]),
+                  Icon(
+                    Icons.receipt_long,
+                    size: 48,
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.45),
+                  ),
                   const SizedBox(height: 12),
-                  Text('ไม่มีออเดอร์ในช่วงเวลานี้', style: TextStyle(color: Colors.grey[500])),
+                  Text(
+                    'ไม่มีออเดอร์ในช่วงเวลานี้',
+                    style: TextStyle(color: colorScheme.onSurfaceVariant),
+                  ),
                 ],
               ),
             )
@@ -547,6 +574,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
   }
 
   Widget _buildOrderCard(Map<String, dynamic> order) {
+    final colorScheme = Theme.of(context).colorScheme;
     final status = order['status'] as String? ?? 'unknown';
     final price = (order['price'] as num?)?.toDouble() ?? 0;
     final orderId = OrderCodeFormatter.formatByServiceType(
@@ -569,7 +597,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
@@ -603,7 +631,11 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
                 const Spacer(),
                 Text(
                   '#$orderId',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500], fontFamily: 'monospace'),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: colorScheme.onSurfaceVariant,
+                    fontFamily: 'monospace',
+                  ),
                 ),
               ],
             ),
@@ -614,14 +646,18 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
               children: [
                 Text(
                   _formatCurrency(price),
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurface,
+                  ),
                 ),
                 const Spacer(),
-                Icon(Icons.access_time, size: 14, color: Colors.grey[400]),
+                Icon(Icons.access_time, size: 14, color: colorScheme.onSurfaceVariant),
                 const SizedBox(width: 4),
                 Text(
                   createdAt,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                  style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
@@ -631,12 +667,12 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  Icon(Icons.note, size: 14, color: Colors.grey[400]),
+                  Icon(Icons.note, size: 14, color: colorScheme.onSurfaceVariant),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       notes,
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),

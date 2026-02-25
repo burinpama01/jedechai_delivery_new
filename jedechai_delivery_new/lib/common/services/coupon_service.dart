@@ -22,12 +22,21 @@ class CouponService {
     final userId = AuthService.userId;
     if (userId == null) throw Exception('กรุณาเข้าสู่ระบบ');
 
+    // Phase 6: Validate coupon code format before querying DB
+    final trimmedCode = code.trim().toUpperCase();
+    if (trimmedCode.isEmpty || trimmedCode.length > 20) {
+      throw Exception('รหัสโค้ดส่วนลดไม่ถูกต้อง (ต้องไม่เกิน 20 ตัวอักษร)');
+    }
+    if (!RegExp(r'^[A-Z0-9_-]+$').hasMatch(trimmedCode)) {
+      throw Exception('รหัสโค้ดส่วนลดต้องเป็นตัวอักษรภาษาอังกฤษหรือตัวเลขเท่านั้น');
+    }
+
     try {
       // Find coupon by code
       final response = await _client
           .from('coupons')
           .select()
-          .eq('code', code.trim().toUpperCase())
+          .eq('code', trimmedCode)
           .eq('is_active', true)
           .maybeSingle();
 
@@ -58,11 +67,12 @@ class CouponService {
         throw Exception('โค้ดนี้ใช้ได้เฉพาะบริการ$serviceLabel');
       }
 
-      // Check merchant
-      if (coupon.merchantId != null &&
-          merchantId != null &&
-          coupon.merchantId != merchantId) {
-        throw Exception('โค้ดนี้ใช้ได้เฉพาะร้านค้าที่กำหนดเท่านั้น');
+      // Check merchant — Phase 5A fix: if coupon is merchant-specific,
+      // the merchantId parameter MUST match (null merchantId = reject)
+      if (coupon.merchantId != null) {
+        if (merchantId == null || coupon.merchantId != merchantId) {
+          throw Exception('โค้ดนี้ใช้ได้เฉพาะร้านค้าที่กำหนดเท่านั้น');
+        }
       }
 
       // Check minimum order
@@ -116,7 +126,9 @@ class CouponService {
       debugLog('✅ Recorded coupon usage: $couponId for booking: $bookingId');
     } catch (e) {
       debugLog('❌ Error recording coupon usage: $e');
-      // Non-critical — don't throw, booking already succeeded
+      // Phase 5A fix: Make this CRITICAL — if usage recording fails,
+      // the coupon can be reused beyond its limit.
+      rethrow;
     }
   }
 
@@ -131,7 +143,10 @@ class CouponService {
 
       return (response as List).length;
     } catch (e) {
-      return 0;
+      // Phase 5A fix: throw on error instead of returning 0,
+      // which would bypass per-user limit checks
+      debugLog('❌ Error fetching coupon usage count: $e');
+      throw Exception('ไม่สามารถตรวจสอบการใช้งานโค้ดส่วนลดได้ กรุณาลองใหม่');
     }
   }
 

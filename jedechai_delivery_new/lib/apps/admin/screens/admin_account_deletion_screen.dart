@@ -221,6 +221,7 @@ class _AdminAccountDeletionScreenState extends State<AdminAccountDeletionScreen>
   }
 
   Widget _buildRequestCard(Map<String, dynamic> request) {
+    final colorScheme = Theme.of(context).colorScheme;
     final status = request['status'] as String? ?? 'pending';
     final isPending = status == 'pending';
     final isApproved = status == 'approved';
@@ -301,7 +302,7 @@ class _AdminAccountDeletionScreenState extends State<AdminAccountDeletionScreen>
                 ),
                 child: Text(
                   'เหตุผล: ${request['reason']}',
-                  style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                  style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
                 ),
               ),
               const SizedBox(height: 10),

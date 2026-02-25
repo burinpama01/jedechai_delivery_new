@@ -59,6 +59,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       backgroundColor: AdminTheme.background,
       body: Column(
@@ -85,9 +86,20 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.receipt_long, size: 64, color: Colors.grey[300]),
+                            Icon(
+                              Icons.receipt_long,
+                              size: 64,
+                              color: colorScheme.onSurfaceVariant
+                                  .withValues(alpha: 0.45),
+                            ),
                             const SizedBox(height: 12),
-                            Text('ไม่พบออเดอร์', style: TextStyle(fontSize: 16, color: Colors.grey[500])),
+                            Text(
+                              'ไม่พบออเดอร์',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
                           ],
                         ),
                       )
@@ -106,9 +118,10 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
   }
 
   Widget _buildFilters() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      color: Colors.grey[50],
+      color: colorScheme.surfaceContainerHighest,
       child: Row(
         children: [
           // Service type filter
@@ -167,6 +180,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
   }
 
   Widget _buildOrderCard(Map<String, dynamic> order) {
+    final colorScheme = Theme.of(context).colorScheme;
     final serviceType = order['service_type'] ?? '-';
     final status = order['status'] ?? '-';
     final price = (order['price'] as num?)?.toDouble() ?? 0;
@@ -282,7 +296,8 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(pickupAddress,
-                      style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                      style: TextStyle(
+                          fontSize: 11, color: colorScheme.onSurfaceVariant),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis),
                 ),
@@ -295,7 +310,8 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(destAddress,
-                      style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                      style: TextStyle(
+                          fontSize: 11, color: colorScheme.onSurfaceVariant),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis),
                 ),
@@ -305,10 +321,13 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
             Row(
               children: [
                 Text('${distanceKm.toStringAsFixed(1)} กม.',
-                    style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+                    style: TextStyle(
+                        fontSize: 11, color: colorScheme.onSurfaceVariant)),
                 const Spacer(),
                 Text(createdAt,
-                    style: TextStyle(fontSize: 11, color: Colors.grey[400])),
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8))),
               ],
             ),
           ],

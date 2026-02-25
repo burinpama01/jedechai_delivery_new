@@ -109,7 +109,9 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                           selected: isSelected,
                           selectedColor: AppTheme.primaryGreen,
                           labelStyle: TextStyle(
-                            color: isSelected ? Colors.white : Colors.black87,
+                            color: isSelected
+                                ? Colors.white
+                                : Theme.of(context).colorScheme.onSurface,
                             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                           ),
                           onSelected: (_) =>
@@ -285,6 +287,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
   }
 
   Widget _buildTicketCard(SupportTicket ticket) {
+    final colorScheme = Theme.of(context).colorScheme;
     final dateStr = DateFormat('d MMM yyyy, HH:mm', 'th').format(ticket.createdAt);
     final color = _statusColor(ticket.status);
 
@@ -359,7 +362,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
             const SizedBox(height: 8),
             Text(
               ticket.description,
-              style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+              style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),

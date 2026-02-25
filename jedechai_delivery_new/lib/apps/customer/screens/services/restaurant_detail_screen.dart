@@ -160,8 +160,9 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: colorScheme.surface,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: AppTheme.accentOrange))
           : _error != null
@@ -172,6 +173,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
   }
 
   Widget _buildContent() {
+    final colorScheme = Theme.of(context).colorScheme;
     return NestedScrollView(
       headerSliverBuilder: (context, innerBoxIsScrolled) {
         return [
@@ -197,7 +199,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                   controller: _tabController,
                   isScrollable: true,
                   labelColor: AppTheme.accentOrange,
-                  unselectedLabelColor: Colors.grey[500],
+                  unselectedLabelColor: colorScheme.onSurfaceVariant,
                   indicatorColor: AppTheme.accentOrange,
                   indicatorWeight: 3,
                   labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
@@ -254,7 +256,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
               color: Colors.white,
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              shadows: [Shadow(blurRadius: 8, color: Colors.black54)],
+              shadows: [Shadow(blurRadius: 8, color: Color(0x8A000000))],
             ),
           ),
         ),
@@ -271,8 +273,9 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
   }
 
   Widget _buildRestaurantInfo() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      color: Colors.white,
+      color: colorScheme.surfaceContainer,
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -282,28 +285,28 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
             children: [
               Icon(Icons.star, size: 18, color: Colors.amber[600]),
               const SizedBox(width: 4),
-              Text('4.5', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey[800])),
-              Text(' (100+)', style: TextStyle(color: Colors.grey[400], fontSize: 13)),
+              Text('4.5', style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
+              Text(' (100+)', style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13)),
               const SizedBox(width: 16),
-              Icon(Icons.access_time, size: 16, color: Colors.grey[400]),
+              Icon(Icons.access_time, size: 16, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: 4),
-              Text('20-30 นาที', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+              Text('20-30 นาที', style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13)),
               const SizedBox(width: 16),
-              Icon(Icons.delivery_dining, size: 16, color: Colors.grey[400]),
+              Icon(Icons.delivery_dining, size: 16, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: 4),
-              Text('ค่าส่ง ฿15', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+              Text('ค่าส่ง ฿15', style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13)),
             ],
           ),
           if (_shopAddress != null && _shopAddress!.isNotEmpty) ...[
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.location_on_outlined, size: 16, color: Colors.grey[400]),
+                Icon(Icons.location_on_outlined, size: 16, color: colorScheme.onSurfaceVariant),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     _shopAddress!,
-                    style: TextStyle(color: Colors.grey[500], fontSize: 13),
+                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -315,9 +318,9 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
             const SizedBox(height: 4),
             Row(
               children: [
-                Icon(Icons.phone_outlined, size: 16, color: Colors.grey[400]),
+                Icon(Icons.phone_outlined, size: 16, color: colorScheme.onSurfaceVariant),
                 const SizedBox(width: 4),
-                Text(_phoneNumber!, style: TextStyle(color: Colors.grey[500], fontSize: 13)),
+                Text(_phoneNumber!, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13)),
               ],
             ),
           ],
@@ -383,7 +386,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
             const SizedBox(height: 4),
             Text(
               'แตะเพื่อคัดลอกโค้ดไปใช้ตอนชำระเงิน',
-              style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+              style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
             ),
           ],
         ],
@@ -522,12 +525,13 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
   Widget _buildCartBar() {
     return Consumer<CartProvider>(
       builder: (context, cart, _) {
+        final colorScheme = Theme.of(context).colorScheme;
         if (cart.isEmpty) return const SizedBox.shrink();
 
         return Container(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: colorScheme.surfaceContainer,
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.1),
@@ -597,14 +601,15 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
   Widget _buildCartSheet() {
     return Consumer<CartProvider>(
       builder: (context, cart, _) {
+        final colorScheme = Theme.of(context).colorScheme;
         return DraggableScrollableSheet(
           initialChildSize: 0.6,
           minChildSize: 0.3,
           maxChildSize: 0.85,
           builder: (context, scrollController) {
             return Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
               child: Column(
@@ -614,7 +619,10 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                     margin: const EdgeInsets.only(top: 12),
                     width: 40,
                     height: 4,
-                    decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+                    decoration: BoxDecoration(
+                      color: colorScheme.outlineVariant,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                   // Header
                   Padding(
@@ -673,7 +681,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                                   Text(item.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                                   if (item.selectedOptions.isNotEmpty)
                                     Text(item.selectedOptions.join(', '),
-                                        style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                                        style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
                                   const SizedBox(height: 6),
                                   Row(
                                     children: [
@@ -695,7 +703,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                   Container(
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: colorScheme.surfaceContainer,
                       boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, -2))],
                     ),
                     child: SafeArea(
@@ -746,6 +754,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
   }
 
   Widget _buildQtyControl(CartProvider cart, int index, CartItem item) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey[300]!),
@@ -761,7 +770,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
               child: Icon(
                 item.quantity > 1 ? Icons.remove : Icons.delete_outline,
                 size: 18,
-                color: item.quantity > 1 ? Colors.grey[700] : Colors.red,
+                color: item.quantity > 1 ? colorScheme.onSurfaceVariant : Colors.red,
               ),
             ),
           ),

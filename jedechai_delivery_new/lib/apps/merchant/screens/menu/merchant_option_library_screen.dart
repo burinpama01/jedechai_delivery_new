@@ -292,6 +292,7 @@ class OptionGroupCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final optionCount = group.options?.length ?? 0;
     
     return Card(
@@ -396,7 +397,7 @@ class OptionGroupCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
-                                color: Colors.grey[700],
+                                color: colorScheme.onSurfaceVariant,
                               ),
                             ),
                             const Spacer(),
@@ -429,7 +430,7 @@ class OptionGroupCard extends StatelessWidget {
                                   option.name,
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.grey[700],
+                                    color: colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ),

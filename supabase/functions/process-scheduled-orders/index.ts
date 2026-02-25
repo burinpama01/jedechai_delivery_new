@@ -33,18 +33,16 @@ function unauthorized() {
   );
 }
 
-function hasValidSchedulerAuth(req: Request, serviceRoleKey?: string): boolean {
-  const incomingSecret = req.headers.get("x-scheduler-secret") ?? "";
-  if (schedulerSecret && incomingSecret === schedulerSecret) {
-    return true;
+function hasValidSchedulerAuth(req: Request, _serviceRoleKey?: string): boolean {
+  // Phase 6: Only accept the dedicated scheduler secret.
+  // Do NOT fall back to service_role key — that would allow any holder
+  // of the service key to trigger scheduled-order processing.
+  if (!schedulerSecret) {
+    console.error("SCHEDULED_ORDER_CRON_SECRET is not configured");
+    return false;
   }
-
-  const authorization = req.headers.get("authorization") ?? req.headers.get("Authorization") ?? "";
-  const token = authorization.toLowerCase().startsWith("bearer ")
-    ? authorization.slice(7).trim()
-    : "";
-
-  return Boolean(serviceRoleKey) && token === serviceRoleKey;
+  const incomingSecret = req.headers.get("x-scheduler-secret") ?? "";
+  return incomingSecret === schedulerSecret;
 }
 
 function formatThaiDateTime(iso: string): string {

@@ -8,8 +8,9 @@ class PendingDeletionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F2EE),
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -21,18 +22,22 @@ class PendingDeletionScreen extends StatelessWidget {
                   width: 120,
                   height: 120,
                   decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: 0.1),
+                    color: colorScheme.errorContainer.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(30),
                   ),
-                  child: const Icon(Icons.delete_outline, size: 64, color: Colors.red),
+                  child: Icon(
+                    Icons.delete_outline,
+                    size: 64,
+                    color: colorScheme.error,
+                  ),
                 ),
                 const SizedBox(height: 32),
-                const Text(
+                Text(
                   'กำลังดำเนินการลบบัญชี',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1A1A2E),
+                    color: colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -41,7 +46,7 @@ class PendingDeletionScreen extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
-                    color: Colors.grey[600],
+                    color: colorScheme.onSurfaceVariant,
                     height: 1.5,
                   ),
                 ),
@@ -49,19 +54,25 @@ class PendingDeletionScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withValues(alpha: 0.05),
+                    color: colorScheme.tertiaryContainer.withValues(alpha: 0.45),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
+                    border: Border.all(
+                      color: colorScheme.tertiary.withValues(alpha: 0.4),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.info_outline, color: Colors.orange, size: 20),
+                      Icon(
+                        Icons.info_outline,
+                        color: colorScheme.tertiary,
+                        size: 20,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           'ระหว่างรอการอนุมัติ\nจะไม่สามารถใช้งานบัญชีนี้ได้',
                           style: TextStyle(
-                            color: Colors.grey[700],
+                            color: colorScheme.onTertiaryContainer,
                             fontSize: 14,
                             height: 1.4,
                           ),
@@ -84,8 +95,8 @@ class PendingDeletionScreen extends StatelessWidget {
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.grey[700],
-                      side: BorderSide(color: Colors.grey[300]!),
+                      foregroundColor: colorScheme.onSurface,
+                      side: BorderSide(color: colorScheme.outlineVariant),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),

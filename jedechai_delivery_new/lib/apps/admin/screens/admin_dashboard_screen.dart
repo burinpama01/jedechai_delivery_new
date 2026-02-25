@@ -110,6 +110,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     required IconData icon,
     required Color color,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -128,7 +129,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
           Text(
             'ทั้งหมด $total',
-            style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+            style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
           ),
           const SizedBox(width: 8),
           Container(

@@ -283,20 +283,21 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F2EE),
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
         title: Text(
           'รายละเอียดออเดอร์',
           style: TextStyle(
-            color: AppTheme.textPrimary,
+            color: colorScheme.onSurface,
             fontWeight: FontWeight.bold,
           ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.textPrimary),
+          icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
@@ -306,11 +307,11 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
               margin: const EdgeInsets.only(right: 8),
               child: TextButton.icon(
                 onPressed: _showCancelOrderDialog,
-                icon: const Icon(Icons.cancel, size: 16, color: Colors.red),
-                label: const Text(
+                icon: Icon(Icons.cancel, size: 16, color: colorScheme.error),
+                label: Text(
                   'ยกเลิก',
                   style: TextStyle(
-                    color: Colors.red,
+                    color: colorScheme.error,
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),
@@ -319,7 +320,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  backgroundColor: Colors.red.withValues(alpha: 0.1),
+                  backgroundColor: colorScheme.errorContainer.withValues(alpha: 0.45),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -338,8 +339,8 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                 ),
                 child: Text(
                   _getStatusText(currentStatus),
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: colorScheme.onPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),
@@ -374,14 +375,15 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
   }
 
   Widget _buildOrderInfoCard() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.12),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -401,7 +403,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                 child: Icon(
                   _getServiceIcon(widget.booking.serviceType),
                   size: 20,
-                  color: Colors.white,
+                  color: colorScheme.onPrimary,
                 ),
               ),
               const SizedBox(width: 12),
@@ -411,17 +413,17 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                   children: [
                     Text(
                       _getServiceTypeText(widget.booking.serviceType),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimary,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                     Text(
                       'ออเดอร์ ${OrderCodeFormatter.format(widget.booking.id)}',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey[600],
+                        color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -432,13 +434,13 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
           const SizedBox(height: 16),
           Row(
             children: [
-              Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
+              Icon(Icons.access_time, size: 16, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: 8),
               Text(
                 'สั่งเมื่อ: ${_formatDateTime(widget.booking.createdAt)}',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey[600],
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -449,14 +451,15 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
   }
 
   Widget _buildLocationCard() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.12),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -465,12 +468,12 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'สถานที่',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary,
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 12),
@@ -483,13 +486,13 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.1),
+                    color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.pin_drop,
                     size: 16,
-                    color: Colors.green,
+                    color: colorScheme.secondary,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -501,17 +504,17 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                         'จุดรับ',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey[600],
+                          color: colorScheme.onSurfaceVariant,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         _formatAddress(widget.booking.pickupAddress),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.textPrimary,
+                          color: colorScheme.onSurface,
                         ),
                       ),
                     ],
@@ -529,13 +532,13 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
+                  color: colorScheme.errorContainer.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.location_on,
                   size: 16,
-                  color: Colors.red,
+                  color: colorScheme.error,
                 ),
               ),
               const SizedBox(width: 12),
@@ -547,17 +550,17 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                       'จุดหมายปลายทาง',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       _formatAddress(widget.booking.destinationAddress),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.textPrimary,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                   ],
@@ -580,14 +583,16 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
   Widget _buildDriverInfoCard() {
     if (_driverInfo == null) return const SizedBox.shrink();
 
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.12),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -596,12 +601,12 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'ข้อมูลคนขับ',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary,
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 12),
@@ -653,10 +658,10 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                         children: [
                           Text(
                             _driverInfo!['full_name'] ?? 'ไม่ระบุชื่อ',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: AppTheme.textPrimary,
+                              color: colorScheme.onSurface,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -665,12 +670,12 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                           if (_driverInfo!['phone_number'] != null) ...[
                             Row(
                               children: [
-                                const Icon(Icons.phone, size: 14, color: Colors.grey),
+                                Icon(Icons.phone, size: 14, color: colorScheme.onSurfaceVariant),
                                 const SizedBox(width: 4),
                                 Flexible(
                                   child: Text(
                                     _driverInfo!['phone_number'],
-                                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                                    style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
@@ -681,12 +686,12 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                           if (_driverInfo!['license_plate'] != null) ...[
                             Row(
                               children: [
-                                const Icon(Icons.directions_car, size: 14, color: Colors.grey),
+                                Icon(Icons.directions_car, size: 14, color: colorScheme.onSurfaceVariant),
                                 const SizedBox(width: 4),
                                 Flexible(
                                   child: Text(
                                     _driverInfo!['license_plate'],
-                                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                                    style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
@@ -739,7 +744,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                       // Message Button
                       Expanded(
                         child: Material(
-                          color: Colors.blue,
+                          color: AppTheme.accentBlue,
                           borderRadius: BorderRadius.circular(12),
                           child: InkWell(
                             borderRadius: BorderRadius.circular(12),
@@ -804,14 +809,15 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
   }
 
   Widget _buildOrderItemsCard() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.12),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -820,12 +826,12 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'รายการอาหาร',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary,
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 12),
@@ -842,7 +848,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
               'ไม่พบรายการอาหาร',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[600],
+                color: colorScheme.onSurfaceVariant,
               ),
             )
           else
@@ -870,10 +876,10 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                       children: [
                         Text(
                           item['menu_item']?['name'] ?? item['item_name'] ?? 'ไม่ระบุชื่อ',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: AppTheme.textPrimary,
+                            color: colorScheme.onSurface,
                           ),
                         ),
                         if (item['quantity'] != null) ...[
@@ -882,7 +888,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                             'จำนวน: ${item['quantity']}',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey[600],
+                              color: colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -947,10 +953,10 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                   if (item['price'] != null)
                     Text(
                       '฿${item['price']}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimary,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                 ],
@@ -1069,6 +1075,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
   }
 
   Widget _buildPricingCard() {
+    final colorScheme = Theme.of(context).colorScheme;
     final booking = _currentBooking ?? widget.booking;
     final couponDiscount = (_couponUsage?['discount_amount'] as num?)?.toDouble() ?? 0.0;
     final couponCode = _couponUsage?['coupon_code'] as String?;
@@ -1076,11 +1083,11 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.12),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -1089,12 +1096,12 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'รายละเอียดราคา',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary,
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 12),
@@ -1115,18 +1122,18 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                       Expanded(
                         child: Text(
                           '$itemName x$quantity',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: Colors.black87,
+                            color: colorScheme.onSurface,
                           ),
                         ),
                       ),
                       Text(
                         '฿${itemTotal.ceil()}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+                          color: colorScheme.onSurface,
                         ),
                       ),
                     ],
@@ -1140,10 +1147,17 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('ค่าอาหาร', style: TextStyle(fontSize: 14, color: Colors.black87)),
+                Text(
+                  'ค่าอาหาร',
+                  style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+                ),
                 Text(
                   '฿${booking.price.ceil()}',
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurface,
+                  ),
                 ),
               ],
             ),
@@ -1154,10 +1168,17 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('ค่าจัดส่ง', style: TextStyle(fontSize: 14, color: Colors.black87)),
+                  Text(
+                    'ค่าจัดส่ง',
+                    style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+                  ),
                   Text(
                     '฿${booking.deliveryFee!.ceil()}',
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface,
+                    ),
                   ),
                 ],
               ),
@@ -1172,11 +1193,18 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                     couponCode != null && couponCode.isNotEmpty
                         ? 'ส่วนลดคูปอง ($couponCode)'
                         : 'ส่วนลดคูปอง',
-                    style: const TextStyle(fontSize: 14, color: Colors.green),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: colorScheme.secondary,
+                    ),
                   ),
                   Text(
                     '-฿${couponDiscount.ceil()}',
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.green),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.secondary,
+                    ),
                   ),
                 ],
               ),
@@ -1187,10 +1215,17 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('ระยะทาง', style: TextStyle(fontSize: 14, color: Colors.black87)),
+                Text(
+                  'ระยะทาง',
+                  style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+                ),
                 Text(
                   '${booking.distanceKm.toStringAsFixed(1)} กม.',
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurface,
+                  ),
                 ),
               ],
             ),
@@ -1204,17 +1239,17 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
               children: [
                 Text(
                   _getServiceTypeText(booking.serviceType),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
-                    color: Colors.black87,
+                    color: colorScheme.onSurface,
                   ),
                 ),
                 Text(
                   '฿${booking.price.ceil()}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                    color: colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -1228,11 +1263,15 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                     couponCode != null && couponCode.isNotEmpty
                         ? 'ส่วนลดคูปอง ($couponCode)'
                         : 'ส่วนลดคูปอง',
-                    style: const TextStyle(fontSize: 14, color: Colors.green),
+                    style: TextStyle(fontSize: 14, color: colorScheme.secondary),
                   ),
                   Text(
                     '-฿${couponDiscount.ceil()}',
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.green),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.secondary,
+                    ),
                   ),
                 ],
               ),
@@ -1245,12 +1284,12 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'รวมทั้งหมด',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
+                  color: colorScheme.onSurface,
                 ),
               ),
               Text(
@@ -1373,6 +1412,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
   void _showCancelledByMerchantDialog() {
     final booking = _currentBooking ?? widget.booking;
     final bookingId = booking.id;
+    final colorScheme = Theme.of(context).colorScheme;
 
     showDialog(
       context: context,
@@ -1404,9 +1444,13 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               'ขออภัย ร้านค้าไม่สามารถรับออเดอร์ของคุณได้ในขณะนี้',
-              style: TextStyle(fontSize: 15, color: Colors.black87, height: 1.5),
+              style: TextStyle(
+                fontSize: 15,
+                color: colorScheme.onSurface,
+                height: 1.5,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -1424,13 +1468,23 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('หมายเลขออเดอร์', style: TextStyle(fontSize: 11, color: Colors.black54)),
+                      Text(
+                        'หมายเลขออเดอร์',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
                       Text(
                         OrderCodeFormatter.formatByServiceType(
                           bookingId,
                           serviceType: booking.serviceType,
                         ),
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey[700]),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                        ),
                       ),
                     ],
                   ),
@@ -1438,9 +1492,9 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
               ),
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'กรุณาลองสั่งใหม่อีกครั้ง หรือเลือกร้านอื่น',
-              style: TextStyle(fontSize: 13, color: Colors.black54),
+              style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
           ],
@@ -1522,6 +1576,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
     final deliveryFee = booking.deliveryFee ?? 0.0;
     final grossAmount = isFood ? foodCost + deliveryFee : booking.price;
     final totalAmount = (grossAmount - couponDiscount) < 0 ? 0 : (grossAmount - couponDiscount);
+    final colorScheme = Theme.of(context).colorScheme;
     
     showDialog(
       context: context,
@@ -1550,7 +1605,10 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('ขอบคุณที่ใช้บริการ', style: TextStyle(fontSize: 16, color: Colors.black87)),
+              Text(
+                'ขอบคุณที่ใช้บริการ',
+                style: TextStyle(fontSize: 16, color: colorScheme.onSurface),
+              ),
               const SizedBox(height: 16),
               // Order ID
               Container(
@@ -1567,7 +1625,13 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('หมายเลขออเดอร์', style: TextStyle(fontSize: 11, color: Colors.black54)),
+                        Text(
+                          'หมายเลขออเดอร์',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
                         Text(
                           OrderCodeFormatter.formatByServiceType(
                             bookingId,
@@ -1711,11 +1775,11 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text(
+        title: Text(
           'ยืนยันการยกเลิกออเดอร์',
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: AppTheme.textPrimary,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         content: const Column(

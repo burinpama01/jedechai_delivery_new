@@ -24,23 +24,11 @@ class FareAdjustmentService {
   static const double _defaultFoodRatePerKm = 5.0;
 
   static Future<RideFarPickupConfig> loadRideFarPickupConfig() async {
-    final rows = await _client
-        .from('system_config')
-        .select('key, value')
-        .inFilter('key', [
-          'ride_far_pickup_threshold_km',
-          'ride_far_pickup_rate_per_km_motorcycle',
-          'ride_far_pickup_rate_per_km_car',
-        ]);
-
-    final map = <String, String>{};
-    for (final row in rows) {
-      final key = row['key'] as String?;
-      final value = row['value'] as String?;
-      if (key != null && value != null) {
-        map[key] = value;
-      }
-    }
+    final map = await _loadConfigMap([
+      'ride_far_pickup_threshold_km',
+      'ride_far_pickup_rate_per_km_motorcycle',
+      'ride_far_pickup_rate_per_km_car',
+    ]);
 
     return RideFarPickupConfig(
       thresholdKm: _parseDouble(
@@ -187,29 +175,76 @@ class FareAdjustmentService {
   }
 
   static Future<double> _loadFoodDefaultThresholdKm() async {
-    final row = await _client
-        .from('system_config')
-        .select('value')
-        .eq('key', 'food_far_pickup_threshold_km_default')
-        .maybeSingle();
-
-    return _parseDouble(row?['value'] as String?, _defaultFoodThresholdKm);
+    final map = await _loadConfigMap(['food_far_pickup_threshold_km_default']);
+    return _parseDouble(
+      map['food_far_pickup_threshold_km_default'],
+      _defaultFoodThresholdKm,
+    );
   }
 
   static Future<double> _loadFoodDefaultRatePerKm() async {
-    final row = await _client
-        .from('system_config')
-        .select('value')
-        .eq('key', 'food_far_pickup_rate_per_km_default')
-        .maybeSingle();
+    final map = await _loadConfigMap(['food_far_pickup_rate_per_km_default']);
+    return _parseDouble(
+      map['food_far_pickup_rate_per_km_default'],
+      _defaultFoodRatePerKm,
+    );
+  }
 
-    return _parseDouble(row?['value'] as String?, _defaultFoodRatePerKm);
+  static Future<Map<String, String>> _loadConfigMap(List<String> keys) async {
+    final map = <String, String>{};
+
+    try {
+      final rows = await _client
+          .from('system_config')
+          .select('key, value')
+          .inFilter('key', keys);
+
+      for (final row in rows) {
+        final key = row['key'] as String?;
+        final value = _toConfigString(row['value']);
+        if (key != null && value != null) {
+          map[key] = value;
+        }
+      }
+
+      return map;
+    } catch (_) {
+      // Fallback for deployments where system_config is a single-row table
+      // and does not have key/value columns.
+    }
+
+    try {
+      final columns = keys.join(', ');
+      final row = await _client
+          .from('system_config')
+          .select(columns)
+          .maybeSingle();
+      if (row == null) return map;
+
+      for (final key in keys) {
+        final value = _toConfigString(row[key]);
+        if (value != null) {
+          map[key] = value;
+        }
+      }
+    } catch (_) {
+      // Keep defaults when config table shape is incompatible.
+    }
+
+    return map;
   }
 
   static double _parseDouble(String? raw, double fallback) {
     final parsed = double.tryParse((raw ?? '').trim());
     if (parsed == null || parsed < 0) return fallback;
     return parsed;
+  }
+
+  static String? _toConfigString(dynamic value) {
+    if (value == null) return null;
+    if (value is String) return value.trim();
+    if (value is num) return value.toString();
+    return value.toString();
   }
 
   static double? _toDouble(dynamic value) {

@@ -184,6 +184,7 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final b = widget.booking;
     final isFood = b.serviceType == 'food';
     final grossCollect = isFood ? b.price + (b.deliveryFee ?? 0) : b.price;
@@ -198,7 +199,7 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
             : 'ส่งพัสดุ';
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundLight,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         backgroundColor: AppTheme.accentBlue,
         foregroundColor: Colors.white,
@@ -269,8 +270,8 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
           // ── Content Section ──
           Expanded(
             child: Container(
-              decoration: const BoxDecoration(
-                color: AppTheme.backgroundLight,
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(24),
                   topRight: Radius.circular(24),
@@ -284,12 +285,12 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
                     // ── Date & Order ID ──
                     Row(
                       children: [
-                        Icon(Icons.calendar_today, size: 14, color: AppTheme.textSecondary),
+                        Icon(Icons.calendar_today, size: 14, color: colorScheme.onSurfaceVariant),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
                             _serviceDateTimeSummary(),
-                            style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                            style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                           ),
                         ),
                         Text(
@@ -297,7 +298,7 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
                             b.id,
                             serviceType: b.serviceType,
                           ),
-                          style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary, fontFamily: 'monospace'),
+                          style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant, fontFamily: 'monospace'),
                         ),
                       ],
                     ),
@@ -326,9 +327,9 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: colorScheme.surfaceContainer,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade200),
+                        border: Border.all(color: colorScheme.outlineVariant),
                       ),
                       child: Row(
                         children: [
@@ -383,7 +384,7 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
                     _sectionCard(
                       title: 'รายละเอียดรายได้',
                       children: [
-                        _earningsRow('ค่ารอบ', '฿ ${totalCollect.ceil()}', AppTheme.textPrimary, isBold: true),
+                        _earningsRow('ค่ารอบ', '฿ ${totalCollect.ceil()}', colorScheme.onSurface, isBold: true),
                         if (_couponDiscount > 0)
                           _earningsRow(
                             _couponCode != null && _couponCode!.isNotEmpty
@@ -397,8 +398,8 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
                         _earningsRow('ยอดรายได้สุทธิ', '฿ ${netEarnings.ceil()}', AppTheme.accentBlue, isBold: true),
                         if (isFood) ...[
                           const SizedBox(height: 8),
-                          _earningsRow('  ค่าอาหาร', '฿ ${b.price.ceil()}', AppTheme.textSecondary),
-                          _earningsRow('  ค่าส่ง', '฿ ${(b.deliveryFee ?? 0).ceil()}', AppTheme.textSecondary),
+                          _earningsRow('  ค่าอาหาร', '฿ ${b.price.ceil()}', colorScheme.onSurfaceVariant),
+                          _earningsRow('  ค่าส่ง', '฿ ${(b.deliveryFee ?? 0).ceil()}', colorScheme.onSurfaceVariant),
                         ],
                       ],
                     ),
@@ -409,7 +410,7 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
                       _sectionCard(
                         title: 'รายการชำระเงินสด',
                         children: [
-                          _earningsRow('ยอดที่ต้องเก็บจากลูกค้า', '฿ ${totalCollect.ceil()}', AppTheme.textPrimary, isBold: true),
+                          _earningsRow('ยอดที่ต้องเก็บจากลูกค้า', '฿ ${totalCollect.ceil()}', colorScheme.onSurface, isBold: true),
                           if (_couponDiscount > 0)
                             _earningsRow(
                               _couponCode != null && _couponCode!.isNotEmpty
@@ -420,8 +421,8 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
                             ),
                           if (isFood) ...[
                             const SizedBox(height: 8),
-                            _earningsRow('  ค่าอาหาร', '฿ ${b.price.ceil()}', AppTheme.textSecondary),
-                            _earningsRow('  ค่าส่ง', '฿ ${(b.deliveryFee ?? 0).ceil()}', AppTheme.textSecondary),
+                            _earningsRow('  ค่าอาหาร', '฿ ${b.price.ceil()}', colorScheme.onSurfaceVariant),
+                            _earningsRow('  ค่าส่ง', '฿ ${(b.deliveryFee ?? 0).ceil()}', colorScheme.onSurfaceVariant),
                           ],
                         ],
                       ),
@@ -436,6 +437,7 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
   }
 
   Widget _buildAddressRow({required IconData icon, required Color iconColor, required double iconSize, required String text}) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Row(
       children: [
         Icon(icon, color: iconColor, size: iconSize),
@@ -443,7 +445,7 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary, fontWeight: FontWeight.w500),
+            style: TextStyle(fontSize: 14, color: colorScheme.onSurface, fontWeight: FontWeight.w500),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -453,14 +455,15 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
   }
 
   Widget _buildInfoChip(String label, IconData icon) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Expanded(
       child: Column(
         children: [
-          Icon(icon, size: 16, color: AppTheme.textSecondary),
+          Icon(icon, size: 16, color: colorScheme.onSurfaceVariant),
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(fontSize: 11, color: AppTheme.textPrimary, fontWeight: FontWeight.w600),
+            style: TextStyle(fontSize: 11, color: colorScheme.onSurface, fontWeight: FontWeight.w600),
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -475,18 +478,19 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
   }
 
   Widget _sectionCard({required String title, required List<Widget> children}) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+          Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
           const SizedBox(height: 12),
           ...children,
         ],

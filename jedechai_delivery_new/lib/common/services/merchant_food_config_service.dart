@@ -114,6 +114,8 @@ class MerchantFoodConfigService {
     required double defaultDeliverySystemRate,
   }) {
     final gpRate = _toDouble(merchantProfile?['gp_rate']);
+    final profileGpSystemRate = _toDouble(merchantProfile?['merchant_gp_system_rate']);
+    final profileGpDriverRate = _toDouble(merchantProfile?['merchant_gp_driver_rate']);
     final customBaseFare = _toDouble(merchantProfile?['custom_base_fare']);
     final customBaseDistance = _toDouble(merchantProfile?['custom_base_distance']);
     final customPerKm = _toDouble(merchantProfile?['custom_per_km']);
@@ -129,12 +131,32 @@ class MerchantFoodConfigService {
       }
     }
 
-    final resolvedSystemRate = _clampRate(
-      preset?.merchantSystemRate ?? gpRate ?? defaultMerchantSystemRate,
+    double resolvedSystemRate = _clampRate(
+      profileGpSystemRate ??
+          preset?.merchantSystemRate ??
+          gpRate ??
+          defaultMerchantSystemRate,
     );
-    final resolvedDriverRate = _clampRate(
-      preset?.merchantDriverRate ?? defaultMerchantDriverRate,
+    double resolvedDriverRate = _clampRate(
+      profileGpDriverRate ??
+          preset?.merchantDriverRate ??
+          defaultMerchantDriverRate,
     );
+
+    if (gpRate != null) {
+      final maxTotal = _clampRate(gpRate);
+      final splitTotal = resolvedSystemRate + resolvedDriverRate;
+      if (splitTotal > maxTotal) {
+        final overflow = splitTotal - maxTotal;
+        if (resolvedDriverRate >= overflow) {
+          resolvedDriverRate = _clampRate(resolvedDriverRate - overflow);
+        } else {
+          resolvedDriverRate = 0.0;
+          resolvedSystemRate = _clampRate(maxTotal);
+        }
+      }
+    }
+
     final resolvedDeliverySystemRate = _clampRate(
       preset?.deliverySystemRate ?? defaultDeliverySystemRate,
     );

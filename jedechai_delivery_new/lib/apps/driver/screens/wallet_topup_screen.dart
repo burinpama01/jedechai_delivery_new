@@ -876,6 +876,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
   }
 
   Widget _buildAmountSection() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -911,7 +912,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                     child: Text(
                       '฿${amount.toStringAsFixed(0)}',
                       style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black87,
+                        color: isSelected ? Colors.white : colorScheme.onSurface,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),

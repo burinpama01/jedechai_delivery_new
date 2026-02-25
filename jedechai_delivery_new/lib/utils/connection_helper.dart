@@ -95,12 +95,14 @@ class ConnectionHelper {
             color: isConnectionError(error) ? Colors.orange : Colors.red,
           ),
           const SizedBox(height: 16),
-          Text(
-            title ?? (isConnectionError(error) ? 'Connection Error' : 'Error'),
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
+          Builder(
+            builder: (context) => Text(
+              title ?? (isConnectionError(error) ? 'Connection Error' : 'Error'),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
           ),
           const SizedBox(height: 8),

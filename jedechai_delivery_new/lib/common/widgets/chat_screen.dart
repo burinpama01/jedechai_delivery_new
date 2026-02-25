@@ -248,6 +248,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildMessageBubble(ChatMessage message, bool isMe) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -305,7 +306,7 @@ class _ChatScreenState extends State<ChatScreen> {
               message.message,
               style: TextStyle(
                 fontSize: 15,
-                color: isMe ? Colors.white : Colors.black87,
+                color: isMe ? Colors.white : colorScheme.onSurface,
               ),
             ),
 
@@ -320,7 +321,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     fontSize: 11,
                     color: isMe
                         ? Colors.white.withValues(alpha: 0.7)
-                        : Colors.grey[500],
+                        : colorScheme.onSurfaceVariant,
                   ),
                 ),
                 if (isMe) ...[

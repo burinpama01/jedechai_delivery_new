@@ -265,10 +265,11 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final displayName = _userProfile?['full_name'] ?? 'Guest';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F2EE),
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
@@ -281,10 +282,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               const SizedBox(height: 22),
               Text(
                 'บริการยอดนิยม',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.textPrimary,
+                  color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 12),
@@ -411,10 +412,11 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   }
 
   Widget _buildActiveOrdersPanel() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
@@ -429,12 +431,12 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         children: [
           Row(
             children: [
-              const Text(
+              Text(
                 'ออเดอร์ที่ค้างอยู่',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.textPrimary,
+                  color: colorScheme.onSurface,
                 ),
               ),
               const Spacer(),
@@ -472,14 +474,14 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFF7F6F3),
+                color: colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: const Text(
+              child: Text(
                 'ตอนนี้ยังไม่มีงานค้างอยู่ เริ่มต้นบริการใหม่ได้เลย',
                 style: TextStyle(
                   fontSize: 13,
-                  color: Colors.black54,
+                  color: colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -547,15 +549,16 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   }
 
   Widget _buildQuickActionsStrip() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'ตัวช่วยด่วน',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
+            color: colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 12),
@@ -609,15 +612,20 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   }
 
   Widget _buildPromoBanner() {
+    final colorScheme = Theme.of(context).colorScheme;
     // Hide banner section entirely if no banners
     if (_banners.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'โปรโมชั่น',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: colorScheme.onSurface,
+          ),
         ),
         const SizedBox(height: 10),
         SizedBox(
@@ -770,6 +778,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     required VoidCallback onTap,
     bool isFullWidth = false,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -777,7 +786,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         height: isFullWidth ? 130 : 130,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -811,10 +820,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             Flexible(
               child: Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
+                  color: colorScheme.onSurface,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 1,
@@ -827,7 +836,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 subtitle,
                 style: TextStyle(
                   fontSize: 9,
-                  color: Colors.grey[600],
+                  color: colorScheme.onSurfaceVariant,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 1,
@@ -847,13 +856,14 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     required Color color,
     required VoidCallback onTap,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         height: 85,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
@@ -876,10 +886,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             Flexible(
               child: Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
+                  color: colorScheme.onSurface,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 1,
@@ -891,7 +901,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 subtitle,
                 style: TextStyle(
                   fontSize: 8,
-                  color: Colors.grey[600],
+                  color: colorScheme.onSurfaceVariant,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 1,
@@ -918,6 +928,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   }
 
   Widget _buildActiveOrderCard(Booking booking) {
+    final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: () {
         // Navigate to order detail screen for all active orders
@@ -930,7 +941,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -985,7 +996,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                           'ออเดอร์ ${OrderCodeFormatter.formatByServiceType(booking.id, serviceType: booking.serviceType)}',
                           style: TextStyle(
                             fontSize: 11,
-                            color: Colors.grey[600],
+                            color: colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -1055,17 +1066,17 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                               'จุดหมายปลายทาง',
                               style: TextStyle(
                                 fontSize: 11,
-                                color: Colors.grey[600],
+                                color: colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               _formatAddress(booking.destinationAddress),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.black87,
+                                color: colorScheme.onSurface,
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
@@ -1104,17 +1115,17 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                                 'จุดรับ',
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: Colors.grey[600],
+                                  color: colorScheme.onSurfaceVariant,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 _formatAddress(booking.pickupAddress),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
+                                  color: colorScheme.onSurface,
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
@@ -1131,7 +1142,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                   Divider(
                     height: 1,
                     thickness: 1,
-                    color: Colors.grey[200],
+                    color: colorScheme.outlineVariant,
                   ),
                   
                   const SizedBox(height: 12),
@@ -1146,14 +1157,14 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                             Icon(
                               Icons.straighten,
                               size: 16,
-                              color: Colors.grey[600],
+                              color: colorScheme.onSurfaceVariant,
                             ),
                             const SizedBox(width: 6),
                             Text(
                               '${booking.distanceKm.toStringAsFixed(1)} กม.',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: Colors.grey[700],
+                                color: colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -1192,14 +1203,14 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                       Icon(
                         Icons.access_time,
                         size: 14,
-                        color: Colors.grey[500],
+                        color: colorScheme.onSurfaceVariant,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         'สั่งเมื่อ: ${_formatDateTime(booking.createdAt)}',
                         style: TextStyle(
                           fontSize: 14,
-                          color: Colors.grey[600],
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],

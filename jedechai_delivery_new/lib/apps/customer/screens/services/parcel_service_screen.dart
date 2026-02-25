@@ -10,6 +10,7 @@ import '../../../../common/services/image_picker_service.dart';
 import '../../../../common/services/storage_service.dart';
 import '../../../../common/services/profile_service.dart';
 import '../../../../common/services/system_config_service.dart';
+import '../../../../common/widgets/app_network_image.dart';
 import '../../../../utils/debug_logger.dart';
 import 'waiting_for_driver_screen.dart';
 import 'saved_addresses_screen.dart';
@@ -537,6 +538,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
   }
 
   Widget _buildSenderSection() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -564,7 +566,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 filled: true,
-                fillColor: Colors.grey[50],
+                fillColor: colorScheme.surfaceContainerHighest,
               ),
               validator: (v) =>
                   v == null || v.isEmpty ? 'กรุณาระบุชื่อผู้ส่ง' : null,
@@ -579,7 +581,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 filled: true,
-                fillColor: Colors.grey[50],
+                fillColor: colorScheme.surfaceContainerHighest,
               ),
               validator: (v) =>
                   v == null || v.isEmpty ? 'กรุณาระบุเบอร์โทรผู้ส่ง' : null,
@@ -593,7 +595,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 filled: true,
-                fillColor: Colors.grey[50],
+                fillColor: colorScheme.surfaceContainerHighest,
               ),
               validator: (v) =>
                   v == null || v.isEmpty ? 'กรุณาระบุจุดรับพัสดุ' : null,
@@ -609,7 +611,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
                   'พิกัดจุดรับ: ${_pickupLat!.toStringAsFixed(5)}, ${_pickupLng!.toStringAsFixed(5)}',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                 ),
               ),
           ],
@@ -619,6 +621,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
   }
 
   Widget _buildRecipientSection() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -678,7 +681,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 filled: true,
-                fillColor: Colors.grey[50],
+                fillColor: colorScheme.surfaceContainerHighest,
               ),
               validator: (v) =>
                   v == null || v.isEmpty ? 'กรุณาระบุชื่อผู้รับ' : null,
@@ -693,7 +696,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 filled: true,
-                fillColor: Colors.grey[50],
+                fillColor: colorScheme.surfaceContainerHighest,
               ),
               validator: (v) =>
                   v == null || v.isEmpty ? 'กรุณาระบุเบอร์โทรผู้รับ' : null,
@@ -707,7 +710,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 filled: true,
-                fillColor: Colors.grey[50],
+                fillColor: colorScheme.surfaceContainerHighest,
                 suffixIcon: _isCalculatingDistance
                     ? const Padding(
                         padding: EdgeInsets.all(12),
@@ -731,7 +734,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   'ระยะทางโดยประมาณ: ${_estimatedDistance.toStringAsFixed(1)} กม.',
-                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
                 ),
               ),
             if (_dropoffLat != null && _dropoffLng != null)
@@ -739,7 +742,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
                   'พิกัดจุดส่ง: ${_dropoffLat!.toStringAsFixed(5)}, ${_dropoffLng!.toStringAsFixed(5)}',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                 ),
               ),
           ],
@@ -782,6 +785,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
   }
 
   Widget _buildDetailsSection() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -805,7 +809,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 filled: true,
-                fillColor: Colors.grey[50],
+                fillColor: colorScheme.surfaceContainerHighest,
               ),
               validator: (v) =>
                   v == null || v.isEmpty ? 'กรุณาอธิบายสิ่งของ' : null,
@@ -821,7 +825,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 filled: true,
-                fillColor: Colors.grey[50],
+                fillColor: colorScheme.surfaceContainerHighest,
               ),
             ),
           ],
@@ -831,6 +835,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
   }
 
   Widget _buildPhotoSection() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -843,7 +848,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             Text('ถ่ายรูปพัสดุเพื่อให้คนขับเห็นสิ่งของ (ไม่บังคับ)',
-                style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
             const SizedBox(height: 12),
             GestureDetector(
               onTap: _pickParcelPhoto,
@@ -851,10 +856,10 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 width: double.infinity,
                 height: 180,
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                      color: Colors.grey[300]!, style: BorderStyle.solid),
+                      color: colorScheme.outlineVariant, style: BorderStyle.solid),
                 ),
                 child: _parcelPhoto != null
                     ? ClipRRect(
@@ -862,7 +867,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
-                            Image.file(_parcelPhoto!, fit: BoxFit.cover),
+                            AppFileImage(file: _parcelPhoto!),
                             Positioned(
                               top: 8,
                               right: 8,
@@ -887,11 +892,11 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.add_a_photo,
-                              size: 48, color: Colors.grey[400]),
+                              size: 48, color: colorScheme.onSurfaceVariant),
                           const SizedBox(height: 8),
                           Text('แตะเพื่อถ่ายรูปหรือเลือกรูป',
                               style: TextStyle(
-                                  color: Colors.grey[500], fontSize: 14)),
+                                  color: colorScheme.onSurfaceVariant, fontSize: 14)),
                         ],
                       ),
               ),
@@ -903,6 +908,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
   }
 
   Widget _buildPriceCard() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -916,12 +922,12 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('ค่าบริการโดยประมาณ',
-                  style: TextStyle(fontSize: 14, color: Colors.grey)),
+              Text('ค่าบริการโดยประมาณ',
+                  style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
               const SizedBox(height: 2),
               Text(
                 'ระยะทาง ${_estimatedDistance.toStringAsFixed(1)} กม.',
-                style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
               ),
             ],
           ),

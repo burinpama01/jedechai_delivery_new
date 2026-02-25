@@ -413,6 +413,7 @@ class _MapScreenState extends State<MapScreen> {
 
   /// Build the floating service menu card
   Widget _buildServiceMenuCard() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
@@ -445,12 +446,12 @@ class _MapScreenState extends State<MapScreen> {
           const SizedBox(height: 16),
           
           // Service title
-          const Text(
+          Text(
             'เลือกบริการ',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary,
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 16),
@@ -510,7 +511,7 @@ class _MapScreenState extends State<MapScreen> {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppTheme.textPrimary,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ],

@@ -345,6 +345,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   }
 
   Widget _buildMenuItemCard(Map<String, dynamic> item) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -396,10 +397,10 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                       Expanded(
                         child: Text(
                           item['name'] ?? 'ไม่มีชื่อ',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            color: colorScheme.onSurface,
                           ),
                         ),
                       ),

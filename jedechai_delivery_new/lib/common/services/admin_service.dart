@@ -13,12 +13,22 @@ import 'auth_service.dart';
 class AdminService {
   final SupabaseClient _client = Supabase.instance.client;
 
+  /// Phase 3C: Verify caller is admin before executing any privileged method.
+  /// Throws if the current user is not an admin.
+  Future<void> _ensureAdmin() async {
+    final role = await AuthService.getUserRole();
+    if (role != 'admin') {
+      throw Exception('Forbidden: admin role required (current: $role)');
+    }
+  }
+
   // ========================================
   // Dashboard / Overview
   // ========================================
 
   /// ดึงข้อมูลภาพรวมระบบ
   Future<Map<String, dynamic>> getDashboardStats() async {
+    await _ensureAdmin();
     try {
       // จำนวนออเดอร์วันนี้
       final today = DateTime.now();
@@ -410,6 +420,40 @@ class AdminService {
       return true;
     } catch (e) {
       debugLog('❌ Error updating merchant shop hours: $e');
+      return false;
+    }
+  }
+
+  /// อัปเดตสถานะเปิด/ปิดร้าน (แยกจากการระงับบัญชี)
+  Future<bool> updateMerchantShopStatus({
+    required String merchantId,
+    required bool isOpen,
+    String? reason,
+  }) async {
+    try {
+      final adminId = AuthService.userId;
+      if (adminId == null) return false;
+
+      await _client.from('profiles').update({
+        'shop_status': isOpen,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', merchantId);
+
+      await _logAction(
+        actionType: isOpen ? 'open_merchant_shop' : 'close_merchant_shop',
+        targetUserId: merchantId,
+        details: {
+          'shop_status': isOpen,
+          if (reason != null && reason.trim().isNotEmpty)
+            'reason': reason.trim(),
+        },
+      );
+
+      debugLog(
+          '✅ Merchant shop status updated: $merchantId (${isOpen ? 'open' : 'closed'})');
+      return true;
+    } catch (e) {
+      debugLog('❌ Error updating merchant shop status: $e');
       return false;
     }
   }

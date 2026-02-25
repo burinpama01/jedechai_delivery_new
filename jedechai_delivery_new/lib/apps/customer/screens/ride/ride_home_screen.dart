@@ -552,6 +552,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
   Widget _buildPaymentOption(
       BuildContext ctx, String value, String label, IconData icon) {
     final isSelected = _paymentMethod == value;
+    final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: () {
         setState(() => _paymentMethod = value);
@@ -579,7 +580,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected ? AppTheme.primaryGreen : Colors.grey[700],
+                  color: isSelected ? AppTheme.primaryGreen : colorScheme.onSurface,
                 )),
             const Spacer(),
             if (isSelected)
@@ -826,6 +827,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       key: _scaffoldKey,
       body: Stack(
@@ -1140,7 +1142,8 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                               Text(
                                   '${_estimatedDistance.toStringAsFixed(1)} กม.',
                                   style: TextStyle(
-                                      fontSize: 14, color: Colors.grey[700])),
+                                      fontSize: 14,
+                                      color: colorScheme.onSurfaceVariant)),
                               const Spacer(),
                               Text('฿${_estimatedPrice.ceil()}',
                                   style: const TextStyle(
@@ -1176,7 +1179,8 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                               Text(
                                 _paymentMethod == 'cash' ? 'เงินสด' : 'โอนเงิน',
                                 style: TextStyle(
-                                    fontSize: 14, color: Colors.grey[700]),
+                                    fontSize: 14,
+                                    color: colorScheme.onSurfaceVariant),
                               ),
                               const Spacer(),
                               Icon(Icons.chevron_right,
@@ -1235,6 +1239,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
   }
 
   Widget _buildCircleButton(IconData icon, VoidCallback onTap) {
+    final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1250,7 +1255,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                 offset: const Offset(0, 2)),
           ],
         ),
-        child: Icon(icon, size: 22, color: Colors.grey[700]),
+        child: Icon(icon, size: 22, color: colorScheme.onSurface),
       ),
     );
   }

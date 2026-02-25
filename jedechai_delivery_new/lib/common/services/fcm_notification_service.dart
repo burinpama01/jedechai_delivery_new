@@ -89,6 +89,10 @@ AndroidNotificationDetails _buildAndroidNotificationDetails({
       playSound: true,
       sound: const RawResourceAndroidNotificationSound('alert_new_order'),
       category: AndroidNotificationCategory.alarm,
+      audioAttributesUsage: AudioAttributesUsage.alarm,
+      ongoing: true,
+      autoCancel: false,
+      fullScreenIntent: true,
       showWhen: false,
       additionalFlags: insistent
           ? Int32List.fromList(
@@ -184,7 +188,8 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     return;
   }
 
-  if (message.notification == null) {
+  final isMerchantNewOrder = message.data['type'] == 'merchant_new_order';
+  if (message.notification == null || isMerchantNewOrder) {
     try {
       await _showBackgroundLocalNotification(message);
       debugLog('✅ Background local notification displayed');

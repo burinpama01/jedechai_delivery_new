@@ -8,6 +8,7 @@ import '../services/fcm_notification_service.dart';
 import '../services/system_config_service.dart';
 import '../services/account_deletion_service.dart';
 import '../services/version_check_service.dart';
+import 'account_suspended_screen.dart';
 import 'pending_approval_screen.dart';
 import 'pending_deletion_screen.dart';
 import 'profile_completion_screen.dart';
@@ -107,10 +108,8 @@ class _AuthGateState extends State<AuthGate> {
       // Check deletion status for all roles
       await _checkDeletionStatus();
 
-      // For driver/merchant, check approval status
-      if (role == 'driver' || role == 'merchant') {
-        await _fetchApprovalStatus();
-      }
+      // Check approval/suspension status for all roles
+      await _fetchApprovalStatus();
       
       // Save FCM token when user is authenticated
       await FCMNotificationService().saveToken();
@@ -305,6 +304,14 @@ class _AuthGateState extends State<AuthGate> {
       return const LoginScreen();
     }
 
+    // Check suspended account for all roles
+    if (_approvalStatus == 'suspended') {
+      return AccountSuspendedScreen(
+        role: _userRole,
+        reason: _rejectionReason,
+      );
+    }
+
     // Check if account is pending deletion
     if (_deletionStatus == 'pending') {
       return const PendingDeletionScreen();
@@ -312,7 +319,7 @@ class _AuthGateState extends State<AuthGate> {
 
     // Check approval status for driver/merchant
     if ((_userRole == 'driver' || _userRole == 'merchant') &&
-        _approvalStatus != 'approved') {
+        (_approvalStatus == 'pending' || _approvalStatus == 'rejected')) {
       return PendingApprovalScreen(
         role: _userRole,
         approvalStatus: _approvalStatus,

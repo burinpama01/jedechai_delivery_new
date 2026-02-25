@@ -479,16 +479,17 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
     final notes = order['notes'] as String? ?? '';
     final paymentMethod = order['payment_method'] as String? ?? 'cash';
     final hasDriver = driverId != null && driverId.isNotEmpty;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: Text(
           'ออเดอร์ ${OrderCodeFormatter.formatByServiceType(order['id']?.toString(), serviceType: order['service_type']?.toString())}',
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
-        foregroundColor: Colors.black,
+        foregroundColor: colorScheme.onSurface,
       ),
       body: _isLoading
           ? const Center(
@@ -538,7 +539,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: colorScheme.surfaceContainer,
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
@@ -553,9 +554,14 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.receipt_long_outlined, color: Colors.grey[600], size: 20),
+                            Icon(Icons.receipt_long_outlined,
+                                color: colorScheme.onSurfaceVariant, size: 20),
                             const SizedBox(width: 8),
-                            Text('ข้อมูลออเดอร์', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey[800])),
+                            Text('ข้อมูลออเดอร์',
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: colorScheme.onSurface)),
                           ],
                         ),
                         const SizedBox(height: 16),
@@ -581,7 +587,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: colorScheme.surfaceContainer,
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
@@ -596,16 +602,24 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.monetization_on_outlined, color: Colors.grey[600], size: 20),
+                            Icon(Icons.monetization_on_outlined,
+                                color: colorScheme.onSurfaceVariant, size: 20),
                             const SizedBox(width: 8),
-                            Text('รายละเอียดราคา', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey[800])),
+                            Text('รายละเอียดราคา',
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: colorScheme.onSurface)),
                           ],
                         ),
                         const SizedBox(height: 16),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('ยอดขาย', style: TextStyle(fontSize: 14, color: Colors.grey[700])),
+                            Text('ยอดขาย',
+                                style: TextStyle(
+                                    fontSize: 14,
+                                    color: colorScheme.onSurfaceVariant)),
                             Text('฿${price.toStringAsFixed(0)}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                           ],
                         ),
@@ -642,7 +656,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: colorScheme.surfaceContainer,
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
@@ -657,9 +671,14 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.location_on_outlined, color: Colors.grey[600], size: 20),
+                            Icon(Icons.location_on_outlined,
+                                color: colorScheme.onSurfaceVariant, size: 20),
                             const SizedBox(width: 8),
-                            Text('ที่อยู่จัดส่ง', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey[800])),
+                            Text('ที่อยู่จัดส่ง',
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: colorScheme.onSurface)),
                           ],
                         ),
                         const SizedBox(height: 16),
@@ -667,12 +686,15 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.grey[50],
+                            color: colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             _formatAddress(order['destination_address']),
-                            style: const TextStyle(fontSize: 14, color: Colors.black87),
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: colorScheme.onSurface,
+                            ),
                           ),
                         ),
                         if (notes.isNotEmpty && !notes.startsWith('สั่งอาหารจาก')) ...[
@@ -714,7 +736,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: colorScheme.surfaceContainer,
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
@@ -731,7 +753,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                           children: [
                             Icon(
                               Icons.restaurant_menu_outlined,
-                              color: Colors.grey[600],
+                              color: colorScheme.onSurfaceVariant,
                               size: 20,
                             ),
                             const SizedBox(width: 8),
@@ -740,7 +762,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.grey[800],
+                                color: colorScheme.onSurface,
                               ),
                             ),
                           ],
@@ -772,14 +794,14 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Colors.grey[50],
+                              color: colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Text(
+                            child: Text(
                               'ไม่พบรายการอาหาร',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.grey,
+                                color: colorScheme.onSurfaceVariant,
                               ),
                             ),
                           )
@@ -813,10 +835,10 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                                     children: [
                                       Text(
                                         item['name'] ?? item['item_name'] ?? item['menu_item']?['name'] ?? 'ไม่ระบุชื่อ',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w600,
-                                          color: AppTheme.textPrimary,
+                                          color: colorScheme.onSurface,
                                         ),
                                       ),
                                       if (item['quantity'] != null && item['quantity'] != 1) ...[
@@ -825,7 +847,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                                           'จำนวน: ${item['quantity']}',
                                           style: TextStyle(
                                             fontSize: 12,
-                                            color: Colors.grey[600],
+                                            color: colorScheme.onSurfaceVariant,
                                           ),
                                         ),
                                       ],
@@ -876,7 +898,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                                                     ),
                                                   ),
                                                 );
-                                              }).toList(),
+                                              }),
                                             ],
                                           ),
                                         ),
@@ -886,15 +908,15 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                                 ),
                                 Text(
                                   '฿${(((item['price'] as num?)?.toDouble() ?? 0.0) * ((item['quantity'] as num?)?.toInt() ?? 1)).toStringAsFixed(0)}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
-                                    color: AppTheme.textPrimary,
+                                    color: colorScheme.onSurface,
                                   ),
                                 ),
                               ],
                             ),
-                          )).toList(),
+                          )),
                       ],
                     ),
                   ),
@@ -990,7 +1012,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.grey[700],
+                              color: colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -1021,7 +1043,13 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                                 children: [
                                   Text(_driverName ?? 'คนขับ', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                                   if (_driverPhone != null)
-                                    Text(_driverPhone!, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                                    Text(
+                                      _driverPhone!,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
                                 ],
                               ),
                             ),
@@ -1084,14 +1112,14 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.grey[100],
+                        color: colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
                         children: [
                           Icon(
                             Icons.info_outline,
-                            color: Colors.grey[600],
+                            color: colorScheme.onSurfaceVariant,
                             size: 24,
                           ),
                           const SizedBox(height: 8),
@@ -1099,7 +1127,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                             'สถานะ: ${_getStatusText(status)}',
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.grey[600],
+                              color: colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -1113,6 +1141,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
   }
 
   Widget _buildInfoRow(String label, String value) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -1124,7 +1153,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
               label,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[600],
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
           ),
@@ -1132,9 +1161,10 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
+                color: colorScheme.onSurface,
               ),
             ),
           ),
@@ -1230,6 +1260,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
         ? (order['price'] as int).toDouble()
         : (order['price'] as num?)?.toDouble() ?? 0.0;
     final bookingId = order['id'].toString();
+    final colorScheme = Theme.of(context).colorScheme;
     
     showDialog(
       context: context,
@@ -1269,11 +1300,11 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'คนขับได้รับอาหารและกำลังเดินทางไปส่งลูกค้า',
                 style: TextStyle(
                   fontSize: 16,
-                  color: Colors.black87,
+                  color: colorScheme.onSurface,
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,
@@ -1300,11 +1331,11 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'หมายเลขออเดอร์',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.black54,
+                              color: colorScheme.onSurfaceVariant,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -1348,11 +1379,11 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'ชื่อลูกค้า',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.black54,
+                              color: colorScheme.onSurfaceVariant,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -1393,11 +1424,11 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                             size: 24,
                           ),
                           const SizedBox(width: 12),
-                          const Text(
+                          Text(
                             'รายการอาหาร',
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.black54,
+                              color: colorScheme.onSurfaceVariant,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -1434,10 +1465,10 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                               Expanded(
                                 child: Text(
                                   itemName,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
+                                    color: colorScheme.onSurface,
                                   ),
                                 ),
                               ),
@@ -1452,7 +1483,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                             ],
                           ),
                         );
-                      }).toList(),
+                      }),
                     ],
                   ),
                 ),

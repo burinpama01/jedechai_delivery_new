@@ -17,6 +17,7 @@ class PendingApprovalScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final isSuspended = approvalStatus == 'suspended';
     final isRejected = approvalStatus == 'rejected';
     final hasReason = rejectionReason != null && rejectionReason!.isNotEmpty;
@@ -139,7 +140,7 @@ class PendingApprovalScreen extends StatelessWidget {
                           child: Text(
                             'แอดมินจะตรวจสอบข้อมูลของคุณ\nและอนุมัติโดยเร็วที่สุด',
                             style: TextStyle(
-                              color: Colors.grey[700],
+                              color: colorScheme.onSurfaceVariant,
                               fontSize: 14,
                               height: 1.4,
                             ),
@@ -163,7 +164,7 @@ class PendingApprovalScreen extends StatelessWidget {
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.grey[700],
+                      foregroundColor: colorScheme.onSurfaceVariant,
                       side: BorderSide(color: Colors.grey[300]!),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),

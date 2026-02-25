@@ -21,6 +21,7 @@ class DriverAssignedScreen extends StatefulWidget {
 class _DriverAssignedScreenState extends State<DriverAssignedScreen> {
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -66,12 +67,12 @@ class _DriverAssignedScreenState extends State<DriverAssignedScreen> {
               const SizedBox(height: 40),
               
               // Success message
-              const Text(
+              Text(
                 'คนขับรับงานแล้ว!',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: colorScheme.onSurface,
                 ),
                 textAlign: TextAlign.center,
               ),

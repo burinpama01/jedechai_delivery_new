@@ -900,8 +900,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: const Text('แดชบอร์ดคนขับ'),
         backgroundColor: const Color(0xFF1E3A8A), // Deep blue
@@ -992,12 +993,12 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                     // Job Feed Section
                     Row(
                       children: [
-                        const Text(
+                        Text(
                           'รายการงาน',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            color: colorScheme.onSurface,
                           ),
                         ),
                         const Spacer(),
@@ -1204,6 +1205,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   }
 
   Widget _buildJobFeed() {
+    final colorScheme = Theme.of(context).colorScheme;
     return StreamBuilder<List<Booking>>(
       stream: _jobsStream,
       builder: (context, snapshot) {
@@ -1253,7 +1255,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           return Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: colorScheme.surfaceContainer,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
@@ -1283,9 +1285,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                 const SizedBox(height: 10),
                 Text(
                   isOfflineEmpty ? 'คุณอยู่ในโหมดออฟไลน์' : 'ไม่มีงานใหม่',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
-                    color: Colors.black87,
+                    color: colorScheme.onSurface,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -1294,9 +1296,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                   isOfflineEmpty
                       ? 'เปิดสถานะออนไลน์เพื่อรับงานใหม่'
                       : 'งานใหม่จะปรากฏที่นี่ทันที',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey,
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -1337,6 +1339,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   }
 
   Widget _buildJobCard(Booking job) {
+    final colorScheme = Theme.of(context).colorScheme;
     // Calculate time elapsed
     final now = DateTime.now();
     final jobTime = job.createdAt;
@@ -1350,7 +1353,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -1399,10 +1402,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                       ),
                       Text(
                         _getServiceLabel(job.serviceType),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+                          color: colorScheme.onSurface,
                         ),
                       ),
                     ],
@@ -1412,9 +1415,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                 // Right: Time elapsed
                 Text(
                   timeAgo,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
-                    color: Colors.grey,
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -1441,10 +1444,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                         job.scheduledAt!.isAfter(DateTime.now())
                             ? 'งานนัดเวลา: รับได้ตั้งแต่ ${_formatScheduledDateTime(job.scheduledAt!)}'
                             : 'งานนัดเวลา: ${_formatScheduledDateTime(job.scheduledAt!)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+                          color: colorScheme.onSurface,
                         ),
                       ),
                     ),
@@ -1482,9 +1485,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                         children: [
                           Text(
                             job.serviceType == 'food' ? 'ร้านอาหาร' : 'จุดรับ',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
-                              color: Colors.grey,
+                              color: colorScheme.onSurfaceVariant,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -1492,10 +1495,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                             job.serviceType == 'food'
                                 ? (job.pickupAddress ?? 'ตำแหน่งร้านอาหาร')
                                 : (job.pickupAddress ?? 'ตำแหน่งปัจจุบัน'),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: Colors.black87,
+                              color: colorScheme.onSurface,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -1512,7 +1515,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                   child: Container(
                     width: 2,
                     height: 14,
-                    color: Colors.grey[300],
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.35),
                   ),
                 ),
 
@@ -1538,18 +1541,18 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                             job.serviceType == 'food'
                                 ? 'ตำแหน่งลูกค้า'
                                 : 'จุดหมาย',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
-                              color: Colors.grey,
+                              color: colorScheme.onSurfaceVariant,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                           Text(
                             job.destinationAddress ?? 'จุดหมายปลายทาง',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: Colors.black87,
+                              color: colorScheme.onSurface,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -1979,6 +1982,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
   /// สร้างส่วนแสดงรายละเอียดการเงินของงาน
   Widget _buildFinancialSummary(Booking job) {
+    final colorScheme = Theme.of(context).colorScheme;
     final couponDiscount = _couponDiscountByBookingId[job.id] ?? 0.0;
 
     if (job.serviceType == 'food') {
@@ -1992,9 +1996,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       return Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.green[50],
+          color: colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.green[200]!),
+          border: Border.all(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.65),
+          ),
         ),
         child: Column(
           children: [
@@ -2002,12 +2008,12 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'เก็บเงินลูกค้า',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                    color: colorScheme.onSurface,
                   ),
                 ),
                 Text(
@@ -2067,9 +2073,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       return Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.green[50],
+          color: colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.green[200]!),
+          border: Border.all(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.65),
+          ),
         ),
         child: Column(
           children: [
@@ -2080,12 +2088,12 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'เก็บเงินลูกค้า',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+                          color: colorScheme.onSurface,
                         ),
                       ),
                       Text(
@@ -2103,15 +2111,15 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
+                    color: colorScheme.surfaceContainer,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     '${job.distanceKm.toStringAsFixed(1)} กม.',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                 ),
@@ -2143,13 +2151,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
   /// Mini detail widget สำหรับแสดงรายละเอียดย่อย
   Widget _buildMiniDetail(String label, String value, Color color) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       children: [
         Text(
           label,
           style: TextStyle(
             fontSize: 11,
-            color: Colors.grey[600],
+            color: colorScheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 2),

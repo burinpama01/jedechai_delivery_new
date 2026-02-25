@@ -197,7 +197,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         merchantProfile = await SupabaseService.client
             .from('profiles')
             .select(
-              'gp_rate, custom_base_fare, custom_base_distance, custom_per_km, custom_delivery_fee',
+              'gp_rate, merchant_gp_system_rate, merchant_gp_driver_rate, custom_base_fare, custom_base_distance, custom_per_km, custom_delivery_fee',
             )
             .eq('id', merchantId)
             .maybeSingle();
@@ -364,10 +364,10 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           debugLog('⚠️ Location permission denied');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
+              SnackBar(
                 content: Text('กรุณาอนุญาตการเข้าถึงตำแหน่งเพื่อใช้งานฟีเจอร์นี้'),
-                backgroundColor: Colors.orange,
-                duration: Duration(seconds: 3),
+                backgroundColor: Theme.of(context).colorScheme.tertiary,
+                duration: const Duration(seconds: 3),
               ),
             );
           }
@@ -381,7 +381,11 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           showDialog(
             context: context,
             builder: (ctx) => AlertDialog(
-              icon: const Icon(Icons.location_off, color: Colors.red, size: 48),
+              icon: Icon(
+                Icons.location_off,
+                color: Theme.of(context).colorScheme.error,
+                size: 48,
+              ),
               title: const Text('ไม่สามารถเข้าถึงตำแหน่ง'),
               content: const Text('กรุณาเปิดการเข้าถึงตำแหน่งในการตั้งค่าของเครื่อง เพื่อใช้งานแอปได้ตามปกติ'),
               actions: [
@@ -656,12 +660,13 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) {
+        final colorScheme = Theme.of(context).colorScheme;
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
               title: Row(
                 children: [
-                  Icon(Icons.cancel_outlined, color: Colors.red[600], size: 24),
+                  Icon(Icons.cancel_outlined, color: colorScheme.error, size: 24),
                   const SizedBox(width: 8),
                   const Text('ยกเลิกงาน', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ],
@@ -670,32 +675,38 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('กรุณาเลือกเหตุผลในการยกเลิก:', style: TextStyle(fontSize: 14, color: Colors.grey[700])),
+                  Text(
+                    'กรุณาเลือกเหตุผลในการยกเลิก:',
+                    style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+                  ),
                   const SizedBox(height: 12),
                   ...reasons.map((reason) => RadioListTile<String>(
                     title: Text(reason, style: const TextStyle(fontSize: 13)),
                     value: reason,
                     groupValue: selectedReason,
                     dense: true,
-                    activeColor: Colors.red,
+                    activeColor: colorScheme.error,
                     onChanged: (val) => setDialogState(() => selectedReason = val),
                   )),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Colors.red[50],
+                      color: colorScheme.errorContainer.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.red[200]!),
+                      border: Border.all(color: colorScheme.error.withValues(alpha: 0.4)),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.warning_amber_rounded, size: 18, color: Colors.red[700]),
+                        Icon(Icons.warning_amber_rounded, size: 18, color: colorScheme.error),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'การยกเลิกงานบ่อยอาจส่งผลต่อคะแนนของคุณ',
-                            style: TextStyle(fontSize: 12, color: Colors.red[700]),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: colorScheme.onErrorContainer,
+                            ),
                           ),
                         ),
                       ],
@@ -713,8 +724,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                       ? null
                       : () => Navigator.of(ctx).pop(true),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
+                    backgroundColor: colorScheme.error,
+                    foregroundColor: colorScheme.onError,
                   ),
                   child: const Text('ยืนยันยกเลิก'),
                 ),
@@ -1620,23 +1631,24 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   // ignore: unused_element
   Color _getActionButtonColor() {
+    final colorScheme = Theme.of(context).colorScheme;
     switch (_booking?.status) {
       case 'accepted': // Ride - driver accepted, going to pickup
         return AppTheme.accentBlue;
       case 'driver_accepted': // Food - going to merchant
-        return Colors.orange;
+        return colorScheme.tertiary;
       case 'arrived_at_merchant': // Food - at merchant, waiting for food
-        return Colors.grey; // Disabled state
+        return colorScheme.outline; // Disabled state
       case 'arrived': // Ride - arrived at pickup
-        return Colors.orange;
+        return colorScheme.tertiary;
       case 'ready_for_pickup': // Ride - ready to pickup customer
-        return Colors.blue;
+        return colorScheme.primary;
       case 'picking_up_order': // Food - picked up order
-        return Colors.green;
+        return colorScheme.secondary;
       case 'in_transit':
-        return Colors.red;
+        return colorScheme.error;
       default:
-        return Colors.grey;
+        return colorScheme.outline;
     }
   }
 
@@ -1673,10 +1685,10 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           // Disabled: merchant must mark food ready first
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
+              SnackBar(
                 content: Text('กรุณารอร้านค้ากดอาหารพร้อมก่อน'),
-                backgroundColor: Colors.orange,
-                duration: Duration(seconds: 3),
+                backgroundColor: Theme.of(context).colorScheme.tertiary,
+                duration: const Duration(seconds: 3),
               ),
             );
           }
@@ -1810,7 +1822,11 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           showDialog(
             context: context,
             builder: (ctx) => AlertDialog(
-              icon: const Icon(Icons.location_searching, color: Colors.orange, size: 48),
+              icon: Icon(
+                Icons.location_searching,
+                color: Theme.of(context).colorScheme.tertiary,
+                size: 48,
+              ),
               title: const Text('อยู่ไกลเกินไป'),
               content: Text(
                 'กรุณาเข้าใกล้จุดหมายมากขึ้น\n\n'
@@ -1834,7 +1850,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('ไม่สามารถตรวจสอบตำแหน่ง: ${e.toString()}'),
-            backgroundColor: Colors.orange,
+            backgroundColor: Theme.of(context).colorScheme.tertiary,
             duration: const Duration(seconds: 3),
           ),
         );
@@ -1891,6 +1907,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           .eq('booking_id', _booking!.id);
 
       if (!mounted) return;
+      final colorScheme = Theme.of(context).colorScheme;
 
       final orderItems = List<Map<String, dynamic>>.from(items);
 
@@ -1900,7 +1917,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Row(
             children: [
-              Icon(Icons.restaurant_menu, color: Colors.orange[700], size: 28),
+              Icon(Icons.restaurant_menu, color: colorScheme.tertiary, size: 28),
               const SizedBox(width: 8),
               const Expanded(
                 child: Text('รายการอาหาร', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
@@ -1939,9 +1956,9 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                           margin: const EdgeInsets.only(bottom: 10),
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.grey[50],
+                            color: colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey[200]!),
+                            border: Border.all(color: colorScheme.outlineVariant),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1951,14 +1968,14 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: Colors.orange[100],
+                                      color: colorScheme.tertiaryContainer,
                                       borderRadius: BorderRadius.circular(8),
                                     ),
-                                    child: Text('x$qty', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange[800], fontSize: 15)),
+                                    child: Text('x$qty', style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.tertiary, fontSize: 15)),
                                   ),
                                   const SizedBox(width: 10),
                                   Expanded(child: Text(name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
-                                  Text('฿${(price * qty).toStringAsFixed(0)}', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange[700], fontSize: 16)),
+                                  Text('฿${(price * qty).toStringAsFixed(0)}', style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.tertiary, fontSize: 16)),
                                 ],
                               ),
                               if (parsedOptions.isNotEmpty) ...[
@@ -1967,13 +1984,13 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                   width: double.infinity,
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: Colors.orange[50],
+                                    color: colorScheme.tertiaryContainer.withValues(alpha: 0.45),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text('ตัวเลือก:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.orange[800])),
+                                      Text('ตัวเลือก:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colorScheme.tertiary)),
                                       const SizedBox(height: 4),
                                       ...parsedOptions.map((opt) {
                                         final optName = opt['name']?.toString() ?? '';
@@ -1982,10 +1999,10 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                           padding: const EdgeInsets.only(bottom: 2),
                                           child: Row(
                                             children: [
-                                              Text('  • ', style: TextStyle(color: Colors.orange[700], fontSize: 14)),
-                                              Expanded(child: Text(optName, style: TextStyle(fontSize: 14, color: Colors.grey[800]))),
+                                              Text('  • ', style: TextStyle(color: colorScheme.tertiary, fontSize: 14)),
+                                              Expanded(child: Text(optName, style: TextStyle(fontSize: 14, color: colorScheme.onSurface))),
                                               if (optPrice > 0)
-                                                Text('+฿${optPrice.toStringAsFixed(0)}', style: TextStyle(fontSize: 13, color: Colors.orange[700], fontWeight: FontWeight.w500)),
+                                                Text('+฿${optPrice.toStringAsFixed(0)}', style: TextStyle(fontSize: 13, color: colorScheme.tertiary, fontWeight: FontWeight.w500)),
                                             ],
                                           ),
                                         );
@@ -1999,9 +2016,9 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Icon(Icons.note_alt_outlined, size: 16, color: Colors.grey[500]),
+                                    Icon(Icons.note_alt_outlined, size: 16, color: colorScheme.onSurfaceVariant),
                                     const SizedBox(width: 4),
-                                    Expanded(child: Text(specialInstructions, style: TextStyle(fontSize: 13, color: Colors.grey[600], fontStyle: FontStyle.italic))),
+                                    Expanded(child: Text(specialInstructions, style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant, fontStyle: FontStyle.italic))),
                                   ],
                                 ),
                               ],
@@ -2018,8 +2035,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
               child: ElevatedButton(
                 onPressed: () => Navigator.of(ctx).pop(),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange[600],
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppTheme.accentBlue,
+                  foregroundColor: colorScheme.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
@@ -2112,21 +2129,22 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   /// สีของปุ่ม action หลัก
   Color _getMainActionColor() {
+    final colorScheme = Theme.of(context).colorScheme;
     final status = _booking?.status ?? 'unknown';
     switch (status) {
       case 'accepted':
       case 'driver_accepted':
-        return const Color(0xFF2196F3);
+        return AppTheme.accentBlue;
       case 'arrived_at_merchant':
-        return Colors.grey; // Food only: disabled waiting for merchant
+        return colorScheme.outline; // Food only: disabled waiting for merchant
       case 'arrived':
-        return const Color(0xFFFF9800); // Ride/parcel: start trip
+        return colorScheme.tertiary; // Ride/parcel: start trip
       case 'ready_for_pickup':
-        return const Color(0xFF4CAF50); // Food only: pick up order
+        return colorScheme.secondary; // Food only: pick up order
       case 'picking_up_order':
-        return const Color(0xFF4CAF50);
+        return colorScheme.secondary;
       case 'in_transit':
-        return const Color(0xFFF44336);
+        return colorScheme.error;
       default:
         return AppTheme.accentBlue;
     }
@@ -2198,7 +2216,10 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('ย้อนกลับ', style: TextStyle(color: Colors.red)),
+            child: Text(
+              'ย้อนกลับ',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
           ),
         ],
       ),
@@ -2208,12 +2229,13 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     if (_isLoading || _booking == null) {
       return Scaffold(
         appBar: AppBar(
           title: const Text('กำลังโหลด...'),
           backgroundColor: AppTheme.accentBlue,
-          foregroundColor: Colors.white,
+          foregroundColor: colorScheme.onPrimary,
         ),
         body: const Center(
           child: CircularProgressIndicator(
@@ -2236,9 +2258,13 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
+        final navigator = Navigator.of(context);
         final shouldPop = await _onBackPressed();
         if (shouldPop && mounted) {
-          Navigator.of(context).pop();
+          navigator.pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const DriverMainScreen()),
+            (route) => false,
+          );
         }
       },
       child: Scaffold(
@@ -2251,13 +2277,13 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           ],
         ),
         backgroundColor: AppTheme.accentBlue,
-        foregroundColor: Colors.white,
+        foregroundColor: colorScheme.onPrimary,
         actions: [
           // ปุ่มโทรหาลูกค้า
           Container(
             margin: const EdgeInsets.only(right: 12),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
+              color: colorScheme.onPrimary.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: IconButton(
@@ -2342,7 +2368,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                           _getServiceTypeIcon(),
                           'ประเภท',
                           _getServiceTypeName(),
-                          Colors.blue,
+                          AppTheme.accentBlue,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -2351,7 +2377,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                           Icons.route_rounded,
                           'ระยะทาง',
                           distanceText,
-                          Colors.orange,
+                          colorScheme.tertiary,
                         ),
                       ),
                     ],
@@ -2374,11 +2400,11 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
             child: Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: colorScheme.surfaceContainer,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.10),
+                  color: colorScheme.shadow.withValues(alpha: 0.12),
                   blurRadius: 16,
                   offset: const Offset(0, -4),
                 ),
@@ -2399,7 +2425,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                               width: 56,
                               height: 5,
                               decoration: BoxDecoration(
-                                color: Colors.grey[300],
+                                color: colorScheme.outlineVariant,
                                 borderRadius: BorderRadius.circular(99),
                               ),
                             ),
@@ -2418,7 +2444,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                 _isInfoPanelCollapsed
                                     ? Icons.keyboard_arrow_up_rounded
                                     : Icons.keyboard_arrow_down_rounded,
-                                color: Colors.grey[600],
+                                color: colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ),
@@ -2434,7 +2460,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                             decoration: BoxDecoration(
-                              color: Colors.grey[100],
+                              color: colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
@@ -2444,7 +2470,11 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                 Expanded(
                                   child: Text(
                                     _getStatusBarText(),
-                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87),
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: colorScheme.onSurface,
+                                    ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
@@ -2456,7 +2486,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                         // ปุ่มนำทาง Google Maps
                         _buildActionCircleButton(
                           Icons.navigation_rounded,
-                          const Color(0xFF4CAF50),
+                          colorScheme.secondary,
                           _launchGoogleMapsNavigation,
                           tooltip: 'นำทาง',
                         ),
@@ -2464,7 +2494,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                         // ปุ่มแชท
                         _buildActionCircleButton(
                           Icons.chat_rounded,
-                          const Color(0xFF9C27B0),
+                          colorScheme.tertiary,
                           _openChat,
                           tooltip: 'แชทกับลูกค้า',
                         ),
@@ -2472,7 +2502,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                         // ปุ่มโทร
                         _buildActionCircleButton(
                           Icons.phone_rounded,
-                          const Color(0xFF2196F3),
+                          AppTheme.accentBlue,
                           _callCustomer,
                           tooltip: 'โทรหาลูกค้า',
                         ),
@@ -2486,10 +2516,13 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                       child: ElevatedButton.icon(
                         onPressed: _isUpdatingStatus ? null : _handleActionPress,
                         icon: _isUpdatingStatus
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 20,
                                 height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: colorScheme.onPrimary,
+                                ),
                               )
                             : Icon(_getMainActionIcon(), size: 22),
                         label: Text(
@@ -2498,7 +2531,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _getMainActionColor(),
-                          foregroundColor: Colors.white,
+                          foregroundColor: colorScheme.onPrimary,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -2517,10 +2550,14 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                         height: 42,
                         child: OutlinedButton.icon(
                           onPressed: _showOrderItemsDialog,
-                          icon: Icon(Icons.receipt_long_rounded, size: 18, color: Colors.orange[700]),
-                          label: Text('ดูรายการอาหาร', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.orange[700])),
+                          icon: Icon(
+                            Icons.receipt_long_rounded,
+                            size: 18,
+                            color: colorScheme.tertiary,
+                          ),
+                          label: Text('ดูรายการอาหาร', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.tertiary)),
                           style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: Colors.orange[300]!),
+                            side: BorderSide(color: colorScheme.tertiary.withValues(alpha: 0.5)),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
                         ),
@@ -2533,16 +2570,18 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                        color: Colors.blue[50],
+                        color: colorScheme.primaryContainer,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.blue[100]!),
+                        border: Border.all(
+                          color: colorScheme.primary.withValues(alpha: 0.2),
+                        ),
                       ),
                       child: Row(
                         children: [
                           CircleAvatar(
                             radius: 16,
-                            backgroundColor: Colors.blue[200],
-                            child: const Icon(Icons.person, size: 18, color: Colors.white),
+                            backgroundColor: colorScheme.primary.withValues(alpha: 0.24),
+                            child: Icon(Icons.person, size: 18, color: colorScheme.onPrimary),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
@@ -2551,12 +2590,20 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                               children: [
                                 Text(
                                   _customerName,
-                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: colorScheme.onPrimaryContainer,
+                                  ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 Text(
                                   _customerPhone,
-                                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: colorScheme.onPrimaryContainer
+                                        .withValues(alpha: 0.8),
+                                  ),
                                 ),
                               ],
                             ),
@@ -2568,10 +2615,14 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                             child: Container(
                               padding: const EdgeInsets.all(6),
                               decoration: BoxDecoration(
-                                color: Colors.green[100],
+                                color: colorScheme.primaryContainer,
                                 shape: BoxShape.circle,
                               ),
-                              child: Icon(Icons.phone, size: 16, color: Colors.green[700]),
+                              child: Icon(
+                                Icons.phone,
+                                size: 16,
+                                color: colorScheme.primary,
+                              ),
                             ),
                           ),
                         ],
@@ -2585,16 +2636,23 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: Colors.orange[50],
+                          color: colorScheme.secondaryContainer,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.orange[100]!),
+                          border: Border.all(
+                            color: colorScheme.secondary.withValues(alpha: 0.22),
+                          ),
                         ),
                         child: Row(
                           children: [
                             CircleAvatar(
                               radius: 16,
-                              backgroundColor: Colors.orange[200],
-                              child: const Icon(Icons.store, size: 18, color: Colors.white),
+                              backgroundColor:
+                                  colorScheme.secondary.withValues(alpha: 0.24),
+                              child: Icon(
+                                Icons.store,
+                                size: 18,
+                                color: colorScheme.onSecondaryContainer,
+                              ),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
@@ -2603,13 +2661,21 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                 children: [
                                   Text(
                                     _merchantName,
-                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: colorScheme.onSecondaryContainer,
+                                    ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                   if (_merchantPhone.isNotEmpty)
                                     Text(
                                       _merchantPhone,
-                                      style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: colorScheme.onSecondaryContainer
+                                            .withValues(alpha: 0.8),
+                                      ),
                                     ),
                                 ],
                               ),
@@ -2621,10 +2687,14 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                 child: Container(
                                   padding: const EdgeInsets.all(6),
                                   decoration: BoxDecoration(
-                                    color: Colors.orange[100],
+                                    color: colorScheme.tertiaryContainer,
                                     shape: BoxShape.circle,
                                   ),
-                                  child: Icon(Icons.phone, size: 16, color: Colors.orange[700]),
+                                  child: Icon(
+                                    Icons.phone,
+                                    size: 16,
+                                    color: colorScheme.tertiary,
+                                  ),
                                 ),
                               ),
                           ],
@@ -2646,8 +2716,10 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                             icon: const Icon(Icons.support_agent, size: 18),
                             label: const Text('แจ้งปัญหา', style: TextStyle(fontSize: 13)),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.blue[700],
-                              side: BorderSide(color: Colors.blue[300]!),
+                              foregroundColor: colorScheme.primary,
+                              side: BorderSide(
+                                color: colorScheme.primary.withValues(alpha: 0.5),
+                              ),
                               padding: const EdgeInsets.symmetric(vertical: 10),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             ),
@@ -2660,8 +2732,10 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                             icon: const Icon(Icons.cancel_outlined, size: 18),
                             label: const Text('ยกเลิกงาน', style: TextStyle(fontSize: 13)),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.red[600],
-                              side: BorderSide(color: Colors.red[300]!),
+                              foregroundColor: colorScheme.error,
+                              side: BorderSide(
+                                color: colorScheme.error.withValues(alpha: 0.5),
+                              ),
                               padding: const EdgeInsets.symmetric(vertical: 10),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             ),
@@ -2684,16 +2758,17 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   /// ปุ่มกลมบนแผนที่ (my location, zoom, etc.)
   Widget _buildMapButton(IconData icon, VoidCallback onPressed) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Material(
       elevation: 2,
       shape: const CircleBorder(),
-      color: Colors.white,
+      color: colorScheme.surfaceContainerHighest,
       child: InkWell(
         onTap: onPressed,
         customBorder: const CircleBorder(),
         child: Padding(
           padding: const EdgeInsets.all(10),
-          child: Icon(icon, size: 20, color: Colors.grey[700]),
+          child: Icon(icon, size: 20, color: colorScheme.onSurface),
         ),
       ),
     );
@@ -2701,6 +2776,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   /// ปุ่มกลมสำหรับ action (นำทาง, โทร)
   Widget _buildActionCircleButton(IconData icon, Color color, VoidCallback onPressed, {String? tooltip}) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Material(
       elevation: 1,
       shape: const CircleBorder(),
@@ -2712,7 +2788,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           message: tooltip ?? '',
           child: Padding(
             padding: const EdgeInsets.all(10),
-            child: Icon(icon, size: 20, color: Colors.white),
+            child: Icon(icon, size: 20, color: colorScheme.onPrimary),
           ),
         ),
       ),
@@ -2725,15 +2801,16 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     String value,
     Color color,
   ) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.94),
+        color: colorScheme.surface.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white),
+        border: Border.all(color: colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: colorScheme.shadow.withValues(alpha: 0.12),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -2752,7 +2829,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                   label,
                   style: TextStyle(
                     fontSize: 10,
-                    color: Colors.grey[600],
+                    color: colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -2763,7 +2840,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    color: Colors.grey[800],
+                    color: colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -2775,11 +2852,12 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   }
 
   void _showSuccessSnackBar(String message) {
+    final colorScheme = Theme.of(context).colorScheme;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.check_circle, color: Colors.white, size: 20),
+            Icon(Icons.check_circle, color: colorScheme.onPrimary, size: 20),
             const SizedBox(width: 8),
             Expanded(child: Text(message)),
           ],
@@ -2801,7 +2879,11 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        icon: const Icon(Icons.cancel, color: Colors.red, size: 48),
+        icon: Icon(
+          Icons.cancel,
+          color: Theme.of(context).colorScheme.error,
+          size: 48,
+        ),
         title: const Text('งานถูกยกเลิก'),
         content: const Text('รายการนี้ถูกยกเลิกแล้ว ระบบจะพากลับหน้าหลักคนขับ'),
         actions: [
@@ -2817,7 +2899,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.accentBlue,
-                foregroundColor: Colors.white,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
               ),
               child: const Text('กลับหน้าหลัก'),
             ),
@@ -2888,16 +2970,17 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   }
 
   void _showErrorSnackBar(String message) {
+    final colorScheme = Theme.of(context).colorScheme;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.error, color: Colors.white, size: 20),
+            Icon(Icons.error, color: colorScheme.onError, size: 20),
             const SizedBox(width: 8),
             Expanded(child: Text(message)),
           ],
         ),
-        backgroundColor: Colors.red,
+        backgroundColor: colorScheme.error,
         duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -2909,6 +2992,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   void _showMerchantPaymentDialog() {
     if (_booking == null || !mounted) return;
+    final colorScheme = Theme.of(context).colorScheme;
     
     final foodPrice = _booking!.price;
     final merchantChargeRate =
@@ -2944,25 +3028,25 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               'รับอาหารจากร้านค้าเรียบร้อย\nกรุณาส่งอาหารให้ลูกค้าต่อ',
-              style: TextStyle(fontSize: 15, color: Colors.black87, height: 1.5),
+              style: TextStyle(fontSize: 15, color: colorScheme.onSurface, height: 1.5),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.green[50],
+                color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.green[200]!),
+                border: Border.all(color: colorScheme.secondary.withValues(alpha: 0.35)),
               ),
               child: Column(
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('ยอดขาย', style: TextStyle(fontSize: 14, color: Colors.grey[700])),
+                      Text('ยอดขาย', style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
                       Text('฿${foodPrice.toStringAsFixed(0)}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                     ],
                   ),
@@ -2972,17 +3056,17 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                     children: [
                       Text(
                         'หักร้าน (${(merchantChargeRate * 100).toStringAsFixed(0)}%)',
-                        style: TextStyle(fontSize: 13, color: Colors.red[400]),
+                        style: TextStyle(fontSize: 13, color: colorScheme.error),
                       ),
-                      Text('-฿${serviceFee.toStringAsFixed(0)}', style: TextStyle(fontSize: 13, color: Colors.red[400])),
+                      Text('-฿${serviceFee.toStringAsFixed(0)}', style: TextStyle(fontSize: 13, color: colorScheme.error)),
                     ],
                   ),
                   const Divider(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('จ่ายร้านค้า', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green[700])),
-                      Text('฿${merchantReceives.toStringAsFixed(0)}', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green[700])),
+                      Text('จ่ายร้านค้า', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colorScheme.secondary)),
+                      Text('฿${merchantReceives.toStringAsFixed(0)}', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: colorScheme.secondary)),
                     ],
                   ),
                 ],
@@ -3001,7 +3085,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
               label: const Text('ส่งอาหารให้ลูกค้า', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.accentBlue,
-                foregroundColor: Colors.white,
+                foregroundColor: colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -3025,6 +3109,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       context: context,
       barrierDismissible: false,
       builder: (context) {
+        final colorScheme = Theme.of(context).colorScheme;
         return AlertDialog(
           title: const Text('🎉 งานเสร็จสมบูรณ์!'),
           content: Column(
@@ -3041,23 +3126,23 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey[800],
+                  color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.grey[50],
+                  color: colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
                   children: [
-                    _buildSummaryRow('เก็บเงินลูกค้า', '฿${totalCollect.ceil()}', Colors.black87, isBold: true),
+                    _buildSummaryRow('เก็บเงินลูกค้า', '฿${totalCollect.ceil()}', colorScheme.onSurface, isBold: true),
                     if (isFood) ...[
                       const SizedBox(height: 4),
-                      _buildSummaryRow('  ค่าอาหาร', '฿${foodPrice.ceil()}', Colors.orange),
-                      _buildSummaryRow('  ค่าส่ง', '฿${deliveryFee.ceil()}', Colors.blue),
+                      _buildSummaryRow('  ค่าอาหาร', '฿${foodPrice.ceil()}', colorScheme.tertiary),
+                      _buildSummaryRow('  ค่าส่ง', '฿${deliveryFee.ceil()}', colorScheme.primary),
                     ],
                     if (_couponDiscount > 0) ...[
                       const SizedBox(height: 4),
@@ -3066,7 +3151,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                             ? '  ส่วนลดคูปอง ($_couponCode)'
                             : '  ส่วนลดคูปอง',
                         '-฿${_couponDiscount.ceil()}',
-                        Colors.green,
+                        colorScheme.secondary,
                       ),
                     ],
                     const Divider(height: 16),
@@ -3096,8 +3181,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                       );
                     },
                     style: TextButton.styleFrom(
-                      backgroundColor: Colors.grey[200],
-                      foregroundColor: Colors.grey[700],
+                      backgroundColor: colorScheme.surfaceContainerHigh,
+                      foregroundColor: colorScheme.onSurface,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     child: const Text('ดูรายละเอียด'),
@@ -3115,7 +3200,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                     },
                     style: TextButton.styleFrom(
                       backgroundColor: AppTheme.accentBlue,
-                      foregroundColor: Colors.white,
+                      foregroundColor: colorScheme.onPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     child: const Text('กลับหน้าหลัก'),
@@ -3130,6 +3215,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   }
 
   Widget _buildFinancialCard(Booking booking) {
+    final colorScheme = Theme.of(context).colorScheme;
     final isFood = booking.serviceType == 'food';
     final foodPrice = booking.price;
     final deliveryFee = booking.deliveryFee ?? 0;
@@ -3144,9 +3230,9 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.green[50],
+        color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.green[200]!),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Column(
         children: [
@@ -3156,14 +3242,14 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
             children: [
               Row(
                 children: [
-                  Icon(Icons.payments, color: Colors.green[700], size: 20),
+                  Icon(Icons.payments, color: colorScheme.secondary, size: 20),
                   const SizedBox(width: 6),
-                  const Text(
+                  Text(
                     'เก็บเงินลูกค้า',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                 ],
@@ -3173,7 +3259,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: Colors.green[700],
+                  color: colorScheme.secondary,
                 ),
               ),
             ],
@@ -3183,11 +3269,19 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
             Row(
               children: [
                 Expanded(
-                  child: _buildMiniInfo('ค่าอาหาร', '฿${foodPrice.toStringAsFixed(0)}', Colors.orange),
+                  child: _buildMiniInfo(
+                    'ค่าอาหาร',
+                    '฿${foodPrice.toStringAsFixed(0)}',
+                    colorScheme.tertiary,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: _buildMiniInfo('ค่าส่ง', '฿${deliveryFee.toStringAsFixed(0)}', Colors.blue),
+                  child: _buildMiniInfo(
+                    'ค่าส่ง',
+                    '฿${deliveryFee.toStringAsFixed(0)}',
+                    colorScheme.primary,
+                  ),
                 ),
               ],
             ),
@@ -3195,21 +3289,37 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.orange[50],
+                color: colorScheme.secondaryContainer.withValues(alpha: 0.55),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange[200]!),
+                border: Border.all(
+                  color: colorScheme.secondary.withValues(alpha: 0.35),
+                ),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.store, color: Colors.orange[700], size: 16),
+                      Icon(Icons.store, color: colorScheme.tertiary, size: 16),
                       const SizedBox(width: 4),
-                      Text('จ่ายร้านค้า', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.orange[800])),
+                      Text(
+                        'จ่ายร้านค้า',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.tertiary,
+                        ),
+                      ),
                     ],
                   ),
-                  Text('฿${payToMerchant.toStringAsFixed(0)}', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.orange[800])),
+                  Text(
+                    '฿${payToMerchant.toStringAsFixed(0)}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.tertiary,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -3221,6 +3331,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   /// Mini info widget
   Widget _buildMiniInfo(String label, String value, Color color) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
       decoration: BoxDecoration(
@@ -3232,7 +3343,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         children: [
           Text(
             label,
-            style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
           ),
           Text(
             value,

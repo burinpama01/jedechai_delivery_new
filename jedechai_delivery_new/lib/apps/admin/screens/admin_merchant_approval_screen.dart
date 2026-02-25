@@ -255,6 +255,7 @@ class _AdminMerchantApprovalScreenState
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            final colorScheme = Theme.of(context).colorScheme;
             Future<void> pickTime({required bool isOpen}) async {
               final picked = await PlatformAdaptive.pickTime(
                 context: context,
@@ -308,7 +309,7 @@ class _AdminMerchantApprovalScreenState
                         'วันที่เปิดร้าน',
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          color: Colors.grey[800],
+                          color: colorScheme.onSurface,
                         ),
                       ),
                     ),
@@ -327,7 +328,7 @@ class _AdminMerchantApprovalScreenState
                           labelStyle: TextStyle(
                             color: isSelected
                                 ? const Color(0xFF0D47A1)
-                                : Colors.black87,
+                                : colorScheme.onSurface,
                             fontWeight: FontWeight.w600,
                           ),
                           side: BorderSide(
@@ -431,15 +432,40 @@ class _AdminMerchantApprovalScreenState
   }
 
   Future<void> _suspendMerchant(String merchantId) async {
-    final reason = await _showReasonDialog('ระงับร้านค้า');
+    final reason = await _showReasonDialog('ระงับบัญชีร้านค้า');
     if (reason == null || reason.isEmpty) return;
 
     final success = await _adminService.suspendUser(merchantId, reason);
     if (success) {
-      _showSnackBar('ระงับร้านค้าสำเร็จ', Colors.orange);
+      _showSnackBar('ระงับบัญชีร้านค้าสำเร็จ', Colors.orange);
       _loadMerchants();
     } else {
       _showSnackBar('เกิดข้อผิดพลาด', Colors.red);
+    }
+  }
+
+  Future<void> _toggleMerchantShopStatus(
+    String merchantId, {
+    required bool currentlyOpen,
+  }) async {
+    final makeOpen = !currentlyOpen;
+    final confirmed = await _showConfirmDialog(
+      makeOpen ? 'เปิดร้าน' : 'ปิดร้าน',
+      makeOpen
+          ? 'ต้องการเปิดร้านนี้ให้ลูกค้าเห็นและสั่งซื้อได้หรือไม่?'
+          : 'ต้องการปิดร้านนี้ชั่วคราว (ระงับการเปิดร้าน) หรือไม่?',
+    );
+    if (confirmed != true) return;
+
+    final success = await _adminService.updateMerchantShopStatus(
+      merchantId: merchantId,
+      isOpen: makeOpen,
+    );
+    if (success) {
+      _showSnackBar(makeOpen ? 'เปิดร้านสำเร็จ' : 'ปิดร้านสำเร็จ', Colors.blue);
+      _loadMerchants();
+    } else {
+      _showSnackBar('อัปเดตสถานะร้านไม่สำเร็จ', Colors.red);
     }
   }
 
@@ -521,6 +547,7 @@ class _AdminMerchantApprovalScreenState
   }
 
   Widget _buildMerchantCard(Map<String, dynamic> merchant, bool isPending) {
+    final colorScheme = Theme.of(context).colorScheme;
     final name = merchant['full_name'] ?? 'ไม่ระบุชื่อ';
     final phone = merchant['phone_number'] ?? '-';
     final status = merchant['approval_status'] ?? 'pending';
@@ -530,6 +557,9 @@ class _AdminMerchantApprovalScreenState
     final shopOpenTime = (merchant['shop_open_time'] as String?) ?? '08:00';
     final shopCloseTime = (merchant['shop_close_time'] as String?) ?? '22:00';
     final shopOpenDays = _extractShopOpenDays(merchant['shop_open_days']);
+    final isShopOpen = merchant['shop_status'] == true ||
+        merchant['shop_status'] == 1 ||
+        merchant['shop_status'] == 'true';
     final merchantId = merchant['id'] as String;
 
     Color statusColor;
@@ -706,6 +736,23 @@ class _AdminMerchantApprovalScreenState
                     ),
                   ),
                 ),
+                const SizedBox(width: 6),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: (isShopOpen ? Colors.green : Colors.grey)
+                        .withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    isShopOpen ? 'ร้านเปิด' : 'ร้านปิด',
+                    style: TextStyle(
+                        color: isShopOpen ? Colors.green : colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 10),
@@ -758,19 +805,47 @@ class _AdminMerchantApprovalScreenState
               ),
             ] else if (status == 'approved') ...[
               const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () => _suspendMerchant(merchantId),
-                  icon: const Icon(Icons.block, size: 18),
-                  label: const Text('ระงับ'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.orange,
-                    side: const BorderSide(color: Colors.orange),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _toggleMerchantShopStatus(
+                        merchantId,
+                        currentlyOpen: isShopOpen,
+                      ),
+                      icon: Icon(
+                        isShopOpen ? Icons.storefront_outlined : Icons.store,
+                        size: 18,
+                      ),
+                      label: Text(isShopOpen ? 'ระงับ(ปิดร้าน)' : 'เปิดร้าน'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor:
+                            isShopOpen ? const Color(0xFF6D4C41) : Colors.blue,
+                        side: BorderSide(
+                          color: isShopOpen
+                              ? const Color(0xFF6D4C41)
+                              : Colors.blue,
+                        ),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _suspendMerchant(merchantId),
+                      icon: const Icon(Icons.block, size: 18),
+                      label: const Text('ระงับบัญชี'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.orange,
+                        side: const BorderSide(color: Colors.orange),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ],

@@ -262,6 +262,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
   void _handleBookingUpdate(Map<String, dynamic> bookingData) {
     final status = bookingData['status'] as String?;
     final driverId = bookingData['driver_id'] as String?;
+    final colorScheme = Theme.of(context).colorScheme;
 
     debugLog('🔄 Booking status changed to: $status');
     debugLog('👤 Driver ID: $driverId');
@@ -388,9 +389,9 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
               ),
             ],
           ),
-          content: const Text(
+          content: Text(
             'ขออภัย ร้านค้าไม่สามารถรับออเดอร์ของคุณได้ในขณะนี้\n\nกรุณาลองสั่งใหม่อีกครั้ง หรือเลือกร้านอื่น',
-            style: TextStyle(fontSize: 15, color: Colors.black87, height: 1.5),
+            style: TextStyle(fontSize: 15, color: colorScheme.onSurface, height: 1.5),
             textAlign: TextAlign.center,
           ),
           actions: [
@@ -628,6 +629,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
   }
 
   Widget _buildDriverInfoSection() {
+    final colorScheme = Theme.of(context).colorScheme;
     // For food service, show restaurant info instead of driver info
     if (_isFoodService && _isRestaurantConfirmed) {
       return Container(
@@ -666,12 +668,12 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'ร้านค้ากำลังเตรียมอาหาร',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: colorScheme.onSurface,
                         ),
                       ),
                       Text(
@@ -767,7 +769,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
                 _driverPhone,
                 style: TextStyle(
                   fontSize: 16,
-                  color: Colors.grey[700],
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
             ],

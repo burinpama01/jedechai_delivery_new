@@ -205,7 +205,9 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                                     style: TextStyle(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 14,
-                                      color: pickedLat != null ? AppTheme.primaryGreen : Colors.grey[700],
+                                      color: pickedLat != null
+                                          ? AppTheme.primaryGreen
+                                          : Theme.of(context).colorScheme.onSurfaceVariant,
                                     ),
                                   ),
                                   if (pickedLat != null)
@@ -311,7 +313,9 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
       selected: isSelected,
       selectedColor: _colorForLabel(value),
       labelStyle: TextStyle(
-        color: isSelected ? Colors.white : Colors.black87,
+        color: isSelected
+            ? Colors.white
+            : Theme.of(context).colorScheme.onSurface,
         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
       ),
       onSelected: (_) => onSelected(value),

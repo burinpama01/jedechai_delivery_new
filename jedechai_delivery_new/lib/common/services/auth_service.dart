@@ -197,6 +197,22 @@ class AuthService {
     }
 
     try {
+      // Phase 3: Clear role cache
+      clearRoleCache();
+
+      // Phase 5: Clear FCM token before sign-out to prevent ghost notifications
+      try {
+        final uid = currentUser?.id;
+        if (uid != null) {
+          await Supabase.instance.client
+              .from('profiles')
+              .update({'fcm_token': null})
+              .eq('id', uid);
+        }
+      } catch (_) {
+        // Best-effort — don't block sign-out
+      }
+
       final client = Supabase.instance.client;
       await client.auth.signOut();
     } on AuthException {
@@ -254,22 +270,34 @@ class AuthService {
     return currentUser?.email;
   }
 
+  // Phase 3: Role cache to avoid repeated DB lookups
+  static String? _cachedRole;
+
+  /// Clear cached role (call on sign-out)
+  static void clearRoleCache() {
+    _cachedRole = null;
+  }
+
   /// Get Current User Role
   ///
-  /// Fetches the user's role from the profiles table
-  /// Returns 'customer' as default if role is not found
+  /// Fetches the user's role from the profiles table.
+  /// Phase 3 fix: throws on error instead of defaulting to 'customer',
+  /// so AuthGate can show an error/retry screen.
+  /// Also prevents role injection from userMetadata.
   static Future<String> getUserRole() async {
     if (MockAuthService.useMockMode) {
-      // In mock mode, return a default role or check mock data
-      return 'customer'; // Default for mock mode
+      return 'customer';
+    }
+
+    // Return cached role if available
+    if (_cachedRole != null) return _cachedRole!;
+
+    final userId = currentUser?.id;
+    if (userId == null) {
+      throw Exception('ไม่พบผู้ใช้ที่เข้าสู่ระบบ กรุณาเข้าสู่ระบบใหม่');
     }
 
     try {
-      final userId = currentUser?.id;
-      if (userId == null) {
-        return 'customer'; // Default if no user
-      }
-
       debugLog('🔍 Fetching role for user: $userId');
 
       final response = await Supabase.instance.client
@@ -277,64 +305,65 @@ class AuthService {
           .select('role')
           .eq('id', userId)
           .maybeSingle()
-          .timeout(const Duration(seconds: 10)); // Add timeout
+          .timeout(const Duration(seconds: 10));
 
       if (response == null) {
         debugLog('❌ No profile found for user: $userId');
 
-        // Try to create profile with user metadata (happens when profile
-        // creation failed during signup, e.g. due to RLS/no-session)
+        // Phase 3B: Auto-create profile but NEVER trust role from metadata.
+        // Always default new profiles to 'customer'. Admin/driver/merchant
+        // roles must be assigned by an admin.
         try {
           final user = currentUser;
           if (user != null && user.userMetadata != null) {
             final metadata = user.userMetadata!;
-            final role = metadata['role'] as String? ?? 'customer';
-            debugLog('📝 Creating profile from metadata: $metadata');
+            // SECURITY: Ignore metadata['role'] — always use 'customer'
+            const safeRole = 'customer';
+            debugLog('📝 Creating profile with safe role: $safeRole');
 
             final profileService = ProfileService();
             await profileService.upsertProfileDirect(
               userId: userId,
               email: user.email ?? '',
-              role: role,
+              role: safeRole,
               fullName: metadata['full_name'] as String? ?? 'Unknown User',
               phone: metadata['phone_number'] as String? ?? '',
-              vehicleType: metadata['vehicle_type'] as String? ?? '',
-              licensePlate: metadata['license_plate'] as String? ?? '',
-              shopName: metadata['shop_name'] as String? ?? '',
-              shopAddress: metadata['shop_address'] as String? ?? '',
-              shopPhone: metadata['shop_phone'] as String? ?? '',
+              vehicleType: '',
+              licensePlate: '',
+              shopName: '',
+              shopAddress: '',
+              shopPhone: '',
             );
 
-            debugLog('✅ Profile created successfully from metadata');
-            return role;
+            debugLog('✅ Profile created with safe role: $safeRole');
+            _cachedRole = safeRole;
+            return safeRole;
           }
         } catch (createError) {
           debugLog('❌ Failed to create profile: $createError');
         }
 
-        return 'customer'; // Default if no profile and creation failed
+        throw Exception('ไม่พบโปรไฟล์ผู้ใช้ กรุณาติดต่อแอดมิน');
       }
 
       final role = response['role'] as String? ?? 'customer';
       debugLog('✅ User role fetched: $role');
+      _cachedRole = role;
       return role;
     } catch (e) {
       debugLog('Error fetching user role: $e');
-      if (e.toString().contains('TimeoutException') ||
-          e.toString().contains('timeout')) {
-        debugLog('⏰ Network timeout - using default role');
-      }
-      return 'customer'; // Default on error
+      // Phase 3 fix: rethrow instead of defaulting to 'customer'
+      // This lets AuthGate show an error screen instead of wrong routing
+      rethrow;
     }
   }
 
   /// Get Current User Role (Synchronous)
   ///
-  /// Returns cached role or fetches it if not available
-  /// Note: This is a simplified version - in production, you might want to cache this
-  static String get currentUserRole {
-    // For now, return default - this should be improved with proper caching
-    return 'customer';
+  /// Returns cached role or null if not yet fetched.
+  /// Phase 3 fix: returns cached value instead of hardcoded 'customer'.
+  static String? get currentUserRole {
+    return _cachedRole;
   }
 
   /// Refresh Session

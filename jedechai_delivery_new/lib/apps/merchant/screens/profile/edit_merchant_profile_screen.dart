@@ -102,15 +102,18 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
     required TimeOfDay value,
     required VoidCallback onTap,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade300),
+          border: Border.all(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.8),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,7 +122,7 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
               label,
               style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey[600],
+                  color: colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 6),
@@ -293,8 +296,9 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: const Text('แก้ไขข้อมูลร้าน'),
         backgroundColor: AppTheme.accentOrange,
@@ -323,9 +327,8 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
                       Positioned.fill(
                         child: ClipOval(
                           child: _shopPhoto != null
-                              ? Image.file(
-                                  _shopPhoto!,
-                                  fit: BoxFit.cover,
+                              ? AppFileImage(
+                                  file: _shopPhoto!,
                                 )
                               : (_shopPhotoUrl != null &&
                                       _shopPhotoUrl!.isNotEmpty)
@@ -360,7 +363,10 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
             const SizedBox(height: 8),
             Center(
               child: Text('แตะเพื่อเปลี่ยนรูปร้าน',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: colorScheme.onSurfaceVariant,
+                  )),
             ),
             const SizedBox(height: 24),
 
@@ -419,9 +425,11 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: colorScheme.surfaceContainer,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[300]!),
+                  border: Border.all(
+                    color: colorScheme.outlineVariant.withValues(alpha: 0.8),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -441,24 +449,29 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
                                 ? 'Lat: ${_shopLat!.toStringAsFixed(5)}, Lng: ${_shopLng!.toStringAsFixed(5)}'
                                 : 'ยังไม่ได้เลือกตำแหน่งบนแผนที่',
                             style: TextStyle(
-                                fontSize: 12, color: Colors.grey[600]),
+                              fontSize: 12,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    const Icon(Icons.chevron_right, color: Colors.grey),
+                    Icon(
+                      Icons.chevron_right,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 32),
 
-            const Text(
+            Text(
               'วันที่เปิดร้าน',
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87),
+                  color: colorScheme.onSurface),
             ),
             const SizedBox(height: 10),
             Wrap(
@@ -472,13 +485,15 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
                   selectedColor: AppTheme.accentOrange.withValues(alpha: 0.18),
                   checkmarkColor: AppTheme.accentOrange,
                   labelStyle: TextStyle(
-                    color: isSelected ? AppTheme.accentOrange : Colors.black87,
+                    color: isSelected
+                        ? AppTheme.accentOrange
+                        : colorScheme.onSurface,
                     fontWeight: FontWeight.w600,
                   ),
                   side: BorderSide(
                     color: isSelected
                         ? AppTheme.accentOrange
-                        : Colors.grey.shade300,
+                        : colorScheme.outlineVariant.withValues(alpha: 0.8),
                   ),
                   onSelected: (selected) {
                     setState(() {
@@ -593,6 +608,7 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
     int maxLines = 1,
     bool enabled = true,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return TextFormField(
       controller: controller,
       validator: validator,
@@ -603,14 +619,20 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
         labelText: label,
         prefixIcon: Icon(icon, color: AppTheme.accentOrange),
         filled: true,
-        fillColor: enabled ? Colors.white : Colors.grey[100],
+        fillColor: enabled
+            ? colorScheme.surfaceContainer
+            : colorScheme.surfaceContainerHighest,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.8),
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.8),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -626,7 +648,9 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
         ),
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.8),
+          ),
         ),
       ),
     );

@@ -441,7 +441,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        Image.file(_menuItemPhoto!, fit: BoxFit.cover),
+                        AppFileImage(file: _menuItemPhoto!),
                         Positioned(
                           top: 8,
                           right: 8,

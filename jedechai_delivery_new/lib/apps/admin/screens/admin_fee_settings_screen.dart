@@ -323,6 +323,7 @@ class _AdminFeeSettingsScreenState extends State<AdminFeeSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       backgroundColor: const Color(0xFFF1F5F9),
       body: _isLoading
@@ -393,7 +394,7 @@ class _AdminFeeSettingsScreenState extends State<AdminFeeSettingsScreen> {
                       const SizedBox(height: 8),
                       Text(
                         'หมายเหตุ: Merchant GP รวม ต้องเท่ากับ เข้าระบบ + ให้คนขับ เช่น 20% = ระบบ 10% + คนขับ 10%',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                        style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                       ),
                       const SizedBox(height: 24),
 
@@ -451,7 +452,7 @@ class _AdminFeeSettingsScreenState extends State<AdminFeeSettingsScreen> {
                       const SizedBox(height: 8),
                       Text(
                         'หมายเหตุ: การตั้งค่ารายร้านใช้ค่าจากโปรไฟล์ร้าน custom_base_distance และ custom_per_km (แอดมินปรับรายร้านได้)',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                        style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                       ),
                       const SizedBox(height: 24),
 
@@ -585,14 +586,15 @@ class _AdminFeeSettingsScreenState extends State<AdminFeeSettingsScreen> {
   }
 
   Widget _buildSectionHeader(String title) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.bold,
-          color: AppTheme.textPrimary,
+          color: colorScheme.onSurface,
         ),
       ),
     );
@@ -607,6 +609,7 @@ class _AdminFeeSettingsScreenState extends State<AdminFeeSettingsScreen> {
     required String suffix,
     TextInputType? keyboardType,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -641,10 +644,10 @@ class _AdminFeeSettingsScreenState extends State<AdminFeeSettingsScreen> {
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.textPrimary,
+                          color: colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 2),

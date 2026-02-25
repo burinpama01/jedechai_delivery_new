@@ -55,6 +55,7 @@ class _MerchantMainScreenState extends State<MerchantMainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) => _onPopInvoked(didPop),
@@ -77,9 +78,9 @@ class _MerchantMainScreenState extends State<MerchantMainScreen> {
           currentIndex: _currentIndex,
           onTap: (index) => setState(() => _currentIndex = index),
           type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
+          backgroundColor: colorScheme.surface,
           selectedItemColor: AppTheme.accentOrange,
-          unselectedItemColor: Colors.grey,
+          unselectedItemColor: colorScheme.onSurfaceVariant,
           selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
           unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w400, fontSize: 13),
           items: const [

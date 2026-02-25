@@ -337,6 +337,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
   }
 
   void _showAlarmDialog() {
+    final colorScheme = Theme.of(context).colorScheme;
     showDialog(
       context: context,
       barrierDismissible: false, // Cannot dismiss by tapping outside
@@ -347,30 +348,30 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
             children: [
               Icon(
                 Icons.notifications_active,
-                color: Colors.red,
+                color: colorScheme.error,
                 size: 32,
               ),
               const SizedBox(width: 12),
-              const Text(
+              Text(
                 '🚨 ออเดอร์ใหม่!',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.red,
+                  color: colorScheme.error,
                 ),
               ),
             ],
           ),
-          content: const Column(
+          content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 Icons.delivery_dining,
                 size: 64,
-                color: Colors.red,
+                color: colorScheme.error,
               ),
-              SizedBox(height: 16),
-              Text(
+              const SizedBox(height: 16),
+              const Text(
                 'คุณมีออเดอร์ใหม่รอการยืนยัน!',
                 style: TextStyle(
                   fontSize: 18,
@@ -378,12 +379,12 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 ),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text(
                 'เสียงจะแจ้งเตือนซ้ำต่อเนื่องจนกว่าคุณกดหยุด',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey,
+                  color: colorScheme.onSurfaceVariant,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -398,8 +399,8 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                   _stopAlarm(); // Stop alarm
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
+                  backgroundColor: colorScheme.error,
+                  foregroundColor: colorScheme.onError,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -808,10 +809,12 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
       }
 
       if (mounted) {
+        final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(value ? 'เปิดร้านแล้ว' : 'ปิดร้านแล้ว'),
-            backgroundColor: value ? AppTheme.accentOrange : Colors.grey,
+            backgroundColor:
+                value ? AppTheme.accentOrange : colorScheme.outline,
             duration: const Duration(seconds: 2),
           ),
         );
@@ -829,7 +832,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('ไม่สามารถเปลี่ยนสถานะร้าน: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
             duration: const Duration(seconds: 3),
           ),
         );
@@ -934,7 +937,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('ออเดอร์ได้รับการยืนยันแล้ว!'),
-              backgroundColor: const Color(0xFF10B981), // Green
+              backgroundColor: Theme.of(context).colorScheme.secondary,
               duration: const Duration(seconds: 2),
             ),
           );
@@ -1003,10 +1006,11 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
 
   void _showSuccessSnackBar(String message) {
     if (mounted) {
+      final colorScheme = Theme.of(context).colorScheme;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: Colors.green,
+          backgroundColor: colorScheme.secondary,
           duration: const Duration(seconds: 2),
         ),
       );
@@ -1015,10 +1019,11 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
 
   void _showErrorSnackBar(String message) {
     if (mounted) {
+      final colorScheme = Theme.of(context).colorScheme;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: Colors.red,
+          backgroundColor: colorScheme.error,
           duration: const Duration(seconds: 3),
         ),
       );
@@ -1075,13 +1080,14 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: Text(_showHistory ? 'ประวัติออเดอร์' : 'ออเดอร์'),
-        backgroundColor: Colors.white,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
-        foregroundColor: Colors.black,
+        foregroundColor: colorScheme.onSurface,
         actions: [
           // Toggle between active and history
           IconButton(
@@ -1112,6 +1118,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
   }
 
   Widget _buildBody() {
+    final colorScheme = Theme.of(context).colorScheme;
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(
@@ -1128,7 +1135,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
             Icon(
               Icons.error_outline,
               size: 64,
-              color: Colors.red[400],
+              color: colorScheme.error,
             ),
             const SizedBox(height: 16),
             Text(
@@ -1136,7 +1143,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.red[400],
+                color: colorScheme.error,
               ),
             ),
             const SizedBox(height: 8),
@@ -1145,7 +1152,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[600],
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 24),
@@ -1153,7 +1160,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               onPressed: _fetchShopStatus,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.accentOrange,
-                foregroundColor: Colors.white,
+                foregroundColor: colorScheme.onPrimary,
               ),
               child: const Text('ลองใหม่'),
             ),
@@ -1179,6 +1186,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
   }
 
   Widget _buildOrdersList() {
+    final colorScheme = Theme.of(context).colorScheme;
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(
@@ -1194,7 +1202,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           children: [
             Text(
               _error!,
-              style: const TextStyle(color: Colors.red),
+              style: TextStyle(color: colorScheme.error),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
@@ -1219,11 +1227,11 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
       return Container(
         padding: const EdgeInsets.all(32),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withValues(alpha: 0.1),
+              color: colorScheme.shadow.withValues(alpha: 0.12),
               blurRadius: 4,
               spreadRadius: 1,
             ),
@@ -1244,11 +1252,11 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'ไม่มีออเดอร์ใหม่',
               style: TextStyle(
                 fontSize: 20,
-                color: Colors.black87,
+                color: colorScheme.onSurface,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -1257,9 +1265,9 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               _isShopOpen
                   ? 'ออเดอร์ใหม่จะปรากฏที่นี่ทันที'
                   : 'เปิดร้านเพื่อรับออเดอร์',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey,
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -1275,6 +1283,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
   }
 
   Widget _buildShopStatusCard() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -1288,14 +1297,14 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                   AppTheme.accentOrange.withValues(alpha: 0.8),
                 ]
               : [
-                  Colors.grey,
-                  Colors.grey.withValues(alpha: 0.8),
+                  colorScheme.outline,
+                  colorScheme.outline.withValues(alpha: 0.8),
                 ],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: (_isShopOpen ? AppTheme.accentOrange : Colors.grey)
+            color: (_isShopOpen ? AppTheme.accentOrange : colorScheme.outline)
                 .withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
@@ -1309,15 +1318,15 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
             children: [
               Icon(
                 _isShopOpen ? Icons.store : Icons.store_mall_directory,
-                color: Colors.white,
+                color: colorScheme.onPrimary,
                 size: 28,
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   'สถานะร้าน',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: colorScheme.onPrimary,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -1326,18 +1335,18 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               Switch(
                 value: _isShopOpen,
                 onChanged: _toggleShopStatus,
-                activeThumbColor: Colors.white,
-                inactiveThumbColor: Colors.grey[300],
-                activeTrackColor: Colors.white.withValues(alpha: 0.5),
-                inactiveTrackColor: Colors.white.withValues(alpha: 0.3),
+                activeThumbColor: colorScheme.onPrimary,
+                inactiveThumbColor: colorScheme.surfaceContainerHighest,
+                activeTrackColor: colorScheme.onPrimary.withValues(alpha: 0.5),
+                inactiveTrackColor: colorScheme.onPrimary.withValues(alpha: 0.3),
               ),
             ],
           ),
           const SizedBox(height: 12),
           Text(
             _isShopOpen ? 'ร้านเปิด' : 'ร้านปิด',
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: colorScheme.onPrimary,
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
@@ -1348,7 +1357,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 ? 'ลูกค้าสามารถสั่งอาหารได้'
                 : 'ร้านปิดให้บริการชั่วคราว',
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.9),
+              color: colorScheme.onPrimary.withValues(alpha: 0.9),
               fontSize: 14,
             ),
           ),
@@ -1359,7 +1368,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 _orderAcceptMode == _acceptModeAuto
                     ? Icons.auto_mode_outlined
                     : Icons.pan_tool_alt_outlined,
-                color: Colors.white.withValues(alpha: 0.9),
+                color: colorScheme.onPrimary.withValues(alpha: 0.9),
                 size: 16,
               ),
               const SizedBox(width: 6),
@@ -1368,7 +1377,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                     ? 'รับออเดอร์อัตโนมัติ'
                     : 'รับออเดอร์ด้วยตนเอง',
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.95),
+                  color: colorScheme.onPrimary.withValues(alpha: 0.95),
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
@@ -1382,7 +1391,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 _shopAutoScheduleEnabled
                     ? Icons.av_timer
                     : Icons.av_timer_outlined,
-                color: Colors.white.withValues(alpha: 0.9),
+                color: colorScheme.onPrimary.withValues(alpha: 0.9),
                 size: 16,
               ),
               const SizedBox(width: 6),
@@ -1391,7 +1400,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                     ? 'เปิด-ปิดร้านอัตโนมัติ: เปิดใช้งาน'
                     : 'เปิด-ปิดร้านอัตโนมัติ: ปิดใช้งาน',
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.95),
+                  color: colorScheme.onPrimary.withValues(alpha: 0.95),
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
@@ -1404,6 +1413,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
   }
 
   Widget _buildOrderCard(Map<String, dynamic> order) {
+    final colorScheme = Theme.of(context).colorScheme;
     final status = order['status'] as String? ?? '';
     final price = order['price'] is int
         ? (order['price'] as int).toDouble()
@@ -1438,14 +1448,14 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(16),
           border: isNewOrder
-              ? Border.all(color: Colors.red.withValues(alpha: 0.4), width: 2)
+              ? Border.all(color: colorScheme.error.withValues(alpha: 0.4), width: 2)
               : null,
           boxShadow: [
             BoxShadow(
-              color: (isNewOrder ? Colors.red : Colors.black)
+              color: (isNewOrder ? colorScheme.error : colorScheme.shadow)
                   .withValues(alpha: 0.08),
               blurRadius: 16,
               offset: const Offset(0, 4),
@@ -1462,7 +1472,10 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: isNewOrder
-                      ? [Colors.red, Colors.red.shade300]
+                      ? [
+                          colorScheme.error,
+                          colorScheme.error.withValues(alpha: 0.7),
+                        ]
                       : [statusColor, statusColor.withValues(alpha: 0.7)],
                 ),
               ),
@@ -1472,14 +1485,14 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                     isNewOrder
                         ? Icons.notifications_active
                         : _getStatusIcon(displayStatus),
-                    color: Colors.white,
+                    color: colorScheme.onPrimary,
                     size: 18,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     _getStatusText(displayStatus),
-                    style: const TextStyle(
-                        color: Colors.white,
+                    style: TextStyle(
+                        color: colorScheme.onPrimary,
                         fontSize: 14,
                         fontWeight: FontWeight.bold),
                   ),
@@ -1487,7 +1500,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                   Text(
                     OrderCodeFormatter.format(order['id']?.toString()),
                     style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.85),
+                        color: colorScheme.onPrimary.withValues(alpha: 0.85),
                         fontSize: 12,
                         fontWeight: FontWeight.w500),
                   ),
@@ -1529,11 +1542,14 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                       // ค่าส่งไม่แสดงฝั่งร้านค้า (เป็นข้อมูลของลูกค้า/คนขับ)
                       const Spacer(),
                       Icon(Icons.access_time_rounded,
-                          size: 14, color: Colors.grey[400]),
+                          size: 14, color: colorScheme.onSurfaceVariant),
                       const SizedBox(width: 4),
                       Text(
                         _getTimeAgo(DateTime.now().difference(createdAt)),
-                        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ),
@@ -1545,24 +1561,26 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 8),
                       decoration: BoxDecoration(
-                        color: Colors.amber.withValues(alpha: 0.12),
+                        color: colorScheme.tertiaryContainer.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.amber.shade300),
+                        border: Border.all(
+                          color: colorScheme.tertiary.withValues(alpha: 0.4),
+                        ),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.schedule,
-                              size: 16, color: Colors.orange),
+                          Icon(Icons.schedule,
+                              size: 16, color: colorScheme.tertiary),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               scheduledAt.isAfter(DateTime.now())
                                   ? 'ออเดอร์นัดเวลา: ${_formatScheduledDateTime(scheduledAt)}'
                                   : 'เวลานัดรับ: ${_formatScheduledDateTime(scheduledAt)}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.black87,
+                                color: colorScheme.onSurface,
                               ),
                             ),
                           ),
@@ -1576,7 +1594,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Colors.grey[50],
+                      color: colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Column(
@@ -1587,17 +1605,17 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                               width: 24,
                               height: 24,
                               decoration: BoxDecoration(
-                                  color: Colors.red.withValues(alpha: 0.1),
+                                  color: colorScheme.errorContainer.withValues(alpha: 0.6),
                                   borderRadius: BorderRadius.circular(6)),
-                              child: const Icon(Icons.location_on,
-                                  size: 14, color: Colors.red),
+                              child: Icon(Icons.location_on,
+                                  size: 14, color: colorScheme.error),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 _formatAddress(order['destination_address']),
                                 style: TextStyle(
-                                    fontSize: 12, color: Colors.grey[800]),
+                                    fontSize: 12, color: colorScheme.onSurface),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -1612,16 +1630,17 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                                 width: 24,
                                 height: 24,
                                 decoration: BoxDecoration(
-                                    color: Colors.green.withValues(alpha: 0.1),
+                                    color: colorScheme.secondaryContainer.withValues(alpha: 0.6),
                                     borderRadius: BorderRadius.circular(6)),
-                                child: const Icon(Icons.straighten,
-                                    size: 14, color: Colors.green),
+                                child: Icon(Icons.straighten,
+                                    size: 14, color: colorScheme.secondary),
                               ),
                               const SizedBox(width: 8),
                               Text(
                                 'ระยะทาง ${distanceKm.toStringAsFixed(1)} กม.',
                                 style: TextStyle(
-                                    fontSize: 12, color: Colors.grey[600]),
+                                    fontSize: 12,
+                                    color: colorScheme.onSurfaceVariant),
                               ),
                             ],
                           ),
@@ -1686,6 +1705,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
   }
 
   Widget _buildActionButtons(Map<String, dynamic> order, String status) {
+    final colorScheme = Theme.of(context).colorScheme;
     switch (status) {
       case 'pending_merchant':
       case 'pending':
@@ -1695,8 +1715,8 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               child: ElevatedButton(
                 onPressed: () => _acceptOrder(order['id']),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF3B82F6),
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppTheme.accentBlue,
+                  foregroundColor: colorScheme.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -1715,15 +1735,16 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.green[50],
+            color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.green[200]!),
+            border:
+                Border.all(color: colorScheme.secondary.withValues(alpha: 0.35)),
           ),
           child: Column(
             children: [
               Icon(
                 Icons.restaurant,
-                color: Colors.green[600],
+                color: colorScheme.secondary,
                 size: 32,
               ),
               const SizedBox(height: 8),
@@ -1732,7 +1753,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.green[700],
+                  color: colorScheme.secondary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -1741,7 +1762,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 'กดเข้าไปดูรายละเอียด',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.green[600],
+                  color: colorScheme.secondary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -1753,15 +1774,16 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.blue[50],
+            color: colorScheme.primaryContainer.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.blue[200]!),
+            border:
+                Border.all(color: colorScheme.primary.withValues(alpha: 0.35)),
           ),
           child: Column(
             children: [
               Icon(
                 Icons.person,
-                color: Colors.blue[600],
+                color: colorScheme.primary,
                 size: 32,
               ),
               const SizedBox(height: 8),
@@ -1770,7 +1792,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blue[700],
+                  color: colorScheme.primary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -1779,7 +1801,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 'กำลังประกอบอาหาร',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.blue[600],
+                  color: colorScheme.primary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -1791,15 +1813,16 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.green[50],
+            color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.green[200]!),
+            border:
+                Border.all(color: colorScheme.secondary.withValues(alpha: 0.35)),
           ),
           child: Column(
             children: [
               Icon(
                 Icons.check_circle,
-                color: Colors.green[600],
+                color: colorScheme.secondary,
                 size: 32,
               ),
               const SizedBox(height: 8),
@@ -1808,7 +1831,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.green[700],
+                  color: colorScheme.secondary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -1817,7 +1840,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 'กดเข้าไปดูรายละเอียด',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.green[600],
+                  color: colorScheme.secondary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -1829,15 +1852,16 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.indigo[50],
+            color: colorScheme.tertiaryContainer.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.indigo[200]!),
+            border:
+                Border.all(color: colorScheme.tertiary.withValues(alpha: 0.35)),
           ),
           child: Column(
             children: [
               Icon(
                 Icons.directions_car,
-                color: Colors.indigo[600],
+                color: colorScheme.tertiary,
                 size: 32,
               ),
               const SizedBox(height: 8),
@@ -1846,7 +1870,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.indigo[700],
+                  color: colorScheme.tertiary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -1855,7 +1879,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 'กรุณาเตรียมอาหารให้พร้อม',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.indigo[600],
+                  color: colorScheme.tertiary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -1867,15 +1891,16 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.orange[50],
+            color: colorScheme.tertiaryContainer.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.orange[200]!),
+            border:
+                Border.all(color: colorScheme.tertiary.withValues(alpha: 0.35)),
           ),
           child: Column(
             children: [
               Icon(
                 Icons.store,
-                color: Colors.orange[600],
+                color: colorScheme.tertiary,
                 size: 32,
               ),
               const SizedBox(height: 8),
@@ -1884,7 +1909,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.orange[700],
+                  color: colorScheme.tertiary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -1893,7 +1918,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 'กดเข้าไปดูรายละเอียด',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.orange[600],
+                  color: colorScheme.tertiary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -1905,15 +1930,16 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.lime[50],
+            color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.lime[200]!),
+            border:
+                Border.all(color: colorScheme.secondary.withValues(alpha: 0.35)),
           ),
           child: Column(
             children: [
               Icon(
                 Icons.delivery_dining,
-                color: Colors.lime[600],
+                color: colorScheme.secondary,
                 size: 32,
               ),
               const SizedBox(height: 8),
@@ -1922,7 +1948,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.lime[700],
+                  color: colorScheme.secondary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -1931,7 +1957,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 'กำลังนำส่งให้ลูกค้า',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.lime[600],
+                  color: colorScheme.secondary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -1943,15 +1969,16 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.cyan[50],
+            color: colorScheme.primaryContainer.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.cyan[200]!),
+            border:
+                Border.all(color: colorScheme.primary.withValues(alpha: 0.35)),
           ),
           child: Column(
             children: [
               Icon(
                 Icons.local_shipping,
-                color: Colors.cyan[600],
+                color: colorScheme.primary,
                 size: 32,
               ),
               const SizedBox(height: 8),
@@ -1960,7 +1987,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.cyan[700],
+                  color: colorScheme.primary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -1969,7 +1996,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 'ออเดอร์กำลังเดินทางถึงลูกค้า',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.cyan[600],
+                  color: colorScheme.primary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -1981,15 +2008,16 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.green[50],
+            color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.green[200]!),
+            border:
+                Border.all(color: colorScheme.secondary.withValues(alpha: 0.35)),
           ),
           child: Column(
             children: [
               Icon(
                 Icons.delivery_dining,
-                color: Colors.green[600],
+                color: colorScheme.secondary,
                 size: 32,
               ),
               const SizedBox(height: 8),
@@ -1998,7 +2026,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.green[700],
+                  color: colorScheme.secondary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -2007,7 +2035,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 'ออเดอร์นี้เสร็จสิ้นสำหรับร้านค้า',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.green[600],
+                  color: colorScheme.secondary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -2020,26 +2048,27 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
   }
 
   Color _getStatusColor(String status) {
+    final colorScheme = Theme.of(context).colorScheme;
     switch (status) {
       case 'pending_merchant':
-        return Colors.red; // Urgent/New Order
+        return colorScheme.error; // Urgent/New Order
       case 'pending':
-        return Colors.orange;
+        return colorScheme.tertiary;
       case 'preparing':
-        return Colors.purple;
+        return colorScheme.primary;
       case 'ready_for_pickup':
-        return Colors.teal;
+        return colorScheme.secondary;
       case 'driver_accepted':
       case 'matched':
-        return Colors.green; // ✅ Treat as Finished/Success
+        return colorScheme.secondary; // ✅ Treat as Finished/Success
       case 'arrived_at_merchant':
-        return Colors.green; // ✅ Also Success
+        return colorScheme.secondary; // ✅ Also Success
       case 'completed':
-        return Colors.green;
+        return colorScheme.secondary;
       case 'cancelled':
-        return Colors.grey;
+        return colorScheme.outline;
       default:
-        return Colors.grey;
+        return colorScheme.outline;
     }
   }
 

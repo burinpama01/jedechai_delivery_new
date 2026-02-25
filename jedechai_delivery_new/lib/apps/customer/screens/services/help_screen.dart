@@ -45,6 +45,7 @@ class _HelpScreenState extends State<HelpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         title: const Text('ช่วยเหลือ'),
@@ -162,7 +163,9 @@ class _HelpScreenState extends State<HelpScreen> {
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
-                                    color: isExpanded ? AppTheme.primaryGreen : Colors.black87,
+                                    color: isExpanded
+                                        ? AppTheme.primaryGreen
+                                        : colorScheme.onSurface,
                                   )),
                             ),
                             Icon(
@@ -180,7 +183,11 @@ class _HelpScreenState extends State<HelpScreen> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(faq['a']!,
-                                style: const TextStyle(fontSize: 14, height: 1.5, color: Colors.black87)),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  height: 1.5,
+                                  color: colorScheme.onSurface,
+                                )),
                           ),
                         ],
                       ],

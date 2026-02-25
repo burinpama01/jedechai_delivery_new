@@ -320,6 +320,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildProfileHeader() {
+    final colorScheme = Theme.of(context).colorScheme;
     final avatarUrl = _profile?['avatar_url'] as String?;
     final hasAvatar = avatarUrl != null && avatarUrl.isNotEmpty;
 
@@ -388,7 +389,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _userEmail,
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey[600],
+              color: colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 8),
@@ -427,14 +428,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildBasicInfoSection() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: colorScheme.shadow.withValues(alpha: 0.12),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -478,14 +480,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildVehicleSection() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: colorScheme.shadow.withValues(alpha: 0.12),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -493,9 +496,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       child: Column(
         children: [
-          const Align(
+          Align(
             alignment: Alignment.centerLeft,
-            child: Text('ประเภทรถ', style: TextStyle(fontSize: 14, color: Colors.grey)),
+            child: Text('ประเภทรถ', style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
           ),
           const SizedBox(height: 8),
           Row(
@@ -527,6 +530,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildVehicleChip(String label, IconData icon) {
     final isSelected = _vehicleTypeController.text == label;
+    final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -536,22 +540,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.primaryGreen.withValues(alpha: 0.1) : Colors.grey[50],
+          color: isSelected ? AppTheme.primaryGreen.withValues(alpha: 0.1) : colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppTheme.primaryGreen : Colors.grey[300]!,
+            color: isSelected ? AppTheme.primaryGreen : colorScheme.outlineVariant,
             width: isSelected ? 2 : 1,
           ),
         ),
         child: Column(
           children: [
-            Icon(icon, color: isSelected ? AppTheme.primaryGreen : Colors.grey[500], size: 28),
+            Icon(icon, color: isSelected ? AppTheme.primaryGreen : colorScheme.onSurfaceVariant, size: 28),
             const SizedBox(height: 6),
             Text(label,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected ? AppTheme.primaryGreen : Colors.black87,
+                  color: isSelected ? AppTheme.primaryGreen : colorScheme.onSurface,
                 )),
             if (isSelected)
               Padding(
@@ -565,14 +569,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildMerchantSection() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: colorScheme.shadow.withValues(alpha: 0.12),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

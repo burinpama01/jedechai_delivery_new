@@ -334,12 +334,13 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: const Text('บัญชี'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: colorScheme.surface,
+        foregroundColor: colorScheme.onSurface,
         elevation: 0,
       ),
       body: _isLoading
@@ -359,6 +360,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
   }
 
   Widget _buildError() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -374,7 +376,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             const SizedBox(height: 8),
             Text(
               _error!,
-              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
@@ -694,6 +696,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            final colorScheme = Theme.of(context).colorScheme;
             return AlertDialog(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -757,7 +760,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                       'วันที่เปิดร้าน',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: Colors.grey[800],
+                        color: colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -773,7 +776,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                         selectedColor: _accent.withValues(alpha: 0.15),
                         checkmarkColor: _accent,
                         labelStyle: TextStyle(
-                          color: isSelected ? _accent : Colors.black87,
+                          color: isSelected ? _accent : colorScheme.onSurface,
                           fontWeight: FontWeight.w600,
                         ),
                         side: BorderSide(
@@ -798,7 +801,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                       'รูปแบบการรับออเดอร์',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: Colors.grey[800],
+                        color: colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -840,7 +843,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                         if (states.contains(WidgetState.selected)) {
                           return _accent;
                         }
-                        return Colors.black87;
+                        return colorScheme.onSurface;
                       }),
                     ),
                     onSelectionChanged: (selected) {
@@ -1167,11 +1170,12 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
   // ============================================================
 
   Widget _card({required String title, required List<Widget> children}) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -1186,10 +1190,10 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 12),
@@ -1205,6 +1209,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
     String value,
     VoidCallback? onTap,
   ) {
+    final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
@@ -1229,17 +1234,17 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                     label,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey[500],
+                      color: colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     value,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black87,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                 ],
@@ -1251,7 +1256,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                   android: Icons.chevron_right,
                   ios: CupertinoIcons.chevron_forward,
                 ),
-                color: Colors.grey[400],
+                color: colorScheme.onSurfaceVariant,
                 size: 20,
               ),
           ],
@@ -1261,6 +1266,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
   }
 
   Widget _menuItem(IconData icon, String label, VoidCallback onTap) {
+    final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
@@ -1268,14 +1274,15 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: Row(
           children: [
-            Icon(icon, color: Colors.grey[700], size: 22),
+            Icon(icon, color: colorScheme.onSurfaceVariant, size: 22),
             const SizedBox(width: 14),
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
+                  color: colorScheme.onSurface,
                 ),
               ),
             ),
@@ -1284,7 +1291,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                 android: Icons.chevron_right,
                 ios: CupertinoIcons.chevron_forward,
               ),
-              color: Colors.grey[400],
+              color: colorScheme.onSurfaceVariant,
               size: 20,
             ),
           ],
@@ -1293,5 +1300,11 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
     );
   }
 
-  Widget _divider() => Divider(height: 1, color: Colors.grey[100]);
+  Widget _divider() {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Divider(
+      height: 1,
+      color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+    );
+  }
 }

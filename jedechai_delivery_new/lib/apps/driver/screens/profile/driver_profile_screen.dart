@@ -396,7 +396,9 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected ? _accent : Colors.black87,
+                  color: isSelected
+                      ? _accent
+                      : Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ),
@@ -441,12 +443,13 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: const Text('บัญชี'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: colorScheme.surface,
+        foregroundColor: colorScheme.onSurface,
         elevation: 0,
       ),
       body: _isLoading
@@ -466,6 +469,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   }
 
   Widget _buildError() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -481,7 +485,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
             const SizedBox(height: 8),
             Text(
               _error!,
-              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
@@ -873,6 +877,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   }
 
   Widget _buildDeleteAccountButton() {
+    final colorScheme = Theme.of(context).colorScheme;
     return SizedBox(
       width: double.infinity,
       child: TextButton.icon(
@@ -886,7 +891,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
         ),
         label: const Text('ลบบัญชี', style: TextStyle(fontSize: 14)),
         style: TextButton.styleFrom(
-          foregroundColor: Colors.grey[500],
+          foregroundColor: colorScheme.onSurfaceVariant,
           padding: const EdgeInsets.symmetric(vertical: 12),
         ),
       ),
@@ -898,11 +903,12 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   // ============================================================
 
   Widget _card({required String title, required List<Widget> children}) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -917,10 +923,10 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 12),
@@ -936,6 +942,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
     String value,
     VoidCallback? onTap,
   ) {
+    final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
@@ -960,17 +967,17 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                     label,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey[500],
+                      color: colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     value,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black87,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                 ],
@@ -982,7 +989,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                   android: Icons.chevron_right,
                   ios: CupertinoIcons.chevron_forward,
                 ),
-                color: Colors.grey[400],
+                color: colorScheme.onSurfaceVariant,
                 size: 20,
               ),
           ],
@@ -992,6 +999,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   }
 
   Widget _menuItem(IconData icon, String label, VoidCallback onTap) {
+    final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
@@ -999,14 +1007,15 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: Row(
           children: [
-            Icon(icon, color: Colors.grey[700], size: 22),
+            Icon(icon, color: colorScheme.onSurfaceVariant, size: 22),
             const SizedBox(width: 14),
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
+                  color: colorScheme.onSurface,
                 ),
               ),
             ),
@@ -1015,7 +1024,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                 android: Icons.chevron_right,
                 ios: CupertinoIcons.chevron_forward,
               ),
-              color: Colors.grey[400],
+              color: colorScheme.onSurfaceVariant,
               size: 20,
             ),
           ],
@@ -1024,5 +1033,11 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
     );
   }
 
-  Widget _divider() => Divider(height: 1, color: Colors.grey[100]);
+  Widget _divider() {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Divider(
+      height: 1,
+      color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+    );
+  }
 }

@@ -4,10 +4,8 @@ import '../models/booking.dart';
 import 'mock_auth_service.dart';
 import 'auth_service.dart';
 import 'wallet_service.dart';
-import 'wallet_service.dart';
 import 'system_config_service.dart';
 import 'merchant_food_config_service.dart';
-import 'fare_adjustment_service.dart';
 import 'fare_adjustment_service.dart';
 import 'notification_sender.dart';
 
@@ -91,7 +89,7 @@ class BookingService {
         merchantProfile = await _client
             .from('profiles')
             .select(
-              'gp_rate, custom_base_fare, custom_base_distance, custom_per_km, custom_delivery_fee',
+              'gp_rate, merchant_gp_system_rate, merchant_gp_driver_rate, custom_base_fare, custom_base_distance, custom_per_km, custom_delivery_fee',
             )
             .eq('id', merchantId)
             .maybeSingle();
@@ -119,6 +117,28 @@ class BookingService {
   ) async {
     final fallbackSystem = configService.merchantGpRate;
     final fallbackDriver = 0.0;
+
+    double systemRate = fallbackSystem;
+    double driverRate = fallbackDriver;
+
+    try {
+      final row = await _client
+          .from('system_config')
+          .select('merchant_gp_system_rate_default, merchant_gp_driver_rate_default')
+          .maybeSingle();
+      if (row != null) {
+        final columnSystem = row['merchant_gp_system_rate_default'];
+        final columnDriver = row['merchant_gp_driver_rate_default'];
+        if (columnSystem != null) {
+          systemRate = _parseRate(columnSystem.toString(), systemRate);
+        }
+        if (columnDriver != null) {
+          driverRate = _parseRate(columnDriver.toString(), driverRate);
+        }
+      }
+    } catch (_) {
+      // ignore column-based read errors and continue with fallback/key-value
+    }
 
     try {
       final rows = await _client
@@ -150,30 +170,30 @@ class BookingService {
           ? map['merchant_gp_driver_rate_$merchantIdKey']
           : null;
 
-      final systemRate = _parseRate(
+      final resolvedSystemRate = _parseRate(
         merchantSystemRaw,
         _parseRate(
           map['merchant_gp_system_rate_default'],
-          fallbackSystem,
+          systemRate,
         ),
       );
-      final driverRate = _parseRate(
+      final resolvedDriverRate = _parseRate(
         merchantDriverRaw,
         _parseRate(
           map['merchant_gp_driver_rate_default'],
-          fallbackDriver,
+          driverRate,
         ),
       );
 
       return {
-        'systemRate': systemRate,
-        'driverRate': driverRate,
+        'systemRate': resolvedSystemRate,
+        'driverRate': resolvedDriverRate,
       };
     } catch (e) {
       debugLog('⚠️ Failed to load merchant GP split defaults: $e');
       return {
-        'systemRate': fallbackSystem,
-        'driverRate': fallbackDriver,
+        'systemRate': systemRate,
+        'driverRate': driverRate,
       };
     }
   }
@@ -247,8 +267,8 @@ class BookingService {
     required double destLat,
     required double destLng,
     required double distanceKm,
-    dynamic pickupAddress,      // เปลี่ยนเป็น dynamic เพื่อรับ object ได้
-    dynamic destinationAddress, // เปลี่ยนเป็น dynamic เพื่อรับ object ได้
+    Object? pickupAddress,      // Phase 6: Accept Object? instead of dynamic for type safety
+    Object? destinationAddress, // Phase 6: Accept Object? instead of dynamic for type safety
     String? notes,
     DateTime? scheduledAt,
   }) async {
@@ -402,7 +422,24 @@ class BookingService {
     debugLog('   └─ Booking ID: $bookingId');
     debugLog('   └─ New Status: $newStatus');
     debugLog('   └─ Timestamp: ${DateTime.now()}');
-    
+
+    // Phase 4A: Authorization check — verify caller is involved in this booking
+    final currentUserId = AuthService.userId;
+    if (currentUserId == null) throw Exception('Not authenticated');
+
+    final booking = await getBookingById(bookingId);
+    if (booking == null) throw Exception('Booking not found');
+
+    final isCustomer = booking.customerId == currentUserId;
+    final isDriver = booking.driverId == currentUserId;
+    final isMerchant = booking.merchantId == currentUserId;
+    final callerRole = AuthService.currentUserRole;
+    final isAdmin = callerRole == 'admin';
+
+    if (!isCustomer && !isDriver && !isMerchant && !isAdmin) {
+      throw Exception('ไม่มีสิทธิ์เปลี่ยนสถานะออเดอร์นี้');
+    }
+
     // Update the booking status
     await _client
         .from('bookings')
@@ -526,20 +563,45 @@ class BookingService {
   }
 
   /// Cancel booking
+  /// Phase 4B: Added authorization check — only the customer who created the
+  /// booking (or admin) can cancel, and only from cancellable statuses.
   Future<void> cancelBooking(String bookingId, {String? reason}) async {
+    final currentUserId = AuthService.userId;
+    if (currentUserId == null) throw Exception('Not authenticated');
+
+    final booking = await getBookingById(bookingId);
+    if (booking == null) throw Exception('Booking not found');
+
+    // Check ownership
+    final isOwner = booking.customerId == currentUserId;
+    final isAdmin = AuthService.currentUserRole == 'admin';
+    if (!isOwner && !isAdmin) {
+      throw Exception('ไม่มีสิทธิ์ยกเลิกออเดอร์นี้');
+    }
+
+    // Check cancellable status
+    const cancellableStatuses = ['pending', 'pending_merchant', 'preparing'];
+    if (!cancellableStatuses.contains(booking.status) && !isAdmin) {
+      throw Exception('ไม่สามารถยกเลิกออเดอร์ที่สถานะ ${booking.status} ได้');
+    }
+
     await _client.from('bookings').update({
       'status': 'cancelled',
-      'notes': reason, // Use notes field instead of cancellation_reason
+      'notes': reason,
     }).eq('id', bookingId);
   }
 
   /// Get pending bookings (for drivers)
+  /// Phase 4D: Fixed filter — drivers should NOT see pending_merchant or
+  /// preparing orders. They should only see:
+  /// - 'pending' (ride/parcel ready for pickup)
+  /// - 'ready_for_pickup' (food orders where merchant finished preparing)
   Future<List<Booking>> getPendingBookings() async {
       final response = await _client
           .from('bookings')
           .select()
           .filter('driver_id', 'is', 'null')
-          .or('status.in.(pending,pending_merchant,preparing,ready_for_pickup)')
+          .or('status.in.(pending,ready_for_pickup)')
           .order('created_at', ascending: false)
           .limit(50);
 
@@ -671,28 +733,6 @@ class BookingService {
           }
         }
       }
-
-      if (booking.serviceType == 'ride') {
-        final config = await FareAdjustmentService.loadRideFarPickupConfig();
-        final distanceKm = await FareAdjustmentService.getDriverToPickupDistanceKm(
-          driverId: driverId,
-          pickupLat: booking.originLat,
-          pickupLng: booking.originLng,
-        );
-        if (distanceKm != null) {
-          final surcharge = FareAdjustmentService.calculateRideFarPickupSurcharge(
-            driverToPickupDistanceKm: distanceKm,
-            vehicleType: booking.notes ?? booking.serviceType,
-            config: config,
-          );
-          if (surcharge > 0) {
-            final adjustedPrice = booking.price + surcharge;
-            updates['price'] = adjustedPrice;
-            updates['notes'] =
-                '${booking.notes ?? ''} | ปรับราคาเพิ่มจากระยะคนขับ→จุดรับ ${distanceKm.toStringAsFixed(2)} กม. (+฿${surcharge.toStringAsFixed(2)})';
-          }
-        }
-      }
     }
 
     // Determine new status based on service_type
@@ -705,14 +745,22 @@ class BookingService {
       newStatus = 'accepted'; // Default fallback
     }
 
-    // Update the booking with new status and driver_id
-    await _client.from('bookings').update({
-      'driver_id': driverId,
-      'status': newStatus,
-      'assigned_at': DateTime.now().toIso8601String(),
-      ...updates,
-      ...updates,
-    }).eq('id', bookingId);
+    // Optimistic concurrency: use RPC to atomically claim the booking (Phase 2)
+    // Only succeeds if booking still has no driver and expected status
+    final expectedStatus = booking.status;
+    final rpcResult = await _client.rpc('accept_booking', params: {
+      'p_booking_id': bookingId,
+      'p_driver_id': driverId,
+      'p_expected_status': expectedStatus,
+    });
+    if (rpcResult is Map && rpcResult['success'] != true) {
+      throw Exception(rpcResult['message'] ?? 'งานนี้ถูกรับไปแล้ว');
+    }
+
+    // Apply additional updates (surcharge, etc.) if any
+    if (updates.isNotEmpty) {
+      await _client.from('bookings').update(updates).eq('id', bookingId);
+    }
     
     debugLog('✅ Driver accepted job: $bookingId with status: $newStatus');
   }

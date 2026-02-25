@@ -203,7 +203,10 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
                                   )
                                 : Text(
                                     _addressText,
-                                    style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    ),
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                   ),

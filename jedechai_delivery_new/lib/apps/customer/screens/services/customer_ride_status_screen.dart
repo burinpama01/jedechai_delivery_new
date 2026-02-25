@@ -692,8 +692,9 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
   @override
   Widget build(BuildContext context) {
     final booking = _currentBooking ?? widget.booking;
-    final couponDiscount = _couponDiscountAmount();
     final totalAmount = _calculateTotalAmount(booking);
+    final couponDiscount = _couponDiscountAmount();
+    final colorScheme = Theme.of(context).colorScheme;
     
     return PopScope(
       canPop: false,
@@ -705,7 +706,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
         );
       },
       child: Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         backgroundColor: AppTheme.primaryGreen,
         foregroundColor: Colors.white,
@@ -753,15 +754,15 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
             flex: 2,
             child: Container(
               padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(20),
                   topRight: Radius.circular(20),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black12,
+                    color: colorScheme.shadow.withValues(alpha: 0.12),
                     blurRadius: 10,
                     offset: Offset(0, -5),
                   ),
@@ -793,21 +794,21 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                   
                   // Driver Info
                   if (booking.driverId != null) ...[
-                    const Text(
+                    Text(
                       'ข้อมูลคนขับ',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.grey[50],
+                        color: colorScheme.surfaceContainer,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey[200]!),
+                        border: Border.all(color: colorScheme.outlineVariant),
                       ),
                       child: Column(
                         children: [
@@ -836,7 +837,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                                       _driverProfile?['vehicle_type'] ?? 'รถจักรยานยนต์',
                                       style: TextStyle(
                                         fontSize: 14,
-                                        color: Colors.grey[600],
+                                        color: colorScheme.onSurfaceVariant,
                                       ),
                                     ),
                                     if (_driverProfile?['license_plate'] != null)
@@ -844,7 +845,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                                         _driverProfile!['license_plate'],
                                         style: TextStyle(
                                           fontSize: 13,
-                                          color: Colors.grey[500],
+                                          color: colorScheme.onSurfaceVariant,
                                         ),
                                       ),
                                   ],
@@ -899,7 +900,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.grey[50],
+                      color: colorScheme.surfaceContainer,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
@@ -1082,6 +1083,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
     if (_hasShownCompletionDialog || !mounted) return;
     _hasShownCompletionDialog = true;
     _bookingSubscription?.cancel();
+    final colorScheme = Theme.of(context).colorScheme;
 
     showDialog(
       context: context,
@@ -1106,9 +1108,9 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
             ),
           ],
         ),
-        content: const Text(
+        content: Text(
           'ขออภัย ร้านค้าไม่สามารถรับออเดอร์ของคุณได้ในขณะนี้\n\nกรุณาลองสั่งใหม่อีกครั้ง หรือเลือกร้านอื่น',
-          style: TextStyle(fontSize: 15, color: Colors.black87, height: 1.5),
+          style: TextStyle(fontSize: 15, color: colorScheme.onSurface, height: 1.5),
           textAlign: TextAlign.center,
         ),
         actions: [
@@ -1150,6 +1152,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
     final grossAmount = isFood ? foodCost + deliveryFee : booking.price;
     final totalAmount = (grossAmount - couponDiscount) < 0 ? 0 : (grossAmount - couponDiscount);
     final bookingId = booking.id;
+    final colorScheme = Theme.of(context).colorScheme;
 
     showDialog(
       context: context,
@@ -1178,7 +1181,10 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('ขอบคุณที่ใช้บริการ', style: TextStyle(fontSize: 16, color: Colors.black87)),
+              Text(
+                'ขอบคุณที่ใช้บริการ',
+                style: TextStyle(fontSize: 16, color: colorScheme.onSurface),
+              ),
               const SizedBox(height: 16),
               // Order ID
               Container(
@@ -1195,7 +1201,13 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('หมายเลขออเดอร์', style: TextStyle(fontSize: 11, color: Colors.black54)),
+                        Text(
+                          'หมายเลขออเดอร์',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
                         Text(
                           OrderCodeFormatter.formatByServiceType(
                             bookingId,
@@ -1312,13 +1324,20 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
   }
 
   Widget _buildInfoRow(String label, String value) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[700])),
-          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+          Text(
+            label,
+            style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+          ),
+          Text(
+            value,
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: colorScheme.onSurface),
+          ),
         ],
       ),
     );

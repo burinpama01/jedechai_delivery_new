@@ -169,6 +169,7 @@ class _DriverWalletScreenState extends State<DriverWalletScreen> {
 
   /// สร้างส่วนแสดงประวัติการทำรายการ
   Widget _buildTransactionsSection() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -188,7 +189,7 @@ class _DriverWalletScreenState extends State<DriverWalletScreen> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey[800],
+                  color: colorScheme.onSurface,
                 ),
               ),
             ],

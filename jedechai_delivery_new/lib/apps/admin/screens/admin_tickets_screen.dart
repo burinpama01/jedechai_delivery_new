@@ -109,7 +109,9 @@ class _AdminTicketsScreenState extends State<AdminTicketsScreen>
                         selected: isSelected,
                         selectedColor: _statusColor(s),
                         labelStyle: TextStyle(
-                          color: isSelected ? Colors.white : Colors.black87,
+                          color: isSelected
+                              ? Colors.white
+                              : Theme.of(context).colorScheme.onSurface,
                           fontWeight:
                               isSelected ? FontWeight.w600 : FontWeight.normal,
                         ),

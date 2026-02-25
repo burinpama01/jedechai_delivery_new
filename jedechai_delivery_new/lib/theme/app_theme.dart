@@ -17,6 +17,8 @@ class AppTheme {
   static const Color textSecondary = Color(0xFF6B7280);
   static const Color backgroundLight = Color(0xFFF9FAFB);
   static const Color backgroundWhite = Colors.white;
+  static const Color darkTextPrimary = Color(0xFFF9FAFB);
+  static const Color darkTextSecondary = Color(0xFFE5E7EB);
 
   static ThemeData get lightTheme {
     return ThemeData(
@@ -87,6 +89,9 @@ class AppTheme {
   }
 
   static ThemeData get darkTheme {
+    const darkSurface = Color(0xFF1F2937);
+    const darkBackground = Color(0xFF111827);
+
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
@@ -95,9 +100,19 @@ class AppTheme {
         secondary: accentOrange,
         brightness: Brightness.dark,
       ),
-      scaffoldBackgroundColor: const Color(0xFF111827),
+      scaffoldBackgroundColor: darkBackground,
+      textTheme: ThemeData.dark().textTheme.apply(
+            bodyColor: darkTextPrimary,
+            displayColor: darkTextPrimary,
+          ),
+      primaryTextTheme: ThemeData.dark().textTheme.apply(
+            bodyColor: darkTextPrimary,
+            displayColor: darkTextPrimary,
+          ),
+      iconTheme: const IconThemeData(color: darkTextPrimary),
+      primaryIconTheme: const IconThemeData(color: darkTextPrimary),
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF1F2937),
+        backgroundColor: darkSurface,
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -125,7 +140,11 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFF1F2937),
+        fillColor: darkSurface,
+        labelStyle: const TextStyle(color: darkTextSecondary),
+        hintStyle: const TextStyle(color: darkTextSecondary),
+        prefixIconColor: darkTextSecondary,
+        suffixIconColor: darkTextSecondary,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.grey.shade700),
@@ -149,7 +168,26 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        color: const Color(0xFF1F2937),
+        color: darkSurface,
+      ),
+      listTileTheme: const ListTileThemeData(
+        textColor: darkTextPrimary,
+        iconColor: darkTextPrimary,
+      ),
+      dialogTheme: const DialogThemeData(
+        backgroundColor: darkSurface,
+        titleTextStyle: TextStyle(
+          color: darkTextPrimary,
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+        ),
+        contentTextStyle: TextStyle(
+          color: darkTextSecondary,
+          fontSize: 16,
+        ),
+      ),
+      snackBarTheme: const SnackBarThemeData(
+        contentTextStyle: TextStyle(color: darkTextPrimary),
       ),
     );
   }

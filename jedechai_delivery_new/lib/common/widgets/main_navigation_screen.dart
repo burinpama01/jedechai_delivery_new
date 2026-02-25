@@ -63,6 +63,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final navShadowColor = colorScheme.shadow.withValues(alpha: 0.12);
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) => _onPopInvoked(didPop),
@@ -81,7 +83,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: navShadowColor,
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
@@ -95,9 +97,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             });
           },
           type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          selectedItemColor: const Color(0xFF3B82F6), // Blue
-          unselectedItemColor: Colors.grey,
+          backgroundColor: colorScheme.surface,
+          selectedItemColor: colorScheme.primary,
+          unselectedItemColor: colorScheme.onSurfaceVariant,
           selectedLabelStyle: const TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 12,
