@@ -980,7 +980,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: booking.status == 'completed' 
-                            ? Colors.grey 
+                            ? colorScheme.outlineVariant
                             : Colors.red,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
@@ -1095,15 +1095,19 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.1),
+                color: colorScheme.errorContainer,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.cancel, color: Colors.red, size: 48),
+              child: Icon(Icons.cancel, color: colorScheme.onErrorContainer, size: 48),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'ร้านค้าปฏิเสธออเดอร์',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.red),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.error,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -1190,13 +1194,13 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.blue[50],
+                  color: colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.blue[200]!),
+                  border: Border.all(color: colorScheme.primary.withValues(alpha: 0.35)),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.receipt_long, color: Colors.blue[700], size: 20),
+                    Icon(Icons.receipt_long, color: colorScheme.onPrimaryContainer, size: 20),
                     const SizedBox(width: 8),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1213,7 +1217,11 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                             bookingId,
                             serviceType: booking.serviceType,
                           ),
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.blue[700]),
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onPrimaryContainer,
+                          ),
                         ),
                       ],
                     ),
@@ -1371,9 +1379,9 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                   
                   // Show success message
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('ยกเลิกการเดินทางสำเร็จ'),
-                      backgroundColor: Colors.green,
+                    SnackBar(
+                      content: const Text('ยกเลิกการเดินทางสำเร็จ'),
+                      backgroundColor: Theme.of(context).colorScheme.tertiary,
                     ),
                   );
                   
@@ -1394,7 +1402,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                   showDialog(
                     context: context,
                     builder: (ctx) => AlertDialog(
-                      icon: const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                      icon: Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error, size: 48),
                       title: const Text('ยกเลิกไม่สำเร็จ'),
                       content: Text('เกิดข้อผิดพลาดในการยกเลิก: $e'),
                       actions: [

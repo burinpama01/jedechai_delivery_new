@@ -70,13 +70,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
       setState(() => _isProcessing = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('เกิดข้อผิดพลาด: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('เกิดข้อผิดพลาด: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
         );
       }
     }
   }
 
   void _showSuccessDialog() {
+    final colorScheme = Theme.of(context).colorScheme;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -103,7 +107,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             const SizedBox(height: 8),
             Text(
               _selectedMethod == 'cash' ? 'กรุณาเตรียมเงินสดให้คนขับ' : 'รายการชำระเงินบันทึกแล้ว',
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
+              style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
@@ -131,6 +135,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         title: const Text('การชำระเงิน'),
@@ -150,8 +155,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   const SizedBox(height: 24),
 
                   // เลือกวิธีชำระเงิน
-                  const Text('เลือกวิธีชำระเงิน',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(
+                    'เลือกวิธีชำระเงิน',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
                   const SizedBox(height: 14),
 
                   ...List.generate(_paymentMethods.length, (i) {
@@ -165,10 +176,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: colorScheme.surface,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: isSelected ? AppTheme.primaryGreen : Colors.grey.shade200,
+                              color: isSelected
+                                  ? AppTheme.primaryGreen
+                                  : colorScheme.outlineVariant,
                               width: isSelected ? 2 : 1,
                             ),
                             boxShadow: isSelected
@@ -192,16 +205,25 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(method['label'] as String,
-                                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: colorScheme.onSurface,
+                                        )),
                                     const SizedBox(height: 2),
                                     Text(method['subtitle'] as String,
-                                        style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: colorScheme.onSurfaceVariant,
+                                        )),
                                   ],
                                 ),
                               ),
                               Icon(
                                 isSelected ? Icons.check_circle : Icons.radio_button_off,
-                                color: isSelected ? AppTheme.primaryGreen : Colors.grey.shade400,
+                                color: isSelected
+                                    ? AppTheme.primaryGreen
+                                    : colorScheme.outlineVariant,
                                 size: 24,
                               ),
                             ],
@@ -244,13 +266,18 @@ class _PaymentScreenState extends State<PaymentScreen> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, -2))],
+              color: colorScheme.surface,
+              boxShadow: [
+                BoxShadow(
+                  color: colorScheme.shadow.withValues(alpha: 0.12),
+                  blurRadius: 8,
+                  offset: const Offset(0, -2),
+                )
+              ],
             ),
             child: SafeArea(
               child: SizedBox(
                 width: double.infinity,
-                height: 54,
                 child: ElevatedButton(
                   onPressed: _isProcessing ? null : _processPayment,
                   style: ElevatedButton.styleFrom(
@@ -265,7 +292,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         )
                       : Text(
                           'ชำระเงิน ฿${widget.booking.totalAmount.ceil()}',
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                 ),
               ),

@@ -1457,13 +1457,13 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.grey[100],
+                color: colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[300]!),
+                border: Border.all(color: colorScheme.outlineVariant),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.receipt_long, color: Colors.grey[600], size: 20),
+                  Icon(Icons.receipt_long, color: colorScheme.onSurfaceVariant, size: 20),
                   const SizedBox(width: 8),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1614,13 +1614,13 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.blue[50],
+                  color: colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.blue[200]!),
+                  border: Border.all(color: colorScheme.primary.withValues(alpha: 0.35)),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.receipt_long, color: Colors.blue[700], size: 20),
+                    Icon(Icons.receipt_long, color: colorScheme.onPrimaryContainer, size: 20),
                     const SizedBox(width: 8),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1637,7 +1637,11 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                             bookingId,
                             serviceType: booking.serviceType,
                           ),
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.blue[700]),
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onPrimaryContainer,
+                          ),
                         ),
                       ],
                     ),
@@ -1772,6 +1776,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
 
   /// Show cancel order confirmation dialog
   void _showCancelOrderDialog() {
+    final colorScheme = Theme.of(context).colorScheme;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -1782,20 +1787,20 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
             color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
-        content: const Column(
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'คุณต้องการยกเลิกออเดอร์นี้ใช่หรือไม่?',
               style: TextStyle(fontSize: 16),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Text(
               'หมายเหตุ: ไม่สามารถยกเลิกออเดอร์ที่กำลังดำเนินการได้',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey,
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -1803,9 +1808,9 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text(
+            child: Text(
               'ไม่ยกเลิก',
-              style: TextStyle(color: Colors.grey),
+              style: TextStyle(color: colorScheme.onSurfaceVariant),
             ),
           ),
           ElevatedButton(
@@ -1831,7 +1836,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
       
       // Show loading indicator
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Row(
             children: [
               SizedBox(
@@ -1839,7 +1844,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.onInverseSurface),
                 ),
               ),
               SizedBox(width: 12),
@@ -1861,9 +1866,9 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
         
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('ออเดอร์ถูกยกเลิกเรียบร้อยแล้ว'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('ออเดอร์ถูกยกเลิกเรียบร้อยแล้ว'),
+            backgroundColor: Theme.of(context).colorScheme.tertiary,
           ),
         );
 

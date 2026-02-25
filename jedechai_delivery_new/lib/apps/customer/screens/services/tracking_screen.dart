@@ -118,7 +118,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
             top: MediaQuery.of(context).padding.top + 8,
             left: 12,
             child: CircleAvatar(
-              backgroundColor: Colors.white,
+              backgroundColor: colorScheme.surface,
               child: IconButton(
                 icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
                 onPressed: () => Navigator.of(context).pop(),
@@ -139,11 +139,18 @@ class _TrackingScreenState extends State<TrackingScreen> {
   }
 
   Widget _buildStatusPanel() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 12, offset: const Offset(0, -4))],
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.12),
+            blurRadius: 12,
+            offset: const Offset(0, -4),
+          )
+        ],
       ),
       child: SafeArea(
         child: Padding(
@@ -155,7 +162,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
               Container(
                 width: 40, height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: colorScheme.outlineVariant,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -183,6 +190,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
   }
 
   Widget _buildCurrentStatus() {
+    final colorScheme = Theme.of(context).colorScheme;
     final statusInfo = _getStatusInfo(_booking.status);
     return Container(
       padding: const EdgeInsets.all(14),
@@ -194,17 +202,24 @@ class _TrackingScreenState extends State<TrackingScreen> {
       ),
       child: Row(
         children: [
-          Icon(statusInfo['icon'] as IconData, color: Colors.white, size: 28),
+          Icon(statusInfo['icon'] as IconData, color: colorScheme.onPrimary, size: 28),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(statusInfo['title'] as String,
-                    style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold)),
+                    style: TextStyle(
+                      color: colorScheme.onPrimary,
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                    )),
                 const SizedBox(height: 2),
                 Text(statusInfo['subtitle'] as String,
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 13)),
+                    style: TextStyle(
+                      color: colorScheme.onPrimary.withValues(alpha: 0.9),
+                      fontSize: 13,
+                    )),
               ],
             ),
           ),
@@ -229,7 +244,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                 Container(
                   width: 24, height: 24,
                   decoration: BoxDecoration(
-                    color: isActive ? AppTheme.primaryGreen : Colors.grey.shade300,
+                    color: isActive ? AppTheme.primaryGreen : colorScheme.outlineVariant,
                     shape: BoxShape.circle,
                   ),
                   child: isActive
@@ -239,7 +254,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                 if (!isLast)
                   Container(
                     width: 2, height: 30,
-                    color: isActive ? AppTheme.primaryGreen : Colors.grey.shade300,
+                    color: isActive ? AppTheme.primaryGreen : colorScheme.outlineVariant,
                   ),
               ],
             ),
@@ -264,10 +279,11 @@ class _TrackingScreenState extends State<TrackingScreen> {
   }
 
   Widget _buildDriverInfo() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -283,9 +299,16 @@ class _TrackingScreenState extends State<TrackingScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(_booking.driverName ?? 'คนขับ',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: colorScheme.onSurface,
+                    )),
                 if (_booking.driverVehicle != null)
-                  Text(_booking.driverVehicle!, style: const TextStyle(fontSize: 13, color: Colors.grey)),
+                  Text(
+                    _booking.driverVehicle!,
+                    style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                  ),
               ],
             ),
           ),
@@ -302,10 +325,11 @@ class _TrackingScreenState extends State<TrackingScreen> {
   }
 
   Widget _buildAddressInfo() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -318,7 +342,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
           ),
           Padding(
             padding: const EdgeInsets.only(left: 11),
-            child: Container(width: 2, height: 20, color: Colors.grey.shade300),
+            child: Container(width: 2, height: 20, color: colorScheme.outlineVariant),
           ),
           _buildAddressRow(
             icon: Icons.location_on,
@@ -337,6 +361,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
     required String label,
     required String address,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Row(
       children: [
         Icon(icon, color: color, size: 22),
@@ -345,8 +370,13 @@ class _TrackingScreenState extends State<TrackingScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-              Text(address, style: const TextStyle(fontSize: 14), maxLines: 2, overflow: TextOverflow.ellipsis),
+              Text(label, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
+              Text(
+                address,
+                style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
           ),
         ),
@@ -376,7 +406,13 @@ class _TrackingScreenState extends State<TrackingScreen> {
       case 'cancelled':
         return {'icon': Icons.cancel, 'color': Colors.red, 'title': 'ยกเลิกแล้ว', 'subtitle': 'ออเดอร์นี้ถูกยกเลิก'};
       default:
-        return {'icon': Icons.info, 'color': Colors.grey, 'title': 'ไม่ทราบสถานะ', 'subtitle': status};
+        final colorScheme = Theme.of(context).colorScheme;
+        return {
+          'icon': Icons.info,
+          'color': colorScheme.outlineVariant,
+          'title': 'ไม่ทราบสถานะ',
+          'subtitle': status,
+        };
     }
   }
 
