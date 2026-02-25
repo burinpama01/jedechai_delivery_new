@@ -765,13 +765,24 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
     if (shouldBeOpen != _isShopOpen) {
       debugLog(
           '⏰ Auto-toggle shop: ${_isShopOpen ? "เปิด→ปิด" : "ปิด→เปิด"} (now=$nowMinutes, open=$openMinutes, close=$closeMinutes)');
-      _toggleShopStatus(shouldBeOpen);
+      _toggleShopStatus(shouldBeOpen, triggeredBySchedule: true);
     }
   }
 
-  Future<void> _toggleShopStatus(bool value) async {
+  Future<void> _toggleShopStatus(
+    bool value, {
+    bool triggeredBySchedule = false,
+  }) async {
     try {
       if (!mounted) return;
+
+      // If merchant manually toggles shop status, disable auto schedule to avoid forced overrides.
+      final bool isManualToggle = !triggeredBySchedule;
+      if (isManualToggle && _shopAutoScheduleEnabled) {
+        setState(() {
+          _shopAutoScheduleEnabled = false;
+        });
+      }
 
       setState(() {
         _isShopOpen = value;
@@ -787,6 +798,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
 
       final updateData = {
         'shop_status': value,
+        if (!triggeredBySchedule) 'shop_auto_schedule_enabled': false,
         'updated_at': DateTime.now().toIso8601String(),
       };
 
@@ -794,7 +806,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           .from('profiles')
           .update(updateData)
           .eq('id', userId)
-          .select('shop_status')
+          .select('shop_status, shop_auto_schedule_enabled')
           .maybeSingle();
 
       final updatedRaw = updated?['shop_status'];
@@ -810,9 +822,14 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
 
       if (mounted) {
         final colorScheme = Theme.of(context).colorScheme;
+        final autoDisabled = updated?['shop_auto_schedule_enabled'] == false;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(value ? 'เปิดร้านแล้ว' : 'ปิดร้านแล้ว'),
+            content: Text(
+              value
+                  ? (autoDisabled ? 'เปิดร้านแล้ว (ปิดอัตโนมัติถูกปิด)' : 'เปิดร้านแล้ว')
+                  : (autoDisabled ? 'ปิดร้านแล้ว (ปิดอัตโนมัติถูกปิด)' : 'ปิดร้านแล้ว'),
+            ),
             backgroundColor:
                 value ? AppTheme.accentOrange : colorScheme.outline,
             duration: const Duration(seconds: 2),
