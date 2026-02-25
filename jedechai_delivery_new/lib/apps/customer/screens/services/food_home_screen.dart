@@ -388,7 +388,9 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
       elevation: 0,
       automaticallyImplyLeading: false,
       backgroundColor: Colors.transparent,
-      expandedHeight: 128,
+      toolbarHeight: 140,
+      collapsedHeight: 140,
+      expandedHeight: 140,
       flexibleSpace: FlexibleSpaceBar(
         collapseMode: CollapseMode.pin,
         background: Container(
