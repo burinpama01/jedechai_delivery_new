@@ -17,11 +17,10 @@ allprojects {
 
 // Keep root build script minimal to avoid interfering with AGP merge tasks.
 
-val flutterBuildDir = rootProject.layout.buildDirectory.dir("../build").get()
-rootProject.layout.buildDirectory.set(flutterBuildDir)
+rootProject.buildDir = file("../build")
 
 subprojects {
-    layout.buildDirectory.set(flutterBuildDir.dir(name))
+    buildDir = File(rootProject.buildDir, name)
 }
 
 subprojects {
@@ -29,5 +28,5 @@ subprojects {
 }
 
 tasks.register<Delete>("clean") {
-    delete(rootProject.layout.buildDirectory)
+    delete(rootProject.buildDir)
 }
