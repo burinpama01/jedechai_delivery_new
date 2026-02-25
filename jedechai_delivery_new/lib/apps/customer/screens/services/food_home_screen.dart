@@ -381,127 +381,137 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
 
   Widget _buildHeader() {
     final colorScheme = Theme.of(context).colorScheme;
-    return SliverToBoxAdapter(
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.accentOrange,
-              AppTheme.accentOrange.withValues(alpha: 0.75),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    return SliverAppBar(
+      pinned: true,
+      floating: false,
+      snap: false,
+      elevation: 0,
+      automaticallyImplyLeading: false,
+      backgroundColor: Colors.transparent,
+      expandedHeight: 128,
+      flexibleSpace: FlexibleSpaceBar(
+        collapseMode: CollapseMode.pin,
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.accentOrange,
+                AppTheme.accentOrange.withValues(alpha: 0.75),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
           ),
-        ),
-        child: Column(
-          children: [
-            // Top bar with back button and title
-            Padding(
-              padding: const EdgeInsets.fromLTRB(4, 8, 16, 0),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.arrow_back, color: colorScheme.onPrimary),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                  Expanded(
-                    child: Text(
-                      'สั่งอาหาร',
-                      style: TextStyle(
-                        color: colorScheme.onPrimary,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+          child: Column(
+            children: [
+              // Top bar with back button and title
+              Padding(
+                padding: const EdgeInsets.fromLTRB(4, 8, 16, 0),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.arrow_back, color: colorScheme.onPrimary),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    Expanded(
+                      child: Text(
+                        'สั่งอาหาร',
+                        style: TextStyle(
+                          color: colorScheme.onPrimary,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  ),
-                  // Cart icon with badge
-                  Consumer<CartProvider>(
-                    builder: (context, cart, _) {
-                      return Stack(
-                        children: [
-                          IconButton(
-                            icon: Icon(
-                              Icons.shopping_bag_outlined,
-                              color: colorScheme.onPrimary,
-                              size: 28,
+                    // Cart icon with badge
+                    Consumer<CartProvider>(
+                      builder: (context, cart, _) {
+                        return Stack(
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                Icons.shopping_bag_outlined,
+                                color: colorScheme.onPrimary,
+                                size: 28,
+                              ),
+                              onPressed: () => _showCartSheet(),
                             ),
-                            onPressed: () => _showCartSheet(),
-                          ),
-                          if (cart.totalItems > 0)
-                            Positioned(
-                              right: 4,
-                              top: 4,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.error,
-                                  shape: BoxShape.circle,
-                                ),
-                                constraints: const BoxConstraints(
-                                    minWidth: 20, minHeight: 20),
-                                child: Text(
-                                  '${cart.totalItems}',
-                                  style: TextStyle(
-                                      color: colorScheme.onError,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold),
-                                  textAlign: TextAlign.center,
+                            if (cart.totalItems > 0)
+                              Positioned(
+                                right: 4,
+                                top: 4,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.error,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  constraints: const BoxConstraints(
+                                      minWidth: 20, minHeight: 20),
+                                  child: Text(
+                                    '${cart.totalItems}',
+                                    style: TextStyle(
+                                        color: colorScheme.onError,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold),
+                                    textAlign: TextAlign.center,
+                                  ),
                                 ),
                               ),
-                            ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-            // Search bar
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainer,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colorScheme.shadow.withValues(alpha: 0.12),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: _onSearchChanged,
-                  decoration: InputDecoration(
-                    hintText: 'ค้นหาร้านอาหาร...',
-                    hintStyle: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
-                      fontSize: 15,
+              ),
+              // Search bar
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainer,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorScheme.shadow.withValues(alpha: 0.12),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: _onSearchChanged,
+                    decoration: InputDecoration(
+                      hintText: 'ค้นหาร้านอาหาร...',
+                      hintStyle: TextStyle(
+                        color: colorScheme.onSurfaceVariant,
+                        fontSize: 15,
+                      ),
+                      prefixIcon:
+                          Icon(Icons.search, color: colorScheme.onSurfaceVariant),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: Icon(
+                                Icons.clear,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                              onPressed: () {
+                                _searchController.clear();
+                                _onSearchChanged('');
+                              },
+                            )
+                          : null,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
                     ),
-                    prefixIcon:
-                        Icon(Icons.search, color: colorScheme.onSurfaceVariant),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: Icon(
-                              Icons.clear,
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                            onPressed: () {
-                              _searchController.clear();
-                              _onSearchChanged('');
-                            },
-                          )
-                        : null,
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
