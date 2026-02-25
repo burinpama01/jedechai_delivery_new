@@ -24,6 +24,12 @@ val isReleaseBuildRequested = gradle.startParameter.taskNames.any {
     it.contains("Release", ignoreCase = true)
 }
 
+val isAndroidBuildRequested = gradle.startParameter.taskNames.any {
+    it.contains("assemble", ignoreCase = true) ||
+        it.contains("bundle", ignoreCase = true) ||
+        it.contains("install", ignoreCase = true)
+}
+
 fun firstNonBlank(vararg values: String?): String {
     return values
         .asSequence()
@@ -58,9 +64,9 @@ if (isReleaseBuildRequested && !hasReleaseKeystoreConfig) {
     )
 }
 
-if (isReleaseBuildRequested && mapsApiKey.isBlank()) {
+if (isAndroidBuildRequested && mapsApiKey.isBlank()) {
     throw GradleException(
-        "Missing GOOGLE_MAPS_API_KEY for release build. " +
+        "Missing GOOGLE_MAPS_API_KEY for Android build. " +
             "Provide it via Gradle property or environment variable.",
     )
 }

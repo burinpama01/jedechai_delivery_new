@@ -243,13 +243,14 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final userEmail = AuthService.userEmail ?? 'ผู้ใช้';
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Jedechai Delivery'),
         backgroundColor: AppTheme.primaryGreen,
-        foregroundColor: Colors.white,
+        foregroundColor: colorScheme.onPrimary,
         actions: [
           // User info
           Padding(
@@ -350,16 +351,15 @@ class _MapScreenState extends State<MapScreen> {
                     heroTag: "mapType",
                     mini: true,
                     onPressed: _toggleMapType,
-                    backgroundColor: Colors.white,
+                    backgroundColor: colorScheme.surface,
                     child: const Icon(Icons.layers, color: AppTheme.primaryGreen),
                   ),
                   const SizedBox(height: 8),
-                  // Current location button
                   FloatingActionButton(
                     heroTag: "currentLocation",
                     mini: true,
                     onPressed: _currentPosition != null ? _moveToCurrentLocation : _determinePosition,
-                    backgroundColor: Colors.white,
+                    backgroundColor: colorScheme.surface,
                     child: _isLoadingLocation
                         ? const SizedBox(
                             width: 16,
@@ -384,14 +384,15 @@ class _MapScreenState extends State<MapScreen> {
                 heroTag: "centerLocation",
                 onPressed: _currentPosition != null ? _moveToCurrentLocation : _determinePosition,
                 backgroundColor: AppTheme.primaryGreen,
-                foregroundColor: Colors.white,
+                foregroundColor: colorScheme.onPrimary,
                 child: _isLoadingLocation
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 24,
                         height: 24,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(colorScheme.onPrimary),
                         ),
                       )
                     : const Icon(Icons.gps_fixed),
@@ -418,14 +419,14 @@ class _MapScreenState extends State<MapScreen> {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: colorScheme.shadow.withValues(alpha: 0.12),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -439,7 +440,7 @@ class _MapScreenState extends State<MapScreen> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey.shade300,
+              color: colorScheme.outlineVariant,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -537,10 +538,11 @@ class _MapScreenState extends State<MapScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('เกิดข้อผิดพลาด: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: colorScheme.error,
           ),
         );
       }
