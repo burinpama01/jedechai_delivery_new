@@ -47,20 +47,11 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
 
-    # Ensure minimum deployment target for all pods
     target.build_configurations.each do |config|
+      # Ensure minimum deployment target for all pods
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
 
-      # Fix Xcode 15+ duplicate symbols
-      config.build_settings['OTHER_LDFLAGS'] ||= ['$(inherited)']
-
-      # Silence warnings for generated code
-      config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
-    end
-  end
-
-  installer.pods_project.targets.each do |target|
-    target.build_configurations.each do |config|
+      # Allow non-modular headers inside framework modules (fixes Firebase Messaging builds)
       config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
     end
   end
