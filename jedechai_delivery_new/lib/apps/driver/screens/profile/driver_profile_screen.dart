@@ -57,96 +57,127 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
 
   Future<void> _showNotificationDebugDialog() async {
     try {
-      final messaging = FirebaseMessaging.instance;
+      if (!mounted) return;
 
-      NotificationSettings? settings;
-      try {
-        settings = await messaging.getNotificationSettings();
-      } catch (e) {
-        debugLog('❌ Could not read notification settings: $e');
-      }
-
+      var isLoading = true;
+      var hasLoaded = false;
+      AuthorizationStatus? permissionStatus;
       String? apnsToken;
-      try {
-        if (defaultTargetPlatform == TargetPlatform.iOS) {
-          apnsToken = await messaging.getAPNSToken();
-        }
-      } catch (e) {
-        debugLog('❌ Could not get APNs token: $e');
-      }
-
       String? fcmToken;
-      try {
-        fcmToken = await messaging.getToken();
-      } catch (e) {
-        debugLog('❌ Could not get FCM token: $e');
-      }
-
-      final permissionStatus = settings?.authorizationStatus;
       final profileToken = _userProfile?['fcm_token']?.toString();
 
-      if (!mounted) return;
       await showDialog<void>(
         context: context,
         builder: (context) {
-          return AlertDialog(
-            title: const Text('Debug: Notification Token'),
-            content: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('App: ${_appVersion ?? '-'}'),
-                  const SizedBox(height: 8),
-                  Text('Permission: ${permissionStatus ?? '-'}'),
-                  const SizedBox(height: 8),
-                  if (defaultTargetPlatform == TargetPlatform.iOS) ...[
-                    const Text('APNs Token:'),
-                    SelectableText(apnsToken ?? '-'),
-                    const SizedBox(height: 8),
-                  ],
-                  const Text('FCM Token:'),
-                  SelectableText(fcmToken ?? '-'),
-                  const SizedBox(height: 8),
-                  const Text('DB profiles.fcm_token:'),
-                  SelectableText(
-                    profileToken?.isNotEmpty == true ? profileToken! : '-',
+          return StatefulBuilder(
+            builder: (context, setDialogState) {
+              if (!hasLoaded) {
+                hasLoaded = true;
+                Future<void>.microtask(() async {
+                  try {
+                    final messaging = FirebaseMessaging.instance;
+
+                    NotificationSettings? settings;
+                    try {
+                      settings = await messaging.getNotificationSettings();
+                      permissionStatus = settings.authorizationStatus;
+                    } catch (e) {
+                      debugLog('❌ Could not read notification settings: $e');
+                    }
+
+                    try {
+                      if (defaultTargetPlatform == TargetPlatform.iOS) {
+                        apnsToken = await messaging.getAPNSToken();
+                      }
+                    } catch (e) {
+                      debugLog('❌ Could not get APNs token: $e');
+                    }
+
+                    try {
+                      fcmToken = await messaging.getToken();
+                    } catch (e) {
+                      debugLog('❌ Could not get FCM token: $e');
+                    }
+                  } finally {
+                    if (context.mounted) {
+                      setDialogState(() {
+                        isLoading = false;
+                      });
+                    }
+                  }
+                });
+              }
+
+              return AlertDialog(
+                title: const Text('Debug: Notification Token'),
+                content: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('App: ${_appVersion ?? '-'}'),
+                      const SizedBox(height: 8),
+                      if (isLoading)
+                        const Text('Loading...')
+                      else ...[
+                        Text('Permission: ${permissionStatus ?? '-'}'),
+                        const SizedBox(height: 8),
+                        if (defaultTargetPlatform == TargetPlatform.iOS) ...[
+                          const Text('APNs Token:'),
+                          SelectableText(apnsToken ?? '-'),
+                          const SizedBox(height: 8),
+                        ],
+                        const Text('FCM Token:'),
+                        SelectableText(fcmToken ?? '-'),
+                        const SizedBox(height: 8),
+                        const Text('DB profiles.fcm_token:'),
+                        SelectableText(
+                          profileToken?.isNotEmpty == true ? profileToken! : '-',
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: isLoading
+                        ? null
+                        : () async {
+                            final text = fcmToken ?? '';
+                            await Clipboard.setData(ClipboardData(text: text));
+                            if (context.mounted) {
+                              Navigator.of(context).pop();
+                            }
+                          },
+                    child: const Text('Copy FCM'),
+                  ),
+                  TextButton(
+                    onPressed: isLoading
+                        ? null
+                        : () async {
+                            final text = [
+                              'app=${_appVersion ?? ''}',
+                              'permission=$permissionStatus',
+                              'apns=${apnsToken ?? ''}',
+                              'fcm=${fcmToken ?? ''}',
+                              'db=${profileToken ?? ''}',
+                            ].join('\n');
+                            await Clipboard.setData(
+                              ClipboardData(text: text),
+                            );
+                            if (context.mounted) {
+                              Navigator.of(context).pop();
+                            }
+                          },
+                    child: const Text('Copy All'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Close'),
                   ),
                 ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () async {
-                  final text = fcmToken ?? '';
-                  await Clipboard.setData(ClipboardData(text: text));
-                  if (context.mounted) {
-                    Navigator.of(context).pop();
-                  }
-                },
-                child: const Text('Copy FCM'),
-              ),
-              TextButton(
-                onPressed: () async {
-                  final text = [
-                    'app=${_appVersion ?? ''}',
-                    'permission=$permissionStatus',
-                    'apns=${apnsToken ?? ''}',
-                    'fcm=${fcmToken ?? ''}',
-                    'db=${profileToken ?? ''}',
-                  ].join('\n');
-                  await Clipboard.setData(ClipboardData(text: text));
-                  if (context.mounted) {
-                    Navigator.of(context).pop();
-                  }
-                },
-                child: const Text('Copy All'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Close'),
-              ),
-            ],
+              );
+            },
           );
         },
       );
