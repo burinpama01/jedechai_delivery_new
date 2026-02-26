@@ -1,5 +1,6 @@
 import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'dart:convert';
+import 'dart:async';
 import 'package:googleapis_auth/auth_io.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/env_config.dart';
@@ -12,6 +13,53 @@ class NotificationSender {
   static const String _kIosApnsTopic = 'com.burin.jdcdelivery';
 
   static const _scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
+
+  static AuthClient? _cachedAuthClient;
+  static DateTime? _cachedAuthClientCreatedAt;
+  static Completer<AuthClient>? _authClientInitCompleter;
+
+  static bool _isMerchantNewOrder(Map<String, String>? data) {
+    final type = (data?['type'] ?? data?['notification_type'])?.trim();
+    return type == 'merchant_new_order';
+  }
+
+  static Future<AuthClient> _getAuthClient() async {
+    final now = DateTime.now();
+
+    // Reuse client for up to ~50 minutes (access tokens typically last 1 hour)
+    if (_cachedAuthClient != null &&
+        _cachedAuthClientCreatedAt != null &&
+        now.difference(_cachedAuthClientCreatedAt!).inMinutes < 50) {
+      return _cachedAuthClient!;
+    }
+
+    if (_authClientInitCompleter != null) {
+      return _authClientInitCompleter!.future;
+    }
+    _authClientInitCompleter = Completer<AuthClient>();
+
+    try {
+      // Close previous client if any
+      try {
+        _cachedAuthClient?.close();
+      } catch (_) {}
+
+      final newClient = await clientViaServiceAccount(
+        ServiceAccountCredentials.fromJson(_serviceAccountJson),
+        _scopes,
+      );
+
+      _cachedAuthClient = newClient;
+      _cachedAuthClientCreatedAt = now;
+      _authClientInitCompleter!.complete(newClient);
+      return newClient;
+    } catch (e) {
+      _authClientInitCompleter!.completeError(e);
+      rethrow;
+    } finally {
+      _authClientInitCompleter = null;
+    }
+  }
 
   // --- 2. ฟังก์ชันหลัก: สั่งงานด้วย User ID (ใช้ง่ายสุดๆ) ---
   static Future<void> sendToUser({
@@ -77,16 +125,17 @@ class NotificationSender {
   static Future<bool> _sendViaV1(String token, String title, String body,
       {String? userId, Map<String, String>? data}) async {
     try {
-      final authClient = await clientViaServiceAccount(
-        ServiceAccountCredentials.fromJson(_serviceAccountJson),
-        _scopes,
-      );
+      final authClient = await _getAuthClient();
 
-      final isMerchantNewOrder = data?['type'] == 'merchant_new_order';
+      final isMerchantNewOrder = _isMerchantNewOrder(data);
       final androidChannelId = isMerchantNewOrder
           ? 'merchant_new_order_channel_v1'
           : 'high_importance_channel';
       final androidSound = isMerchantNewOrder ? 'alert_new_order' : 'default';
+
+      final collapseId = isMerchantNewOrder
+          ? 'merchant_new_order_${data?['booking_id'] ?? DateTime.now().millisecondsSinceEpoch}'
+          : 'default_${DateTime.now().millisecondsSinceEpoch}';
 
       final mergedData = {
         'title': title,
@@ -101,6 +150,8 @@ class NotificationSender {
           'apns-push-type': 'alert',
           'apns-priority': '10',
           'apns-topic': _kIosApnsTopic,
+          // Reduce APNs collapsing which can suppress repeated sound
+          'apns-collapse-id': collapseId,
         },
         'payload': {
           'aps': {
@@ -148,7 +199,6 @@ class NotificationSender {
         debugLog('   └─ Token: ${token.substring(0, 20)}...');
         debugLog('   └─ Title: $title');
         debugLog('   └─ Body: $body');
-        authClient.close();
         return true;
       } else {
         debugLog('❌ ส่งไม่สำเร็จ: ${response.statusCode}');
@@ -166,7 +216,6 @@ class NotificationSender {
           }
         }
       }
-      authClient.close();
       return false;
     } catch (e) {
       debugLog('💥 Error V1 API: $e');
