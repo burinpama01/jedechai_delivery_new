@@ -9,6 +9,8 @@ class NotificationSender {
   static Map<String, String> get _serviceAccountJson =>
       EnvConfig.firebaseServiceAccountJson;
 
+  static const String _kIosApnsTopic = 'com.burin.jdcdelivery';
+
   static const _scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
 
   // --- 2. ฟังก์ชันหลัก: สั่งงานด้วย User ID (ใช้ง่ายสุดๆ) ---
@@ -72,7 +74,7 @@ class NotificationSender {
   }
 
   // --- 3. ระบบส่ง V1 (Private Function) ---
-  static Future<void> _sendViaV1(String token, String title, String body,
+  static Future<bool> _sendViaV1(String token, String title, String body,
       {String? userId, Map<String, String>? data}) async {
     try {
       final authClient = await clientViaServiceAccount(
@@ -94,6 +96,23 @@ class NotificationSender {
         if (data != null) ...data,
       };
 
+      final apnsPayload = {
+        'headers': {
+          'apns-push-type': 'alert',
+          'apns-priority': '10',
+          'apns-topic': _kIosApnsTopic,
+        },
+        'payload': {
+          'aps': {
+            'alert': {
+              'title': title,
+              'body': body,
+            },
+            'sound': isMerchantNewOrder ? 'AlertNewOrder.wav' : 'default',
+          },
+        },
+      };
+
       final messagePayload = {
         'token': token,
         'data': mergedData,
@@ -110,22 +129,7 @@ class NotificationSender {
             'title': title,
             'body': body,
           },
-        if (isMerchantNewOrder)
-          'apns': {
-            'headers': {
-              'apns-push-type': 'alert',
-              'apns-priority': '10',
-            },
-            'payload': {
-              'aps': {
-                'alert': {
-                  'title': title,
-                  'body': body,
-                },
-                'sound': 'AlertNewOrder.wav',
-              },
-            },
-          },
+        'apns': apnsPayload,
       };
 
       final response = await authClient.post(
@@ -144,6 +148,8 @@ class NotificationSender {
         debugLog('   └─ Token: ${token.substring(0, 20)}...');
         debugLog('   └─ Title: $title');
         debugLog('   └─ Body: $body');
+        authClient.close();
+        return true;
       } else {
         debugLog('❌ ส่งไม่สำเร็จ: ${response.statusCode}');
         debugLog('   └─ Response: ${response.body}');
@@ -161,8 +167,10 @@ class NotificationSender {
         }
       }
       authClient.close();
+      return false;
     } catch (e) {
       debugLog('💥 Error V1 API: $e');
+      return false;
     }
   }
 
@@ -187,14 +195,30 @@ class NotificationSender {
     bool persistInApp = true,
   }) async {
     try {
-      await sendToUser(
-        userId: targetUserId,
-        title: title,
-        body: body,
-        data: data,
-        persistInApp: persistInApp,
-      );
-      return true;
+      if (persistInApp) {
+        await _persistInAppNotification(
+          userId: targetUserId,
+          title: title,
+          body: body,
+          data: data,
+        );
+      }
+
+      debugLog('🔍 กำลังค้นหา Token ของ User: $targetUserId');
+      final response = await Supabase.instance.client
+          .from('profiles')
+          .select('fcm_token')
+          .eq('id', targetUserId)
+          .maybeSingle();
+
+      final token = response?['fcm_token'] as String?;
+      if (token == null || token.trim().isEmpty) {
+        debugLog('⚠️ ไม่พบ Token ของผู้ใช้นี้');
+        return false;
+      }
+
+      return await _sendViaV1(token.trim(), title, body,
+          userId: targetUserId, data: data);
     } catch (e) {
       debugLog('❌ Error in sendNotification: $e');
       return false;
