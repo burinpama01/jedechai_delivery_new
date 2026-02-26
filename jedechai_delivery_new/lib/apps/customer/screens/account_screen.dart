@@ -1,6 +1,9 @@
 import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../common/services/auth_service.dart';
 import '../../../common/services/profile_service.dart';
@@ -26,6 +29,8 @@ class _AccountScreenState extends State<AccountScreen> {
   Map<String, dynamic>? _userProfile;
   bool _isLoading = true;
   String? _error;
+  String? _appVersion;
+  int _versionTapCount = 0;
 
   static const Color _accent = AppTheme.accentBlue;
   static const List<Color> _gradient = [AppTheme.accentBlue, Color(0xFF1E3A8A)];
@@ -34,6 +39,117 @@ class _AccountScreenState extends State<AccountScreen> {
   void initState() {
     super.initState();
     _fetchUserProfile();
+    _loadAppVersion();
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (!mounted) return;
+      setState(() {
+        _appVersion = '${info.version}+${info.buildNumber}';
+      });
+    } catch (e) {
+      debugLog('❌ Error loading app version: $e');
+    }
+  }
+
+  Future<void> _showNotificationDebugDialog() async {
+    try {
+      final messaging = FirebaseMessaging.instance;
+
+      NotificationSettings? settings;
+      try {
+        settings = await messaging.getNotificationSettings();
+      } catch (e) {
+        debugLog('❌ Could not read notification settings: $e');
+      }
+
+      String? apnsToken;
+      try {
+        if (DefaultTargetPlatform.iOS == defaultTargetPlatform) {
+          apnsToken = await messaging.getAPNSToken();
+        }
+      } catch (e) {
+        debugLog('❌ Could not get APNs token: $e');
+      }
+
+      String? fcmToken;
+      try {
+        fcmToken = await messaging.getToken();
+      } catch (e) {
+        debugLog('❌ Could not get FCM token: $e');
+      }
+
+      final permissionStatus = settings?.authorizationStatus;
+      final profileToken = _userProfile?['fcm_token']?.toString();
+
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Debug: Notification Token'),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('App: ${_appVersion ?? '-'}'),
+                  const SizedBox(height: 8),
+                  Text('Permission: ${permissionStatus ?? '-'}'),
+                  const SizedBox(height: 8),
+                  if (defaultTargetPlatform == TargetPlatform.iOS) ...[
+                    const Text('APNs Token:'),
+                    SelectableText(apnsToken ?? '-'),
+                    const SizedBox(height: 8),
+                  ],
+                  const Text('FCM Token:'),
+                  SelectableText(fcmToken ?? '-'),
+                  const SizedBox(height: 8),
+                  const Text('DB profiles.fcm_token:'),
+                  SelectableText(profileToken?.isNotEmpty == true ? profileToken! : '-'),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () async {
+                  final text = fcmToken ?? '';
+                  await Clipboard.setData(ClipboardData(text: text));
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+                  }
+                },
+                child: const Text('Copy FCM'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final text = [
+                    'app=${_appVersion ?? ''}',
+                    'permission=$permissionStatus',
+                    'apns=${apnsToken ?? ''}',
+                    'fcm=${fcmToken ?? ''}',
+                    'db=${profileToken ?? ''}',
+                  ].join('\n');
+                  await Clipboard.setData(ClipboardData(text: text));
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+                  }
+                },
+                child: const Text('Copy All'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Close'),
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {
+      debugLog('❌ Failed to show notification debug dialog: $e');
+    }
   }
 
   Future<void> _fetchUserProfile() async {
@@ -660,9 +776,19 @@ class _AccountScreenState extends State<AccountScreen> {
                 style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
               ),
               const Spacer(),
-              Text(
-                '1.0.0',
-                style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+              GestureDetector(
+                onTap: () {
+                  _versionTapCount += 1;
+                  if (_versionTapCount >= 7) {
+                    _versionTapCount = 0;
+                    _showNotificationDebugDialog();
+                  }
+                },
+                child: Text(
+                  _appVersion ?? 'กำลังโหลด...',
+                  style:
+                      TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                ),
               ),
             ],
           ),

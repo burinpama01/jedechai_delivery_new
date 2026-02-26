@@ -1,5 +1,7 @@
 import 'package:jedechai_delivery_new/utils/debug_logger.dart';
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -209,6 +211,7 @@ class FCMNotificationService {
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
   String? _fcmToken;
+  StreamSubscription<String>? _tokenRefreshSubscription;
 
   /// Initialize FCM service
   Future<void> initialize() async {
@@ -235,6 +238,25 @@ class FCMNotificationService {
       // Get FCM token
       debugLog('🔍 Step 4: Getting FCM token...');
       await _getFCMToken();
+
+      // Listen for token refresh (iOS token can be ready after login)
+      debugLog('🔍 Step 4.1: Listening for FCM token refresh...');
+      _tokenRefreshSubscription?.cancel();
+      _tokenRefreshSubscription =
+          FirebaseMessaging.instance.onTokenRefresh.listen((token) async {
+        try {
+          if (token.trim().isEmpty) {
+            return;
+          }
+          _fcmToken = token;
+          debugLog('🔄 FCM token refreshed');
+          debugLog('   └─ Token: ${token.substring(0, token.length > 20 ? 20 : token.length)}...');
+          await _saveFCMTokenToSupabase(token);
+        } catch (e) {
+          debugLog('❌ Failed to handle token refresh: $e');
+        }
+      });
+      debugLog('   └─ Token refresh listener set');
 
       // Setup message handlers
       debugLog('🔍 Step 5: Setting up message handlers...');
@@ -334,7 +356,65 @@ class FCMNotificationService {
       debugLog('🔔 Getting FCM token...');
       debugLog('   └─ Attempting to get token from Firebase...');
 
-      _fcmToken = await _firebaseMessaging!.getToken();
+      if (_firebaseMessaging == null) {
+        debugLog('❌ FirebaseMessaging is not initialized');
+        return;
+      }
+
+      try {
+        await _firebaseMessaging!.setAutoInitEnabled(true);
+      } catch (e) {
+        debugLog('⚠️ Could not enable auto-init for FCM: $e');
+      }
+
+      NotificationSettings? settings;
+      try {
+        settings = await _firebaseMessaging!.getNotificationSettings();
+      } catch (e) {
+        debugLog('⚠️ Could not read notification settings: $e');
+      }
+
+      final currentStatus = settings?.authorizationStatus;
+      debugLog('📋 Current permission status: $currentStatus');
+      if (currentStatus == AuthorizationStatus.denied) {
+        debugLog('❌ Permission denied. Skip token fetch.');
+        return;
+      }
+
+      if (currentStatus == AuthorizationStatus.notDetermined) {
+        await _requestPermissions();
+      }
+
+      if (Platform.isIOS) {
+        String? apnsToken;
+        for (var i = 0; i < 5; i++) {
+          try {
+            apnsToken = await _firebaseMessaging!.getAPNSToken();
+          } catch (e) {
+            debugLog('⚠️ getAPNSToken failed: $e');
+          }
+
+          if (apnsToken != null && apnsToken.isNotEmpty) {
+            debugLog('✅ APNs token ready');
+            debugLog('   └─ APNs: ${apnsToken.substring(0, apnsToken.length > 12 ? 12 : apnsToken.length)}...');
+            break;
+          }
+
+          await Future<void>.delayed(const Duration(milliseconds: 800));
+        }
+
+        if (apnsToken == null || apnsToken.isEmpty) {
+          debugLog('⚠️ APNs token is still null. FCM token may be null on iOS.');
+        }
+      }
+
+      for (var i = 0; i < 5; i++) {
+        _fcmToken = await _firebaseMessaging!.getToken();
+        if (_fcmToken != null && _fcmToken!.isNotEmpty) {
+          break;
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 800));
+      }
 
       if (_fcmToken != null) {
         debugLog('✅ FCM Token obtained successfully');
@@ -587,6 +667,14 @@ class FCMNotificationService {
 
   /// Save FCM token (compatibility method)
   Future<void> saveToken() async {
-    await _getFCMToken();
+    try {
+      if (_firebaseMessaging == null) {
+        debugLog('🔄 saveToken: FirebaseMessaging not ready, initializing...');
+        await initialize();
+      }
+      await _getFCMToken();
+    } catch (e) {
+      debugLog('❌ saveToken failed: $e');
+    }
   }
 }
