@@ -121,7 +121,7 @@ DarwinNotificationDetails _buildDarwinNotificationDetails({
     presentAlert: true,
     presentBadge: true,
     presentSound: true,
-    sound: isMerchantNewOrder ? 'AlertNewOrder.wav' : null,
+    sound: isMerchantNewOrder ? 'AlertNewOrder.caf' : null,
     interruptionLevel:
         isMerchantNewOrder ? InterruptionLevel.timeSensitive : null,
   );

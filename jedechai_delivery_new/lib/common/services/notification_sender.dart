@@ -108,7 +108,7 @@ class NotificationSender {
               'title': title,
               'body': body,
             },
-            'sound': isMerchantNewOrder ? 'AlertNewOrder.wav' : 'default',
+            'sound': isMerchantNewOrder ? 'AlertNewOrder.caf' : 'default',
           },
         },
       };
