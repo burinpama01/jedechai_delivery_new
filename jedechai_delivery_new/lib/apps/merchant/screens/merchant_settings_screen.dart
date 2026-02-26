@@ -90,6 +90,9 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
       AuthorizationStatus? permissionStatus;
       String? apnsToken;
       String? fcmToken;
+      String? bundleId;
+      String? firebaseProjectId;
+      String? firebaseAppId;
       String? firebaseError;
       String? settingsError;
       String? apnsError;
@@ -115,6 +118,21 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                     await Firebase.initializeApp();
                   } catch (e) {
                     firebaseError = e.toString();
+                  }
+
+                  try {
+                    final app = Firebase.app();
+                    firebaseProjectId = app.options.projectId;
+                    firebaseAppId = app.options.appId;
+                  } catch (e) {
+                    debugLog('❌ Could not read Firebase.app options: $e');
+                  }
+
+                  try {
+                    final info = await PackageInfo.fromPlatform();
+                    bundleId = info.packageName;
+                  } catch (e) {
+                    debugLog('❌ Could not read bundle id: $e');
                   }
 
                   final messaging = FirebaseMessaging.instance;
@@ -166,6 +184,9 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text('App: ${_appVersion ?? '-'}'),
+                      Text('Bundle: ${bundleId ?? '-'}'),
+                      Text('Firebase project: ${firebaseProjectId ?? '-'}'),
+                      Text('Firebase appId: ${firebaseAppId ?? '-'}'),
                       const SizedBox(height: 8),
                       if (isLoading)
                         const Text('Loading...')
