@@ -146,7 +146,7 @@ class _MenuOptionSelectorState extends State<MenuOptionSelector> {
           width: hasError ? 2 : 1,
         ),
         borderRadius: BorderRadius.circular(8),
-        color: hasError ? colorScheme.errorContainer : null,
+        color: colorScheme.surface,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -173,9 +173,7 @@ class _MenuOptionSelectorState extends State<MenuOptionSelector> {
       width: double.infinity,
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: hasError
-            ? colorScheme.errorContainer
-            : colorScheme.surfaceContainerHighest,
+        color: colorScheme.surfaceContainerHighest,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(8),
           topRight: Radius.circular(8),
@@ -192,7 +190,7 @@ class _MenuOptionSelectorState extends State<MenuOptionSelector> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: hasError ? colorScheme.onErrorContainer : colorScheme.onSurface,
+                    color: colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -200,11 +198,20 @@ class _MenuOptionSelectorState extends State<MenuOptionSelector> {
                   group.selectionType,
                   style: TextStyle(
                     fontSize: 12,
-                    color: hasError
-                        ? colorScheme.onErrorContainer.withValues(alpha: 0.85)
-                        : colorScheme.onSurfaceVariant,
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
+                if (hasError) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    _validationErrors[group.id] ?? '',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colorScheme.error,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -212,13 +219,13 @@ class _MenuOptionSelectorState extends State<MenuOptionSelector> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: hasError ? colorScheme.error : colorScheme.secondary,
+                color: colorScheme.secondaryContainer,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Text(
+              child: Text(
                 'จำเป็น',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: colorScheme.onSecondaryContainer,
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
                 ),
@@ -320,8 +327,8 @@ class _MenuOptionSelectorState extends State<MenuOptionSelector> {
       margin: const EdgeInsets.only(top: 16.0),
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: colorScheme.errorContainer,
-        border: Border.all(color: colorScheme.error.withValues(alpha: 0.35)),
+        color: colorScheme.surfaceContainerHighest,
+        border: Border.all(color: colorScheme.error.withValues(alpha: 0.5)),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -329,12 +336,12 @@ class _MenuOptionSelectorState extends State<MenuOptionSelector> {
         children: [
           Row(
             children: [
-              Icon(Icons.error_outline, color: colorScheme.onErrorContainer, size: 20),
+              Icon(Icons.error_outline, color: colorScheme.error, size: 20),
               const SizedBox(width: 8),
               Text(
                 'กรุณาเลือกตัวเลือกที่จำเป็นให้ครบ',
                 style: TextStyle(
-                  color: colorScheme.onErrorContainer,
+                  color: colorScheme.error,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -346,7 +353,7 @@ class _MenuOptionSelectorState extends State<MenuOptionSelector> {
             child: Text(
               '• ${entry.value}',
               style: TextStyle(
-                color: colorScheme.onErrorContainer.withValues(alpha: 0.9),
+                color: colorScheme.onSurfaceVariant,
                 fontSize: 14,
               ),
             ),

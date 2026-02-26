@@ -21,6 +21,12 @@ const String _kMerchantNewOrderChannelDescription =
 
 const int _kAndroidNotificationFlagInsistent = 4;
 
+bool _isMerchantNewOrderMessage(RemoteMessage message) {
+  final rawType = message.data['type'] ?? message.data['notification_type'];
+  final type = rawType?.toString().trim();
+  return type == 'merchant_new_order';
+}
+
 String _resolveNotificationTitle(RemoteMessage message) {
   final notificationTitle = message.notification?.title?.trim();
   if (notificationTitle != null && notificationTitle.isNotEmpty) {
@@ -144,7 +150,7 @@ Future<void> _showBackgroundLocalNotification(RemoteMessage message) async {
   await localNotifications.initialize(settings);
   await _ensureAndroidNotificationChannels(localNotifications);
 
-  final isMerchantNewOrder = message.data['type'] == 'merchant_new_order';
+  final isMerchantNewOrder = _isMerchantNewOrderMessage(message);
   final notificationId = message.messageId?.hashCode ??
       DateTime.now().millisecondsSinceEpoch.remainder(1 << 31);
   final darwinDetails = _buildDarwinNotificationDetails(
@@ -192,7 +198,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     return;
   }
 
-  final isMerchantNewOrder = message.data['type'] == 'merchant_new_order';
+  final isMerchantNewOrder = _isMerchantNewOrderMessage(message);
   if (message.notification == null || isMerchantNewOrder) {
     try {
       await _showBackgroundLocalNotification(message);
@@ -599,7 +605,7 @@ class FCMNotificationService {
     debugLog('📦 Payload: ${jsonEncode(message.data)}');
 
     try {
-      final isMerchantNewOrder = message.data['type'] == 'merchant_new_order';
+      final isMerchantNewOrder = _isMerchantNewOrderMessage(message);
       final androidDetails = _buildAndroidNotificationDetails(
         isMerchantNewOrder: isMerchantNewOrder,
         insistent: false,
@@ -613,10 +619,12 @@ class FCMNotificationService {
         iOS: darwinDetails,
       );
 
-      debugLog('🔔 Showing notification with ID: ${message.hashCode}');
+      final notificationId = message.messageId?.hashCode ??
+          DateTime.now().millisecondsSinceEpoch.remainder(1 << 31);
+      debugLog('🔔 Showing notification with ID: $notificationId');
 
       await _localNotifications.show(
-        message.hashCode,
+        notificationId,
         _resolveNotificationTitle(message),
         _resolveNotificationBody(message),
         notificationDetails,

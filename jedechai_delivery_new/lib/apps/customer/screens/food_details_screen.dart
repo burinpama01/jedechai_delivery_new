@@ -5,6 +5,7 @@ import '../../../common/services/menu_option_service.dart';
 import '../../../common/widgets/menu_option_selector.dart';
 import '../../../common/models/menu_item.dart';
 import '../../../common/widgets/app_network_image.dart';
+import '../../../theme/app_theme.dart';
 
 class FoodDetailsScreen extends StatefulWidget {
   final MenuItem menuItem;
@@ -300,6 +301,8 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
 
   Widget _buildFoodHeader() {
     final colorScheme = Theme.of(context).colorScheme;
+    final availabilityColor =
+        widget.menuItem.isAvailable ? colorScheme.tertiary : colorScheme.error;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -321,7 +324,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).primaryColor,
+                color: colorScheme.primary,
               ),
             ),
             const SizedBox(width: 12),
@@ -350,14 +353,14 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
             Icon(
               widget.menuItem.isAvailable ? Icons.check_circle : Icons.cancel,
               size: 16,
-              color: widget.menuItem.isAvailable ? Colors.green : Colors.red,
+              color: availabilityColor,
             ),
             const SizedBox(width: 4),
             Text(
               widget.menuItem.isAvailable ? 'พร้อมจำหน่าย' : 'หมด',
               style: TextStyle(
                 fontSize: 14,
-                color: widget.menuItem.isAvailable ? Colors.green : Colors.red,
+                color: availabilityColor,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -414,19 +417,19 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.orange.shade50,
+              color: colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.orange.shade200),
+              border: Border.all(color: colorScheme.outlineVariant),
             ),
             child: Row(
               children: [
-                Icon(Icons.refresh, color: Colors.orange.shade600),
+                Icon(Icons.refresh, color: colorScheme.onSurfaceVariant),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'กำลังโหลดตัวเลือก...',
                     style: TextStyle(
-                      color: Colors.orange.shade600,
+                      color: colorScheme.onSurfaceVariant,
                       fontSize: 14,
                     ),
                   ),
@@ -436,7 +439,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+                    valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accentOrange),
                   ),
                 ),
               ],

@@ -1,7 +1,7 @@
 name: jedechai_delivery_new
 description: Super App for Food Delivery, Parcel Delivery, and Passenger Transport
 publish_to: 'none'
-version: 1.0.8+28
+version: 1.0.8+29
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

@@ -103,9 +103,9 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('ลบเมนูสำเร็จ'),
-              backgroundColor: AppTheme.accentOrange,
+            SnackBar(
+              content: const Text('ลบเมนูสำเร็จ'),
+              backgroundColor: Theme.of(context).colorScheme.primary,
             ),
           );
         }
@@ -138,7 +138,10 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
               _fetchMenuItems();
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('ซ่อนเมนูสำเร็จ (เปลี่ยนเป็น "หมด")'), backgroundColor: AppTheme.accentOrange),
+                  SnackBar(
+                    content: const Text('ซ่อนเมนูสำเร็จ (เปลี่ยนเป็น "หมด")'),
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                  ),
                 );
               }
             }
@@ -146,7 +149,10 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
         } else {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('ไม่สามารถลบเมนู: $e'), backgroundColor: Colors.red),
+              SnackBar(
+                content: Text('ไม่สามารถลบเมนู: $e'),
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
             );
           }
         }
@@ -174,7 +180,8 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(newValue ? 'เปิดการขายเมนูแล้ว' : 'ปิดการขายเมนูแล้ว'),
-            backgroundColor: newValue ? AppTheme.accentOrange : Colors.grey,
+            backgroundColor:
+                newValue ? Theme.of(context).colorScheme.primary : Colors.grey,
             duration: const Duration(seconds: 1),
           ),
         );
@@ -189,7 +196,10 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('เปลี่ยนสถานะไม่สำเร็จ: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('เปลี่ยนสถานะไม่สำเร็จ: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
         );
       }
     }
@@ -220,13 +230,14 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: const Text('จัดการเมนู'),
-        backgroundColor: Colors.white,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
-        foregroundColor: Colors.black,
+        foregroundColor: colorScheme.onSurface,
         actions: [
           IconButton(
             icon: const Icon(Icons.category),
@@ -261,6 +272,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     }
 
     if (_error != null) {
+      final colorScheme = Theme.of(context).colorScheme;
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -268,7 +280,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
             Icon(
               Icons.error_outline,
               size: 64,
-              color: Colors.red[400],
+              color: colorScheme.error,
             ),
             const SizedBox(height: 16),
             Text(
@@ -276,7 +288,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.red[400],
+                color: colorScheme.error,
               ),
             ),
             const SizedBox(height: 8),
@@ -285,15 +297,15 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[600],
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: _fetchMenuItems,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accentOrange,
-                foregroundColor: Colors.white,
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
               ),
               child: const Text('ลองใหม่'),
             ),
@@ -303,6 +315,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     }
 
     if (_menuItems.isEmpty) {
+      final colorScheme = Theme.of(context).colorScheme;
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -310,7 +323,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
             Icon(
               Icons.restaurant_menu,
               size: 64,
-              color: Colors.grey[400],
+              color: colorScheme.onSurfaceVariant,
             ),
             const SizedBox(height: 16),
             Text(
@@ -318,7 +331,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey[600],
+                color: colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
@@ -326,7 +339,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
               'กดปุ่ม + เพื่อเพิ่มเมนูแรกของคุณ',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[500],
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -349,12 +362,12 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.08),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -370,7 +383,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
               height: 80,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
-                color: Colors.grey[200],
+                color: colorScheme.surfaceContainerHighest,
               ),
               child: item['image_url'] != null && item['image_url'].isNotEmpty
                   ? ClipRRect(
@@ -378,7 +391,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                       child: AppNetworkImage(
                         imageUrl: item['image_url']?.toString(),
                         fit: BoxFit.cover,
-                        backgroundColor: Colors.grey[200],
+                        backgroundColor: colorScheme.surfaceContainerHighest,
                       ),
                     )
                   : const GrayscaleLogoPlaceholder(
@@ -455,7 +468,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                       item['description'],
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey[600],
+                        color: colorScheme.onSurfaceVariant,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -476,14 +489,14 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.blue.withValues(alpha: 0.1),
+                            color: colorScheme.secondaryContainer,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             item['category'],
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
-                              color: Colors.blue,
+                              color: colorScheme.onSecondaryContainer,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
