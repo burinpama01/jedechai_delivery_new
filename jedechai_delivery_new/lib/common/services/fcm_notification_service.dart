@@ -122,6 +122,8 @@ DarwinNotificationDetails _buildDarwinNotificationDetails({
     presentBadge: true,
     presentSound: true,
     sound: isMerchantNewOrder ? 'AlertNewOrder.wav' : null,
+    interruptionLevel:
+        isMerchantNewOrder ? InterruptionLevel.timeSensitive : null,
   );
 }
 
@@ -281,9 +283,9 @@ class FCMNotificationService {
 
     try {
       await _firebaseMessaging!.setForegroundNotificationPresentationOptions(
-        alert: false,
-        badge: false,
-        sound: false,
+        alert: true,
+        badge: true,
+        sound: true,
       );
       debugLog('✅ Foreground presentation options configured');
     } catch (e) {
