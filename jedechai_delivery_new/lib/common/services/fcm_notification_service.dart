@@ -119,7 +119,7 @@ DarwinNotificationDetails _buildDarwinNotificationDetails({
     presentAlert: true,
     presentBadge: true,
     presentSound: true,
-    sound: isMerchantNewOrder ? 'AlertNewOrder.mp3' : null,
+    sound: isMerchantNewOrder ? 'AlertNewOrder.wav' : null,
   );
 }
 

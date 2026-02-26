@@ -113,6 +113,7 @@ class NotificationSender {
         if (isMerchantNewOrder)
           'apns': {
             'headers': {
+              'apns-push-type': 'alert',
               'apns-priority': '10',
             },
             'payload': {
@@ -121,7 +122,7 @@ class NotificationSender {
                   'title': title,
                   'body': body,
                 },
-                'sound': 'AlertNewOrder.mp3',
+                'sound': 'AlertNewOrder.wav',
               },
             },
           },
