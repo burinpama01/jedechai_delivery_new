@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -89,6 +90,10 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
       AuthorizationStatus? permissionStatus;
       String? apnsToken;
       String? fcmToken;
+      String? firebaseError;
+      String? settingsError;
+      String? apnsError;
+      String? fcmError;
       final profileToken = _userProfile?['fcm_token']?.toString();
 
       await showDialog<void>(
@@ -96,40 +101,60 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
         builder: (context) {
           return StatefulBuilder(
             builder: (context, setDialogState) {
+              Future<void> load() async {
+                setDialogState(() {
+                  isLoading = true;
+                  firebaseError = null;
+                  settingsError = null;
+                  apnsError = null;
+                  fcmError = null;
+                });
+
+                try {
+                  try {
+                    await Firebase.initializeApp();
+                  } catch (e) {
+                    firebaseError = e.toString();
+                  }
+
+                  final messaging = FirebaseMessaging.instance;
+
+                  try {
+                    final settings = await messaging.getNotificationSettings();
+                    permissionStatus = settings.authorizationStatus;
+                  } catch (e) {
+                    settingsError = e.toString();
+                    debugLog('❌ Could not read notification settings: $e');
+                  }
+
+                  try {
+                    if (defaultTargetPlatform == TargetPlatform.iOS) {
+                      apnsToken = await messaging.getAPNSToken();
+                    }
+                  } catch (e) {
+                    apnsError = e.toString();
+                    debugLog('❌ Could not get APNs token: $e');
+                  }
+
+                  try {
+                    fcmToken = await messaging.getToken();
+                  } catch (e) {
+                    fcmError = e.toString();
+                    debugLog('❌ Could not get FCM token: $e');
+                  }
+                } finally {
+                  if (context.mounted) {
+                    setDialogState(() {
+                      isLoading = false;
+                    });
+                  }
+                }
+              }
+
               if (!hasLoaded) {
                 hasLoaded = true;
                 Future<void>.microtask(() async {
-                  try {
-                    final messaging = FirebaseMessaging.instance;
-
-                    NotificationSettings? settings;
-                    try {
-                      settings = await messaging.getNotificationSettings();
-                      permissionStatus = settings.authorizationStatus;
-                    } catch (e) {
-                      debugLog('❌ Could not read notification settings: $e');
-                    }
-
-                    try {
-                      if (defaultTargetPlatform == TargetPlatform.iOS) {
-                        apnsToken = await messaging.getAPNSToken();
-                      }
-                    } catch (e) {
-                      debugLog('❌ Could not get APNs token: $e');
-                    }
-
-                    try {
-                      fcmToken = await messaging.getToken();
-                    } catch (e) {
-                      debugLog('❌ Could not get FCM token: $e');
-                    }
-                  } finally {
-                    if (context.mounted) {
-                      setDialogState(() {
-                        isLoading = false;
-                      });
-                    }
-                  }
+                  await load();
                 });
               }
 
@@ -145,15 +170,23 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                       if (isLoading)
                         const Text('Loading...')
                       else ...[
+                        if (firebaseError != null) ...[
+                          Text('Firebase init error: $firebaseError'),
+                          const SizedBox(height: 8),
+                        ],
                         Text('Permission: ${permissionStatus ?? '-'}'),
+                        if (settingsError != null)
+                          Text('Permission error: $settingsError'),
                         const SizedBox(height: 8),
                         if (defaultTargetPlatform == TargetPlatform.iOS) ...[
                           const Text('APNs Token:'),
                           SelectableText(apnsToken ?? '-'),
+                          if (apnsError != null) Text('APNs error: $apnsError'),
                           const SizedBox(height: 8),
                         ],
                         const Text('FCM Token:'),
                         SelectableText(fcmToken ?? '-'),
+                        if (fcmError != null) Text('FCM error: $fcmError'),
                         const SizedBox(height: 8),
                         const Text('DB profiles.fcm_token:'),
                         SelectableText(
@@ -164,6 +197,28 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                   ),
                 ),
                 actions: [
+                  TextButton(
+                    onPressed: isLoading
+                        ? null
+                        : () async {
+                            try {
+                              final messaging = FirebaseMessaging.instance;
+                              await messaging.requestPermission(
+                                alert: true,
+                                badge: true,
+                                sound: true,
+                              );
+                            } catch (e) {
+                              debugLog('❌ requestPermission failed: $e');
+                            }
+                            await load();
+                          },
+                    child: const Text('Request Permission'),
+                  ),
+                  TextButton(
+                    onPressed: isLoading ? null : () => load(),
+                    child: const Text('Refresh'),
+                  ),
                   TextButton(
                     onPressed: isLoading
                         ? null
