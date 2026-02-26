@@ -778,17 +778,31 @@ class _AccountScreenState extends State<AccountScreen> {
               ),
               const Spacer(),
               GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onTap: () {
                   _versionTapCount += 1;
+
+                  ScaffoldMessenger.of(context).clearSnackBars();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Debug: ${_versionTapCount}/7'),
+                      duration: const Duration(milliseconds: 700),
+                    ),
+                  );
+
                   if (_versionTapCount >= 7) {
                     _versionTapCount = 0;
                     _showNotificationDebugDialog();
                   }
                 },
-                child: Text(
-                  _appVersion ?? 'กำลังโหลด...',
-                  style:
-                      TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+                  child: Text(
+                    _appVersion ?? 'กำลังโหลด...',
+                    style: TextStyle(
+                        fontSize: 13, color: colorScheme.onSurfaceVariant),
+                  ),
                 ),
               ),
             ],
