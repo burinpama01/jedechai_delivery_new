@@ -1,5 +1,6 @@
 import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -67,7 +68,7 @@ class _AccountScreenState extends State<AccountScreen> {
 
       String? apnsToken;
       try {
-        if (DefaultTargetPlatform.iOS == defaultTargetPlatform) {
+        if (defaultTargetPlatform == TargetPlatform.iOS) {
           apnsToken = await messaging.getAPNSToken();
         }
       } catch (e) {
