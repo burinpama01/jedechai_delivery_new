@@ -270,7 +270,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
   }
 
   Future<bool> _playCustomMerchantAlarmSound() async {
-    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
+    if (kIsWeb) {
       return false;
     }
 
@@ -284,7 +284,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
   }
 
   Future<void> _stopCustomMerchantAlarmSound() async {
-    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
+    if (kIsWeb) {
       return;
     }
 
