@@ -1034,6 +1034,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
 
       final scheduledAt = _isScheduledOrder ? _scheduledAt : null;
       final finalTotal = _calculateFinalTotal(cart.subtotal, _deliveryFee);
+      final merchantVisibleTotal = cart.subtotal;
 
       final booking = await _createFoodOrder(
         userId: userId,
@@ -1080,8 +1081,8 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
             userId: merchantId,
             title: '🍔 มีออเดอร์ใหม่!',
             body: _isScheduledOrder && _scheduledAt != null
-                ? 'มีลูกค้าสั่งอาหารล่วงหน้า ฿${finalTotal.ceil()} เวลา ${_formatScheduledDateTime(_scheduledAt!)}'
-                : 'มีลูกค้าสั่งอาหาร ฿${finalTotal.ceil()} กรุณายืนยันออเดอร์',
+                ? 'มีลูกค้าสั่งอาหารล่วงหน้า ฿${merchantVisibleTotal.ceil()} เวลา ${_formatScheduledDateTime(_scheduledAt!)}'
+                : 'มีลูกค้าสั่งอาหาร ฿${merchantVisibleTotal.ceil()} กรุณายืนยันออเดอร์',
             data: {
               'type': 'merchant_new_order',
               'booking_id': booking['id']?.toString() ?? '',

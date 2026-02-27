@@ -288,11 +288,22 @@ class FCMNotificationService {
     }
 
     try {
-      await _firebaseMessaging!.setForegroundNotificationPresentationOptions(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
+      // iOS: If we allow system presentation in foreground AND we also show a local
+      // notification, it will appear duplicated (system + local) and sound behavior
+      // becomes inconsistent. We show local notifications ourselves.
+      if (Platform.isIOS) {
+        await _firebaseMessaging!.setForegroundNotificationPresentationOptions(
+          alert: false,
+          badge: false,
+          sound: false,
+        );
+      } else {
+        await _firebaseMessaging!.setForegroundNotificationPresentationOptions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+      }
       debugLog('✅ Foreground presentation options configured');
     } catch (e) {
       debugLog('⚠️ Could not configure foreground presentation options: $e');
