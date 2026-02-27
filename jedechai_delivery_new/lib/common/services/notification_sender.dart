@@ -132,6 +132,7 @@ class NotificationSender {
           ? 'merchant_new_order_channel_v1'
           : 'high_importance_channel';
       final androidSound = isMerchantNewOrder ? 'alert_new_order' : 'default';
+      final iosSound = isMerchantNewOrder ? 'AlertNewOrder' : 'default';
 
       final collapseId = isMerchantNewOrder
           ? 'merchant_new_order_${data?['booking_id'] ?? DateTime.now().millisecondsSinceEpoch}'
@@ -142,6 +143,7 @@ class NotificationSender {
         'body': body,
         "click_action": "FLUTTER_NOTIFICATION_CLICK",
         "sound": androidSound,
+        "ios_sound": iosSound,
         if (data != null) ...data,
       };
 
@@ -159,7 +161,7 @@ class NotificationSender {
               'title': title,
               'body': body,
             },
-            'sound': isMerchantNewOrder ? 'AlertNewOrder.caf' : 'default',
+            'sound': iosSound,
           },
         },
       };
