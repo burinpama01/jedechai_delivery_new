@@ -403,6 +403,7 @@ class AdminService {
         'shop_open_time': shopOpenTime,
         'shop_close_time': shopCloseTime,
         if (shopOpenDays != null) 'shop_open_days': shopOpenDays,
+        'shop_auto_schedule_enabled': true,
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', merchantId);
 
@@ -436,6 +437,7 @@ class AdminService {
 
       await _client.from('profiles').update({
         'shop_status': isOpen,
+        'is_online': isOpen,
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', merchantId);
 
