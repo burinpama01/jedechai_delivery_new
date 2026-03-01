@@ -190,20 +190,33 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
     try {
       final rows = await Supabase.instance.client
           .from('driver_locations')
-          .select('location_lat, location_lng')
+          .select('driver_id, location_lat, location_lng')
           .eq('is_online', true)
           .eq('is_available', true);
 
+      final nearbyDriverIds = <String>[];
       int count = 0;
       for (final row in rows) {
+        final driverId = row['driver_id'] as String?;
         final lat = (row['location_lat'] as num?)?.toDouble();
         final lng = (row['location_lng'] as num?)?.toDouble();
-        if (lat == null || lng == null) continue;
+        if (driverId == null || lat == null || lng == null) continue;
 
         final distanceKm =
             Geolocator.distanceBetween(_pickupLat!, _pickupLng!, lat, lng) /
                 1000;
-        if (distanceKm <= _driverSearchRadiusKm) count++;
+        if (distanceKm <= _driverSearchRadiusKm) {
+          nearbyDriverIds.add(driverId);
+        }
+      }
+
+      if (nearbyDriverIds.isNotEmpty) {
+        final profileResponse = await Supabase.instance.client
+            .from('profiles')
+            .select('id')
+            .eq('approval_status', 'approved')
+            .inFilter('id', nearbyDriverIds);
+        count = (profileResponse as List).length;
       }
 
       if (mounted) {

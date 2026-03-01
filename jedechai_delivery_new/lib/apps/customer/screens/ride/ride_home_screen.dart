@@ -241,6 +241,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
         final profileResponse = await SupabaseService.client
             .from('profiles')
             .select('vehicle_type')
+            .eq('approval_status', 'approved')
             .inFilter('id', nearbyOnlineDriverIds);
 
         for (final row in profileResponse) {

@@ -24,176 +24,253 @@ function checkRateLimit(adminId: string): boolean {
   return entry.count <= RATE_LIMIT_MAX;
 }
 
+function withCors(res: Response) {
+  const headers = new Headers(res.headers);
+  for (const [k, v] of Object.entries(corsHeaders)) {
+    if (!headers.has(k)) headers.set(k, v);
+  }
+  return new Response(res.body, {
+    status: res.status,
+    statusText: res.statusText,
+    headers,
+  });
+}
+
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
-
-  if (req.method !== "POST") {
-    return errorResponse("Method not allowed", 405);
-  }
-
-  // Verify admin authentication
-  const authResult = await verifyAdmin(req);
-  if (authResult instanceof Response) return authResult;
-
-  const { adminId, supabaseAdmin } = authResult;
-
-  // Phase 7: Rate limit check
-  if (!checkRateLimit(adminId)) {
-    return errorResponse("Rate limit exceeded. Please wait a moment.", 429);
-  }
-
-  let body: Record<string, unknown>;
   try {
-    body = await req.json();
-  } catch {
-    return errorResponse("Invalid JSON body");
-  }
+    if (req.method === "OPTIONS") {
+      return withCors(new Response(null, { status: 204, headers: corsHeaders }));
+    }
 
-  const action = body.action as string;
-  if (!action) return errorResponse("Missing 'action' field");
+    if (req.method !== "POST") {
+      return withCors(errorResponse("Method not allowed", 405));
+    }
 
-  try {
+    // Verify admin authentication
+    const authResult = await verifyAdmin(req);
+    if (authResult instanceof Response) return withCors(authResult);
+
+    const { adminId, supabaseAdmin } = authResult;
+
+    // Phase 7: Rate limit check
+    if (!checkRateLimit(adminId)) {
+      return withCors(errorResponse("Rate limit exceeded. Please wait a moment.", 429));
+    }
+
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      return withCors(errorResponse("Invalid JSON body"));
+    }
+
+    const action = body.action as string;
+    if (!action) return withCors(errorResponse("Missing 'action' field"));
+
+    let result: Response;
     switch (action) {
       // ─── Driver / Merchant Approval ───
       case "approve_driver":
-        return await handleApproveProfile(supabaseAdmin, body, "driver");
+        result = await handleApproveProfile(supabaseAdmin, body, "driver");
+        break;
       case "reject_driver":
-        return await handleRejectProfile(supabaseAdmin, body, "driver");
+        result = await handleRejectProfile(supabaseAdmin, body, "driver");
+        break;
       case "approve_merchant":
-        return await handleApproveProfile(supabaseAdmin, body, "merchant");
+        result = await handleApproveProfile(supabaseAdmin, body, "merchant");
+        break;
       case "reject_merchant":
-        return await handleRejectProfile(supabaseAdmin, body, "merchant");
+        result = await handleRejectProfile(supabaseAdmin, body, "merchant");
+        break;
 
       // ─── User Management ───
       case "suspend_user":
-        return await handleSuspendUser(supabaseAdmin, body);
+        result = await handleSuspendUser(supabaseAdmin, body);
+        break;
       case "unsuspend_user":
-        return await handleUnsuspendUser(supabaseAdmin, body);
+        result = await handleUnsuspendUser(supabaseAdmin, body);
+        break;
       case "delete_user":
-        return await handleDeleteUser(supabaseAdmin, body);
+        result = await handleDeleteUser(supabaseAdmin, body);
+        break;
       case "set_online_status":
-        return await handleSetOnlineStatus(supabaseAdmin, body);
+        result = await handleSetOnlineStatus(supabaseAdmin, body);
+        break;
 
       // ─── Profile Edit ───
       case "edit_driver":
-        return await handleEditProfile(supabaseAdmin, body);
+        result = await handleEditProfile(supabaseAdmin, body);
+        break;
       case "edit_merchant":
-        return await handleEditMerchant(supabaseAdmin, body);
+        result = await handleEditMerchant(supabaseAdmin, body);
+        break;
+      case "edit_user":
+        result = await handleEditUser(supabaseAdmin, body);
+        break;
 
       // ─── User Creation ───
       case "add_driver":
-        return await handleAddUser(supabaseAdmin, body, "driver");
+        result = await handleAddUser(supabaseAdmin, body, "driver");
+        break;
       case "add_merchant":
-        return await handleAddUser(supabaseAdmin, body, "merchant");
+        result = await handleAddUser(supabaseAdmin, body, "merchant");
+        break;
 
       // ─── Withdrawal ───
       case "approve_withdrawal":
-        return await handleApproveWithdrawal(supabaseAdmin, body);
+        result = await handleApproveWithdrawal(supabaseAdmin, body);
+        break;
       case "reject_withdrawal":
-        return await handleRejectWithdrawal(supabaseAdmin, body);
+        result = await handleRejectWithdrawal(supabaseAdmin, body);
+        break;
 
       // ─── Topup ───
       case "approve_topup":
-        return await handleApproveTopup(supabaseAdmin, body);
+        result = await handleApproveTopup(supabaseAdmin, body);
+        break;
       case "reject_topup":
-        return await handleRejectTopup(supabaseAdmin, body);
+        result = await handleRejectTopup(supabaseAdmin, body);
+        break;
 
       // ─── Order Reassignment ───
       case "reassign_order":
-        return await handleReassignOrder(supabaseAdmin, body);
+        result = await handleReassignOrder(supabaseAdmin, body);
+        break;
+
+      case "toggle_shop_status":
+        result = await handleToggleShopStatus(supabaseAdmin, body);
+        break;
 
       // ─── System Config ───
       case "upsert_system_config":
-        return await handleUpsertSystemConfig(supabaseAdmin, body);
+        result = await handleUpsertSystemConfig(supabaseAdmin, body);
+        break;
       case "upsert_system_config_kv":
-        return await handleUpsertSystemConfigKV(supabaseAdmin, body);
+        result = await handleUpsertSystemConfigKV(supabaseAdmin, body);
+        break;
 
       // ─── Account Deletion ───
       case "approve_account_deletion":
-        return await handleApproveAccountDeletion(supabaseAdmin, body);
+        result = await handleApproveAccountDeletion(supabaseAdmin, body);
+        break;
       case "reject_account_deletion":
-        return await handleRejectAccountDeletion(supabaseAdmin, body);
+        result = await handleRejectAccountDeletion(supabaseAdmin, body);
+        break;
+      case "approve_deletion":
+        result = await handleApproveAccountDeletion(supabaseAdmin, body);
+        break;
+      case "reject_deletion":
+        result = await handleRejectAccountDeletion(supabaseAdmin, body);
+        break;
 
       // ─── Coupons ───
       case "create_coupon":
-        return await handleCreateCoupon(supabaseAdmin, body);
+        result = await handleCreateCoupon(supabaseAdmin, body);
+        break;
       case "toggle_coupon":
-        return await handleToggleCoupon(supabaseAdmin, body);
+        result = await handleToggleCoupon(supabaseAdmin, body);
+        break;
       case "delete_coupon":
-        return await handleDeleteCoupon(supabaseAdmin, body);
+        result = await handleDeleteCoupon(supabaseAdmin, body);
+        break;
       case "update_coupon":
-        return await handleUpdateCoupon(supabaseAdmin, body);
+        result = await handleUpdateCoupon(supabaseAdmin, body);
+        break;
 
       // ─── Menu Management ───
       case "create_menu_item":
-        return await handleCreateMenuItem(supabaseAdmin, body);
+        result = await handleCreateMenuItem(supabaseAdmin, body);
+        break;
       case "update_menu_item":
-        return await handleUpdateMenuItem(supabaseAdmin, body);
+        result = await handleUpdateMenuItem(supabaseAdmin, body);
+        break;
       case "delete_menu_item":
-        return await handleDeleteMenuItem(supabaseAdmin, body);
+        result = await handleDeleteMenuItem(supabaseAdmin, body);
+        break;
       case "create_menu_option":
-        return await handleCreateMenuOption(supabaseAdmin, body);
+        result = await handleCreateMenuOption(supabaseAdmin, body);
+        break;
       case "update_menu_option":
-        return await handleUpdateMenuOption(supabaseAdmin, body);
+        result = await handleUpdateMenuOption(supabaseAdmin, body);
+        break;
       case "delete_menu_option":
-        return await handleDeleteMenuOption(supabaseAdmin, body);
+        result = await handleDeleteMenuOption(supabaseAdmin, body);
+        break;
       case "create_menu_option_group":
-        return await handleCreateMenuOptionGroup(supabaseAdmin, body);
+        result = await handleCreateMenuOptionGroup(supabaseAdmin, body);
+        break;
       case "delete_option_group":
-        return await handleDeleteOptionGroup(supabaseAdmin, body);
+        result = await handleDeleteOptionGroup(supabaseAdmin, body);
+        break;
       case "create_option_group_and_link":
-        return await handleCreateOptionGroupAndLink(supabaseAdmin, body);
+        result = await handleCreateOptionGroupAndLink(supabaseAdmin, body);
+        break;
       case "toggle_link_group":
-        return await handleToggleLinkGroup(supabaseAdmin, body);
+        result = await handleToggleLinkGroup(supabaseAdmin, body);
+        break;
       case "unlink_option_group":
-        return await handleUnlinkOptionGroup(supabaseAdmin, body);
+        result = await handleUnlinkOptionGroup(supabaseAdmin, body);
+        break;
 
       // ─── Support Tickets ───
       case "update_ticket_status":
-        return await handleUpdateTicketStatus(supabaseAdmin, body);
+        result = await handleUpdateTicketStatus(supabaseAdmin, body);
+        break;
       case "resolve_ticket":
-        return await handleResolveTicket(supabaseAdmin, body);
+        result = await handleResolveTicket(supabaseAdmin, body);
+        break;
 
       // ─── Order Management ───
       case "assign_order":
-        return await handleAssignOrder(supabaseAdmin, body);
+        result = await handleAssignOrder(supabaseAdmin, body);
+        break;
       case "cancel_order":
-        return await handleCancelOrder(supabaseAdmin, body);
+        result = await handleCancelOrder(supabaseAdmin, body);
+        break;
       case "force_cancel_order":
-        return await handleForceCancelOrder(supabaseAdmin, body);
+        result = await handleForceCancelOrder(supabaseAdmin, body);
+        break;
       case "rebroadcast_order":
-        return await handleRebroadcastOrder(supabaseAdmin, body);
+        result = await handleRebroadcastOrder(supabaseAdmin, body);
+        break;
 
       // ─── Wallet ───
       case "wallet_adjust":
-        return await handleWalletAdjust(supabaseAdmin, body);
+        result = await handleWalletAdjust(supabaseAdmin, body);
+        break;
       case "manual_topup":
-        return await handleManualTopup(supabaseAdmin, body);
+        result = await handleManualTopup(supabaseAdmin, body);
+        break;
 
       // ─── Withdrawal with Slip ───
       case "approve_withdrawal_with_slip":
-        return await handleApproveWithdrawal(supabaseAdmin, body);
+        result = await handleApproveWithdrawal(supabaseAdmin, body);
+        break;
 
       // ─── Banners ───
       case "create_banner":
-        return await handleCreateBanner(supabaseAdmin, body);
+        result = await handleCreateBanner(supabaseAdmin, body);
+        break;
       case "toggle_banner":
-        return await handleToggleBanner(supabaseAdmin, body);
+        result = await handleToggleBanner(supabaseAdmin, body);
+        break;
       case "delete_banner":
-        return await handleDeleteBanner(supabaseAdmin, body);
+        result = await handleDeleteBanner(supabaseAdmin, body);
+        break;
 
       // ─── Fetch User Emails ───
       case "fetch_user_emails":
-        return await handleFetchUserEmails(supabaseAdmin);
+        result = await handleFetchUserEmails(supabaseAdmin);
+        break;
 
       default:
-        return errorResponse(`Unknown action: ${action}`);
+        result = errorResponse(`Unknown action: ${action}`);
+        break;
     }
+    return withCors(result);
   } catch (e) {
     console.error(`admin-actions error [${action}]:`, e);
-    return errorResponse(e.message || "Internal error", 500);
+    return withCors(errorResponse(e?.message || "Internal error", 500));
   }
 });
 
@@ -391,6 +468,11 @@ async function handleEditMerchant(supabase, body) {
   const { id, update_data, system_config_updates } = body;
   if (!id || !update_data) return errorResponse("Missing 'id' or 'update_data'");
 
+  // Sync is_online with shop_status if shop_status is provided
+  if (update_data.shop_status !== undefined) {
+    update_data.is_online = update_data.shop_status;
+  }
+
   const { error } = await supabase
     .from("profiles")
     .update(update_data)
@@ -408,6 +490,28 @@ async function handleEditMerchant(supabase, body) {
         );
     }
   }
+
+  return jsonResponse({ success: true });
+}
+
+async function handleEditUser(supabase, body) {
+  const { original_role } = body;
+  if (original_role === "merchant") {
+    return await handleEditMerchant(supabase, body);
+  }
+  return await handleEditProfile(supabase, body);
+}
+
+async function handleToggleShopStatus(supabase, body) {
+  const { id, make_open } = body;
+  if (!id) return errorResponse("Missing 'id'");
+
+  const nowIso = new Date().toISOString();
+  const { error } = await supabase
+    .from("profiles")
+    .update({ shop_status: !!make_open, is_online: !!make_open, updated_at: nowIso })
+    .eq("id", id);
+  if (error) return errorResponse(error.message);
 
   return jsonResponse({ success: true });
 }
@@ -1171,33 +1275,69 @@ async function handleManualTopup(supabase, body) {
   const { user_id, amount, description } = body;
   if (!user_id || !amount) return errorResponse("Missing 'user_id' or 'amount'");
 
-  let { data: wallet } = await supabase
+  let { data: wallet, error: walletErr } = await supabase
     .from("wallets")
     .select("id, balance")
     .eq("user_id", user_id)
     .maybeSingle();
+  if (walletErr) return errorResponse(walletErr.message);
   if (!wallet) {
-    const { data: newW } = await supabase
+    const { data: newW, error: createErr } = await supabase
       .from("wallets")
       .insert({ user_id, balance: 0 })
-      .select()
+      .select("id, balance")
       .single();
+    if (createErr) return errorResponse(createErr.message);
     wallet = newW;
   }
-  if (!wallet) return errorResponse("ไม่สามารถสร้าง wallet ได้");
+  if (!wallet) return errorResponse("ไม่สามารถสร้าง wallet ได้ (wallet insert returned null)");
 
-  await supabase
+  const before = wallet.balance || 0;
+  const after = before + amount;
+
+  const { error: updateErr } = await supabase
     .from("wallets")
-    .update({ balance: (wallet.balance || 0) + amount })
+    .update({ balance: after, updated_at: new Date().toISOString() })
     .eq("id", wallet.id);
-  await supabase.from("wallet_transactions").insert({
+  if (updateErr) return errorResponse(updateErr.message);
+
+  const { error: txErr } = await supabase.from("wallet_transactions").insert({
     wallet_id: wallet.id,
     amount,
     type: "topup",
     description: (description || "Admin เติมเงินด้วยมือ") + " (Admin Manual)",
   });
+  if (txErr) return errorResponse(txErr.message);
 
-  return jsonResponse({ success: true });
+  let topupRequestLogged = false;
+  let topupRequestLogError: string | null = null;
+  try {
+    const nowIso = new Date().toISOString();
+    const { error: topupLogErr } = await supabase.from("topup_requests").insert({
+      user_id,
+      amount,
+      status: "completed",
+      admin_note: (description || "Admin เติมเงินด้วยมือ") + " (Admin Manual)",
+      processed_at: nowIso,
+      updated_at: nowIso,
+    });
+
+    if (topupLogErr) {
+      topupRequestLogError = topupLogErr.message;
+    } else {
+      topupRequestLogged = true;
+    }
+  } catch (e) {
+    topupRequestLogError = String((e as Error)?.message || e);
+  }
+
+  return jsonResponse({
+    success: true,
+    before,
+    after,
+    topup_request_logged: topupRequestLogged,
+    topup_request_log_error: topupRequestLogError,
+  });
 }
 
 // ─── Banners ──────────────────────────────────────────

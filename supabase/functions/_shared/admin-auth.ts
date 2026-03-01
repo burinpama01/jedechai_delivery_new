@@ -5,8 +5,10 @@ import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-
 
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Max-Age": "86400",
 };
 
 export function jsonResponse(body: Record<string, unknown>, status = 200) {
@@ -32,9 +34,8 @@ export async function verifyAdmin(
 > {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
 
-  if (!supabaseUrl || !serviceRoleKey || !anonKey) {
+  if (!supabaseUrl || !serviceRoleKey) {
     return errorResponse("Server misconfigured", 500);
   }
 
@@ -52,7 +53,8 @@ export async function verifyAdmin(
   }
 
   // Create an auth client to verify the user's JWT
-  const supabaseAuth = createClient(supabaseUrl, anonKey, {
+  // Use service role key to avoid failures when SUPABASE_ANON_KEY is missing/mismatched.
+  const supabaseAuth = createClient(supabaseUrl, serviceRoleKey, {
     global: { headers: { Authorization: `Bearer ${token}` } },
   });
 

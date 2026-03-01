@@ -209,6 +209,7 @@ class RealtimeService {
         .eq('is_available', true);
 
     final drivers = (response as List).cast<Map<String, dynamic>>();
+    final nearbyDriverIds = <String>[];
     
     // Filter by distance (simple calculation)
     // In production, use PostGIS ST_DWithin in a database function
@@ -218,9 +219,32 @@ class RealtimeService {
       final driverLng = (driver['location_lng'] as num).toDouble();
       final distance = await _calculateDistance(lat, lng, driverLat, driverLng);
       if (distance <= radiusKm) {
+        final driverId = driver['driver_id'] as String?;
+        if (driverId != null) {
+          nearbyDriverIds.add(driverId);
+        }
+      }
+    }
+
+    if (nearbyDriverIds.isEmpty) return [];
+
+    // Get approved drivers from profiles
+    final profileResponse = await _client
+        .from('profiles')
+        .select('id')
+        .eq('approval_status', 'approved')
+        .inFilter('id', nearbyDriverIds);
+
+    final approvedIds = (profileResponse as List).map((p) => p['id'] as String).toSet();
+
+    // Filter out unapproved drivers
+    for (final driver in drivers) {
+      final driverId = driver['driver_id'] as String?;
+      if (driverId != null && approvedIds.contains(driverId) && nearbyDriverIds.contains(driverId)) {
         filteredDrivers.add(driver);
       }
     }
+
     return filteredDrivers;
   }
 

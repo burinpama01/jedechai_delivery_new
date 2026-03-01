@@ -66,6 +66,40 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
     'sun'
   ];
 
+  Future<bool> _confirmManualCloseShopDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        final colorScheme = Theme.of(context).colorScheme;
+        return AlertDialog(
+          title: const Text('ปิดร้าน?'),
+          content: const Text(
+            'เมื่อกดปิดร้านเอง จะปิดการใช้งาน เปิด-ปิด ร้านอัตโนมัติ\n'
+            'สามารถเปิดใช้งานฟีเจอร์นี้ได้ที่หน้าตั้งค่า',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(
+                'ยกเลิก',
+                style: TextStyle(color: colorScheme.onSurfaceVariant),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorScheme.error,
+                foregroundColor: colorScheme.onError,
+              ),
+              child: const Text('ปิดร้าน'),
+            ),
+          ],
+        );
+      },
+    );
+    return result == true;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -798,6 +832,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
 
       final updateData = {
         'shop_status': value,
+        'is_online': value, // Sync online status with shop status
         if (!triggeredBySchedule) 'shop_auto_schedule_enabled': false,
         'updated_at': DateTime.now().toIso8601String(),
       };
@@ -1351,7 +1386,17 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               ),
               Switch(
                 value: _isShopOpen,
-                onChanged: _toggleShopStatus,
+                onChanged: (value) async {
+                  if (!mounted) return;
+
+                  final isManualClose = value == false;
+                  if (isManualClose) {
+                    final confirmed = await _confirmManualCloseShopDialog();
+                    if (!confirmed) return;
+                  }
+
+                  await _toggleShopStatus(value);
+                },
                 activeThumbColor: colorScheme.onPrimary,
                 inactiveThumbColor: colorScheme.surfaceContainerHighest,
                 activeTrackColor: colorScheme.onPrimary.withValues(alpha: 0.5),
