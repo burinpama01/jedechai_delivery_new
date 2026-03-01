@@ -10,9 +10,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app_navigation_service.dart';
 
 const String _kDefaultChannelId = 'jedechai_channel';
-const String _kDefaultChannelName = 'JeDeChai Notifications';
+const String _kDefaultChannelName = 'JDC Notifications';
 const String _kDefaultChannelDescription =
-    'Notifications from JeDeChai delivery app';
+    'Notifications from JDC Delivery app';
 
 const String _kMerchantNewOrderChannelId = 'merchant_new_order_channel_v1';
 const String _kMerchantNewOrderChannelName = 'Merchant New Orders';

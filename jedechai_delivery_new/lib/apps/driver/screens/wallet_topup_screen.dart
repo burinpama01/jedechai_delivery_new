@@ -487,7 +487,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
   </div>
   <p style="color:#666;">กรุณาเข้าสู่ระบบ Admin เพื่อตรวจสอบและอนุมัติคำขอเติมเงิน</p>
   <hr style="border:none;border-top:1px solid #eee;margin:20px 0;">
-  <p style="color:#999;font-size:12px;">Jedechai Delivery Admin System</p>
+  <p style="color:#999;font-size:12px;">JDC Delivery Admin System</p>
 </div>
 ''',
         },

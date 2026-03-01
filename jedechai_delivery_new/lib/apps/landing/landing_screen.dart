@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 
-/// Landing Page — Public-facing page for Jedechai Delivery
+/// Landing Page — Public-facing page for JDC Delivery
 ///
 /// Separate from Admin web panel.
 /// Shows app features, download links, and login button.
@@ -436,14 +436,14 @@ class PublicLandingScreen extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               const Text(
-                'Jedechai Delivery',
+                'JDC Delivery',
                 style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ],
           ),
           const SizedBox(height: 12),
           Text(
-            '© ${DateTime.now().year} Jedechai Delivery. All rights reserved.',
+            '© ${DateTime.now().year} JDC Delivery. All rights reserved.',
             style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
           ),
         ],

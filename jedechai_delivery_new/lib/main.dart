@@ -88,7 +88,7 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider(create: (_) => CartProvider()),
       ],
       child: MaterialApp(
-        title: 'Jedechai Delivery',
+        title: 'JDC Delivery',
         debugShowCheckedModeBanner: false,
         navigatorKey: AppNavigationService.navigatorKey,
         restorationScopeId: 'app',

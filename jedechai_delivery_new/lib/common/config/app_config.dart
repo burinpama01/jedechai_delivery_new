@@ -2,7 +2,7 @@
 /// 
 /// Contains application-wide configuration settings
 class AppConfig {
-  static const String appName = 'Jedechai Delivery';
+  static const String appName = 'JDC Delivery';
   static const String appVersion = '1.0.0';
   static const String appDescription = 'Super App for Food Delivery, Parcel Delivery, and Passenger Transport';
   

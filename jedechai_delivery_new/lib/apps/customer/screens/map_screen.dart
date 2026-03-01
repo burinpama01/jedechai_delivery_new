@@ -248,7 +248,7 @@ class _MapScreenState extends State<MapScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Jedechai Delivery'),
+        title: const Text('JDC Delivery'),
         backgroundColor: AppTheme.primaryGreen,
         foregroundColor: colorScheme.onPrimary,
         actions: [

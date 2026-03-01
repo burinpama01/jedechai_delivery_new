@@ -81,7 +81,7 @@ class _SplashScreenState extends State<SplashScreen> {
             const SizedBox(height: 24),
             // App Name
             const Text(
-              'Jedechai Delivery',
+              'JDC Delivery',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
