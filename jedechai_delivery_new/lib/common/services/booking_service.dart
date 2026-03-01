@@ -480,6 +480,24 @@ class BookingService {
           // delivery_fee = delivery fee
           final foodPrice = booking.price;
           final deliveryFee = booking.deliveryFee ?? 0;
+          Map<String, dynamic>? couponUsage;
+          String? couponCode;
+          double couponDiscountAmount = 0.0;
+          try {
+            couponUsage = await _client
+                .from('coupon_usages')
+                .select('discount_amount, coupon:coupons(code)')
+                .eq('booking_id', bookingId)
+                .maybeSingle();
+            if (couponUsage != null) {
+              couponDiscountAmount =
+                  (couponUsage['discount_amount'] as num?)?.toDouble() ?? 0.0;
+              final coupon = couponUsage['coupon'] as Map<String, dynamic>?;
+              couponCode = coupon?['code'] as String?;
+            }
+          } catch (e) {
+            debugLog('⚠️ Failed to load coupon usage for completion: $e');
+          }
           final couponFinance = await _getFoodCouponFinanceContext(
             bookingId: bookingId,
             merchantId: booking.merchantId,
@@ -500,6 +518,8 @@ class BookingService {
             deliveryFee: deliveryFee,
             foodPrice: foodPrice,
             bookingId: bookingId,
+            couponCode: couponCode,
+            couponDiscountAmount: couponDiscountAmount,
             deliverySystemRateOverride: merchantFoodConfig.deliverySystemRate,
             merchantGpSystemRateOverride: merchantFoodConfig.merchantGpSystemRate,
             merchantGpDriverRateOverride: merchantFoodConfig.merchantGpDriverRate,

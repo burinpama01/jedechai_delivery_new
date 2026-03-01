@@ -43,11 +43,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   int _todayCompletedJobs = 0;
   bool _isAcceptingJob = false;
   Map<String, double> _couponDiscountByBookingId = {};
+  Map<String, String?> _couponCodeByBookingId = {};
   StreamSubscription<Position>? _driverLocationSub;
   DateTime? _lastLocationSyncAt;
   double _driverOrderDetectionRadiusKm = 20.0;
   double? _driverLat;
   double? _driverLng;
+
+  bool _didCheckReferralWalletRewardDialog = false;
 
   @override
   void initState() {
@@ -60,6 +63,47 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     _loadEarningsData(); // Load earnings data
     _setupJobStream();
     _startAutoRefresh();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndShowReferralWalletRewardDialogIfAny();
+    });
+  }
+
+  Future<void> _checkAndShowReferralWalletRewardDialogIfAny() async {
+    if (!mounted) return;
+    if (_didCheckReferralWalletRewardDialog) return;
+    _didCheckReferralWalletRewardDialog = true;
+
+    final userId = AuthService.userId;
+    if (userId == null) return;
+
+    final unread = await NotificationService.getUnreadByTypes(
+      userId,
+      const [
+        'referral_wallet_reward_referee',
+        'referral_wallet_reward_referrer',
+      ],
+      limit: 1,
+    );
+    if (!mounted) return;
+    if (unread.isEmpty) return;
+
+    final n = unread.first;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(n.title),
+        content: Text(n.body),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('ตกลง'),
+          ),
+        ],
+      ),
+    );
+
+    await NotificationService.markAsRead(n.id);
   }
 
   double? _toDouble(dynamic value) {
@@ -1961,22 +2005,52 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       final ids = jobs.map((j) => j.id).toList();
       final usageRows = await SupabaseService.client
           .from('coupon_usages')
-          .select('booking_id, discount_amount')
+          .select('booking_id, discount_amount, coupon_id')
           .inFilter('booking_id', ids);
 
       final map = <String, double>{};
+      final couponIdByBookingId = <String, String?>{};
       for (final row in usageRows) {
         final bid = row['booking_id'] as String?;
         if (bid == null) continue;
         map[bid] = (row['discount_amount'] as num?)?.toDouble() ?? 0.0;
+        couponIdByBookingId[bid] = row['coupon_id'] as String?;
       }
+
+      final couponIds = couponIdByBookingId.values
+          .whereType<String>()
+          .where((v) => v.isNotEmpty)
+          .toSet()
+          .toList();
+      final couponCodeById = <String, String>{};
+      if (couponIds.isNotEmpty) {
+        final couponRows = await SupabaseService.client
+            .from('coupons')
+            .select('id, code')
+            .inFilter('id', couponIds);
+        for (final r in couponRows) {
+          final id = r['id'] as String?;
+          final code = r['code'] as String?;
+          if (id != null && code != null) {
+            couponCodeById[id] = code;
+          }
+        }
+      }
+
+      final codeMap = <String, String?>{};
+      for (final entry in couponIdByBookingId.entries) {
+        final cid = entry.value;
+        codeMap[entry.key] = cid != null ? couponCodeById[cid] : null;
+      }
+
       if (mounted) {
         setState(() {
           _couponDiscountByBookingId = map;
+          _couponCodeByBookingId = codeMap;
         });
       }
     } catch (e) {
-      debugLog('⚠️ Error loading coupon discounts for dashboard jobs: $e');
+      debugLog('⚠️ Error loading coupon discounts for jobs: $e');
     }
   }
 
@@ -1984,6 +2058,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   Widget _buildFinancialSummary(Booking job) {
     final colorScheme = Theme.of(context).colorScheme;
     final couponDiscount = _couponDiscountByBookingId[job.id] ?? 0.0;
+    final couponCode = _couponCodeByBookingId[job.id];
+    final normalizedCouponCode = couponCode?.trim().toUpperCase();
+    final hideCouponBreakdown = normalizedCouponCode == 'WELCOME20' ||
+        normalizedCouponCode == 'REFERRER20' ||
+        normalizedCouponCode == 'REFFERER20';
 
     if (job.serviceType == 'food') {
       // Food: แสดง ค่าอาหาร + ค่าส่ง - คูปอง = เก็บลูกค้า
@@ -2054,7 +2133,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                   Icon(Icons.local_offer, size: 14, color: Colors.green[600]),
                   const SizedBox(width: 4),
                   Text(
-                    'ส่วนลดคูปอง -฿${couponDiscount.toStringAsFixed(0)}',
+                    hideCouponBreakdown
+                        ? 'ส่วนลดจากคูปอง -฿${couponDiscount.toStringAsFixed(0)}'
+                        : 'ส่วนลดคูปอง -฿${couponDiscount.toStringAsFixed(0)}',
                     style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -2134,7 +2215,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                     Icon(Icons.local_offer, size: 14, color: Colors.green[600]),
                     const SizedBox(width: 4),
                     Text(
-                      'ส่วนลดคูปอง -฿${couponDiscount.toStringAsFixed(0)}',
+                      hideCouponBreakdown
+                          ? 'ส่วนลดจากคูปอง -฿${couponDiscount.toStringAsFixed(0)}'
+                          : 'ส่วนลดคูปอง -฿${couponDiscount.toStringAsFixed(0)}',
                       style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,

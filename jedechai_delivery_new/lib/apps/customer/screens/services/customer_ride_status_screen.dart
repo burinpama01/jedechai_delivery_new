@@ -119,8 +119,19 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
     return _couponUsage?['coupon_code'] as String?;
   }
 
+  bool get _hideCouponBreakdown {
+    final normalizedCouponCode = _couponCode()?.trim().toUpperCase();
+    return normalizedCouponCode == 'WELCOME20' ||
+        normalizedCouponCode == 'REFERRER20' ||
+        normalizedCouponCode == 'REFFERER20';
+  }
+
   double _calculateTotalAmount(Booking booking) {
     final couponDiscount = _couponDiscountAmount();
+    final normalizedCouponCode = _couponCode()?.trim().toUpperCase();
+    final hideCouponBreakdown = normalizedCouponCode == 'WELCOME20' ||
+        normalizedCouponCode == 'REFERRER20' ||
+        normalizedCouponCode == 'REFFERER20';
     final gross = booking.serviceType == 'food'
         ? booking.price + (booking.deliveryFee ?? 0.0)
         : booking.price;
@@ -912,9 +923,12 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                           if (couponDiscount > 0) ...[
                             const SizedBox(height: 6),
                             _buildInfoRow(
-                              _couponCode() != null && _couponCode()!.isNotEmpty
-                                  ? 'ส่วนลดคูปอง (${_couponCode()!})'
-                                  : 'ส่วนลดคูปอง',
+                              _hideCouponBreakdown
+                                  ? 'ส่วนลดจากคูปอง'
+                                  : (_couponCode() != null &&
+                                          _couponCode()!.isNotEmpty
+                                      ? 'ส่วนลดคูปอง (${_couponCode()!})'
+                                      : 'ส่วนลดคูปอง'),
                               '-฿${couponDiscount.ceil()}',
                             ),
                           ],
@@ -940,9 +954,12 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                           if (couponDiscount > 0) ...[
                             const SizedBox(height: 6),
                             _buildInfoRow(
-                              _couponCode() != null && _couponCode()!.isNotEmpty
-                                  ? 'ส่วนลดคูปอง (${_couponCode()!})'
-                                  : 'ส่วนลดคูปอง',
+                              _hideCouponBreakdown
+                                  ? 'ส่วนลดจากคูปอง'
+                                  : (_couponCode() != null &&
+                                          _couponCode()!.isNotEmpty
+                                      ? 'ส่วนลดคูปอง (${_couponCode()!})'
+                                      : 'ส่วนลดคูปอง'),
                               '-฿${couponDiscount.ceil()}',
                             ),
                           ],

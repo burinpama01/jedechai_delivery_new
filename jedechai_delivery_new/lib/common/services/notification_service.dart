@@ -15,21 +15,43 @@ class NotificationService {
     Map<String, dynamic>? data,
   }) async {
     try {
-      final notification = notification_model.Notification(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        userId: userId,
-        title: title,
-        body: body,
-        type: type,
-        data: data,
-        createdAt: DateTime.now(),
-      );
-
       await Supabase.instance.client
           .from('notifications')
-          .insert(notification.toJson());
+          .insert({
+            'user_id': userId,
+            'title': title,
+            'body': body,
+            'type': type,
+            'data': data,
+            'is_read': false,
+          });
     } catch (e) {
       debugLog('Error sending notification: $e');
+    }
+  }
+
+  static Future<List<notification_model.Notification>> getUnreadByTypes(
+    String userId,
+    List<String> types, {
+    int limit = 10,
+  }) async {
+    if (types.isEmpty) return [];
+    try {
+      final response = await Supabase.instance.client
+          .from('notifications')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('is_read', false)
+          .inFilter('type', types)
+          .order('created_at', ascending: false)
+          .limit(limit);
+
+      return (response as List)
+          .map((item) => notification_model.Notification.fromJson(item))
+          .toList();
+    } catch (e) {
+      debugLog('Error fetching unread notifications by type: $e');
+      return [];
     }
   }
 

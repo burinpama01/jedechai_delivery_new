@@ -163,7 +163,7 @@ class SystemConfigService {
   /// ดึงค่าเงินขั้นต่ำที่คนขับต้องมี
   int get driverMinWallet => _systemConfig?.driverMinWallet ?? 50;
 
-  /// ดึงอัตราค่าคอมมิชชั่น
+  /// ดึงอัตราค่าบริการระบบ
   double get commissionRate => _systemConfig?.commissionRate ?? 15.0;
 
   /// ดึงอัตรา Platform Fee (สำหรับ food delivery)
@@ -201,7 +201,7 @@ class SystemConfigService {
   double get parcelDriverToPickupRadiusKm =>
       _systemConfig?.detectionRadiusConfig.parcelDriverToPickupKm ?? 30.0;
 
-  /// คำนวณค่าคอมมิชชั่นจากราคางาน
+  /// คำนวณค่าบริการระบบจากราคางาน
   double calculateCommission(int jobPrice) {
     final commission = jobPrice * (commissionRate / 100);
     return commission.ceilToDouble();

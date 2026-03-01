@@ -10,6 +10,95 @@ import 'auth_service.dart';
 class CouponService {
   final SupabaseClient _client = Supabase.instance.client;
 
+  Future<List<Coupon>> getMyWalletCoupons({
+    String? serviceType,
+    String? merchantId,
+  }) async {
+    final userId = AuthService.userId;
+    if (userId == null) throw Exception('กรุณาเข้าสู่ระบบ');
+
+    try {
+      final response = await _client
+          .from('user_coupons')
+          .select('id, status, expires_at, coupon:coupons(*)')
+          .eq('user_id', userId)
+          .eq('status', 'claimed')
+          .order('claimed_at', ascending: false);
+
+      final coupons = (response as List)
+          .map((row) => row['coupon'])
+          .whereType<Map<String, dynamic>>()
+          .map((json) => Coupon.fromJson(json))
+          .where((c) => c.isValid)
+          .where((c) =>
+              serviceType == null || c.serviceType == null || c.serviceType == serviceType)
+          .where((c) =>
+              merchantId == null || c.merchantId == null || c.merchantId == merchantId)
+          .toList();
+
+      return coupons;
+    } catch (e) {
+      debugLog('❌ Error fetching wallet coupons: $e');
+      return [];
+    }
+  }
+
+  Future<List<Coupon>> getClaimableCoupons({
+    String? serviceType,
+    String? merchantId,
+  }) async {
+    try {
+      final response = await _client
+          .from('coupons')
+          .select()
+          .eq('is_active', true)
+          .eq('distribution_type', 'claimable')
+          .lte('start_date', DateTime.now().toIso8601String())
+          .gte('end_date', DateTime.now().toIso8601String())
+          .order('created_at', ascending: false);
+
+      final coupons = (response as List)
+          .map((json) => Coupon.fromJson(json))
+          .where((c) => c.isValid)
+          .where((c) =>
+              serviceType == null || c.serviceType == null || c.serviceType == serviceType)
+          .where((c) =>
+              merchantId == null || c.merchantId == null || c.merchantId == merchantId)
+          .toList();
+
+      return coupons;
+    } catch (e) {
+      debugLog('❌ Error fetching claimable coupons: $e');
+      return [];
+    }
+  }
+
+  Future<void> claimCouponByCode(String couponCode) async {
+    final userId = AuthService.userId;
+    if (userId == null) throw Exception('กรุณาเข้าสู่ระบบ');
+
+    try {
+      final res = await _client.rpc('claim_coupon', params: {
+        'p_user_id': userId,
+        'p_coupon_code': couponCode.trim().toUpperCase(),
+      });
+
+      if (res is Map) {
+        final success = res['success'] == true;
+        if (!success) {
+          final err = res['error']?.toString();
+          throw Exception(err?.isNotEmpty == true ? err : 'ไม่สามารถเก็บคูปองได้');
+        }
+        return;
+      }
+
+      throw Exception('ไม่สามารถเก็บคูปองได้');
+    } catch (e) {
+      debugLog('❌ Error claiming coupon: $e');
+      rethrow;
+    }
+  }
+
   /// Validate a coupon code for a specific order
   ///
   /// Returns the Coupon if valid, or throws an Exception with a Thai error message

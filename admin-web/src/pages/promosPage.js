@@ -154,6 +154,42 @@ export async function renderPromosPage(el, ctx) {
             </select>
           </div>
           <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">รูปแบบการแจก</label>
+            <select id="promoDistributionType" class="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm bg-gray-50/50 transition-all">
+              <option value="code_only">ใช้โค้ด (Code Only)</option>
+              <option value="claimable">กดรับเข้าวอลเล็ท (Claimable)</option>
+              <option value="auto_grant">แจกอัตโนมัติ (Auto Grant)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">ฐานการคำนวณส่วนลด</label>
+            <select id="promoDiscountBase" class="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm bg-gray-50/50 transition-all">
+              <option value="subtotal">ค่าสินค้า (Subtotal)</option>
+              <option value="delivery_fee">ค่าส่ง (Delivery Fee)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">แหล่งทุนส่วนลด</label>
+            <select id="promoFundingSource" class="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm bg-gray-50/50 transition-all">
+              <option value="platform">แพลตฟอร์ม</option>
+              <option value="merchant">ร้านค้า</option>
+              <option value="driver">คนขับ</option>
+              <option value="split">แบ่งสัดส่วน</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">กลุ่มซ้อนคูปอง (Stacking Group)</label>
+            <input id="promoStackingGroup" type="text" class="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm bg-gray-50/50 transition-all" placeholder="เช่น NEW_USER, FOOD_ONLY">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">จำนวนสิทธิ์การกดรับทั้งหมด</label>
+            <input id="promoClaimLimit" type="number" class="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm bg-gray-50/50 transition-all" placeholder="เว้นว่าง = ไม่จำกัด" min="0">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">จำกัดการกดรับ/คน</label>
+            <input id="promoClaimLimitPerUser" type="number" class="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm bg-gray-50/50 transition-all" value="1" min="0">
+          </div>
+          <div>
             <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">GP คูปองส่งฟรีรวม (ส่วนร้าน)</label>
             <input id="promoGpChargeRate" type="number" class="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm bg-gray-50/50 transition-all" value="0.25" min="0" step="0.01">
           </div>
@@ -292,6 +328,13 @@ export async function createPromoCode() {
   const minOrder = parseFloat(document.getElementById('promoMinOrder').value) || null;
   const serviceType = document.getElementById('promoService').value || null;
   const merchantId = document.getElementById('promoMerchant').value || null;
+  const distributionType = document.getElementById('promoDistributionType')?.value || 'code_only';
+  const discountBase = document.getElementById('promoDiscountBase')?.value || 'subtotal';
+  const fundingSource = document.getElementById('promoFundingSource')?.value || 'platform';
+  const stackingGroup = document.getElementById('promoStackingGroup')?.value.trim() || null;
+  const claimLimitRaw = document.getElementById('promoClaimLimit')?.value;
+  const claimLimit = claimLimitRaw === '' || claimLimitRaw == null ? null : (parseInt(claimLimitRaw) || 0);
+  const claimLimitPerUser = parseInt(document.getElementById('promoClaimLimitPerUser')?.value) || 1;
   const gpChargeRate = parseFloat(document.getElementById('promoGpChargeRate').value) || 0.25;
   const gpSystemRate = parseFloat(document.getElementById('promoGpSystemRate').value) || 0.10;
   const gpDriverRate = parseFloat(document.getElementById('promoGpDriverRate').value) || 0.15;
@@ -314,6 +357,12 @@ export async function createPromoCode() {
       discount_type: discountType,
       discount_value: discountType === 'free_delivery' ? 0 : discountValue,
       max_discount_amount: discountType === 'percentage' ? maxDisc : null,
+      discount_base: discountBase,
+      distribution_type: distributionType,
+      claim_limit: claimLimit,
+      claim_limit_per_user: claimLimitPerUser,
+      stacking_group: stackingGroup,
+      funding_source: fundingSource,
       min_order_amount: minOrder,
       service_type: merchantId ? 'food' : serviceType,
       merchant_id: merchantId,
@@ -435,9 +484,57 @@ export async function editPromoCode(id) {
               ${merchantOptions}
             </select>
           </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">รูปแบบการแจก</label>
+            <select id="editPromoDistributionType" class="w-full px-3 py-2 border rounded-lg text-sm">
+              <option value="code_only" ${(c.distribution_type||'code_only')==='code_only'?'selected':''}>ใช้โค้ด</option>
+              <option value="claimable" ${(c.distribution_type||'code_only')==='claimable'?'selected':''}>กดรับเข้าวอลเล็ท</option>
+              <option value="auto_grant" ${(c.distribution_type||'code_only')==='auto_grant'?'selected':''}>แจกอัตโนมัติ</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">ฐานการคำนวณส่วนลด</label>
+            <select id="editPromoDiscountBase" class="w-full px-3 py-2 border rounded-lg text-sm">
+              <option value="subtotal" ${(c.discount_base||'subtotal')==='subtotal'?'selected':''}>ค่าสินค้า</option>
+              <option value="delivery_fee" ${(c.discount_base||'subtotal')==='delivery_fee'?'selected':''}>ค่าส่ง</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">แหล่งทุนส่วนลด</label>
+            <select id="editPromoFundingSource" class="w-full px-3 py-2 border rounded-lg text-sm">
+              <option value="platform" ${(c.funding_source||'platform')==='platform'?'selected':''}>แพลตฟอร์ม</option>
+              <option value="merchant" ${(c.funding_source||'platform')==='merchant'?'selected':''}>ร้านค้า</option>
+              <option value="driver" ${(c.funding_source||'platform')==='driver'?'selected':''}>คนขับ</option>
+              <option value="split" ${(c.funding_source||'platform')==='split'?'selected':''}>แบ่งสัดส่วน</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">กลุ่มซ้อนคูปอง (Stacking Group)</label>
+            <input id="editPromoStackingGroup" type="text" value="${escapeHtml(c.stacking_group||'')}" class="w-full px-3 py-2 border rounded-lg text-sm" placeholder="เช่น NEW_USER">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">จำนวนสิทธิ์การกดรับทั้งหมด</label>
+            <input id="editPromoClaimLimit" type="number" value="${c.claim_limit ?? ''}" class="w-full px-3 py-2 border rounded-lg text-sm" min="0" placeholder="เว้นว่าง = ไม่จำกัด">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">จำกัดการกดรับ/คน</label>
+            <input id="editPromoClaimLimitPerUser" type="number" value="${c.claim_limit_per_user ?? 1}" class="w-full px-3 py-2 border rounded-lg text-sm" min="0">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">จำกัด/คน</label>
             <input id="editPromoPerUser" type="number" value="${c.per_user_limit||0}" class="w-full px-3 py-2 border rounded-lg text-sm" min="0">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">ยอดกดรับสะสม</label>
+            <input type="number" value="${c.current_claims ?? 0}" class="w-full px-3 py-2 border rounded-lg text-sm bg-gray-50" disabled>
           </div>
         </div>
         <div class="grid grid-cols-2 gap-3">
@@ -490,12 +587,20 @@ export async function submitEditPromo(id) {
   try {
     const discountType = document.getElementById('editPromoType').value;
     const merchantId = document.getElementById('editPromoMerchant').value || null;
+    const claimLimitRaw = document.getElementById('editPromoClaimLimit')?.value;
+    const claimLimit = claimLimitRaw === '' || claimLimitRaw == null ? null : (parseInt(claimLimitRaw) || 0);
     const updateData = {
       name: document.getElementById('editPromoName').value.trim(),
       description: document.getElementById('editPromoDesc').value.trim() || null,
       discount_type: discountType,
       discount_value: discountType === 'free_delivery' ? 0 : (parseFloat(document.getElementById('editPromoValue').value) || 0),
       max_discount_amount: discountType === 'percentage' ? (parseFloat(document.getElementById('editPromoMaxDisc').value) || null) : null,
+      discount_base: document.getElementById('editPromoDiscountBase')?.value || 'subtotal',
+      distribution_type: document.getElementById('editPromoDistributionType')?.value || 'code_only',
+      funding_source: document.getElementById('editPromoFundingSource')?.value || 'platform',
+      stacking_group: document.getElementById('editPromoStackingGroup')?.value.trim() || null,
+      claim_limit: claimLimit,
+      claim_limit_per_user: parseInt(document.getElementById('editPromoClaimLimitPerUser')?.value) || 1,
       min_order_amount: parseFloat(document.getElementById('editPromoMinOrder').value) || null,
       service_type: merchantId ? 'food' : (document.getElementById('editPromoService').value || null),
       merchant_id: merchantId,

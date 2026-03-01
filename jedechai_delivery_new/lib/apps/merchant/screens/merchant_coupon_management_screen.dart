@@ -241,8 +241,10 @@ class _MerchantCouponManagementScreenState
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: Text(
           widget.managedByAdmin
@@ -264,9 +266,13 @@ class _MerchantCouponManagementScreenState
             else
               _buildCreateForm(),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'คูปองของร้าน',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: colorScheme.onSurface,
+              ),
             ),
             const SizedBox(height: 8),
             if (_isLoading)
@@ -282,10 +288,14 @@ class _MerchantCouponManagementScreenState
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: colorScheme.surface,
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: colorScheme.outline.withOpacity(0.12)),
                 ),
-                child: const Text('ยังไม่มีคูปองร้านค้า'),
+                child: Text(
+                  'ยังไม่มีคูปองร้านค้า',
+                  style: TextStyle(color: colorScheme.onSurface),
+                ),
               )
             else
               ..._coupons.map(_buildCouponCard),
@@ -296,6 +306,8 @@ class _MerchantCouponManagementScreenState
   }
 
   Widget _buildUsageGuide() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final step3 = '3) คูปองส่งฟรีของร้าน จะคิด GP เพิ่มรวม 25%';
     final step4 = widget.managedByAdmin
         ? '4) แอดมินสามารถเปิด/ปิดคูปองแต่ละรายการได้จากสวิตช์ด้านขวา'
@@ -304,42 +316,55 @@ class _MerchantCouponManagementScreenState
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.orange.withValues(alpha: 0.08),
+        color: isDark
+            ? colorScheme.surfaceContainerHighest
+            : Colors.orange.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+        border: Border.all(
+          color: isDark
+              ? colorScheme.outline.withOpacity(0.18)
+              : Colors.orange.withValues(alpha: 0.3),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'วิธีใช้งานคูปองร้าน',
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             widget.managedByAdmin
                 ? '1) แอดมินกำลังจัดการคูปองของร้านที่เลือก ลูกค้าจะเห็นบนหน้าร้านโดยอัตโนมัติ'
                 : '1) สร้างคูปองเฉพาะร้านของคุณ แล้วลูกค้าจะเห็นบนหน้าร้านโดยอัตโนมัติ',
+            style: TextStyle(color: colorScheme.onSurface.withOpacity(0.85)),
           ),
           Text(
             widget.managedByAdmin
                 ? '2) กดปุ่ม "เปิดฟอร์มคูปอง" เพื่อแก้ไขผ่าน Dialog แทนฟอร์มหน้าเดิม'
                 : '2) กรอกข้อมูลในฟอร์มด้านล่างเพื่อสร้างคูปองใหม่ได้ทันที',
+            style: TextStyle(color: colorScheme.onSurface.withOpacity(0.85)),
           ),
-          Text(step3),
-          Text(step4),
+          Text(step3, style: TextStyle(color: colorScheme.onSurface.withOpacity(0.85))),
+          Text(step4, style: TextStyle(color: colorScheme.onSurface.withOpacity(0.85))),
         ],
       ),
     );
   }
 
   Widget _buildAdminCreateButton() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colorScheme.outline.withOpacity(0.12)),
       ),
       child: OutlinedButton.icon(
         onPressed: _openAdminCreateCouponDialog,
@@ -360,13 +385,15 @@ class _MerchantCouponManagementScreenState
   }
 
   Widget _buildCreateForm({VoidCallback? onCreated}) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Form(
       key: _formKey,
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colorScheme.outline.withOpacity(0.12)),
         ),
         child: Column(
           children: [
@@ -531,12 +558,14 @@ class _MerchantCouponManagementScreenState
   }
 
   Widget _buildCouponCard(Coupon coupon) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colorScheme.outline.withOpacity(0.12)),
       ),
       child: Row(
         children: [
@@ -546,12 +575,24 @@ class _MerchantCouponManagementScreenState
               children: [
                 Text(
                   coupon.code,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurface,
+                  ),
                 ),
-                Text(coupon.name, style: const TextStyle(fontSize: 13)),
+                Text(
+                  coupon.name,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: colorScheme.onSurface.withOpacity(0.85),
+                  ),
+                ),
                 Text(
                   coupon.discountText,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: colorScheme.onSurface.withOpacity(0.7),
+                  ),
                 ),
               ],
             ),

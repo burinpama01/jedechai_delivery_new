@@ -21,6 +21,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _referralCodeController = TextEditingController();
 
   String _selectedRole = 'customer'; // Default role
   bool _isLoading = false;
@@ -213,6 +214,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _showSuccessDialog() {
+    final referralCode = _selectedRole == 'customer'
+        ? _referralCodeController.text.trim()
+        : '';
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -236,7 +240,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
               onPressed: () {
                 Navigator.of(context).pop();
                 Navigator.of(this.context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => LoginScreen(initialReferralCode: referralCode),
+                  ),
                 );
               },
               style: ElevatedButton.styleFrom(
@@ -260,6 +266,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _referralCodeController.dispose();
     super.dispose();
   }
 
@@ -390,6 +397,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 },
               ),
               const SizedBox(height: 16),
+
+              if (_selectedRole == 'customer') ...[
+                TextFormField(
+                  controller: _referralCodeController,
+                  decoration: const InputDecoration(
+                    labelText: 'โค้ดแนะนำจากเพื่อน (ถ้ามี)',
+                    prefixIcon: Icon(Icons.card_giftcard_outlined),
+                  ),
+                  textCapitalization: TextCapitalization.characters,
+                ),
+                const SizedBox(height: 16),
+              ],
 
               // Password Field
               TextFormField(

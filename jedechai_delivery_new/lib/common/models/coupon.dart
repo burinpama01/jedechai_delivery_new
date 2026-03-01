@@ -13,6 +13,13 @@ class Coupon {
   final double? maxDiscountAmount; // Cap for percentage discounts
   final String? serviceType; // null=all, 'food', 'ride', 'parcel'
   final String? merchantId; // null=all merchants, or specific merchant
+  final String? discountBase; // 'subtotal' | 'delivery_fee'
+  final String? stackingGroup;
+  final String? fundingSource; // platform, merchant, driver, split
+  final String? distributionType; // code_only, claimable, auto_grant
+  final int? claimLimit;
+  final int? claimLimitPerUser;
+  final int? currentClaims;
   final int usageLimit; // Total times this coupon can be used (0=unlimited)
   final int usedCount; // How many times it has been used
   final int perUserLimit; // Times a single user can use it (0=unlimited)
@@ -36,6 +43,13 @@ class Coupon {
     this.maxDiscountAmount,
     this.serviceType,
     this.merchantId,
+    this.discountBase,
+    this.stackingGroup,
+    this.fundingSource,
+    this.distributionType,
+    this.claimLimit,
+    this.claimLimitPerUser,
+    this.currentClaims,
     this.usageLimit = 0,
     this.usedCount = 0,
     this.perUserLimit = 1,
@@ -65,6 +79,13 @@ class Coupon {
           : null,
       serviceType: json['service_type'] as String?,
       merchantId: json['merchant_id'] as String?,
+      discountBase: json['discount_base'] as String?,
+      stackingGroup: json['stacking_group'] as String?,
+      fundingSource: json['funding_source'] as String?,
+      distributionType: json['distribution_type'] as String?,
+      claimLimit: json['claim_limit'] as int?,
+      claimLimitPerUser: json['claim_limit_per_user'] as int?,
+      currentClaims: json['current_claims'] as int?,
       usageLimit: json['usage_limit'] as int? ?? 0,
       usedCount: json['used_count'] as int? ?? 0,
       perUserLimit: json['per_user_limit'] as int? ?? 1,
@@ -91,6 +112,13 @@ class Coupon {
       'max_discount_amount': maxDiscountAmount,
       'service_type': serviceType,
       'merchant_id': merchantId,
+      'discount_base': discountBase,
+      'stacking_group': stackingGroup,
+      'funding_source': fundingSource,
+      'distribution_type': distributionType,
+      'claim_limit': claimLimit,
+      'claim_limit_per_user': claimLimitPerUser,
+      'current_claims': currentClaims,
       'usage_limit': usageLimit,
       'used_count': usedCount,
       'per_user_limit': perUserLimit,

@@ -7,7 +7,7 @@ import '../utils/order_code_formatter.dart';
 /// 
 /// ฟีเจอร์หลัก:
 /// - ตรวจสอบยอดเงินคงเหลือ
-/// - หักเงินค่าคอมมิชชั่น
+/// - หักเงินค่าบริการระบบ
 /// - บันทึกประวัติการทำรายการ
 /// - ตรวจสอบว่าคนขับมีเงินพอรับงานหรือไม่
 ///
@@ -176,7 +176,56 @@ class WalletService {
     }
   }
 
-  /// หักเงินค่าคอมมิชชั่นสำหรับ food order (Platform Fee + Merchant GP)
+  static Map<String, double> applyReferralCouponFundingOffsets({
+    required double totalDeduction,
+    required double appEarnings,
+    required double driverNetIncome,
+    String? couponCode,
+    required double couponDiscountAmount,
+  }) {
+    final normalizedCouponCode = couponCode?.trim().toUpperCase();
+    final isReferralTwoSidedCoupon = normalizedCouponCode == 'WELCOME20' ||
+        normalizedCouponCode == 'REFERRER20' ||
+        normalizedCouponCode == 'REFFERER20';
+
+    var updatedTotalDeduction = totalDeduction;
+    var updatedAppEarnings = appEarnings;
+    var updatedDriverNetIncome = driverNetIncome;
+    var couponSystemOffset = 0.0;
+    var couponDriverOffset = 0.0;
+
+    final effectiveCouponDiscount =
+        isReferralTwoSidedCoupon ? couponDiscountAmount : 0.0;
+    if (effectiveCouponDiscount > 0) {
+      couponSystemOffset = effectiveCouponDiscount > updatedTotalDeduction
+          ? updatedTotalDeduction
+          : effectiveCouponDiscount;
+      updatedTotalDeduction -= couponSystemOffset;
+      updatedAppEarnings -= couponSystemOffset;
+
+      final remaining = effectiveCouponDiscount - couponSystemOffset;
+      if (remaining > 0) {
+        couponDriverOffset = remaining > updatedDriverNetIncome
+            ? updatedDriverNetIncome
+            : remaining;
+        updatedDriverNetIncome -= couponDriverOffset;
+      }
+    }
+
+    if (updatedTotalDeduction < 0) updatedTotalDeduction = 0;
+    if (updatedAppEarnings < 0) updatedAppEarnings = 0;
+    if (updatedDriverNetIncome < 0) updatedDriverNetIncome = 0;
+
+    return {
+      'totalDeduction': updatedTotalDeduction,
+      'appEarnings': updatedAppEarnings,
+      'driverNetIncome': updatedDriverNetIncome,
+      'couponSystemOffset': couponSystemOffset,
+      'couponDriverOffset': couponDriverOffset,
+    };
+  }
+
+  /// หักเงินค่าบริการระบบสำหรับ food order (Platform Fee + Merchant GP)
   ///
   /// platformFee = deliveryFee * 15%
   /// merchantGP  = foodPrice * 10%
@@ -190,6 +239,8 @@ class WalletService {
     required double deliveryFee,
     required double foodPrice,
     required String bookingId,
+    String? couponCode,
+    double couponDiscountAmount = 0,
     double? deliverySystemRateOverride,
     double? merchantGpSystemRateOverride,
     double? merchantGpDriverRateOverride,
@@ -198,7 +249,7 @@ class WalletService {
     double merchantFreeDeliverySystemRate = 0.10,
     double merchantFreeDeliveryDriverRate = 0.15,
   }) async {
-    debugLog('💰 กำลังหักค่าคอมมิชชั่น Food Order...');
+    debugLog('💰 กำลังหักค่าบริการระบบ Food Order...');
     debugLog('   └─ คนขับ: $driverId');
     debugLog('   └─ Delivery Fee: $deliveryFee');
     debugLog('   └─ Food Price: $foodPrice');
@@ -233,6 +284,8 @@ class WalletService {
           (deliveryFee - deliverySystemFee) + merchantDriverGP;
       var extraSystemCharge = 0.0;
       var extraDriverSupport = 0.0;
+      var couponSystemOffset = 0.0;
+      var couponDriverOffset = 0.0;
 
       if (applyMerchantFreeDeliveryAdjustment) {
         // Additional GP from merchant coupon budget
@@ -250,6 +303,19 @@ class WalletService {
             (foodPrice * merchantFreeDeliveryChargeRate).ceilToDouble();
       }
 
+      final funding = applyReferralCouponFundingOffsets(
+        totalDeduction: totalDeduction,
+        appEarnings: appEarnings,
+        driverNetIncome: driverNetIncome,
+        couponCode: couponCode,
+        couponDiscountAmount: couponDiscountAmount,
+      );
+      totalDeduction = funding['totalDeduction'] ?? totalDeduction;
+      appEarnings = funding['appEarnings'] ?? appEarnings;
+      driverNetIncome = funding['driverNetIncome'] ?? driverNetIncome;
+      couponSystemOffset = funding['couponSystemOffset'] ?? 0.0;
+      couponDriverOffset = funding['couponDriverOffset'] ?? 0.0;
+
       debugLog('   └─ Delivery System Fee (${(deliverySystemRate * 100).toStringAsFixed(0)}% of $deliveryFee): $deliverySystemFee');
       debugLog('   └─ Merchant GP System (${(merchantGpSystemRate * 100).toStringAsFixed(0)}% of $foodPrice): $merchantSystemGP');
       debugLog('   └─ Merchant GP Driver (${(merchantGpDriverRate * 100).toStringAsFixed(0)}% of $foodPrice): $merchantDriverGP');
@@ -264,20 +330,24 @@ class WalletService {
       debugLog('   └─ ยอดเงินเดิม: ${wallet.balance} บาท');
       debugLog('   └─ ยอดเงินใหม่: $newBalance บาท');
 
-      // Atomic deduction via RPC (Phase 2)
-      final shortId = OrderCodeFormatter.format(bookingId);
-      final rpcResult = await _supabase.rpc('wallet_deduct', params: {
-        'p_user_id': driverId,
-        'p_amount': totalDeduction,
-        'p_description': 'หักค่าบริการระบบ ออเดอร์ $shortId',
-        'p_type': 'commission',
-        'p_related_booking_id': bookingId,
-      });
-      if (rpcResult is Map && rpcResult['success'] != true) {
-        throw Exception(rpcResult['error'] ?? 'wallet_deduct failed');
+      if (totalDeduction > 0) {
+        // Atomic deduction via RPC (Phase 2)
+        final shortId = OrderCodeFormatter.format(bookingId);
+        final rpcResult = await _supabase.rpc('wallet_deduct', params: {
+          'p_user_id': driverId,
+          'p_amount': totalDeduction,
+          'p_description': 'หักค่าบริการระบบ ออเดอร์ $shortId',
+          'p_type': 'commission',
+          'p_related_booking_id': bookingId,
+        });
+        if (rpcResult is Map && rpcResult['success'] != true) {
+          throw Exception(rpcResult['error'] ?? 'wallet_deduct failed');
+        }
+      } else {
+        debugLog('ℹ️ Skip wallet_deduct เพราะยอดหักเข้าระบบ = 0');
       }
 
-      debugLog('✅ หักค่าคอมมิชชั่น Food Order สำเร็จ');
+      debugLog('✅ หักค่าบริการระบบ Food Order สำเร็จ');
 
       return {
         'platformFee': deliverySystemFee,
@@ -287,6 +357,8 @@ class WalletService {
         'merchantDriverGP': merchantDriverGP,
         'extraSystemCharge': extraSystemCharge,
         'extraDriverSupport': extraDriverSupport,
+        'couponSystemOffset': couponSystemOffset,
+        'couponDriverOffset': couponDriverOffset,
         'appEarnings': appEarnings,
         'totalDeduction': totalDeduction,
         'driverNetIncome': driverNetIncome,
@@ -297,7 +369,7 @@ class WalletService {
     }
   }
 
-  /// หักเงินค่าคอมมิชชั่นจากกระเป๋าคนขับ
+  /// หักเงินค่าบริการระบบจากกระเป๋าคนขับ
   /// 
   /// [driverId] - ID ของคนขับ
   /// [jobPrice] - ราคางาน (บาท)
@@ -311,7 +383,7 @@ class WalletService {
   }) async {
     debugLog('🔍 DEBUG: deductCommission called');
     debugLog('   └─ Timestamp: ${DateTime.now()}');
-    debugLog('💰 กำลังหักค่าคอมมิชชั่น...');
+    debugLog('💰 กำลังหักค่าบริการระบบ...');
     debugLog('   └─ คนขับ: $driverId');
     debugLog('   └─ ราคางาน: $jobPrice บาท');
     debugLog('   └─ Booking: $bookingId');
@@ -323,10 +395,10 @@ class WalletService {
         throw Exception('ไม่พบกระเป๋าเงินของคนขับ');
       }
 
-      // คำนวณค่าคอมมิชชั่น
+      // คำนวณค่าบริการระบบ
       final commission = _configService.calculateCommission(jobPrice);
-      debugLog('   └─ อัตราคอมมิชชั่น: ${_configService.commissionRate}%');
-      debugLog('   └─ ค่าคอมมิชชั่น: $commission บาท');
+      debugLog('   └─ อัตราค่าบริการระบบ: ${_configService.commissionRate}%');
+      debugLog('   └─ ค่าบริการระบบ: $commission บาท');
 
       // ยอดเงินใหม่
       final newBalance = wallet.balance - commission;
@@ -345,7 +417,7 @@ class WalletService {
         throw Exception(rpcResult['error'] ?? 'wallet_deduct failed');
       }
 
-      debugLog('✅ หักค่าคอมมิชชั่นสำเร็จ');
+      debugLog('✅ หักค่าบริการระบบสำเร็จ');
       return true;
     } catch (e) {
       debugLog('❌ Error deducting commission: $e');
@@ -548,9 +620,9 @@ class WalletTransaction {
       case 'topup':
         return 'เติมเงิน';
       case 'commission':
-        return 'หักค่าคอมมิชชั่น';
+        return 'หักค่าบริการระบบ';
       case 'food_commission':
-        return 'หักค่าคอมมิชชั่นอาหาร';
+        return 'หักค่าบริการระบบอาหาร';
       case 'job_income':
         return 'รายได้จากงาน';
       case 'penalty':

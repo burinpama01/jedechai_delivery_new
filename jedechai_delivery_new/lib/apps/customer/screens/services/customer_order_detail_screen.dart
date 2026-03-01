@@ -1080,6 +1080,11 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
     final couponDiscount = (_couponUsage?['discount_amount'] as num?)?.toDouble() ?? 0.0;
     final couponCode = _couponUsage?['coupon_code'] as String?;
 
+    final normalizedCouponCode = couponCode?.trim().toUpperCase();
+    final hideCouponBreakdown = normalizedCouponCode == 'WELCOME20' ||
+        normalizedCouponCode == 'REFERRER20' ||
+        normalizedCouponCode == 'REFFERER20';
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1190,9 +1195,11 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    couponCode != null && couponCode.isNotEmpty
-                        ? 'ส่วนลดคูปอง ($couponCode)'
-                        : 'ส่วนลดคูปอง',
+                    hideCouponBreakdown
+                        ? 'ส่วนลดจากคูปอง'
+                        : (couponCode != null && couponCode.isNotEmpty
+                            ? 'ส่วนลดคูปอง ($couponCode)'
+                            : 'ส่วนลดคูปอง'),
                     style: TextStyle(
                       fontSize: 14,
                       color: colorScheme.secondary,
@@ -1260,9 +1267,11 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    couponCode != null && couponCode.isNotEmpty
-                        ? 'ส่วนลดคูปอง ($couponCode)'
-                        : 'ส่วนลดคูปอง',
+                    hideCouponBreakdown
+                        ? 'ส่วนลดจากคูปอง'
+                        : (couponCode != null && couponCode.isNotEmpty
+                            ? 'ส่วนลดคูปอง ($couponCode)'
+                            : 'ส่วนลดคูปอง'),
                     style: TextStyle(fontSize: 14, color: colorScheme.secondary),
                   ),
                   Text(

@@ -1,14 +1,21 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import '../../../../common/widgets/app_network_image.dart';
 import '../../../../common/services/auth_service.dart';
 import '../../../../common/services/system_config_service.dart';
+import '../../../../common/services/referral_service.dart';
 import '../../../../theme/app_theme.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final String? initialReferralCode;
+
+  const LoginScreen({
+    super.key,
+    this.initialReferralCode,
+  });
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -22,6 +29,8 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   DateTime? _lastBackPressTime;
   String? _logoUrl;
+
+  final ReferralService _referralService = ReferralService();
 
   @override
   void initState() {
@@ -50,6 +59,16 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
+
+      final referralCode = widget.initialReferralCode?.trim() ?? '';
+      if (referralCode.isNotEmpty) {
+        try {
+          await _referralService.submitReferralCode(referralCode);
+        } catch (e) {
+          // Do not block login if referral code fails.
+          debugLog('⚠️ submitReferralCode after login failed: $e');
+        }
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

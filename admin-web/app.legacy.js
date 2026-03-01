@@ -493,6 +493,7 @@ async function loadPage(page) {
       case 'pending_orders': await renderPendingOrders(container); break;
       case 'complaints': await renderComplaints(container); break;
       case 'promos': await renderPromos(container); break;
+      case 'referrals': await renderReferrals(container); break;
       case 'settings': await renderSettings(container); break;
       case 'account_deletions': await renderAccountDeletions(container); break;
     }
@@ -2811,6 +2812,49 @@ async function rejectWithdrawal(id, userId, amount) {
 let _promoFilter = 'all'; // all, active, expired, inactive
 let _promoMerchants = [];
 
+// ============================================
+// Referrals Page
+// ============================================
+async function renderReferrals(el) {
+  try {
+    const bridged = window.__adminWebBridge?.renderReferralsPage;
+    if (typeof bridged === 'function') {
+      return await bridged(el, { supabase, supabaseAuth, currentUser });
+    }
+  } catch (_) {
+    // ignore and fall back
+  }
+
+  el.innerHTML = `
+    <div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
+      <h1 class="text-2xl md:text-3xl text-slate-800 font-bold">ระบบชวนเพื่อน (Referrals)</h1>
+      <p class="mt-4 text-slate-500">ไม่พบโมดูล Referrals (bridge ไม่พร้อม)</p>
+    </div>
+  `;
+}
+
+function filterReferrals() {
+  try {
+    const bridged = window.__adminWebBridge?.filterReferrals;
+    if (typeof bridged === 'function') return bridged();
+  } catch (_) {}
+}
+
+function refreshReferrals() {
+  try {
+    const bridged = window.__adminWebBridge?.refreshReferrals;
+    if (typeof bridged === 'function') return bridged();
+  } catch (_) {}
+  return filterReferrals();
+}
+
+function updateReferralStatus(referralId, newStatus) {
+  try {
+    const bridged = window.__adminWebBridge?.updateReferralStatus;
+    if (typeof bridged === 'function') return bridged(referralId, newStatus);
+  } catch (_) {}
+}
+
 async function renderPromos(el) {
   try {
     const bridged = window.__adminWebBridge?.renderPromosPage;
@@ -4910,7 +4954,7 @@ async function loadRevenue() {
     <!-- Summary Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
       ${statCard('payments', 'ยอดรวมทั้งหมด', '฿' + fmt(Math.round(totalRevenue)), 'bg-green-500')}
-      ${statCard('account_balance', 'รายได้ค่าบริการ', '฿' + fmt(Math.round(platformIncome)), 'bg-blue-500')}
+      ${statCard('account_balance', 'GP ระบบ', '฿' + fmt(Math.round(platformIncome)), 'bg-blue-500')}
       ${statCard('restaurant', 'อาหาร', '฿' + fmt(Math.round(byType.food.revenue)) + ' (' + byType.food.count + ')', 'bg-orange-500')}
       ${statCard('local_taxi', 'เรียกรถ+พัสดุ', '฿' + fmt(Math.round(byType.ride.revenue + byType.parcel.revenue)) + ' (' + (byType.ride.count + byType.parcel.count) + ')', 'bg-purple-500')}
     </div>
@@ -5024,7 +5068,7 @@ async function loadRevenue() {
       <div class="flex items-center gap-3 mb-5">
         <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center"><span class="material-icons-round text-blue-500">analytics</span></div>
         <div>
-          <h3 class="font-bold text-gray-800">รายละเอียดค่าบริการระบบ</h3>
+          <h3 class="font-bold text-gray-800">รายละเอียด GP ระบบ</h3>
           <p class="text-xs text-gray-400">แยกตามประเภทบริการ</p>
         </div>
       </div>

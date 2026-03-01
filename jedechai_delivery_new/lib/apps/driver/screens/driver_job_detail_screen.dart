@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:intl/intl.dart';
-import '../../../common/models/booking.dart';
+
 import '../../../common/config/env_config.dart';
-import '../../../common/services/supabase_service.dart';
+import '../../../common/models/booking.dart';
+import '../../../common/utils/driver_amount_calculator.dart';
 import '../../../common/utils/order_code_formatter.dart';
+import '../../../common/services/supabase_service.dart';
 import '../../../theme/app_theme.dart';
 import '../../../utils/debug_logger.dart';
 
@@ -187,10 +189,24 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     final b = widget.booking;
     final isFood = b.serviceType == 'food';
-    final grossCollect = isFood ? b.price + (b.deliveryFee ?? 0) : b.price;
-    final totalCollect = (grossCollect - _couponDiscount) < 0 ? 0 : (grossCollect - _couponDiscount);
-    final commission = b.appEarnings ?? (totalCollect * 0.20);
-    final netEarnings = b.driverEarnings ?? (totalCollect - commission);
+    final grossCollect = DriverAmountCalculator.grossCollect(b);
+    final totalCollect = DriverAmountCalculator.netCollect(
+      booking: b,
+      couponDiscountAmount: _couponDiscount,
+    );
+    final normalizedCouponCode = _couponCode?.trim().toUpperCase();
+    final hideCouponBreakdown = normalizedCouponCode == 'WELCOME20' ||
+        normalizedCouponCode == 'REFERRER20' ||
+        normalizedCouponCode == 'REFFERER20';
+    final commission = DriverAmountCalculator.appFee(
+      booking: b,
+      netCollectAmount: totalCollect,
+    );
+    final netEarnings = DriverAmountCalculator.netEarnings(
+      booking: b,
+      netCollectAmount: totalCollect,
+      appFeeAmount: commission,
+    );
     final paymentLabel = (b.paymentMethod ?? 'cash') == 'cash' ? 'เงินสด' : b.paymentMethod ?? '-';
     final serviceLabel = isFood
         ? 'สั่งอาหาร'
@@ -387,13 +403,15 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
                         _earningsRow('ค่ารอบ', '฿ ${totalCollect.ceil()}', colorScheme.onSurface, isBold: true),
                         if (_couponDiscount > 0)
                           _earningsRow(
-                            _couponCode != null && _couponCode!.isNotEmpty
-                                ? 'ส่วนลดคูปอง ($_couponCode)'
-                                : 'ส่วนลดคูปอง',
+                            hideCouponBreakdown
+                                ? 'ส่วนลดจากคูปอง'
+                                : (_couponCode != null && _couponCode!.isNotEmpty
+                                    ? 'ส่วนลดคูปอง ($_couponCode)'
+                                    : 'ส่วนลดคูปอง'),
                             '-฿ ${_couponDiscount.ceil()}',
                             Colors.green.shade600,
                           ),
-                        _earningsRow('ค่าคอมมิชชั่น', '-฿ ${commission.ceil()}', Colors.red.shade400),
+                        _earningsRow('ค่าบริการระบบ', '-฿ ${commission.ceil()}', Colors.red.shade400),
                         const Divider(height: 20),
                         _earningsRow('ยอดรายได้สุทธิ', '฿ ${netEarnings.ceil()}', AppTheme.accentBlue, isBold: true),
                         if (isFood) ...[
@@ -413,9 +431,12 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
                           _earningsRow('ยอดที่ต้องเก็บจากลูกค้า', '฿ ${totalCollect.ceil()}', colorScheme.onSurface, isBold: true),
                           if (_couponDiscount > 0)
                             _earningsRow(
-                              _couponCode != null && _couponCode!.isNotEmpty
-                                  ? 'ส่วนลดคูปอง ($_couponCode)'
-                                  : 'ส่วนลดคูปอง',
+                              hideCouponBreakdown
+                                  ? 'ส่วนลดจากคูปอง'
+                                  : (_couponCode != null &&
+                                          _couponCode!.isNotEmpty
+                                      ? 'ส่วนลดคูปอง ($_couponCode)'
+                                      : 'ส่วนลดคูปอง'),
                               '-฿ ${_couponDiscount.ceil()}',
                               Colors.green.shade600,
                             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../apps/customer/screens/rewards/my_coupons_screen.dart';
 import '../models/coupon.dart';
 import '../services/coupon_service.dart';
 import '../../theme/app_theme.dart';
@@ -125,59 +126,95 @@ class _CouponEntryWidgetState extends State<CouponEntryWidget> {
   }
 
   Widget _buildInputRow() {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: TextField(
-            controller: _codeController,
-            textCapitalization: TextCapitalization.characters,
-            decoration: InputDecoration(
-              hintText: 'กรอกโค้ดส่วนลด',
-              hintStyle: TextStyle(color: Colors.grey[400]),
-              prefixIcon: Icon(Icons.local_offer_outlined, color: Colors.grey[500]),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey[300]!),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _codeController,
+                textCapitalization: TextCapitalization.characters,
+                decoration: InputDecoration(
+                  hintText: 'กรอกโค้ดส่วนลด',
+                  hintStyle: TextStyle(color: Colors.grey[400]),
+                  prefixIcon: Icon(Icons.local_offer_outlined, color: Colors.grey[500]),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 2),
+                  ),
+                  isDense: true,
+                ),
               ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey[300]!),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 2),
-              ),
-              isDense: true,
             ),
-          ),
+            const SizedBox(width: 12),
+            SizedBox(
+              height: 48,
+              child: ElevatedButton(
+                onPressed: _isValidating ? null : _validateCoupon,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryGreen,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                ),
+                child: _isValidating
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'ใช้โค้ด',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 12),
+        const SizedBox(height: 12),
         SizedBox(
+          width: double.infinity,
           height: 48,
-          child: ElevatedButton(
-            onPressed: _isValidating ? null : _validateCoupon,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryGreen,
-              foregroundColor: Colors.white,
+          child: OutlinedButton.icon(
+            onPressed: () async {
+              final selectedCoupon = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const MyCouponsScreen(isSelectingMode: true),
+                ),
+              );
+              
+              if (selectedCoupon != null && selectedCoupon is Coupon) {
+                _codeController.text = selectedCoupon.code;
+                _validateCoupon();
+              }
+            },
+            icon: const Icon(Icons.account_balance_wallet, size: 20, color: AppTheme.primaryGreen),
+            label: const Text(
+              'เลือกจากคูปองของฉัน',
+              style: TextStyle(fontWeight: FontWeight.w600, color: AppTheme.primaryGreen),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: AppTheme.primaryGreen.withOpacity(0.5)),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 20),
             ),
-            child: _isValidating
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Text(
-                    'ใช้โค้ด',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
           ),
         ),
       ],
@@ -185,6 +222,10 @@ class _CouponEntryWidgetState extends State<CouponEntryWidget> {
   }
 
   Widget _buildAppliedCoupon() {
+    final normalizedCode = _appliedCoupon?.code.trim().toUpperCase();
+    final hideBreakdown = normalizedCode == 'WELCOME20' ||
+        normalizedCode == 'REFERRER20' ||
+        normalizedCode == 'REFFERER20';
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -214,34 +255,38 @@ class _CouponEntryWidgetState extends State<CouponEntryWidget> {
                 Row(
                   children: [
                     Text(
-                      _appliedCoupon!.code,
+                      hideBreakdown ? 'ใช้คูปองแล้ว' : _appliedCoupon!.code,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                         color: AppTheme.primaryGreen,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryGreen,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        _appliedCoupon!.discountText,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
+                    if (!hideBreakdown) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryGreen,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          _appliedCoupon!.discountText,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'ประหยัด ฿${_discount.toStringAsFixed(0)}',
+                  hideBreakdown
+                      ? 'ส่วนลด ฿${_discount.toStringAsFixed(0)}'
+                      : 'ประหยัด ฿${_discount.toStringAsFixed(0)}',
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.green[700],

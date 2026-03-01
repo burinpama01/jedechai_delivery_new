@@ -19,6 +19,7 @@ import '../../../common/services/chat_service.dart';
 import '../../../common/widgets/chat_screen.dart';
 import '../../../common/services/merchant_food_config_service.dart';
 import '../../../common/models/booking.dart';
+import '../../../common/utils/driver_amount_calculator.dart';
 import '../../../common/utils/order_code_formatter.dart';
 import '../../../theme/app_theme.dart';
 import '../../../common/config/env_config.dart';
@@ -173,14 +174,14 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   }
 
   double _grossCollectAmount(Booking booking) {
-    return booking.serviceType == 'food'
-        ? booking.price + (booking.deliveryFee ?? 0)
-        : booking.price;
+    return DriverAmountCalculator.grossCollect(booking);
   }
 
   double _netCollectAmount(Booking booking) {
-    final total = _grossCollectAmount(booking) - _couponDiscount;
-    return total < 0 ? 0 : total;
+    return DriverAmountCalculator.netCollect(
+      booking: booking,
+      couponDiscountAmount: _couponDiscount,
+    );
   }
 
   Future<void> _loadMerchantFinancePreview() async {
@@ -3104,6 +3105,19 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     final foodPrice = booking.price;
     final deliveryFee = booking.deliveryFee ?? 0;
     final totalCollect = _netCollectAmount(booking);
+    final commission = DriverAmountCalculator.appFee(
+      booking: booking,
+      netCollectAmount: totalCollect,
+    );
+    final netEarnings = DriverAmountCalculator.netEarnings(
+      booking: booking,
+      netCollectAmount: totalCollect,
+      appFeeAmount: commission,
+    );
+    final normalizedCouponCode = _couponCode?.trim().toUpperCase();
+    final hideCouponBreakdown = normalizedCouponCode == 'WELCOME20' ||
+        normalizedCouponCode == 'REFERRER20' ||
+        normalizedCouponCode == 'REFFERER20';
 
     showDialog(
       context: context,
@@ -3147,17 +3161,24 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                     if (_couponDiscount > 0) ...[
                       const SizedBox(height: 4),
                       _buildSummaryRow(
-                        _couponCode != null && _couponCode!.isNotEmpty
-                            ? '  ส่วนลดคูปอง ($_couponCode)'
-                            : '  ส่วนลดคูปอง',
+                        hideCouponBreakdown
+                            ? '  ส่วนลดจากคูปอง'
+                            : (_couponCode != null && _couponCode!.isNotEmpty
+                                ? '  ส่วนลดคูปอง ($_couponCode)'
+                                : '  ส่วนลดคูปอง'),
                         '-฿${_couponDiscount.ceil()}',
                         colorScheme.secondary,
                       ),
                     ],
+                    _buildSummaryRow(
+                      'ค่าบริการระบบ',
+                      '-฿${commission.ceil()}',
+                      colorScheme.error,
+                    ),
                     const Divider(height: 16),
                     _buildSummaryRow(
                       'รายได้สุทธิ',
-                      '฿${(booking.driverEarnings ?? booking.price).ceil()}',
+                      '฿${netEarnings.ceil()}',
                       AppTheme.accentBlue,
                       isBold: true,
                       fontSize: 18,

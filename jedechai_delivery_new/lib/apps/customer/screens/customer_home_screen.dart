@@ -5,6 +5,7 @@ import 'dart:async';
 import '../../../theme/app_theme.dart';
 import '../../../common/services/auth_service.dart';
 import '../../../common/services/profile_service.dart';
+import '../../../common/services/notification_service.dart';
 import '../../../common/models/booking.dart';
 import '../../../common/services/supabase_service.dart';
 import '../../../common/utils/order_code_formatter.dart';
@@ -40,6 +41,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   int _currentBannerIndex = 0;
   final PageController _bannerController = PageController();
   Timer? _bannerTimer;
+
+  bool _didCheckReferralRewardDialog = false;
 
   Future<Map<String, Map<String, dynamic>>> _fetchCouponUsageMap(List<String> bookingIds) async {
     if (bookingIds.isEmpty) return {};
@@ -102,6 +105,44 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     _setupBookingsStream();
     _startAutoRefresh();
     _loadBanners();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndShowReferralRewardDialogIfAny();
+    });
+  }
+
+  Future<void> _checkAndShowReferralRewardDialogIfAny() async {
+    if (!mounted) return;
+    if (_didCheckReferralRewardDialog) return;
+    _didCheckReferralRewardDialog = true;
+
+    final userId = AuthService.userId;
+    if (userId == null) return;
+
+    final unread = await NotificationService.getUnreadByTypes(
+      userId,
+      const ['referral_reward_referee', 'welcome_coupon_general'],
+      limit: 1,
+    );
+    if (!mounted) return;
+    if (unread.isEmpty) return;
+
+    final n = unread.first;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(n.title),
+        content: Text(n.body),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('ตกลง'),
+          ),
+        ],
+      ),
+    );
+
+    await NotificationService.markAsRead(n.id);
   }
 
   @override

@@ -260,7 +260,7 @@ export async function loadRevenue(ctx) {
   rc.innerHTML = `
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
       ${statCard('payments', 'ยอดรวมทั้งหมด', '฿' + fmt(Math.round(totalRevenue)), 'bg-green-500')}
-      ${statCard('account_balance', 'รายได้ค่าบริการ', '฿' + fmt(Math.round(platformIncome)), 'bg-blue-500')}
+      ${statCard('account_balance', 'GP ระบบ', '฿' + fmt(Math.round(platformIncome)), 'bg-blue-500')}
       ${statCard('restaurant', 'อาหาร', '฿' + fmt(Math.round(byType.food.revenue)) + ' (' + byType.food.count + ')', 'bg-orange-500')}
       ${statCard('local_taxi', 'เรียกรถ+พัสดุ', '฿' + fmt(Math.round(byType.ride.revenue + byType.parcel.revenue)) + ' (' + (byType.ride.count + byType.parcel.count) + ')', 'bg-purple-500')}
     </div>
@@ -324,7 +324,7 @@ export async function loadRevenue(ctx) {
       <div class="flex items-center gap-3 mb-5">
         <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center"><span class="material-icons-round text-blue-500">analytics</span></div>
         <div>
-          <h3 class="font-bold text-gray-800">รายละเอียดค่าบริการระบบ</h3>
+          <h3 class="font-bold text-gray-800">รายละเอียด GP ระบบ</h3>
           <p class="text-xs text-gray-400">แยกตามประเภทบริการ</p>
         </div>
       </div>

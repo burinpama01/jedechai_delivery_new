@@ -14,10 +14,16 @@ import '../../../common/utils/order_code_formatter.dart';
 /// Shows detailed order information with accept/decline actions
 class MerchantOrderDetailScreen extends StatefulWidget {
   final Map<String, dynamic> order;
+  final bool loadRemoteData;
+  final bool enableRealtimeListener;
+  final bool enableAutoRefresh;
 
   const MerchantOrderDetailScreen({
     super.key,
     required this.order,
+    this.loadRemoteData = true,
+    this.enableRealtimeListener = true,
+    this.enableAutoRefresh = true,
   });
 
   @override
@@ -40,11 +46,18 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
   void initState() {
     super.initState();
     _currentOrder = widget.order;
-    _fetchOrderItems();
-    _fetchGpRate();
-    _fetchDriverInfo();
-    _setupOrderStatusListener();
-    _startAutoRefresh();
+
+    if (widget.loadRemoteData) {
+      _fetchOrderItems();
+      _fetchGpRate();
+      _fetchDriverInfo();
+    }
+    if (widget.enableRealtimeListener) {
+      _setupOrderStatusListener();
+    }
+    if (widget.enableAutoRefresh) {
+      _startAutoRefresh();
+    }
   }
 
   @override

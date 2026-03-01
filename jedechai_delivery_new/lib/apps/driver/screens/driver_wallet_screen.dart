@@ -312,6 +312,10 @@ class _DriverWalletScreenState extends State<DriverWalletScreen> {
         iconData = Icons.remove_circle;
         displayType = 'ค่าบริการระบบ';
         break;
+      case 'food_commission':
+        iconData = Icons.remove_circle;
+        displayType = 'ค่าบริการระบบอาหาร';
+        break;
       case 'job_income':
         iconData = Icons.attach_money;
         displayType = 'รายได้จากงาน';

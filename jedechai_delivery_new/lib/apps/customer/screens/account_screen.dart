@@ -17,6 +17,8 @@ import '../../../common/screens/profile_screen.dart';
 import '../../../common/widgets/app_network_image.dart';
 import '../../../theme/app_theme.dart';
 import 'auth/login_screen.dart';
+import 'rewards/my_coupons_screen.dart';
+import 'rewards/referral_screen.dart';
 
 /// Account Screen — Customer
 class AccountScreen extends StatefulWidget {
@@ -811,13 +813,28 @@ class _AccountScreenState extends State<AccountScreen> {
         _divider(),
         _menuItem(
           PlatformAdaptive.icon(
-            android: Icons.notifications_outlined,
-            ios: CupertinoIcons.bell,
+            android: Icons.card_giftcard,
+            ios: CupertinoIcons.gift,
           ),
-          'การแจ้งเตือน',
+          'คูปองของฉัน',
           () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('ฟีเจอร์นี้จะมาในเวอร์ชันถัดไป')),
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MyCouponsScreen()),
+            );
+          },
+        ),
+        _divider(),
+        _menuItem(
+          PlatformAdaptive.icon(
+            android: Icons.people_alt_outlined,
+            ios: CupertinoIcons.person_2,
+          ),
+          'ชวนเพื่อนรับรางวัล',
+          () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ReferralScreen()),
             );
           },
         ),

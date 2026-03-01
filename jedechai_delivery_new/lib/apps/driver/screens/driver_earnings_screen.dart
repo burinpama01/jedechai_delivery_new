@@ -8,6 +8,7 @@ import 'driver_job_detail_screen.dart';
 import '../../../common/models/booking.dart';
 import '../../../common/services/wallet_service.dart';
 import '../../../common/services/auth_service.dart';
+import '../../../common/utils/driver_amount_calculator.dart';
 import '../../../common/utils/order_code_formatter.dart';
 
 /// Driver Earnings Screen
@@ -38,6 +39,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
 
   // Job history
   List<Map<String, dynamic>> _jobHistory = [];
+  Map<String, double> _couponDiscountByBookingId = {};
 
   @override
   void initState() {
@@ -139,6 +141,32 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
       if (hasEndFilter) allQuery = allQuery.lte('created_at', endStr);
       final allJobsResponse = await allQuery.order('created_at', ascending: false).limit(50);
 
+      final bookingIds = allJobsResponse
+          .map((e) => e['id']?.toString())
+          .whereType<String>()
+          .where((id) => id.isNotEmpty)
+          .toList();
+
+      Map<String, double> couponDiscountMap = {};
+      if (bookingIds.isNotEmpty) {
+        try {
+          final usages = await Supabase.instance.client
+              .from('coupon_usages')
+              .select('booking_id, discount_amount')
+              .inFilter('booking_id', bookingIds);
+
+          for (final usage in (usages as List)) {
+            final bookingId = usage['booking_id']?.toString();
+            if (bookingId == null || bookingId.isEmpty) continue;
+
+            final discount = (usage['discount_amount'] as num?)?.toDouble() ?? 0.0;
+            couponDiscountMap[bookingId] = discount;
+          }
+        } catch (e) {
+          debugLog('⚠️ Error loading coupon usages for driver earnings screen: $e');
+        }
+      }
+
       // Calculate stats
       double totalEarn = 0;
       for (final job in completedResponse) {
@@ -153,6 +181,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
           _cancelledJobs = cancelledResponse.length;
           _avgEarnings = _completedJobs > 0 ? totalEarn / _completedJobs : 0;
           _jobHistory = List<Map<String, dynamic>>.from(allJobsResponse);
+          _couponDiscountByBookingId = couponDiscountMap;
           _isLoading = false;
         });
       }
@@ -554,7 +583,21 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
       serviceType: serviceType,
     );
     final createdAt = _formatDate(job['created_at']);
-    // final totalCollect = serviceType == 'food' ? price + deliveryFee : price;
+    final bookingId = job['id']?.toString();
+    final couponDiscount = bookingId == null ? 0.0 : (_couponDiscountByBookingId[bookingId] ?? 0.0);
+
+    Booking? booking;
+    double netCollect = 0.0;
+    try {
+      booking = Booking.fromJson(job);
+      netCollect = DriverAmountCalculator.netCollect(
+        booking: booking,
+        couponDiscountAmount: couponDiscount,
+      );
+    } catch (_) {
+      booking = null;
+      netCollect = 0.0;
+    }
 
     return GestureDetector(
       onTap: () => _showJobDetail(job),
@@ -642,6 +685,44 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                   ),
                 ),
               ],
+            ),
+          ],
+
+          if (booking != null && status == 'completed') ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('เก็บเงินลูกค้า', style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
+                      Text(
+                        _formatCurrency(netCollect),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: colorScheme.onSurface),
+                      ),
+                    ],
+                  ),
+                  if (couponDiscount > 0) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('ส่วนลดจากคูปอง', style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
+                        Text(
+                          '-${_formatCurrency(couponDiscount)}',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.green[700]),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
             ),
           ],
         ],

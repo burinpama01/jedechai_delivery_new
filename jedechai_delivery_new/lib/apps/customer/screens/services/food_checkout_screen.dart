@@ -60,6 +60,12 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
   Coupon? _appliedCoupon;
   double _couponDiscount = 0;
 
+  bool get _hideCouponBreakdown {
+    final code = _appliedCoupon?.code.trim().toUpperCase();
+    if (code == null || code.isEmpty) return false;
+    return code == 'WELCOME20' || code == 'REFERRER20' || code == 'REFFERER20';
+  }
+
   // ── อัตราค่าส่ง (โหลดจาก service_rates table — อาจถูก override โดยค่าเฉพาะร้าน) ──
   double _baseFare = 15.0; // ค่าเริ่มต้น (fallback)
   double _baseDistance = 2.0; // ระยะเริ่มต้น (กม.) (fallback)
@@ -919,8 +925,11 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                 ),
           if (_couponDiscount > 0) ...[
             const SizedBox(height: 8),
-            _buildPriceRow('ส่วนลดคูปอง', '-฿${_couponDiscount.ceil()}',
-                isGreen: true),
+            _buildPriceRow(
+              _hideCouponBreakdown ? 'ส่วนลดจากคูปอง' : 'ส่วนลดคูปอง',
+              '-฿${_couponDiscount.ceil()}',
+              isGreen: true,
+            ),
           ],
           const Divider(height: 20),
           _buildPriceRow(
@@ -1036,7 +1045,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       final finalTotal = _calculateFinalTotal(cart.subtotal, _deliveryFee);
       final merchantVisibleTotal = cart.subtotal;
 
-      final booking = await _createFoodOrder(
+      final booking = await createFoodOrder(
         userId: userId,
         merchantId: cart.merchantId!,
         merchantName: cart.merchantName!,
@@ -1134,7 +1143,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
 
   /// สร้าง food order ใน Supabase
   /// status = 'pending_merchant' เพื่อให้ร้านค้าเห็นออเดอร์ทันที
-  Future<Map<String, dynamic>?> _createFoodOrder({
+  static Future<Map<String, dynamic>?> createFoodOrder({
     required String userId,
     required String merchantId,
     required String merchantName,
@@ -1154,8 +1163,8 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
     try {
       final client = Supabase.instance.client;
 
-      final merchantLat = _merchantLat ?? 13.7563;
-      final merchantLng = _merchantLng ?? 100.5018;
+      final merchantLat = 13.7563;
+      final merchantLng = 100.5018;
 
       debugLog('📝 Creating food order:');
       debugLog('   └─ merchant: $merchantName ($merchantId)');
@@ -1173,13 +1182,14 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       if (scheduledAt != null) {
         debugLog('   └─ scheduled_at: ${scheduledAt.toIso8601String()}');
       }
-      if (_merchantFoodConfig != null) {
-        debugLog('   └─ merchant config: ${_merchantFoodConfig!.summary}');
-      }
       debugLog('   └─ status: pending_merchant');
 
       final mergedNote = note.isNotEmpty ? note : 'สั่งอาหารจาก $merchantName';
-      final noteWithCoupon = (couponCode != null && couponDiscount > 0)
+      final normalizedCoupon = couponCode?.trim().toUpperCase();
+      final hideBreakdown = normalizedCoupon == 'WELCOME20' ||
+          normalizedCoupon == 'REFERRER20' ||
+          normalizedCoupon == 'REFFERER20';
+      final noteWithCoupon = (couponCode != null && couponDiscount > 0 && !hideBreakdown)
           ? '$mergedNote\n[คูปอง: $couponCode | ส่วนลด: ฿${couponDiscount.toStringAsFixed(2)}]'
           : mergedNote;
 
