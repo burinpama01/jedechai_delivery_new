@@ -132,7 +132,7 @@ class NotificationSender {
           ? 'merchant_new_order_channel_v1'
           : 'high_importance_channel';
       final androidSound = isMerchantNewOrder ? 'alert_new_order' : 'default';
-      final iosSound = isMerchantNewOrder ? 'AlertNewOrder' : 'default';
+      final iosSound = isMerchantNewOrder ? 'AlertNewOrder.caf' : 'default';
 
       final collapseId = isMerchantNewOrder
           ? 'merchant_new_order_${data?['booking_id'] ?? DateTime.now().millisecondsSinceEpoch}'
