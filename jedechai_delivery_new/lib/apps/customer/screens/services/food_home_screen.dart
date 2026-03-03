@@ -14,6 +14,7 @@ import '../../../../common/services/merchant_food_config_service.dart';
 import '../../../../common/services/system_config_service.dart';
 import '../../../../common/widgets/app_network_image.dart';
 import '../../../../common/widgets/location_disclosure_dialog.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'restaurant_detail_screen.dart';
 import 'food_checkout_screen.dart';
 
@@ -31,7 +32,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
   bool _isLoading = true;
   String? _error;
   String _searchQuery = '';
-  String _selectedCategory = 'ทั้งหมด';
+  String _selectedCategory = 'all';
   final TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>> _foodBanners = [];
   int _currentBannerIndex = 0;
@@ -43,13 +44,13 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
   double _restaurantRadiusKm = 30.0;
   bool _isOutOfRestaurantCoverage = false;
 
-  final List<_FoodCategory> _categories = [
-    _FoodCategory('ทั้งหมด', Icons.apps, const Color(0xFFFF6B35)),
-    _FoodCategory('อาหารตามสั่ง', Icons.restaurant, const Color(0xFFEF4444)),
-    _FoodCategory('ก๋วยเตี๋ยว', Icons.ramen_dining, const Color(0xFFF59E0B)),
-    _FoodCategory('เครื่องดื่ม', Icons.local_cafe, const Color(0xFF8B5CF6)),
-    _FoodCategory('ของหวาน', Icons.cake, const Color(0xFFEC4899)),
-    _FoodCategory('ฟาสต์ฟู้ด', Icons.fastfood, const Color(0xFF10B981)),
+  List<_FoodCategory> _getCategories(AppLocalizations l10n) => [
+    _FoodCategory('all', l10n.foodCategoryAll, Icons.apps, const Color(0xFFFF6B35)),
+    _FoodCategory('อาหารตามสั่ง', l10n.foodCategoryMadeToOrder, Icons.restaurant, const Color(0xFFEF4444)),
+    _FoodCategory('ก๋วยเตี๋ยว', l10n.foodCategoryNoodles, Icons.ramen_dining, const Color(0xFFF59E0B)),
+    _FoodCategory('เครื่องดื่ม', l10n.foodCategoryDrinks, Icons.local_cafe, const Color(0xFF8B5CF6)),
+    _FoodCategory('ของหวาน', l10n.foodCategoryDesserts, Icons.cake, const Color(0xFFEC4899)),
+    _FoodCategory('ฟาสต์ฟู้ด', l10n.foodCategoryFastFood, Icons.fastfood, const Color(0xFF10B981)),
   ];
 
   @override
@@ -205,7 +206,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
         topItems.add({
           ...item,
           'sales_count': salesMap[id] ?? 0,
-          'merchant_name': merchant['full_name'] ?? 'ร้านอาหาร',
+          'merchant_name': merchant['full_name'] ?? '',
           'shop_photo_url': merchant['shop_photo_url'],
         });
       }
@@ -376,7 +377,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
 
       // Category filter
       bool matchCategory = true;
-      if (_selectedCategory != 'ทั้งหมด') {
+      if (_selectedCategory != 'all') {
         final merchantId = r['id'] as String;
         final cats = _restaurantCategories[merchantId] ?? {};
         matchCategory = cats.any((c) =>
@@ -404,6 +405,8 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+    final categories = _getCategories(l10n);
     return Scaffold(
       backgroundColor: colorScheme.surface,
       body: SafeArea(
@@ -421,7 +424,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                 pinned: true,
                 delegate: _FixedHeightSliverHeaderDelegate(
                   height: 122,
-                  child: _buildCategories(),
+                  child: _buildCategories(categories),
                 ),
               ),
               // Promo Banner
@@ -445,6 +448,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
 
   Widget _buildHeader() {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     return SliverAppBar(
       pinned: true,
       floating: false,
@@ -481,7 +485,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                     ),
                     Expanded(
                       child: Text(
-                        'สั่งอาหาร',
+                        l10n.foodHomeTitle,
                         style: TextStyle(
                           color: colorScheme.onPrimary,
                           fontSize: 22,
@@ -550,7 +554,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                     controller: _searchController,
                     onChanged: _onSearchChanged,
                     decoration: InputDecoration(
-                      hintText: 'ค้นหาร้านอาหาร...',
+                      hintText: l10n.foodHomeSearchHint,
                       hintStyle: TextStyle(
                         color: colorScheme.onSurfaceVariant,
                         fontSize: 15,
@@ -583,7 +587,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
     );
   }
 
-  Widget _buildCategories() {
+  Widget _buildCategories(List<_FoodCategory> categories) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       color: colorScheme.surfaceContainer,
@@ -593,12 +597,12 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          itemCount: _categories.length,
+          itemCount: categories.length,
           itemBuilder: (context, index) {
-            final cat = _categories[index];
-            final isSelected = _selectedCategory == cat.name;
+            final cat = categories[index];
+            final isSelected = _selectedCategory == cat.key;
             return GestureDetector(
-              onTap: () => _onCategorySelected(cat.name),
+              onTap: () => _onCategorySelected(cat.key),
               child: Container(
                 width: 72,
                 margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -626,7 +630,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      cat.name,
+                      cat.label,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight:
@@ -735,6 +739,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
 
   Widget _buildTopSellingSection() {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     if (_isLoadingTopSelling) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -760,13 +765,13 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
               Icon(Icons.local_fire_department,
                   color: colorScheme.error, size: 22),
               const SizedBox(width: 6),
-              const Text(
-                'สินค้าขายดี',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Text(
+                l10n.foodHomeTopSelling,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const Spacer(),
               Text(
-                'Top ${_topSellingItems.length}',
+                l10n.foodHomeTopCount(_topSellingItems.length.toString()),
                 style: TextStyle(
                     fontSize: 13,
                     color: colorScheme.onSurfaceVariant,
@@ -880,7 +885,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                                           size: 10, color: colorScheme.onPrimary),
                                       const SizedBox(width: 2),
                                       Text(
-                                        '$salesCount ขายแล้ว',
+                                        l10n.foodHomeSoldCount(salesCount.toString()),
                                         style: TextStyle(
                                             color: colorScheme.onPrimary,
                                             fontSize: 9,
@@ -950,10 +955,10 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
             Icon(Icons.confirmation_number,
                 color: AppTheme.accentOrange, size: 28),
             const SizedBox(width: 8),
-            const Expanded(
-                child: Text('โค้ดส่วนลด',
+            Expanded(
+                child: Text(AppLocalizations.of(context)!.foodPromoCodeTitle,
                     style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+                        const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
           ],
         ),
         content: Column(
@@ -989,7 +994,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            Text('นำโค้ดนี้ไปใช้ตอนสั่งซื้อเพื่อรับส่วนลด',
+            Text(AppLocalizations.of(context)!.foodPromoCodeHint,
                 style: TextStyle(
                   fontSize: 12,
                   color: colorScheme.onSurfaceVariant,
@@ -999,7 +1004,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('ปิด'),
+            child: Text(AppLocalizations.of(context)!.foodPromoCodeClose),
           ),
           ElevatedButton.icon(
             onPressed: () {
@@ -1007,14 +1012,14 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('คัดลอกโค้ด "$code" แล้ว'),
+                  content: Text(AppLocalizations.of(context)!.foodPromoCodeCopied(code)),
                   backgroundColor: AppTheme.accentOrange,
                   duration: const Duration(seconds: 2),
                 ),
               );
             },
             icon: const Icon(Icons.copy, size: 16),
-            label: const Text('คัดลอกโค้ด'),
+            label: Text(AppLocalizations.of(context)!.foodPromoCodeCopy),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.accentOrange,
               foregroundColor: colorScheme.onPrimary,
@@ -1033,14 +1038,14 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Row(
         children: [
-          const Text(
-            'ร้านอาหารใกล้คุณ',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            AppLocalizations.of(context)!.foodHomeNearbyTitle,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const Spacer(),
           if (!_isLoading)
             Text(
-              '${_filteredRestaurants.length} ร้าน',
+              AppLocalizations.of(context)!.foodHomeRestaurantCount(_filteredRestaurants.length.toString()),
               style: TextStyle(
                 fontSize: 13,
                 color: colorScheme.onSurfaceVariant,
@@ -1062,7 +1067,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
               children: [
                 const CircularProgressIndicator(color: AppTheme.accentOrange),
                 const SizedBox(height: 16),
-                Text('กำลังโหลดร้านอาหาร...',
+                Text(AppLocalizations.of(context)!.foodHomeLoading,
                     style: TextStyle(color: colorScheme.onSurfaceVariant)),
               ],
             ),
@@ -1118,20 +1123,20 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'ไม่สามารถโหลดข้อมูลได้',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          Text(
+            AppLocalizations.of(context)!.foodHomeErrorTitle,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
-            'กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต',
+            AppLocalizations.of(context)!.foodHomeErrorSubtitle,
             style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 20),
           ElevatedButton.icon(
             onPressed: _fetchRestaurants,
             icon: const Icon(Icons.refresh),
-            label: const Text('ลองใหม่'),
+            label: Text(AppLocalizations.of(context)!.foodHomeRetry),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.accentOrange,
               foregroundColor: colorScheme.onPrimary,
@@ -1165,19 +1170,19 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
           const SizedBox(height: 16),
           Text(
             _searchQuery.isNotEmpty
-                ? 'ไม่พบร้านอาหารที่ค้นหา'
+                ? AppLocalizations.of(context)!.foodHomeEmptySearch
                 : (_isOutOfRestaurantCoverage
-                    ? 'ในพื้นที่ของคุณยังไม่มีร้านอาหาร'
-                    : 'ไม่มีร้านอาหารเปิดให้บริการ'),
+                    ? AppLocalizations.of(context)!.foodHomeEmptyNoArea
+                    : AppLocalizations.of(context)!.foodHomeEmptyNoneOpen),
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
             _searchQuery.isNotEmpty
-                ? 'ลองค้นหาด้วยคำอื่น'
+                ? AppLocalizations.of(context)!.foodHomeEmptySearchHint
                 : (_isOutOfRestaurantCoverage
-                    ? 'ไม่พบร้านอาหารที่เปิดอยู่ภายในรัศมี ${_restaurantRadiusKm.toStringAsFixed(0)} กม.'
-                    : 'กรุณาลองใหม่ภายหลัง'),
+                    ? AppLocalizations.of(context)!.foodHomeEmptyNoAreaHint(_restaurantRadiusKm.toStringAsFixed(0))
+                    : AppLocalizations.of(context)!.foodHomeEmptyTryLater),
             style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
@@ -1242,7 +1247,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'ดูตะกร้า — ${cart.merchantName ?? ""}',
+                        '${AppLocalizations.of(context)!.foodCartViewCart} — ${cart.merchantName ?? ""}',
                         style: TextStyle(
                           color: colorScheme.onPrimary,
                           fontWeight: FontWeight.w600,
@@ -1274,7 +1279,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
       MaterialPageRoute(
         builder: (context) => RestaurantDetailScreen(
           merchantId: restaurant['id'],
-          merchantName: restaurant['full_name'] ?? 'ร้านอาหาร',
+          merchantName: restaurant['full_name'] ?? AppLocalizations.of(context)!.foodHomeRestaurantDefault,
         ),
       ),
     );
@@ -1328,7 +1333,8 @@ class _RestaurantCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final name = restaurant['full_name'] ?? 'ร้านอาหาร';
+    final l10n = AppLocalizations.of(context)!;
+    final name = restaurant['full_name'] ?? l10n.foodHomeRestaurantDefault;
     // final phone = restaurant['phone_number'] ?? '';
     final address = restaurant['shop_address'] ?? '';
     final photoUrl = restaurant['shop_photo_url'] as String?;
@@ -1409,7 +1415,7 @@ class _RestaurantCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              'เปิด',
+                              l10n.foodHomeOpenBadge,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: colorScheme.secondary,
@@ -1442,14 +1448,14 @@ class _RestaurantCard extends StatelessWidget {
                       if (distanceKm != null) ...[
                         Icon(Icons.near_me, size: 14, color: colorScheme.onSurfaceVariant),
                         const SizedBox(width: 2),
-                        Text('${distanceKm.toStringAsFixed(1)} กม.',
+                        Text(l10n.foodHomeDistanceKm(distanceKm.toStringAsFixed(1)),
                             style: TextStyle(
                                 fontSize: 12, color: colorScheme.onSurfaceVariant)),
                       ] else ...[
                         Icon(Icons.access_time,
                             size: 14, color: colorScheme.onSurfaceVariant),
                         const SizedBox(width: 2),
-                        Text('20-30 นาที',
+                        Text(l10n.foodHomeEstTime,
                             style: TextStyle(
                                 fontSize: 12, color: colorScheme.onSurfaceVariant)),
                       ],
@@ -1543,9 +1549,9 @@ class _CartBottomSheet extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'ตะกร้าของคุณ',
-                                style: TextStyle(
+                              Text(
+                                AppLocalizations.of(context)!.foodCartTitle,
+                                style: const TextStyle(
                                     fontSize: 18, fontWeight: FontWeight.bold),
                               ),
                               if (cart.merchantName != null)
@@ -1564,7 +1570,7 @@ class _CartBottomSheet extends StatelessWidget {
                               cart.clearCart();
                               Navigator.of(context).pop();
                             },
-                            child: Text('ล้าง',
+                            child: Text(AppLocalizations.of(context)!.foodCartClear,
                                 style: TextStyle(color: colorScheme.error)),
                           ),
                       ],
@@ -1582,7 +1588,7 @@ class _CartBottomSheet extends StatelessWidget {
                                     size: 64,
                                     color: colorScheme.outlineVariant),
                                 const SizedBox(height: 12),
-                                Text('ตะกร้าว่างเปล่า',
+                                Text(AppLocalizations.of(context)!.foodCartEmpty,
                                     style: TextStyle(
                                         fontSize: 16,
                                         color: colorScheme.onSurfaceVariant)),
@@ -1628,7 +1634,7 @@ class _CartBottomSheet extends StatelessWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('ค่าอาหาร',
+                                Text(AppLocalizations.of(context)!.foodCartFoodCost,
                                     style: TextStyle(
                                         color: colorScheme.onSurfaceVariant)),
                                 Text('฿${cart.subtotal.ceil()}'),
@@ -1638,13 +1644,13 @@ class _CartBottomSheet extends StatelessWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('ค่าจัดส่ง',
+                                Text(AppLocalizations.of(context)!.foodCartDeliveryFee,
                                     style: TextStyle(
                                         color: colorScheme.onSurfaceVariant)),
                                 Text(
                                   cart.deliveryFee > 0
                                       ? '฿${cart.deliveryFee.ceil()}'
-                                      : 'คำนวณเมื่อสั่ง',
+                                      : AppLocalizations.of(context)!.foodCartDeliveryCalcLater,
                                   style: TextStyle(
                                     color: cart.deliveryFee > 0
                                         ? null
@@ -1660,8 +1666,8 @@ class _CartBottomSheet extends StatelessWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('รวมทั้งหมด',
-                                    style: TextStyle(
+                                Text(AppLocalizations.of(context)!.foodCartTotal,
+                                    style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16)),
                                 Text(
@@ -1698,7 +1704,7 @@ class _CartBottomSheet extends StatelessWidget {
                                   elevation: 0,
                                 ),
                                 child: Text(
-                                  'สั่งอาหาร — ฿${cart.subtotal.ceil()}',
+                                  '${AppLocalizations.of(context)!.foodCartOrderButton} — ฿${cart.subtotal.ceil()}',
                                   style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold),
@@ -1854,10 +1860,11 @@ class _CartItemRow extends StatelessWidget {
 // Food Category Model
 // ============================================================
 class _FoodCategory {
-  final String name;
+  final String key;
+  final String label;
   final IconData icon;
   final Color color;
-  const _FoodCategory(this.name, this.icon, this.color);
+  const _FoodCategory(this.key, this.label, this.icon, this.color);
 }
 
 // ============================================================
@@ -1891,32 +1898,32 @@ class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
         return Scaffold(
           backgroundColor: colorScheme.surface,
           appBar: AppBar(
-            title: const Text('ยืนยันคำสั่งซื้อ'),
+            title: Text(AppLocalizations.of(context)!.foodCheckoutTitle),
             backgroundColor: AppTheme.accentOrange,
             foregroundColor: colorScheme.onPrimary,
             elevation: 0,
           ),
           body: cart.isEmpty
-              ? const Center(child: Text('ตะกร้าว่างเปล่า'))
+              ? Center(child: Text(AppLocalizations.of(context)!.foodCartEmpty))
               : SingleChildScrollView(
                   child: Column(
                     children: [
                       // Restaurant info
                       _buildSection(
                         icon: Icons.store,
-                        title: 'ร้านอาหาร',
+                        title: AppLocalizations.of(context)!.foodCheckoutRestaurant,
                         child: Text(cart.merchantName ?? '',
                             style: const TextStyle(fontSize: 15)),
                       ),
                       // Delivery address
                       _buildSection(
                         icon: Icons.location_on,
-                        title: 'ที่อยู่จัดส่ง',
+                        title: AppLocalizations.of(context)!.foodCheckoutDeliveryAddress,
                         child: Row(
                           children: [
                             Expanded(
                               child: Text(
-                                'ตำแหน่งปัจจุบัน',
+                                AppLocalizations.of(context)!.foodCheckoutCurrentLocation,
                                 style: TextStyle(
                                     fontSize: 15,
                                     color: colorScheme.onSurface),
@@ -1930,7 +1937,7 @@ class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
                       // Order items
                       _buildSection(
                         icon: Icons.receipt_long,
-                        title: 'รายการอาหาร (${cart.totalItems} รายการ)',
+                        title: AppLocalizations.of(context)!.foodCheckoutItemsTitle(cart.totalItems.toString()),
                         child: Column(
                           children: cart.items.map((item) {
                             return Padding(
@@ -1971,11 +1978,11 @@ class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
                       // Note
                       _buildSection(
                         icon: Icons.note_alt_outlined,
-                        title: 'หมายเหตุถึงร้าน',
+                        title: AppLocalizations.of(context)!.foodCheckoutNoteTitle,
                         child: TextField(
                           controller: _noteController,
                           decoration: InputDecoration(
-                            hintText: 'เช่น ไม่ใส่ผัก, เผ็ดน้อย...',
+                            hintText: AppLocalizations.of(context)!.foodCheckoutNoteHint,
                             hintStyle: TextStyle(
                                 color: colorScheme.onSurfaceVariant),
                             border: OutlineInputBorder(
@@ -1989,12 +1996,12 @@ class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
                       // Payment method
                       _buildSection(
                         icon: Icons.payment,
-                        title: 'วิธีชำระเงิน',
+                        title: AppLocalizations.of(context)!.foodCheckoutPaymentTitle,
                         child: Column(
                           children: [
-                            _buildPaymentOption('cash', 'เงินสด', Icons.money),
+                            _buildPaymentOption('cash', AppLocalizations.of(context)!.foodCheckoutPayCash, Icons.money),
                             _buildPaymentOption(
-                                'transfer', 'โอนเงิน', Icons.account_balance),
+                                'transfer', AppLocalizations.of(context)!.foodCheckoutPayTransfer, Icons.account_balance),
                           ],
                         ),
                       ),
@@ -2009,12 +2016,12 @@ class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
                         child: Column(
                           children: [
                             _buildPriceRow(
-                                'ค่าอาหาร', '฿${cart.subtotal.ceil()}'),
+                                AppLocalizations.of(context)!.foodCartFoodCost, '฿${cart.subtotal.ceil()}'),
                             const SizedBox(height: 8),
-                            _buildPriceRow('ค่าจัดส่ง (โดยประมาณ)', '฿30'),
+                            _buildPriceRow(AppLocalizations.of(context)!.foodCheckoutDeliveryEstimate, '฿30'),
                             const Divider(height: 20),
                             _buildPriceRow(
-                              'รวมทั้งหมด',
+                              AppLocalizations.of(context)!.foodCartTotal,
                               '฿${(cart.subtotal + 30).ceil()}',
                               isBold: true,
                               isOrange: true,
@@ -2063,9 +2070,9 @@ class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
                                     strokeWidth: 2,
                                     color: colorScheme.onPrimary),
                               )
-                            : const Text(
-                                'ยืนยันสั่งอาหาร',
-                                style: TextStyle(
+                            : Text(
+                                AppLocalizations.of(context)!.foodCheckoutConfirmButton,
+                                style: const TextStyle(
                                     fontSize: 16, fontWeight: FontWeight.bold),
                               ),
                       ),
@@ -2160,7 +2167,7 @@ class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
             final accepted =
                 await LocationDisclosureHelper.showIfNeeded(context);
             if (!accepted)
-              return {'lat': lat, 'lng': lng, 'address': 'ตำแหน่งปัจจุบัน'};
+              return {'lat': lat, 'lng': lng, 'address': AppLocalizations.of(context)!.foodCheckoutCurrentLocation};
           }
           permission = await Geolocator.requestPermission();
         }
@@ -2179,7 +2186,7 @@ class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
       debugLog('⚠️ Unable to fetch current customer location: $e');
     }
 
-    var address = 'ตำแหน่งปัจจุบัน';
+    var address = AppLocalizations.of(context)!.foodCheckoutCurrentLocation;
     try {
       final resolved =
           await GeocodingService.getAddressFromCoordinates(lat, lng);
@@ -2199,10 +2206,11 @@ class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
 
   Future<void> _placeOrder(BuildContext context, CartProvider cart) async {
     setState(() => _isPlacingOrder = true);
+    final l10n = AppLocalizations.of(context)!;
 
     try {
       final userId = Supabase.instance.client.auth.currentUser?.id;
-      if (userId == null) throw Exception('กรุณาเข้าสู่ระบบ');
+      if (userId == null) throw Exception(l10n.foodCheckoutLoginRequired);
 
       // Import needed services dynamically
       final bookingService = _BookingServiceHelper();
@@ -2227,7 +2235,7 @@ class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
         note: cart.note,
       );
 
-      if (booking == null) throw Exception('ไม่สามารถสร้างออเดอร์ได้');
+      if (booking == null) throw Exception(l10n.foodCheckoutCreateFailed);
 
       // Send notification to merchant about new order
       try {
@@ -2237,9 +2245,9 @@ class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
               '📤 Sending new order notification to merchant: $merchantId');
           await NotificationSender.sendToUser(
             userId: merchantId,
-            title: '🍔 มีออเดอร์ใหม่!',
+            title: l10n.foodCheckoutNotifTitle,
             body:
-                'มีลูกค้าสั่งอาหาร ฿${cart.subtotal.ceil()} กรุณายืนยันออเดอร์',
+                l10n.foodCheckoutNotifBody(cart.subtotal.ceil().toString()),
             data: {
               'type': 'merchant_new_order',
               'booking_id': booking['id']?.toString() ?? '',
@@ -2256,7 +2264,7 @@ class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
         // Show success and navigate
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ สั่งอาหารสำเร็จ!'),
+            content: Text('✅ ${l10n.foodCheckoutSuccess}'),
             backgroundColor: Theme.of(context).colorScheme.secondary,
           ),
         );
@@ -2268,7 +2276,7 @@ class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('ไม่สามารถสั่งอาหารได้: $e'),
+            content: Text(l10n.foodCheckoutOrderFailed(e.toString())),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -2288,7 +2296,7 @@ class _BookingServiceHelper {
       final addr = await GeocodingService.getAddressFromCoordinates(lat, lng);
       if (addr != null && addr.isNotEmpty) return addr;
     } catch (_) {}
-    return 'ตำแหน่งปัจจุบัน';
+    return 'Current location';
   }
 
   Future<Map<String, dynamic>?> createFoodOrder({

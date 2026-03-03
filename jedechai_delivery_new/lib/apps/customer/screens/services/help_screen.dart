@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import 'support_tickets_screen.dart';
 
@@ -14,32 +15,17 @@ class HelpScreen extends StatefulWidget {
 }
 
 class _HelpScreenState extends State<HelpScreen> {
-  final List<Map<String, String>> _faqs = [
-    {
-      'q': 'สั่งอาหารแล้วไม่ได้รับ ทำอย่างไร?',
-      'a': 'กรุณาตรวจสอบสถานะออเดอร์ในหน้า "กิจกรรม" หากออเดอร์แสดงว่าจัดส่งแล้วแต่ยังไม่ได้รับ ให้แจ้งปัญหาผ่านปุ่ม "รายงานปัญหา" ด้านล่าง ทีมงานจะตรวจสอบและดำเนินการภายใน 24 ชั่วโมง',
-    },
-    {
-      'q': 'จะยกเลิกออเดอร์ได้อย่างไร?',
-      'a': 'ไปที่หน้า "กิจกรรม" > เลือกออเดอร์ที่ต้องการ > กด "ยกเลิก" หมายเหตุ: สามารถยกเลิกได้เฉพาะออเดอร์ที่ยังไม่มีคนขับรับงาน',
-    },
-    {
-      'q': 'ค่าจัดส่งคำนวณอย่างไร?',
-      'a': 'ค่าจัดส่งคำนวณจากระยะทางระหว่างร้านค้า/จุดรับ กับจุดหมายปลายทางของคุณ โดยมีค่าขั้นต่ำและราคาต่อกิโลเมตรตามที่ระบบกำหนด',
-    },
-    {
-      'q': 'ชำระเงินได้ช่องทางไหนบ้าง?',
-      'a': 'ปัจจุบันรองรับการชำระด้วยเงินสด PromptPay และ Mobile Banking ทีมงานกำลังพัฒนาช่องทางเพิ่มเติม',
-    },
-    {
-      'q': 'อาหารที่ได้รับไม่ถูกต้อง ทำอย่างไร?',
-      'a': 'กรุณาแจ้งปัญหาผ่านปุ่ม "รายงานปัญหา" พร้อมแนบรูปถ่ายและรายละเอียด ทีมงานจะประสานงานกับร้านค้าเพื่อแก้ไขให้',
-    },
-    {
-      'q': 'สมัครเป็นคนขับได้อย่างไร?',
-      'a': 'ลงทะเบียนผ่านแอปโดยเลือก role เป็น "คนขับ" จากนั้นกรอกข้อมูลส่วนตัว ใบขับขี่ และรอการอนุมัติจากแอดมิน',
-    },
-  ];
+  List<Map<String, String>> _getFaqs(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return [
+      {'q': l10n.helpFaq1Q, 'a': l10n.helpFaq1A},
+      {'q': l10n.helpFaq2Q, 'a': l10n.helpFaq2A},
+      {'q': l10n.helpFaq3Q, 'a': l10n.helpFaq3A},
+      {'q': l10n.helpFaq4Q, 'a': l10n.helpFaq4A},
+      {'q': l10n.helpFaq5Q, 'a': l10n.helpFaq5A},
+      {'q': l10n.helpFaq6Q, 'a': l10n.helpFaq6A},
+    ];
+  }
 
   int? _expandedIndex;
 
@@ -48,7 +34,7 @@ class _HelpScreenState extends State<HelpScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ช่วยเหลือ'),
+        title: Text(AppLocalizations.of(context)!.helpTitle),
         backgroundColor: AppTheme.primaryGreen,
         foregroundColor: Colors.white,
       ),
@@ -67,15 +53,15 @@ class _HelpScreenState extends State<HelpScreen> {
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Column(
+              child: Column(
                 children: [
-                  Icon(Icons.support_agent, size: 48, color: Colors.white),
-                  SizedBox(height: 12),
-                  Text('ศูนย์ช่วยเหลือ',
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-                  SizedBox(height: 4),
-                  Text('พร้อมช่วยเหลือคุณตลอด 24 ชั่วโมง',
-                      style: TextStyle(fontSize: 14, color: Colors.white70)),
+                  const Icon(Icons.support_agent, size: 48, color: Colors.white),
+                  const SizedBox(height: 12),
+                  Text(AppLocalizations.of(context)!.helpCenterTitle,
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+                  const SizedBox(height: 4),
+                  Text(AppLocalizations.of(context)!.helpCenterSubtitle,
+                      style: const TextStyle(fontSize: 14, color: Colors.white70)),
                 ],
               ),
             ),
@@ -83,14 +69,14 @@ class _HelpScreenState extends State<HelpScreen> {
             const SizedBox(height: 24),
 
             // ช่องทางติดต่อ
-            const Text('ช่องทางติดต่อ',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.helpContactTitle,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(child: _buildContactCard(
                   icon: Icons.phone,
-                  label: 'โทรศัพท์',
+                  label: AppLocalizations.of(context)!.helpPhone,
                   detail: '02-XXX-XXXX',
                   color: AppTheme.primaryGreen,
                   onTap: () => _launchUrl('tel:02XXXXXXXX'),
@@ -110,7 +96,7 @@ class _HelpScreenState extends State<HelpScreen> {
               children: [
                 Expanded(child: _buildContactCard(
                   icon: Icons.email,
-                  label: 'อีเมล',
+                  label: AppLocalizations.of(context)!.helpEmail,
                   detail: 'support@jedechai.com',
                   color: AppTheme.accentBlue,
                   onTap: () => _launchUrl('mailto:support@jedechai.com'),
@@ -129,11 +115,11 @@ class _HelpScreenState extends State<HelpScreen> {
             const SizedBox(height: 28),
 
             // คำถามที่พบบ่อย
-            const Text('คำถามที่พบบ่อย (FAQ)',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.helpFaqTitle,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
-            ...List.generate(_faqs.length, (i) {
-              final faq = _faqs[i];
+            ...List.generate(_getFaqs(context).length, (i) {
+              final faq = _getFaqs(context)[i];
               final isExpanded = _expandedIndex == i;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 10),
@@ -213,7 +199,7 @@ class _HelpScreenState extends State<HelpScreen> {
                   );
                 },
                 icon: const Icon(Icons.report_problem_outlined),
-                label: const Text('รายงานปัญหา', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                label: Text(AppLocalizations.of(context)!.helpReportProblem, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.accentOrange,
                   foregroundColor: Colors.white,

@@ -1,5 +1,6 @@
 ﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../common/models/menu_option.dart';
 import '../../../common/services/menu_option_service.dart';
 import '../../../common/widgets/menu_option_selector.dart';
@@ -174,7 +175,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ เพิ่ม ${widget.menuItem.name} ลงตะกร้าแล้ว'),
+            content: Text(AppLocalizations.of(context)!.foodDetAddedToCart(widget.menuItem.name)),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 2),
           ),
@@ -185,7 +186,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ เพิ่มลงตะกร้าไม่สำเร็จ: $e'),
+            content: Text(AppLocalizations.of(context)!.foodDetAddFailed(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -357,7 +358,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
             ),
             const SizedBox(width: 4),
             Text(
-              widget.menuItem.isAvailable ? 'พร้อมจำหน่าย' : 'หมด',
+              widget.menuItem.isAvailable ? AppLocalizations.of(context)!.foodDetAvailable : AppLocalizations.of(context)!.foodDetSoldOut,
               style: TextStyle(
                 fontSize: 14,
                 color: availabilityColor,
@@ -375,9 +376,9 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'ปรับแต่งออเดอร์',
-          style: TextStyle(
+        Text(
+          AppLocalizations.of(context)!.foodDetCustomize,
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -404,7 +405,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
                 Icon(Icons.info_outline, color: colorScheme.onSurfaceVariant),
                 const SizedBox(width: 8),
                 Text(
-                  'ไม่มีตัวเลือกเพิ่มเติมสำหรับเมนูนี้',
+                  AppLocalizations.of(context)!.foodDetNoOptions,
                   style: TextStyle(
                     color: colorScheme.onSurfaceVariant,
                     fontSize: 14,
@@ -427,7 +428,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'กำลังโหลดตัวเลือก...',
+                    AppLocalizations.of(context)!.foodDetLoadingOptions,
                     style: TextStyle(
                       color: colorScheme.onSurfaceVariant,
                       fontSize: 14,
@@ -454,9 +455,9 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'รายละเอียด',
-          style: TextStyle(
+        Text(
+          AppLocalizations.of(context)!.foodDetDescription,
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -479,9 +480,9 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'ร้านอาหาร',
-          style: TextStyle(
+        Text(
+          AppLocalizations.of(context)!.foodDetRestaurant,
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -507,7 +508,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  widget.restaurantName ?? 'ร้านอาหาร',
+                  widget.restaurantName ?? AppLocalizations.of(context)!.foodDetRestaurant,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
@@ -568,7 +569,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
                         ),
                       )
                     : Text(
-                        'เพิ่มลงตะกร้า — ฿${_calculateTotalPrice()}',
+                        AppLocalizations.of(context)!.foodDetAddToCart(_calculateTotalPrice().toString()),
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,

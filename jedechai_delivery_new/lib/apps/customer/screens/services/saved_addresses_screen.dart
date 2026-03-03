@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../common/models/saved_address.dart';
 import '../../../../common/services/address_service.dart';
 import '../../../../theme/app_theme.dart';
@@ -66,13 +67,14 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
   }
 
   String _displayLabel(String label) {
+    final l10n = AppLocalizations.of(context)!;
     switch (label) {
       case 'home':
-        return 'บ้าน';
+        return l10n.addrLabelHome;
       case 'work':
-        return 'ที่ทำงาน';
+        return l10n.addrLabelWork;
       default:
-        return 'อื่นๆ';
+        return l10n.addrLabelOther;
     }
   }
 
@@ -93,7 +95,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
           builder: (context, setDialogState) {
             return AlertDialog(
               title: Text(
-                existing != null ? 'แก้ไขที่อยู่' : 'เพิ่มที่อยู่ใหม่',
+                existing != null ? AppLocalizations.of(context)!.addrEditTitle : AppLocalizations.of(context)!.addrAddTitle,
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               content: SingleChildScrollView(
@@ -102,9 +104,9 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Label selector
-                    const Text(
-                      'ประเภท',
-                      style: TextStyle(
+                    Text(
+                      AppLocalizations.of(context)!.addrType,
+                      style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
                       ),
@@ -116,7 +118,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                         if (!_hasHome || existing?.label == 'home')
                           _buildLabelChip(
                             'home',
-                            'บ้าน',
+                            AppLocalizations.of(context)!.addrLabelHome,
                             Icons.home_rounded,
                             selectedLabel,
                             (val) => setDialogState(() => selectedLabel = val),
@@ -124,14 +126,14 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                         if (!_hasWork || existing?.label == 'work')
                           _buildLabelChip(
                             'work',
-                            'ที่ทำงาน',
+                            AppLocalizations.of(context)!.addrLabelWork,
                             Icons.work_rounded,
                             selectedLabel,
                             (val) => setDialogState(() => selectedLabel = val),
                           ),
                         _buildLabelChip(
                           'other',
-                          'อื่นๆ',
+                          AppLocalizations.of(context)!.addrLabelOther,
                           Icons.location_on_rounded,
                           selectedLabel,
                           (val) => setDialogState(() => selectedLabel = val),
@@ -143,9 +145,9 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                     // Name
                     TextField(
                       controller: nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'ชื่อสถานที่',
-                        hintText: 'เช่น บ้านพ่อแม่, คอนโด',
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.addrPlaceName,
+                        hintText: AppLocalizations.of(context)!.addrPlaceNameHint,
                         prefixIcon: Icon(Icons.edit),
                       ),
                     ),
@@ -201,7 +203,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    pickedLat != null ? 'ปักหมุดแล้ว' : 'ปักหมุดบนแผนที่',
+                                    pickedLat != null ? AppLocalizations.of(context)!.addrPinPlaced : AppLocalizations.of(context)!.addrPinOnMap,
                                     style: TextStyle(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 14,
@@ -231,9 +233,9 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                     TextField(
                       controller: addressController,
                       maxLines: 2,
-                      decoration: const InputDecoration(
-                        labelText: 'ที่อยู่ (รายละเอียดเพิ่มเติม)',
-                        hintText: 'เช่น 123/4 ถ.สุขุมวิท',
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.addrAddressLabel,
+                        hintText: AppLocalizations.of(context)!.addrAddressHint,
                         prefixIcon: Icon(Icons.map),
                       ),
                     ),
@@ -242,9 +244,9 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                     // Note
                     TextField(
                       controller: noteController,
-                      decoration: const InputDecoration(
-                        labelText: 'หมายเหตุ (ไม่บังคับ)',
-                        hintText: 'เช่น ตึก A ชั้น 5 ห้อง 501',
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.addrNoteLabel,
+                        hintText: AppLocalizations.of(context)!.addrNoteHint,
                         prefixIcon: Icon(Icons.note),
                       ),
                     ),
@@ -254,13 +256,13 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: const Text('ยกเลิก'),
+                  child: Text(AppLocalizations.of(context)!.addrCancel),
                 ),
                 ElevatedButton(
                   onPressed: () async {
                     if (nameController.text.trim().isEmpty || pickedLat == null || pickedLng == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('กรุณากรอกชื่อสถานที่และปักหมุดบนแผนที่')),
+                        SnackBar(content: Text(AppLocalizations.of(context)!.addrValidation)),
                       );
                       return;
                     }
@@ -285,7 +287,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryGreen,
                   ),
-                  child: const Text('บันทึก'),
+                  child: Text(AppLocalizations.of(context)!.addrSave),
                 ),
               ],
             );
@@ -326,17 +328,17 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('ลบที่อยู่'),
-        content: Text('ต้องการลบ "${addr.name}" หรือไม่?'),
+        title: Text(AppLocalizations.of(context)!.addrDeleteTitle),
+        content: Text(AppLocalizations.of(context)!.addrDeleteConfirm(addr.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('ยกเลิก'),
+            child: Text(AppLocalizations.of(context)!.addrCancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('ลบ'),
+            child: Text(AppLocalizations.of(context)!.addrDelete),
           ),
         ],
       ),
@@ -354,7 +356,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.pickMode ? 'เลือกที่อยู่' : 'สมุดที่อยู่'),
+        title: Text(widget.pickMode ? AppLocalizations.of(context)!.addrPickTitle : AppLocalizations.of(context)!.addrBookTitle),
         backgroundColor: AppTheme.primaryGreen,
         foregroundColor: Colors.white,
       ),
@@ -366,7 +368,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddEditDialog(),
         icon: const Icon(Icons.add),
-        label: const Text('เพิ่มที่อยู่'),
+        label: Text(AppLocalizations.of(context)!.addrAddButton),
         backgroundColor: AppTheme.primaryGreen,
         foregroundColor: Colors.white,
       ),
@@ -385,7 +387,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'ยังไม่มีที่อยู่ที่บันทึก',
+            AppLocalizations.of(context)!.addrEmptyTitle,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -394,7 +396,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'เพิ่มที่อยู่ "บ้าน" หรือ "ที่ทำงาน"\nเพื่อเลือกง่ายๆ ไม่ต้องพิมพ์ใหม่ทุกครั้ง',
+            AppLocalizations.of(context)!.addrEmptySubtitle,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
@@ -406,9 +408,9 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildQuickAddButton('home', 'บ้าน', Icons.home_rounded, Colors.blue),
+              _buildQuickAddButton('home', AppLocalizations.of(context)!.addrLabelHome, Icons.home_rounded, Colors.blue),
               const SizedBox(width: 16),
-              _buildQuickAddButton('work', 'ที่ทำงาน', Icons.work_rounded, Colors.orange),
+              _buildQuickAddButton('work', AppLocalizations.of(context)!.addrLabelWork, Icons.work_rounded, Colors.orange),
             ],
           ),
         ],
@@ -431,7 +433,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
         ),
       ),
       icon: Icon(icon, color: color),
-      label: Text('เพิ่ม $name'),
+      label: Text(AppLocalizations.of(context)!.addrQuickAdd(name)),
       style: OutlinedButton.styleFrom(
         foregroundColor: color,
         side: BorderSide(color: color),

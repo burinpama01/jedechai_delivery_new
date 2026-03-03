@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jedechai_delivery_new/theme/app_theme.dart';
+import '../../../l10n/app_localizations.dart';
 import 'menu/merchant_add_edit_menu_screen.dart';
 import 'menu/merchant_option_library_screen.dart';
 import '../../../common/widgets/app_network_image.dart';
@@ -36,7 +37,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
 
       final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId == null) {
-        throw Exception('ไม่พบข้อมูลผู้ใช้');
+        throw Exception(AppLocalizations.of(context)!.menuMgmtUserNotFound);
       }
 
       final response = await Supabase.instance.client
@@ -77,16 +78,16 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('ยืนยันการลบ'),
-        content: Text('คุณต้องการลบเมนู "$itemName" ใช่หรือไม่?'),
+        title: Text(AppLocalizations.of(context)!.menuMgmtDeleteConfirmTitle),
+        content: Text(AppLocalizations.of(context)!.menuMgmtDeleteConfirmBody(itemName)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('ไม่'),
+            child: Text(AppLocalizations.of(context)!.menuMgmtNo),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('ใช่'),
+            child: Text(AppLocalizations.of(context)!.menuMgmtYes),
           ),
         ],
       ),
@@ -104,7 +105,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('ลบเมนูสำเร็จ'),
+              content: Text(AppLocalizations.of(context)!.menuMgmtDeleteSuccess),
               backgroundColor: Theme.of(context).colorScheme.primary,
             ),
           );
@@ -117,15 +118,15 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
             final hideInstead = await showDialog<bool>(
               context: context,
               builder: (ctx) => AlertDialog(
-                title: const Text('ไม่สามารถลบเมนูได้'),
-                content: const Text(
-                  'เมนูนี้มีออเดอร์ที่เกี่ยวข้องอยู่จึงไม่สามารถลบได้\n\nต้องการซ่อนเมนูนี้แทนหรือไม่? (เปลี่ยนสถานะเป็น "หมด")',
+                title: Text(AppLocalizations.of(context)!.menuMgmtCannotDeleteTitle),
+                content: Text(
+                  AppLocalizations.of(context)!.menuMgmtCannotDeleteBody,
                 ),
                 actions: [
-                  TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('ยกเลิก')),
+                  TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(AppLocalizations.of(context)!.menuMgmtCancel)),
                   TextButton(
                     onPressed: () => Navigator.of(ctx).pop(true),
-                    child: const Text('ซ่อนเมนู', style: TextStyle(color: AppTheme.accentOrange)),
+                    child: Text(AppLocalizations.of(context)!.menuMgmtHideMenu, style: const TextStyle(color: AppTheme.accentOrange)),
                   ),
                 ],
               ),
@@ -139,7 +140,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: const Text('ซ่อนเมนูสำเร็จ (เปลี่ยนเป็น "หมด")'),
+                    content: Text(AppLocalizations.of(context)!.menuMgmtHideSuccess),
                     backgroundColor: Theme.of(context).colorScheme.primary,
                   ),
                 );
@@ -150,7 +151,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('ไม่สามารถลบเมนู: $e'),
+                content: Text(AppLocalizations.of(context)!.menuMgmtDeleteFailed(e.toString())),
                 backgroundColor: Theme.of(context).colorScheme.error,
               ),
             );
@@ -179,7 +180,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(newValue ? 'เปิดการขายเมนูแล้ว' : 'ปิดการขายเมนูแล้ว'),
+            content: Text(newValue ? AppLocalizations.of(context)!.menuMgmtToggleOn : AppLocalizations.of(context)!.menuMgmtToggleOff),
             backgroundColor:
                 newValue ? Theme.of(context).colorScheme.primary : Colors.grey,
             duration: const Duration(seconds: 1),
@@ -197,7 +198,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('เปลี่ยนสถานะไม่สำเร็จ: $e'),
+            content: Text(AppLocalizations.of(context)!.menuMgmtToggleFailed(e.toString())),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -213,8 +214,8 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('ไม่พบข้อมูลผู้ใช้'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.menuMgmtUserNotFound),
           backgroundColor: Colors.red,
         ),
       );
@@ -234,7 +235,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('จัดการเมนู'),
+        title: Text(AppLocalizations.of(context)!.menuMgmtTitle),
         backgroundColor: colorScheme.surface,
         elevation: 0,
         foregroundColor: colorScheme.onSurface,
@@ -242,7 +243,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
           IconButton(
             icon: const Icon(Icons.category),
             onPressed: _navigateToOptionLibrary,
-            tooltip: 'จัดการตัวเลือก',
+            tooltip: AppLocalizations.of(context)!.menuMgmtOptionTooltip,
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -284,7 +285,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'เกิดข้อผิดพลาด',
+              AppLocalizations.of(context)!.menuMgmtError,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -307,7 +308,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                 backgroundColor: colorScheme.primary,
                 foregroundColor: colorScheme.onPrimary,
               ),
-              child: const Text('ลองใหม่'),
+              child: Text(AppLocalizations.of(context)!.menuMgmtRetry),
             ),
           ],
         ),
@@ -327,7 +328,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'ยังไม่มีเมนู',
+              AppLocalizations.of(context)!.menuMgmtEmpty,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
@@ -336,7 +337,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'กดปุ่ม + เพื่อเพิ่มเมนูแรกของคุณ',
+              AppLocalizations.of(context)!.menuMgmtEmptyHint,
               style: TextStyle(
                 fontSize: 14,
                 color: colorScheme.onSurfaceVariant,
@@ -409,7 +410,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          item['name'] ?? 'ไม่มีชื่อ',
+                          item['name'] ?? AppLocalizations.of(context)!.menuMgmtNoName,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -447,7 +448,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                item['is_available'] == true ? 'วางขาย' : 'หมด',
+                                item['is_available'] == true ? AppLocalizations.of(context)!.menuMgmtAvailable : AppLocalizations.of(context)!.menuMgmtSoldOut,
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
@@ -514,27 +515,27 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                 if (value == 'edit') {
                   _showMenuItemDialog(item: item);
                 } else if (value == 'delete') {
-                  _deleteMenuItem(item['id'], item['name'] ?? 'เมนูนี้');
+                  _deleteMenuItem(item['id'], item['name'] ?? AppLocalizations.of(context)!.menuMgmtNoName);
                 }
               },
               itemBuilder: (context) => [
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'edit',
                   child: Row(
                     children: [
-                      Icon(Icons.edit, size: 18),
-                      SizedBox(width: 8),
-                      Text('แก้ไข'),
+                      const Icon(Icons.edit, size: 18),
+                      const SizedBox(width: 8),
+                      Text(AppLocalizations.of(context)!.menuMgmtEdit),
                     ],
                   ),
                 ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'delete',
                   child: Row(
                     children: [
-                      Icon(Icons.delete, size: 18, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('ลบ', style: TextStyle(color: Colors.red)),
+                      const Icon(Icons.delete, size: 18, color: Colors.red),
+                      const SizedBox(width: 8),
+                      Text(AppLocalizations.of(context)!.menuMgmtDelete, style: const TextStyle(color: Colors.red)),
                     ],
                   ),
                 ),

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../../../../common/services/menu_option_service.dart';
 import '../../../../common/models/menu_option.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 
 /// Merchant Option Group Detail Screen
@@ -74,11 +75,11 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
 
       // Validate min/max selection
       if (minSelection < 0 || maxSelection < 1) {
-        throw Exception('ค่าต่ำสุดต้องไม่ต่ำกว่า 0 และค่าสูงสุดต้องไม่ต่ำกว่า 1');
+        throw Exception(AppLocalizations.of(context)!.optGroupMinMaxError);
       }
 
       if (minSelection > maxSelection) {
-        throw Exception('ค่าต่ำสุดต้องไม่มากกว่าค่าสูงสุด');
+        throw Exception(AppLocalizations.of(context)!.optGroupMinGtMaxError);
       }
 
       MenuOptionGroup? savedGroup;
@@ -103,7 +104,7 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
       }
 
       if (savedGroup == null) {
-        throw Exception('ไม่สามารถบันทึกกลุ่มตัวเลือกได้');
+        throw Exception(AppLocalizations.of(context)!.optGroupSaveError);
       }
 
       // Save options
@@ -113,8 +114,8 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(widget.group == null 
-                ? '✅ สร้างกลุ่มตัวเลือกเรียบร้อย'
-                : '✅ อัปเดตกลุ่มตัวเลือกเรียบร้อย'),
+                ? AppLocalizations.of(context)!.optGroupCreateSuccess
+                : AppLocalizations.of(context)!.optGroupUpdateSuccess),
             backgroundColor: Colors.green,
           ),
         );
@@ -161,8 +162,8 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
 
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('❌ กรุณากรอกชื่อตัวเลือก'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.optGroupOptionNameRequired),
           backgroundColor: Colors.red,
         ),
       );
@@ -172,8 +173,8 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
     final price = int.tryParse(priceText) ?? 0;
     if (price < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('❌ ราคาต้องไม่ติดลบ'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.optGroupOptionPriceNegative),
           backgroundColor: Colors.red,
         ),
       );
@@ -217,7 +218,7 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? 'แก้ไขกลุ่มตัวเลือก' : 'สร้างกลุ่มตัวเลือก'),
+        title: Text(isEditing ? AppLocalizations.of(context)!.optGroupEditTitle : AppLocalizations.of(context)!.optGroupCreateTitle),
         backgroundColor: AppTheme.accentOrange,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -291,7 +292,7 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
                             ),
                           )
                         : Text(
-                            isEditing ? 'อัปเดตกลุ่มตัวเลือก' : 'สร้างกลุ่มตัวเลือก',
+                            isEditing ? AppLocalizations.of(context)!.optGroupBtnUpdate : AppLocalizations.of(context)!.optGroupBtnCreate,
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -311,8 +312,8 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'ข้อมูลกลุ่มตัวเลือก',
+        Text(
+          AppLocalizations.of(context)!.optGroupInfoTitle,
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -323,14 +324,14 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
         // Group Name
         TextFormField(
           controller: _nameController,
-          decoration: const InputDecoration(
-            labelText: 'ชื่อกลุ่มตัวเลือก',
-            hintText: 'เช่น ระดับความเผ็ด, ท็อปปิ้ง',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context)!.optGroupNameLabel,
+            hintText: AppLocalizations.of(context)!.optGroupNameHint,
+            border: const OutlineInputBorder(),
           ),
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
-              return 'กรุณากรอกชื่อกลุ่มตัวเลือก';
+              return AppLocalizations.of(context)!.optGroupNameRequired;
             }
             return null;
           },
@@ -344,18 +345,18 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
               child: TextFormField(
                 controller: _minSelectionController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'เลือกขั้นต่ำ',
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.optGroupMinLabel,
                   hintText: '0',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'กรุณากรอกจำนวนขั้นต่ำ';
+                    return AppLocalizations.of(context)!.optGroupMinRequired;
                   }
                   final num = int.tryParse(value);
                   if (num == null || num < 0) {
-                    return 'กรุณากรอกจำนวนที่ถูกต้อง';
+                    return AppLocalizations.of(context)!.optGroupMinInvalid;
                   }
                   return null;
                 },
@@ -366,18 +367,18 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
               child: TextFormField(
                 controller: _maxSelectionController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'เลือกสูงสุด',
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.optGroupMaxLabel,
                   hintText: '1',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'กรุณากรอกจำนวนสูงสุด';
+                    return AppLocalizations.of(context)!.optGroupMaxRequired;
                   }
                   final num = int.tryParse(value);
                   if (num == null || num < 1) {
-                    return 'กรุณากรอกจำนวนที่ถูกต้อง (อย่างน้อย 1)';
+                    return AppLocalizations.of(context)!.optGroupMaxInvalid;
                   }
                   return null;
                 },
@@ -387,7 +388,7 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
         ),
         const SizedBox(height: 8),
         Text(
-          'คำแนะนำ: 0=ไม่จำเป็นต้องเลือก, 1=ต้องเลือก 1 รายการ',
+          AppLocalizations.of(context)!.optGroupSelectionHint,
           style: TextStyle(
             fontSize: 12,
             color: Colors.grey[600],
@@ -401,8 +402,8 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'เพิ่มตัวเลือก',
+        Text(
+          AppLocalizations.of(context)!.optGroupAddOptionTitle,
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -417,10 +418,10 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
               flex: 2,
               child: TextFormField(
                 controller: _optionNameController,
-                decoration: const InputDecoration(
-                  labelText: 'ชื่อตัวเลือก',
-                  hintText: 'เช่น ไม่เผ็ด, เผ็ดมาก',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.optGroupOptionNameLabel,
+                  hintText: AppLocalizations.of(context)!.optGroupOptionNameHint,
+                  border: const OutlineInputBorder(),
                 ),
               ),
             ),
@@ -432,11 +433,11 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
               child: TextFormField(
                 controller: _optionPriceController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'ราคาเพิ่ม',
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.optGroupOptionPriceLabel,
                   hintText: '0',
                   prefixText: '฿',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
                 ),
               ),
             ),
@@ -475,7 +476,7 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
             ),
             const SizedBox(height: 16),
             Text(
-              'ยังไม่มีตัวเลือก',
+              AppLocalizations.of(context)!.optGroupNoOptions,
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey[600],
@@ -483,7 +484,7 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
             ),
             const SizedBox(height: 8),
             Text(
-              'เพิ่มตัวเลือกเพื่อให้ลูกค้าเลือกจากกลุ่มนี้',
+              AppLocalizations.of(context)!.optGroupNoOptionsHint,
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[500],
@@ -499,8 +500,8 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
       children: [
         Row(
           children: [
-            const Text(
-              'ตัวเลือกทั้งหมด',
+            Text(
+              AppLocalizations.of(context)!.optGroupAllOptionsTitle,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -508,7 +509,7 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
             ),
             const Spacer(),
             Text(
-              '${_options.length} รายการ',
+              AppLocalizations.of(context)!.optGroupItemCount(_options.length.toString()),
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[600],
@@ -535,15 +536,15 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('ยืนยันการลบ'),
+        title: Text(AppLocalizations.of(context)!.optLibDeleteConfirmTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('คุณต้องการลบกลุ่ม "${widget.group!.name}" ใช่หรือไม่?'),
+            Text(AppLocalizations.of(context)!.optLibDeleteConfirmBody(widget.group!.name)),
             const SizedBox(height: 8),
             Text(
-              'หมายเหตุ: การลบกลุ่มนี้จะลบตัวเลือกทั้งหมดและลบออกจากเมนูที่ใช้งานอยู่',
+              AppLocalizations.of(context)!.optLibDeleteNote((widget.group!.options?.length ?? 0).toString()),
               style: TextStyle(
                 color: Colors.orange.shade700,
                 fontSize: 12,
@@ -554,7 +555,7 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('ยกเลิก'),
+            child: Text(AppLocalizations.of(context)!.optLibCancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
@@ -562,7 +563,7 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
             ),
-            child: const Text('ลบ'),
+            child: Text(AppLocalizations.of(context)!.optLibDeleteBtn),
           ),
         ],
       ),
@@ -575,7 +576,7 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('✅ ลบกลุ่ม "${widget.group!.name}" เรียบร้อย'),
+              content: Text(AppLocalizations.of(context)!.optLibDeleteSuccess(widget.group!.name)),
               backgroundColor: Colors.green,
             ),
           );
@@ -585,7 +586,7 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('❌ ลบกลุ่มไม่สำเร็จ: $e'),
+              content: Text(AppLocalizations.of(context)!.optLibDeleteFailed(e.toString())),
               backgroundColor: Colors.red,
             ),
           );

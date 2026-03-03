@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_theme.dart';
 import 'merchant_dashboard_screen.dart';
 import 'merchant_orders_screen.dart';
@@ -45,8 +46,8 @@ class _MerchantMainScreenState extends State<MerchantMainScreen> {
     }
     _lastBackPressTime = now;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('กดอีกครั้งเพื่อออกจากแอป'),
+      SnackBar(
+        content: Text(AppLocalizations.of(context)!.merchantPressBackAgain),
         duration: Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
       ),
@@ -83,26 +84,26 @@ class _MerchantMainScreenState extends State<MerchantMainScreen> {
           unselectedItemColor: colorScheme.onSurfaceVariant,
           selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
           unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w400, fontSize: 13),
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_long_outlined),
-              activeIcon: Icon(Icons.receipt_long),
-              label: 'ออเดอร์',
+              icon: const Icon(Icons.receipt_long_outlined),
+              activeIcon: const Icon(Icons.receipt_long),
+              label: AppLocalizations.of(context)!.merchantNavOrders,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.restaurant_menu_outlined),
-              activeIcon: Icon(Icons.restaurant_menu),
-              label: 'เมนู',
+              icon: const Icon(Icons.restaurant_menu_outlined),
+              activeIcon: const Icon(Icons.restaurant_menu),
+              label: AppLocalizations.of(context)!.merchantNavMenu,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.bar_chart_outlined),
-              activeIcon: Icon(Icons.bar_chart),
-              label: 'รายงาน',
+              icon: const Icon(Icons.bar_chart_outlined),
+              activeIcon: const Icon(Icons.bar_chart),
+              label: AppLocalizations.of(context)!.merchantNavReport,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
-              label: 'บัญชี',
+              icon: const Icon(Icons.person_outline),
+              activeIcon: const Icon(Icons.person),
+              label: AppLocalizations.of(context)!.merchantNavAccount,
             ),
           ],
         ),

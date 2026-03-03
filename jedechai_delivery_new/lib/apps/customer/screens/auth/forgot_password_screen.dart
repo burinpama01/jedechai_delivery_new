@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../common/services/auth_service.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Forgot Password Screen
 ///
@@ -38,7 +39,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       }
     } catch (e) {
       if (mounted) {
-        _showErrorDialog(_getThaiErrorMessage(e.toString()));
+        _showErrorDialog(_getLocalizedErrorMessage(e.toString()));
       }
     } finally {
       if (mounted) {
@@ -47,30 +48,32 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     }
   }
 
-  String _getThaiErrorMessage(String error) {
+  String _getLocalizedErrorMessage(String error) {
+    final l10n = AppLocalizations.of(context)!;
     if (error.contains('User not found') ||
         error.contains('invalid_credentials')) {
-      return 'ไม่พบบัญชีที่ใช้อีเมลนี้\nกรุณาตรวจสอบอีเมลของคุณ';
+      return l10n.forgotPasswordErrorUserNotFound;
     } else if (error.contains('Too many requests') ||
         error.contains('rate_limit')) {
-      return 'คุณส่งคำขอบ่อยเกินไป\nกรุณารอสักครู่แล้วลองใหม่';
+      return l10n.forgotPasswordErrorTooManyRequests;
     } else if (error.contains('SocketException') ||
         error.contains('Failed host lookup') ||
         error.contains('เชื่อมต่อ')) {
-      return 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้\nกรุณาตรวจสอบอินเทอร์เน็ตของคุณ';
+      return l10n.forgotPasswordErrorCannotConnect;
     }
-    return 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง';
+    return l10n.forgotPasswordErrorGeneric;
   }
 
   void _showErrorDialog(String message) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         icon: const Icon(Icons.error_outline, color: Colors.red, size: 48),
-        title: const Text(
-          'ส่งอีเมลไม่สำเร็จ',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        title: Text(
+          l10n.forgotPasswordErrorDialogTitle,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         content: Text(
           message,
@@ -90,8 +93,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              child: const Text('ตกลง',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              child: Text(l10n.commonOk,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             ),
           ),
         ],
@@ -100,6 +103,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   void _showSuccessDialog() {
+    final l10n = AppLocalizations.of(context)!;
     final email = _emailController.text.trim();
     final isMockMode = AuthService.isMockMode;
 
@@ -110,14 +114,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         icon: const Icon(Icons.mark_email_read,
             color: AppTheme.primaryGreen, size: 48),
-        title: const Text(
-          'ส่งอีเมลสำเร็จ!',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        title: Text(
+          l10n.forgotPasswordSuccessTitle,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         content: Text(
           isMockMode
-              ? 'โหมดทดสอบ (Mock Mode)\nระบบจำลองการส่งอีเมลไปที่\n$email\n\n*จะไม่มีอีเมลจริงถูกส่ง*'
-              : 'ลิงก์รีเซ็ตรหัสผ่านถูกส่งไปที่\n$email\n\nกรุณาตรวจสอบอีเมลของคุณ',
+              ? l10n.forgotPasswordSuccessBodyMock(email)
+              : l10n.forgotPasswordSuccessBody(email),
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 15, height: 1.5),
         ),
@@ -142,8 +146,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              child: const Text('กลับไปเข้าสู่ระบบ',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              child: Text(l10n.forgotPasswordSuccessGoToLogin,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             ),
           ),
         ],
@@ -155,9 +159,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ลืมรหัสผ่าน'),
+        title: Text(l10n.forgotPasswordTitle),
         backgroundColor: AppTheme.primaryGreen,
         foregroundColor: Colors.white,
       ),
@@ -182,18 +188,18 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         color: AppTheme.primaryGreen,
                       ),
                       const SizedBox(height: 24),
-                      const Text(
-                        'ลืมรหัสผ่าน?',
-                        style: TextStyle(
+                      Text(
+                        l10n.forgotPasswordHeader,
+                        style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                         ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        'กรุณากรอกอีเมลของคุณเพื่อรับลิงก์รีเซ็ตรหัส',
-                        style: TextStyle(
+                      Text(
+                        l10n.forgotPasswordSubheader,
+                        style: const TextStyle(
                           fontSize: 16,
                           color: Colors.grey,
                         ),
@@ -203,17 +209,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(
-                          labelText: 'อีเมล',
-                          prefixIcon: Icon(Icons.email),
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: l10n.forgotPasswordEmailLabel,
+                          prefixIcon: const Icon(Icons.email),
+                          border: const OutlineInputBorder(),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'กรุณากรอกอีเมล';
+                            return l10n.forgotPasswordEmailRequired;
                           }
                           if (!value.contains('@')) {
-                            return 'กรุณากรอกอีเมลที่ถูกต้อง';
+                            return l10n.forgotPasswordEmailInvalid;
                           }
                           return null;
                         },
@@ -232,9 +238,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         child: _isLoading
                             ? const CircularProgressIndicator(
                                 color: Colors.white)
-                            : const Text(
-                                'ส่งอีเมลรีเซ็ตรหัส',
-                                style: TextStyle(fontSize: 16),
+                            : Text(
+                                l10n.forgotPasswordSubmit,
+                                style: const TextStyle(fontSize: 16),
                               ),
                       ),
                       const SizedBox(height: 16),
@@ -242,7 +248,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         onPressed: () {
                           Navigator.of(context).pop();
                         },
-                        child: const Text('กลับไปหน้าเข้าสู่ระบบ'),
+                        child: Text(l10n.forgotPasswordBackToLogin),
                       ),
                     ],
                   ),

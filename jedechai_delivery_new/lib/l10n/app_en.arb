@@ -1,0 +1,2778 @@
+{
+  "@@locale": "en",
+  "appName": "JDC Delivery",
+  "language": "Language",
+  "useSystemLanguage": "Use system language",
+  "thai": "Thai",
+  "english": "English",
+
+  "commonOk": "OK",
+
+  "loginWelcomeTitle": "Welcome",
+  "loginWelcomeSubtitle": "Sign in to continue",
+  "loginEmailLabel": "Email",
+  "loginPasswordLabel": "Password",
+  "loginForgotPassword": "Forgot password?",
+  "loginButton": "Sign in",
+  "loginNoAccountPrefix": "No account? ",
+  "loginRegisterButton": "Sign up",
+  "loginSuccessSnack": "Signed in successfully",
+  "loginBackPressToExit": "Press again to exit",
+  "loginErrorDialogTitle": "Sign in failed",
+
+  "loginValidationEmailRequired": "Please enter your email",
+  "loginValidationEmailInvalid": "Invalid email",
+  "loginValidationPasswordRequired": "Please enter your password",
+  "loginValidationPasswordMinLength": "Password must be at least 6 characters",
+
+  "loginErrorInvalidCredentials": "Incorrect email or password\nPlease try again",
+  "loginErrorEmailNotConfirmed": "Email not confirmed\nPlease check your inbox",
+  "loginErrorUserNotFound": "User not found\nPlease sign up first",
+  "loginErrorTooManyRequests": "Too many attempts\nPlease wait and try again",
+  "loginErrorCannotConnect": "Cannot connect to server\nPlease check your internet",
+  "loginErrorNetwork": "Network error\nPlease try again",
+  "loginErrorGeneric": "An error occurred. Please try again",
+
+  "registerTitle": "Sign up",
+  "registerHeader": "Create a new account",
+  "registerSubheader": "Please fill in your information",
+  "registerSelectRole": "Select account type",
+  "registerFullNameLabel": "Full name",
+  "registerShopNameLabel": "Shop name",
+  "registerPhoneLabel": "Phone number",
+  "registerEmailLabel": "Email",
+  "registerReferralCodeLabel": "Referral code (optional)",
+  "registerPasswordLabel": "Password",
+  "registerConfirmPasswordLabel": "Confirm password",
+  "registerButton": "Sign up",
+  "registerHaveAccountPrefix": "Already have an account? ",
+  "registerGoToLogin": "Sign in",
+
+  "registerValidationFullNameRequired": "Please enter your name",
+  "registerValidationShopNameRequired": "Please enter shop name",
+  "registerValidationPhoneRequired": "Please enter phone number",
+  "registerValidationPhoneInvalid": "Invalid phone number",
+  "registerValidationEmailRequired": "Please enter email",
+  "registerValidationEmailInvalid": "Invalid email",
+  "registerValidationPasswordRequired": "Please enter password",
+  "registerValidationPasswordMinLength": "Password must be at least 6 characters",
+  "registerValidationConfirmPasswordRequired": "Please confirm your password",
+  "registerValidationPasswordMismatch": "Passwords do not match",
+
+  "registerErrorDialogTitle": "Sign up failed",
+  "registerErrorPasswordMismatch": "Passwords do not match\nPlease check and try again",
+  "registerErrorPhoneUsed": "This phone number is already in use\nPlease use another phone or sign in",
+  "registerErrorEmailUsed": "This email is already in use\nPlease sign in or use another email",
+  "registerErrorEmailAlreadyRegistered": "This email is already in use\nPlease sign in or use another email",
+  "registerErrorWeakPassword": "Weak password\nPlease use at least 6 characters",
+  "registerErrorInvalidEmail": "Invalid email format\nPlease check your email",
+  "registerErrorCannotConnect": "Cannot connect to server\nPlease check your internet",
+  "registerErrorTooManyRequests": "Too many attempts\nPlease wait and try again",
+  "registerErrorGeneric": "An error occurred. Please try again",
+
+  "registerSuccessTitle": "Signed up successfully!",
+  "registerSuccessBody": "Registration completed\nPlease sign in to start using the app",
+  "registerSuccessGoToLogin": "Sign in",
+
+  "forgotPasswordTitle": "Forgot password",
+  "forgotPasswordHeader": "Forgot password?",
+  "forgotPasswordSubheader": "Enter your email to receive a reset link",
+  "forgotPasswordEmailLabel": "Email",
+  "forgotPasswordEmailRequired": "Please enter email",
+  "forgotPasswordEmailInvalid": "Please enter a valid email",
+  "forgotPasswordSubmit": "Send reset email",
+  "forgotPasswordBackToLogin": "Back to sign in",
+
+  "forgotPasswordErrorDialogTitle": "Failed to send email",
+  "forgotPasswordSuccessTitle": "Email sent!",
+  "forgotPasswordSuccessBody": "A password reset link has been sent to\n{email}\n\nPlease check your inbox",
+  "@forgotPasswordSuccessBody": {
+    "placeholders": {
+      "email": {}
+    }
+  },
+  "forgotPasswordSuccessBodyMock": "Mock Mode\nA reset email was simulated to\n{email}\n\n*No real email was sent*",
+  "@forgotPasswordSuccessBodyMock": {
+    "placeholders": {
+      "email": {}
+    }
+  },
+  "forgotPasswordSuccessGoToLogin": "Back to sign in",
+
+  "forgotPasswordErrorUserNotFound": "No account found for this email\nPlease check your email",
+  "forgotPasswordErrorTooManyRequests": "Too many requests\nPlease wait and try again",
+  "forgotPasswordErrorCannotConnect": "Cannot connect to server\nPlease check your internet",
+  "forgotPasswordErrorGeneric": "An error occurred. Please try again",
+
+  "foodCategoryAll": "All",
+  "foodCategoryMadeToOrder": "Made to order",
+  "foodCategoryNoodles": "Noodles",
+  "foodCategoryDrinks": "Drinks",
+  "foodCategoryDesserts": "Desserts",
+  "foodCategoryFastFood": "Fast food",
+
+  "foodHomeTitle": "Order Food",
+  "foodHomeSearchHint": "Search restaurants...",
+  "foodHomeTopSelling": "Best Sellers",
+  "foodHomeTopCount": "Top {count}",
+  "@foodHomeTopCount": { "placeholders": { "count": {} } },
+  "foodHomeSoldCount": "{count} sold",
+  "@foodHomeSoldCount": { "placeholders": { "count": {} } },
+  "foodHomeNearbyTitle": "Restaurants near you",
+  "foodHomeRestaurantCount": "{count} restaurants",
+  "@foodHomeRestaurantCount": { "placeholders": { "count": {} } },
+  "foodHomeLoading": "Loading restaurants...",
+  "foodHomeErrorTitle": "Unable to load data",
+  "foodHomeErrorSubtitle": "Please check your internet connection",
+  "foodHomeRetry": "Try again",
+  "foodHomeEmptySearch": "No restaurants found",
+  "foodHomeEmptyNoArea": "No restaurants in your area yet",
+  "foodHomeEmptyNoneOpen": "No restaurants currently open",
+  "foodHomeEmptySearchHint": "Try another search term",
+  "foodHomeEmptyNoAreaHint": "No open restaurants within {radius} km",
+  "@foodHomeEmptyNoAreaHint": { "placeholders": { "radius": {} } },
+  "foodHomeEmptyTryLater": "Please try again later",
+  "foodHomeRestaurantDefault": "Restaurant",
+  "foodHomeOpenBadge": "Open",
+  "foodHomeDistanceKm": "{km} km",
+  "@foodHomeDistanceKm": { "placeholders": { "km": {} } },
+  "foodHomeEstTime": "20-30 min",
+
+  "foodPromoCodeTitle": "Promo Code",
+  "foodPromoCodeHint": "Use this code at checkout for a discount",
+  "foodPromoCodeCopied": "Copied code \"{code}\"",
+  "@foodPromoCodeCopied": { "placeholders": { "code": {} } },
+  "foodPromoCodeClose": "Close",
+  "foodPromoCodeCopy": "Copy code",
+
+  "foodCartViewCart": "View cart",
+  "foodCartTitle": "Your cart",
+  "foodCartClear": "Clear",
+  "foodCartEmpty": "Cart is empty",
+  "foodCartFoodCost": "Food cost",
+  "foodCartDeliveryFee": "Delivery fee",
+  "foodCartDeliveryCalcLater": "Calculated at order",
+  "foodCartTotal": "Total",
+  "foodCartOrderButton": "Order food",
+
+  "foodCheckoutTitle": "Confirm order",
+  "foodCheckoutRestaurant": "Restaurant",
+  "foodCheckoutDeliveryAddress": "Delivery address",
+  "foodCheckoutCurrentLocation": "Current location",
+  "foodCheckoutItemsTitle": "Food items ({count} items)",
+  "@foodCheckoutItemsTitle": { "placeholders": { "count": {} } },
+  "foodCheckoutNoteTitle": "Note to restaurant",
+  "foodCheckoutNoteHint": "e.g. no vegetables, less spicy...",
+  "foodCheckoutPaymentTitle": "Payment method",
+  "foodCheckoutPayCash": "Cash",
+  "foodCheckoutPayTransfer": "Bank transfer",
+  "foodCheckoutDeliveryEstimate": "Delivery fee (estimated)",
+  "foodCheckoutConfirmButton": "Confirm order",
+  "foodCheckoutSuccess": "Order placed successfully!",
+  "foodCheckoutLoginRequired": "Please sign in",
+  "foodCheckoutCreateFailed": "Unable to create order",
+  "foodCheckoutOrderFailed": "Unable to place order: {error}",
+  "@foodCheckoutOrderFailed": { "placeholders": { "error": {} } },
+  "foodCheckoutNotifTitle": "New order!",
+  "foodCheckoutNotifBody": "Customer ordered food \u0e3f{amount} — please confirm",
+  "@foodCheckoutNotifBody": { "placeholders": { "amount": {} } },
+
+  "foodScheduleTitle": "Delivery time",
+  "foodScheduleNow": "Deliver now",
+  "foodScheduleNowDesc": "Restaurant will start preparing immediately after confirmation",
+  "foodScheduleLater": "Schedule delivery",
+  "foodScheduleLaterDesc": "Choose date and time you want to receive food",
+  "foodScheduleLaterSet": "Scheduled: {dateTime}",
+  "@foodScheduleLaterSet": { "placeholders": { "dateTime": {} } },
+  "foodSchedulePickDate": "Choose delivery date",
+  "foodSchedulePickTime": "Choose delivery time",
+  "foodScheduleMinTime": "Please choose a time at least 20 minutes from now",
+  "foodScheduleRequired": "Please choose delivery date and time",
+
+  "foodDistanceWarningTitle": "Out of delivery range",
+  "foodDistanceWarningBody": "Your delivery location is {distance} km from the restaurant\nwhich exceeds the default range of {maxRadius} km.",
+  "@foodDistanceWarningBody": { "placeholders": { "distance": {}, "maxRadius": {} } },
+  "foodDistanceWarningFee": "Delivery fee based on actual distance: \u0e3f{fee}",
+  "@foodDistanceWarningFee": { "placeholders": { "fee": {} } },
+  "foodDistanceWarningOk": "Understood",
+
+  "foodAddressCurrentLocation": "Current location",
+  "foodAddressPinOnMap": "Pin on map",
+  "foodAddressSaved": "Saved addresses",
+  "foodAddressDistance": "Distance: {km} km",
+  "@foodAddressDistance": { "placeholders": { "km": {} } },
+  "foodAddressUnknown": "Current location (unable to determine)",
+
+  "foodDeliveryFeeWithDist": "Delivery fee ({km} km)",
+  "@foodDeliveryFeeWithDist": { "placeholders": { "km": {} } },
+  "foodCalculating": "Calculating...",
+  "foodCouponDiscount": "Coupon discount",
+
+  "foodCheckoutLocationRequired": "Unable to determine delivery location. Please select a location",
+  "foodCheckoutNoResponse": "No order data received from server",
+  "foodCheckoutFailedTitle": "Order failed",
+  "foodCheckoutSuccessScheduled": "Scheduled order placed successfully ({dateTime})",
+  "@foodCheckoutSuccessScheduled": { "placeholders": { "dateTime": {} } },
+  "foodCheckoutSuccessNow": "Order placed! Waiting for restaurant to confirm",
+  "foodCheckoutNotifScheduledBody": "Customer pre-ordered food \u0e3f{amount} for {dateTime}",
+  "@foodCheckoutNotifScheduledBody": { "placeholders": { "amount": {}, "dateTime": {} } },
+
+  "orderDetailScreenTitle": "Order details",
+  "orderDetailCancel": "Cancel",
+  "orderDetailOrderId": "Order {code}",
+  "@orderDetailOrderId": { "placeholders": { "code": {} } },
+  "orderDetailOrderedAt": "Ordered: {dateTime}",
+  "@orderDetailOrderedAt": { "placeholders": { "dateTime": {} } },
+  "orderDetailLocationTitle": "Location",
+  "orderDetailPickup": "Pickup",
+  "orderDetailDestination": "Destination",
+  "orderDetailDriverTitle": "Driver info",
+  "orderDetailDriverUnnamed": "No name",
+  "orderDetailTrack": "Track",
+  "orderDetailChat": "Chat",
+  "orderDetailCall": "Call",
+  "orderDetailCannotCall": "Cannot call {phone}",
+  "@orderDetailCannotCall": { "placeholders": { "phone": {} } },
+  "orderDetailItemsTitle": "Food items",
+  "orderDetailNoItems": "No food items found",
+  "orderDetailItemUnnamed": "Unnamed",
+  "orderDetailQuantity": "Qty: {qty}",
+  "@orderDetailQuantity": { "placeholders": { "qty": {} } },
+  "orderDetailOptionsLabel": "Extras:",
+  "orderDetailOptionDefault": "Option",
+  "orderDetailAddressUnknown": "Address not specified",
+  "orderDetailAddressCurrent": "Current location",
+  "orderDetailPriceTitle": "Price details",
+  "orderDetailFoodCost": "Food cost",
+  "orderDetailDeliveryFee": "Delivery fee",
+  "orderDetailCouponDiscount": "Coupon discount",
+  "orderDetailCouponDiscountCode": "Coupon discount ({code})",
+  "@orderDetailCouponDiscountCode": { "placeholders": { "code": {} } },
+  "orderDetailDistance": "Distance",
+  "orderDetailDistanceKm": "{km} km",
+  "@orderDetailDistanceKm": { "placeholders": { "km": {} } },
+  "orderDetailTotal": "Total",
+  "orderDetailServiceRide": "Ride service",
+  "orderDetailServiceFood": "Food order",
+  "orderDetailServiceParcel": "Parcel delivery",
+  "orderDetailStatusPending": "Pending",
+  "orderDetailStatusPendingMerchant": "Waiting for restaurant",
+  "orderDetailStatusPreparing": "Preparing food",
+  "orderDetailStatusReady": "Food ready",
+  "orderDetailStatusDriverAccepted": "Driver accepted",
+  "orderDetailStatusConfirmed": "Confirmed",
+  "orderDetailStatusArrived": "Arrived at pickup",
+  "orderDetailStatusPickingUp": "Picking up food",
+  "orderDetailStatusInTransit": "Delivering",
+  "orderDetailStatusCompleted": "Completed",
+  "orderDetailStatusCancelled": "Cancelled",
+  "orderDetailCancelledTitle": "Restaurant rejected order",
+  "orderDetailCancelledBody": "Sorry, the restaurant cannot accept your order at this time",
+  "orderDetailOrderNumber": "Order number",
+  "orderDetailCancelledRetry": "Please try ordering again or choose another restaurant",
+  "orderDetailUnderstood": "Understood",
+  "orderDetailChatError": "Cannot open chat",
+  "orderDetailDriverDefault": "Driver",
+  "orderDetailCompletedFood": "Delivered successfully!",
+  "orderDetailCompletedRide": "Trip completed!",
+  "orderDetailThankYou": "Thank you for using our service",
+  "orderDetailTotalAmount": "Total amount",
+  "orderDetailIncludingDelivery": "Including delivery",
+  "orderDetailCouponUsed": "Used coupon {code} discount \u0e3f{amount}",
+  "@orderDetailCouponUsed": { "placeholders": { "code": {}, "amount": {} } },
+  "orderDetailCouponUsedNoCode": "Used coupon discount \u0e3f{amount}",
+  "@orderDetailCouponUsedNoCode": { "placeholders": { "amount": {} } },
+  "orderDetailCancelConfirmTitle": "Confirm order cancellation",
+  "orderDetailCancelConfirmBody": "Do you want to cancel this order?",
+  "orderDetailCancelNote": "Note: Orders in progress cannot be cancelled",
+  "orderDetailCancelKeep": "Keep order",
+  "orderDetailCancelConfirm": "Confirm cancel",
+  "orderDetailCancelling": "Cancelling order...",
+  "orderDetailCancelSuccess": "Order cancelled successfully",
+  "orderDetailCancelError": "Cannot cancel order: {error}",
+  "@orderDetailCancelError": { "placeholders": { "error": {} } },
+
+  "driverDashTitle": "Driver Dashboard",
+  "driverDashOnline": "Online",
+  "driverDashOffline": "Offline",
+  "driverDashProfile": "Profile",
+  "driverDashLogout": "Sign out",
+  "driverDashJobList": "Job list",
+  "driverDashRefreshing": "Refreshing...",
+  "driverDashRealtime": "Realtime",
+  "driverDashDriverDefault": "Driver",
+  "driverDashPendingJobs": "Pending",
+  "driverDashCompletedToday": "Done today",
+  "driverDashEarningsToday": "Earnings today",
+  "driverDashNowOnline": "You are now online",
+  "driverDashNowOffline": "You are now offline",
+  "driverDashOfflineTitle": "You are offline",
+  "driverDashNoJobs": "No new jobs",
+  "driverDashOfflineHint": "Go online to receive new jobs",
+  "driverDashNoJobsHint": "New jobs will appear here instantly",
+  "driverDashRefresh": "Refresh",
+  "driverDashNewJob": "New job! {type} - {status}",
+  "@driverDashNewJob": { "placeholders": { "type": {}, "status": {} } },
+  "driverDashViewJob": "View job",
+  "driverDashJobFood": "Food delivery",
+  "driverDashJobRide": "Passenger ride",
+  "driverDashJobParcel": "Parcel delivery",
+  "driverDashJobGeneral": "General job",
+  "driverDashStatusPending": "Waiting for driver",
+  "driverDashStatusPendingMerchant": "Waiting for restaurant",
+  "driverDashStatusPreparing": "Preparing food",
+  "driverDashStatusMatched": "Matched",
+  "driverDashStatusReady": "Food ready",
+  "driverDashStatusAccepted": "Accepted",
+  "driverDashStatusDriverAccepted": "Driver accepted",
+  "driverDashStatusUnknown": "Unknown status",
+  "driverDashMustOnline": "Please go online before accepting jobs",
+  "driverDashNoUser": "User not found",
+  "driverDashPleaseLogin": "Please sign in again",
+  "driverDashAccepted": "Job accepted! Navigating...",
+  "driverDashErrorTitle": "Error occurred",
+  "driverDashNavError": "Cannot open navigation: {error}",
+  "@driverDashNavError": { "placeholders": { "error": {} } },
+  "driverDashInsufficientBalance": "Insufficient balance",
+  "driverDashClose": "Close",
+  "driverDashTopUp": "Top up",
+  "driverDashCannotAccept": "Cannot accept job",
+  "driverDashOk": "OK",
+  "driverDashErrorGeneric": "Error: {error}",
+  "@driverDashErrorGeneric": { "placeholders": { "error": {} } },
+  "driverDashPickupRestaurant": "Restaurant",
+  "driverDashPickupPoint": "Pickup",
+  "driverDashPickupFoodFallback": "Restaurant location",
+  "driverDashPickupRideFallback": "Current location",
+  "driverDashDestCustomer": "Customer location",
+  "driverDashDestPoint": "Destination",
+  "driverDashDestFallback": "Destination",
+  "driverDashScheduledFrom": "Scheduled: available from {dateTime}",
+  "@driverDashScheduledFrom": { "placeholders": { "dateTime": {} } },
+  "driverDashScheduledAt": "Scheduled: {dateTime}",
+  "@driverDashScheduledAt": { "placeholders": { "dateTime": {} } },
+  "driverDashAcceptAt": "Available at {dateTime}",
+  "@driverDashAcceptAt": { "placeholders": { "dateTime": {} } },
+  "driverDashAcceptParcel": "Accept parcel job",
+  "driverDashAcceptRide": "Accept this job",
+  "driverDashAcceptFood": "Accept food order",
+  "driverDashIncompleteJob": "Incomplete job",
+  "driverDashInProgress": "In progress",
+  "driverDashGoToNav": "Go to navigation",
+  "driverDashNavigating": "Opening navigation...",
+  "driverDashCannotNav": "Cannot navigate: {error}",
+  "@driverDashCannotNav": { "placeholders": { "error": {} } },
+  "driverDashCollectCustomer": "Collect from customer",
+  "driverDashFoodCost": "Food cost",
+  "driverDashDeliveryFee": "Delivery fee",
+  "driverDashDistance": "Distance",
+  "driverDashDistanceKm": "{km} km",
+  "@driverDashDistanceKm": { "placeholders": { "km": {} } },
+  "driverDashCouponDiscount": "Coupon discount -\u0e3f{amount}",
+  "@driverDashCouponDiscount": { "placeholders": { "amount": {} } },
+  "driverDashCouponDiscountCode": "Coupon -\u0e3f{amount}",
+  "@driverDashCouponDiscountCode": { "placeholders": { "amount": {} } },
+  "driverDashTimeJustNow": "Just now",
+  "driverDashTimeMinutes": "{min} min ago",
+  "@driverDashTimeMinutes": { "placeholders": { "min": {} } },
+  "driverDashTimeHours": "{hours} hr ago",
+  "@driverDashTimeHours": { "placeholders": { "hours": {} } },
+  "driverDashTimeDays": "{days} days ago",
+  "@driverDashTimeDays": { "placeholders": { "days": {} } },
+  "driverDashVehicleMotorcycle": "Motorcycle",
+  "driverDashVehicleCar": "Car",
+  "driverDashNotifFoodTitle": "Driver accepted your order!",
+  "driverDashNotifFoodBody": "Driver {name} is coming to pick up your food",
+  "@driverDashNotifFoodBody": { "placeholders": { "name": {} } },
+  "driverDashNotifFoodBodyDefault": "A driver is coming to pick up your food",
+  "driverDashNotifParcelTitle": "Driver accepted your parcel!",
+  "driverDashNotifParcelBody": "Driver {name} is coming to pick up your parcel",
+  "@driverDashNotifParcelBody": { "placeholders": { "name": {} } },
+  "driverDashNotifParcelBodyDefault": "A driver is coming to pick up your parcel",
+  "driverDashNotifRideTitle": "Driver accepted your trip!",
+  "driverDashNotifRideBody": "Driver {name} is coming to pick you up",
+  "@driverDashNotifRideBody": { "placeholders": { "name": {} } },
+  "driverDashNotifRideBodyDefault": "A driver is coming to pick you up",
+  "driverDashNotifMerchantTitle": "Driver accepted the order!",
+  "driverDashNotifMerchantBody": "Driver {name} is coming to pick up order {code}",
+  "@driverDashNotifMerchantBody": { "placeholders": { "name": {}, "code": {} } },
+  "driverDashNotifMerchantBodyDefault": "A driver is coming to pick up your order",
+
+  "driverNavCustomerDefault": "Customer",
+  "driverNavPhoneUnknown": "Not specified",
+  "driverNavMerchantDefault": "Restaurant",
+  "driverNavLocationPermSnack": "Please allow location access to use this feature",
+  "driverNavLocationDeniedTitle": "Cannot access location",
+  "driverNavLocationDeniedBody": "Please enable location access in device settings to use the app normally",
+  "driverNavOk": "OK",
+  "driverNavOpenSettings": "Open settings",
+  "driverNavNoMerchantPhone": "Merchant phone not found",
+  "driverNavCannotCall": "Cannot make a call",
+  "driverNavCallError": "Error making call",
+  "driverNavNoCustomerPhone": "Customer phone not found",
+  "driverNavCancelTitle": "Cancel job",
+  "driverNavCancelSelectReason": "Please select a cancellation reason:",
+  "driverNavCancelReason1": "Customer unreachable",
+  "driverNavCancelReason2": "Restaurant closed/unavailable",
+  "driverNavCancelReason3": "Distance too far",
+  "driverNavCancelReason4": "Personal emergency",
+  "driverNavCancelReason5": "Bad weather/road conditions",
+  "driverNavCancelReason6": "Other",
+  "driverNavCancelWarning": "Frequent cancellations may affect your rating",
+  "driverNavCancelBack": "Back",
+  "driverNavCancelConfirm": "Confirm cancel",
+  "driverNavCancelNotifTitle": "Driver cancelled job",
+  "driverNavCancelNotifBody": "Reason: {reason}",
+  "@driverNavCancelNotifBody": { "placeholders": { "reason": {} } },
+  "driverNavCancelSuccess": "Job cancelled successfully",
+  "driverNavCancelError": "Cannot cancel job: {error}",
+  "@driverNavCancelError": { "placeholders": { "error": {} } },
+  "driverNavMarkerPickup": "Pickup",
+  "driverNavMarkerPickupFallback": "Pickup location",
+  "driverNavMarkerDest": "Destination",
+  "driverNavMarkerDestFallback": "Destination",
+  "driverNavMarkerDriver": "Driver location",
+  "driverNavMarkerYou": "Your location",
+  "driverNavMarkerPosition": "Location",
+  "driverNavNoDriverData": "Driver data not found. Please sign out and sign in again",
+  "driverNavStatusUpdated": "Status updated successfully",
+  "driverNavPermDenied": "Permission denied. Please check your account permissions",
+  "driverNavBookingNotFound": "Booking not found. Please refresh and try again",
+  "driverNavDriverInvalid": "Driver data invalid. Please sign out and sign in again",
+  "driverNavStatusUpdateError": "Cannot update status: {error}",
+  "@driverNavStatusUpdateError": { "placeholders": { "error": {} } },
+  "driverNavCannotOpenMaps": "Cannot open Google Maps",
+  "driverNavMapsError": "Error opening navigation map",
+  "driverNavFoodArrivedMerchant": "Arrived at restaurant",
+  "driverNavFoodWaitReady": "Wait for food ready",
+  "driverNavFoodPickup": "Pick up food",
+  "driverNavFoodStartDelivery": "Start food delivery",
+  "driverNavFoodComplete": "Food delivery complete",
+  "driverNavParcelArrivedPickup": "Arrived at parcel pickup",
+  "driverNavParcelStartDelivery": "Pick up parcel, start delivery",
+  "driverNavParcelComplete": "Parcel delivery complete",
+  "driverNavRideArrivedPickup": "Arrived at customer pickup",
+  "driverNavRideStartTrip": "Pick up passenger, start trip",
+  "driverNavRideComplete": "Passenger drop-off complete",
+  "driverNavUpdateStatus": "Update status",
+  "driverNavWaitMerchantReady": "Please wait for restaurant to mark food ready",
+  "driverNavInvalidStatus": "Invalid status: {status}",
+  "@driverNavInvalidStatus": { "placeholders": { "status": {} } },
+  "driverNavProxCustomerDest": "Customer destination",
+  "driverNavProxMerchant": "Restaurant",
+  "driverNavProxRidePickup": "Passenger pickup",
+  "driverNavProxParcelPickup": "Parcel pickup",
+  "driverNavTooFarTitle": "Too far away",
+  "driverNavTooFarBody": "Please move closer to the destination\n\nCurrent distance: {current} meters\nAllowed distance: {allowed} meters",
+  "@driverNavTooFarBody": { "placeholders": { "current": {}, "allowed": {} } },
+  "driverNavCannotCheckLocation": "Cannot verify location: {error}",
+  "@driverNavCannotCheckLocation": { "placeholders": { "error": {} } },
+  "driverNavChatError": "Cannot open chat",
+  "driverNavChatRoomError": "Cannot open chat room",
+  "driverNavChatOpenError": "Error opening chat",
+  "driverNavOrderItemsTitle": "Food items",
+  "driverNavOrderItemsEmpty": "No food items found",
+  "driverNavItemUnspecified": "Unspecified",
+  "driverNavOptionsLabel": "Options:",
+  "driverNavClose": "Close",
+  "driverNavLoadItemsError": "Cannot load food items",
+  "driverNavStatusFoodGoingMerchant": "Going to restaurant",
+  "driverNavStatusFoodAtMerchant": "At restaurant, waiting for food",
+  "driverNavStatusFoodReady": "Food is ready",
+  "driverNavStatusFoodPickedUp": "Food picked up",
+  "driverNavStatusFoodDelivering": "Delivering food...",
+  "driverNavStatusParcelGoing": "Going to pick up parcel",
+  "driverNavStatusParcelArrived": "Arrived at parcel pickup",
+  "driverNavStatusParcelReady": "Ready to deliver parcel",
+  "driverNavStatusParcelDelivering": "Delivering parcel...",
+  "driverNavStatusRideGoing": "Going to pick up passenger",
+  "driverNavStatusRideArrived": "Arrived at customer pickup",
+  "driverNavStatusRideReady": "Ready to pick up passenger",
+  "driverNavStatusRideTraveling": "Traveling...",
+  "driverNavStatusAtPickup": "At pickup point",
+  "driverNavStatusPickedUp": "Picked up",
+  "driverNavStatusCompleted": "Delivery complete",
+  "driverNavStatusDefault": "In progress",
+  "driverNavServiceFood": "Food order",
+  "driverNavServiceRide": "Ride",
+  "driverNavServiceParcel": "Parcel delivery",
+  "driverNavServiceDefault": "Service",
+  "driverNavBackTitle": "Leave navigation?",
+  "driverNavBackBody": "You still have an active job. The job will continue",
+  "driverNavBackStay": "Stay",
+  "driverNavBackLeave": "Go back",
+  "driverNavLoading": "Loading...",
+  "driverNavActiveJob": "Active job",
+  "driverNavCallCustomer": "Call customer",
+  "driverNavTooltipNav": "Navigate",
+  "driverNavTooltipChat": "Chat with customer",
+  "driverNavChipType": "Type",
+  "driverNavChipDistance": "Distance",
+  "driverNavViewFoodItems": "View food items",
+  "driverNavReportIssue": "Report issue",
+  "driverNavCancelJob": "Cancel job",
+  "driverNavJobCancelledTitle": "Job cancelled",
+  "driverNavJobCancelledBody": "This job has been cancelled. Returning to driver home",
+  "driverNavGoHome": "Go to home",
+  "driverNavNotifStatusTitle": "Job status update",
+  "driverNavNotifAccepted": "Driver has accepted the job",
+  "driverNavNotifArrived": "Driver has arrived at pickup",
+  "driverNavNotifPickedUp": "Driver picked up food, delivering now",
+  "driverNavNotifInTransit": "Driver is on the way to you",
+  "driverNavNotifCompleted": "Job completed successfully",
+  "driverNavNotifCancelled": "Job has been cancelled",
+  "driverNavNotifStatusUpdate": "Job status updated to {status}",
+  "@driverNavNotifStatusUpdate": { "placeholders": { "status": {} } },
+  "driverNavMerchantArrivedTitle": "Driver arrived at restaurant",
+  "driverNavMerchantArrivedBody": "Driver has arrived. Please prepare the food for handover",
+  "driverNavPaymentTitle": "Merchant payment successful",
+  "driverNavPaymentBody": "Food picked up from restaurant\nPlease deliver to customer",
+  "driverNavPaymentSales": "Sales",
+  "driverNavPaymentDeduction": "Deduction ({percent}%)",
+  "@driverNavPaymentDeduction": { "placeholders": { "percent": {} } },
+  "driverNavPaymentToMerchant": "Pay to merchant",
+  "driverNavPaymentDeliver": "Deliver to customer",
+  "driverNavCompletionTitle": "Job completed!",
+  "driverNavCompletionSuccess": "Delivered successfully!",
+  "driverNavCompletionCollect": "Collect from customer",
+  "driverNavCompletionFoodCost": "  Food cost",
+  "driverNavCompletionDeliveryFee": "  Delivery fee",
+  "driverNavCompletionCouponPlatform": "  Platform coupon discount",
+  "driverNavCompletionCouponCode": "  Coupon discount ({code})",
+  "@driverNavCompletionCouponCode": { "placeholders": { "code": {} } },
+  "driverNavCompletionCoupon": "  Coupon discount",
+  "driverNavCompletionServiceFee": "System service fee",
+  "driverNavCompletionNetEarnings": "Net earnings",
+  "driverNavCompletionViewDetails": "View details",
+  "driverNavFinCardCollect": "Collect from customer",
+  "driverNavFinCardFoodCost": "Food cost",
+  "driverNavFinCardDeliveryFee": "Delivery fee",
+  "driverNavFinCardPayMerchant": "Pay to merchant",
+
+  "walletTitle": "Wallet",
+  "walletBalance": "Balance",
+  "walletBalanceBaht": "{amount} Baht",
+  "@walletBalanceBaht": { "placeholders": { "amount": {} } },
+  "walletTopUp": "Top up",
+  "walletTransactionHistory": "Transaction history",
+  "walletLoadError": "Error loading data",
+  "walletRetry": "Try again",
+  "walletNoTransactions": "No transaction history yet",
+  "walletTypeTopup": "Top up",
+  "walletTypeCommission": "System service fee",
+  "walletTypeFoodCommission": "Food system service fee",
+  "walletTypeJobIncome": "Job income",
+  "walletTypePenalty": "Penalty",
+  "walletToday": "Today {time}",
+  "@walletToday": { "placeholders": { "time": {} } },
+  "walletYesterday": "Yesterday {time}",
+  "@walletYesterday": { "placeholders": { "time": {} } },
+
+  "topupTitle": "Top up / Withdraw",
+  "topupMinAmountError": "Please enter at least {amount} Baht",
+  "@topupMinAmountError": { "placeholders": { "amount": {} } },
+  "topupMaxAmountError": "Amount exceeds limit per transaction (max ฿{amount})",
+  "@topupMaxAmountError": { "placeholders": { "amount": {} } },
+  "topupOmiseSourceError": "Cannot create PromptPay Source\nPlease check Omise Key in .env",
+  "topupOmiseChargeError": "Cannot create Charge\nPlease check Omise Secret Key",
+  "topupOmiseQRError": "QR Code not found in Charge response\nPlease try again",
+  "topupOmiseError": "Omise error: {error}",
+  "@topupOmiseError": { "placeholders": { "error": {} } },
+  "topupQRExpired": "QR Code expired, please generate a new one",
+  "topupPaymentFailed": "Payment failed, please try again",
+  "topupCreditError": "Payment successful but cannot add to wallet\nPlease contact Admin with transfer proof",
+  "topupCreditGenericError": "Payment successful but an error occurred\nPlease contact Admin",
+  "topupPromptPayNotSet": "PromptPay number not configured\nPlease contact Admin to set up",
+  "topupPromptPayInvalid": "PromptPay number in system is invalid\nPlease contact Admin",
+  "topupLocalError": "Error: {error}",
+  "@topupLocalError": { "placeholders": { "error": {} } },
+  "topupDirectError": "Cannot add to wallet\nPlease contact Admin",
+  "topupDirectGenericError": "Error adding to wallet\nPlease contact Admin",
+  "topupDriverDefault": "Driver",
+  "topupErrorTitle": "Error occurred",
+  "topupOk": "OK",
+  "topupRequestSentTitle": "Top-up request sent",
+  "topupRequestSentBody": "Top-up request ฿{amount} has been sent\nWaiting for Admin to verify",
+  "@topupRequestSentBody": { "placeholders": { "amount": {} } },
+  "topupSuccessTitle": "Top up successful!",
+  "topupSuccessBody": "Added ฿{amount} to wallet successfully",
+  "@topupSuccessBody": { "placeholders": { "amount": {} } },
+  "topupWithdrawTitle": "Withdraw",
+  "topupWithdrawBalance": "Balance: ฿{amount}",
+  "@topupWithdrawBalance": { "placeholders": { "amount": {} } },
+  "topupWithdrawAmountLabel": "Amount to withdraw",
+  "topupWithdrawBankName": "Bank name",
+  "topupWithdrawBankHint": "e.g. Kasikorn, SCB",
+  "topupWithdrawAccountNum": "Account number",
+  "topupWithdrawAccountName": "Account name",
+  "topupWithdrawCancel": "Cancel",
+  "topupWithdrawAmountRequired": "Please enter amount",
+  "topupWithdrawInsufficientBalance": "Insufficient balance",
+  "topupWithdrawBankRequired": "Please fill in bank info",
+  "topupWithdrawError": "Error: {error}",
+  "@topupWithdrawError": { "placeholders": { "error": {} } },
+  "topupWithdrawSubmit": "Submit withdrawal request",
+  "topupWithdrawBtn": "Withdraw",
+  "topupWithdrawHistoryTitle": "Withdrawal history",
+  "topupWithdrawHistoryEmpty": "No withdrawal history yet",
+  "topupHistoryTitle": "Top-up history",
+  "topupHistoryEmpty": "No top-up history yet",
+  "topupStatusCompleted": "Transferred",
+  "topupStatusRejected": "Rejected",
+  "topupStatusCancelled": "Cancelled",
+  "topupStatusPending": "Pending",
+  "topupStatusApproved": "Approved",
+  "topupSelectAmount": "Select amount",
+  "topupCustomAmount": "Or enter custom amount",
+  "topupScanQR": "Scan QR Code to transfer",
+  "topupOmiseScanDesc": "Scan QR via bank app — auto-verified",
+  "topupManualScanDesc": "Transfer via PromptPay then confirm",
+  "topupAmount": "Amount: ฿{amount}",
+  "@topupAmount": { "placeholders": { "amount": {} } },
+  "topupOmiseAutoDesc": "Scan QR to transfer — system auto-verifies",
+  "topupManualConfirmDesc": "Scan QR then press \"Confirm transfer\" below",
+  "topupRequestSentCard": "Top-up request sent",
+  "topupRequestSentCardBody": "Amount ฿{amount} — waiting for Admin to verify",
+  "@topupRequestSentCardBody": { "placeholders": { "amount": {} } },
+  "topupCheckingPayment": "Checking payment...",
+  "topupAutoCheckDesc": "System checks every 5 seconds\nWallet credited instantly on success",
+  "topupCancelNewQR": "Cancel / Generate new QR",
+  "topupOmiseSuccessTitle": "Payment successful!",
+  "topupOmiseSuccessBody": "Added ฿{amount} to wallet successfully",
+  "@topupOmiseSuccessBody": { "placeholders": { "amount": {} } },
+  "topupOmiseAutoVerified": "Auto-verified via Omise",
+  "topupGeneratingQR": "Generating QR...",
+  "topupPayPromptPay": "Pay with PromptPay",
+  "topupSending": "Sending...",
+  "topupConfirmTransfer": "Confirm transfer ฿{amount}",
+  "@topupConfirmTransfer": { "placeholders": { "amount": {} } },
+  "topupGenerateNewQR": "Generate new QR",
+
+  "withdrawTitle": "Withdraw",
+  "withdrawBalance": "Balance",
+  "withdrawAmountRequired": "Please specify withdrawal amount",
+  "withdrawInsufficientBalance": "Insufficient balance\nRemaining: ฿{amount}",
+  "@withdrawInsufficientBalance": { "placeholders": { "amount": {} } },
+  "withdrawFailed": "Cannot submit withdrawal\nPlease try again",
+  "withdrawGenericError": "Error occurred\nPlease try again",
+  "withdrawErrorTitle": "Error occurred",
+  "withdrawOk": "OK",
+  "withdrawSuccessTitle": "Withdrawal request submitted",
+  "withdrawSuccessBody": "Withdrawal request ฿{amount} received\n\nAdmin will review and transfer within 1-3 business days",
+  "@withdrawSuccessBody": { "placeholders": { "amount": {} } },
+  "withdrawAmountSectionTitle": "Withdrawal amount",
+  "withdrawAmountLabel": "Amount (Baht)",
+  "withdrawMinHelper": "Minimum ฿100",
+  "withdrawAmountValidation": "Please specify amount",
+  "withdrawMinValidation": "Minimum ฿100",
+  "withdrawBankInfoTitle": "Bank account information",
+  "withdrawBankLabel": "Bank",
+  "withdrawBankValidation": "Please select a bank",
+  "withdrawAccountNumLabel": "Account number",
+  "withdrawAccountNumValidation": "Please enter account number",
+  "withdrawAccountNameLabel": "Account name",
+  "withdrawAccountNameValidation": "Please enter account name",
+  "withdrawProcessing": "Processing...",
+  "withdrawSubmitBtn": "Submit withdrawal",
+  "withdrawHistoryTitle": "Withdrawal request history",
+  "withdrawStatusCompleted": "Transferred",
+  "withdrawStatusRejected": "Rejected",
+  "withdrawStatusCancelled": "Cancelled",
+  "withdrawStatusPending": "Pending",
+  "withdrawBankKasikorn": "Kasikorn Bank",
+  "withdrawBankSCB": "Siam Commercial Bank",
+  "withdrawBankBangkok": "Bangkok Bank",
+  "withdrawBankKrungthai": "Krungthai Bank",
+  "withdrawBankKrungsri": "Krungsri Bank",
+  "withdrawBankTTB": "TMBThanachart Bank",
+  "withdrawBankGSB": "Government Savings Bank",
+  "withdrawBankKKP": "Kiatnakin Phatra Bank",
+  "withdrawBankCIMB": "CIMB Thai Bank",
+  "withdrawBankTisco": "Tisco Bank",
+  "withdrawBankUOB": "UOB Bank",
+  "withdrawBankLH": "Land and Houses Bank",
+
+  "accountTitle": "Account",
+  "accountErrorTitle": "Failed to load",
+  "accountRetry": "Try again",
+
+  "accountPersonalInfoTitle": "Personal information",
+  "accountMenuTitle": "Menu",
+  "accountAppInfoTitle": "App info",
+
+  "accountLogout": "Sign out",
+  "accountLogoutDialogTitle": "Sign out",
+  "accountLogoutDialogBody": "Do you want to sign out?",
+  "accountCancel": "Cancel",
+
+  "accountDelete": "Delete account",
+  "accountDeleteDialogTitle": "Delete account",
+  "accountDeleteDialogBody": "Once confirmed, your request will be sent to an admin for approval.\nWhile waiting for approval, you will not be able to use the account.",
+  "accountDeleteReasonHint": "Reason for deletion (optional)",
+  "accountDeleteConfirm": "Confirm deletion",
+
+  "accountUploadingImage": "Uploading image...",
+  "accountUploadSuccess": "Profile photo uploaded successfully!",
+  "accountUploadFailed": "Upload failed: {error}",
+  "@accountUploadFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "accountUpdateSuccess": "Updated successfully!",
+  "accountUpdateFailed": "Update failed: {error}",
+  "@accountUpdateFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+
+  "accountOpenLinkFailed": "Unable to open link",
+  "accountErrorGeneric": "Error: {error}",
+  "@accountErrorGeneric": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+
+  "accountInfoTitle": "Information",
+  "accountInfoName": "Name",
+  "accountInfoPhone": "Phone",
+  "accountInfoEmail": "Email",
+  "accountNotSet": "Not set",
+
+  "accountMenuEditProfile": "Edit profile",
+  "accountMenuCoupons": "My coupons",
+  "accountMenuReferral": "Referral",
+  "accountMenuHelp": "Help",
+  "accountMenuNotifications": "Notifications",
+  "accountMenuPrivacyPolicy": "Privacy policy",
+  "accountFeatureComingSoon": "This feature will be available in a future version",
+
+  "merchantMenuEditShop": "Edit shop information",
+  "merchantMenuCoupons": "Merchant coupons",
+
+  "accountRoleCustomer": "Customer",
+  "accountRoleMerchant": "Merchant",
+  "accountRoleDriver": "Driver",
+
+  "driverInfoVehicleType": "Vehicle type",
+  "driverInfoLicensePlate": "License plate",
+
+  "profileEditTitle": "Edit profile",
+  "profileLoadFailedTitle": "Failed to load profile",
+  "profileLoadFailedBody": "Unable to load profile data: {error}",
+  "@profileLoadFailedBody": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "profileSaveSuccess": "Profile saved successfully",
+  "profileSaveFailedTitle": "Save failed",
+  "profileSaveFailedBody": "Unable to save profile: {error}",
+  "@profileSaveFailedBody": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "profileBasicInfoSection": "Basic information",
+  "profileVehicleSection": "Vehicle information",
+  "profileMerchantSection": "Shop information",
+  "profileSave": "Save",
+  "profileUploadingImage": "Uploading image...",
+  "profileVehicleMotorcycle": "Motorcycle",
+  "profileVehicleCar": "Car",
+
+  "profileFullNameLabel": "Full name",
+  "profileFullNameRequired": "Please enter your name",
+  "profilePhoneLabel": "Phone number",
+  "profilePhoneRequired": "Please enter your phone number",
+  "profileLicensePlateRequired": "Please enter your license plate",
+
+  "profileShopNameLabel": "Shop name",
+  "profileShopNameHint": "Enter shop name",
+  "profileShopNameRequired": "Please enter shop name",
+  "profileShopAddressLabel": "Shop address",
+  "profileShopAddressHint": "Enter shop address",
+  "profileShopAddressRequired": "Please enter shop address",
+  "profileShopPhoneLabel": "Shop phone",
+  "profileShopPhoneHint": "Enter shop phone number",
+  "profileShopPhoneRequired": "Please enter shop phone number",
+
+  "accountVersionLabel": "Version",
+  "accountDevelopedByLabel": "Developed by",
+  "accountLoading": "Loading...",
+  "accountDeleteRequestSubmitFailed": "Unable to submit request: {error}",
+  "@accountDeleteRequestSubmitFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+
+  "merchantCloseShopTitle": "Close shop?",
+  "merchantCloseShopBody": "Closing the shop manually will disable auto open/close.\nYou can re-enable this feature in Settings.",
+  "merchantCloseShopCancel": "Cancel",
+  "merchantCloseShopConfirm": "Close shop",
+  "merchantNewOrderAlert": "🚨 New order!",
+  "merchantNewOrderWaiting": "You have a new order waiting for confirmation!",
+  "merchantAlarmDesc": "Sound will keep alerting until you press stop",
+  "merchantStopAlarm": "Stop sound / Acknowledge",
+  "merchantUserNotFound": "User data not found",
+  "merchantOrderConfirmed": "Order has been confirmed!",
+  "merchantShopOpenedAutoOff": "Shop opened (auto schedule disabled)",
+  "merchantShopOpened": "Shop opened",
+  "merchantShopClosedAutoOff": "Shop closed (auto schedule disabled)",
+  "merchantShopClosed": "Shop closed",
+  "merchantShopStatusError": "Unable to change shop status: {error}",
+  "@merchantShopStatusError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "merchantDriverStatusWaiting": "Driver: Waiting for driver...",
+  "merchantDriverStatusComing": "Driver: {name} is on the way",
+  "@merchantDriverStatusComing": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "merchantDriverStatusArrived": "Driver: {name} has arrived",
+  "@merchantDriverStatusArrived": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "merchantDriverStatusPreparing": "Driver: Waiting for food preparation",
+  "merchantDriverStatusReady": "Driver: Waiting for food ready",
+  "merchantDriverStatusDefault": "Driver: Processing",
+  "merchantDriverDefault": "Driver",
+  "merchantStatusNewOrder": "New order",
+  "merchantStatusPending": "Pending",
+  "merchantStatusPreparing": "Preparing",
+  "merchantStatusDriverAccepted": "Driver accepted",
+  "merchantStatusArrivedAtMerchant": "Driver arrived",
+  "merchantStatusMatched": "Driver matched",
+  "merchantStatusReadyForPickup": "Food ready",
+  "merchantStatusPickingUp": "Driver picking up",
+  "merchantStatusInTransit": "Delivering",
+  "merchantStatusCompleted": "Completed",
+  "merchantStatusCancelled": "Cancelled",
+  "merchantStatusUnknown": "Unknown status",
+  "merchantAppBarOrders": "Orders",
+  "merchantAppBarHistory": "Order history",
+  "merchantTooltipActiveOrders": "View active orders",
+  "merchantTooltipHistory": "View order history",
+  "merchantRefreshed": "Data refreshed",
+  "merchantErrorOccurred": "An error occurred",
+  "merchantRetry": "Try again",
+  "merchantNoOrders": "No new orders",
+  "merchantOrdersWillAppear": "New orders will appear here instantly",
+  "merchantOpenShopToReceive": "Open shop to receive orders",
+  "merchantShopStatus": "Shop status",
+  "merchantShopOpen": "Shop open",
+  "merchantShopClosed2": "Shop closed",
+  "merchantShopOpenDesc": "Customers can order food",
+  "merchantShopClosedDesc": "Shop temporarily closed",
+  "merchantAcceptModeAuto": "Auto accept orders",
+  "merchantAcceptModeManual": "Manual accept orders",
+  "merchantAutoScheduleOn": "Auto open/close: Enabled",
+  "merchantAutoScheduleOff": "Auto open/close: Disabled",
+  "merchantAcceptOrder": "Accept order",
+  "merchantPreparingFood": "Preparing food",
+  "merchantTapForDetails": "Tap for details",
+  "merchantDriverAcceptedCard": "Driver accepted",
+  "merchantCookingFood": "Cooking food",
+  "merchantDriverMatchedCard": "Driver matched",
+  "merchantDriverTravelingToShop": "Driver on the way to shop",
+  "merchantPrepareFood": "Please prepare the food",
+  "merchantDriverArrivedCard": "Driver arrived at shop",
+  "merchantDriverPickingUpCard": "Driver picking up order",
+  "merchantDeliveringToCustomer": "Delivering to customer",
+  "merchantDelivering": "Delivering food",
+  "merchantOrderEnRoute": "Order on the way to customer",
+  "merchantDriverPickedUpCard": "Driver picked up order",
+  "merchantOrderDoneForMerchant": "This order is done for the merchant",
+  "merchantAddressNotSpecified": "Not specified",
+  "merchantAddressPinLocation": "📍 Customer pin location",
+  "merchantScheduledOrder": "Scheduled order: {dateTime}",
+  "@merchantScheduledOrder": {
+    "placeholders": {
+      "dateTime": {}
+    }
+  },
+  "merchantPickupTime": "Pickup time: {dateTime}",
+  "@merchantPickupTime": {
+    "placeholders": {
+      "dateTime": {}
+    }
+  },
+  "merchantDistance": "Distance {km} km",
+  "@merchantDistance": {
+    "placeholders": {
+      "km": {}
+    }
+  },
+  "merchantTimeJustNow": "Just now",
+  "merchantTimeMinutesAgo": "{minutes} min ago",
+  "@merchantTimeMinutesAgo": {
+    "placeholders": {
+      "minutes": {}
+    }
+  },
+  "merchantTimeHoursAgo": "{hours} hr ago",
+  "@merchantTimeHoursAgo": {
+    "placeholders": {
+      "hours": {}
+    }
+  },
+  "merchantTimeDaysAgo": "{days} days ago",
+  "@merchantTimeDaysAgo": {
+    "placeholders": {
+      "days": {}
+    }
+  },
+  "merchantNotifMerchantDefault": "Shop",
+  "merchantNotifOrderAccepted": "✅ Shop confirmed your order!",
+  "merchantNotifPreparingBody": "{merchantName} is preparing your food",
+  "@merchantNotifPreparingBody": {
+    "placeholders": {
+      "merchantName": {}
+    }
+  },
+  "merchantNotifFoodReadyCustomer": "🍔 Food is ready!",
+  "merchantNotifFoodReadyCustomerBody": "{merchantName} finished preparing, waiting for driver pickup",
+  "@merchantNotifFoodReadyCustomerBody": {
+    "placeholders": {
+      "merchantName": {}
+    }
+  },
+  "merchantNotifFoodReadyDriver": "🍔 Food ready for pickup!",
+  "merchantNotifFoodReadyDriverBody": "{merchantName} finished preparing, ready for pickup",
+  "@merchantNotifFoodReadyDriverBody": {
+    "placeholders": {
+      "merchantName": {}
+    }
+  },
+  "merchantViewHistory": "View order history",
+  "merchantViewActive": "View active orders",
+
+  "orderDetailTitle": "Order {code}",
+  "@orderDetailTitle": {
+    "placeholders": {
+      "code": {}
+    }
+  },
+  "orderDetailDriverPhoneNotFound": "Driver phone not found",
+  "orderDetailLoadItemsError": "Cannot load food items: {error}",
+  "@orderDetailLoadItemsError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "orderDetailAccepted": "Order confirmed!",
+  "orderDetailAcceptFailed": "Failed to accept order",
+  "orderDetailAcceptError": "Cannot accept order: {error}",
+  "@orderDetailAcceptError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "orderDetailOk": "OK",
+  "orderDetailDeclined": "Order declined",
+  "orderDetailDeclineFailed": "Failed to decline order",
+  "orderDetailDeclineError": "Cannot decline order: {error}",
+  "@orderDetailDeclineError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "orderDetailStatusUpdateFailed": "Cannot update status",
+  "orderDetailFoodReady": "Food ready! Waiting for driver",
+  "orderDetailUpdateFailed": "Failed to update status",
+  "orderDetailUpdateError": "Cannot update status: {error}",
+  "@orderDetailUpdateError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "orderDetailAddressNotSpecified": "Not specified",
+  "orderDetailAddressPinLocation": "Customer pin location",
+  "orderDetailOrderInfo": "Order information",
+  "orderDetailOrderCode": "Order code",
+  "orderDetailOrderTime": "Order time",
+  "orderDetailPayment": "Payment",
+  "orderDetailPaymentCash": "Cash",
+  "orderDetailPaymentTransfer": "Transfer",
+  "orderDetailDistanceLabel": "Distance",
+  "orderDetailDistanceKm": "{km} km",
+  "@orderDetailDistanceKm": {
+    "placeholders": {
+      "km": {}
+    }
+  },
+  "orderDetailScheduled": "Scheduled",
+  "orderDetailPriceBreakdown": "Price breakdown",
+  "orderDetailSalesAmount": "Sales",
+  "orderDetailGpDeduction": "GP deduction ({percent}%)",
+  "@orderDetailGpDeduction": {
+    "placeholders": {
+      "percent": {}
+    }
+  },
+  "orderDetailNetReceived": "Net received",
+  "orderDetailDeliveryAddress": "Delivery address",
+  "orderDetailCustomerNote": "Customer note",
+  "orderDetailFoodItems": "Food items",
+  "orderDetailNoItems": "No food items found",
+  "orderDetailItemUnnamed": "Unnamed",
+  "orderDetailQuantity": "Qty: {qty}",
+  "@orderDetailQuantity": {
+    "placeholders": {
+      "qty": {}
+    }
+  },
+  "orderDetailOptions": "Extras:",
+  "orderDetailOptionDefault": "Option",
+  "orderDetailDeclineBtn": "Decline order",
+  "orderDetailAcceptBtn": "Accept order",
+  "orderDetailWaitingDriver": "Waiting for driver",
+  "orderDetailWaitingDriverDesc": "Please wait for driver to accept\nbefore marking food as ready",
+  "orderDetailFoodReadyBtn": "Food ready",
+  "orderDetailStatusLabel": "Status: {status}",
+  "@orderDetailStatusLabel": {
+    "placeholders": {
+      "status": {}
+    }
+  },
+  "orderDetailStatusPending": "Pending confirmation",
+  "orderDetailStatusPreparing": "Preparing food",
+  "orderDetailStatusDriverAccepted": "Driver accepted",
+  "orderDetailStatusArrivedMerchant": "Driver arrived",
+  "orderDetailStatusReadyPickup": "Food ready to deliver",
+  "orderDetailStatusPickingUp": "Driver picking up",
+  "orderDetailStatusInTransit": "Delivering food",
+  "orderDetailStatusCancelled": "Declined",
+  "orderDetailStatusCompleted": "Completed",
+  "orderDetailStatusUnknown": "Unknown status",
+  "orderDetailCompletionTitle": "✅ Order completed",
+  "orderDetailCompletionBody": "Driver has picked up the food and is delivering to customer",
+  "orderDetailCompletionOrderNum": "Order number",
+  "orderDetailCompletionCustomer": "Customer name",
+  "orderDetailCompletionNetReceived": "Net received",
+  "orderDetailCompletionAfterGP": "After GP deduction {percent}%",
+  "@orderDetailCompletionAfterGP": {
+    "placeholders": {
+      "percent": {}
+    }
+  },
+  "orderDetailCompletionOk": "Understood",
+  "orderDetailCustomerDefault": "Customer",
+  "orderDetailItemNotSpecified": "Not specified",
+  "orderDetailNotifRejectTitle": "❌ Shop declined order",
+  "orderDetailNotifRejectBody": "Sorry, the shop cannot accept your order at this time",
+
+  "customerHomeOk": "OK",
+  "customerHomeGreeting": "Hello",
+  "customerHomeNoNewNotifications": "No new notifications",
+  "customerHomeHelpToday": "What can we help you with today?",
+  "customerHomeAvailable247": "Available 24/7",
+  "customerHomeRealtimeTracking": "Real-time tracking",
+  "customerHomePendingOrders": "Pending orders",
+  "customerHomeJobCount": "{count} jobs",
+  "@customerHomeJobCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "customerHomeNoJobs": "No pending orders. Start a new service!",
+  "customerHomePopularServices": "Popular services",
+  "customerHomeCallRide": "Call a ride",
+  "customerHomeCallRideSubtitle": "Fast & safe",
+  "customerHomeOrderFood": "Order food",
+  "customerHomeOrderFoodSubtitle": "Order from nearby",
+  "customerHomeSendParcel": "Send parcel",
+  "customerHomeSendParcelSubtitle": "Deliver to destination",
+  "customerHomeQuickActions": "Quick actions",
+  "customerHomeHistory": "History",
+  "customerHomeBookings": "Bookings",
+  "customerHomeSaved": "Saved",
+  "customerHomePlaces": "Places",
+  "customerHomeHelp": "Help",
+  "customerHomeContactUs": "Contact us",
+  "customerHomeHelpDeveloping": "Help system under development",
+  "customerHomePromotions": "Promotions",
+  "customerHomeDiscountCode": "Discount code",
+  "customerHomePromoCodeHint": "Use this code when ordering to get a discount",
+  "customerHomeClose": "Close",
+  "customerHomeCopiedCode": "Copied code \"{code}\"",
+  "@customerHomeCopiedCode": {
+    "placeholders": {
+      "code": {}
+    }
+  },
+  "customerHomeCopyCode": "Copy code",
+  "customerHomeOrderCode": "Order {code}",
+  "@customerHomeOrderCode": {
+    "placeholders": {
+      "code": {}
+    }
+  },
+  "customerHomeDestination": "Destination",
+  "customerHomePickupPoint": "Pickup",
+  "customerHomeDistanceKm": "{km} km",
+  "@customerHomeDistanceKm": {
+    "placeholders": {
+      "km": {}
+    }
+  },
+  "customerHomeOrderedAt": "Ordered: {datetime}",
+  "@customerHomeOrderedAt": {
+    "placeholders": {
+      "datetime": {}
+    }
+  },
+  "customerHomeStatusPending": "Pending",
+  "customerHomeStatusPendingMerchant": "Waiting for merchant",
+  "customerHomeStatusPreparing": "Preparing food",
+  "customerHomeStatusReadyPickup": "Food ready",
+  "customerHomeStatusDriverAccepted": "Driver accepted",
+  "customerHomeStatusConfirmed": "Confirmed",
+  "customerHomeStatusArrived": "Arrived at pickup",
+  "customerHomeStatusArrivedMerchant": "Driver at merchant",
+  "customerHomeStatusMatched": "Driver matched",
+  "customerHomeStatusPickingUp": "Picking up food",
+  "customerHomeStatusInTransit": "Delivering",
+  "customerHomeStatusCompleted": "Completed",
+  "customerHomeStatusCancelled": "Cancelled",
+  "customerHomeAddressNotSpecified": "Address not specified",
+  "customerHomeCurrentLocation": "Current location",
+
+  "rideStatusTitle": "Trip Status",
+  "rideStatusDriver": "Driver",
+  "rideStatusCannotCall": "Cannot call {phone}",
+  "@rideStatusCannotCall": {
+    "placeholders": {
+      "phone": {}
+    }
+  },
+  "rideStatusCannotOpenChat": "Cannot open chat",
+  "rideStatusEnableLocation": "Please enable Location Service",
+  "rideStatusAllowLocation": "Please allow location access",
+  "rideStatusLocationDenied": "Cannot access location",
+  "rideStatusLocationDeniedBody": "Please enable location access in device settings",
+  "rideStatusOk": "OK",
+  "rideStatusOpenSettings": "Open settings",
+  "rideStatusMerchantMarker": "Merchant: {address}",
+  "@rideStatusMerchantMarker": {
+    "placeholders": {
+      "address": {}
+    }
+  },
+  "rideStatusMerchantDefault": "Restaurant",
+  "rideStatusPickupMarker": "Pickup: {address}",
+  "@rideStatusPickupMarker": {
+    "placeholders": {
+      "address": {}
+    }
+  },
+  "rideStatusPickupDefault": "Pickup",
+  "rideStatusYourLocation": "Your location",
+  "rideStatusDestMarker": "Destination: {address}",
+  "@rideStatusDestMarker": {
+    "placeholders": {
+      "address": {}
+    }
+  },
+  "rideStatusDestDefault": "Destination",
+  "rideStatusDriverInfo": "Driver info",
+  "rideStatusMotorcycle": "Motorcycle",
+  "rideStatusCall": "Call",
+  "rideStatusChat": "Chat",
+  "rideStatusFoodCost": "Food cost",
+  "rideStatusDeliveryFee": "Delivery fee",
+  "rideStatusCouponDiscount": "Coupon discount",
+  "rideStatusCouponDiscountWithCode": "Coupon ({code})",
+  "@rideStatusCouponDiscountWithCode": {
+    "placeholders": {
+      "code": {}
+    }
+  },
+  "rideStatusDistance": "Distance",
+  "rideStatusDistanceKm": "{km} km",
+  "@rideStatusDistanceKm": {
+    "placeholders": {
+      "km": {}
+    }
+  },
+  "rideStatusGrandTotal": "Grand total",
+  "rideStatusServiceFee": "Service fee",
+  "rideStatusTripCompleted": "Trip completed",
+  "rideStatusCancelTrip": "Cancel trip",
+  "rideStatusAccepted": "Driver accepted",
+  "rideStatusDriverGoingPickup": "Driver going to pick up food",
+  "rideStatusArrivedPickup": "Driver arrived at pickup",
+  "rideStatusArrivedMerchant": "Driver at merchant",
+  "rideStatusFoodReady": "Food ready",
+  "rideStatusPickedUp": "Driver picked up food",
+  "rideStatusInTransit": "On the way",
+  "rideStatusCompleted": "Trip completed",
+  "rideStatusPending": "Pending",
+  "rideStatusDriverComing": "Driver is coming",
+  "rideStatusDriverGoingFood": "Driver going to pick up food",
+  "rideStatusDriverArrivedPickup": "Driver arrived at pickup",
+  "rideStatusDriverAtMerchantWaiting": "Driver at merchant, waiting for food",
+  "rideStatusFoodReadyDriverPickup": "Food ready, driver picking up",
+  "rideStatusDriverPickedUpDelivering": "Driver picked up, on the way",
+  "rideStatusNavigating": "Navigating to destination",
+  "rideStatusDriverCompleted": "Trip completed",
+  "rideStatusWaitingDriver": "Waiting for driver",
+  "rideStatusMerchantRejected": "Merchant declined order",
+  "rideStatusMerchantRejectedBody": "Sorry, the merchant cannot accept your order at this time.\n\nPlease try ordering again or choose another restaurant.",
+  "rideStatusUnderstood": "Understood",
+  "rideStatusDeliverySuccess": "🎉 Delivery successful!",
+  "rideStatusTripSuccess": "🎉 Trip completed!",
+  "rideStatusThankYou": "Thank you for using our service",
+  "rideStatusOrderNumber": "Order number",
+  "rideStatusTotalAmount": "Total amount",
+  "rideStatusIncludingDelivery": "Including delivery",
+  "rideStatusUsedCouponWithCode": "Used coupon {code} discount ฿{amount}",
+  "@rideStatusUsedCouponWithCode": {
+    "placeholders": {
+      "code": {},
+      "amount": {}
+    }
+  },
+  "rideStatusUsedCoupon": "Used coupon discount ฿{amount}",
+  "@rideStatusUsedCoupon": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "rideStatusCancelTripTitle": "Cancel trip",
+  "rideStatusCancelConfirm": "Do you want to cancel this trip?",
+  "rideStatusNo": "No",
+  "rideStatusYes": "Yes",
+  "rideStatusCancelSuccess": "Trip cancelled successfully",
+  "rideStatusCancelFailed": "Cancel failed",
+  "rideStatusCancelError": "Error cancelling: {error}",
+  "@rideStatusCancelError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+
+  "activityTitle": "Activity History",
+  "activityPaymentCash": "Cash",
+  "activityPaymentTransfer": "Transfer",
+  "activityPaymentCard": "Credit card",
+  "activityPaymentUnknown": "Payment not specified",
+  "activityDatePickerHelp": "Select date range",
+  "activityDatePickerConfirm": "Confirm",
+  "activityDatePickerCancel": "Cancel",
+  "activityFilterToday": "Today",
+  "activityFilterLast7Days": "Last 7 days",
+  "activityFilterLast7DaysShort": "7 days",
+  "activityFilterThisMonth": "This month",
+  "activityFilterAll": "All",
+  "activityFilterDateRange": "Date range",
+  "activityTimeUnknown": "Unknown",
+  "activityTimeHoursAgo": "{hours} hours ago",
+  "@activityTimeHoursAgo": {
+    "placeholders": {
+      "hours": {}
+    }
+  },
+  "activityTimeMinutesAgo": "{minutes} minutes ago",
+  "@activityTimeMinutesAgo": {
+    "placeholders": {
+      "minutes": {}
+    }
+  },
+  "activityTimeJustNow": "Just now",
+  "activityServiceRide": "Ride",
+  "activityServiceFood": "Food order",
+  "activityServiceParcel": "Parcel",
+  "activityFilterByDate": "Filter by date",
+  "activityOrderStats": "Order statistics",
+  "activityTimePeriod": "Period: {period}",
+  "@activityTimePeriod": {
+    "placeholders": {
+      "period": {}
+    }
+  },
+  "activityStatTotal": "Total",
+  "activityStatItems": "{count} orders",
+  "@activityStatItems": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "activityStatCompleted": "Completed",
+  "activityStatCancelled": "Cancelled",
+  "activityStatTotalSpent": "Total spent",
+  "activityStatCouponSavings": "Coupon savings",
+  "activityFilteredEmpty": "No items in selected date range",
+  "activityFilteredEmptyHint": "Try changing the date filter to see more order history",
+  "activityLoadFailed": "Failed to load data",
+  "activityNoHistory": "No history yet",
+  "activityNoHistoryHint": "Your booking history will appear here",
+  "activityBookingCode": "Code {code}",
+  "@activityBookingCode": {
+    "placeholders": {
+      "code": {}
+    }
+  },
+  "activityDistanceKm": "{km} km",
+  "@activityDistanceKm": {
+    "placeholders": {
+      "km": {}
+    }
+  },
+  "activityScheduledService": "Scheduled service: {datetime}",
+  "@activityScheduledService": {
+    "placeholders": {
+      "datetime": {}
+    }
+  },
+  "activityScheduledOrder": "Scheduled order: {datetime}",
+  "@activityScheduledOrder": {
+    "placeholders": {
+      "datetime": {}
+    }
+  },
+  "activityAmountPaid": "Amount paid",
+  "activityViewDetails": "View details",
+  "activityStatusCompleted": "Completed",
+  "activityStatusCancelled": "Cancelled",
+  "activityStatusConfirmed": "Confirmed",
+  "activityStatusDriverAccepted": "Driver accepted",
+  "activityStatusInTransit": "Delivering",
+  "activityStatusPreparing": "Preparing food",
+  "activityStatusReadyPickup": "Food ready",
+  "activityStatusArrived": "Arrived",
+  "activityStatusPending": "Pending",
+  "activityAddressNotSpecified": "Not specified",
+  "activityAddressFallback": "Destination address",
+  "activityUsedCouponWithCode": "Used coupon {code} discount ฿{amount}",
+  "@activityUsedCouponWithCode": {
+    "placeholders": {
+      "code": {},
+      "amount": {}
+    }
+  },
+  "activityUsedCoupon": "Used coupon discount ฿{amount}",
+  "@activityUsedCoupon": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+
+  "parcelTitle": "Send Parcel",
+  "parcelHeaderTitle": "Parcel Delivery",
+  "parcelHeaderSubtitle": "Fast and safe delivery to your door",
+  "parcelSizeSmall": "Small (S)",
+  "parcelSizeSmallDesc": "Envelopes, documents",
+  "parcelSizeMedium": "Medium (M)",
+  "parcelSizeMediumDesc": "Parcel box up to 5 kg",
+  "parcelSizeLarge": "Large (L)",
+  "parcelSizeLargeDesc": "Large box up to 15 kg",
+  "parcelSizeXLarge": "Extra (XL)",
+  "parcelSizeXLargeDesc": "Large items up to 30 kg",
+  "parcelPickupCoord": "Pickup ({lat}, {lng})",
+  "@parcelPickupCoord": {
+    "placeholders": {
+      "lat": {},
+      "lng": {}
+    }
+  },
+  "parcelDropoffCoord": "Drop-off ({lat}, {lng})",
+  "@parcelDropoffCoord": {
+    "placeholders": {
+      "lat": {},
+      "lng": {}
+    }
+  },
+  "parcelCurrentLocation": "Current location ({lat}, {lng})",
+  "@parcelCurrentLocation": {
+    "placeholders": {
+      "lat": {},
+      "lng": {}
+    }
+  },
+  "parcelErrorNoLocation": "Please wait for location\nor enable GPS and try again",
+  "parcelErrorNoDrivers": "No online drivers found within {radius} km\nPlease try again later",
+  "@parcelErrorNoDrivers": {
+    "placeholders": {
+      "radius": {}
+    }
+  },
+  "parcelErrorCreateBooking": "Cannot create booking",
+  "parcelErrorBookFailed": "Cannot book parcel delivery\nPlease try again",
+  "parcelErrorTitle": "Error occurred",
+  "parcelOk": "OK",
+  "parcelDriversFound": "Found {count} online drivers near you (within {radius} km)",
+  "@parcelDriversFound": {
+    "placeholders": {
+      "count": {},
+      "radius": {}
+    }
+  },
+  "parcelNoDriversNearby": "No online drivers found within {radius} km",
+  "@parcelNoDriversNearby": {
+    "placeholders": {
+      "radius": {}
+    }
+  },
+  "parcelSenderInfo": "Sender info",
+  "parcelSenderName": "Sender name",
+  "parcelSenderNameRequired": "Please specify sender name",
+  "parcelSenderPhone": "Sender phone",
+  "parcelSenderPhoneRequired": "Please specify sender phone",
+  "parcelPickupAddress": "Pickup address",
+  "parcelPickupRequired": "Please specify pickup location",
+  "parcelPinPickup": "Pin pickup on map",
+  "parcelPickupCoords": "Pickup coordinates: {lat}, {lng}",
+  "@parcelPickupCoords": {
+    "placeholders": {
+      "lat": {},
+      "lng": {}
+    }
+  },
+  "parcelRecipientInfo": "Recipient info",
+  "parcelSavedAddresses": "Saved addresses",
+  "parcelPinDropoff": "Pin drop-off on map",
+  "parcelRecipientName": "Recipient name",
+  "parcelRecipientNameRequired": "Please specify recipient name",
+  "parcelRecipientPhone": "Recipient phone",
+  "parcelRecipientPhoneRequired": "Please specify recipient phone",
+  "parcelDropoffAddress": "Drop-off address",
+  "parcelDropoffRequired": "Please specify drop-off location",
+  "parcelEstimatedDistance": "Estimated distance: {km} km",
+  "@parcelEstimatedDistance": {
+    "placeholders": {
+      "km": {}
+    }
+  },
+  "parcelDropoffCoords": "Drop-off coordinates: {lat}, {lng}",
+  "@parcelDropoffCoords": {
+    "placeholders": {
+      "lat": {},
+      "lng": {}
+    }
+  },
+  "parcelSizeTitle": "Parcel size",
+  "parcelDetailsTitle": "Parcel details",
+  "parcelDescriptionLabel": "Describe items (e.g. documents, food, clothes)",
+  "parcelDescriptionRequired": "Please describe items",
+  "parcelWeightLabel": "Estimated weight (kg) - optional",
+  "parcelPhotoTitle": "Parcel photo",
+  "parcelPhotoHint": "Take a photo of the parcel for the driver (optional)",
+  "parcelPhotoTap": "Tap to take or select photo",
+  "parcelEstimatedFee": "Estimated service fee",
+  "parcelDistanceKm": "Distance {km} km",
+  "@parcelDistanceKm": {
+    "placeholders": {
+      "km": {}
+    }
+  },
+  "parcelBookButton": "Book Parcel Delivery",
+
+  "waitingSearchingDriver": "Searching for driver...",
+  "waitingPriceUpdated": "Price updated",
+  "waitingPriceAdjustedBody": "The price has been adjusted because the driver who accepted is beyond the set distance\n\nOriginal price: ฿{oldPrice}\nNew price: ฿{newPrice}\n\nDo you want to continue?",
+  "@waitingPriceAdjustedBody": {
+    "placeholders": {
+      "oldPrice": {},
+      "newPrice": {}
+    }
+  },
+  "waitingCancelJob": "Cancel job",
+  "waitingContinue": "Continue",
+  "waitingConnectionError": "Connection error, retrying...",
+  "waitingConnectionFailed": "Connection failed",
+  "waitingCannotConnect": "Cannot connect to server: {error}",
+  "@waitingCannotConnect": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "waitingOk": "OK",
+  "waitingDriverFallback": "Driver",
+  "waitingMotorcycleFallback": "Motorcycle",
+  "waitingMerchantRejected": "Merchant rejected order",
+  "waitingMerchantRejectedBody": "Sorry, the merchant cannot accept your order at this time.\n\nPlease try ordering again or choose another restaurant.",
+  "waitingUnderstood": "Understood",
+  "waitingForMerchant": "Waiting for merchant",
+  "waitingSearchingForDriver": "Searching for driver",
+  "waitingMerchantConfirmed": "Merchant confirmed order!",
+  "waitingDriverFound": "Driver found!",
+  "waitingForMerchantDots": "Waiting for merchant...",
+  "waitingSearchingDriverDots": "Searching for driver...",
+  "waitingMerchantPreparing": "Merchant is preparing your food",
+  "waitingDriverComing": "Driver is on the way to you",
+  "waitingEstimatedTime": "Estimated time {minutes} minutes",
+  "@waitingEstimatedTime": {
+    "placeholders": {
+      "minutes": {}
+    }
+  },
+  "waitingRestaurantPreparing": "Restaurant preparing food",
+  "waitingPleaseWait": "Please wait a moment...",
+  "waitingAssigned": "Assigned",
+  "waitingContactDriver": "Contact driver",
+  "waitingCancelBooking": "Cancel booking",
+  "waitingPhoneCall": "Phone call",
+  "waitingChatWithDriver": "Chat with driver",
+  "waitingChatInApp": "Send message in app",
+  "waitingClose": "Close",
+  "waitingCannotCall": "Cannot call {phone}",
+  "@waitingCannotCall": {
+    "placeholders": {
+      "phone": {}
+    }
+  },
+  "waitingCannotOpenChat": "Cannot open chat",
+  "waitingCancelBookingTitle": "Cancel booking",
+  "waitingCancelConfirm": "Are you sure you want to cancel this booking?",
+  "waitingNo": "No",
+  "waitingCancelFailed": "Cancel failed",
+  "waitingCancelError": "Error cancelling: {error}",
+  "@waitingCancelError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "waitingCancel": "Cancel",
+  "waitingBookingInfo": "Booking info",
+  "waitingOrderCode": "Order code: {code}",
+  "@waitingOrderCode": {
+    "placeholders": {
+      "code": {}
+    }
+  },
+  "waitingType": "Type: {type}",
+  "@waitingType": {
+    "placeholders": {
+      "type": {}
+    }
+  },
+  "waitingPrice": "Price: ฿{price}",
+  "@waitingPrice": {
+    "placeholders": {
+      "price": {}
+    }
+  },
+  "waitingStatus": "Status: {status}",
+  "@waitingStatus": {
+    "placeholders": {
+      "status": {}
+    }
+  },
+
+  "restCategoryOther": "Others",
+  "restDeliveryTime": "20-30 min",
+  "restDeliveryFee": "Delivery ฿15",
+  "restCouponCopied": "Copied code {code}",
+  "@restCouponCopied": {
+    "placeholders": {
+      "code": {}
+    }
+  },
+  "restCouponHint": "Tap to copy code for checkout",
+  "restNoMenu": "No menu available at this time",
+  "restRefresh": "Refresh",
+  "restCannotLoadMenu": "Cannot load menu",
+  "restTryAgain": "Please try again",
+  "restRetry": "Try again",
+  "restSwitchRestaurant": "Switch restaurant?",
+  "restSwitchRestaurantBody": "Cart has food from \"{name}\"\nClear cart and order from this restaurant instead?",
+  "@restSwitchRestaurantBody": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "restCancel": "Cancel",
+  "restClearAndAdd": "Clear and add",
+  "restAddedToCart": "Added {name} to cart",
+  "@restAddedToCart": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "restViewCart": "View cart",
+  "restYourCart": "Your cart",
+  "restClear": "Clear",
+  "restTotal": "Total",
+  "restGoToCheckout": "Go to checkout — ฿{amount}",
+  "@restGoToCheckout": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "restItemNoName": "Unnamed",
+  "restMustSelectOption": "Must select option",
+
+  "ratingPleaseRateDriver": "Please rate the driver",
+  "ratingPleaseRateMerchant": "Please rate the merchant",
+  "ratingUserNotFound": "User not found",
+  "ratingError": "Error: {error}",
+  "@ratingError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "ratingThankYou": "Thank you for rating!",
+  "ratingFeedbackHelps": "Your feedback helps improve our service",
+  "ratingTitle": "Rate",
+  "ratingRateDriver": "Rate driver",
+  "ratingDriverHint": "Comment about the driver (optional)",
+  "ratingRateMerchant": "Rate merchant",
+  "ratingMerchantHint": "Comment about the merchant (optional)",
+  "ratingSubmit": "Submit rating",
+  "ratingSkip": "Skip for now",
+  "ratingServiceFood": "Food order",
+  "ratingServiceRide": "Ride",
+  "ratingServiceParcel": "Parcel delivery",
+  "ratingLabel1": "Very bad",
+  "ratingLabel2": "Bad",
+  "ratingLabel3": "Average",
+  "ratingLabel4": "Good",
+  "ratingLabel5": "Excellent",
+
+  "cancelReasonWaitTooLong": "Waited too long",
+  "cancelReasonChangedMind": "Changed mind, no longer needed",
+  "cancelReasonWrongAddress": "Wrong address",
+  "cancelReasonPriceTooHigh": "Price too high",
+  "cancelReasonWrongOrder": "Ordered wrong items",
+  "cancelReasonOther": "Other reason",
+  "cancelSelectReason": "Please select a cancellation reason",
+  "cancelConfirmTitle": "Confirm cancellation",
+  "cancelConfirmBody": "Are you sure you want to cancel this order?",
+  "cancelReasonLabel": "Reason: {reason}",
+  "@cancelReasonLabel": {
+    "placeholders": {
+      "reason": {}
+    }
+  },
+  "cancelKeep": "Don't cancel",
+  "cancelConfirmBtn": "Confirm cancel",
+  "cancelSuccess": "Order cancelled successfully",
+  "cancelError": "Error: {error}",
+  "@cancelError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "cancelServiceFood": "Food order",
+  "cancelServiceRide": "Ride",
+  "cancelServiceParcel": "Parcel delivery",
+  "cancelServiceDefault": "Order",
+  "cancelTitle": "Cancel order",
+  "cancelReasonsTitle": "Cancellation reason",
+  "cancelReasonsSubtitle": "Please select a reason to help us improve",
+  "cancelOtherHint": "Please specify reason...",
+  "cancelButton": "Cancel order",
+
+  "addrLabelHome": "Home",
+  "addrLabelWork": "Work",
+  "addrLabelOther": "Other",
+  "addrEditTitle": "Edit address",
+  "addrAddTitle": "Add new address",
+  "addrType": "Type",
+  "addrPlaceName": "Place name",
+  "addrPlaceNameHint": "e.g. Parents' house, Condo",
+  "addrPinPlaced": "Pin placed",
+  "addrPinOnMap": "Pin on map",
+  "addrAddressLabel": "Address (additional details)",
+  "addrAddressHint": "e.g. 123/4 Main Street",
+  "addrNoteLabel": "Note (optional)",
+  "addrNoteHint": "e.g. Building A, Floor 5, Room 501",
+  "addrCancel": "Cancel",
+  "addrValidation": "Please enter place name and pin on map",
+  "addrSave": "Save",
+  "addrDeleteTitle": "Delete address",
+  "addrDeleteConfirm": "Do you want to delete \"{name}\"?",
+  "@addrDeleteConfirm": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "addrDelete": "Delete",
+  "addrPickTitle": "Choose address",
+  "addrBookTitle": "Address book",
+  "addrAddButton": "Add address",
+  "addrEmptyTitle": "No saved addresses",
+  "addrEmptySubtitle": "Add a \"Home\" or \"Work\" address\nfor easy selection without retyping",
+  "addrQuickAdd": "Add {name}",
+  "@addrQuickAdd": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+
+  "confirmServiceFood": "Food order",
+  "confirmServiceRide": "Ride",
+  "confirmServiceParcel": "Parcel delivery",
+  "confirmSuccess": "Booking successful!",
+  "confirmOrderCode": "Order {code}",
+  "@confirmOrderCode": {
+    "placeholders": {
+      "code": {}
+    }
+  },
+  "confirmPickup": "Pickup",
+  "confirmDestination": "Destination",
+  "confirmNotSpecified": "Not specified",
+  "confirmDistance": "Distance",
+  "confirmDistanceKm": "{km} km",
+  "@confirmDistanceKm": {
+    "placeholders": {
+      "km": {}
+    }
+  },
+  "confirmOrderTime": "Order time",
+  "confirmFoodCost": "Food cost",
+  "confirmDeliveryFee": "Delivery fee",
+  "confirmTotal": "Total",
+  "confirmPayCash": "Pay with cash",
+  "confirmCash": "Cash",
+  "confirmTrackOrder": "Track order",
+  "confirmBackToHome": "Back to home",
+
+  "foodDetAddedToCart": "Added {name} to cart",
+  "@foodDetAddedToCart": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "foodDetAddFailed": "Failed to add to cart: {error}",
+  "@foodDetAddFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "foodDetAvailable": "Available",
+  "foodDetSoldOut": "Sold out",
+  "foodDetCustomize": "Customize order",
+  "foodDetNoOptions": "No additional options for this item",
+  "foodDetLoadingOptions": "Loading options...",
+  "foodDetDescription": "Description",
+  "foodDetRestaurant": "Restaurant",
+  "foodDetAddToCart": "Add to cart — ฿{price}",
+  "@foodDetAddToCart": {
+    "placeholders": {
+      "price": {}
+    }
+  },
+
+  "foodDefaultNote": "Food order from {merchant}",
+  "@foodDefaultNote": {
+    "placeholders": {
+      "merchant": {}
+    }
+  },
+  "foodCouponNote": "[Coupon: {code} | Discount: ฿{amount}]",
+  "@foodCouponNote": {
+    "placeholders": {
+      "code": {},
+      "amount": {}
+    }
+  },
+
+  "trackPickup": "Pickup",
+  "trackDestination": "Destination",
+  "trackNotSpecified": "Not specified",
+  "trackDriverFallback": "Driver",
+  "trackStatusPendingTitle": "Waiting for driver",
+  "trackStatusPendingSub": "Searching for a driver near you",
+  "trackStatusAcceptedTitle": "Driver accepted",
+  "trackStatusAcceptedSub": "Driver is on the way to you",
+  "trackStatusPickingUpTitle": "Picking up",
+  "trackStatusPickingUpSub": "Driver arrived at pickup",
+  "trackStatusPreparingTitle": "Restaurant preparing",
+  "trackStatusPreparingSub": "Restaurant is preparing your order",
+  "trackStatusInTransitTitle": "Delivering",
+  "trackStatusInTransitSub": "Driver is heading to destination",
+  "trackStatusArrivedTitle": "Arrived at destination",
+  "trackStatusArrivedSub": "Driver has arrived at the destination",
+  "trackStatusCompletedTitle": "Delivered",
+  "trackStatusCompletedSub": "Order completed",
+  "trackStatusCancelledTitle": "Cancelled",
+  "trackStatusCancelledSub": "This order has been cancelled",
+  "trackStatusUnknownTitle": "Unknown status",
+  "trackTimelineCreated": "Order created",
+  "trackTimelineAccepted": "Driver accepted",
+  "trackTimelinePickingUp": "Picking up",
+  "trackTimelineInTransit": "Delivering",
+  "trackTimelineCompleted": "Delivered",
+
+  "helpTitle": "Help",
+  "helpCenterTitle": "Help Center",
+  "helpCenterSubtitle": "Available to help you 24 hours",
+  "helpContactTitle": "Contact Channels",
+  "helpPhone": "Phone",
+  "helpEmail": "Email",
+  "helpFaqTitle": "Frequently Asked Questions (FAQ)",
+  "helpReportProblem": "Report Problem",
+  "helpFaq1Q": "I ordered food but didn't receive it. What should I do?",
+  "helpFaq1A": "Please check the order status on the \"Activity\" page. If the order shows delivered but you haven't received it, report the issue using the \"Report Problem\" button below. Our team will investigate within 24 hours.",
+  "helpFaq2Q": "How do I cancel an order?",
+  "helpFaq2A": "Go to \"Activity\" > select the order > press \"Cancel\". Note: You can only cancel orders that haven't been accepted by a driver yet.",
+  "helpFaq3Q": "How is the delivery fee calculated?",
+  "helpFaq3A": "The delivery fee is calculated based on the distance between the store/pickup point and your destination, with a minimum fee and per-kilometer rate set by the system.",
+  "helpFaq4Q": "What payment methods are available?",
+  "helpFaq4A": "Currently we support cash, PromptPay, and Mobile Banking. Our team is developing additional payment methods.",
+  "helpFaq5Q": "The food I received is incorrect. What should I do?",
+  "helpFaq5A": "Please report the issue using the \"Report Problem\" button with photos and details. Our team will coordinate with the restaurant to resolve it.",
+  "helpFaq6Q": "How do I become a driver?",
+  "helpFaq6A": "Register through the app by selecting the \"Driver\" role, then fill in your personal information, driver's license, and wait for admin approval.",
+
+  "payTitle": "Payment",
+  "payCash": "Cash",
+  "payCashSubtitle": "Pay cash to driver",
+  "payPromptPaySubtitle": "Transfer via QR Code",
+  "payMobileBankingSubtitle": "Transfer via banking app",
+  "payError": "An error occurred: {error}",
+  "@payError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "paySuccess": "Payment successful!",
+  "payCashPrepare": "Please prepare cash for the driver",
+  "payRecorded": "Payment has been recorded",
+  "payOk": "OK",
+  "paySelectMethod": "Select payment method",
+  "payPromptPayNote": "The system will automatically generate a QR Code for PromptPay transfer",
+  "payButton": "Pay ฿{amount}",
+  "@payButton": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "payTotalAmount": "Total amount",
+  "payFoodCost": "Food cost",
+  "payDeliveryFee": "Delivery fee",
+
+  "ticketTitle": "Report / Complaint",
+  "ticketCatLostItem": "Lost item",
+  "ticketCatWrongOrder": "Wrong food/item",
+  "ticketCatRudeDriver": "Rude driver",
+  "ticketCatRefund": "Request refund",
+  "ticketCatAppBug": "App issue",
+  "ticketCatOther": "Other",
+  "ticketCreateTitle": "Report Problem",
+  "ticketCategoryLabel": "Problem type",
+  "ticketSubjectLabel": "Subject",
+  "ticketSubjectHint": "e.g. Left item in car",
+  "ticketDescLabel": "Description",
+  "ticketDescHint": "Describe the problem in detail...",
+  "ticketValidation": "Please fill in all fields",
+  "ticketSubmit": "Submit report",
+  "ticketFab": "Report",
+  "ticketEmptyTitle": "No reports yet",
+  "ticketEmptySubtitle": "If you encounter a problem, press \"Report\" below",
+
+  "mapPickerTitle": "Select delivery location",
+  "mapPickerLoadingAddress": "Loading address...",
+  "mapPickerSearching": "Searching for address...",
+  "mapPickerDeliveryLocation": "Delivery location",
+  "mapPickerConfirm": "Confirm this location",
+  "mapPickerPosition": "Position: {lat}, {lng}",
+  "@mapPickerPosition": {
+    "placeholders": {
+      "lat": {},
+      "lng": {}
+    }
+  },
+
+  "foodSvcTitle": "Order Food",
+  "foodSvcLoadError": "Unable to load restaurants: {error}",
+  "@foodSvcLoadError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "foodSvcRetry": "Retry",
+  "foodSvcEmpty": "No restaurants are currently open",
+  "foodSvcRefresh": "Refresh",
+  "foodSvcRestaurantFallback": "Restaurant",
+  "foodSvcNotSpecified": "Not specified",
+  "foodSvcOpen": "Open",
+
+  "accountEditName": "Edit Name",
+  "accountEditPhone": "Edit Phone",
+  "accountEditNameHint": "Enter full name",
+  "accountEditPhoneHint": "Enter phone number",
+  "accountEditCancel": "Cancel",
+  "accountEditSave": "Save",
+  "accountEditSuccess": "Updated successfully!",
+  "accountEditError": "Update failed: {error}",
+  "@accountEditError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "accountUserFallback": "User",
+
+  "couponScreenTitle": "My Coupons",
+  "couponTabMine": "My Coupons",
+  "couponTabDiscover": "Discover More",
+  "couponTabHistory": "Usage History",
+  "couponEmptyWallet": "No coupons in wallet",
+  "couponEmptyDiscover": "No new coupons available right now",
+  "couponEmptyHistory": "No coupon usage history yet",
+  "couponClaimSuccess": "Coupon claimed successfully!",
+  "couponRemainingUses": "{count} uses remaining",
+  "@couponRemainingUses": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "couponExpiry": "Expires: {date}",
+  "@couponExpiry": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "couponClaimed": "Claimed",
+  "couponClaim": "Claim",
+  "couponHistoryCode": "Code: {code}\nTime: {time}",
+  "@couponHistoryCode": {
+    "placeholders": {
+      "code": {},
+      "time": {}
+    }
+  },
+
+  "referralTitle": "Invite Friends & Get Rewards",
+  "referralHeroTitle": "Invite friends to use the app\nBoth get coupons!",
+  "referralHeroSubtitle": "Get a ฿20 discount coupon instantly\nwhen your friend completes their first order",
+  "referralMyCodeLabel": "Your referral code",
+  "referralShareButton": "Share with friends",
+  "referralHaveCode": "Have a referral code?",
+  "referralEnterCodeHint": "Enter the code from your friend to get a welcome coupon",
+  "referralCodePlaceholder": "Enter code here",
+  "referralUseCode": "Use Code",
+  "referralCopied": "Referral code copied",
+  "referralCodeSuccess": "Code used successfully!",
+  "referralOk": "OK",
+  "referralSuccessful": "Successful referrals",
+  "referralHowTitle": "How does it work?",
+  "referralStep1Title": "Share code with friends",
+  "referralStep1Desc": "Send your code to friends who haven't used the app yet",
+  "referralStep2Title": "Friend places first order",
+  "referralStep2Desc": "Friend registers and completes their first food order",
+  "referralStep3Title": "Get discount coupon!",
+  "referralStep3Desc": "You'll get a discount coupon sent directly to your wallet",
+
+  "driverAssignedTitle": "Driver Accepted",
+  "driverAssignedHeading": "Driver accepted the job!",
+  "driverAssignedSubtitle": "The driver is on the way to you",
+  "driverAssignedOnTheWay": "Driver is on the way",
+  "driverAssignedEta": "Estimated time: 5-10 minutes",
+  "driverAssignedContact": "Contact Driver",
+  "driverAssignedCancelBooking": "Cancel Booking",
+  "driverAssignedContactTitle": "Contact Driver",
+  "driverAssignedPhone": "Phone",
+  "driverAssignedMessage": "Message",
+  "driverAssignedMessageSub": "Send a message to the driver",
+  "driverAssignedClose": "Close",
+  "driverAssignedCancelTitle": "Cancel Booking",
+  "driverAssignedCancelBody": "Are you sure you want to cancel this booking?",
+  "driverAssignedNo": "No",
+  "driverAssignedCancel": "Cancel",
+
+  "mapSvcRide": "Call Ride",
+  "mapSvcFood": "Order Food",
+  "mapSvcParcel": "Send Parcel",
+  "mapSelectService": "Select Service",
+  "mapFindingLocation": "Finding location...",
+  "mapUserFallback": "User",
+  "mapLogout": "Logout",
+  "mapLocServiceTitle": "Location Service",
+  "mapLocServiceBody": "Location service is disabled. Please enable it.",
+  "mapLocOpenSettings": "Open Settings",
+  "mapLocCancel": "Cancel",
+  "mapLocPermTitle": "Location Permission",
+  "mapLocPermDenied": "Location permission was denied. Please allow location access to use the map.",
+  "mapLocRetry": "Retry",
+  "mapLocPermForever": "Location permission was permanently denied. Please open app settings to allow permission.",
+  "mapLocErrorTitle": "Location Error",
+  "mapLocErrorBody": "Unable to get location: {error}",
+  "@mapLocErrorBody": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "mapLocOk": "OK",
+  "mapLogoutError": "An error occurred: {error}",
+  "@mapLogoutError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+
+  "rideTitle": "Call Ride",
+  "rideMotorcycle": "Motorcycle",
+  "rideCar": "Car",
+  "rideMotorcycleDesc": "Fast & affordable",
+  "rideCarDesc": "Comfortable",
+  "rideSelectPayment": "Select payment method",
+  "rideCash": "Cash",
+  "rideTransfer": "Bank Transfer",
+  "rideSelectDestination": "Please select a destination",
+  "rideSelectVehicle": "Please select a vehicle type first",
+  "ridePleaseLogin": "Please log in",
+  "rideSearchingDriver": "Searching for a driver...",
+  "rideError": "An error occurred: {error}",
+  "@rideError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "rideCurrentLocation": "Current location",
+  "rideFindingLocation": "Finding location...",
+  "rideDestHint": "Where to? Tap map to select",
+  "rideOnlineCount": "{count} online",
+  "@rideOnlineCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "rideNoDrivers": "No drivers",
+  "rideNoVehicleOnline": "No {vehicle} online right now",
+  "@rideNoVehicleOnline": {
+    "placeholders": {
+      "vehicle": {}
+    }
+  },
+  "rideDistanceKm": "{km} km",
+  "@rideDistanceKm": {
+    "placeholders": {
+      "km": {}
+    }
+  },
+  "rideBtnSelectDest": "Select destination",
+  "rideBtnSelectVehicle": "Please select vehicle type",
+  "rideBtnCallRide": "Call Ride — ฿{price}",
+  "@rideBtnCallRide": {
+    "placeholders": {
+      "price": {}
+    }
+  },
+  "rideNoteVehicleType": "Vehicle type: {name}",
+  "@rideNoteVehicleType": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "rideNotePickupSurcharge": "Extra driver→pickup {km} km (+฿{surcharge})",
+  "@rideNotePickupSurcharge": {
+    "placeholders": {
+      "km": {},
+      "surcharge": {}
+    }
+  },
+  "ridePickupAddress": "Current location",
+  "rideNotifTitle": "🚗 New job! Passenger ride",
+  "rideNotifBody": "Ride request from {pickup} to {destination} — ฿{price}",
+  "@rideNotifBody": {
+    "placeholders": {
+      "pickup": {},
+      "destination": {},
+      "price": {}
+    }
+  },
+  "rideNotifPickupFallback": "Origin",
+  "rideNotifDestFallback": "Destination",
+
+  "drvProfileEditName": "Edit Name",
+  "drvProfileEditPhone": "Edit Phone",
+  "drvProfileEditPlate": "Edit License Plate",
+  "drvProfileHintName": "Full name",
+  "drvProfileHintPhone": "Phone number",
+  "drvProfileHintPlate": "e.g. ABC 1234",
+  "drvProfileCancel": "Cancel",
+  "drvProfileSave": "Save",
+  "drvProfileUpdateSuccess": "Updated successfully!",
+  "drvProfileUpdateError": "Update failed: {error}",
+  "@drvProfileUpdateError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "drvProfileSelectVehicle": "Select vehicle type",
+  "drvProfileMotorcycle": "Motorcycle",
+  "drvProfileCar": "Car",
+
+  "earnTitle": "Earnings",
+  "earnWalletTooltip": "Wallet",
+  "earnRefresh": "Refresh",
+  "earnLoadError": "Unable to load data",
+  "earnRetry": "Retry",
+  "earnPeriodToday": "Today",
+  "earnPeriodWeek": "This Week",
+  "earnPeriodMonth": "This Month",
+  "earnPeriodAll": "All Time",
+  "earnPeriodCustom": "Custom Date",
+  "earnRevenueLabel": "Earnings {period}",
+  "@earnRevenueLabel": {
+    "placeholders": {
+      "period": {}
+    }
+  },
+  "earnAvgPerJob": "Average {amount} / job",
+  "@earnAvgPerJob": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "earnTotalJobs": "Total Jobs",
+  "earnCompleted": "Completed",
+  "earnCancelled": "Cancelled",
+  "earnWalletTitle": "Wallet",
+  "earnWalletLoading": "Loading...",
+  "earnWalletBaht": "{amount} THB",
+  "@earnWalletBaht": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "earnViewAll": "View All",
+  "earnJobHistory": "Job History",
+  "earnNoJobs": "No jobs in this period",
+  "earnStatusCompleted": "Completed",
+  "earnStatusCancelled": "Cancelled",
+  "earnStatusPickedUp": "Picked Up",
+  "earnStatusDelivering": "Delivering",
+  "earnSvcRide": "Ride",
+  "earnSvcFood": "Food",
+  "earnSvcParcel": "Parcel",
+  "earnSvcOther": "Other",
+  "earnAppFee": "(Platform fee {amount})",
+  "@earnAppFee": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "earnCollectCustomer": "Collect from customer",
+  "earnCouponDiscount": "Coupon discount",
+  "earnOpenDetailError": "Unable to open job detail",
+  "earnUserNotFound": "User not found",
+
+  "jobDetailTitle": "Service Detail",
+  "jobDetailNoRoute": "No route data",
+  "jobDetailPickupFallback": "Pickup",
+  "jobDetailDestFallback": "Destination",
+  "jobDetailDurationHrMin": "{hr} hr {min} min",
+  "@jobDetailDurationHrMin": {
+    "placeholders": {
+      "hr": {},
+      "min": {}
+    }
+  },
+  "jobDetailDurationMin": "{min} min",
+  "@jobDetailDurationMin": {
+    "placeholders": {
+      "min": {}
+    }
+  },
+  "jobDetailCash": "Cash",
+  "jobDetailOrderFood": "Food Order",
+  "jobDetailRide": "Ride",
+  "jobDetailParcel": "Parcel",
+  "jobDetailNetEarnings": "Net Earnings",
+  "jobDetailEarningsBreakdown": "Earnings Breakdown",
+  "jobDetailTripFare": "Trip fare",
+  "jobDetailCouponDiscountGeneric": "Coupon discount",
+  "jobDetailCouponDiscountCode": "Coupon discount ({code})",
+  "@jobDetailCouponDiscountCode": {
+    "placeholders": {
+      "code": {}
+    }
+  },
+  "jobDetailPlatformFee": "Platform fee",
+  "jobDetailFoodCost": "  Food cost",
+  "jobDetailDeliveryFee": "  Delivery fee",
+  "jobDetailCashCollection": "Cash payment items",
+  "jobDetailCollectFromCustomer": "Collect from customer",
+
+  "parcelConfirmPickupTitle": "Confirm Pickup",
+  "parcelConfirmDeliveryTitle": "Confirm Delivery",
+  "parcelConfirmPhotoRequired": "Please take a confirmation photo",
+  "parcelConfirmSignatureRequired": "Please take a recipient signature photo",
+  "parcelConfirmUploadFailed": "Photo upload failed",
+  "parcelConfirmUpdateFailed": "Status update failed",
+  "parcelConfirmPickupSuccess": "Parcel picked up!",
+  "parcelConfirmPickupSuccessBody": "Photo saved successfully\nPlease deliver the parcel",
+  "parcelConfirmDeliverySuccess": "Parcel delivered!",
+  "parcelConfirmDeliverySuccessBody": "Photo and signature saved\nJob completed",
+  "parcelConfirmError": "An error occurred\nPlease try again",
+  "parcelConfirmErrorTitle": "Error",
+  "parcelConfirmOk": "OK",
+  "parcelConfirmNoData": "Parcel data not found",
+  "parcelConfirmParcelInfo": "Parcel Info",
+  "parcelConfirmSender": "Sender",
+  "parcelConfirmRecipient": "Recipient",
+  "parcelConfirmSize": "Size",
+  "parcelConfirmDescription": "Description",
+  "parcelConfirmWeightKg": "Weight",
+  "parcelConfirmWeightValue": "{kg} kg",
+  "@parcelConfirmWeightValue": {
+    "placeholders": {
+      "kg": {}
+    }
+  },
+  "parcelConfirmStatus": "Status",
+  "parcelConfirmCustomerPhoto": "Customer parcel photo",
+  "parcelConfirmPickupPhotoTitle": "Take pickup confirmation photo *",
+  "parcelConfirmDeliveryPhotoTitle": "Take delivery confirmation photo *",
+  "parcelConfirmPickupPhotoDesc": "Take a photo of the parcel received",
+  "parcelConfirmDeliveryPhotoDesc": "Take a photo of the parcel delivered",
+  "parcelConfirmSignatureTitle": "Take recipient signature photo *",
+  "parcelConfirmSignatureDesc": "Take a photo of recipient signature or ID",
+  "parcelConfirmTapToPhoto": "Tap to take photo",
+  "parcelConfirmPickupBtn": "Confirm Pickup",
+  "parcelConfirmDeliveryBtn": "Confirm Delivery Complete",
+
+  "merchantNavOrders": "Orders",
+  "merchantNavMenu": "Menu",
+  "merchantNavReport": "Report",
+  "merchantNavAccount": "Account",
+  "merchantPressBackAgain": "Press back again to exit",
+
+  "mchSetShopInfoTitle": "Shop Information",
+  "mchSetShopName": "Shop Name",
+  "mchSetPhone": "Phone",
+  "mchSetEmail": "Email",
+  "mchSetAddress": "Shop Address",
+  "mchSetShopStatus": "Shop Status",
+  "mchSetShopOpen": "Accepting Orders",
+  "mchSetShopClosed": "Shop Closed",
+  "mchSetOpenCloseTime": "Open-Close Time",
+  "mchSetOpenDays": "Open Days",
+  "mchSetOrderAcceptMode": "Order Accept Mode",
+  "mchSetAutoSchedule": "Auto Open-Close",
+  "mchSetAutoScheduleOn": "Enabled",
+  "mchSetAutoScheduleOff": "Disabled",
+  "mchSetNotSet": "Not set",
+  "mchSetEveryDay": "Every day",
+  "mchSetAcceptAuto": "Auto accept orders",
+  "mchSetAcceptManual": "Manual accept orders",
+  "mchSetEditField": "Edit {label}",
+  "@mchSetEditField": {
+    "placeholders": {
+      "label": {}
+    }
+  },
+  "mchSetHintShopName": "Shop name",
+  "mchSetHintPhone": "Phone number",
+  "mchSetCancel": "Cancel",
+  "mchSetSave": "Save",
+  "mchSetEditShopHoursTitle": "Set Shop Hours",
+  "mchSetOpenTime": "Open Time",
+  "mchSetCloseTime": "Close Time",
+  "mchSetOpenDaysLabel": "Open Days",
+  "mchSetOrderAcceptModeLabel": "Order Accept Mode",
+  "mchSetAcceptManualShort": "Manual",
+  "mchSetAcceptAutoShort": "Auto",
+  "mchSetAutoScheduleSwitch": "Auto open-close by schedule",
+  "mchSetAutoScheduleOnDesc": "System will toggle shop status automatically",
+  "mchSetAutoScheduleOffDesc": "Off — manual open/close only",
+  "mchSetSelectAtLeast1Day": "Please select at least 1 open day",
+  "mchSetShopHoursSaved": "Shop hours set: {open} - {close} ({days})",
+  "@mchSetShopHoursSaved": {
+    "placeholders": {
+      "open": {},
+      "close": {},
+      "days": {}
+    }
+  },
+  "mchSetSaveFailed": "Save failed: {error}",
+  "@mchSetSaveFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "mchSetWeekMon": "M",
+  "mchSetWeekTue": "T",
+  "mchSetWeekWed": "W",
+  "mchSetWeekThu": "Th",
+  "mchSetWeekFri": "F",
+  "mchSetWeekSat": "Sa",
+  "mchSetWeekSun": "Su",
+
+  "mchDashTitle": "Sales Report",
+  "mchDashRefresh": "Refresh",
+  "mchDashLoadError": "Unable to load data",
+  "mchDashRetry": "Retry",
+  "mchDashPeriodToday": "Today",
+  "mchDashPeriodWeek": "This Week",
+  "mchDashPeriodMonth": "This Month",
+  "mchDashPeriodAll": "All Time",
+  "mchDashPeriodCustom": "Custom Date",
+  "mchDashPickDateRange": "Select date range",
+  "mchDashClearDateFilter": "Clear date filter",
+  "mchDashNetRevenue": "Net Revenue {period}",
+  "@mchDashNetRevenue": {
+    "placeholders": {
+      "period": {}
+    }
+  },
+  "mchDashAvgPerOrder": "Average {amount} / order",
+  "@mchDashAvgPerOrder": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "mchDashTotalOrders": "Total Orders",
+  "mchDashCompleted": "Completed",
+  "mchDashCancelled": "Cancelled",
+  "mchDashOrderHistory": "Order History",
+  "mchDashNoOrders": "No orders in this period",
+  "mchDashViewDetail": "View detail",
+  "mchDashStatusCompleted": "Completed",
+  "mchDashStatusCancelled": "Cancelled",
+  "mchDashStatusPreparing": "Preparing",
+  "mchDashStatusReady": "Ready",
+  "mchDashStatusPickedUp": "Picked Up",
+  "mchDashStatusDelivering": "Delivering",
+  "mchDashUserNotFound": "User not found",
+
+  "menuMgmtTitle": "Menu Management",
+  "menuMgmtOptionTooltip": "Manage options",
+  "menuMgmtError": "An error occurred",
+  "menuMgmtRetry": "Retry",
+  "menuMgmtEmpty": "No menu items yet",
+  "menuMgmtEmptyHint": "Tap + to add your first menu item",
+  "menuMgmtNoName": "Unnamed",
+  "menuMgmtAvailable": "Available",
+  "menuMgmtSoldOut": "Sold Out",
+  "menuMgmtEdit": "Edit",
+  "menuMgmtDelete": "Delete",
+  "menuMgmtDeleteConfirmTitle": "Confirm Delete",
+  "menuMgmtDeleteConfirmBody": "Do you want to delete menu \"{name}\"?",
+  "@menuMgmtDeleteConfirmBody": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "menuMgmtNo": "No",
+  "menuMgmtYes": "Yes",
+  "menuMgmtDeleteSuccess": "Menu deleted successfully",
+  "menuMgmtCannotDeleteTitle": "Cannot delete menu",
+  "menuMgmtCannotDeleteBody": "This menu has related orders and cannot be deleted.\n\nWould you like to hide it instead? (Change status to \"Sold Out\")",
+  "menuMgmtCancel": "Cancel",
+  "menuMgmtHideMenu": "Hide Menu",
+  "menuMgmtHideSuccess": "Menu hidden (changed to \"Sold Out\")",
+  "menuMgmtDeleteFailed": "Cannot delete menu: {error}",
+  "@menuMgmtDeleteFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "menuMgmtToggleOn": "Menu is now available",
+  "menuMgmtToggleOff": "Menu is now unavailable",
+  "menuMgmtToggleFailed": "Status change failed: {error}",
+  "@menuMgmtToggleFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "menuMgmtUserNotFound": "User not found",
+
+  "menuEditTitleEdit": "Edit Menu",
+  "menuEditTitleAdd": "Add New Menu",
+  "menuEditBtnUpdate": "Update Menu",
+  "menuEditBtnAdd": "Add Menu",
+  "menuEditInfoTitle": "Menu Info",
+  "menuEditNameLabel": "Menu Name *",
+  "menuEditNameRequired": "Please enter a menu name",
+  "menuEditDescLabel": "Description",
+  "menuEditPriceLabel": "Price *",
+  "menuEditPriceRequired": "Please enter a price",
+  "menuEditPriceInvalid": "Please enter a valid price",
+  "menuEditPhotoLabel": "Menu Photo",
+  "menuEditTapToPhoto": "Tap to take or select photo",
+  "menuEditCategoryLabel": "Category *",
+  "menuEditCategoryRequired": "Please select a category",
+  "menuEditAvailable": "Available for sale",
+  "menuEditOptionGroupsTitle": "Option Groups",
+  "menuEditGroupCount": "{count} groups",
+  "@menuEditGroupCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "menuEditNoOptionGroups": "No option groups selected",
+  "menuEditNoOptionGroupsHint": "Add option groups for customers to choose from",
+  "menuEditAddSuccess": "Menu added successfully",
+  "menuEditUpdateSuccess": "Menu updated successfully",
+  "menuEditLoadOptionsFailed": "Failed to load options: {error}",
+  "@menuEditLoadOptionsFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "menuEditDeleteGroupSuccess": "Group \"{name}\" deleted",
+  "@menuEditDeleteGroupSuccess": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "menuEditDeleteGroupFailed": "Failed to delete group: {error}",
+  "@menuEditDeleteGroupFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "menuEditCatMadeToOrder": "Made to Order",
+  "menuEditCatNoodles": "Noodles",
+  "menuEditCatDrinks": "Drinks",
+  "menuEditCatDessert": "Dessert",
+  "menuEditCatFastFood": "Fast Food",
+  "menuEditCatBreakfast": "Breakfast",
+  "menuEditCatJapanese": "Japanese",
+  "menuEditCatIsaan": "Isaan",
+  "menuEditCatSnacks": "Snacks",
+  "menuEditCatOther": "Other",
+
+  "optGroupEditTitle": "Edit Option Group",
+  "optGroupCreateTitle": "Create Option Group",
+  "optGroupBtnUpdate": "Update Option Group",
+  "optGroupBtnCreate": "Create Option Group",
+  "optGroupInfoTitle": "Option Group Info",
+  "optGroupNameLabel": "Option Group Name",
+  "optGroupNameHint": "e.g. Spice Level, Toppings",
+  "optGroupNameRequired": "Please enter a group name",
+  "optGroupMinLabel": "Min Selection",
+  "optGroupMinRequired": "Please enter minimum",
+  "optGroupMinInvalid": "Please enter a valid number",
+  "optGroupMaxLabel": "Max Selection",
+  "optGroupMaxRequired": "Please enter maximum",
+  "optGroupMaxInvalid": "Please enter a valid number (at least 1)",
+  "optGroupSelectionHint": "Hint: 0=optional, 1=must select 1 item",
+  "optGroupAddOptionTitle": "Add Option",
+  "optGroupOptionNameLabel": "Option Name",
+  "optGroupOptionNameHint": "e.g. Not Spicy, Very Spicy",
+  "optGroupOptionPriceLabel": "Extra Price",
+  "optGroupNoOptions": "No options yet",
+  "optGroupNoOptionsHint": "Add options for customers to choose from",
+  "optGroupAllOptionsTitle": "All Options",
+  "optGroupItemCount": "{count} items",
+  "@optGroupItemCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "optGroupOptionNameRequired": "Please enter an option name",
+  "optGroupOptionPriceNegative": "Price must not be negative",
+  "optGroupCreateSuccess": "Option group created",
+  "optGroupUpdateSuccess": "Option group updated",
+  "optGroupMinMaxError": "Min must not be less than 0 and max must not be less than 1",
+  "optGroupMinGtMaxError": "Min must not be greater than max",
+  "optGroupSaveError": "Could not save option group",
+
+  "optLibTitle": "Manage Food Options",
+  "optLibRetry": "Retry",
+  "optLibEmpty": "No option groups yet",
+  "optLibEmptyHint": "Create option groups to use with your menu items",
+  "optLibCreateNew": "Create New Group",
+  "optLibDeleteConfirmTitle": "Confirm Delete",
+  "optLibDeleteConfirmBody": "Do you want to delete group \"{name}\"?",
+  "@optLibDeleteConfirmBody": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "optLibDeleteNote": "Note: Deleting this group will also delete all {count} options",
+  "@optLibDeleteNote": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "optLibCancel": "Cancel",
+  "optLibDeleteBtn": "Delete",
+  "optLibDeleteSuccess": "Group \"{name}\" deleted",
+  "@optLibDeleteSuccess": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "optLibDeleteFailed": "Failed to delete group: {error}",
+  "@optLibDeleteFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "optLibSelectMax1": "Select up to 1 item",
+  "optLibSelectMaxN": "Select up to {max} items",
+  "@optLibSelectMaxN": {
+    "placeholders": {
+      "max": {}
+    }
+  },
+  "optLibSelectExact": "Select {n} items",
+  "@optLibSelectExact": {
+    "placeholders": {
+      "n": {}
+    }
+  },
+  "optLibSelectRange": "Select {min}-{max} items",
+  "@optLibSelectRange": {
+    "placeholders": {
+      "min": {},
+      "max": {}
+    }
+  },
+  "optLibOptionCount": "{count} options",
+  "@optLibOptionCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "optLibShowFirst3": "Showing first 3",
+
+  "menuEditAddOptionGroup": "Add Option Group",
+  "menuEditSelectOptionGroups": "Select Option Groups",
+  "menuEditSaveSelection": "Save Selection",
+  "menuEditSheetRetry": "Retry",
+  "menuEditSheetNoGroups": "No option groups",
+  "menuEditSheetNoGroupsHint": "Create option groups first to use with menus",
+  "menuEditRemoveGroupTooltip": "Remove this group",
+  "menuEditOptionCount": "{count} options",
+  "@menuEditOptionCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+
+  "couponAdminDialogTitle": "Create Shop Coupon (Admin)",
+  "couponCreateSuccess": "Shop coupon created successfully",
+  "couponCreateFailed": "Failed to create coupon",
+  "couponAdminTitle": "Shop Coupons: {name}",
+  "@couponAdminTitle": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "couponAdminTitleNoName": "Shop Coupons: Unknown",
+  "couponTitle": "Shop Coupons",
+  "couponListTitle": "Shop Coupons",
+  "couponEmpty": "No shop coupons yet",
+  "couponGuideTitle": "How to use shop coupons",
+  "couponGuideStep1Admin": "1) Admin is managing coupons for the selected shop. Customers will see them on the shop page automatically.",
+  "couponGuideStep1Merchant": "1) Create coupons for your shop. Customers will see them on the shop page automatically.",
+  "couponGuideStep2Admin": "2) Press \"Open Coupon Form\" to edit via Dialog instead of inline form.",
+  "couponGuideStep2Merchant": "2) Fill in the form below to create new coupons instantly.",
+  "couponGuideStep3": "3) Free delivery coupons will charge an additional 25% GP.",
+  "couponGuideStep4Admin": "4) Admin can enable/disable each coupon via the switch on the right.",
+  "couponGuideStep4Merchant": "4) You can enable/disable each coupon via the switch on the right.",
+  "couponAdminOpenForm": "Open Coupon Form (Dialog)",
+  "couponCodeLabel": "Coupon Code",
+  "couponCodeRequired": "Enter coupon code",
+  "couponNameLabel": "Coupon Name",
+  "couponNameRequired": "Enter coupon name",
+  "couponDescLabel": "Description (optional)",
+  "couponTypePercentage": "Percentage Discount",
+  "couponTypeFixed": "Fixed Amount Discount",
+  "couponTypeFreeDelivery": "Free Delivery",
+  "couponTypeLabel": "Coupon Type",
+  "couponDiscountPercent": "Discount (%)",
+  "couponDiscountBaht": "Discount (Baht)",
+  "couponDiscountRequired": "Enter valid discount",
+  "couponMaxDiscount": "Max Discount (Baht) optional",
+  "couponMinOrder": "Min Order (Baht) optional",
+  "couponUsageLimit": "Total uses (0=unlimited)",
+  "couponPerUserLimit": "Limit/person",
+  "couponStartDate": "Start: {date}",
+  "@couponStartDate": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "couponPickStartDate": "Select start date",
+  "couponPick": "Pick",
+  "couponEndDate": "Expires: {date}",
+  "@couponEndDate": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "couponPickEndDate": "Select expiry date",
+  "couponCreateBtn": "Create Coupon",
+
+  "editProfileTitle": "Edit Shop Info",
+  "editProfileTapPhoto": "Tap to change shop photo",
+  "editProfileShopName": "Shop Name",
+  "editProfileShopNameRequired": "Please enter shop name",
+  "editProfileEmail": "Email",
+  "editProfilePhone": "Phone Number",
+  "editProfilePhoneInvalid": "Please enter a valid phone number",
+  "editProfileAddress": "Shop Address",
+  "editProfilePinLocation": "Pin shop location",
+  "editProfileNoLocation": "No location selected on map",
+  "editProfileOpenDays": "Open Days",
+  "editProfileOpenTime": "Open Time",
+  "editProfileCloseTime": "Close Time",
+  "editProfileSelectDayRequired": "Please select at least 1 open day",
+  "editProfileSaveBtn": "Save",
+  "editProfileSaveSuccess": "Saved successfully",
+  "editProfileSaveFailed": "Cannot save: {error}",
+  "@editProfileSaveFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "editProfileDayMon": "Mon",
+  "editProfileDayTue": "Tue",
+  "editProfileDayWed": "Wed",
+  "editProfileDayThu": "Thu",
+  "editProfileDayFri": "Fri",
+  "editProfileDaySat": "Sat",
+  "editProfileDaySun": "Sun",
+
+  "profileCompleteRoleDriver": "Driver",
+  "profileCompleteRoleMerchant": "Merchant",
+  "profileCompleteTitle": "Complete Profile ({role})",
+  "@profileCompleteTitle": {
+    "placeholders": {
+      "role": {}
+    }
+  },
+  "profileCompleteLogout": "Logout",
+  "profileCompleteBack": "Back",
+  "profileCompleteNext": "Next",
+  "profileCompleteSaveStart": "Save & Start",
+  "profileCompleteSaveSuccess": "✅ Profile saved successfully",
+  "profileCompleteError": "❌ Error: {error}",
+  "@profileCompleteError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "profileCompleteUploadMissing": "Please upload: {items}",
+  "@profileCompleteUploadMissing": {
+    "placeholders": {
+      "items": {}
+    }
+  },
+
+  "profileCompleteStepPersonalTitle": "Personal Info",
+  "profileCompleteStepPersonalSubtitle": "Please enter your information",
+  "profileCompleteFullNameLabel": "Full name",
+  "profileCompleteFullNameRequired": "Please enter your name",
+  "profileCompletePhoneLabel": "Phone number",
+  "profileCompletePhoneRequired": "Please enter phone number",
+
+  "profileCompleteStepVehicleTitle": "Vehicle Info",
+  "profileCompleteStepVehicleSubtitle": "Select vehicle type and enter plate number",
+  "profileCompleteVehicleTypeLabel": "Vehicle type",
+  "profileCompleteVehicleMotorcycle": "Motorcycle",
+  "profileCompleteVehicleCar": "Car",
+  "profileCompletePlateLabel": "License plate",
+  "profileCompletePlateRequired": "Please enter plate number",
+
+  "profileCompleteStepDocsTitle": "Upload Documents",
+  "profileCompleteStepDocsSubtitle": "Please take photos of your documents",
+  "profileCompleteDocIdCard": "ID card photo",
+  "profileCompleteDocDriverLicense": "Driver license photo",
+  "profileCompleteDocVehiclePhoto": "Vehicle photo",
+  "profileCompleteDocPlatePhoto": "Plate photo",
+  "profileCompleteDocsHint": "* Please upload all 4 documents",
+  "profileCompleteDocSelected": "Selected ✓",
+  "profileCompleteDocTapToPick": "Tap to take photo or choose from gallery",
+
+  "profileCompleteStepMerchantTitle": "Shop Info",
+  "profileCompleteStepMerchantSubtitle": "Please enter your shop information",
+  "profileCompleteMerchantNameLabel": "Shop name / owner",
+  "profileCompleteAddressLabel": "Shop address",
+  "profileCompleteAddressRequired": "Please enter address",
+
+  "profileCompleteStepBankTitle": "Bank Info",
+  "profileCompleteStepBankSubtitle": "For receiving payouts (optional)",
+  "profileCompleteBankNameLabel": "Bank name",
+  "profileCompleteBankNameHint": "e.g. Kasikorn, SCB",
+  "profileCompleteBankAccountNumberLabel": "Account number",
+  "profileCompleteBankAccountNameLabel": "Account name",
+
+  "imagePickerChooseImage": "Choose image",
+  "imagePickerTakePhoto": "Take photo",
+  "imagePickerTakePhotoSubtitle": "Use camera to take a new photo",
+  "imagePickerPickGallery": "Choose from gallery",
+  "imagePickerPickGallerySubtitle": "Pick from your album",
+
+  "landingLogin": "Login",
+  "landingStart": "Get Started",
+  "landingHeadline": "Ride-hailing\nFood & Parcel Delivery",
+  "landingSubheadline": "A community super app\nRide, order food, and send parcels in one app",
+  "landingServicesTitle": "Our Services",
+  "landingServicesSubtitle": "Everything in one app",
+  "landingServiceRideTitle": "Ride",
+  "landingServiceRideDesc": "Motorcycle or car rides\nConvenient and safe",
+  "landingServiceFoodTitle": "Food",
+  "landingServiceFoodDesc": "Order from nearby restaurants\nFast delivery to your home",
+  "landingServiceParcelTitle": "Parcel",
+  "landingServiceParcelDesc": "Send parcels to destination\nAffordable and trackable",
+  "landingSignupNow": "Sign up now",
+  "landingHowTitle": "Easy in 4 steps",
+  "landingHowStep1Number": "1",
+  "landingHowStep1Title": "Sign up",
+  "landingHowStep1Desc": "Register with your phone number",
+  "landingHowStep2Number": "2",
+  "landingHowStep2Title": "Choose a service",
+  "landingHowStep2Desc": "Ride, Food, or Parcel",
+  "landingHowStep3Number": "3",
+  "landingHowStep3Title": "Confirm order",
+  "landingHowStep3Desc": "Choose destination and payment method",
+  "landingHowStep4Number": "4",
+  "landingHowStep4Title": "Get served",
+  "landingHowStep4Desc": "A driver accepts and comes to you",
+  "landingDriverCtaTitle": "Become a Jedechai driver",
+  "landingDriverCtaSubtitle": "Earn extra income, work freely, choose your own hours",
+
+  "topupAdminPushTitle": "💰 New top-up request",
+  "topupAdminPushBody": "{driverName} requested a top-up of ฿{amount} — pending approval",
+  "@topupAdminPushBody": {
+    "placeholders": {
+      "driverName": {},
+      "amount": {}
+    }
+  },
+  "topupAdminEmailSubject": "💰 New top-up request — {driverName} ฿{amount}",
+  "@topupAdminEmailSubject": {
+    "placeholders": {
+      "driverName": {},
+      "amount": {}
+    }
+  },
+  "topupAdminEmailHtml": "<div style=\"font-family:sans-serif;max-width:500px;margin:0 auto;padding:20px;\">\n  <h2 style=\"color:#1565C0;\">💰 New top-up request</h2>\n  <div style=\"background:#f5f5f5;padding:16px;border-radius:12px;margin:16px 0;\">\n    <p><strong>Driver:</strong> {driverName}</p>\n    <p><strong>Amount:</strong> <span style=\"color:#4CAF50;font-size:24px;font-weight:bold;\">฿{amount}</span></p>\n    <p><strong>Status:</strong> <span style=\"color:#FF9800;\">Pending approval</span></p>\n  </div>\n  <p style=\"color:#666;\">Please sign in to Admin to review and approve the top-up request</p>\n  <hr style=\"border:none;border-top:1px solid #eee;margin:20px 0;\">\n  <p style=\"color:#999;font-size:12px;\">JDC Delivery Admin System</p>\n</div>\n",
+  "@topupAdminEmailHtml": {
+    "placeholders": {
+      "driverName": {},
+      "amount": {}
+    }
+  },
+  "topupOmiseTransactionDescription": "Top up via Omise PromptPay (฿{amount}) — Charge: {chargeId}",
+  "@topupOmiseTransactionDescription": {
+    "placeholders": {
+      "amount": {},
+      "chargeId": {}
+    }
+  },
+  "topupPromptPayTransactionDescription": "Top up via PromptPay (฿{amount})",
+  "@topupPromptPayTransactionDescription": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "topupWithdrawalTransactionDescription": "Withdrawal request ฿{amount} to {bankName} {accountNumber}",
+  "@topupWithdrawalTransactionDescription": {
+    "placeholders": {
+      "amount": {},
+      "bankName": {},
+      "accountNumber": {}
+    }
+  }
+}

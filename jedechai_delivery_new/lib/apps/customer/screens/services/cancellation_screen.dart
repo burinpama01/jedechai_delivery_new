@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../common/models/booking.dart';
 import '../../../../common/services/booking_service.dart';
@@ -22,14 +23,17 @@ class _CancellationScreenState extends State<CancellationScreen> {
   final TextEditingController _otherReasonController = TextEditingController();
   bool _isCancelling = false;
 
-  final List<Map<String, dynamic>> _reasons = [
-    {'icon': Icons.access_time, 'text': 'รอนานเกินไป'},
-    {'icon': Icons.money_off, 'text': 'เปลี่ยนใจ ไม่ต้องการแล้ว'},
-    {'icon': Icons.wrong_location, 'text': 'ใส่ที่อยู่ผิด'},
-    {'icon': Icons.price_change, 'text': 'ราคาสูงเกินไป'},
-    {'icon': Icons.error_outline, 'text': 'สั่งผิดรายการ'},
-    {'icon': Icons.edit_note, 'text': 'เหตุผลอื่น'},
-  ];
+  List<Map<String, dynamic>> _getReasons(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return [
+      {'icon': Icons.access_time, 'text': l10n.cancelReasonWaitTooLong},
+      {'icon': Icons.money_off, 'text': l10n.cancelReasonChangedMind},
+      {'icon': Icons.wrong_location, 'text': l10n.cancelReasonWrongAddress},
+      {'icon': Icons.price_change, 'text': l10n.cancelReasonPriceTooHigh},
+      {'icon': Icons.error_outline, 'text': l10n.cancelReasonWrongOrder},
+      {'icon': Icons.edit_note, 'text': l10n.cancelReasonOther},
+    ];
+  }
 
   @override
   void dispose() {
@@ -37,20 +41,21 @@ class _CancellationScreenState extends State<CancellationScreen> {
     super.dispose();
   }
 
-  String get _selectedReasonText {
+  String _getSelectedReasonText(BuildContext context) {
+    final reasons = _getReasons(context);
     if (_selectedReasonIndex == null) return '';
-    if (_selectedReasonIndex == _reasons.length - 1) {
+    if (_selectedReasonIndex == reasons.length - 1) {
       return _otherReasonController.text.trim().isEmpty
-          ? 'เหตุผลอื่น'
+          ? AppLocalizations.of(context)!.cancelReasonOther
           : _otherReasonController.text.trim();
     }
-    return _reasons[_selectedReasonIndex!]['text'] as String;
+    return reasons[_selectedReasonIndex!]['text'] as String;
   }
 
   Future<void> _confirmCancellation() async {
     if (_selectedReasonIndex == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('กรุณาเลือกเหตุผลการยกเลิก'), backgroundColor: Colors.red),
+        SnackBar(content: Text(AppLocalizations.of(context)!.cancelSelectReason), backgroundColor: Colors.red),
       );
       return;
     }
@@ -59,18 +64,18 @@ class _CancellationScreenState extends State<CancellationScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
-            SizedBox(width: 8),
-            Text('ยืนยันการยกเลิก'),
+            const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
+            const SizedBox(width: 8),
+            Text(AppLocalizations.of(context)!.cancelConfirmTitle),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('คุณแน่ใจว่าต้องการยกเลิกออเดอร์นี้?'),
+            Text(AppLocalizations.of(context)!.cancelConfirmBody),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
@@ -84,7 +89,7 @@ class _CancellationScreenState extends State<CancellationScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'เหตุผล: $_selectedReasonText',
+                      AppLocalizations.of(context)!.cancelReasonLabel(_getSelectedReasonText(context)),
                       style: TextStyle(fontSize: 13, color: Colors.red.shade700),
                     ),
                   ),
@@ -96,7 +101,7 @@ class _CancellationScreenState extends State<CancellationScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('ไม่ยกเลิก', style: TextStyle(color: Colors.grey)),
+            child: Text(AppLocalizations.of(context)!.cancelKeep, style: const TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -105,7 +110,7 @@ class _CancellationScreenState extends State<CancellationScreen> {
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text('ยืนยันยกเลิก'),
+            child: Text(AppLocalizations.of(context)!.cancelConfirmBtn),
           ),
         ],
       ),
@@ -124,8 +129,8 @@ class _CancellationScreenState extends State<CancellationScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('ยกเลิกออเดอร์สำเร็จ'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.cancelSuccess),
             backgroundColor: AppTheme.primaryGreen,
           ),
         );
@@ -136,7 +141,7 @@ class _CancellationScreenState extends State<CancellationScreen> {
       setState(() => _isCancelling = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('เกิดข้อผิดพลาด: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(AppLocalizations.of(context)!.cancelError(e.toString())), backgroundColor: Colors.red),
         );
       }
     }
@@ -144,15 +149,16 @@ class _CancellationScreenState extends State<CancellationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final serviceLabel = {
-      'food': 'ออเดอร์อาหาร',
-      'ride': 'เรียกรถ',
-      'parcel': 'ส่งพัสดุ',
-    }[widget.booking.serviceType] ?? 'ออเดอร์';
+      'food': l10n.cancelServiceFood,
+      'ride': l10n.cancelServiceRide,
+      'parcel': l10n.cancelServiceParcel,
+    }[widget.booking.serviceType] ?? l10n.cancelServiceDefault;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ยกเลิกออเดอร์'),
+        title: Text(l10n.cancelTitle),
         backgroundColor: Colors.red.shade600,
         foregroundColor: Colors.white,
       ),
@@ -206,16 +212,16 @@ class _CancellationScreenState extends State<CancellationScreen> {
                   ),
 
                   const SizedBox(height: 24),
-                  const Text('เหตุผลในการยกเลิก',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(l10n.cancelReasonsTitle,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
-                  const Text('กรุณาเลือกเหตุผลเพื่อช่วยเราปรับปรุงบริการ',
-                      style: TextStyle(fontSize: 14, color: Colors.grey)),
+                  Text(l10n.cancelReasonsSubtitle,
+                      style: const TextStyle(fontSize: 14, color: Colors.grey)),
                   const SizedBox(height: 16),
 
                   // รายการเหตุผล
-                  ...List.generate(_reasons.length, (i) {
-                    final reason = _reasons[i];
+                  ...List.generate(_getReasons(context).length, (i) {
+                    final reason = _getReasons(context)[i];
                     final isSelected = _selectedReasonIndex == i;
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 10),
@@ -260,14 +266,14 @@ class _CancellationScreenState extends State<CancellationScreen> {
                   }),
 
                   // ช่องพิมพ์เหตุผลอื่น
-                  if (_selectedReasonIndex == _reasons.length - 1) ...[
+                  if (_selectedReasonIndex == _getReasons(context).length - 1) ...[
                     const SizedBox(height: 8),
                     TextField(
                       controller: _otherReasonController,
                       maxLines: 3,
                       maxLength: 300,
                       decoration: InputDecoration(
-                        hintText: 'โปรดระบุเหตุผล...',
+                        hintText: l10n.cancelOtherHint,
                         hintStyle: TextStyle(color: Colors.grey.shade400),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         focusedBorder: OutlineInputBorder(
@@ -308,7 +314,7 @@ class _CancellationScreenState extends State<CancellationScreen> {
                           width: 24, height: 24,
                           child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
                         )
-                      : const Text('ยกเลิกออเดอร์', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      : Text(l10n.cancelButton, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
               ),
             ),

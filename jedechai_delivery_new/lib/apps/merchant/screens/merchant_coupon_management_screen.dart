@@ -5,6 +5,7 @@ import '../../../common/models/coupon.dart';
 import '../../../common/services/auth_service.dart';
 import '../../../common/services/coupon_service.dart';
 import '../../../common/utils/platform_adaptive.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_theme.dart';
 
 class MerchantCouponManagementScreen extends StatefulWidget {
@@ -98,9 +99,9 @@ class _MerchantCouponManagementScreenState
                   padding: const EdgeInsets.fromLTRB(16, 14, 8, 8),
                   child: Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          'สร้างคูปองร้าน (แอดมิน)',
+                          AppLocalizations.of(context)!.couponAdminDialogTitle,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -210,8 +211,8 @@ class _MerchantCouponManagementScreenState
         _usageLimitController.text = '0';
         _perUserLimitController.text = '1';
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('สร้างคูปองร้านค้าสำเร็จ'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.couponCreateSuccess),
             backgroundColor: Colors.green,
           ),
         );
@@ -219,8 +220,8 @@ class _MerchantCouponManagementScreenState
         _loadCoupons();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('สร้างคูปองไม่สำเร็จ'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.couponCreateFailed),
             backgroundColor: Colors.red,
           ),
         );
@@ -248,8 +249,10 @@ class _MerchantCouponManagementScreenState
       appBar: AppBar(
         title: Text(
           widget.managedByAdmin
-              ? 'คูปองร้าน: ${widget.merchantDisplayName ?? 'ไม่ระบุชื่อ'}'
-              : 'คูปองร้านค้า',
+              ? (widget.merchantDisplayName != null
+                  ? AppLocalizations.of(context)!.couponAdminTitle(widget.merchantDisplayName!)
+                  : AppLocalizations.of(context)!.couponAdminTitleNoName)
+              : AppLocalizations.of(context)!.couponTitle,
         ),
         backgroundColor: AppTheme.accentOrange,
         foregroundColor: Colors.white,
@@ -267,7 +270,7 @@ class _MerchantCouponManagementScreenState
               _buildCreateForm(),
             const SizedBox(height: 16),
             Text(
-              'คูปองของร้าน',
+              AppLocalizations.of(context)!.couponListTitle,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
@@ -293,7 +296,7 @@ class _MerchantCouponManagementScreenState
                   border: Border.all(color: colorScheme.outline.withOpacity(0.12)),
                 ),
                 child: Text(
-                  'ยังไม่มีคูปองร้านค้า',
+                  AppLocalizations.of(context)!.couponEmpty,
                   style: TextStyle(color: colorScheme.onSurface),
                 ),
               )
@@ -308,10 +311,11 @@ class _MerchantCouponManagementScreenState
   Widget _buildUsageGuide() {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final step3 = '3) คูปองส่งฟรีของร้าน จะคิด GP เพิ่มรวม 25%';
+    final l10n = AppLocalizations.of(context)!;
+    final step3 = l10n.couponGuideStep3;
     final step4 = widget.managedByAdmin
-        ? '4) แอดมินสามารถเปิด/ปิดคูปองแต่ละรายการได้จากสวิตช์ด้านขวา'
-        : '4) สามารถเปิด/ปิดคูปองแต่ละรายการได้จากสวิตช์ด้านขวา';
+        ? l10n.couponGuideStep4Admin
+        : l10n.couponGuideStep4Merchant;
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -330,7 +334,7 @@ class _MerchantCouponManagementScreenState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'วิธีใช้งานคูปองร้าน',
+            AppLocalizations.of(context)!.couponGuideTitle,
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: colorScheme.onSurface,
@@ -339,14 +343,14 @@ class _MerchantCouponManagementScreenState
           const SizedBox(height: 6),
           Text(
             widget.managedByAdmin
-                ? '1) แอดมินกำลังจัดการคูปองของร้านที่เลือก ลูกค้าจะเห็นบนหน้าร้านโดยอัตโนมัติ'
-                : '1) สร้างคูปองเฉพาะร้านของคุณ แล้วลูกค้าจะเห็นบนหน้าร้านโดยอัตโนมัติ',
+                ? AppLocalizations.of(context)!.couponGuideStep1Admin
+                : AppLocalizations.of(context)!.couponGuideStep1Merchant,
             style: TextStyle(color: colorScheme.onSurface.withOpacity(0.85)),
           ),
           Text(
             widget.managedByAdmin
-                ? '2) กดปุ่ม "เปิดฟอร์มคูปอง" เพื่อแก้ไขผ่าน Dialog แทนฟอร์มหน้าเดิม'
-                : '2) กรอกข้อมูลในฟอร์มด้านล่างเพื่อสร้างคูปองใหม่ได้ทันที',
+                ? AppLocalizations.of(context)!.couponGuideStep2Admin
+                : AppLocalizations.of(context)!.couponGuideStep2Merchant,
             style: TextStyle(color: colorScheme.onSurface.withOpacity(0.85)),
           ),
           Text(step3, style: TextStyle(color: colorScheme.onSurface.withOpacity(0.85))),
@@ -374,7 +378,7 @@ class _MerchantCouponManagementScreenState
             ios: CupertinoIcons.pencil,
           ),
         ),
-        label: const Text('เปิดฟอร์มคูปอง (Dialog)'),
+        label: Text(AppLocalizations.of(context)!.couponAdminOpenForm),
         style: OutlinedButton.styleFrom(
           foregroundColor: AppTheme.accentOrange,
           side: const BorderSide(color: AppTheme.accentOrange),
@@ -400,39 +404,39 @@ class _MerchantCouponManagementScreenState
             TextFormField(
               controller: _codeController,
               textCapitalization: TextCapitalization.characters,
-              decoration: const InputDecoration(labelText: 'โค้ดคูปอง'),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.couponCodeLabel),
               validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'กรอกโค้ดคูปอง' : null,
+                  (v == null || v.trim().isEmpty) ? AppLocalizations.of(context)!.couponCodeRequired : null,
             ),
             TextFormField(
               controller: _nameController,
-              decoration: const InputDecoration(labelText: 'ชื่อคูปอง'),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.couponNameLabel),
               validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'กรอกชื่อคูปอง' : null,
+                  (v == null || v.trim().isEmpty) ? AppLocalizations.of(context)!.couponNameRequired : null,
             ),
             TextFormField(
               controller: _descController,
-              decoration: const InputDecoration(
-                labelText: 'คำอธิบาย (ไม่บังคับ)',
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.couponDescLabel,
               ),
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               initialValue: _discountType,
-              items: const [
+              items: [
                 DropdownMenuItem(
                   value: 'percentage',
-                  child: Text('ลดเปอร์เซ็นต์'),
+                  child: Text(AppLocalizations.of(context)!.couponTypePercentage),
                 ),
                 DropdownMenuItem(
                   value: 'fixed',
-                  child: Text('ลดเป็นจำนวนเงิน'),
+                  child: Text(AppLocalizations.of(context)!.couponTypeFixed),
                 ),
-                DropdownMenuItem(value: 'free_delivery', child: Text('ส่งฟรี')),
+                DropdownMenuItem(value: 'free_delivery', child: Text(AppLocalizations.of(context)!.couponTypeFreeDelivery)),
               ],
               onChanged: (v) =>
                   setState(() => _discountType = v ?? 'percentage'),
-              decoration: const InputDecoration(labelText: 'ประเภทคูปอง'),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.couponTypeLabel),
             ),
             if (_discountType != 'free_delivery')
               TextFormField(
@@ -440,13 +444,13 @@ class _MerchantCouponManagementScreenState
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   labelText: _discountType == 'percentage'
-                      ? 'ส่วนลด (%)'
-                      : 'ส่วนลด (บาท)',
+                      ? AppLocalizations.of(context)!.couponDiscountPercent
+                      : AppLocalizations.of(context)!.couponDiscountBaht,
                 ),
                 validator: (v) {
                   final value = double.tryParse(v ?? '');
                   if (value == null || value <= 0) {
-                    return 'กรอกส่วนลดให้ถูกต้อง';
+                    return AppLocalizations.of(context)!.couponDiscountRequired;
                   }
                   return null;
                 },
@@ -455,15 +459,15 @@ class _MerchantCouponManagementScreenState
               TextFormField(
                 controller: _maxDiscountController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'ลดสูงสุด (บาท) ไม่บังคับ',
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.couponMaxDiscount,
                 ),
               ),
             TextFormField(
               controller: _minOrderController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'ยอดขั้นต่ำ (บาท) ไม่บังคับ',
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.couponMinOrder,
               ),
             ),
             Row(
@@ -472,8 +476,8 @@ class _MerchantCouponManagementScreenState
                   child: TextFormField(
                     controller: _usageLimitController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'สิทธิ์รวม (0=ไม่จำกัด)',
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.couponUsageLimit,
                     ),
                   ),
                 ),
@@ -482,7 +486,7 @@ class _MerchantCouponManagementScreenState
                   child: TextFormField(
                     controller: _perUserLimitController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'จำกัด/คน'),
+                    decoration: InputDecoration(labelText: AppLocalizations.of(context)!.couponPerUserLimit),
                   ),
                 ),
               ],
@@ -490,7 +494,7 @@ class _MerchantCouponManagementScreenState
             const SizedBox(height: 10),
             Row(
               children: [
-                Expanded(child: Text('เริ่ม: ${_formatDate(_startDate)}')),
+                Expanded(child: Text(AppLocalizations.of(context)!.couponStartDate(_formatDate(_startDate)))),
                 TextButton(
                   onPressed: () async {
                     final picked = await PlatformAdaptive.pickDate(
@@ -501,17 +505,17 @@ class _MerchantCouponManagementScreenState
                       ),
                       lastDate: DateTime.now().add(const Duration(days: 365)),
                       locale: const Locale('th', 'TH'),
-                      title: 'เลือกวันเริ่มใช้งาน',
+                      title: AppLocalizations.of(context)!.couponPickStartDate,
                     );
                     if (picked != null) setState(() => _startDate = picked);
                   },
-                  child: const Text('เลือก'),
+                  child: Text(AppLocalizations.of(context)!.couponPick),
                 ),
               ],
             ),
             Row(
               children: [
-                Expanded(child: Text('หมดอายุ: ${_formatDate(_endDate)}')),
+                Expanded(child: Text(AppLocalizations.of(context)!.couponEndDate(_formatDate(_endDate)))),
                 TextButton(
                   onPressed: () async {
                     final picked = await PlatformAdaptive.pickDate(
@@ -520,11 +524,11 @@ class _MerchantCouponManagementScreenState
                       firstDate: _startDate,
                       lastDate: DateTime.now().add(const Duration(days: 365)),
                       locale: const Locale('th', 'TH'),
-                      title: 'เลือกวันหมดอายุ',
+                      title: AppLocalizations.of(context)!.couponPickEndDate,
                     );
                     if (picked != null) setState(() => _endDate = picked);
                   },
-                  child: const Text('เลือก'),
+                  child: Text(AppLocalizations.of(context)!.couponPick),
                 ),
               ],
             ),
@@ -548,7 +552,7 @@ class _MerchantCouponManagementScreenState
                           color: Colors.white,
                         ),
                       )
-                    : const Text('สร้างคูปอง'),
+                    : Text(AppLocalizations.of(context)!.couponCreateBtn),
               ),
             ),
           ],

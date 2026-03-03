@@ -16,7 +16,9 @@ import '../../../common/services/storage_service.dart';
 import '../../../common/services/account_deletion_service.dart';
 import '../../../common/utils/platform_adaptive.dart';
 import '../../../common/widgets/app_network_image.dart';
+import '../../../common/widgets/language_switcher.dart';
 import '../../customer/screens/auth/login_screen.dart';
+import '../../../l10n/app_localizations.dart';
 import 'merchant_coupon_management_screen.dart';
 import 'profile/edit_merchant_profile_screen.dart';
 
@@ -50,15 +52,18 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
     'sat',
     'sun',
   ];
-  static const Map<String, String> _weekdayThai = {
-    'mon': 'จ',
-    'tue': 'อ',
-    'wed': 'พ',
-    'thu': 'พฤ',
-    'fri': 'ศ',
-    'sat': 'ส',
-    'sun': 'อา',
-  };
+  Map<String, String> _weekdayLocal(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return {
+      'mon': l10n.mchSetWeekMon,
+      'tue': l10n.mchSetWeekTue,
+      'wed': l10n.mchSetWeekWed,
+      'thu': l10n.mchSetWeekThu,
+      'fri': l10n.mchSetWeekFri,
+      'sat': l10n.mchSetWeekSat,
+      'sun': l10n.mchSetWeekSun,
+    };
+  }
   static const String _acceptModeManual = 'manual';
   static const String _acceptModeAuto = 'auto';
 
@@ -318,9 +323,10 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
       final userId = AuthService.userId;
       if (userId == null) return;
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('กำลังอัพโหลดรูปภาพ...'),
+          SnackBar(
+            content: Text(l10n.accountUploadingImage),
             duration: Duration(seconds: 2),
           ),
         );
@@ -333,9 +339,10 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
         await _profileService.updateProfile(userId: userId, avatarUrl: url);
         await _fetchUserProfile();
         if (mounted) {
+          final l10n = AppLocalizations.of(context)!;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('อัพโหลดรูปโปรไฟล์สำเร็จ!'),
+            SnackBar(
+              content: Text(l10n.accountUploadSuccess),
               backgroundColor: Colors.green,
             ),
           );
@@ -344,9 +351,10 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
     } catch (e) {
       debugLog('❌ Error uploading avatar: $e');
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('อัพโหลดรูปไม่สำเร็จ: $e'),
+            content: Text(l10n.accountUploadFailed(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -355,15 +363,16 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
   }
 
   Future<void> _editProfileField(String field) async {
-    final labels = {'full_name': 'ชื่อร้าน', 'phone_number': 'เบอร์โทร'};
-    final hints = {'full_name': 'ชื่อร้านค้า', 'phone_number': 'เบอร์โทรศัพท์'};
+    final l10n = AppLocalizations.of(context)!;
+    final labels = {'full_name': l10n.mchSetShopName, 'phone_number': l10n.mchSetPhone};
+    final hints = {'full_name': l10n.mchSetHintShopName, 'phone_number': l10n.mchSetHintPhone};
     final label = labels[field] ?? field;
     final hint = hints[field] ?? '';
     final controller = TextEditingController(text: _userProfile?[field] ?? '');
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('แก้ไข$label'),
+        title: Text(l10n.mchSetEditField(label)),
         content: TextField(
           controller: controller,
           keyboardType: field == 'phone_number'
@@ -377,11 +386,11 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('ยกเลิก'),
+            child: Text(l10n.mchSetCancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: const Text('บันทึก'),
+            child: Text(l10n.mchSetSave),
           ),
         ],
       ),
@@ -394,9 +403,10 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
           phone: field == 'phone_number' ? result.trim() : null,
         );
         if (mounted) {
+          final l10n = AppLocalizations.of(context)!;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('อัปเดตสำเร็จ!'),
+            SnackBar(
+              content: Text(l10n.accountUpdateSuccess),
               backgroundColor: Colors.green,
             ),
           );
@@ -404,9 +414,10 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
         _fetchUserProfile();
       } catch (e) {
         if (mounted) {
+          final l10n = AppLocalizations.of(context)!;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('อัปเดตไม่สำเร็จ: $e'),
+              content: Text(l10n.accountUpdateFailed(e.toString())),
               backgroundColor: Colors.red,
             ),
           );
@@ -417,6 +428,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
 
   void _showDeleteAccountDialog() {
     final reasonController = TextEditingController();
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -426,24 +438,24 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
           color: Colors.red[700],
           size: 48,
         ),
-        title: const Text(
-          'ลบบัญชีผู้ใช้',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          l10n.accountDeleteDialogTitle,
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'เมื่อยืนยันแล้ว คำขอจะถูกส่งไปยังแอดมินเพื่ออนุมัติ\nระหว่างรออนุมัติจะไม่สามารถใช้งานบัญชีได้',
+            Text(
+              l10n.accountDeleteDialogBody,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, height: 1.5),
+              style: const TextStyle(fontSize: 14, height: 1.5),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: reasonController,
               maxLines: 2,
               decoration: InputDecoration(
-                hintText: 'เหตุผลในการลบบัญชี (ไม่บังคับ)',
+                hintText: l10n.accountDeleteReasonHint,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -456,7 +468,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('ยกเลิก'),
+            child: Text(l10n.accountCancel),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -470,7 +482,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: const Text('ยืนยันลบบัญชี'),
+            child: Text(l10n.accountDeleteConfirm),
           ),
         ],
       ),
@@ -485,9 +497,10 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('ไม่สามารถส่งคำขอได้: $e'),
+            content: Text(l10n.accountDeleteRequestSubmitFailed(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -496,24 +509,25 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
   }
 
   void _showLogoutConfirmation() {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('ออกจากระบบ'),
-        content: const Text('คุณต้องการออกจากระบบใช่หรือไม่?'),
+        title: Text(l10n.accountLogoutDialogTitle),
+        content: Text(l10n.accountLogoutDialogBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('ยกเลิก'),
+            child: Text(l10n.accountCancel),
           ),
           TextButton(
             onPressed: () {
               Navigator.of(ctx).pop();
               _signOut();
             },
-            child: const Text(
-              'ออกจากระบบ',
-              style: TextStyle(color: Colors.red),
+            child: Text(
+              l10n.accountLogout,
+              style: const TextStyle(color: Colors.red),
             ),
           ),
         ],
@@ -532,9 +546,10 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('ออกจากระบบไม่สำเร็จ: $e'),
+            content: Text(l10n.accountUpdateFailed(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -561,13 +576,20 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('บัญชี'),
+        title: Text(l10n.accountTitle),
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
         elevation: 0,
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 8),
+            child: LanguageSwitcher(),
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(
@@ -587,6 +609,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
 
   Widget _buildError() {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -595,9 +618,9 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
           children: [
             Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
             const SizedBox(height: 16),
-            const Text(
-              'โหลดข้อมูลไม่สำเร็จ',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              l10n.accountErrorTitle,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
@@ -609,7 +632,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             ElevatedButton.icon(
               onPressed: _fetchUserProfile,
               icon: const Icon(Icons.refresh),
-              label: const Text('ลองใหม่'),
+              label: Text(l10n.accountRetry),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _accent,
                 foregroundColor: Colors.white,
@@ -724,7 +747,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
           ),
           const SizedBox(height: 14),
           Text(
-            _userProfile?['full_name'] ?? 'ร้านค้า',
+            _userProfile?['full_name'] ?? AppLocalizations.of(context)!.accountRoleMerchant,
             style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
@@ -738,9 +761,9 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
               color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Text(
-              'ร้านค้า',
-              style: TextStyle(
+            child: Text(
+              AppLocalizations.of(context)!.accountRoleMerchant,
+              style: const TextStyle(
                 fontSize: 12,
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
@@ -765,15 +788,15 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
         (_userProfile?['shop_auto_schedule_enabled'] as bool?) ?? true;
 
     return _card(
-      title: 'ข้อมูลร้านค้า',
+      title: AppLocalizations.of(context)!.mchSetShopInfoTitle,
       children: [
         _infoRow(
           PlatformAdaptive.icon(
             android: Icons.store,
             ios: CupertinoIcons.building_2_fill,
           ),
-          'ชื่อร้าน',
-          _userProfile?['full_name'] ?? 'ยังไม่ได้ตั้งค่า',
+          AppLocalizations.of(context)!.mchSetShopName,
+          _userProfile?['full_name'] ?? AppLocalizations.of(context)!.mchSetNotSet,
           () => _editProfileField('full_name'),
         ),
         _divider(),
@@ -782,8 +805,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             android: Icons.phone,
             ios: CupertinoIcons.phone,
           ),
-          'เบอร์โทร',
-          _userProfile?['phone_number'] ?? 'ยังไม่ได้ตั้งค่า',
+          AppLocalizations.of(context)!.mchSetPhone,
+          _userProfile?['phone_number'] ?? AppLocalizations.of(context)!.mchSetNotSet,
           () => _editProfileField('phone_number'),
         ),
         _divider(),
@@ -792,7 +815,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             android: Icons.email_outlined,
             ios: CupertinoIcons.mail,
           ),
-          'อีเมล',
+          AppLocalizations.of(context)!.mchSetEmail,
           AuthService.currentUser?.email ?? '-',
           null,
         ),
@@ -802,8 +825,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             android: Icons.location_on_outlined,
             ios: CupertinoIcons.location,
           ),
-          'ที่อยู่ร้าน',
-          _userProfile?['shop_address'] ?? 'ยังไม่ได้ตั้งค่า',
+          AppLocalizations.of(context)!.mchSetAddress,
+          _userProfile?['shop_address'] ?? AppLocalizations.of(context)!.mchSetNotSet,
           null,
         ),
         _divider(),
@@ -817,8 +840,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                   android: Icons.cancel,
                   ios: CupertinoIcons.xmark_circle_fill,
                 ),
-          'สถานะร้าน',
-          shopStatus == true ? 'เปิดรับออเดอร์' : 'ปิดร้าน',
+          AppLocalizations.of(context)!.mchSetShopStatus,
+          shopStatus == true ? AppLocalizations.of(context)!.mchSetShopOpen : AppLocalizations.of(context)!.mchSetShopClosed,
           null,
         ),
         _divider(),
@@ -827,7 +850,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             android: Icons.schedule,
             ios: CupertinoIcons.clock,
           ),
-          'เวลาเปิด-ปิดร้าน',
+          AppLocalizations.of(context)!.mchSetOpenCloseTime,
           '${_userProfile?['shop_open_time'] ?? '08:00'} - ${_userProfile?['shop_close_time'] ?? '22:00'}',
           _showEditShopHoursDialog,
         ),
@@ -837,7 +860,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             android: Icons.calendar_today_outlined,
             ios: CupertinoIcons.calendar,
           ),
-          'วันเปิดร้าน',
+          AppLocalizations.of(context)!.mchSetOpenDays,
           _formatOpenDaysText(shopOpenDays),
           _showEditShopHoursDialog,
         ),
@@ -847,7 +870,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             android: Icons.rule_folder_outlined,
             ios: CupertinoIcons.doc_text,
           ),
-          'รูปแบบรับออเดอร์',
+          AppLocalizations.of(context)!.mchSetOrderAcceptMode,
           _formatOrderAcceptMode(orderAcceptMode),
           _showEditShopHoursDialog,
         ),
@@ -857,8 +880,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             android: Icons.av_timer_outlined,
             ios: CupertinoIcons.timer,
           ),
-          'เปิด-ปิดร้านอัตโนมัติ',
-          autoScheduleEnabled ? 'เปิดใช้งาน' : 'ปิดใช้งาน',
+          AppLocalizations.of(context)!.mchSetAutoSchedule,
+          autoScheduleEnabled ? AppLocalizations.of(context)!.mchSetAutoScheduleOn : AppLocalizations.of(context)!.mchSetAutoScheduleOff,
           _showEditShopHoursDialog,
         ),
       ],
@@ -877,17 +900,17 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
   }
 
   String _formatOpenDaysText(List<String> days) {
-    if (days.isEmpty) return 'ทุกวัน';
-    return days.map((d) => _weekdayThai[d] ?? d).join(' ');
+    if (days.isEmpty) return AppLocalizations.of(context)!.mchSetEveryDay;
+    return days.map((d) => _weekdayLocal(context)[d] ?? d).join(' ');
   }
 
   String _formatOrderAcceptMode(String mode) {
     switch (mode) {
       case _acceptModeAuto:
-        return 'รับออเดอร์อัตโนมัติ';
+        return AppLocalizations.of(context)!.mchSetAcceptAuto;
       case _acceptModeManual:
       default:
-        return 'รับออเดอร์ด้วยตนเอง';
+        return AppLocalizations.of(context)!.mchSetAcceptManual;
     }
   }
 
@@ -927,8 +950,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              title: const Text(
-                'ตั้งเวลาเปิด-ปิดร้าน',
+              title: Text(
+                AppLocalizations.of(context)!.mchSetEditShopHoursTitle,
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               content: Column(
@@ -936,7 +959,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                 children: [
                   ListTile(
                     leading: Icon(Icons.wb_sunny, color: _accent),
-                    title: const Text('เวลาเปิดร้าน'),
+                    title: Text(AppLocalizations.of(context)!.mchSetOpenTime),
                     trailing: Text(
                       formatTime(selectedOpen),
                       style: TextStyle(
@@ -949,7 +972,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                       final picked = await PlatformAdaptive.pickTime(
                         context: context,
                         initialTime: selectedOpen,
-                        title: 'เวลาเปิดร้าน',
+                        title: AppLocalizations.of(context)!.mchSetOpenTime,
                       );
                       if (picked != null) {
                         setDialogState(() => selectedOpen = picked);
@@ -959,7 +982,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                   const Divider(),
                   ListTile(
                     leading: Icon(Icons.nights_stay, color: Colors.indigo[400]),
-                    title: const Text('เวลาปิดร้าน'),
+                    title: Text(AppLocalizations.of(context)!.mchSetCloseTime),
                     trailing: Text(
                       formatTime(selectedClose),
                       style: TextStyle(
@@ -972,7 +995,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                       final picked = await PlatformAdaptive.pickTime(
                         context: context,
                         initialTime: selectedClose,
-                        title: 'เวลาปิดร้าน',
+                        title: AppLocalizations.of(context)!.mchSetCloseTime,
                       );
                       if (picked != null) {
                         setDialogState(() => selectedClose = picked);
@@ -983,7 +1006,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'วันที่เปิดร้าน',
+                      AppLocalizations.of(context)!.mchSetOpenDaysLabel,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: colorScheme.onSurface,
@@ -997,7 +1020,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                     children: _weekdayKeys.map((day) {
                       final isSelected = selectedDays.contains(day);
                       return FilterChip(
-                        label: Text(_weekdayThai[day] ?? day),
+                        label: Text(_weekdayLocal(context)[day] ?? day),
                         selected: isSelected,
                         selectedColor: _accent.withValues(alpha: 0.15),
                         checkmarkColor: _accent,
@@ -1024,7 +1047,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'รูปแบบการรับออเดอร์',
+                      AppLocalizations.of(context)!.mchSetOrderAcceptModeLabel,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: colorScheme.onSurface,
@@ -1033,16 +1056,16 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                   ),
                   const SizedBox(height: 8),
                   SegmentedButton<String>(
-                    segments: const [
+                    segments: [
                       ButtonSegment<String>(
                         value: _acceptModeManual,
                         icon: Icon(Icons.pan_tool_alt_outlined),
-                        label: Text('รับเอง'),
+                        label: Text(AppLocalizations.of(context)!.mchSetAcceptManualShort),
                       ),
                       ButtonSegment<String>(
                         value: _acceptModeAuto,
                         icon: Icon(Icons.auto_mode_outlined),
-                        label: Text('อัตโนมัติ'),
+                        label: Text(AppLocalizations.of(context)!.mchSetAcceptAutoShort),
                       ),
                     ],
                     selected: {selectedAcceptMode},
@@ -1083,14 +1106,14 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                     value: autoScheduleEnabled,
                     activeThumbColor: _accent,
                     contentPadding: EdgeInsets.zero,
-                    title: const Text(
-                      'เปิด-ปิดร้านอัตโนมัติตามวันและเวลา',
-                      style: TextStyle(fontWeight: FontWeight.w600),
+                    title: Text(
+                      AppLocalizations.of(context)!.mchSetAutoScheduleSwitch,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                     subtitle: Text(
                       autoScheduleEnabled
-                          ? 'ระบบจะสลับสถานะร้านให้อัตโนมัติ'
-                          : 'ปิดไว้ จะเปิด/ปิดร้านด้วยตนเองเท่านั้น',
+                          ? AppLocalizations.of(context)!.mchSetAutoScheduleOnDesc
+                          : AppLocalizations.of(context)!.mchSetAutoScheduleOffDesc,
                       style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                     onChanged: (value) {
@@ -1104,14 +1127,14 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(false),
-                  child: const Text('ยกเลิก'),
+                  child: Text(AppLocalizations.of(context)!.mchSetCancel),
                 ),
                 ElevatedButton(
                   onPressed: () {
                     if (selectedDays.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('กรุณาเลือกวันเปิดร้านอย่างน้อย 1 วัน'),
+                        SnackBar(
+                          content: Text(AppLocalizations.of(context)!.mchSetSelectAtLeast1Day),
                           backgroundColor: Colors.red,
                         ),
                       );
@@ -1126,7 +1149,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text('บันทึก'),
+                  child: Text(AppLocalizations.of(context)!.mchSetSave),
                 ),
               ],
             );
@@ -1157,7 +1180,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'ตั้งเวลาเปิด-ปิดร้าน: $openStr - $closeStr (${_formatOpenDaysText(selectedDays.toList())})',
+                AppLocalizations.of(context)!.mchSetShopHoursSaved(openStr, closeStr, _formatOpenDaysText(selectedDays.toList())),
               ),
               backgroundColor: Colors.green,
             ),
@@ -1168,7 +1191,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('บันทึกไม่สำเร็จ: $e'),
+              content: Text(AppLocalizations.of(context)!.mchSetSaveFailed(e.toString())),
               backgroundColor: Colors.red,
             ),
           );
@@ -1183,14 +1206,14 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
 
   Widget _buildMenuCard() {
     return _card(
-      title: 'เมนู',
+      title: AppLocalizations.of(context)!.accountMenuTitle,
       children: [
         _menuItem(
           PlatformAdaptive.icon(
             android: Icons.edit,
             ios: CupertinoIcons.pencil,
           ),
-          'แก้ไขข้อมูลร้าน',
+          AppLocalizations.of(context)!.merchantMenuEditShop,
           _navigateToEditProfile,
         ),
         _divider(),
@@ -1199,7 +1222,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             android: Icons.local_offer_outlined,
             ios: CupertinoIcons.ticket,
           ),
-          'คูปองร้านค้า',
+          AppLocalizations.of(context)!.merchantMenuCoupons,
           () {
             Navigator.of(context).push(
               MaterialPageRoute(
@@ -1210,27 +1233,29 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
         ),
         _divider(),
         _menuItem(
-          PlatformAdaptive.icon(
-            android: Icons.notifications_outlined,
-            ios: CupertinoIcons.bell,
-          ),
-          'การแจ้งเตือน',
+          Icons.notifications_outlined,
+          AppLocalizations.of(context)!.accountMenuNotifications,
           () {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('ฟีเจอร์นี้จะมาในเวอร์ชันถัดไป')),
+              SnackBar(
+                content: Text(
+                  AppLocalizations.of(context)!.accountFeatureComingSoon,
+                ),
+              ),
             );
           },
         ),
         _divider(),
         _menuItem(
-          PlatformAdaptive.icon(
-            android: Icons.help_outline,
-            ios: CupertinoIcons.question_circle,
-          ),
-          'ช่วยเหลือ',
+          Icons.help_outline,
+          AppLocalizations.of(context)!.accountMenuHelp,
           () {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('ฟีเจอร์นี้จะมาในเวอร์ชันถัดไป')),
+              SnackBar(
+                content: Text(
+                  AppLocalizations.of(context)!.accountFeatureComingSoon,
+                ),
+              ),
             );
           },
         ),
@@ -1240,7 +1265,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             android: Icons.privacy_tip_outlined,
             ios: CupertinoIcons.shield,
           ),
-          'นโยบายความเป็นส่วนตัว',
+          AppLocalizations.of(context)!.accountMenuPrivacyPolicy,
           _openPrivacyPolicy,
         ),
       ],
@@ -1254,9 +1279,10 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
     try {
       if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
         if (mounted) {
+          final l10n = AppLocalizations.of(context)!;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('ไม่สามารถเปิดลิงก์ได้'),
+            SnackBar(
+              content: Text(l10n.accountOpenLinkFailed),
               backgroundColor: Colors.red,
             ),
           );
@@ -1265,9 +1291,10 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
     } catch (e) {
       debugLog('❌ Error opening privacy policy: $e');
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('เกิดข้อผิดพลาด: $e'),
+            content: Text(l10n.accountErrorGeneric(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -1298,7 +1325,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'ข้อมูลแอป',
+            AppLocalizations.of(context)!.accountAppInfoTitle,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -1309,7 +1336,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
           Row(
             children: [
               Text(
-                'เวอร์ชัน',
+                AppLocalizations.of(context)!.accountVersionLabel,
                 style: TextStyle(fontSize: 13, color: Colors.grey[600]),
               ),
               const Spacer(),
@@ -1333,7 +1360,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                   padding:
                       const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
                   child: Text(
-                    _appVersion ?? 'กำลังโหลด...',
+                    _appVersion ?? AppLocalizations.of(context)!.accountLoading,
                     style: TextStyle(fontSize: 13, color: Colors.grey[500]),
                   ),
                 ),
@@ -1344,7 +1371,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
           Row(
             children: [
               Text(
-                'พัฒนาโดย',
+                AppLocalizations.of(context)!.accountDevelopedByLabel,
                 style: TextStyle(fontSize: 13, color: Colors.grey[600]),
               ),
               const Spacer(),
@@ -1364,6 +1391,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
   // ============================================================
 
   Widget _buildLogoutButton() {
+    final l10n = AppLocalizations.of(context)!;
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
@@ -1375,9 +1403,9 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
           ),
           size: 20,
         ),
-        label: const Text(
-          'ออกจากระบบ',
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+        label: Text(
+          l10n.accountLogout,
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
         ),
         style: OutlinedButton.styleFrom(
           foregroundColor: Colors.red,
@@ -1392,6 +1420,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
   }
 
   Widget _buildDeleteAccountButton() {
+    final l10n = AppLocalizations.of(context)!;
     return SizedBox(
       width: double.infinity,
       child: TextButton.icon(
@@ -1403,7 +1432,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
           ),
           size: 20,
         ),
-        label: const Text('ลบบัญชี', style: TextStyle(fontSize: 14)),
+        label: Text(l10n.accountDelete, style: const TextStyle(fontSize: 14)),
         style: TextButton.styleFrom(
           foregroundColor: Colors.grey[500],
           padding: const EdgeInsets.symmetric(vertical: 12),

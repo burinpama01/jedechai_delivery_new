@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../common/services/auth_service.dart';
 import '../../../common/widgets/location_disclosure_dialog.dart';
 import '../../../theme/app_theme.dart';
@@ -32,27 +33,29 @@ class _MapScreenState extends State<MapScreen> {
     zoom: 14.0,
   );
 
-  // Service data
-  final List<Map<String, dynamic>> _services = [
-    {
-      'title': 'เรียกรถ',
-      'icon': Icons.motorcycle,
-      'color': AppTheme.primaryGreen,
-      'screen': const RideServiceScreen(),
-    },
-    {
-      'title': 'สั่งอาหาร',
-      'icon': Icons.fastfood,
-      'color': AppTheme.accentOrange,
-      'screen': FoodServiceScreen(),
-    },
-    {
-      'title': 'ส่งของ',
-      'icon': Icons.local_shipping,
-      'color': AppTheme.accentBlue,
-      'screen': const ParcelServiceScreen(),
-    },
-  ];
+  List<Map<String, dynamic>> _getServices(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return [
+      {
+        'title': l10n.mapSvcRide,
+        'icon': Icons.motorcycle,
+        'color': AppTheme.primaryGreen,
+        'screen': const RideServiceScreen(),
+      },
+      {
+        'title': l10n.mapSvcFood,
+        'icon': Icons.fastfood,
+        'color': AppTheme.accentOrange,
+        'screen': FoodServiceScreen(),
+      },
+      {
+        'title': l10n.mapSvcParcel,
+        'icon': Icons.local_shipping,
+        'color': AppTheme.accentBlue,
+        'screen': const ParcelServiceScreen(),
+      },
+    ];
+  }
 
   @override
   void initState() {
@@ -141,8 +144,8 @@ class _MapScreenState extends State<MapScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('บริการตำแหน่ง'),
-          content: const Text('บริการตำแหน่งถูกปิดใช้งานอยู่ กรุณาเปิดใช้งานบริการตำแหน่ง'),
+          title: Text(AppLocalizations.of(context)!.mapLocServiceTitle),
+          content: Text(AppLocalizations.of(context)!.mapLocServiceBody),
           actions: [
             TextButton(
               onPressed: () {
@@ -150,13 +153,13 @@ class _MapScreenState extends State<MapScreen> {
                 // Try opening location settings
                 Geolocator.openLocationSettings();
               },
-              child: const Text('เปิดการตั้งค่า'),
+              child: Text(AppLocalizations.of(context)!.mapLocOpenSettings),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('ยกเลิก'),
+              child: Text(AppLocalizations.of(context)!.mapLocCancel),
             ),
           ],
         );
@@ -170,21 +173,21 @@ class _MapScreenState extends State<MapScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('สิทธิ์การเข้าถึงตำแหน่ง'),
-          content: const Text('การอนุญาตให้เข้าถึงตำแหน่งถูกปฏิเสธ กรุณาอนุญาตให้เข้าถึงตำแหน่งเพื่อใช้งานแผนที่'),
+          title: Text(AppLocalizations.of(context)!.mapLocPermTitle),
+          content: Text(AppLocalizations.of(context)!.mapLocPermDenied),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 _determinePosition(); // Try again
               },
-              child: const Text('ลองใหม่'),
+              child: Text(AppLocalizations.of(context)!.mapLocRetry),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('ยกเลิก'),
+              child: Text(AppLocalizations.of(context)!.mapLocCancel),
             ),
           ],
         );
@@ -198,21 +201,21 @@ class _MapScreenState extends State<MapScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('สิทธิ์การเข้าถึงตำแหน่ง'),
-          content: const Text('การอนุญาตให้เข้าถึงตำแหน่งถูกปฏิเสธถาวร กรุณาเปิดการตั้งค่าแอปเพื่ออนุญาตสิทธิ์'),
+          title: Text(AppLocalizations.of(context)!.mapLocPermTitle),
+          content: Text(AppLocalizations.of(context)!.mapLocPermForever),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 Geolocator.openAppSettings();
               },
-              child: const Text('เปิดการตั้งค่า'),
+              child: Text(AppLocalizations.of(context)!.mapLocOpenSettings),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('ยกเลิก'),
+              child: Text(AppLocalizations.of(context)!.mapLocCancel),
             ),
           ],
         );
@@ -226,14 +229,14 @@ class _MapScreenState extends State<MapScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('ข้อผิดพลาดตำแหน่ง'),
-          content: Text('ไม่สามารถดึงตำแหน่งได้: $error'),
+          title: Text(AppLocalizations.of(context)!.mapLocErrorTitle),
+          content: Text(AppLocalizations.of(context)!.mapLocErrorBody(error)),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('ตกลง'),
+              child: Text(AppLocalizations.of(context)!.mapLocOk),
             ),
           ],
         );
@@ -244,7 +247,7 @@ class _MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final userEmail = AuthService.userEmail ?? 'ผู้ใช้';
+    final userEmail = AuthService.userEmail ?? AppLocalizations.of(context)!.mapUserFallback;
 
     return Scaffold(
       appBar: AppBar(
@@ -269,7 +272,7 @@ class _MapScreenState extends State<MapScreen> {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: _logout,
-            tooltip: 'ออกจากระบบ',
+            tooltip: AppLocalizations.of(context)!.mapLogout,
           ),
         ],
       ),
@@ -314,16 +317,16 @@ class _MapScreenState extends State<MapScreen> {
           
           // Location loading indicator
           if (_isLoadingLocation)
-            const Positioned(
+            Positioned(
               top: 80,
               left: 16,
               child: Card(
                 child: Padding(
-                  padding: EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(12),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      SizedBox(
+                      const SizedBox(
                         width: 16,
                         height: 16,
                         child: CircularProgressIndicator(
@@ -331,8 +334,8 @@ class _MapScreenState extends State<MapScreen> {
                           valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryGreen),
                         ),
                       ),
-                      SizedBox(width: 8),
-                      Text('กำลังหาตำแหน่ง...'),
+                      const SizedBox(width: 8),
+                      Text(AppLocalizations.of(context)!.mapFindingLocation),
                     ],
                   ),
                 ),
@@ -448,7 +451,7 @@ class _MapScreenState extends State<MapScreen> {
           
           // Service title
           Text(
-            'เลือกบริการ',
+            AppLocalizations.of(context)!.mapSelectService,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -460,7 +463,7 @@ class _MapScreenState extends State<MapScreen> {
           // Service buttons row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: _services.map((service) {
+            children: _getServices(context).map((service) {
               return _buildServiceButton(
                 title: service['title'] as String,
                 icon: service['icon'] as IconData,
@@ -541,7 +544,7 @@ class _MapScreenState extends State<MapScreen> {
         final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('เกิดข้อผิดพลาด: ${e.toString()}'),
+            content: Text(AppLocalizations.of(context)!.mapLogoutError(e.toString())),
             backgroundColor: colorScheme.error,
           ),
         );

@@ -26,6 +26,7 @@ import '../../../common/config/env_config.dart';
 import '../../customer/screens/services/support_tickets_screen.dart';
 import 'driver_main_screen.dart';
 import 'driver_job_detail_screen.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Driver Navigation Screen
 /// 
@@ -64,8 +65,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   // Customer info
   // ignore: unused_field
   Map<String, dynamic>? _customerProfile;
-  String _customerName = 'ลูกค้า';
-  String _customerPhone = 'ไม่ระบุ';
+  String _customerName = '';
+  String _customerPhone = '';
   double _couponDiscount = 0.0;
   String? _couponCode;
   double _merchantSystemRatePreview = 0.10;
@@ -366,7 +367,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('กรุณาอนุญาตการเข้าถึงตำแหน่งเพื่อใช้งานฟีเจอร์นี้'),
+                content: Text(AppLocalizations.of(context)!.driverNavLocationPermSnack),
                 backgroundColor: Theme.of(context).colorScheme.tertiary,
                 duration: const Duration(seconds: 3),
               ),
@@ -387,19 +388,19 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                 color: Theme.of(context).colorScheme.error,
                 size: 48,
               ),
-              title: const Text('ไม่สามารถเข้าถึงตำแหน่ง'),
-              content: const Text('กรุณาเปิดการเข้าถึงตำแหน่งในการตั้งค่าของเครื่อง เพื่อใช้งานแอปได้ตามปกติ'),
+              title: Text(AppLocalizations.of(context)!.driverNavLocationDeniedTitle),
+              content: Text(AppLocalizations.of(context)!.driverNavLocationDeniedBody),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('ตกลง'),
+                  child: Text(AppLocalizations.of(context)!.driverNavOk),
                 ),
                 ElevatedButton(
                   onPressed: () {
                     Navigator.of(ctx).pop();
                     Geolocator.openAppSettings();
                   },
-                  child: const Text('เปิดการตั้งค่า'),
+                  child: Text(AppLocalizations.of(context)!.driverNavOpenSettings),
                 ),
               ],
             ),
@@ -583,8 +584,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       
       if (profile != null) {
         _customerProfile = profile;
-        _customerName = profile['full_name'] ?? 'ลูกค้า';
-        _customerPhone = profile['phone_number'] ?? 'ไม่ระบุ';
+        _customerName = profile['full_name'] ?? AppLocalizations.of(context)!.driverNavCustomerDefault;
+        _customerPhone = profile['phone_number'] ?? AppLocalizations.of(context)!.driverNavPhoneUnknown;
         debugLog('✅ Customer profile fetched: $_customerName, $_customerPhone');
         
         if (mounted) {
@@ -608,7 +609,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           .maybeSingle();
       if (profile != null && mounted) {
         setState(() {
-          _merchantName = profile['full_name'] ?? 'ร้านค้า';
+          _merchantName = profile['full_name'] ?? AppLocalizations.of(context)!.driverNavMerchantDefault;
           _merchantPhone = profile['phone_number'] ?? '';
         });
       }
@@ -619,7 +620,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   Future<void> _callMerchant() async {
     if (_merchantPhone.isEmpty) {
-      _showErrorSnackBar('ไม่พบเบอร์โทรร้านค้า');
+      _showErrorSnackBar(AppLocalizations.of(context)!.driverNavNoMerchantPhone);
       return;
     }
     final uri = Uri.parse('tel:$_merchantPhone');
@@ -627,10 +628,10 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
       } else {
-        _showErrorSnackBar('ไม่สามารถโทรออกได้');
+        _showErrorSnackBar(AppLocalizations.of(context)!.driverNavCannotCall);
       }
     } catch (e) {
-      _showErrorSnackBar('เกิดข้อผิดพลาดในการโทร');
+      _showErrorSnackBar(AppLocalizations.of(context)!.driverNavCallError);
     }
   }
 
@@ -649,13 +650,14 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     if (_booking == null) return;
 
     String? selectedReason;
+    final l10n = AppLocalizations.of(context)!;
     final reasons = [
-      'ลูกค้าไม่รับสาย/ติดต่อไม่ได้',
-      'ร้านค้าปิด/ไม่พร้อมให้บริการ',
-      'ระยะทางไกลเกินไป',
-      'เกิดเหตุฉุกเฉินส่วนตัว',
-      'สภาพอากาศไม่ดี/ถนนไม่สะดวก',
-      'อื่นๆ',
+      l10n.driverNavCancelReason1,
+      l10n.driverNavCancelReason2,
+      l10n.driverNavCancelReason3,
+      l10n.driverNavCancelReason4,
+      l10n.driverNavCancelReason5,
+      l10n.driverNavCancelReason6,
     ];
 
     final confirmed = await showDialog<bool>(
@@ -669,7 +671,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                 children: [
                   Icon(Icons.cancel_outlined, color: colorScheme.error, size: 24),
                   const SizedBox(width: 8),
-                  const Text('ยกเลิกงาน', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(l10n.driverNavCancelTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ],
               ),
               content: Column(
@@ -677,7 +679,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'กรุณาเลือกเหตุผลในการยกเลิก:',
+                    l10n.driverNavCancelSelectReason,
                     style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
                   ),
                   const SizedBox(height: 12),
@@ -703,7 +705,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'การยกเลิกงานบ่อยอาจส่งผลต่อคะแนนของคุณ',
+                            l10n.driverNavCancelWarning,
                             style: TextStyle(
                               fontSize: 12,
                               color: colorScheme.onErrorContainer,
@@ -718,7 +720,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(false),
-                  child: const Text('กลับ'),
+                  child: Text(l10n.driverNavCancelBack),
                 ),
                 ElevatedButton(
                   onPressed: selectedReason == null
@@ -728,7 +730,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                     backgroundColor: colorScheme.error,
                     foregroundColor: colorScheme.onError,
                   ),
-                  child: const Text('ยืนยันยกเลิก'),
+                  child: Text(l10n.driverNavCancelConfirm),
                 ),
               ],
             );
@@ -753,8 +755,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       if (_booking!.customerId.isNotEmpty) {
         await NotificationSender.sendNotification(
           targetUserId: _booking!.customerId,
-          title: '❌ คนขับยกเลิกงาน',
-          body: 'เหตุผล: $selectedReason',
+          title: l10n.driverNavCancelNotifTitle,
+          body: l10n.driverNavCancelNotifBody(selectedReason!),
           data: {
             'type': 'booking_cancelled',
             'booking_id': _booking!.id,
@@ -763,7 +765,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       }
 
       if (mounted) {
-        _showSuccessSnackBar('ยกเลิกงานเรียบร้อยแล้ว');
+        _showSuccessSnackBar(l10n.driverNavCancelSuccess);
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const DriverMainScreen()),
           (route) => false,
@@ -772,7 +774,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     } catch (e) {
       debugLog('❌ Error cancelling job: $e');
       if (mounted) {
-        _showErrorSnackBar('ไม่สามารถยกเลิกงาน: ${e.toString()}');
+        _showErrorSnackBar(l10n.driverNavCancelError(e.toString()));
       }
     } finally {
       if (mounted) setState(() => _isUpdatingStatus = false);
@@ -896,8 +898,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           position: _pickupLocation!,
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
           infoWindow: InfoWindow(
-            title: 'จุดรับ',
-            snippet: _booking?.pickupAddress ?? 'ตำแหน่งรับ',
+            title: AppLocalizations.of(context)!.driverNavMarkerPickup,
+            snippet: _booking?.pickupAddress ?? AppLocalizations.of(context)!.driverNavMarkerPickupFallback,
           ),
         ));
         debugLog('📍 Added pickup marker at ${_pickupLocation!.latitude}, ${_pickupLocation!.longitude}');
@@ -910,8 +912,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           position: _destinationLocation!,
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
           infoWindow: InfoWindow(
-            title: 'จุดหมาย',
-            snippet: _booking?.destinationAddress ?? 'จุดหมายปลายทาง',
+            title: AppLocalizations.of(context)!.driverNavMarkerDest,
+            snippet: _booking?.destinationAddress ?? AppLocalizations.of(context)!.driverNavMarkerDestFallback,
           ),
         ));
         debugLog('📍 Added destination marker at ${_destinationLocation!.latitude}, ${_destinationLocation!.longitude}');
@@ -950,7 +952,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   }
   
   void _updateMapForStatus() {
-    if (_booking == null || _mapController == null) return;
+    if (_booking == null || _isUpdatingStatus) return;
     
     debugLog('🗺️ Updating map for status: ${_booking!.status}');
     
@@ -1161,7 +1163,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
               markerId: const MarkerId('driver'),
               position: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
               icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-              infoWindow: const InfoWindow(title: 'ตำแหน่งคนขับ'),
+              infoWindow: InfoWindow(title: AppLocalizations.of(context)!.driverNavMarkerDriver),
             ));
           }
           
@@ -1170,7 +1172,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
             markerId: const MarkerId('destination'),
             position: _destinationLocation!,
             icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-            infoWindow: InfoWindow(title: 'จุดหมาย: ${_booking?.destinationAddress ?? 'ตำแหน่ง'}'),
+            infoWindow: InfoWindow(title: '${AppLocalizations.of(context)!.driverNavMarkerDest}: ${_booking?.destinationAddress ?? AppLocalizations.of(context)!.driverNavMarkerPosition}'),
           ));
           
           // Add polyline
@@ -1231,7 +1233,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
               markerId: const MarkerId('driver'),
               position: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
               icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-              infoWindow: const InfoWindow(title: 'ตำแหน่งของคุณ'),
+              infoWindow: InfoWindow(title: AppLocalizations.of(context)!.driverNavMarkerYou),
             ),
           );
         });
@@ -1248,12 +1250,12 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     if (_booking!.status == 'in_transit') {
       if (_destinationLocation == null) return;
       targetLocation = _destinationLocation!;
-      targetLabel = 'จุดหมาย';
+      targetLabel = AppLocalizations.of(context)!.driverNavMarkerDest;
       targetIcon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
     } else {
       if (_pickupLocation == null) return;
       targetLocation = _pickupLocation!;
-      targetLabel = 'จุดรับ';
+      targetLabel = AppLocalizations.of(context)!.driverNavMarkerPickup;
       targetIcon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen);
     }
 
@@ -1265,7 +1267,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           markerId: const MarkerId('driver'),
           position: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-          infoWindow: const InfoWindow(title: 'ตำแหน่งของคุณ'),
+          infoWindow: InfoWindow(title: AppLocalizations.of(context)!.driverNavMarkerYou),
         ),
       );
       _markers.add(
@@ -1283,7 +1285,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
             markerId: const MarkerId('destination'),
             position: _destinationLocation!,
             icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-            infoWindow: InfoWindow(title: 'จุดหมาย: ${_booking?.destinationAddress ?? ''}'),
+            infoWindow: InfoWindow(title: '${AppLocalizations.of(context)!.driverNavMarkerDest}: ${_booking?.destinationAddress ?? ''}'),
           ),
         );
       }
@@ -1409,7 +1411,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         } else {
           debugLog('❌ Driver ID is null - cannot update');
           if (mounted) {
-            _showErrorSnackBar('ไม่พบข้อมูลคนขับ กรุณาออกจากระบบและเข้าสู่ระบบใหม่');
+            _showErrorSnackBar(AppLocalizations.of(context)!.driverNavNoDriverData);
           }
           return;
         }
@@ -1472,7 +1474,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         }
         
         if (mounted) {
-          _showSuccessSnackBar('อัพเดตสถานะเรียบร้อยแล้ว');
+          _showSuccessSnackBar(AppLocalizations.of(context)!.driverNavStatusUpdated);
           
           // Show merchant payment dialog when picking up food
           if (newStatus == 'picking_up_order' && _booking!.serviceType == 'food') {
@@ -1502,21 +1504,21 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       if (e.toString().contains('permission_denied')) {
         debugLog('❌ Permission denied - check RLS policies');
         if (mounted) {
-          _showErrorSnackBar('ไม่มีสิทธิ์ กรุณาตรวจสอบสิทธิ์บัญชีของคุณ');
+          _showErrorSnackBar(AppLocalizations.of(context)!.driverNavPermDenied);
         }
       } else if (e.toString().contains('no rows')) {
         debugLog('❌ No rows found - booking may not exist');
         if (mounted) {
-          _showErrorSnackBar('ไม่พบการจอง กรุณารีเฟรชและลองใหม่');
+          _showErrorSnackBar(AppLocalizations.of(context)!.driverNavBookingNotFound);
         }
       } else if (e.toString().contains('foreign_key')) {
         debugLog('❌ Foreign key constraint - driver_id may be invalid');
         if (mounted) {
-          _showErrorSnackBar('ข้อมูลคนขับไม่ถูกต้อง กรุณาออกจากระบบและเข้าสู่ระบบใหม่');
+          _showErrorSnackBar(AppLocalizations.of(context)!.driverNavDriverInvalid);
         }
       } else {
         if (mounted) {
-          _showErrorSnackBar('ไม่สามารถอัพเดตสถานะ: ${e.toString()}');
+          _showErrorSnackBar(AppLocalizations.of(context)!.driverNavStatusUpdateError(e.toString()));
         }
       }
     } finally {
@@ -1570,13 +1572,13 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       } else {
         debugLog('❌ Cannot launch Google Maps');
         if (mounted) {
-          _showErrorSnackBar('ไม่สามารถเปิด Google Maps ได้');
+          _showErrorSnackBar(AppLocalizations.of(context)!.driverNavCannotOpenMaps);
         }
       }
     } catch (e) {
       debugLog('❌ Error launching Google Maps: $e');
       if (mounted) {
-        _showErrorSnackBar('เกิดข้อผิดพลาดในการเปิดแผนที่นำทาง');
+        _showErrorSnackBar(AppLocalizations.of(context)!.driverNavMapsError);
       }
     }
   }
@@ -1584,48 +1586,49 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   String _getActionButtonText() {
     final status = _booking?.status ?? 'unknown';
     final serviceType = _booking?.serviceType ?? 'ride';
+    final l10n = AppLocalizations.of(context)!;
     debugLog('🎯 Getting action button text for status: $status, service: $serviceType');
     
     if (serviceType == 'food') {
       switch (status) {
         case 'accepted':
         case 'driver_accepted':
-          return 'ถึงร้านแล้ว';
+          return l10n.driverNavFoodArrivedMerchant;
         case 'arrived_at_merchant':
-          return 'รออาหารพร้อม';
+          return l10n.driverNavFoodWaitReady;
         case 'ready_for_pickup':
-          return 'รับอาหาร';
+          return l10n.driverNavFoodPickup;
         case 'picking_up_order':
-          return 'เริ่มส่งอาหาร';
+          return l10n.driverNavFoodStartDelivery;
         case 'in_transit':
-          return 'ส่งอาหารเสร็จสิ้น';
+          return l10n.driverNavFoodComplete;
         default:
-          return 'อัพเดตสถานะ';
+          return l10n.driverNavUpdateStatus;
       }
     } else if (serviceType == 'parcel') {
       switch (status) {
         case 'accepted':
         case 'driver_accepted':
-          return 'ถึงจุดรับพัสดุแล้ว';
+          return l10n.driverNavParcelArrivedPickup;
         case 'arrived':
-          return 'รับพัสดุ เริ่มส่ง';
+          return l10n.driverNavParcelStartDelivery;
         case 'in_transit':
-          return 'ส่งพัสดุเสร็จสิ้น';
+          return l10n.driverNavParcelComplete;
         default:
-          return 'อัพเดตสถานะ';
+          return l10n.driverNavUpdateStatus;
       }
     } else {
       // Ride
       switch (status) {
         case 'accepted':
         case 'driver_accepted':
-          return 'ถึงจุดรับลูกค้าแล้ว';
+          return l10n.driverNavRideArrivedPickup;
         case 'arrived':
-          return 'รับผู้โดยสาร เริ่มเดินทาง';
+          return l10n.driverNavRideStartTrip;
         case 'in_transit':
-          return 'ส่งผู้โดยสารเสร็จสิ้น';
+          return l10n.driverNavRideComplete;
         default:
-          return 'อัพเดตสถานะ';
+          return l10n.driverNavUpdateStatus;
       }
     }
   }
@@ -1687,7 +1690,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('กรุณารอร้านค้ากดอาหารพร้อมก่อน'),
+                content: Text(AppLocalizations.of(context)!.driverNavWaitMerchantReady),
                 backgroundColor: Theme.of(context).colorScheme.tertiary,
                 duration: const Duration(seconds: 3),
               ),
@@ -1707,7 +1710,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           break;
         default:
           debugLog('⚠️ Unknown food status: ${_booking!.status}');
-          _showErrorSnackBar('สถานะไม่ถูกต้อง: ${_booking!.status}');
+          _showErrorSnackBar(AppLocalizations.of(context)!.driverNavInvalidStatus(_booking!.status));
           return;
       }
     } else {
@@ -1727,7 +1730,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           break;
         default:
           debugLog('⚠️ Unknown ride/parcel status: ${_booking!.status}');
-          _showErrorSnackBar('สถานะไม่ถูกต้อง: ${_booking!.status}');
+          _showErrorSnackBar(AppLocalizations.of(context)!.driverNavInvalidStatus(_booking!.status));
           return;
       }
     }
@@ -1745,6 +1748,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   }
 
   Future<bool> _checkProximity() async {
+    final l10n = AppLocalizations.of(context)!;
     try {
       debugLog('📍 Checking proximity to target location...');
       
@@ -1767,37 +1771,37 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         // ALL service types - check distance to destination (customer) before completing
         targetLat = _booking!.destLat;
         targetLng = _booking!.destLng;
-        locationName = 'จุดหมายลูกค้า';
+        locationName = l10n.driverNavProxCustomerDest;
         debugLog('📍 Target: Customer destination (${targetLat}, ${targetLng})');
       } else if (serviceType == 'food' && status == 'driver_accepted') {
         // Food - check distance to merchant (origin) when arriving
         targetLat = _booking!.originLat;
         targetLng = _booking!.originLng;
-        locationName = 'ร้านค้า';
+        locationName = l10n.driverNavProxMerchant;
         debugLog('📍 Target: Merchant location (${targetLat}, ${targetLng})');
       } else if (serviceType == 'food' && status == 'ready_for_pickup') {
         // Food - check distance to merchant (origin) when picking up order
         targetLat = _booking!.originLat;
         targetLng = _booking!.originLng;
-        locationName = 'ร้านค้า';
+        locationName = l10n.driverNavProxMerchant;
         debugLog('📍 Target: Merchant location for pickup (${targetLat}, ${targetLng})');
       } else if (serviceType == 'ride' && status == 'accepted') {
         // Ride - check distance to pickup location (origin)
         targetLat = _booking!.originLat;
         targetLng = _booking!.originLng;
-        locationName = 'จุดรับผู้โดยสาร';
+        locationName = l10n.driverNavProxRidePickup;
         debugLog('📍 Target: Pickup location (${targetLat}, ${targetLng})');
       } else if (serviceType == 'parcel' && (status == 'accepted' || status == 'driver_accepted')) {
         // Parcel - check distance to pickup (origin)
         targetLat = _booking!.originLat;
         targetLng = _booking!.originLng;
-        locationName = 'จุดรับพัสดุ';
+        locationName = l10n.driverNavProxParcelPickup;
         debugLog('📍 Target: Parcel pickup location (${targetLat}, ${targetLng})');
       } else if (serviceType == 'parcel' && status == 'ready_for_pickup') {
         // Parcel - check distance to pickup (origin) before starting delivery
         targetLat = _booking!.originLat;
         targetLng = _booking!.originLng;
-        locationName = 'จุดรับพัสดุ';
+        locationName = l10n.driverNavProxParcelPickup;
         debugLog('📍 Target: Parcel pickup for delivery (${targetLat}, ${targetLng})');
       } else {
         debugLog('⚠️ Unexpected service type or status for proximity check');
@@ -1828,16 +1832,14 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                 color: Theme.of(context).colorScheme.tertiary,
                 size: 48,
               ),
-              title: const Text('อยู่ไกลเกินไป'),
+              title: Text(l10n.driverNavTooFarTitle),
               content: Text(
-                'กรุณาเข้าใกล้จุดหมายมากขึ้น\n\n'
-                'ระยะทางปัจจุบัน: ${distanceInMeters.toStringAsFixed(0)} เมตร\n'
-                'ระยะทางที่อนุญาต: ${kAllowedRadiusMeters.toStringAsFixed(0)} เมตร',
+                l10n.driverNavTooFarBody(distanceInMeters.toStringAsFixed(0), kAllowedRadiusMeters.toStringAsFixed(0)),
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('ตกลง'),
+                  child: Text(l10n.driverNavOk),
                 ),
               ],
             ),
@@ -1850,7 +1852,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('ไม่สามารถตรวจสอบตำแหน่ง: ${e.toString()}'),
+            content: Text(l10n.driverNavCannotCheckLocation(e.toString())),
             backgroundColor: Theme.of(context).colorScheme.tertiary,
             duration: const Duration(seconds: 3),
           ),
@@ -1866,11 +1868,12 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     if (_booking == null) return;
     final driverId = AuthService.userId;
     if (driverId == null || _booking!.customerId.isEmpty) {
-      _showErrorSnackBar('ไม่สามารถเปิดแชทได้');
+      _showErrorSnackBar(AppLocalizations.of(context)!.driverNavChatError);
       return;
     }
 
     try {
+      final l10n = AppLocalizations.of(context)!;
       final chatService = ChatService();
       final room = await chatService.getOrCreateBookingChatRoom(
         bookingId: _booking!.id,
@@ -1890,11 +1893,11 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           ),
         );
       } else {
-        _showErrorSnackBar('ไม่สามารถเปิดห้องแชทได้');
+        _showErrorSnackBar(l10n.driverNavChatRoomError);
       }
     } catch (e) {
       debugLog('❌ Error opening chat: $e');
-      _showErrorSnackBar('เกิดข้อผิดพลาดในการเปิดแชท');
+      _showErrorSnackBar(AppLocalizations.of(context)!.driverNavChatOpenError);
     }
   }
 
@@ -1909,6 +1912,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
       if (!mounted) return;
       final colorScheme = Theme.of(context).colorScheme;
+      final l10n = AppLocalizations.of(context)!;
 
       final orderItems = List<Map<String, dynamic>>.from(items);
 
@@ -1920,20 +1924,20 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
             children: [
               Icon(Icons.restaurant_menu, color: colorScheme.tertiary, size: 28),
               const SizedBox(width: 8),
-              const Expanded(
-                child: Text('รายการอาหาร', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              Expanded(
+                child: Text(l10n.driverNavOrderItemsTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
           content: orderItems.isEmpty
-              ? const Text('ไม่พบรายการอาหาร', style: TextStyle(fontSize: 16))
+              ? Text(l10n.driverNavOrderItemsEmpty, style: const TextStyle(fontSize: 16))
               : SizedBox(
                   width: double.maxFinite,
                   child: SingleChildScrollView(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: orderItems.map((item) {
-                        final name = item['name'] ?? item['item_name'] ?? 'ไม่ระบุ';
+                        final name = item['name'] ?? item['item_name'] ?? l10n.driverNavItemUnspecified;
                         final qty = (item['quantity'] as num?)?.toInt() ?? 1;
                         final price = (item['price'] as num?)?.toDouble() ?? 0;
                         final options = item['options'];
@@ -1991,7 +1995,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text('ตัวเลือก:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colorScheme.tertiary)),
+                                      Text(l10n.driverNavOptionsLabel, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colorScheme.tertiary)),
                                       const SizedBox(height: 4),
                                       ...parsedOptions.map((opt) {
                                         final optName = opt['name']?.toString() ?? '';
@@ -2041,7 +2045,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('ปิด', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                child: Text(AppLocalizations.of(context)!.driverNavClose, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -2049,14 +2053,14 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       );
     } catch (e) {
       debugLog('❌ Error fetching order items: $e');
-      _showErrorSnackBar('ไม่สามารถโหลดรายการอาหาร');
+      _showErrorSnackBar(AppLocalizations.of(context)!.driverNavLoadItemsError);
     }
   }
 
   /// โทรหาลูกค้า
   Future<void> _callCustomer() async {
-    if (_customerPhone == 'ไม่ระบุ' || _customerPhone.isEmpty) {
-      _showErrorSnackBar('ไม่พบเบอร์โทรลูกค้า');
+    if (_customerPhone.isEmpty || _customerPhone == AppLocalizations.of(context)!.driverNavPhoneUnknown) {
+      _showErrorSnackBar(AppLocalizations.of(context)!.driverNavNoCustomerPhone);
       return;
     }
     final uri = Uri.parse('tel:$_customerPhone');
@@ -2064,10 +2068,10 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
       } else {
-        _showErrorSnackBar('ไม่สามารถโทรออกได้');
+        _showErrorSnackBar(AppLocalizations.of(context)!.driverNavCannotCall);
       }
     } catch (e) {
-      _showErrorSnackBar('เกิดข้อผิดพลาดในการโทร');
+      _showErrorSnackBar(AppLocalizations.of(context)!.driverNavCallError);
     }
   }
 
@@ -2075,34 +2079,35 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   String _getStatusBarText() {
     final status = _booking?.status ?? 'unknown';
     final serviceType = _booking?.serviceType ?? 'ride';
+    final l10n = AppLocalizations.of(context)!;
     switch (status) {
       case 'accepted':
       case 'driver_accepted':
-        if (serviceType == 'food') return 'กำลังไปร้านอาหาร';
-        if (serviceType == 'parcel') return 'กำลังไปรับพัสดุ';
-        return 'กำลังไปรับผู้โดยสาร';
+        if (serviceType == 'food') return l10n.driverNavStatusFoodGoingMerchant;
+        if (serviceType == 'parcel') return l10n.driverNavStatusParcelGoing;
+        return l10n.driverNavStatusRideGoing;
       case 'arrived_at_merchant':
-        if (serviceType == 'food') return 'ถึงร้านแล้ว รออาหาร';
-        return 'ถึงจุดรับแล้ว';
+        if (serviceType == 'food') return l10n.driverNavStatusFoodAtMerchant;
+        return l10n.driverNavStatusAtPickup;
       case 'arrived':
-        if (serviceType == 'food') return 'ถึงร้านแล้ว';
-        if (serviceType == 'parcel') return 'ถึงจุดรับพัสดุแล้ว';
-        return 'ถึงจุดรับลูกค้าแล้ว';
+        if (serviceType == 'food') return l10n.driverNavFoodArrivedMerchant;
+        if (serviceType == 'parcel') return l10n.driverNavStatusParcelArrived;
+        return l10n.driverNavStatusRideArrived;
       case 'ready_for_pickup':
-        if (serviceType == 'food') return 'อาหารพร้อมแล้ว';
-        if (serviceType == 'parcel') return 'พร้อมส่งพัสดุ';
-        return 'พร้อมรับผู้โดยสาร';
+        if (serviceType == 'food') return l10n.driverNavStatusFoodReady;
+        if (serviceType == 'parcel') return l10n.driverNavStatusParcelReady;
+        return l10n.driverNavStatusRideReady;
       case 'picking_up_order':
-        if (serviceType == 'food') return 'รับอาหารแล้ว';
-        return 'รับของแล้ว';
+        if (serviceType == 'food') return l10n.driverNavStatusFoodPickedUp;
+        return l10n.driverNavStatusPickedUp;
       case 'in_transit':
-        if (serviceType == 'food') return 'กำลังส่งอาหาร...';
-        if (serviceType == 'parcel') return 'กำลังส่งพัสดุ...';
-        return 'กำลังเดินทาง...';
+        if (serviceType == 'food') return l10n.driverNavStatusFoodDelivering;
+        if (serviceType == 'parcel') return l10n.driverNavStatusParcelDelivering;
+        return l10n.driverNavStatusRideTraveling;
       case 'completed':
-        return 'ส่งเสร็จแล้ว';
+        return l10n.driverNavStatusCompleted;
       default:
-        return 'กำลังดำเนินการ';
+        return l10n.driverNavStatusDefault;
     }
   }
 
@@ -2177,15 +2182,16 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   /// ชื่อประเภทบริการ
   String _getServiceTypeName() {
+    final l10n = AppLocalizations.of(context)!;
     switch (_booking?.serviceType) {
       case 'food':
-        return 'สั่งอาหาร';
+        return l10n.driverNavServiceFood;
       case 'ride':
-        return 'เรียกรถ';
+        return l10n.driverNavServiceRide;
       case 'parcel':
-        return 'ส่งพัสดุ';
+        return l10n.driverNavServiceParcel;
       default:
-        return 'บริการ';
+        return l10n.driverNavServiceDefault;
     }
   }
 
@@ -2208,17 +2214,17 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('ออกจากหน้านำทาง?', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: const Text('คุณยังมีงานอยู่ งานจะยังคงดำเนินต่อไป'),
+        title: Text(AppLocalizations.of(context)!.driverNavBackTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(AppLocalizations.of(context)!.driverNavBackBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('อยู่ต่อ'),
+            child: Text(AppLocalizations.of(context)!.driverNavBackStay),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             child: Text(
-              'ย้อนกลับ',
+              AppLocalizations.of(context)!.driverNavBackLeave,
               style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           ),
@@ -2231,10 +2237,11 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     if (_isLoading || _booking == null) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('กำลังโหลด...'),
+          title: Text(l10n.driverNavLoading),
           backgroundColor: AppTheme.accentBlue,
           foregroundColor: colorScheme.onPrimary,
         ),
@@ -2273,7 +2280,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('งานที่กำลังดำเนินการ', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+            Text(l10n.driverNavActiveJob, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
             Text(OrderCodeFormatter.format(booking.id), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w400)),
           ],
         ),
@@ -2290,7 +2297,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
             child: IconButton(
               icon: const Icon(Icons.phone, size: 22),
               onPressed: _callCustomer,
-              tooltip: 'โทรหาลูกค้า',
+              tooltip: l10n.driverNavCallCustomer,
             ),
           ),
         ],
@@ -2367,7 +2374,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                       Expanded(
                         child: _buildFloatingInfoChip(
                           _getServiceTypeIcon(),
-                          'ประเภท',
+                          l10n.driverNavChipType,
                           _getServiceTypeName(),
                           AppTheme.accentBlue,
                         ),
@@ -2376,7 +2383,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                       Expanded(
                         child: _buildFloatingInfoChip(
                           Icons.route_rounded,
-                          'ระยะทาง',
+                          l10n.driverNavChipDistance,
                           distanceText,
                           colorScheme.tertiary,
                         ),
@@ -2489,7 +2496,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                           Icons.navigation_rounded,
                           colorScheme.secondary,
                           _launchGoogleMapsNavigation,
-                          tooltip: 'นำทาง',
+                          tooltip: l10n.driverNavTooltipNav,
                         ),
                         const SizedBox(width: 6),
                         // ปุ่มแชท
@@ -2497,7 +2504,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                           Icons.chat_rounded,
                           colorScheme.tertiary,
                           _openChat,
-                          tooltip: 'แชทกับลูกค้า',
+                          tooltip: l10n.driverNavTooltipChat,
                         ),
                         const SizedBox(width: 6),
                         // ปุ่มโทร
@@ -2505,7 +2512,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                           Icons.phone_rounded,
                           AppTheme.accentBlue,
                           _callCustomer,
-                          tooltip: 'โทรหาลูกค้า',
+                          tooltip: l10n.driverNavCallCustomer,
                         ),
                       ],
                     ),
@@ -2552,14 +2559,15 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                         child: OutlinedButton.icon(
                           onPressed: _showOrderItemsDialog,
                           icon: Icon(
-                            Icons.receipt_long_rounded,
+                            Icons.receipt_long,
                             size: 18,
                             color: colorScheme.tertiary,
                           ),
-                          label: Text('ดูรายการอาหาร', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.tertiary)),
+                          label: Text(l10n.driverNavViewFoodItems, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.tertiary)),
                           style: OutlinedButton.styleFrom(
                             side: BorderSide(color: colorScheme.tertiary.withValues(alpha: 0.5)),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
                         ),
                       ),
@@ -2715,7 +2723,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                           child: OutlinedButton.icon(
                             onPressed: _openSupportChat,
                             icon: const Icon(Icons.support_agent, size: 18),
-                            label: const Text('แจ้งปัญหา', style: TextStyle(fontSize: 13)),
+                            label: Text(l10n.driverNavReportIssue, style: const TextStyle(fontSize: 13)),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: colorScheme.primary,
                               side: BorderSide(
@@ -2731,7 +2739,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                           child: OutlinedButton.icon(
                             onPressed: _isUpdatingStatus ? null : _cancelJob,
                             icon: const Icon(Icons.cancel_outlined, size: 18),
-                            label: const Text('ยกเลิกงาน', style: TextStyle(fontSize: 13)),
+                            label: Text(l10n.driverNavCancelJob, style: const TextStyle(fontSize: 13)),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: colorScheme.error,
                               side: BorderSide(
@@ -2885,8 +2893,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           color: Theme.of(context).colorScheme.error,
           size: 48,
         ),
-        title: const Text('งานถูกยกเลิก'),
-        content: const Text('รายการนี้ถูกยกเลิกแล้ว ระบบจะพากลับหน้าหลักคนขับ'),
+        title: Text(AppLocalizations.of(context)!.driverNavJobCancelledTitle),
+        content: Text(AppLocalizations.of(context)!.driverNavJobCancelledBody),
         actions: [
           SizedBox(
             width: double.infinity,
@@ -2902,7 +2910,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                 backgroundColor: AppTheme.accentBlue,
                 foregroundColor: Theme.of(context).colorScheme.onPrimary,
               ),
-              child: const Text('กลับหน้าหลัก'),
+              child: Text(AppLocalizations.of(context)!.driverNavGoHome),
             ),
           ),
         ],
@@ -2918,7 +2926,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       final statusText = _getStatusTextForCustomer(newStatus);
       await NotificationSender.sendNotification(
         targetUserId: customerId,
-        title: 'อัปเดตสถานะงาน',
+        title: AppLocalizations.of(context)!.driverNavNotifStatusTitle,
         body: statusText,
         data: {
           'type': 'booking_status_update',
@@ -2938,8 +2946,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
       await NotificationSender.sendNotification(
         targetUserId: merchantId,
-        title: 'คนขับถึงร้านแล้ว',
-        body: 'คนขับมาถึงร้านแล้ว กรุณาเตรียมส่งมอบอาหาร',
+        title: AppLocalizations.of(context)!.driverNavMerchantArrivedTitle,
+        body: AppLocalizations.of(context)!.driverNavMerchantArrivedBody,
         data: {
           'type': 'driver_arrived_merchant',
           'booking_id': booking['id']?.toString() ?? '',
@@ -2951,22 +2959,23 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   }
 
   String _getStatusTextForCustomer(String status) {
+    final l10n = AppLocalizations.of(context)!;
     switch (status) {
       case 'accepted':
-        return 'คนขับรับงานแล้ว';
+        return l10n.driverNavNotifAccepted;
       case 'arrived':
       case 'arrived_at_merchant':
-        return 'คนขับถึงจุดรับแล้ว';
+        return l10n.driverNavNotifArrived;
       case 'picking_up_order':
-        return 'คนขับรับอาหารแล้ว กำลังจัดส่ง';
+        return l10n.driverNavNotifPickedUp;
       case 'in_transit':
-        return 'คนขับกำลังเดินทางมาหาคุณ';
+        return l10n.driverNavNotifInTransit;
       case 'completed':
-        return 'งานเสร็จสมบูรณ์แล้ว';
+        return l10n.driverNavNotifCompleted;
       case 'cancelled':
-        return 'งานถูกยกเลิก';
+        return l10n.driverNavNotifCancelled;
       default:
-        return 'สถานะงานอัปเดตเป็น $status';
+        return l10n.driverNavNotifStatusUpdate(status);
     }
   }
 
@@ -2994,6 +3003,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   void _showMerchantPaymentDialog() {
     if (_booking == null || !mounted) return;
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     
     final foodPrice = _booking!.price;
     final merchantChargeRate =
@@ -3019,9 +3029,9 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
               child: const Icon(Icons.payments, color: AppTheme.accentBlue, size: 48),
             ),
             const SizedBox(height: 12),
-            const Text(
-              '💰 จ่ายเงินร้านค้าสำเร็จ',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.accentBlue),
+            Text(
+              l10n.driverNavPaymentTitle,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.accentBlue),
               textAlign: TextAlign.center,
             ),
           ],
@@ -3030,7 +3040,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'รับอาหารจากร้านค้าเรียบร้อย\nกรุณาส่งอาหารให้ลูกค้าต่อ',
+              l10n.driverNavPaymentBody,
               style: TextStyle(fontSize: 15, color: colorScheme.onSurface, height: 1.5),
               textAlign: TextAlign.center,
             ),
@@ -3047,7 +3057,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('ยอดขาย', style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
+                      Text(l10n.driverNavPaymentSales, style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
                       Text('฿${foodPrice.toStringAsFixed(0)}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                     ],
                   ),
@@ -3056,7 +3066,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'หักร้าน (${(merchantChargeRate * 100).toStringAsFixed(0)}%)',
+                        l10n.driverNavPaymentDeduction((merchantChargeRate * 100).toStringAsFixed(0)),
                         style: TextStyle(fontSize: 13, color: colorScheme.error),
                       ),
                       Text('-฿${serviceFee.toStringAsFixed(0)}', style: TextStyle(fontSize: 13, color: colorScheme.error)),
@@ -3066,7 +3076,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('จ่ายร้านค้า', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colorScheme.secondary)),
+                      Text(l10n.driverNavPaymentToMerchant, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colorScheme.secondary)),
                       Text('฿${merchantReceives.toStringAsFixed(0)}', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: colorScheme.secondary)),
                     ],
                   ),
@@ -3083,7 +3093,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                 Navigator.of(context).pop();
               },
               icon: const Icon(Icons.delivery_dining),
-              label: const Text('ส่งอาหารให้ลูกค้า', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              label: Text(l10n.driverNavPaymentDeliver, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.accentBlue,
                 foregroundColor: colorScheme.onPrimary,
@@ -3101,6 +3111,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     if (_booking == null) return;
 
     final booking = _booking!;
+    final l10n = AppLocalizations.of(context)!;
     final isFood = booking.serviceType == 'food';
     final foodPrice = booking.price;
     final deliveryFee = booking.deliveryFee ?? 0;
@@ -3125,7 +3136,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       builder: (context) {
         final colorScheme = Theme.of(context).colorScheme;
         return AlertDialog(
-          title: const Text('🎉 งานเสร็จสมบูรณ์!'),
+          title: Text(l10n.driverNavCompletionTitle),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -3136,7 +3147,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
               ),
               const SizedBox(height: 16),
               Text(
-                'ส่งสำเร็จแล้ว!',
+                l10n.driverNavCompletionSuccess,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -3152,32 +3163,32 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                 ),
                 child: Column(
                   children: [
-                    _buildSummaryRow('เก็บเงินลูกค้า', '฿${totalCollect.ceil()}', colorScheme.onSurface, isBold: true),
+                    _buildSummaryRow(l10n.driverNavCompletionCollect, '฿${totalCollect.ceil()}', colorScheme.onSurface, isBold: true),
                     if (isFood) ...[
                       const SizedBox(height: 4),
-                      _buildSummaryRow('  ค่าอาหาร', '฿${foodPrice.ceil()}', colorScheme.tertiary),
-                      _buildSummaryRow('  ค่าส่ง', '฿${deliveryFee.ceil()}', colorScheme.primary),
+                      _buildSummaryRow(l10n.driverNavCompletionFoodCost, '฿${foodPrice.ceil()}', colorScheme.tertiary),
+                      _buildSummaryRow(l10n.driverNavCompletionDeliveryFee, '฿${deliveryFee.ceil()}', colorScheme.primary),
                     ],
                     if (_couponDiscount > 0) ...[
                       const SizedBox(height: 4),
                       _buildSummaryRow(
                         hideCouponBreakdown
-                            ? '  ส่วนลดจากคูปอง'
+                            ? l10n.driverNavCompletionCouponPlatform
                             : (_couponCode != null && _couponCode!.isNotEmpty
-                                ? '  ส่วนลดคูปอง ($_couponCode)'
-                                : '  ส่วนลดคูปอง'),
+                                ? l10n.driverNavCompletionCouponCode(_couponCode!)
+                                : l10n.driverNavCompletionCoupon),
                         '-฿${_couponDiscount.ceil()}',
                         colorScheme.secondary,
                       ),
                     ],
                     _buildSummaryRow(
-                      'ค่าบริการระบบ',
+                      l10n.driverNavCompletionServiceFee,
                       '-฿${commission.ceil()}',
                       colorScheme.error,
                     ),
                     const Divider(height: 16),
                     _buildSummaryRow(
-                      'รายได้สุทธิ',
+                      l10n.driverNavCompletionNetEarnings,
                       '฿${netEarnings.ceil()}',
                       AppTheme.accentBlue,
                       isBold: true,
@@ -3206,7 +3217,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                       foregroundColor: colorScheme.onSurface,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    child: const Text('ดูรายละเอียด'),
+                    child: Text(l10n.driverNavCompletionViewDetails),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -3224,7 +3235,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                       foregroundColor: colorScheme.onPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    child: const Text('กลับหน้าหลัก'),
+                    child: Text(l10n.driverNavGoHome),
                   ),
                 ),
               ],
@@ -3237,6 +3248,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   Widget _buildFinancialCard(Booking booking) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     final isFood = booking.serviceType == 'food';
     final foodPrice = booking.price;
     final deliveryFee = booking.deliveryFee ?? 0;
@@ -3266,7 +3278,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                   Icon(Icons.payments, color: colorScheme.secondary, size: 20),
                   const SizedBox(width: 6),
                   Text(
-                    'เก็บเงินลูกค้า',
+                    l10n.driverNavFinCardCollect,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -3291,7 +3303,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
               children: [
                 Expanded(
                   child: _buildMiniInfo(
-                    'ค่าอาหาร',
+                    l10n.driverNavFinCardFoodCost,
                     '฿${foodPrice.toStringAsFixed(0)}',
                     colorScheme.tertiary,
                   ),
@@ -3299,7 +3311,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                 const SizedBox(width: 8),
                 Expanded(
                   child: _buildMiniInfo(
-                    'ค่าส่ง',
+                    l10n.driverNavFinCardDeliveryFee,
                     '฿${deliveryFee.toStringAsFixed(0)}',
                     colorScheme.primary,
                   ),
@@ -3324,7 +3336,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                       Icon(Icons.store, color: colorScheme.tertiary, size: 16),
                       const SizedBox(width: 4),
                       Text(
-                        'จ่ายร้านค้า',
+                        l10n.driverNavFinCardPayMerchant,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,

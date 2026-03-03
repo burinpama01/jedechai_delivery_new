@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../common/services/referral_service.dart';
 import '../../../../common/services/notification_service.dart';
 import '../../../../common/services/auth_service.dart';
@@ -57,7 +58,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('ตกลง'),
+            child: Text(AppLocalizations.of(context)!.referralOk),
           ),
         ],
       ),
@@ -98,7 +99,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
   void _copyToClipboard() {
     Clipboard.setData(ClipboardData(text: myReferralCode));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('คัดลอกโค้ดชวนเพื่อนแล้ว')),
+      SnackBar(content: Text(AppLocalizations.of(context)!.referralCopied)),
     );
   }
 
@@ -111,7 +112,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('ใช้โค้ดสำเร็จ!')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.referralCodeSuccess)),
       );
       _codeController.clear();
       await _loadReferralData();
@@ -132,7 +133,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ชวนเพื่อนรับรางวัล', style: TextStyle(color: Colors.white)),
+        title: Text(AppLocalizations.of(context)!.referralTitle, style: const TextStyle(color: Colors.white)),
         backgroundColor: AppTheme.primaryGreen,
         elevation: 0,
       ),
@@ -159,10 +160,10 @@ class _ReferralScreenState extends State<ReferralScreen> {
         children: [
           const Icon(Icons.people_alt, size: 80, color: Colors.white),
           const SizedBox(height: 16),
-          const Text(
-            'ชวนเพื่อนใช้แอป\nรับคูปองทั้งคู่!',
+          Text(
+            AppLocalizations.of(context)!.referralHeroTitle,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: Colors.white,
@@ -170,7 +171,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'รับคูปองส่วนลด 20 บาท ทันที\nเมื่อเพื่อนของคุณสั่งอาหารครั้งแรกสำเร็จ',
+            AppLocalizations.of(context)!.referralHeroSubtitle,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
@@ -205,7 +206,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'โค้ดชวนเพื่อนของคุณ',
+              AppLocalizations.of(context)!.referralMyCodeLabel,
               style: TextStyle(
                 fontSize: 14,
                 color: colorScheme.onSurface.withOpacity(0.7),
@@ -246,7 +247,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
               child: ElevatedButton.icon(
                 onPressed: _copyToClipboard,
                 icon: const Icon(Icons.share),
-                label: const Text('แชร์ให้เพื่อน'),
+                label: Text(AppLocalizations.of(context)!.referralShareButton),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryGreen,
                   padding: const EdgeInsets.symmetric(vertical: 12),
@@ -276,8 +277,8 @@ class _ReferralScreenState extends State<ReferralScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'มีโค้ดชวนเพื่อนไหม?',
+          Text(
+            AppLocalizations.of(context)!.referralHaveCode,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -285,7 +286,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'กรอกโค้ดจากเพื่อนเพื่อรับคูปองต้อนรับทันที',
+            AppLocalizations.of(context)!.referralEnterCodeHint,
             style: TextStyle(
               fontSize: 14,
               color: colorScheme.onSurface.withOpacity(0.7),
@@ -298,7 +299,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                 child: TextField(
                   controller: _codeController,
                   decoration: InputDecoration(
-                    hintText: 'กรอกโค้ดที่นี่',
+                    hintText: AppLocalizations.of(context)!.referralCodePlaceholder,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -327,7 +328,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                         height: 20, 
                         child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
                       )
-                    : const Text('ใช้โค้ด'),
+                    : Text(AppLocalizations.of(context)!.referralUseCode),
               ),
             ],
           ),
@@ -362,7 +363,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
               ),
             ),
             Text(
-              'ชวนสำเร็จ',
+              AppLocalizations.of(context)!.referralSuccessful,
               style: TextStyle(
                 color: colorScheme.onSurface.withOpacity(0.7),
                 fontSize: 12,
@@ -380,9 +381,9 @@ class _ReferralScreenState extends State<ReferralScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'ทำงานอย่างไร?',
-            style: TextStyle(
+          Text(
+            AppLocalizations.of(context)!.referralHowTitle,
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
@@ -390,18 +391,18 @@ class _ReferralScreenState extends State<ReferralScreen> {
           const SizedBox(height: 16),
           _buildStepItem(
             '1', 
-            'แชร์โค้ดให้เพื่อน', 
-            'ส่งโค้ดของคุณให้เพื่อนที่ยังไม่เคยใช้แอป'
+            AppLocalizations.of(context)!.referralStep1Title, 
+            AppLocalizations.of(context)!.referralStep1Desc
           ),
           _buildStepItem(
             '2', 
-            'เพื่อนสั่งอาหารครั้งแรก', 
-            'เพื่อนสมัครและสั่งอาหารสำเร็จเป็นครั้งแรก'
+            AppLocalizations.of(context)!.referralStep2Title, 
+            AppLocalizations.of(context)!.referralStep2Desc
           ),
           _buildStepItem(
             '3', 
-            'รับคูปองส่วนลด!', 
-            'คุณจะได้คูปองส่วนลดส่งตรงเข้ากระเป๋าทันที'
+            AppLocalizations.of(context)!.referralStep3Title, 
+            AppLocalizations.of(context)!.referralStep3Desc
           ),
         ],
       ),

@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../common/models/booking.dart';
 import '../../../../common/utils/order_code_formatter.dart';
@@ -27,7 +28,7 @@ class _DriverAssignedScreenState extends State<DriverAssignedScreen> {
       appBar: AppBar(
         backgroundColor: AppTheme.primaryGreen,
         foregroundColor: Colors.white,
-        title: const Text('คนขับรับงานแล้ว'),
+        title: Text(AppLocalizations.of(context)!.driverAssignedTitle),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () {
@@ -68,7 +69,7 @@ class _DriverAssignedScreenState extends State<DriverAssignedScreen> {
               
               // Success message
               Text(
-                'คนขับรับงานแล้ว!',
+                AppLocalizations.of(context)!.driverAssignedHeading,
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -80,7 +81,7 @@ class _DriverAssignedScreenState extends State<DriverAssignedScreen> {
               const SizedBox(height: 16),
               
               Text(
-                'คนขับกำลังเดินทางมาหาคุณ',
+                AppLocalizations.of(context)!.driverAssignedSubtitle,
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.grey[600],
@@ -133,15 +134,15 @@ class _DriverAssignedScreenState extends State<DriverAssignedScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'คนขับกำลังเดินทาง',
-                                style: TextStyle(
+                              Text(
+                                AppLocalizations.of(context)!.driverAssignedOnTheWay,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
                               Text(
-                                'ระยะเวลาโดยประมาณ: 5-10 นาที',
+                                AppLocalizations.of(context)!.driverAssignedEta,
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey[600],
@@ -169,7 +170,7 @@ class _DriverAssignedScreenState extends State<DriverAssignedScreen> {
                         _showContactDialog();
                       },
                       icon: const Icon(Icons.phone),
-                      label: const Text('ติดต่อคนขับ'),
+                      label: Text(AppLocalizations.of(context)!.driverAssignedContact),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -191,9 +192,9 @@ class _DriverAssignedScreenState extends State<DriverAssignedScreen> {
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      child: const Text(
-                        'ยกเลิกการจอง',
-                        style: TextStyle(
+                      child: Text(
+                        AppLocalizations.of(context)!.driverAssignedCancelBooking,
+                        style: const TextStyle(
                           fontSize: 16,
                           color: Colors.red,
                         ),
@@ -215,26 +216,26 @@ class _DriverAssignedScreenState extends State<DriverAssignedScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('ติดต่อคนขับ'),
-        content: const Column(
+        title: Text(AppLocalizations.of(context)!.driverAssignedContactTitle),
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: Icon(Icons.phone),
-              title: Text('โทรศัพท์'),
-              subtitle: Text('099-999-9999'),
+              leading: const Icon(Icons.phone),
+              title: Text(AppLocalizations.of(context)!.driverAssignedPhone),
+              subtitle: const Text('099-999-9999'),
             ),
             ListTile(
-              leading: Icon(Icons.message),
-              title: Text('ข้อความ'),
-              subtitle: Text('ส่งข้อความถึงคนขับ'),
+              leading: const Icon(Icons.message),
+              title: Text(AppLocalizations.of(context)!.driverAssignedMessage),
+              subtitle: Text(AppLocalizations.of(context)!.driverAssignedMessageSub),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('ปิด'),
+            child: Text(AppLocalizations.of(context)!.driverAssignedClose),
           ),
         ],
       ),
@@ -245,12 +246,12 @@ class _DriverAssignedScreenState extends State<DriverAssignedScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('ยกเลิกการจอง'),
-        content: const Text('คุณแน่ใจว่าต้องการยกเลิกการจองนี้?'),
+        title: Text(AppLocalizations.of(context)!.driverAssignedCancelTitle),
+        content: Text(AppLocalizations.of(context)!.driverAssignedCancelBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('ไม่'),
+            child: Text(AppLocalizations.of(context)!.driverAssignedNo),
           ),
           TextButton(
             onPressed: () {
@@ -260,7 +261,7 @@ class _DriverAssignedScreenState extends State<DriverAssignedScreen> {
             style: TextButton.styleFrom(
               foregroundColor: Colors.red,
             ),
-            child: const Text('ยกเลิก'),
+            child: Text(AppLocalizations.of(context)!.driverAssignedCancel),
           ),
         ],
       ),

@@ -1,6 +1,7 @@
 ﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import 'restaurant_detail_screen.dart';
 
@@ -108,7 +109,7 @@ class _FoodServiceScreenState extends State<FoodServiceScreen> {
     } catch (e) {
       debugLog('❌ Debug: Error fetching restaurants: $e');
       setState(() {
-        _error = 'ไม่สามารถโหลดรายชื่อร้านอาหารได้: $e';
+        _error = e.toString();
         _isLoading = false;
       });
     }
@@ -118,7 +119,7 @@ class _FoodServiceScreenState extends State<FoodServiceScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('สั่งอาหาร'),
+        title: Text(AppLocalizations.of(context)!.foodSvcTitle),
         backgroundColor: AppTheme.accentOrange,
         foregroundColor: Colors.white,
       ),
@@ -148,7 +149,7 @@ class _FoodServiceScreenState extends State<FoodServiceScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              _error!,
+              AppLocalizations.of(context)!.foodSvcLoadError(_error!),
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey[600],
@@ -158,7 +159,7 @@ class _FoodServiceScreenState extends State<FoodServiceScreen> {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _fetchRestaurants,
-              child: const Text('ลองใหม่'),
+              child: Text(AppLocalizations.of(context)!.foodSvcRetry),
             ),
           ],
         ),
@@ -177,7 +178,7 @@ class _FoodServiceScreenState extends State<FoodServiceScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'ไม่มีร้านอาหารเปิดให้บริการในขณะนี้',
+              AppLocalizations.of(context)!.foodSvcEmpty,
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey[600],
@@ -186,7 +187,7 @@ class _FoodServiceScreenState extends State<FoodServiceScreen> {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _fetchRestaurants,
-              child: const Text('รีเฟรช'),
+              child: Text(AppLocalizations.of(context)!.foodSvcRefresh),
             ),
           ],
         ),
@@ -205,7 +206,7 @@ class _FoodServiceScreenState extends State<FoodServiceScreen> {
               MaterialPageRoute(
                 builder: (context) => RestaurantDetailScreen(
                   merchantId: restaurant['id'],
-                  merchantName: restaurant['full_name'] ?? 'ร้านอาหาร',
+                  merchantName: restaurant['full_name'] ?? AppLocalizations.of(context)!.foodSvcRestaurantFallback,
                 ),
               ),
             );
@@ -228,8 +229,9 @@ class RestaurantCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = restaurant['full_name'] ?? 'ร้านอาหาร';
-    final phone = restaurant['phone_number'] ?? 'ไม่ระบุ';
+    final l10n = AppLocalizations.of(context)!;
+    final name = restaurant['full_name'] ?? l10n.foodSvcRestaurantFallback;
+    final phone = restaurant['phone_number'] ?? l10n.foodSvcNotSpecified;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -287,9 +289,9 @@ class RestaurantCard extends StatelessWidget {
                         color: Colors.green.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Text(
-                        'เปิด',
-                        style: TextStyle(
+                      child: Text(
+                        AppLocalizations.of(context)!.foodSvcOpen,
+                        style: const TextStyle(
                           fontSize: 12,
                           color: Colors.green,
                           fontWeight: FontWeight.w500,

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../../../../common/services/menu_option_service.dart';
 import '../../../../common/models/menu_option.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'merchant_option_group_detail_screen.dart';
 import '../../../../theme/app_theme.dart';
 
@@ -67,7 +68,7 @@ class _MerchantOptionLibraryScreenState extends State<MerchantOptionLibraryScree
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ ลบกลุ่ม "${group.name}" เรียบร้อย'),
+            content: Text(AppLocalizations.of(context)!.optLibDeleteSuccess(group.name)),
             backgroundColor: Colors.green,
           ),
         );
@@ -77,7 +78,7 @@ class _MerchantOptionLibraryScreenState extends State<MerchantOptionLibraryScree
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ ลบกลุ่มไม่สำเร็จ: $e'),
+            content: Text(AppLocalizations.of(context)!.optLibDeleteFailed(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -89,16 +90,16 @@ class _MerchantOptionLibraryScreenState extends State<MerchantOptionLibraryScree
     return await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('ยืนยันการลบ'),
+        title: Text(AppLocalizations.of(context)!.optLibDeleteConfirmTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('คุณต้องการลบกลุ่ม "${group.name}" ใช่หรือไม่?'),
+            Text(AppLocalizations.of(context)!.optLibDeleteConfirmBody(group.name)),
             const SizedBox(height: 8),
             if (group.options != null && group.options!.isNotEmpty)
               Text(
-                'หมายเหตุ: การลบกลุ่มนี้จะลบตัวเลือกทั้งหมด ${group.options!.length} รายการ',
+                AppLocalizations.of(context)!.optLibDeleteNote(group.options!.length.toString()),
                 style: TextStyle(
                   color: Colors.orange.shade700,
                   fontSize: 12,
@@ -109,7 +110,7 @@ class _MerchantOptionLibraryScreenState extends State<MerchantOptionLibraryScree
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('ยกเลิก'),
+            child: Text(AppLocalizations.of(context)!.optLibCancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
@@ -117,7 +118,7 @@ class _MerchantOptionLibraryScreenState extends State<MerchantOptionLibraryScree
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
             ),
-            child: const Text('ลบ'),
+            child: Text(AppLocalizations.of(context)!.optLibDeleteBtn),
           ),
         ],
       ),
@@ -153,7 +154,7 @@ class _MerchantOptionLibraryScreenState extends State<MerchantOptionLibraryScree
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('จัดการตัวเลือกอาหาร'),
+        title: Text(AppLocalizations.of(context)!.optLibTitle),
         backgroundColor: AppTheme.accentOrange,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -196,7 +197,7 @@ class _MerchantOptionLibraryScreenState extends State<MerchantOptionLibraryScree
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _loadOptionGroups,
-              child: const Text('ลองใหม่'),
+              child: Text(AppLocalizations.of(context)!.optLibRetry),
             ),
           ],
         ),
@@ -215,7 +216,7 @@ class _MerchantOptionLibraryScreenState extends State<MerchantOptionLibraryScree
             ),
             const SizedBox(height: 16),
             Text(
-              'ยังไม่มีกลุ่มตัวเลือก',
+              AppLocalizations.of(context)!.optLibEmpty,
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey[600],
@@ -223,7 +224,7 @@ class _MerchantOptionLibraryScreenState extends State<MerchantOptionLibraryScree
             ),
             const SizedBox(height: 8),
             Text(
-              'สร้างกลุ่มตัวเลือกเพื่อนำไปใช้กับเมนูอาหารของคุณ',
+              AppLocalizations.of(context)!.optLibEmptyHint,
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[500],
@@ -234,7 +235,7 @@ class _MerchantOptionLibraryScreenState extends State<MerchantOptionLibraryScree
             ElevatedButton.icon(
               onPressed: () => _navigateToDetailScreen(),
               icon: const Icon(Icons.add),
-              label: const Text('สร้างกลุ่มใหม่'),
+              label: Text(AppLocalizations.of(context)!.optLibCreateNew),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.accentOrange,
                 foregroundColor: Colors.white,
@@ -275,18 +276,19 @@ class OptionGroupCard extends StatelessWidget {
     required this.onDelete,
   }) : super(key: key);
 
-  String _getSelectionText() {
+  String _getSelectionText(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final min = group.minSelection;
     final max = group.maxSelection;
     
     if (min == 0 && max == 1) {
-      return 'เลือกได้ 1 รายการ';
+      return l10n.optLibSelectMax1;
     } else if (min == 0 && max > 1) {
-      return 'เลือกได้สูงสุด $max รายการ';
+      return l10n.optLibSelectMaxN(max.toString());
     } else if (min == max) {
-      return 'เลือก $min รายการ';
+      return l10n.optLibSelectExact(min.toString());
     } else {
-      return 'เลือก $min-$max รายการ';
+      return l10n.optLibSelectRange(min.toString(), max.toString());
     }
   }
 
@@ -359,7 +361,7 @@ class OptionGroupCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            _getSelectionText(),
+                            _getSelectionText(context),
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.grey[600],
@@ -393,7 +395,7 @@ class OptionGroupCard extends StatelessWidget {
                         Row(
                           children: [
                             Text(
-                              'ตัวเลือก $optionCount รายการ',
+                              AppLocalizations.of(context)!.optLibOptionCount(optionCount.toString()),
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
@@ -403,7 +405,7 @@ class OptionGroupCard extends StatelessWidget {
                             const Spacer(),
                             if (optionCount > 3)
                               Text(
-                                'แสดง 3 รายการแรก',
+                                AppLocalizations.of(context)!.optLibShowFirst3,
                                 style: TextStyle(
                                   fontSize: 10,
                                   color: Colors.grey[500],

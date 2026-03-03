@@ -6,6 +6,7 @@ import '../../../../common/services/image_picker_service.dart';
 import '../../../../common/services/storage_service.dart';
 import '../../../../common/models/menu_option.dart';
 import '../../../../common/widgets/app_network_image.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../utils/debug_logger.dart';
 
@@ -94,7 +95,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
         setState(() => _isLoadingOptionGroups = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ โหลดตัวเลือกไม่สำเร็จ: $e'),
+            content: Text(AppLocalizations.of(context)!.menuEditLoadOptionsFailed(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -115,7 +116,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
       children: [
         Icon(Icons.add_a_photo, size: 48, color: Colors.grey[400]),
         const SizedBox(height: 8),
-        Text('แตะเพื่อถ่ายรูปหรือเลือกรูป', style: TextStyle(color: Colors.grey[500], fontSize: 14)),
+        Text(AppLocalizations.of(context)!.menuEditTapToPhoto, style: TextStyle(color: Colors.grey[500], fontSize: 14)),
       ],
     );
   }
@@ -128,7 +129,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
     try {
       final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId == null) {
-        throw Exception('ไม่พบข้อมูลผู้ใช้');
+        throw Exception(AppLocalizations.of(context)!.menuMgmtUserNotFound);
       }
 
       final menuItemData = {
@@ -202,7 +203,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(widget.item == null ? '✅ เพิ่มเมนูสำเร็จ' : '✅ แก้ไขเมนูสำเร็จ'),
+            content: Text(widget.item == null ? AppLocalizations.of(context)!.menuEditAddSuccess : AppLocalizations.of(context)!.menuEditUpdateSuccess),
             backgroundColor: Colors.green,
           ),
         );
@@ -265,14 +266,14 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('✅ ลบกลุ่ม "${group.name}" เรียบร้อย'),
+          content: Text(AppLocalizations.of(context)!.menuEditDeleteGroupSuccess(group.name)),
           backgroundColor: Colors.green,
         ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('❌ ลบกลุ่มไม่สำเร็จ: $e'),
+          content: Text(AppLocalizations.of(context)!.menuEditDeleteGroupFailed(e.toString())),
           backgroundColor: Colors.red,
         ),
       );
@@ -285,7 +286,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? 'แก้ไขเมนู' : 'เพิ่มเมนูใหม่'),
+        title: Text(isEditing ? AppLocalizations.of(context)!.menuEditTitleEdit : AppLocalizations.of(context)!.menuEditTitleAdd),
         backgroundColor: AppTheme.accentOrange,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -348,7 +349,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
                             ),
                           )
                         : Text(
-                            isEditing ? 'อัปเดตเมนู' : 'เพิ่มเมนู',
+                            isEditing ? AppLocalizations.of(context)!.menuEditBtnUpdate : AppLocalizations.of(context)!.menuEditBtnAdd,
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -368,8 +369,8 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'ข้อมูลเมนู',
+        Text(
+          AppLocalizations.of(context)!.menuEditInfoTitle,
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -379,13 +380,13 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
         
         TextFormField(
           controller: _nameController,
-          decoration: const InputDecoration(
-            labelText: 'ชื่อเมนู *',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context)!.menuEditNameLabel,
+            border: const OutlineInputBorder(),
           ),
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
-              return 'กรุณาระบุชื่อเมนู';
+              return AppLocalizations.of(context)!.menuEditNameRequired;
             }
             return null;
           },
@@ -394,9 +395,9 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
         
         TextFormField(
           controller: _descriptionController,
-          decoration: const InputDecoration(
-            labelText: 'รายละเอียด',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context)!.menuEditDescLabel,
+            border: const OutlineInputBorder(),
           ),
           maxLines: 3,
         ),
@@ -404,18 +405,18 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
         
         TextFormField(
           controller: _priceController,
-          decoration: const InputDecoration(
-            labelText: 'ราคา *',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context)!.menuEditPriceLabel,
+            border: const OutlineInputBorder(),
             prefixText: '฿ ',
           ),
           keyboardType: TextInputType.number,
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
-              return 'กรุณาระบุราคา';
+              return AppLocalizations.of(context)!.menuEditPriceRequired;
             }
             if (double.tryParse(value) == null || double.tryParse(value)! < 0) {
-              return 'กรุณาระบุราคาที่ถูกต้อง';
+              return AppLocalizations.of(context)!.menuEditPriceInvalid;
             }
             return null;
           },
@@ -423,7 +424,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
         const SizedBox(height: 16),
         
         // Image Upload Section
-        const Text('รูปภาพเมนู', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+        Text(AppLocalizations.of(context)!.menuEditPhotoLabel, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
         const SizedBox(height: 8),
         GestureDetector(
           onTap: _isUploadingImage ? null : _pickMenuItemPhoto,
@@ -499,10 +500,10 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
         // Category Dropdown
         DropdownButtonFormField<String>(
           initialValue: _categoryOptions.contains(_selectedCategory) ? _selectedCategory : 'อื่นๆ',
-          decoration: const InputDecoration(
-            labelText: 'หมวดหมู่ *',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.category),
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context)!.menuEditCategoryLabel,
+            border: const OutlineInputBorder(),
+            prefixIcon: const Icon(Icons.category),
           ),
           items: _categoryOptions.map((cat) {
             return DropdownMenuItem(value: cat, child: Text(cat));
@@ -514,7 +515,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
           },
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return 'กรุณาเลือกหมวดหมู่';
+              return AppLocalizations.of(context)!.menuEditCategoryRequired;
             }
             return null;
           },
@@ -522,7 +523,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
         const SizedBox(height: 16),
         
         SwitchListTile(
-          title: const Text('พร้อมวางขาย'),
+          title: Text(AppLocalizations.of(context)!.menuEditAvailable),
           value: _isAvailable,
           onChanged: (value) {
             setState(() {
@@ -541,8 +542,8 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
       children: [
         Row(
           children: [
-            const Text(
-              'กลุ่มตัวเลือก',
+            Text(
+              AppLocalizations.of(context)!.menuEditOptionGroupsTitle,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -551,7 +552,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
             const Spacer(),
             if (_linkedOptionGroups.isNotEmpty)
               Text(
-                '${_linkedOptionGroups.length} กลุ่ม',
+                AppLocalizations.of(context)!.menuEditGroupCount(_linkedOptionGroups.length.toString()),
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.grey[600],
@@ -586,7 +587,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'ยังไม่ได้เลือกกลุ่มตัวเลือก',
+                  AppLocalizations.of(context)!.menuEditNoOptionGroups,
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.grey[600],
@@ -594,7 +595,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'เพิ่มกลุ่มตัวเลือกเพื่อให้ลูกค้าเลือกจากเมนูนี้',
+                  AppLocalizations.of(context)!.menuEditNoOptionGroupsHint,
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[500],
@@ -621,7 +622,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
           child: OutlinedButton.icon(
             onPressed: _showOptionGroupSelectionSheet,
             icon: const Icon(Icons.add),
-            label: const Text('เพิ่มกลุ่มตัวเลือก'),
+            label: Text(AppLocalizations.of(context)!.menuEditAddOptionGroup),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
               side: BorderSide(color: AppTheme.accentOrange),
@@ -644,18 +645,19 @@ class LinkedOptionGroupCard extends StatelessWidget {
     required this.onRemove,
   }) : super(key: key);
 
-  String _getSelectionText() {
+  String _getSelectionText(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final min = group.minSelection;
     final max = group.maxSelection;
     
     if (min == 0 && max == 1) {
-      return 'เลือกได้ 1 รายการ';
+      return l10n.optLibSelectMax1;
     } else if (min == 0 && max > 1) {
-      return 'เลือกได้สูงสุด $max รายการ';
+      return l10n.optLibSelectMaxN(max.toString());
     } else if (min == max) {
-      return 'เลือก $min รายการ';
+      return l10n.optLibSelectExact(min.toString());
     } else {
-      return 'เลือก $min-$max รายการ';
+      return l10n.optLibSelectRange(min.toString(), max.toString());
     }
   }
 
@@ -699,7 +701,7 @@ class LinkedOptionGroupCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    _getSelectionText(),
+                    _getSelectionText(context),
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey[600],
@@ -707,7 +709,7 @@ class LinkedOptionGroupCard extends StatelessWidget {
                   ),
                   if (optionCount > 0)
                     Text(
-                      '$optionCount ตัวเลือก',
+                      AppLocalizations.of(context)!.menuEditOptionCount(optionCount.toString()),
                       style: TextStyle(
                         fontSize: 12,
                         color: AppTheme.accentOrange,
@@ -721,7 +723,7 @@ class LinkedOptionGroupCard extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.remove_circle, color: Colors.red),
               onPressed: onRemove,
-              tooltip: 'ลบกลุ่มนี้',
+              tooltip: AppLocalizations.of(context)!.menuEditRemoveGroupTooltip,
             ),
           ],
         ),
@@ -839,8 +841,8 @@ class _OptionGroupSelectionSheetState extends State<OptionGroupSelectionSheet> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
-                    const Text(
-                      'เลือกกลุ่มตัวเลือก',
+                    Text(
+                      AppLocalizations.of(context)!.menuEditSelectOptionGroups,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -900,8 +902,8 @@ class _OptionGroupSelectionSheetState extends State<OptionGroupSelectionSheet> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'บันทึกการเลือก',
+                      child: Text(
+                        AppLocalizations.of(context)!.menuEditSaveSelection,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -947,7 +949,7 @@ class _OptionGroupSelectionSheetState extends State<OptionGroupSelectionSheet> {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _loadAvailableGroups,
-              child: const Text('ลองใหม่'),
+              child: Text(AppLocalizations.of(context)!.menuEditSheetRetry),
             ),
           ],
         ),
@@ -966,7 +968,7 @@ class _OptionGroupSelectionSheetState extends State<OptionGroupSelectionSheet> {
             ),
             const SizedBox(height: 16),
             Text(
-              'ไม่มีกลุ่มตัวเลือก',
+              AppLocalizations.of(context)!.menuEditSheetNoGroups,
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey[600],
@@ -974,7 +976,7 @@ class _OptionGroupSelectionSheetState extends State<OptionGroupSelectionSheet> {
             ),
             const SizedBox(height: 8),
             Text(
-              'สร้างกลุ่มตัวเลือกก่อนเพื่อนำมาใช้กับเมนู',
+              AppLocalizations.of(context)!.menuEditSheetNoGroupsHint,
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[500],
@@ -1016,18 +1018,19 @@ class OptionGroupSelectionCard extends StatelessWidget {
     required this.onTap,
   }) : super(key: key);
 
-  String _getSelectionText() {
+  String _getSelectionText(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final min = group.minSelection;
     final max = group.maxSelection;
     
     if (min == 0 && max == 1) {
-      return 'เลือกได้ 1 รายการ';
+      return l10n.optLibSelectMax1;
     } else if (min == 0 && max > 1) {
-      return 'เลือกได้สูงสุด $max รายการ';
+      return l10n.optLibSelectMaxN(max.toString());
     } else if (min == max) {
-      return 'เลือก $min รายการ';
+      return l10n.optLibSelectExact(min.toString());
     } else {
-      return 'เลือก $min-$max รายการ';
+      return l10n.optLibSelectRange(min.toString(), max.toString());
     }
   }
 
@@ -1081,7 +1084,7 @@ class OptionGroupSelectionCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _getSelectionText(),
+                      _getSelectionText(context),
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey[600],
@@ -1089,7 +1092,7 @@ class OptionGroupSelectionCard extends StatelessWidget {
                     ),
                     if (optionCount > 0)
                       Text(
-                        '$optionCount ตัวเลือก',
+                        AppLocalizations.of(context)!.menuEditOptionCount(optionCount.toString()),
                         style: TextStyle(
                           fontSize: 12,
                           color: AppTheme.accentOrange,

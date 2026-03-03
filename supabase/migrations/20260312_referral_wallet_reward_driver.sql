@@ -1,8 +1,8 @@
--- Phase 12: Driver referral wallet reward (topup 100) on referee first completed booking
+-- Phase 12: Driver referral wallet reward (topup 50) on referee first completed booking
 -- Updates referral qualification function to support referee as customer or driver.
 -- Reward type is based on profiles.role:
 --  - customer: coupon (WELCOME20 / REFERRER20)
---  - driver: wallet topup 100
+--  - driver: wallet topup 50
 
 CREATE OR REPLACE FUNCTION public.referral_qualify_on_booking_completed(p_booking_id uuid)
 RETURNS jsonb
@@ -97,13 +97,21 @@ BEGIN
             LIMIT 1;
 
             IF v_coupon_referee IS NOT NULL THEN
-              IF NOT EXISTS (
-                SELECT 1 FROM public.user_coupons
-                WHERE user_id = v_referee_id AND coupon_id = v_coupon_referee.id
-              ) THEN
-                INSERT INTO public.user_coupons (user_id, coupon_id, status, expires_at)
-                VALUES (v_referee_id, v_coupon_referee.id, 'claimed', v_coupon_referee.end_date);
-              END IF;
+              DECLARE
+                v_claims_count int;
+                v_claim_limit int;
+              BEGIN
+                SELECT count(*) INTO v_claims_count
+                FROM public.user_coupons
+                WHERE user_id = v_referee_id AND coupon_id = v_coupon_referee.id;
+
+                v_claim_limit := COALESCE(v_coupon_referee.claim_limit_per_user, 1);
+
+                IF v_claim_limit <= 0 OR v_claims_count < v_claim_limit THEN
+                  INSERT INTO public.user_coupons (user_id, coupon_id, status, expires_at)
+                  VALUES (v_referee_id, v_coupon_referee.id, 'claimed', v_coupon_referee.end_date);
+                END IF;
+              END;
 
               IF NOT EXISTS (
                 SELECT 1
@@ -126,7 +134,7 @@ BEGIN
               END IF;
             END IF;
           ELSIF COALESCE(v_referee_role, '') = 'driver' THEN
-            PERFORM public.wallet_topup(v_referee_id, 100, 'Referral reward');
+            PERFORM public.wallet_topup(v_referee_id, 50, 'Referral reward');
 
             IF NOT EXISTS (
               SELECT 1
@@ -139,11 +147,11 @@ BEGIN
               VALUES (
                 v_referee_id,
                 'คุณได้รับเงินแล้ว',
-                'รับเงินรางวัลเข้ากระเป๋า 100 บาทเรียบร้อยแล้ว',
+                'รับเงินรางวัลเข้ากระเป๋า 50 บาทเรียบร้อยแล้ว',
                 'referral_wallet_reward_referee',
                 jsonb_build_object(
                   'referral_id', v_referral.id::text,
-                  'amount', 100,
+                  'amount', 50,
                   'booking_id', p_booking_id::text
                 )
               );
@@ -159,13 +167,21 @@ BEGIN
             LIMIT 1;
 
             IF v_coupon_referrer IS NOT NULL THEN
-              IF NOT EXISTS (
-                SELECT 1 FROM public.user_coupons
-                WHERE user_id = v_referral.referrer_id AND coupon_id = v_coupon_referrer.id
-              ) THEN
-                INSERT INTO public.user_coupons (user_id, coupon_id, status, expires_at)
-                VALUES (v_referral.referrer_id, v_coupon_referrer.id, 'claimed', v_coupon_referrer.end_date);
-              END IF;
+              DECLARE
+                v_claims_count int;
+                v_claim_limit int;
+              BEGIN
+                SELECT count(*) INTO v_claims_count
+                FROM public.user_coupons
+                WHERE user_id = v_referral.referrer_id AND coupon_id = v_coupon_referrer.id;
+
+                v_claim_limit := COALESCE(v_coupon_referrer.claim_limit_per_user, 1);
+
+                IF v_claim_limit <= 0 OR v_claims_count < v_claim_limit THEN
+                  INSERT INTO public.user_coupons (user_id, coupon_id, status, expires_at)
+                  VALUES (v_referral.referrer_id, v_coupon_referrer.id, 'claimed', v_coupon_referrer.end_date);
+                END IF;
+              END;
 
               IF NOT EXISTS (
                 SELECT 1
@@ -189,7 +205,7 @@ BEGIN
               END IF;
             END IF;
           ELSIF COALESCE(v_referrer_role, '') = 'driver' THEN
-            PERFORM public.wallet_topup(v_referral.referrer_id, 100, 'Referral reward');
+            PERFORM public.wallet_topup(v_referral.referrer_id, 50, 'Referral reward');
 
             IF NOT EXISTS (
               SELECT 1
@@ -202,11 +218,11 @@ BEGIN
               VALUES (
                 v_referral.referrer_id,
                 'คุณได้รับเงินแล้ว',
-                'เพื่อนของคุณทำรายการสำเร็จแล้ว รับเงินรางวัลเข้ากระเป๋า 100 บาทเรียบร้อยแล้ว',
+                'เพื่อนของคุณทำรายการสำเร็จแล้ว รับเงินรางวัลเข้ากระเป๋า 50 บาทเรียบร้อยแล้ว',
                 'referral_wallet_reward_referrer',
                 jsonb_build_object(
                   'referral_id', v_referral.id::text,
-                  'amount', 100,
+                  'amount', 50,
                   'booking_id', p_booking_id::text,
                   'referee_id', v_referee_id::text
                 )
@@ -281,13 +297,21 @@ BEGIN
             LIMIT 1;
 
             IF v_coupon_referee IS NOT NULL THEN
-              IF NOT EXISTS (
-                SELECT 1 FROM public.user_coupons
-                WHERE user_id = v_referee_id AND coupon_id = v_coupon_referee.id
-              ) THEN
-                INSERT INTO public.user_coupons (user_id, coupon_id, status, expires_at)
-                VALUES (v_referee_id, v_coupon_referee.id, 'claimed', v_coupon_referee.end_date);
-              END IF;
+              DECLARE
+                v_claims_count int;
+                v_claim_limit int;
+              BEGIN
+                SELECT count(*) INTO v_claims_count
+                FROM public.user_coupons
+                WHERE user_id = v_referee_id AND coupon_id = v_coupon_referee.id;
+
+                v_claim_limit := COALESCE(v_coupon_referee.claim_limit_per_user, 1);
+
+                IF v_claim_limit <= 0 OR v_claims_count < v_claim_limit THEN
+                  INSERT INTO public.user_coupons (user_id, coupon_id, status, expires_at)
+                  VALUES (v_referee_id, v_coupon_referee.id, 'claimed', v_coupon_referee.end_date);
+                END IF;
+              END;
 
               IF NOT EXISTS (
                 SELECT 1
@@ -310,7 +334,7 @@ BEGIN
               END IF;
             END IF;
           ELSIF COALESCE(v_referee_role, '') = 'driver' THEN
-            PERFORM public.wallet_topup(v_referee_id, 100, 'Referral reward');
+            PERFORM public.wallet_topup(v_referee_id, 50, 'Referral reward');
 
             IF NOT EXISTS (
               SELECT 1
@@ -323,11 +347,11 @@ BEGIN
               VALUES (
                 v_referee_id,
                 'คุณได้รับเงินแล้ว',
-                'รับเงินรางวัลเข้ากระเป๋า 100 บาทเรียบร้อยแล้ว',
+                'รับเงินรางวัลเข้ากระเป๋า 50 บาทเรียบร้อยแล้ว',
                 'referral_wallet_reward_referee',
                 jsonb_build_object(
                   'referral_id', v_referral.id::text,
-                  'amount', 100,
+                  'amount', 50,
                   'booking_id', p_booking_id::text
                 )
               );
@@ -343,13 +367,21 @@ BEGIN
             LIMIT 1;
 
             IF v_coupon_referrer IS NOT NULL THEN
-              IF NOT EXISTS (
-                SELECT 1 FROM public.user_coupons
-                WHERE user_id = v_referral.referrer_id AND coupon_id = v_coupon_referrer.id
-              ) THEN
-                INSERT INTO public.user_coupons (user_id, coupon_id, status, expires_at)
-                VALUES (v_referral.referrer_id, v_coupon_referrer.id, 'claimed', v_coupon_referrer.end_date);
-              END IF;
+              DECLARE
+                v_claims_count int;
+                v_claim_limit int;
+              BEGIN
+                SELECT count(*) INTO v_claims_count
+                FROM public.user_coupons
+                WHERE user_id = v_referral.referrer_id AND coupon_id = v_coupon_referrer.id;
+
+                v_claim_limit := COALESCE(v_coupon_referrer.claim_limit_per_user, 1);
+
+                IF v_claim_limit <= 0 OR v_claims_count < v_claim_limit THEN
+                  INSERT INTO public.user_coupons (user_id, coupon_id, status, expires_at)
+                  VALUES (v_referral.referrer_id, v_coupon_referrer.id, 'claimed', v_coupon_referrer.end_date);
+                END IF;
+              END;
 
               IF NOT EXISTS (
                 SELECT 1
@@ -373,7 +405,7 @@ BEGIN
               END IF;
             END IF;
           ELSIF COALESCE(v_referrer_role, '') = 'driver' THEN
-            PERFORM public.wallet_topup(v_referral.referrer_id, 100, 'Referral reward');
+            PERFORM public.wallet_topup(v_referral.referrer_id, 50, 'Referral reward');
 
             IF NOT EXISTS (
               SELECT 1
@@ -386,11 +418,11 @@ BEGIN
               VALUES (
                 v_referral.referrer_id,
                 'คุณได้รับเงินแล้ว',
-                'เพื่อนของคุณทำรายการสำเร็จแล้ว รับเงินรางวัลเข้ากระเป๋า 100 บาทเรียบร้อยแล้ว',
+                'เพื่อนของคุณทำรายการสำเร็จแล้ว รับเงินรางวัลเข้ากระเป๋า 50 บาทเรียบร้อยแล้ว',
                 'referral_wallet_reward_referrer',
                 jsonb_build_object(
                   'referral_id', v_referral.id::text,
-                  'amount', 100,
+                  'amount', 50,
                   'booking_id', p_booking_id::text,
                   'referee_id', v_referee_id::text
                 )

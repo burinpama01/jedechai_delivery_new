@@ -2,6 +2,7 @@ import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../common/models/booking.dart';
 import '../../../common/utils/order_code_formatter.dart';
 import '../../../common/widgets/status_badge.dart';
@@ -44,18 +45,19 @@ class _ActivityScreenState extends State<ActivityScreen> {
   }
 
   String _getPaymentMethodText(String? paymentMethod) {
+    final l10n = AppLocalizations.of(context)!;
     switch ((paymentMethod ?? '').toLowerCase()) {
       case 'cash':
-        return 'เงินสด';
+        return l10n.activityPaymentCash;
       case 'transfer':
       case 'promptpay':
       case 'bank_transfer':
-        return 'โอนเงิน';
+        return l10n.activityPaymentTransfer;
       case 'card':
       case 'credit_card':
-        return 'บัตรเครดิต';
+        return l10n.activityPaymentCard;
       default:
-        return 'ไม่ระบุการชำระ';
+        return l10n.activityPaymentUnknown;
     }
   }
 
@@ -171,9 +173,9 @@ class _ActivityScreenState extends State<ActivityScreen> {
       firstDate: DateTime(now.year - 2, 1, 1),
       lastDate: DateTime(now.year + 1, 12, 31),
       initialDateRange: initialRange,
-      helpText: 'เลือกช่วงวันที่',
-      saveText: 'ยืนยัน',
-      cancelText: 'ยกเลิก',
+      helpText: AppLocalizations.of(context)!.activityDatePickerHelp,
+      saveText: AppLocalizations.of(context)!.activityDatePickerConfirm,
+      cancelText: AppLocalizations.of(context)!.activityDatePickerCancel,
     );
 
     if (picked == null) return;
@@ -188,17 +190,18 @@ class _ActivityScreenState extends State<ActivityScreen> {
   }
 
   String _getDateFilterText() {
+    final l10n = AppLocalizations.of(context)!;
     switch (_dateFilter) {
       case _ActivityDateFilter.today:
-        return 'วันนี้';
+        return l10n.activityFilterToday;
       case _ActivityDateFilter.last7Days:
-        return '7 วันที่ผ่านมา';
+        return l10n.activityFilterLast7Days;
       case _ActivityDateFilter.thisMonth:
-        return 'เดือนนี้';
+        return l10n.activityFilterThisMonth;
       case _ActivityDateFilter.all:
-        return 'ทั้งหมด';
+        return l10n.activityFilterAll;
       case _ActivityDateFilter.custom:
-        if (_customDateRange == null) return 'ช่วงวันที่';
+        if (_customDateRange == null) return l10n.activityFilterDateRange;
         final formatter = DateFormat('dd/MM/yyyy');
         return '${formatter.format(_customDateRange!.start)} - ${formatter.format(_customDateRange!.end)}';
     }
@@ -390,7 +393,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
   }
 
   String _formatDateTime(DateTime? dateTime) {
-    if (dateTime == null) return 'ไม่ทราบ';
+    if (dateTime == null) return AppLocalizations.of(context)!.activityTimeUnknown;
 
     final now = DateTime.now();
     final difference = now.difference(dateTime);
@@ -398,23 +401,24 @@ class _ActivityScreenState extends State<ActivityScreen> {
     if (difference.inDays > 0) {
       return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
     } else if (difference.inHours > 0) {
-      return '${difference.inHours} ชั่วโมงที่แล้ว';
+      return AppLocalizations.of(context)!.activityTimeHoursAgo(difference.inHours.toString());
     } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} นาทีที่แล้ว';
+      return AppLocalizations.of(context)!.activityTimeMinutesAgo(difference.inMinutes.toString());
     } else {
-      return 'เมื่อสักครู่';
+      return AppLocalizations.of(context)!.activityTimeJustNow;
     }
   }
 
   String _getServiceText(String serviceType) {
+    final l10n = AppLocalizations.of(context)!;
     switch (serviceType.toLowerCase()) {
       case 'ride':
-        return 'เรียกรถ';
+        return l10n.activityServiceRide;
       case 'food':
-        return 'สั่งอาหาร';
+        return l10n.activityServiceFood;
       case 'parcel':
       case 'delivery':
-        return 'ส่งพัสดุ';
+        return l10n.activityServiceParcel;
       default:
         return serviceType;
     }
@@ -428,7 +432,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('ประวัติการใช้งาน'),
+        title: Text(AppLocalizations.of(context)!.activityTitle),
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
         elevation: 0,
@@ -513,14 +517,14 @@ class _ActivityScreenState extends State<ActivityScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.filter_alt_rounded,
+              const Icon(Icons.filter_alt_rounded,
                   color: AppTheme.accentBlue, size: 18),
-              SizedBox(width: 6),
+              const SizedBox(width: 6),
               Text(
-                'กรองตามวันที่',
-                style: TextStyle(
+                AppLocalizations.of(context)!.activityFilterByDate,
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                 ),
@@ -532,10 +536,10 @@ class _ActivityScreenState extends State<ActivityScreen> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                _buildDateFilterChip(_ActivityDateFilter.today, 'วันนี้'),
-                _buildDateFilterChip(_ActivityDateFilter.last7Days, '7 วัน'),
-                _buildDateFilterChip(_ActivityDateFilter.thisMonth, 'เดือนนี้'),
-                _buildDateFilterChip(_ActivityDateFilter.all, 'ทั้งหมด'),
+                _buildDateFilterChip(_ActivityDateFilter.today, AppLocalizations.of(context)!.activityFilterToday),
+                _buildDateFilterChip(_ActivityDateFilter.last7Days, AppLocalizations.of(context)!.activityFilterLast7DaysShort),
+                _buildDateFilterChip(_ActivityDateFilter.thisMonth, AppLocalizations.of(context)!.activityFilterThisMonth),
+                _buildDateFilterChip(_ActivityDateFilter.all, AppLocalizations.of(context)!.activityFilterAll),
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: ChoiceChip(
@@ -543,7 +547,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                       _dateFilter == _ActivityDateFilter.custom &&
                               _customDateRange != null
                           ? _getDateFilterText()
-                          : 'ช่วงวันที่',
+                          : AppLocalizations.of(context)!.activityFilterDateRange,
                     ),
                     selected: _dateFilter == _ActivityDateFilter.custom,
                     onSelected: (_) => _selectCustomDateRange(),
@@ -626,7 +630,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'สถิติการสั่งซื้อ',
+            AppLocalizations.of(context)!.activityOrderStats,
             style: TextStyle(
               color: colorScheme.onPrimary,
               fontSize: 16,
@@ -635,7 +639,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            'ช่วงเวลา: ${_getDateFilterText()}',
+            AppLocalizations.of(context)!.activityTimePeriod(_getDateFilterText()),
             style: TextStyle(
               color: colorScheme.onPrimary.withValues(alpha: 0.85),
               fontSize: 12,
@@ -647,11 +651,11 @@ class _ActivityScreenState extends State<ActivityScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildStatChip('ทั้งหมด', '$totalOrders รายการ'),
-              _buildStatChip('สำเร็จ', '$completedCount รายการ'),
-              _buildStatChip('ยกเลิก', '$cancelledCount รายการ'),
-              _buildStatChip('ยอดใช้จ่าย', '฿${totalSpent.ceil()}'),
-              _buildStatChip('ประหยัดจากคูปอง', '฿${totalSavings.ceil()}'),
+              _buildStatChip(AppLocalizations.of(context)!.activityStatTotal, AppLocalizations.of(context)!.activityStatItems(totalOrders.toString())),
+              _buildStatChip(AppLocalizations.of(context)!.activityStatCompleted, AppLocalizations.of(context)!.activityStatItems(completedCount.toString())),
+              _buildStatChip(AppLocalizations.of(context)!.activityStatCancelled, AppLocalizations.of(context)!.activityStatItems(cancelledCount.toString())),
+              _buildStatChip(AppLocalizations.of(context)!.activityStatTotalSpent, '฿${totalSpent.ceil()}'),
+              _buildStatChip(AppLocalizations.of(context)!.activityStatCouponSavings, '฿${totalSavings.ceil()}'),
             ],
           ),
         ],
@@ -713,8 +717,8 @@ class _ActivityScreenState extends State<ActivityScreen> {
               ),
             ),
             const SizedBox(height: 14),
-            const Text(
-              'ไม่พบรายการในช่วงวันที่ที่เลือก',
+            Text(
+              AppLocalizations.of(context)!.activityFilteredEmpty,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 17,
@@ -723,7 +727,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              'ลองเปลี่ยนตัวกรองวันที่เพื่อดูประวัติการสั่งซื้อเพิ่มเติม',
+              AppLocalizations.of(context)!.activityFilteredEmptyHint,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
@@ -740,7 +744,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
     return ConnectionHelper.buildErrorWidget(
       error: _error!,
       onRetry: _fetchBookings,
-      title: 'โหลดข้อมูลไม่สำเร็จ',
+      title: AppLocalizations.of(context)!.activityLoadFailed,
     );
   }
 
@@ -764,7 +768,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
           ),
           const SizedBox(height: 20),
           Text(
-            'ยังไม่มีประวัติ',
+            AppLocalizations.of(context)!.activityNoHistory,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
@@ -773,7 +777,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'ประวัติการจองของคุณจะแสดงที่นี่',
+            AppLocalizations.of(context)!.activityNoHistoryHint,
             style: TextStyle(
               fontSize: 14,
               color: colorScheme.onSurfaceVariant,
@@ -851,7 +855,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'รหัส ${_shortBookingId(booking.id, booking.serviceType)}',
+                          AppLocalizations.of(context)!.activityBookingCode(_shortBookingId(booking.id, booking.serviceType)),
                           style: TextStyle(
                             fontSize: 11,
                             color: colorScheme.onSurfaceVariant,
@@ -906,7 +910,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                       _getPaymentMethodText(booking.paymentMethod)),
                   if (booking.distanceKm > 0)
                     _buildMetaChip(Icons.straighten_rounded,
-                        '${booking.distanceKm.toStringAsFixed(1)} กม.'),
+                        AppLocalizations.of(context)!.activityDistanceKm(booking.distanceKm.toStringAsFixed(1))),
                 ],
               ),
 
@@ -934,8 +938,8 @@ class _ActivityScreenState extends State<ActivityScreen> {
                       Expanded(
                         child: Text(
                           booking.scheduledAt!.isAfter(DateTime.now())
-                              ? 'นัดหมายรับบริการ: ${_formatScheduledDateTime(booking.scheduledAt!)}'
-                              : 'ออเดอร์นัดหมาย: ${_formatScheduledDateTime(booking.scheduledAt!)}',
+                              ? AppLocalizations.of(context)!.activityScheduledService(_formatScheduledDateTime(booking.scheduledAt!))
+                              : AppLocalizations.of(context)!.activityScheduledOrder(_formatScheduledDateTime(booking.scheduledAt!)),
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -958,7 +962,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'ยอดชำระ',
+                        AppLocalizations.of(context)!.activityAmountPaid,
                         style: TextStyle(
                           fontSize: 12,
                           color: colorScheme.onSurfaceVariant,
@@ -977,7 +981,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                   Row(
                     children: [
                       Text(
-                        'ดูรายละเอียด',
+                        AppLocalizations.of(context)!.activityViewDetails,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -1071,38 +1075,39 @@ class _ActivityScreenState extends State<ActivityScreen> {
   }
 
   String _getStatusText(String status) {
+    final l10n = AppLocalizations.of(context)!;
     switch (status.toLowerCase()) {
       case 'completed':
-        return 'สำเร็จ';
+        return l10n.activityStatusCompleted;
       case 'cancelled':
-        return 'ยกเลิก';
+        return l10n.activityStatusCancelled;
       case 'confirmed':
       case 'accepted':
-        return 'ยืนยันแล้ว';
+        return l10n.activityStatusConfirmed;
       case 'driver_assigned':
       case 'driver_accepted':
-        return 'คนขับรับแล้ว';
+        return l10n.activityStatusDriverAccepted;
       case 'in_progress':
       case 'in_transit':
-        return 'กำลังจัดส่ง';
+        return l10n.activityStatusInTransit;
       case 'preparing':
-        return 'กำลังเตรียมอาหาร';
+        return l10n.activityStatusPreparing;
       case 'ready_for_pickup':
-        return 'อาหารพร้อมรับ';
+        return l10n.activityStatusReadyPickup;
       case 'arrived':
-        return 'ถึงจุดหมาย';
+        return l10n.activityStatusArrived;
       case 'pending':
       case 'searching':
-        return 'รอดำเนินการ';
+        return l10n.activityStatusPending;
       default:
         return status;
     }
   }
 
   String _formatAddress(String? address) {
-    if (address == null) return 'ไม่ระบุ';
+    if (address == null) return AppLocalizations.of(context)!.activityAddressNotSpecified;
     if (address.toString() == 'Instance of \'AddressPlacemark\'') {
-      return 'ที่อยู่ปลายทาง'; // Fallback
+      return AppLocalizations.of(context)!.activityAddressFallback; // Fallback
     }
     return address;
   }
@@ -1131,9 +1136,9 @@ class _ActivityScreenState extends State<ActivityScreen> {
     final code = _getCouponCode(booking);
     final discount = _getCouponDiscount(booking).ceil();
     if (code != null && code.isNotEmpty) {
-      return 'ใช้คูปอง $code ลด ฿$discount';
+      return AppLocalizations.of(context)!.activityUsedCouponWithCode(code, discount.toString());
     }
-    return 'ใช้คูปอง ลด ฿$discount';
+    return AppLocalizations.of(context)!.activityUsedCoupon(discount.toString());
   }
 
   double _getTotalPrice(Booking booking) {

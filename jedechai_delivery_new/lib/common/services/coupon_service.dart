@@ -7,6 +7,17 @@ import 'auth_service.dart';
 ///
 /// Handles coupon validation, redemption, and management
 /// Tables: coupons, coupon_usages
+
+class WalletCouponGroup {
+  final Coupon coupon;
+  final int quantity;
+
+  const WalletCouponGroup({
+    required this.coupon,
+    required this.quantity,
+  });
+}
+
 class CouponService {
   final SupabaseClient _client = Supabase.instance.client;
 
@@ -39,6 +50,86 @@ class CouponService {
       return coupons;
     } catch (e) {
       debugLog('❌ Error fetching wallet coupons: $e');
+      return [];
+    }
+  }
+
+  static List<WalletCouponGroup> groupWalletCouponRows(
+    List<Map<String, dynamic>> userCouponRows, {
+    String? serviceType,
+    String? merchantId,
+  }) {
+    final Map<String, WalletCouponGroup> grouped = {};
+    final List<String> order = [];
+
+    for (final row in userCouponRows) {
+      final couponJson = row['coupon'];
+      if (couponJson is! Map<String, dynamic>) continue;
+
+      final coupon = Coupon.fromJson(couponJson);
+      if (!coupon.isValid) continue;
+      if (serviceType != null && coupon.serviceType != null && coupon.serviceType != serviceType) {
+        continue;
+      }
+      if (merchantId != null && coupon.merchantId != null && coupon.merchantId != merchantId) {
+        continue;
+      }
+
+      final key = coupon.id;
+      final existing = grouped[key];
+      if (existing == null) {
+        grouped[key] = WalletCouponGroup(coupon: coupon, quantity: 1);
+        order.add(key);
+      } else {
+        grouped[key] = WalletCouponGroup(coupon: existing.coupon, quantity: existing.quantity + 1);
+      }
+    }
+
+    return order.map((id) => grouped[id]!).toList();
+  }
+
+  Future<List<WalletCouponGroup>> getMyWalletCouponGroups({
+    String? serviceType,
+    String? merchantId,
+  }) async {
+    final userId = AuthService.userId;
+    if (userId == null) throw Exception('กรุณาเข้าสู่ระบบ');
+
+    try {
+      final response = await _client
+          .from('user_coupons')
+          .select('id, status, expires_at, claimed_at, coupon:coupons(*)')
+          .eq('user_id', userId)
+          .eq('status', 'claimed')
+          .order('claimed_at', ascending: false);
+
+      return groupWalletCouponRows(
+        (response as List).whereType<Map<String, dynamic>>().toList(),
+        serviceType: serviceType,
+        merchantId: merchantId,
+      );
+    } catch (e) {
+      debugLog('❌ Error fetching grouped wallet coupons: $e');
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getMyCouponUsageHistory() async {
+    final userId = AuthService.userId;
+    if (userId == null) throw Exception('กรุณาเข้าสู่ระบบ');
+
+    try {
+      final response = await _client
+          .from('coupon_usages')
+          .select('id, coupon_id, booking_id, discount_amount, created_at, coupon:coupons(code, name)')
+          .eq('user_id', userId)
+          .order('created_at', ascending: false);
+
+      return (response as List)
+          .whereType<Map<String, dynamic>>()
+          .toList();
+    } catch (e) {
+      debugLog('❌ Error fetching coupon usage history: $e');
       return [];
     }
   }

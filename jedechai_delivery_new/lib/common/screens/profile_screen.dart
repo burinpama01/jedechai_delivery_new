@@ -5,7 +5,9 @@ import '../services/profile_service.dart';
 import '../services/image_picker_service.dart';
 import '../services/storage_service.dart';
 import '../widgets/app_network_image.dart';
+import '../widgets/language_switcher.dart';
 import '../../theme/app_theme.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Profile Screen - Universal for all roles
 /// 
@@ -93,16 +95,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _isLoading = false;
       });
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
             icon: const Icon(Icons.error_outline, color: Colors.red, size: 48),
-            title: const Text('โหลดโปรไฟล์ไม่สำเร็จ'),
-            content: Text('ไม่สามารถโหลดข้อมูลโปรไฟล์ได้: $e'),
+            title: Text(l10n.profileLoadFailedTitle),
+            content: Text(l10n.profileLoadFailedBody(e.toString())),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('ตกลง'),
+                child: Text(l10n.commonOk),
               ),
             ],
           ),
@@ -161,9 +164,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await _loadProfile();
 
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('บันทึกโปรไฟล์สำเร็จ'),
+          SnackBar(
+            content: Text(l10n.profileSaveSuccess),
             backgroundColor: AppTheme.primaryGreen,
           ),
         );
@@ -171,16 +175,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       debugLog('❌ Error saving profile: $e');
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
             icon: const Icon(Icons.error_outline, color: Colors.red, size: 48),
-            title: const Text('บันทึกไม่สำเร็จ'),
-            content: Text('ไม่สามารถบันทึกโปรไฟล์ได้: $e'),
+            title: Text(l10n.profileSaveFailedTitle),
+            content: Text(l10n.profileSaveFailedBody(e.toString())),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('ตกลง'),
+                child: Text(l10n.commonOk),
               ),
             ],
           ),
@@ -195,11 +200,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppTheme.primaryGreen,
         foregroundColor: Colors.white,
-        title: const Text('แก้ไขโปรไฟล์'),
+        title: Text(l10n.profileEditTitle),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 8),
+            child: LanguageSwitcher(),
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(
@@ -220,21 +232,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(height: 32),
                     
                     // Basic Information
-                    _buildSectionTitle('ข้อมูลพื้นฐาน'),
+                    _buildSectionTitle(l10n.profileBasicInfoSection),
                     _buildBasicInfoSection(),
                     
                     const SizedBox(height: 24),
                     
                     // Driver Specific Fields
                     if (_userRole == 'driver') ...[
-                      _buildSectionTitle('ข้อมูลยานพาหนะ'),
+                      _buildSectionTitle(l10n.profileVehicleSection),
                       _buildVehicleSection(),
                       const SizedBox(height: 24),
                     ],
                     
                     // Merchant Specific Fields
                     if (_userRole == 'merchant') ...[
-                      _buildSectionTitle('ข้อมูลร้านค้า'),
+                      _buildSectionTitle(l10n.profileMerchantSection),
                       _buildMerchantSection(),
                       const SizedBox(height: 24),
                     ],
@@ -261,9 +273,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                 ),
                               )
-                            : const Text(
-                                'บันทึก',
-                                style: TextStyle(
+                            : Text(
+                                l10n.profileSave,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -286,8 +298,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (userId == null) return;
 
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('กำลังอัพโหลดรูปภาพ...'), duration: Duration(seconds: 2)),
+          SnackBar(
+            content: Text(l10n.profileUploadingImage),
+            duration: const Duration(seconds: 2),
+          ),
         );
       }
 
@@ -302,18 +318,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
           avatarUrl: uploadedUrl,
         );
         debugLog('📷 Avatar uploaded: $uploadedUrl');
+
+        // Reload profile
         await _loadProfile();
+
         if (mounted) {
+          final l10n = AppLocalizations.of(context)!;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('อัพโหลดรูปโปรไฟล์สำเร็จ!'), backgroundColor: Colors.green),
+            SnackBar(
+              content: Text(l10n.accountUploadSuccess),
+              backgroundColor: Colors.green,
+            ),
           );
         }
       }
     } catch (e) {
       debugLog('❌ Error uploading avatar: $e');
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('อัพโหลดรูปไม่สำเร็จ: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(l10n.accountUploadFailed(e.toString())),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -400,11 +427,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              _userRole == 'driver' ? 'คนขับ' : _userRole == 'merchant' ? 'ร้านค้า' : 'ลูกค้า',
+              _userRole == 'driver'
+                  ? AppLocalizations.of(context)!.accountRoleDriver
+                  : _userRole == 'merchant'
+                      ? AppLocalizations.of(context)!.accountRoleMerchant
+                      : AppLocalizations.of(context)!.accountRoleCustomer,
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
-                fontSize: 12,
               ),
             ),
           ),
@@ -428,6 +458,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildBasicInfoSection() {
+    final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
@@ -446,14 +477,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           TextFormField(
             controller: _fullNameController,
-            decoration: const InputDecoration(
-              labelText: 'ชื่อ-นามสกุล',
-              prefixIcon: Icon(Icons.person),
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: l10n.profileFullNameLabel,
+              prefixIcon: const Icon(Icons.person),
+              border: const OutlineInputBorder(),
             ),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'กรุณากรอกชื่อ-นามสกุล';
+                return l10n.profileFullNameRequired;
               }
               return null;
             },
@@ -461,15 +492,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _phoneController,
-            decoration: const InputDecoration(
-              labelText: 'เบอร์โทรศัพท์',
-              prefixIcon: Icon(Icons.phone),
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: l10n.profilePhoneLabel,
+              prefixIcon: const Icon(Icons.phone),
+              border: const OutlineInputBorder(),
             ),
             keyboardType: TextInputType.phone,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'กรุณากรอกเบอร์โทรศัพท์';
+                return l10n.profilePhoneRequired;
               }
               return null;
             },
@@ -480,6 +511,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildVehicleSection() {
+    final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
@@ -498,27 +530,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           Align(
             alignment: Alignment.centerLeft,
-            child: Text('ประเภทรถ', style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
+            child: Text(
+              l10n.driverInfoVehicleType,
+              style: TextStyle(
+                fontSize: 14,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
           const SizedBox(height: 8),
           Row(
             children: [
-              Expanded(child: _buildVehicleChip('มอเตอร์ไซค์', Icons.two_wheeler)),
+              Expanded(
+                child: _buildVehicleChip(
+                  l10n.profileVehicleMotorcycle,
+                  Icons.two_wheeler,
+                ),
+              ),
               const SizedBox(width: 12),
-              Expanded(child: _buildVehicleChip('รถยนต์', Icons.directions_car)),
+              Expanded(
+                child: _buildVehicleChip(
+                  l10n.profileVehicleCar,
+                  Icons.directions_car,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _licensePlateController,
-            decoration: const InputDecoration(
-              labelText: 'ทะเบียนรถ',
-              prefixIcon: Icon(Icons.pin),
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: l10n.driverInfoLicensePlate,
+              prefixIcon: const Icon(Icons.pin),
+              border: const OutlineInputBorder(),
             ),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'กรุณากรอกทะเบียนรถ';
+                return l10n.profileLicensePlateRequired;
               }
               return null;
             },
@@ -569,6 +617,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildMerchantSection() {
+    final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
@@ -587,15 +636,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           TextFormField(
             controller: _shopNameController,
-            decoration: const InputDecoration(
-              labelText: 'ชื่อร้าน',
-              prefixIcon: Icon(Icons.store),
-              border: OutlineInputBorder(),
-              hintText: 'กรอกชื่อร้านค้า',
+            decoration: InputDecoration(
+              labelText: l10n.profileShopNameLabel,
+              prefixIcon: const Icon(Icons.store),
+              border: const OutlineInputBorder(),
+              hintText: l10n.profileShopNameHint,
             ),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'กรุณากรอกชื่อร้าน';
+                return l10n.profileShopNameRequired;
               }
               return null;
             },
@@ -603,16 +652,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _shopAddressController,
-            decoration: const InputDecoration(
-              labelText: 'ที่อยู่ร้าน',
-              prefixIcon: Icon(Icons.location_on),
-              border: OutlineInputBorder(),
-              hintText: 'กรอกที่อยู่ร้านค้า',
+            decoration: InputDecoration(
+              labelText: l10n.profileShopAddressLabel,
+              prefixIcon: const Icon(Icons.location_on),
+              border: const OutlineInputBorder(),
+              hintText: l10n.profileShopAddressHint,
             ),
             maxLines: 2,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'กรุณากรอกที่อยู่ร้าน';
+                return l10n.profileShopAddressRequired;
               }
               return null;
             },
@@ -620,16 +669,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _shopPhoneController,
-            decoration: const InputDecoration(
-              labelText: 'เบอร์โทรร้าน',
-              prefixIcon: Icon(Icons.phone),
-              border: OutlineInputBorder(),
-              hintText: 'กรอกเบอร์โทรศัพท์ร้าน',
+            decoration: InputDecoration(
+              labelText: l10n.profileShopPhoneLabel,
+              prefixIcon: const Icon(Icons.phone),
+              border: const OutlineInputBorder(),
+              hintText: l10n.profileShopPhoneHint,
             ),
             keyboardType: TextInputType.phone,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'กรุณากรอกเบอร์โทรศัพท์ร้าน';
+                return l10n.profileShopPhoneRequired;
               }
               return null;
             },

@@ -1,6 +1,7 @@
 ﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../common/models/booking.dart';
 import '../../../../common/services/profile_service.dart';
@@ -46,7 +47,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
   
   bool _isDriverFound = false;
   bool _isDriverAssigned = false;
-  String _driverName = 'กำลังค้นหาคนขับ...';
+  String _driverName = '';
   String _driverPhone = '';
   String _driverVehicle = '';
   int _estimatedTime = 5; // minutes
@@ -140,21 +141,18 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
           context: context,
           barrierDismissible: false,
           builder: (ctx) => AlertDialog(
-            title: const Text('ราคาอัปเดตใหม่'),
+            title: Text(AppLocalizations.of(context)!.waitingPriceUpdated),
             content: Text(
-              'ราคาถูกปรับใหม่เนื่องจากคนขับที่รับงานอยู่เกินระยะที่กำหนด\n\n'
-              'ราคาเดิม: ฿${_initialQuotedPrice.toStringAsFixed(2)}\n'
-              'ราคาใหม่: ฿${adjustedPrice.toStringAsFixed(2)}\n\n'
-              'ต้องการดำเนินการต่อหรือไม่?',
+              AppLocalizations.of(context)!.waitingPriceAdjustedBody(_initialQuotedPrice.toStringAsFixed(2), adjustedPrice.toStringAsFixed(2)),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('ยกเลิกงาน'),
+                child: Text(AppLocalizations.of(context)!.waitingCancelJob),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text('ดำเนินการต่อ'),
+                child: Text(AppLocalizations.of(context)!.waitingContinue),
               ),
             ],
           ),
@@ -172,7 +170,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
           .from('bookings')
           .update({
             'status': 'cancelled',
-            'notes': '${booking.notes ?? ''} | ลูกค้ายกเลิกหลังปรับราคาจากระยะคนขับ',
+            'notes': '${booking.notes ?? ''} | customer_cancelled_after_price_adjustment',
           })
           .eq('id', booking.id);
     } catch (e) {
@@ -221,7 +219,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('การเชื่อมต่อขัดข้อง กำลังลองใหม่...'),
+                content: Text(AppLocalizations.of(context)!.waitingConnectionError),
                 backgroundColor: Colors.orange,
                 duration: const Duration(seconds: 3),
               ),
@@ -245,12 +243,12 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
           context: context,
           builder: (ctx) => AlertDialog(
             icon: const Icon(Icons.wifi_off, color: Colors.red, size: 48),
-            title: const Text('เชื่อมต่อไม่สำเร็จ'),
-            content: Text('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้: ${e.toString()}'),
+            title: Text(AppLocalizations.of(context)!.waitingConnectionFailed),
+            content: Text(AppLocalizations.of(context)!.waitingCannotConnect(e.toString())),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('ตกลง'),
+                child: Text(AppLocalizations.of(context)!.waitingOk),
               ),
             ],
           ),
@@ -293,9 +291,9 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
             setState(() {
               _isDriverFound = true;
               _isDriverAssigned = true;
-              _driverName = driverInfo['full_name'] ?? 'คนขับ';
+              _driverName = driverInfo['full_name'] ?? AppLocalizations.of(context)!.waitingDriverFallback;
               _driverPhone = driverInfo['phone'] ?? '';
-              _driverVehicle = driverInfo['vehicle_type'] ?? 'รถจักรยานยนต์';
+              _driverVehicle = driverInfo['vehicle_type'] ?? AppLocalizations.of(context)!.waitingMotorcycleFallback;
             });
           }
 
@@ -382,15 +380,15 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
                 child: const Icon(Icons.cancel, color: Colors.red, size: 48),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'ร้านค้าปฏิเสธออเดอร์',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.red),
+              Text(
+                AppLocalizations.of(context)!.waitingMerchantRejected,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.red),
                 textAlign: TextAlign.center,
               ),
             ],
           ),
           content: Text(
-            'ขออภัย ร้านค้าไม่สามารถรับออเดอร์ของคุณได้ในขณะนี้\n\nกรุณาลองสั่งใหม่อีกครั้ง หรือเลือกร้านอื่น',
+            AppLocalizations.of(context)!.waitingMerchantRejectedBody,
             style: TextStyle(fontSize: 15, color: colorScheme.onSurface, height: 1.5),
             textAlign: TextAlign.center,
           ),
@@ -411,7 +409,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('เข้าใจแล้ว', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                child: Text(AppLocalizations.of(context)!.waitingUnderstood, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -476,7 +474,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
       appBar: AppBar(
         backgroundColor: _isFoodService ? AppTheme.accentOrange : AppTheme.primaryGreen,
         foregroundColor: Colors.white,
-        title: Text(_isFoodService ? 'กำลังรอร้านค้า' : 'กำลังค้นหาคนขับ'),
+        title: Text(_isFoodService ? AppLocalizations.of(context)!.waitingForMerchant : AppLocalizations.of(context)!.waitingSearchingForDriver),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () {
@@ -547,8 +545,8 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
           const SizedBox(height: 16),
           Text(
             isCompleted 
-                ? (_isFoodService ? 'ร้านค้ายืนยันคำสั่งซื้อ!' : 'พบคนขับแล้ว!')
-                : (_isFoodService ? 'กำลังรอร้านค้า...' : 'กำลังค้นหาคนขับ...'),
+                ? (_isFoodService ? AppLocalizations.of(context)!.waitingMerchantConfirmed : AppLocalizations.of(context)!.waitingDriverFound)
+                : (_isFoodService ? AppLocalizations.of(context)!.waitingForMerchantDots : AppLocalizations.of(context)!.waitingSearchingDriverDots),
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -558,8 +556,8 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
           const SizedBox(height: 8),
           Text(
             isCompleted 
-                ? (_isFoodService ? 'ร้านค้ากำลังเตรียมอาหารของคุณ' : 'คนขับกำลังเดินทางมาหาคุณ')
-                : 'ระบบเวลาโดยประมาณ $_estimatedTime นาที',
+                ? (_isFoodService ? AppLocalizations.of(context)!.waitingMerchantPreparing : AppLocalizations.of(context)!.waitingDriverComing)
+                : AppLocalizations.of(context)!.waitingEstimatedTime(_estimatedTime.toString()),
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey[600],
@@ -669,7 +667,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'ร้านค้ากำลังเตรียมอาหาร',
+                        AppLocalizations.of(context)!.waitingRestaurantPreparing,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -677,7 +675,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
                         ),
                       ),
                       Text(
-                        'โปรดรอสักครู่...',
+                        AppLocalizations.of(context)!.waitingPleaseWait,
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey[600],
@@ -749,8 +747,8 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
                     color: Colors.green.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Text(
-                    'มอบหมายแล้ว',
+                  child: Text(
+                    AppLocalizations.of(context)!.waitingAssigned,
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.green,
@@ -788,7 +786,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
             child: ElevatedButton.icon(
               onPressed: _showContactDialog,
               icon: const Icon(Icons.phone),
-              label: const Text('ติดต่อคนขับ'),
+              label: Text(AppLocalizations.of(context)!.waitingContactDriver),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryGreen,
                 foregroundColor: Colors.white,
@@ -807,9 +805,9 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
           child: TextButton.icon(
             onPressed: _showCancelDialog,
             icon: const Icon(Icons.cancel, color: Colors.red),
-            label: const Text(
-              'ยกเลิกการจอง',
-              style: TextStyle(color: Colors.red),
+            label: Text(
+              AppLocalizations.of(context)!.waitingCancelBooking,
+              style: const TextStyle(color: Colors.red),
             ),
             style: TextButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
@@ -828,13 +826,13 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('ติดต่อคนขับ'),
+        title: Text(AppLocalizations.of(context)!.waitingContactDriver),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
               leading: const Icon(Icons.phone, color: Colors.green),
-              title: const Text('โทรศัพท์'),
+              title: Text(AppLocalizations.of(context)!.waitingPhoneCall),
               subtitle: Text(_driverPhone),
               onTap: () {
                 Navigator.of(context).pop();
@@ -843,8 +841,8 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
             ),
             ListTile(
               leading: const Icon(Icons.chat, color: Colors.blue),
-              title: const Text('แชทกับคนขับ'),
-              subtitle: const Text('ส่งข้อความในแอป'),
+              title: Text(AppLocalizations.of(context)!.waitingChatWithDriver),
+              subtitle: Text(AppLocalizations.of(context)!.waitingChatInApp),
               onTap: () {
                 Navigator.of(context).pop();
                 _openChat();
@@ -855,7 +853,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('ปิด'),
+            child: Text(AppLocalizations.of(context)!.waitingClose),
           ),
         ],
       ),
@@ -869,7 +867,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('ไม่สามารถโทรไปที่ $phoneNumber ได้')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.waitingCannotCall(phoneNumber))),
         );
       }
     }
@@ -902,7 +900,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
       debugLog('❌ Error opening chat: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('ไม่สามารถเปิดแชทได้')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.waitingCannotOpenChat)),
         );
       }
     }
@@ -912,12 +910,12 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('ยกเลิกการจอง'),
-        content: const Text('คุณแน่ใจว่าต้องการยกเลิกการจองนี้?'),
+        title: Text(AppLocalizations.of(context)!.waitingCancelBookingTitle),
+        content: Text(AppLocalizations.of(context)!.waitingCancelConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('ไม่'),
+            child: Text(AppLocalizations.of(context)!.waitingNo),
           ),
           TextButton(
             onPressed: () async {
@@ -949,12 +947,12 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
                         context: context,
                         builder: (ctx) => AlertDialog(
                           icon: const Icon(Icons.error_outline, color: Colors.red, size: 48),
-                          title: const Text('ยกเลิกไม่สำเร็จ'),
-                          content: Text('เกิดข้อผิดพลาดในการยกเลิก: $e'),
+                          title: Text(AppLocalizations.of(context)!.waitingCancelFailed),
+                          content: Text(AppLocalizations.of(context)!.waitingCancelError(e.toString())),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.of(ctx).pop(),
-                              child: const Text('ตกลง'),
+                              child: Text(AppLocalizations.of(context)!.waitingOk),
                             ),
                           ],
                         ),
@@ -967,7 +965,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
             style: TextButton.styleFrom(
               foregroundColor: Colors.red,
             ),
-            child: const Text('ยกเลิก'),
+            child: Text(AppLocalizations.of(context)!.waitingCancel),
           ),
         ],
       ),
@@ -978,26 +976,26 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('ข้อมูลการจอง'),
+        title: Text(AppLocalizations.of(context)!.waitingBookingInfo),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'รหัสออเดอร์: ${OrderCodeFormatter.formatByServiceType(widget.booking.id, serviceType: widget.booking.serviceType)}',
+              AppLocalizations.of(context)!.waitingOrderCode(OrderCodeFormatter.formatByServiceType(widget.booking.id, serviceType: widget.booking.serviceType)),
             ),
             const SizedBox(height: 8),
-            Text('ประเภท: ${widget.booking.serviceType}'),
+            Text(AppLocalizations.of(context)!.waitingType(widget.booking.serviceType)),
             const SizedBox(height: 8),
-            Text('ราคา: ฿${widget.booking.price.ceil()}'),
+            Text(AppLocalizations.of(context)!.waitingPrice(widget.booking.price.ceil().toString())),
             const SizedBox(height: 8),
-            Text('สถานะ: ${widget.booking.status}'),
+            Text(AppLocalizations.of(context)!.waitingStatus(widget.booking.status)),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('ปิด'),
+            child: Text(AppLocalizations.of(context)!.waitingClose),
           ),
         ],
       ),

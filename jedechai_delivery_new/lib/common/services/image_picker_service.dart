@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
@@ -32,6 +33,7 @@ class ImagePickerService {
 
   /// แสดง Bottom Sheet ให้เลือกถ่ายรูปหรือเลือกจากแกลเลอรี
   static Future<File?> showImageSourceDialog(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -52,9 +54,9 @@ class ImagePickerService {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'เลือกรูปภาพ',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Text(
+                l10n.imagePickerChooseImage,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               ListTile(
@@ -68,8 +70,8 @@ class ImagePickerService {
                     color: Colors.white,
                   ),
                 ),
-                title: const Text('ถ่ายรูป'),
-                subtitle: const Text('ใช้กล้องถ่ายรูปใหม่'),
+                title: Text(l10n.imagePickerTakePhoto),
+                subtitle: Text(l10n.imagePickerTakePhotoSubtitle),
                 onTap: () => Navigator.pop(ctx, ImageSource.camera),
               ),
               ListTile(
@@ -83,8 +85,8 @@ class ImagePickerService {
                     color: Colors.white,
                   ),
                 ),
-                title: const Text('เลือกจากแกลเลอรี'),
-                subtitle: const Text('เลือกรูปจากอัลบั้ม'),
+                title: Text(l10n.imagePickerPickGallery),
+                subtitle: Text(l10n.imagePickerPickGallerySubtitle),
                 onTap: () => Navigator.pop(ctx, ImageSource.gallery),
               ),
               const SizedBox(height: 8),

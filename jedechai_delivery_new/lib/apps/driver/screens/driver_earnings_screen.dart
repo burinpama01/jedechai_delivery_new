@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jedechai_delivery_new/theme/app_theme.dart';
 import 'package:intl/intl.dart';
+import '../../../l10n/app_localizations.dart';
 import 'driver_wallet_screen.dart';
 import 'driver_job_detail_screen.dart';
 import '../../../common/models/booking.dart';
@@ -27,7 +28,10 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
 
   // Date filter
   int _selectedPeriod = 0; // 0=วันนี้, 1=สัปดาห์นี้, 2=เดือนนี้, 3=ทั้งหมด, 4=ระบุวันที่
-  final List<String> _periodLabels = ['วันนี้', 'สัปดาห์นี้', 'เดือนนี้', 'ทั้งหมด', 'ระบุวันที่'];
+  List<String> _getPeriodLabels(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return [l10n.earnPeriodToday, l10n.earnPeriodWeek, l10n.earnPeriodMonth, l10n.earnPeriodAll, l10n.earnPeriodCustom];
+  }
   DateTimeRange? _customDateRange;
 
   // Stats
@@ -105,7 +109,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
 
     try {
       final userId = AuthService.userId;
-      if (userId == null) throw Exception('ไม่พบข้อมูลผู้ใช้');
+      if (userId == null) throw Exception('User not found');
 
       final startStr = _getStartDate().toIso8601String();
       final endStr = _getEndDate().toIso8601String();
@@ -209,10 +213,10 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
 
   String _getStatusText(String status) {
     switch (status) {
-      case 'completed': return 'สำเร็จ';
-      case 'cancelled': return 'ยกเลิก';
-      case 'picked_up': return 'รับแล้ว';
-      case 'delivering': return 'กำลังส่ง';
+      case 'completed': return AppLocalizations.of(context)!.earnStatusCompleted;
+      case 'cancelled': return AppLocalizations.of(context)!.earnStatusCancelled;
+      case 'picked_up': return AppLocalizations.of(context)!.earnStatusPickedUp;
+      case 'delivering': return AppLocalizations.of(context)!.earnStatusDelivering;
       default: return status;
     }
   }
@@ -242,7 +246,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('รายได้'),
+        title: Text(AppLocalizations.of(context)!.earnTitle),
         backgroundColor: AppTheme.accentBlue,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -250,9 +254,9 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
           IconButton(
             icon: const Icon(Icons.account_balance_wallet),
             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DriverWalletScreen())),
-            tooltip: 'กระเป๋าเงิน',
+            tooltip: AppLocalizations.of(context)!.earnWalletTooltip,
           ),
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData, tooltip: 'รีเฟรช'),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData, tooltip: AppLocalizations.of(context)!.earnRefresh),
         ],
       ),
       body: _isLoading
@@ -290,14 +294,14 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
           children: [
             Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
             const SizedBox(height: 16),
-            const Text('ไม่สามารถโหลดข้อมูลได้', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.earnLoadError, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text(_error ?? '', style: TextStyle(color: Colors.grey[500], fontSize: 13), textAlign: TextAlign.center),
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: _loadData,
               icon: const Icon(Icons.refresh),
-              label: const Text('ลองใหม่'),
+              label: Text(AppLocalizations.of(context)!.earnRetry),
               style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentBlue, foregroundColor: Colors.white),
             ),
           ],
@@ -318,9 +322,9 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
-          children: List.generate(_periodLabels.length, (index) {
+          children: List.generate(_getPeriodLabels(context).length, (index) {
             final isSelected = _selectedPeriod == index;
-            String chipLabel = _periodLabels[index];
+            String chipLabel = _getPeriodLabels(context)[index];
             if (index == 4 && _customDateRange != null && isSelected) {
               final fmt = DateFormat('d/M/yy');
               chipLabel = '${fmt.format(_customDateRange!.start)} - ${fmt.format(_customDateRange!.end)}';
@@ -390,7 +394,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
             children: [
               const Icon(Icons.trending_up, color: Colors.white, size: 20),
               const SizedBox(width: 8),
-              Text('รายได้${_periodLabels[_selectedPeriod]}', style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 14)),
+              Text(AppLocalizations.of(context)!.earnRevenueLabel(_getPeriodLabels(context)[_selectedPeriod]), style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 14)),
             ],
           ),
           const SizedBox(height: 12),
@@ -400,7 +404,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'เฉลี่ย ${_formatCurrency(_avgEarnings)} / งาน',
+            AppLocalizations.of(context)!.earnAvgPerJob(_formatCurrency(_avgEarnings)),
             style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 13),
           ),
         ],
@@ -417,11 +421,11 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          Expanded(child: _buildStatCard('งานทั้งหมด', '$_totalJobs', Icons.work, Colors.blue)),
+          Expanded(child: _buildStatCard(AppLocalizations.of(context)!.earnTotalJobs, '$_totalJobs', Icons.work, Colors.blue)),
           const SizedBox(width: 10),
-          Expanded(child: _buildStatCard('สำเร็จ', '$_completedJobs', Icons.check_circle, Colors.green)),
+          Expanded(child: _buildStatCard(AppLocalizations.of(context)!.earnCompleted, '$_completedJobs', Icons.check_circle, Colors.green)),
           const SizedBox(width: 10),
-          Expanded(child: _buildStatCard('ยกเลิก', '$_cancelledJobs', Icons.cancel, Colors.red)),
+          Expanded(child: _buildStatCard(AppLocalizations.of(context)!.earnCancelled, '$_cancelledJobs', Icons.cancel, Colors.red)),
         ],
       ),
     );
@@ -481,7 +485,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'กระเป๋าเงิน',
+                  AppLocalizations.of(context)!.earnWalletTitle,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -494,7 +498,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return Text(
-                        'กำลังโหลด...',
+                        AppLocalizations.of(context)!.earnWalletLoading,
                         style: TextStyle(
                           fontSize: 12,
                           color: colorScheme.onSurfaceVariant,
@@ -503,7 +507,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                     }
                     final balance = snapshot.data ?? 0.0;
                     return Text(
-                      '${balance.toStringAsFixed(2)} บาท',
+                      AppLocalizations.of(context)!.earnWalletBaht(balance.toStringAsFixed(2)),
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: balance >= 50 ? Colors.green : Colors.orange),
                     );
                   },
@@ -513,7 +517,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DriverWalletScreen())),
-            child: Text('ดูทั้งหมด', style: TextStyle(color: Colors.blue[600], fontSize: 13)),
+            child: Text(AppLocalizations.of(context)!.earnViewAll, style: TextStyle(color: Colors.blue[600], fontSize: 13)),
           ),
         ],
       ),
@@ -532,7 +536,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'ประวัติงาน',
+            AppLocalizations.of(context)!.earnJobHistory,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -557,7 +561,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'ไม่มีงานในช่วงเวลานี้',
+                    AppLocalizations.of(context)!.earnNoJobs,
                     style: TextStyle(color: colorScheme.onSurfaceVariant),
                   ),
                 ],
@@ -628,7 +632,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                '${_getServiceIcon(serviceType)} ${serviceType == 'ride' ? 'รับส่ง' : serviceType == 'food' ? 'อาหาร' : serviceType == 'parcel' ? 'พัสดุ' : 'อื่นๆ'}',
+                '${_getServiceIcon(serviceType)} ${serviceType == 'ride' ? AppLocalizations.of(context)!.earnSvcRide : serviceType == 'food' ? AppLocalizations.of(context)!.earnSvcFood : serviceType == 'parcel' ? AppLocalizations.of(context)!.earnSvcParcel : AppLocalizations.of(context)!.earnSvcOther}',
                 style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
               ),
               const Spacer(),
@@ -653,7 +657,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
               ),
               if (appEarnings > 0) ...[
                 const SizedBox(width: 8),
-                Text('(ค่าบริการระบบ ${_formatCurrency(appEarnings)})', style: TextStyle(fontSize: 12, color: Colors.red[400])),
+                Text(AppLocalizations.of(context)!.earnAppFee(_formatCurrency(appEarnings)), style: TextStyle(fontSize: 12, color: Colors.red[400])),
               ],
               const Spacer(),
               Icon(Icons.access_time, size: 14, color: colorScheme.onSurfaceVariant),
@@ -701,7 +705,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('เก็บเงินลูกค้า', style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
+                      Text(AppLocalizations.of(context)!.earnCollectCustomer, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
                       Text(
                         _formatCurrency(netCollect),
                         style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: colorScheme.onSurface),
@@ -713,7 +717,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('ส่วนลดจากคูปอง', style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
+                        Text(AppLocalizations.of(context)!.earnCouponDiscount, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
                         Text(
                           '-${_formatCurrency(couponDiscount)}',
                           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.green[700]),
@@ -743,7 +747,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
     } catch (e) {
       debugLog('❌ Error opening job detail: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('ไม่สามารถเปิดรายละเอียดงานได้')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.earnOpenDetailError)),
       );
     }
   }

@@ -10,6 +10,7 @@ import '../../../common/services/driver_foreground_service.dart';
 import '../../customer/screens/auth/login_screen.dart';
 import 'driver_navigation_screen.dart';
 import 'profile/driver_profile_screen.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Driver Dashboard Screen
 ///
@@ -97,7 +98,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('ตกลง'),
+            child: Text(AppLocalizations.of(context)!.driverDashOk),
           ),
         ],
       ),
@@ -221,9 +222,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     final normalized = _normalizeVehicleType(value);
     switch (normalized) {
       case 'motorcycle':
-        return 'มอเตอร์ไซค์';
+        return AppLocalizations.of(context)!.driverDashVehicleMotorcycle;
       case 'car':
-        return 'รถยนต์';
+        return AppLocalizations.of(context)!.driverDashVehicleCar;
       default:
         return value ?? '';
     }
@@ -689,11 +690,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-            '🚨 งานใหม่! ${_getJobTypeText(job.serviceType)} - ${_getJobStatusText(job.status)}'),
+            AppLocalizations.of(context)!.driverDashNewJob(_getJobTypeText(job.serviceType), _getJobStatusText(job.status))),
         backgroundColor: Colors.green,
         duration: const Duration(seconds: 5),
         action: SnackBarAction(
-          label: 'ดูงาน',
+          label: AppLocalizations.of(context)!.driverDashViewJob,
           textColor: Colors.white,
           onPressed: () {
             // Scroll to top or refresh
@@ -710,37 +711,39 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
   /// Get job type text in Thai
   String _getJobTypeText(String? serviceType) {
+    final l10n = AppLocalizations.of(context)!;
     switch (serviceType) {
       case 'food':
-        return 'ส่งอาหาร';
+        return l10n.driverDashJobFood;
       case 'ride':
-        return 'รับส่งผู้โดยสาร';
+        return l10n.driverDashJobRide;
       case 'parcel':
-        return 'ส่งพัสดุ';
+        return l10n.driverDashJobParcel;
       default:
-        return 'งานทั่วไป';
+        return l10n.driverDashJobGeneral;
     }
   }
 
   /// Get job status text in Thai
   String _getJobStatusText(String? status) {
+    final l10n = AppLocalizations.of(context)!;
     switch (status) {
       case 'pending':
-        return 'รอคนขับ';
+        return l10n.driverDashStatusPending;
       case 'pending_merchant':
-        return 'รอร้านค้ารับ';
+        return l10n.driverDashStatusPendingMerchant;
       case 'preparing':
-        return 'กำลังทำอาหาร';
+        return l10n.driverDashStatusPreparing;
       case 'matched':
-        return 'จับคู่แล้ว';
+        return l10n.driverDashStatusMatched;
       case 'ready_for_pickup':
-        return 'อาหารพร้อม';
+        return l10n.driverDashStatusReady;
       case 'accepted':
-        return 'รับงานแล้ว';
+        return l10n.driverDashStatusAccepted;
       case 'driver_accepted':
-        return 'คนขับรับแล้ว';
+        return l10n.driverDashStatusDriverAccepted;
       default:
-        return status ?? 'ไม่ทราบสถานะ';
+        return status ?? l10n.driverDashStatusUnknown;
     }
   }
 
@@ -780,7 +783,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('เกิดข้อผิดพลาด: $e'),
+            content: Text(AppLocalizations.of(context)!.driverDashErrorGeneric(e.toString())),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -812,10 +815,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     // Block accepting when offline
     if (!_isOnline) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('กรุณาเปิดสถานะออนไลน์ก่อนรับงาน'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.driverDashMustOnline),
           backgroundColor: Colors.orange,
-          duration: Duration(seconds: 3),
+          duration: const Duration(seconds: 3),
         ),
       );
       return;
@@ -825,7 +828,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     try {
       final driverId = AuthService.userId;
       if (driverId == null) {
-        _showErrorDialog('ไม่พบข้อมูลผู้ใช้', 'กรุณาเข้าสู่ระบบใหม่');
+        _showErrorDialog(AppLocalizations.of(context)!.driverDashNoUser, AppLocalizations.of(context)!.driverDashPleaseLogin);
         if (mounted) setState(() => _isAcceptingJob = false);
         return;
       }
@@ -855,10 +858,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('รับงานแล้ว! กำลังนำทาง...'),
-            backgroundColor: Color(0xFF3B82F6),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.driverDashAccepted),
+            backgroundColor: const Color(0xFF3B82F6),
+            duration: const Duration(seconds: 2),
           ),
         );
 
@@ -876,7 +879,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         } catch (e) {
           debugLog('❌ Navigation error: $e');
           _showErrorDialog(
-              'เกิดข้อผิดพลาด', 'ไม่สามารถเปิดหน้านำทางได้: ${e.toString()}');
+              AppLocalizations.of(context)!.driverDashErrorTitle, AppLocalizations.of(context)!.driverDashNavError(e.toString()));
         }
       }
     } catch (e) {
@@ -890,12 +893,12 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
             builder: (ctx) => AlertDialog(
               icon: const Icon(Icons.account_balance_wallet,
                   color: Colors.orange, size: 48),
-              title: const Text('ยอดเงินไม่เพียงพอ'),
+              title: Text(AppLocalizations.of(context)!.driverDashInsufficientBalance),
               content: Text(e.toString()),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('ปิด'),
+                  child: Text(AppLocalizations.of(context)!.driverDashClose),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -910,14 +913,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                     backgroundColor: Colors.orange,
                     foregroundColor: Colors.white,
                   ),
-                  child: const Text('เติมเงิน'),
+                  child: Text(AppLocalizations.of(context)!.driverDashTopUp),
                 ),
               ],
             ),
           );
         }
       } else {
-        _showErrorDialog('ไม่สามารถรับงานได้', e.toString());
+        _showErrorDialog(AppLocalizations.of(context)!.driverDashCannotAccept, e.toString());
       }
     } finally {
       if (mounted) setState(() => _isAcceptingJob = false);
@@ -935,7 +938,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('ตกลง'),
+            child: Text(AppLocalizations.of(context)!.driverDashOk),
           ),
         ],
       ),
@@ -948,7 +951,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('แดชบอร์ดคนขับ'),
+        title: Text(AppLocalizations.of(context)!.driverDashTitle),
         backgroundColor: const Color(0xFF1E3A8A), // Deep blue
         foregroundColor: Colors.white,
         elevation: 0,
@@ -980,7 +983,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      _isOnline ? 'ออนไลน์' : 'ออฟไลน์',
+                      _isOnline ? AppLocalizations.of(context)!.driverDashOnline : AppLocalizations.of(context)!.driverDashOffline,
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -1006,13 +1009,13 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                 await _loadDriverProfile();
               }
             },
-            tooltip: 'โปรไฟล์',
+            tooltip: AppLocalizations.of(context)!.driverDashProfile,
           ),
           // Logout button
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: _logout,
-            tooltip: 'ออกจากระบบ',
+            tooltip: AppLocalizations.of(context)!.driverDashLogout,
           ),
         ],
       ),
@@ -1038,7 +1041,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                     Row(
                       children: [
                         Text(
-                          'รายการงาน',
+                          AppLocalizations.of(context)!.driverDashJobList,
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -1054,7 +1057,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            _isRefreshing ? 'กำลังรีเฟรช...' : 'เรียลไทม์',
+                            _isRefreshing ? AppLocalizations.of(context)!.driverDashRefreshing : AppLocalizations.of(context)!.driverDashRealtime,
                             style: TextStyle(
                               fontSize: 10,
                               color: Colors.blue,
@@ -1074,7 +1077,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   }
 
   Widget _buildCompactDriverHeader() {
-    final driverName = _driverProfile?['full_name'] ?? 'คนขับ';
+    final driverName = _driverProfile?['full_name'] ?? AppLocalizations.of(context)!.driverDashDriverDefault;
     final vehicle = _displayVehicleType(_driverProfile?['vehicle_type'] as String?);
 
     return Container(
@@ -1148,7 +1151,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
             children: [
               Expanded(
                 child: _buildQuickStat(
-                  'งานรอรับ',
+                  AppLocalizations.of(context)!.driverDashPendingJobs,
                   '${_availableJobs.length}',
                   Icons.pending_actions,
                   Colors.white,
@@ -1157,7 +1160,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               const SizedBox(width: 8),
               Expanded(
                 child: _buildQuickStat(
-                  'เสร็จวันนี้',
+                  AppLocalizations.of(context)!.driverDashCompletedToday,
                   '$_todayCompletedJobs',
                   Icons.check_circle,
                   Colors.white,
@@ -1166,7 +1169,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               const SizedBox(width: 8),
               Expanded(
                 child: _buildQuickStat(
-                  'รายได้วันนี้',
+                  AppLocalizations.of(context)!.driverDashEarningsToday,
                   '฿${_todayEarnings.toStringAsFixed(0)}',
                   Icons.payments,
                   Colors.white,
@@ -1225,7 +1228,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     // Show feedback
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(_isOnline ? 'คุณออนไลน์แล้ว' : 'คุณออฟไลน์แล้ว'),
+        content: Text(_isOnline ? AppLocalizations.of(context)!.driverDashNowOnline : AppLocalizations.of(context)!.driverDashNowOffline),
         backgroundColor: _isOnline ? Colors.green : Colors.grey,
         duration: const Duration(seconds: 2),
       ),
@@ -1328,7 +1331,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  isOfflineEmpty ? 'คุณอยู่ในโหมดออฟไลน์' : 'ไม่มีงานใหม่',
+                  isOfflineEmpty ? AppLocalizations.of(context)!.driverDashOfflineTitle : AppLocalizations.of(context)!.driverDashNoJobs,
                   style: TextStyle(
                     fontSize: 20,
                     color: colorScheme.onSurface,
@@ -1338,8 +1341,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                 const SizedBox(height: 8),
                 Text(
                   isOfflineEmpty
-                      ? 'เปิดสถานะออนไลน์เพื่อรับงานใหม่'
-                      : 'งานใหม่จะปรากฏที่นี่ทันที',
+                      ? AppLocalizations.of(context)!.driverDashOfflineHint
+                      : AppLocalizations.of(context)!.driverDashNoJobsHint,
                   style: TextStyle(
                     fontSize: 14,
                     color: colorScheme.onSurfaceVariant,
@@ -1359,7 +1362,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                           ),
                         )
                       : const Icon(Icons.refresh),
-                  label: const Text('รีเฟรช'),
+                  label: Text(AppLocalizations.of(context)!.driverDashRefresh),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF3B82F6), // Blue
                     foregroundColor: Colors.white,
@@ -1486,8 +1489,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                     Expanded(
                       child: Text(
                         job.scheduledAt!.isAfter(DateTime.now())
-                            ? 'งานนัดเวลา: รับได้ตั้งแต่ ${_formatScheduledDateTime(job.scheduledAt!)}'
-                            : 'งานนัดเวลา: ${_formatScheduledDateTime(job.scheduledAt!)}',
+                            ? AppLocalizations.of(context)!.driverDashScheduledFrom(_formatScheduledDateTime(job.scheduledAt!))
+                            : AppLocalizations.of(context)!.driverDashScheduledAt(_formatScheduledDateTime(job.scheduledAt!)),
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -1528,7 +1531,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            job.serviceType == 'food' ? 'ร้านอาหาร' : 'จุดรับ',
+                            job.serviceType == 'food' ? AppLocalizations.of(context)!.driverDashPickupRestaurant : AppLocalizations.of(context)!.driverDashPickupPoint,
                             style: TextStyle(
                               fontSize: 11,
                               color: colorScheme.onSurfaceVariant,
@@ -1537,8 +1540,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                           ),
                           Text(
                             job.serviceType == 'food'
-                                ? (job.pickupAddress ?? 'ตำแหน่งร้านอาหาร')
-                                : (job.pickupAddress ?? 'ตำแหน่งปัจจุบัน'),
+                                ? (job.pickupAddress ?? AppLocalizations.of(context)!.driverDashPickupFoodFallback)
+                                : (job.pickupAddress ?? AppLocalizations.of(context)!.driverDashPickupRideFallback),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -1583,8 +1586,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                         children: [
                           Text(
                             job.serviceType == 'food'
-                                ? 'ตำแหน่งลูกค้า'
-                                : 'จุดหมาย',
+                                ? AppLocalizations.of(context)!.driverDashDestCustomer
+                                : AppLocalizations.of(context)!.driverDashDestPoint,
                             style: TextStyle(
                               fontSize: 11,
                               color: colorScheme.onSurfaceVariant,
@@ -1592,7 +1595,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                             ),
                           ),
                           Text(
-                            job.destinationAddress ?? 'จุดหมายปลายทาง',
+                            job.destinationAddress ?? AppLocalizations.of(context)!.driverDashDestFallback,
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -1648,10 +1651,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
             ),
             child: Text(
               isScheduledLocked
-                  ? 'รับได้เวลา ${_formatScheduledDateTime(job.scheduledAt!)}'
+                  ? AppLocalizations.of(context)!.driverDashAcceptAt(_formatScheduledDateTime(job.scheduledAt!))
                   : (job.serviceType == 'parcel'
-                      ? 'รับงานส่งพัสดุ'
-                      : 'รับงานนี้'),
+                      ? AppLocalizations.of(context)!.driverDashAcceptParcel
+                      : AppLocalizations.of(context)!.driverDashAcceptRide),
               style: const TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
@@ -1681,8 +1684,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
             ),
             child: Text(
               isScheduledLocked
-                  ? 'รับได้เวลา ${_formatScheduledDateTime(job.scheduledAt!)}'
-                  : 'รับออเดอร์อาหาร',
+                  ? AppLocalizations.of(context)!.driverDashAcceptAt(_formatScheduledDateTime(job.scheduledAt!))
+                  : AppLocalizations.of(context)!.driverDashAcceptFood,
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -1717,7 +1720,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'งานที่ยังไม่เสร็จ',
+                    AppLocalizations.of(context)!.driverDashIncompleteJob,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -1727,7 +1730,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'กำลังดำเนินการ',
+                    AppLocalizations.of(context)!.driverDashInProgress,
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.blue[600],
@@ -1751,8 +1754,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'ไปยังหน้านำทาง',
+                child: Text(
+                  AppLocalizations.of(context)!.driverDashGoToNav,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -1773,7 +1776,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('กำลังไปยังหน้านำทาง...'),
+          content: Text(AppLocalizations.of(context)!.driverDashNavigating),
           backgroundColor: const Color(0xFF10B981), // Green
           duration: const Duration(seconds: 2),
         ),
@@ -1789,37 +1792,39 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       } catch (e) {
         debugLog('❌ Navigation error: $e');
         _showErrorDialog(
-            'เกิดข้อผิดพลาด', 'ไม่สามารถเปิดหน้านำทางได้: ${e.toString()}');
+            AppLocalizations.of(context)!.driverDashErrorTitle, AppLocalizations.of(context)!.driverDashNavError(e.toString()));
       }
     } catch (e) {
       debugLog('❌ Failed to navigate to pickup: $e');
-      _showErrorDialog('เกิดข้อผิดพลาด', 'ไม่สามารถนำทางได้: ${e.toString()}');
+      _showErrorDialog(AppLocalizations.of(context)!.driverDashErrorTitle, AppLocalizations.of(context)!.driverDashCannotNav(e.toString()));
     }
   }
 
   // Helper methods
   String _getServiceLabel(String serviceType) {
+    final l10n = AppLocalizations.of(context)!;
     switch (serviceType.toLowerCase()) {
       case 'food':
-        return 'ส่งอาหาร';
+        return l10n.driverDashJobFood;
       case 'ride':
-        return 'รับส่งผู้โดยสาร';
+        return l10n.driverDashJobRide;
       case 'parcel':
-        return 'ส่งพัสดุ';
+        return l10n.driverDashJobParcel;
       default:
-        return 'งานทั่วไป';
+        return l10n.driverDashJobGeneral;
     }
   }
 
   String _formatTimeAgo(Duration duration) {
+    final l10n = AppLocalizations.of(context)!;
     if (duration.inMinutes < 1) {
-      return 'เมื่อสักครู่';
+      return l10n.driverDashTimeJustNow;
     } else if (duration.inMinutes < 60) {
-      return '${duration.inMinutes} นาทีที่แล้ว';
+      return l10n.driverDashTimeMinutes(duration.inMinutes.toString());
     } else if (duration.inHours < 24) {
-      return '${duration.inHours} ชั่วโมงที่แล้ว';
+      return l10n.driverDashTimeHours(duration.inHours.toString());
     } else {
-      return '${duration.inDays} วันที่แล้ว';
+      return l10n.driverDashTimeDays(duration.inDays.toString());
     }
   }
 
@@ -1885,27 +1890,28 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       String title;
       String body;
 
+      final l10n = AppLocalizations.of(context)!;
       switch (serviceType.toLowerCase()) {
         case 'food':
-          title = '🍔 คนขับรับออเดอร์แล้ว!';
+          title = l10n.driverDashNotifFoodTitle;
           body = driverProfile != null
-              ? 'คนขับ ${driverProfile['full_name'] ?? 'กำลังมา'} กำลังมารับอาหารของคุณ'
-              : 'คนขับกำลังมารับอาหารของคุณ';
+              ? l10n.driverDashNotifFoodBody(driverProfile['full_name'] ?? '')
+              : l10n.driverDashNotifFoodBodyDefault;
           break;
         case 'delivery':
         case 'parcel':
-          title = '📦 คนขับรับพัสดุแล้ว!';
+          title = l10n.driverDashNotifParcelTitle;
           body = driverProfile != null
-              ? 'คนขับ ${driverProfile['full_name'] ?? 'กำลังมา'} กำลังมารับพัสดุของคุณ'
-              : 'คนขับกำลังมารับพัสดุของคุณ';
+              ? l10n.driverDashNotifParcelBody(driverProfile['full_name'] ?? '')
+              : l10n.driverDashNotifParcelBodyDefault;
           break;
         case 'ride':
         case 'taxi':
         default:
-          title = '🚗 คนขับรับทริปแล้ว!';
+          title = l10n.driverDashNotifRideTitle;
           body = driverProfile != null
-              ? 'คนขับ ${driverProfile['full_name'] ?? 'กำลังมา'} กำลังมารับคุณ'
-              : 'คนขับกำลังมารับคุณ';
+              ? l10n.driverDashNotifRideBody(driverProfile['full_name'] ?? '')
+              : l10n.driverDashNotifRideBodyDefault;
           break;
       }
 
@@ -1955,12 +1961,13 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         booking['id']?.toString(),
         serviceType: booking['service_type']?.toString(),
       );
+      final l10n = AppLocalizations.of(context)!;
       final success = await NotificationSender.sendNotification(
         targetUserId: merchantId,
-        title: '🚗 คนขับรับออเดอร์แล้ว!',
+        title: l10n.driverDashNotifMerchantTitle,
         body: driverProfile != null
-            ? 'คนขับ ${driverProfile['full_name'] ?? 'กำลังมา'} กำลังมารับอาหารออเดอร์ $orderCode'
-            : 'คนขับกำลังมารับอาหารออเดอร์ของคุณ',
+            ? l10n.driverDashNotifMerchantBody(driverProfile['full_name'] ?? '', orderCode)
+            : l10n.driverDashNotifMerchantBodyDefault,
         data: {
           'type': 'driver_accepted_food',
           'booking_id': booking['id'] as String,
@@ -2088,7 +2095,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'เก็บเงินลูกค้า',
+                  AppLocalizations.of(context)!.driverDashCollectCustomer,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -2110,18 +2117,18 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
             Row(
               children: [
                 Expanded(
-                  child: _buildMiniDetail('ค่าอาหาร',
+                  child: _buildMiniDetail(AppLocalizations.of(context)!.driverDashFoodCost,
                       '฿${foodPrice.toStringAsFixed(0)}', Colors.orange),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: _buildMiniDetail('ค่าส่ง',
+                  child: _buildMiniDetail(AppLocalizations.of(context)!.driverDashDeliveryFee,
                       '฿${deliveryFee.toStringAsFixed(0)}', Colors.blue),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: _buildMiniDetail('ระยะทาง',
-                      '${job.distanceKm.toStringAsFixed(1)} กม.', Colors.grey),
+                  child: _buildMiniDetail(AppLocalizations.of(context)!.driverDashDistance,
+                      AppLocalizations.of(context)!.driverDashDistanceKm(job.distanceKm.toStringAsFixed(1)), Colors.grey),
                 ),
               ],
             ),
@@ -2134,8 +2141,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                   const SizedBox(width: 4),
                   Text(
                     hideCouponBreakdown
-                        ? 'ส่วนลดจากคูปอง -฿${couponDiscount.toStringAsFixed(0)}'
-                        : 'ส่วนลดคูปอง -฿${couponDiscount.toStringAsFixed(0)}',
+                        ? AppLocalizations.of(context)!.driverDashCouponDiscount(couponDiscount.toStringAsFixed(0))
+                        : AppLocalizations.of(context)!.driverDashCouponDiscountCode(couponDiscount.toStringAsFixed(0)),
                     style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -2170,7 +2177,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'เก็บเงินลูกค้า',
+                        AppLocalizations.of(context)!.driverDashCollectCustomer,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -2196,7 +2203,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    '${job.distanceKm.toStringAsFixed(1)} กม.',
+                    AppLocalizations.of(context)!.driverDashDistanceKm(job.distanceKm.toStringAsFixed(1)),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -2216,8 +2223,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                     const SizedBox(width: 4),
                     Text(
                       hideCouponBreakdown
-                          ? 'ส่วนลดจากคูปอง -฿${couponDiscount.toStringAsFixed(0)}'
-                          : 'ส่วนลดคูปอง -฿${couponDiscount.toStringAsFixed(0)}',
+                          ? AppLocalizations.of(context)!.driverDashCouponDiscount(couponDiscount.toStringAsFixed(0))
+                          : AppLocalizations.of(context)!.driverDashCouponDiscountCode(couponDiscount.toStringAsFixed(0)),
                       style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,

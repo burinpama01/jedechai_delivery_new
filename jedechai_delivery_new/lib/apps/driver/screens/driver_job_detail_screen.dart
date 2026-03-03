@@ -3,6 +3,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:intl/intl.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../common/config/env_config.dart';
 import '../../../common/models/booking.dart';
 import '../../../common/utils/driver_amount_calculator.dart';
@@ -87,13 +88,13 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
         markerId: const MarkerId('origin'),
         position: LatLng(b.originLat, b.originLng),
         icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-        infoWindow: InfoWindow(title: b.pickupAddress ?? 'จุดรับ'),
+        infoWindow: InfoWindow(title: b.pickupAddress ?? 'Pickup'),
       ),
       Marker(
         markerId: const MarkerId('dest'),
         position: LatLng(b.destLat, b.destLng),
         icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-        infoWindow: InfoWindow(title: b.destinationAddress ?? 'จุดส่ง'),
+        infoWindow: InfoWindow(title: b.destinationAddress ?? 'Destination'),
       ),
     ]);
     _fetchRoute();
@@ -149,19 +150,19 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
     if (b.tripDurationMinutes != null) {
       final mins = b.tripDurationMinutes!.abs();
       if (mins >= 60) {
-        return '${mins ~/ 60} ชม. ${mins % 60} น.';
+        return AppLocalizations.of(context)!.jobDetailDurationHrMin((mins ~/ 60).toString(), (mins % 60).toString());
       }
-      return '$mins นาที';
+      return AppLocalizations.of(context)!.jobDetailDurationMin(mins.toString());
     }
     if (b.startedAt != null && b.completedAt != null) {
       final dur = b.completedAt!.difference(b.startedAt!).abs();
-      if (dur.inHours > 0) return '${dur.inHours} ชม. ${dur.inMinutes % 60} น.';
-      return '${dur.inMinutes} นาที';
+      if (dur.inHours > 0) return AppLocalizations.of(context)!.jobDetailDurationHrMin(dur.inHours.toString(), (dur.inMinutes % 60).toString());
+      return AppLocalizations.of(context)!.jobDetailDurationMin(dur.inMinutes.toString());
     }
     if (b.assignedAt != null && b.completedAt != null) {
       final dur = b.completedAt!.difference(b.assignedAt!).abs();
-      if (dur.inHours > 0) return '${dur.inHours} ชม. ${dur.inMinutes % 60} น.';
-      return '${dur.inMinutes} นาที';
+      if (dur.inHours > 0) return AppLocalizations.of(context)!.jobDetailDurationHrMin(dur.inHours.toString(), (dur.inMinutes % 60).toString());
+      return AppLocalizations.of(context)!.jobDetailDurationMin(dur.inMinutes.toString());
     }
     return '-';
   }
@@ -207,12 +208,13 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
       netCollectAmount: totalCollect,
       appFeeAmount: commission,
     );
-    final paymentLabel = (b.paymentMethod ?? 'cash') == 'cash' ? 'เงินสด' : b.paymentMethod ?? '-';
+    final l10n = AppLocalizations.of(context)!;
+    final paymentLabel = (b.paymentMethod ?? 'cash') == 'cash' ? l10n.jobDetailCash : b.paymentMethod ?? '-';
     final serviceLabel = isFood
-        ? 'สั่งอาหาร'
+        ? l10n.jobDetailOrderFood
         : b.serviceType == 'ride'
-            ? 'เรียกรถ'
-            : 'ส่งพัสดุ';
+            ? l10n.jobDetailRide
+            : l10n.jobDetailParcel;
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -221,7 +223,7 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        title: const Text('รายละเอียดการให้บริการ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+        title: Text(l10n.jobDetailTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
       ),
       body: Column(
         children: [
@@ -271,13 +273,13 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
             Container(
               height: 120,
               color: const Color(0xFF1A1A2E),
-              child: const Center(
+              child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.map_outlined, color: Colors.white24, size: 40),
-                    SizedBox(height: 8),
-                    Text('ไม่มีข้อมูลเส้นทาง', style: TextStyle(color: Colors.white38, fontSize: 12)),
+                    const Icon(Icons.map_outlined, color: Colors.white24, size: 40),
+                    const SizedBox(height: 8),
+                    Text(l10n.jobDetailNoRoute, style: const TextStyle(color: Colors.white38, fontSize: 12)),
                   ],
                 ),
               ),
@@ -325,7 +327,7 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
                       icon: Icons.circle,
                       iconColor: AppTheme.accentBlue,
                       iconSize: 12,
-                      text: b.pickupAddress ?? 'จุดรับ',
+                      text: b.pickupAddress ?? l10n.jobDetailPickupFallback,
                     ),
                     Padding(
                       padding: const EdgeInsets.only(left: 5),
@@ -335,7 +337,7 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
                       icon: Icons.circle,
                       iconColor: Colors.red,
                       iconSize: 12,
-                      text: b.destinationAddress ?? 'จุดส่ง',
+                      text: b.destinationAddress ?? l10n.jobDetailDestFallback,
                     ),
                     const SizedBox(height: 16),
 
@@ -380,7 +382,7 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
                       ),
                       child: Column(
                         children: [
-                          const Text('ยอดรายได้สุทธิ', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                          Text(l10n.jobDetailNetEarnings, style: const TextStyle(color: Colors.white70, fontSize: 14)),
                           const SizedBox(height: 4),
                           Text(
                             '฿ ${netEarnings.ceil()}',
@@ -398,52 +400,52 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
 
                     // ── Earnings Breakdown ──
                     _sectionCard(
-                      title: 'รายละเอียดรายได้',
+                      title: l10n.jobDetailEarningsBreakdown,
                       children: [
-                        _earningsRow('ค่ารอบ', '฿ ${totalCollect.ceil()}', colorScheme.onSurface, isBold: true),
+                        _earningsRow(l10n.jobDetailTripFare, '฿ ${totalCollect.ceil()}', colorScheme.onSurface, isBold: true),
                         if (_couponDiscount > 0)
                           _earningsRow(
                             hideCouponBreakdown
-                                ? 'ส่วนลดจากคูปอง'
+                                ? l10n.jobDetailCouponDiscountGeneric
                                 : (_couponCode != null && _couponCode!.isNotEmpty
-                                    ? 'ส่วนลดคูปอง ($_couponCode)'
-                                    : 'ส่วนลดคูปอง'),
+                                    ? l10n.jobDetailCouponDiscountCode(_couponCode!)
+                                    : l10n.jobDetailCouponDiscountGeneric),
                             '-฿ ${_couponDiscount.ceil()}',
                             Colors.green.shade600,
                           ),
-                        _earningsRow('ค่าบริการระบบ', '-฿ ${commission.ceil()}', Colors.red.shade400),
+                        _earningsRow(l10n.jobDetailPlatformFee, '-฿ ${commission.ceil()}', Colors.red.shade400),
                         const Divider(height: 20),
-                        _earningsRow('ยอดรายได้สุทธิ', '฿ ${netEarnings.ceil()}', AppTheme.accentBlue, isBold: true),
+                        _earningsRow(l10n.jobDetailNetEarnings, '฿ ${netEarnings.ceil()}', AppTheme.accentBlue, isBold: true),
                         if (isFood) ...[
                           const SizedBox(height: 8),
-                          _earningsRow('  ค่าอาหาร', '฿ ${b.price.ceil()}', colorScheme.onSurfaceVariant),
-                          _earningsRow('  ค่าส่ง', '฿ ${(b.deliveryFee ?? 0).ceil()}', colorScheme.onSurfaceVariant),
+                          _earningsRow(l10n.jobDetailFoodCost, '฿ ${b.price.ceil()}', colorScheme.onSurfaceVariant),
+                          _earningsRow(l10n.jobDetailDeliveryFee, '฿ ${(b.deliveryFee ?? 0).ceil()}', colorScheme.onSurfaceVariant),
                         ],
                       ],
                     ),
                     const SizedBox(height: 16),
 
                     // ── Cash Collection ──
-                    if (paymentLabel == 'เงินสด')
+                    if ((b.paymentMethod ?? 'cash') == 'cash')
                       _sectionCard(
-                        title: 'รายการชำระเงินสด',
+                        title: l10n.jobDetailCashCollection,
                         children: [
-                          _earningsRow('ยอดที่ต้องเก็บจากลูกค้า', '฿ ${totalCollect.ceil()}', colorScheme.onSurface, isBold: true),
+                          _earningsRow(l10n.jobDetailCollectFromCustomer, '฿ ${totalCollect.ceil()}', colorScheme.onSurface, isBold: true),
                           if (_couponDiscount > 0)
                             _earningsRow(
                               hideCouponBreakdown
-                                  ? 'ส่วนลดจากคูปอง'
+                                  ? l10n.jobDetailCouponDiscountGeneric
                                   : (_couponCode != null &&
                                           _couponCode!.isNotEmpty
-                                      ? 'ส่วนลดคูปอง ($_couponCode)'
-                                      : 'ส่วนลดคูปอง'),
+                                      ? l10n.jobDetailCouponDiscountCode(_couponCode!)
+                                      : l10n.jobDetailCouponDiscountGeneric),
                               '-฿ ${_couponDiscount.ceil()}',
                               Colors.green.shade600,
                             ),
                           if (isFood) ...[
                             const SizedBox(height: 8),
-                            _earningsRow('  ค่าอาหาร', '฿ ${b.price.ceil()}', colorScheme.onSurfaceVariant),
-                            _earningsRow('  ค่าส่ง', '฿ ${(b.deliveryFee ?? 0).ceil()}', colorScheme.onSurfaceVariant),
+                            _earningsRow(l10n.jobDetailFoodCost, '฿ ${b.price.ceil()}', colorScheme.onSurfaceVariant),
+                            _earningsRow(l10n.jobDetailDeliveryFee, '฿ ${(b.deliveryFee ?? 0).ceil()}', colorScheme.onSurfaceVariant),
                           ],
                         ],
                       ),

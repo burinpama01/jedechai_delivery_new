@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../../common/services/wallet_service.dart';
 import '../../../common/services/auth_service.dart';
 import 'wallet_topup_screen.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Driver Wallet Screen
 /// 
@@ -41,7 +42,7 @@ class _DriverWalletScreenState extends State<DriverWalletScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('กระเป๋าเงิน'),
+        title: Text(AppLocalizations.of(context)!.walletTitle),
         backgroundColor: Colors.blue[600],
         foregroundColor: Colors.white,
         elevation: 0,
@@ -88,18 +89,18 @@ class _DriverWalletScreenState extends State<DriverWalletScreen> {
       child: Column(
         children: [
           // Title
-          const Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
+              const Icon(
                 Icons.account_balance_wallet,
                 color: Colors.white,
                 size: 24,
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Text(
-                'ยอดเงินคงเหลือ',
-                style: TextStyle(
+                AppLocalizations.of(context)!.walletBalance,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
@@ -123,7 +124,7 @@ class _DriverWalletScreenState extends State<DriverWalletScreen> {
               
               if (snapshot.hasError) {
                 return Text(
-                  '0.00 บาท',
+                  AppLocalizations.of(context)!.walletBalanceBaht('0.00'),
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 32,
@@ -134,7 +135,7 @@ class _DriverWalletScreenState extends State<DriverWalletScreen> {
               
               final balance = snapshot.data ?? 0.0;
               return Text(
-                '${balance.toStringAsFixed(2)} บาท',
+                AppLocalizations.of(context)!.walletBalanceBaht(balance.toStringAsFixed(2)),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 32,
@@ -152,7 +153,7 @@ class _DriverWalletScreenState extends State<DriverWalletScreen> {
               _showTopUpDialog();
             },
             icon: const Icon(Icons.add, size: 20),
-            label: const Text('เติมเงิน'),
+            label: Text(AppLocalizations.of(context)!.walletTopUp),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: Colors.blue[600],
@@ -185,7 +186,7 @@ class _DriverWalletScreenState extends State<DriverWalletScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                'ประวัติการทำรายการ',
+                AppLocalizations.of(context)!.walletTransactionHistory,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -223,7 +224,7 @@ class _DriverWalletScreenState extends State<DriverWalletScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'เกิดข้อผิดพลาดในการโหลดข้อมูล',
+                          AppLocalizations.of(context)!.walletLoadError,
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 16,
@@ -232,7 +233,7 @@ class _DriverWalletScreenState extends State<DriverWalletScreen> {
                         const SizedBox(height: 8),
                         TextButton(
                           onPressed: _refreshData,
-                          child: const Text('ลองใหม่'),
+                          child: Text(AppLocalizations.of(context)!.walletRetry),
                         ),
                       ],
                     ),
@@ -255,7 +256,7 @@ class _DriverWalletScreenState extends State<DriverWalletScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'ยังไม่มีประวัติการทำรายการ',
+                          AppLocalizations.of(context)!.walletNoTransactions,
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 16,
@@ -306,23 +307,23 @@ class _DriverWalletScreenState extends State<DriverWalletScreen> {
     switch (type) {
       case 'topup':
         iconData = Icons.add_circle;
-        displayType = 'เติมเงิน';
+        displayType = AppLocalizations.of(context)!.walletTypeTopup;
         break;
       case 'commission':
         iconData = Icons.remove_circle;
-        displayType = 'ค่าบริการระบบ';
+        displayType = AppLocalizations.of(context)!.walletTypeCommission;
         break;
       case 'food_commission':
         iconData = Icons.remove_circle;
-        displayType = 'ค่าบริการระบบอาหาร';
+        displayType = AppLocalizations.of(context)!.walletTypeFoodCommission;
         break;
       case 'job_income':
         iconData = Icons.attach_money;
-        displayType = 'รายได้จากงาน';
+        displayType = AppLocalizations.of(context)!.walletTypeJobIncome;
         break;
       case 'penalty':
         iconData = Icons.gavel;
-        displayType = 'ค่าปรับ';
+        displayType = AppLocalizations.of(context)!.walletTypePenalty;
         break;
       default:
         iconData = Icons.receipt;
@@ -354,7 +355,7 @@ class _DriverWalletScreenState extends State<DriverWalletScreen> {
         ),
       ),
       trailing: Text(
-        '${isIncome ? '+' : ''}${amount.toStringAsFixed(2)} บาท',
+        '${isIncome ? '+' : ''}${AppLocalizations.of(context)!.walletBalanceBaht(amount.toStringAsFixed(2))}',
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.bold,
@@ -371,10 +372,10 @@ class _DriverWalletScreenState extends State<DriverWalletScreen> {
     
     if (difference.inDays == 0) {
       // วันนี้ - แสดงเวลา
-      return 'วันนี้ ${DateFormat('HH:mm').format(dateTime)}';
+      return AppLocalizations.of(context)!.walletToday(DateFormat('HH:mm').format(dateTime));
     } else if (difference.inDays == 1) {
       // เมื่อวาน
-      return 'เมื่อวาน ${DateFormat('HH:mm').format(dateTime)}';
+      return AppLocalizations.of(context)!.walletYesterday(DateFormat('HH:mm').format(dateTime));
     } else if (difference.inDays < 7) {
       // ภายในสัปดาห์
       return DateFormat('EEEE HH:mm', 'th').format(dateTime);

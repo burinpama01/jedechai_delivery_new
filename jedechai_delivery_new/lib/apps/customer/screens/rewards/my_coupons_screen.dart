@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../common/models/coupon.dart';
 import '../../../../common/services/coupon_service.dart';
 import '../../../../theme/app_theme.dart';
@@ -18,13 +19,14 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
   final CouponService _couponService = CouponService();
   bool _isLoading = false;
   String? _claimingCouponId;
-  List<Coupon> _myCoupons = [];
+  List<WalletCouponGroup> _myCouponGroups = [];
   List<Coupon> _discoverCoupons = [];
+  List<Map<String, dynamic>> _usageHistory = [];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _loadCoupons();
   }
 
@@ -40,14 +42,16 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
 
     try {
       final results = await Future.wait([
-        _couponService.getMyWalletCoupons(),
+        _couponService.getMyWalletCouponGroups(),
         _couponService.getClaimableCoupons(),
+        _couponService.getMyCouponUsageHistory(),
       ]);
 
       if (!mounted) return;
       setState(() {
-        _myCoupons = results[0] as List<Coupon>;
+        _myCouponGroups = results[0] as List<WalletCouponGroup>;
         _discoverCoupons = results[1] as List<Coupon>;
+        _usageHistory = results[2] as List<Map<String, dynamic>>;
         _isLoading = false;
       });
     } catch (e) {
@@ -68,7 +72,7 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('เก็บคูปองสำเร็จ!')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.couponClaimSuccess)),
       );
       await _loadCoupons();
     } catch (e) {
@@ -88,7 +92,7 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('คูปองของฉัน'),
+        title: Text(AppLocalizations.of(context)!.couponScreenTitle),
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
         elevation: 0,
@@ -97,9 +101,10 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
           labelColor: AppTheme.primaryGreen,
           unselectedLabelColor: Colors.grey,
           indicatorColor: AppTheme.primaryGreen,
-          tabs: const [
-            Tab(text: 'คูปองของฉัน'),
-            Tab(text: 'เก็บคูปองเพิ่ม'),
+          tabs: [
+            Tab(text: AppLocalizations.of(context)!.couponTabMine),
+            Tab(text: AppLocalizations.of(context)!.couponTabDiscover),
+            Tab(text: AppLocalizations.of(context)!.couponTabHistory),
           ],
         ),
       ),
@@ -108,6 +113,7 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
         children: [
           _buildMyCouponsTab(),
           _buildDiscoverCouponsTab(),
+          _buildUsageHistoryTab(),
         ],
       ),
     );
@@ -117,17 +123,18 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (_myCoupons.isEmpty) {
-      return const Center(child: Text('ไม่มีคูปองในกระเป๋า'));
+    if (_myCouponGroups.isEmpty) {
+      return Center(child: Text(AppLocalizations.of(context)!.couponEmptyWallet));
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: _myCoupons.length,
+      itemCount: _myCouponGroups.length,
       itemBuilder: (context, index) {
-        final coupon = _myCoupons[index];
+        final group = _myCouponGroups[index];
+        final coupon = group.coupon;
         return GestureDetector(
           onTap: widget.isSelectingMode ? () => Navigator.pop(context, coupon) : null,
-          child: _buildCouponCard(coupon, isMine: true),
+          child: _buildCouponCard(coupon, isMine: true, quantity: group.quantity),
         );
       },
     );
@@ -138,7 +145,7 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
       return const Center(child: CircularProgressIndicator());
     }
     if (_discoverCoupons.isEmpty) {
-      return const Center(child: Text('ไม่มีคูปองใหม่ให้เก็บในขณะนี้'));
+      return Center(child: Text(AppLocalizations.of(context)!.couponEmptyDiscover));
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -150,10 +157,53 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
     );
   }
 
-  Widget _buildCouponCard(Coupon coupon, {required bool isMine}) {
+  Widget _buildUsageHistoryTab() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_usageHistory.isEmpty) {
+      return Center(child: Text(AppLocalizations.of(context)!.couponEmptyHistory));
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _usageHistory.length,
+      itemBuilder: (context, index) {
+        final item = _usageHistory[index];
+        final coupon = item['coupon'];
+        final couponName = (coupon is Map && coupon['name'] != null) ? coupon['name'].toString() : '-';
+        final couponCode = (coupon is Map && coupon['code'] != null) ? coupon['code'].toString() : '-';
+        final discountAmount = (item['discount_amount'] as num?)?.toDouble() ?? 0;
+        final createdAt = item['created_at']?.toString() ?? '';
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 1,
+          child: ListTile(
+            title: Text(
+              couponName,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            subtitle: Text(AppLocalizations.of(context)!.couponHistoryCode(couponCode, createdAt)),
+            trailing: Text(
+              '-฿${discountAmount.toStringAsFixed(0)}',
+              style: TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCouponCard(Coupon coupon, {required bool isMine, int? quantity}) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    final claimedCouponIds = _myCoupons.map((c) => c.id).toSet();
+    final claimedCouponIds = _myCouponGroups.map((g) => g.coupon.id).toSet();
     final alreadyClaimed = claimedCouponIds.contains(coupon.id);
 
     IconData icon;
@@ -194,13 +244,35 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    coupon.name,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: colorScheme.onSurface,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          coupon.name,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                      if (isMine && quantity != null && quantity > 1)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryGreen.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            'x$quantity',
+                            style: const TextStyle(
+                              color: AppTheme.primaryGreen,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -210,9 +282,20 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
                       fontSize: 13,
                     ),
                   ),
+                  if (isMine && quantity != null && quantity > 1) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      AppLocalizations.of(context)!.couponRemainingUses(quantity.toString()),
+                      style: TextStyle(
+                        color: colorScheme.onSurface.withOpacity(0.75),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   Text(
-                    'หมดอายุ: ${coupon.endDate.toString().split(' ').first}',
+                    AppLocalizations.of(context)!.couponExpiry(coupon.endDate.toString().split(' ').first),
                     style: TextStyle(color: Colors.red.shade400, fontSize: 12),
                   ),
                 ],
@@ -230,7 +313,7 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
                   ),
                 ),
                 child: alreadyClaimed
-                    ? const Text('เก็บแล้ว')
+                    ? Text(AppLocalizations.of(context)!.couponClaimed)
                     : (_claimingCouponId == coupon.id
                         ? const SizedBox(
                             width: 18,
@@ -240,7 +323,7 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
                               color: Colors.white,
                             ),
                           )
-                        : const Text('เก็บ')),
+                        : Text(AppLocalizations.of(context)!.couponClaim)),
               ),
           ],
         ),

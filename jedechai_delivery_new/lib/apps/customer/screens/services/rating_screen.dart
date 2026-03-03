@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../common/models/booking.dart';
 import '../../../../common/services/auth_service.dart';
@@ -39,13 +40,13 @@ class _RatingScreenState extends State<RatingScreen> {
   Future<void> _submitRating() async {
     if (_hasDriver && _driverRating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('กรุณาให้คะแนนคนขับ'), backgroundColor: Colors.red),
+        SnackBar(content: Text(AppLocalizations.of(context)!.ratingPleaseRateDriver), backgroundColor: Colors.red),
       );
       return;
     }
     if (_isFood && _merchantRating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('กรุณาให้คะแนนร้านค้า'), backgroundColor: Colors.red),
+        SnackBar(content: Text(AppLocalizations.of(context)!.ratingPleaseRateMerchant), backgroundColor: Colors.red),
       );
       return;
     }
@@ -54,7 +55,7 @@ class _RatingScreenState extends State<RatingScreen> {
 
     try {
       final userId = AuthService.userId;
-      if (userId == null) throw Exception('ไม่พบข้อมูลผู้ใช้');
+      if (userId == null) throw Exception(AppLocalizations.of(context)!.ratingUserNotFound);
 
       final client = Supabase.instance.client;
 
@@ -127,7 +128,7 @@ class _RatingScreenState extends State<RatingScreen> {
       setState(() => _isSubmitting = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('เกิดข้อผิดพลาด: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(AppLocalizations.of(context)!.ratingError(e.toString())), backgroundColor: Colors.red),
         );
       }
     }
@@ -151,11 +152,11 @@ class _RatingScreenState extends State<RatingScreen> {
                 child: const Icon(Icons.check_circle, size: 80, color: AppTheme.primaryGreen),
               ),
               const SizedBox(height: 24),
-              const Text('ขอบคุณสำหรับการให้คะแนน!',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+              Text(AppLocalizations.of(context)!.ratingThankYou,
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              const Text('ความคิดเห็นของคุณช่วยพัฒนาบริการ',
-                  style: TextStyle(fontSize: 16, color: Colors.grey)),
+              Text(AppLocalizations.of(context)!.ratingFeedbackHelps,
+                  style: const TextStyle(fontSize: 16, color: Colors.grey)),
             ],
           ),
         ),
@@ -164,7 +165,7 @@ class _RatingScreenState extends State<RatingScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ให้คะแนน'),
+        title: Text(AppLocalizations.of(context)!.ratingTitle),
         backgroundColor: AppTheme.primaryGreen,
         foregroundColor: Colors.white,
       ),
@@ -179,24 +180,24 @@ class _RatingScreenState extends State<RatingScreen> {
 
             // ให้คะแนนคนขับ
             _buildRatingSection(
-              title: 'ให้คะแนนคนขับ',
+              title: AppLocalizations.of(context)!.ratingRateDriver,
               icon: Icons.delivery_dining,
               rating: _driverRating,
               onRatingChanged: (r) => setState(() => _driverRating = r),
               controller: _driverCommentController,
-              hintText: 'แสดงความคิดเห็นเกี่ยวกับคนขับ (ไม่บังคับ)',
+              hintText: AppLocalizations.of(context)!.ratingDriverHint,
             ),
 
             // ให้คะแนนร้านค้า (เฉพาะ food)
             if (_isFood) ...[
               const SizedBox(height: 24),
               _buildRatingSection(
-                title: 'ให้คะแนนร้านค้า',
+                title: AppLocalizations.of(context)!.ratingRateMerchant,
                 icon: Icons.store,
                 rating: _merchantRating,
                 onRatingChanged: (r) => setState(() => _merchantRating = r),
                 controller: _merchantCommentController,
-                hintText: 'แสดงความคิดเห็นเกี่ยวกับร้านค้า (ไม่บังคับ)',
+                hintText: AppLocalizations.of(context)!.ratingMerchantHint,
               ),
             ],
 
@@ -218,7 +219,7 @@ class _RatingScreenState extends State<RatingScreen> {
                         width: 24, height: 24,
                         child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
                       )
-                    : const Text('ส่งคะแนน', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    : Text(AppLocalizations.of(context)!.ratingSubmit, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ),
             ),
 
@@ -229,7 +230,7 @@ class _RatingScreenState extends State<RatingScreen> {
               width: double.infinity,
               child: TextButton(
                 onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(false),
-                child: const Text('ข้ามไปก่อน', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                child: Text(AppLocalizations.of(context)!.ratingSkip, style: const TextStyle(color: Colors.grey, fontSize: 16)),
               ),
             ),
           ],
@@ -239,10 +240,11 @@ class _RatingScreenState extends State<RatingScreen> {
   }
 
   Widget _buildOrderSummaryCard() {
+    final l10n = AppLocalizations.of(context)!;
     final serviceLabel = {
-      'food': 'สั่งอาหาร',
-      'ride': 'เรียกรถ',
-      'parcel': 'ส่งพัสดุ',
+      'food': l10n.ratingServiceFood,
+      'ride': l10n.ratingServiceRide,
+      'parcel': l10n.ratingServiceParcel,
     }[widget.booking.serviceType] ?? widget.booking.serviceType;
 
     final serviceIcon = {
@@ -300,7 +302,8 @@ class _RatingScreenState extends State<RatingScreen> {
     required TextEditingController controller,
     required String hintText,
   }) {
-    final ratingLabels = ['', 'แย่มาก', 'ไม่ดี', 'ปานกลาง', 'ดี', 'ยอดเยี่ยม'];
+    final l10n = AppLocalizations.of(context)!;
+    final ratingLabels = ['', l10n.ratingLabel1, l10n.ratingLabel2, l10n.ratingLabel3, l10n.ratingLabel4, l10n.ratingLabel5];
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(

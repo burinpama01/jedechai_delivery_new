@@ -2,13 +2,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter_android/google_maps_flutter_android.dart';
 import 'package:google_maps_flutter_platform_interface/google_maps_flutter_platform_interface.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'l10n/app_localizations.dart';
 import 'common/config/env_config.dart';
 import 'common/providers/auth_provider.dart';
+import 'common/providers/language_provider.dart';
 import 'common/services/services.dart';
 import 'common/services/mock_auth_service.dart';
 import 'utils/auth_helper.dart';
@@ -86,8 +87,11 @@ class _MyAppState extends State<MyApp> {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
+        ChangeNotifierProvider(create: (_) => LanguageProvider()),
       ],
-      child: MaterialApp(
+      child: Consumer<LanguageProvider>(
+        builder: (context, languageProvider, _) {
+          return MaterialApp(
         title: 'JDC Delivery',
         debugShowCheckedModeBanner: false,
         navigatorKey: AppNavigationService.navigatorKey,
@@ -95,16 +99,12 @@ class _MyAppState extends State<MyApp> {
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.system,
-        locale: const Locale('th', 'TH'),
+        locale: languageProvider.localeOverride,
         supportedLocales: const [
           Locale('th', 'TH'),
           Locale('en', 'US'),
         ],
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
         home: const AuthGate(),
         routes: {
           '/landing': (context) => const PublicLandingScreen(),
@@ -129,6 +129,8 @@ class _MyAppState extends State<MyApp> {
           return MaterialPageRoute(
             builder: (context) => const LoginScreen(),
           );
+        },
+      );
         },
       ),
     );

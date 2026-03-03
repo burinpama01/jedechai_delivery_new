@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../common/models/booking.dart';
 import '../../../../utils/debug_logger.dart';
@@ -39,14 +40,14 @@ class _TrackingScreenState extends State<TrackingScreen> {
       markerId: const MarkerId('origin'),
       position: LatLng(_booking.originLat, _booking.originLng),
       icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-      infoWindow: InfoWindow(title: 'จุดรับ', snippet: _booking.pickupAddress ?? ''),
+      infoWindow: InfoWindow(title: AppLocalizations.of(context)!.trackPickup, snippet: _booking.pickupAddress ?? ''),
     ));
     // จุดส่ง
     _markers.add(Marker(
       markerId: const MarkerId('destination'),
       position: LatLng(_booking.destLat, _booking.destLng),
       icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-      infoWindow: InfoWindow(title: 'จุดส่ง', snippet: _booking.destinationAddress ?? ''),
+      infoWindow: InfoWindow(title: AppLocalizations.of(context)!.trackDestination, snippet: _booking.destinationAddress ?? ''),
     ));
   }
 
@@ -298,7 +299,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_booking.driverName ?? 'คนขับ',
+                Text(_booking.driverName ?? AppLocalizations.of(context)!.trackDriverFallback,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
@@ -337,8 +338,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
           _buildAddressRow(
             icon: Icons.circle,
             color: AppTheme.primaryGreen,
-            label: 'จุดรับ',
-            address: _booking.pickupAddress ?? 'ไม่ระบุ',
+            label: AppLocalizations.of(context)!.trackPickup,
+            address: _booking.pickupAddress ?? AppLocalizations.of(context)!.trackNotSpecified,
           ),
           Padding(
             padding: const EdgeInsets.only(left: 11),
@@ -347,8 +348,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
           _buildAddressRow(
             icon: Icons.location_on,
             color: Colors.red,
-            label: 'จุดส่ง',
-            address: _booking.destinationAddress ?? 'ไม่ระบุ',
+            label: AppLocalizations.of(context)!.trackDestination,
+            address: _booking.destinationAddress ?? AppLocalizations.of(context)!.trackNotSpecified,
           ),
         ],
       ),
@@ -387,30 +388,30 @@ class _TrackingScreenState extends State<TrackingScreen> {
   Map<String, dynamic> _getStatusInfo(String status) {
     switch (status) {
       case 'pending':
-        return {'icon': Icons.hourglass_empty, 'color': Colors.orange, 'title': 'รอคนขับรับงาน', 'subtitle': 'กำลังค้นหาคนขับในพื้นที่ใกล้คุณ'};
+        return {'icon': Icons.hourglass_empty, 'color': Colors.orange, 'title': AppLocalizations.of(context)!.trackStatusPendingTitle, 'subtitle': AppLocalizations.of(context)!.trackStatusPendingSub};
       case 'accepted':
       case 'assigned':
-        return {'icon': Icons.delivery_dining, 'color': AppTheme.accentBlue, 'title': 'คนขับรับงานแล้ว', 'subtitle': 'คนขับกำลังเดินทางมาหาคุณ'};
+        return {'icon': Icons.delivery_dining, 'color': AppTheme.accentBlue, 'title': AppLocalizations.of(context)!.trackStatusAcceptedTitle, 'subtitle': AppLocalizations.of(context)!.trackStatusAcceptedSub};
       case 'picking_up':
       case 'arrived_at_pickup':
-        return {'icon': Icons.store, 'color': AppTheme.accentBlue, 'title': 'กำลังรับสินค้า', 'subtitle': 'คนขับถึงจุดรับแล้ว'};
+        return {'icon': Icons.store, 'color': AppTheme.accentBlue, 'title': AppLocalizations.of(context)!.trackStatusPickingUpTitle, 'subtitle': AppLocalizations.of(context)!.trackStatusPickingUpSub};
       case 'preparing':
-        return {'icon': Icons.restaurant, 'color': Colors.orange, 'title': 'ร้านกำลังเตรียม', 'subtitle': 'ร้านค้ากำลังเตรียมออเดอร์ของคุณ'};
+        return {'icon': Icons.restaurant, 'color': Colors.orange, 'title': AppLocalizations.of(context)!.trackStatusPreparingTitle, 'subtitle': AppLocalizations.of(context)!.trackStatusPreparingSub};
       case 'in_transit':
       case 'delivering':
-        return {'icon': Icons.local_shipping, 'color': AppTheme.primaryGreen, 'title': 'กำลังจัดส่ง', 'subtitle': 'คนขับกำลังเดินทางไปจุดส่ง'};
+        return {'icon': Icons.local_shipping, 'color': AppTheme.primaryGreen, 'title': AppLocalizations.of(context)!.trackStatusInTransitTitle, 'subtitle': AppLocalizations.of(context)!.trackStatusInTransitSub};
       case 'arrived_at_dropoff':
-        return {'icon': Icons.pin_drop, 'color': AppTheme.primaryGreen, 'title': 'ถึงจุดส่งแล้ว', 'subtitle': 'คนขับถึงจุดหมายปลายทางแล้ว'};
+        return {'icon': Icons.pin_drop, 'color': AppTheme.primaryGreen, 'title': AppLocalizations.of(context)!.trackStatusArrivedTitle, 'subtitle': AppLocalizations.of(context)!.trackStatusArrivedSub};
       case 'completed':
-        return {'icon': Icons.check_circle, 'color': AppTheme.primaryGreen, 'title': 'จัดส่งสำเร็จ', 'subtitle': 'ออเดอร์เสร็จสมบูรณ์'};
+        return {'icon': Icons.check_circle, 'color': AppTheme.primaryGreen, 'title': AppLocalizations.of(context)!.trackStatusCompletedTitle, 'subtitle': AppLocalizations.of(context)!.trackStatusCompletedSub};
       case 'cancelled':
-        return {'icon': Icons.cancel, 'color': Colors.red, 'title': 'ยกเลิกแล้ว', 'subtitle': 'ออเดอร์นี้ถูกยกเลิก'};
+        return {'icon': Icons.cancel, 'color': Colors.red, 'title': AppLocalizations.of(context)!.trackStatusCancelledTitle, 'subtitle': AppLocalizations.of(context)!.trackStatusCancelledSub};
       default:
         final colorScheme = Theme.of(context).colorScheme;
         return {
           'icon': Icons.info,
           'color': colorScheme.outlineVariant,
-          'title': 'ไม่ทราบสถานะ',
+          'title': AppLocalizations.of(context)!.trackStatusUnknownTitle,
           'subtitle': status,
         };
     }
@@ -418,12 +419,13 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
   List<Map<String, dynamic>> _getTimelineSteps() {
     final statusOrder = ['pending', 'accepted', 'picking_up', 'in_transit', 'completed'];
+    final l10n = AppLocalizations.of(context)!;
     final labels = {
-      'pending': 'สร้างออเดอร์แล้ว',
-      'accepted': 'คนขับรับงาน',
-      'picking_up': 'กำลังรับสินค้า',
-      'in_transit': 'กำลังจัดส่ง',
-      'completed': 'จัดส่งสำเร็จ',
+      'pending': l10n.trackTimelineCreated,
+      'accepted': l10n.trackTimelineAccepted,
+      'picking_up': l10n.trackTimelinePickingUp,
+      'in_transit': l10n.trackTimelineInTransit,
+      'completed': l10n.trackTimelineCompleted,
     };
 
     int currentIndex = statusOrder.indexOf(_booking.status);

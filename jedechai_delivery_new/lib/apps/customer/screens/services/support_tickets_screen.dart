@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../common/models/support_ticket.dart';
 import '../../../../common/services/ticket_service.dart';
 import '../../../../theme/app_theme.dart';
@@ -43,13 +44,14 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
     final descCtrl = TextEditingController();
     String category = 'other';
 
+    final l10n = AppLocalizations.of(context)!;
     final categories = [
-      {'value': 'lost_item', 'label': 'ของหาย', 'icon': Icons.search_off},
-      {'value': 'wrong_order', 'label': 'อาหาร/สินค้าผิด', 'icon': Icons.error_outline},
-      {'value': 'rude_driver', 'label': 'คนขับไม่สุภาพ', 'icon': Icons.person_off},
-      {'value': 'refund', 'label': 'ขอคืนเงิน', 'icon': Icons.money_off},
-      {'value': 'app_bug', 'label': 'ปัญหาแอป', 'icon': Icons.bug_report},
-      {'value': 'other', 'label': 'อื่นๆ', 'icon': Icons.help_outline},
+      {'value': 'lost_item', 'label': l10n.ticketCatLostItem, 'icon': Icons.search_off},
+      {'value': 'wrong_order', 'label': l10n.ticketCatWrongOrder, 'icon': Icons.error_outline},
+      {'value': 'rude_driver', 'label': l10n.ticketCatRudeDriver, 'icon': Icons.person_off},
+      {'value': 'refund', 'label': l10n.ticketCatRefund, 'icon': Icons.money_off},
+      {'value': 'app_bug', 'label': l10n.ticketCatAppBug, 'icon': Icons.bug_report},
+      {'value': 'other', 'label': l10n.ticketCatOther, 'icon': Icons.help_outline},
     ];
 
     final result = await showModalBottomSheet<bool>(
@@ -78,9 +80,9 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                       children: [
                         const Icon(Icons.support_agent, color: AppTheme.primaryGreen),
                         const SizedBox(width: 8),
-                        const Text(
-                          'แจ้งปัญหา',
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        Text(
+                          l10n.ticketCreateTitle,
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                         const Spacer(),
                         IconButton(
@@ -93,8 +95,8 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                     const SizedBox(height: 8),
 
                     // Category
-                    const Text('ประเภทปัญหา',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
+                    Text(l10n.ticketCategoryLabel,
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
@@ -124,10 +126,10 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                     // Subject
                     TextField(
                       controller: subjectCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'หัวข้อ',
-                        hintText: 'เช่น ลืมของไว้ในรถ',
-                        prefixIcon: Icon(Icons.title),
+                      decoration: InputDecoration(
+                        labelText: l10n.ticketSubjectLabel,
+                        hintText: l10n.ticketSubjectHint,
+                        prefixIcon: const Icon(Icons.title),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -136,10 +138,10 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                     TextField(
                       controller: descCtrl,
                       maxLines: 4,
-                      decoration: const InputDecoration(
-                        labelText: 'รายละเอียด',
-                        hintText: 'อธิบายปัญหาให้ละเอียด...',
-                        prefixIcon: Icon(Icons.description),
+                      decoration: InputDecoration(
+                        labelText: l10n.ticketDescLabel,
+                        hintText: l10n.ticketDescHint,
+                        prefixIcon: const Icon(Icons.description),
                         alignLabelWithHint: true,
                       ),
                     ),
@@ -154,8 +156,8 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                           if (subjectCtrl.text.trim().isEmpty ||
                               descCtrl.text.trim().isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text('กรุณากรอกข้อมูลให้ครบถ้วน')),
+                              SnackBar(
+                                  content: Text(l10n.ticketValidation)),
                             );
                             return;
                           }
@@ -172,8 +174,8 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                           }
                         },
                         icon: const Icon(Icons.send),
-                        label: const Text('ส่งแจ้งปัญหา',
-                            style: TextStyle(
+                        label: Text(l10n.ticketSubmit,
+                            style: const TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.w600)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primaryGreen,
@@ -232,7 +234,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('แจ้งปัญหา / ร้องเรียน'),
+        title: Text(AppLocalizations.of(context)!.ticketTitle),
         backgroundColor: AppTheme.primaryGreen,
         foregroundColor: Colors.white,
       ),
@@ -244,7 +246,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showCreateDialog,
         icon: const Icon(Icons.add),
-        label: const Text('แจ้งปัญหา'),
+        label: Text(AppLocalizations.of(context)!.ticketFab),
         backgroundColor: AppTheme.primaryGreen,
         foregroundColor: Colors.white,
       ),
@@ -259,7 +261,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
           Icon(Icons.support_agent, size: 80, color: Colors.grey[300]),
           const SizedBox(height: 16),
           Text(
-            'ยังไม่มีรายการแจ้งปัญหา',
+            AppLocalizations.of(context)!.ticketEmptyTitle,
             style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -267,7 +269,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'หากพบปัญหากดปุ่ม "แจ้งปัญหา" ด้านล่าง',
+            AppLocalizations.of(context)!.ticketEmptySubtitle,
             style: TextStyle(fontSize: 14, color: Colors.grey[400]),
           ),
         ],

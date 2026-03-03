@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../theme/app_theme.dart';
 
 /// Landing Page — Public-facing page for JDC Delivery
@@ -10,6 +11,7 @@ class PublicLandingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final width = MediaQuery.of(context).size.width;
     final isWide = width >= 900;
     final colorScheme = Theme.of(context).colorScheme;
@@ -19,11 +21,11 @@ class PublicLandingScreen extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            _buildNavBar(context, isWide),
-            _buildHeroSection(context, isWide),
-            _buildServicesSection(context, isWide),
-            _buildHowItWorksSection(context, isWide),
-            _buildDriverCTASection(context, isWide),
+            _buildNavBar(context, isWide, l10n),
+            _buildHeroSection(context, isWide, l10n),
+            _buildServicesSection(context, isWide, l10n),
+            _buildHowItWorksSection(context, isWide, l10n),
+            _buildDriverCTASection(context, isWide, l10n),
             _buildFooter(context, isWide),
           ],
         ),
@@ -32,7 +34,7 @@ class PublicLandingScreen extends StatelessWidget {
   }
 
   // ─── Navigation Bar ─────────────────────────────────
-  Widget _buildNavBar(BuildContext context, bool isWide) {
+  Widget _buildNavBar(BuildContext context, bool isWide, AppLocalizations l10n) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: EdgeInsets.symmetric(
@@ -82,7 +84,7 @@ class PublicLandingScreen extends StatelessWidget {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               elevation: 0,
             ),
-            child: const Text('เข้าสู่ระบบ', style: TextStyle(fontWeight: FontWeight.w600)),
+            child: Text(l10n.landingLogin, style: const TextStyle(fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -90,14 +92,14 @@ class PublicLandingScreen extends StatelessWidget {
   }
 
   // ─── Hero Section ───────────────────────────────────
-  Widget _buildHeroSection(BuildContext context, bool isWide) {
+  Widget _buildHeroSection(BuildContext context, bool isWide, AppLocalizations l10n) {
     final colorScheme = Theme.of(context).colorScheme;
     final content = Column(
       crossAxisAlignment: isWide ? CrossAxisAlignment.start : CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          'บริการเรียกรถ\nส่งอาหาร & พัสดุ',
+          l10n.landingHeadline,
           textAlign: isWide ? TextAlign.left : TextAlign.center,
           style: TextStyle(
             fontSize: isWide ? 48 : 32,
@@ -109,7 +111,7 @@ class PublicLandingScreen extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          'แพลตฟอร์ม Super App สำหรับชุมชน\nเรียกรถ สั่งอาหาร ส่งพัสดุ ครบจบในแอปเดียว',
+          l10n.landingSubheadline,
           textAlign: isWide ? TextAlign.left : TextAlign.center,
           style: TextStyle(
             fontSize: isWide ? 18 : 15,
@@ -126,7 +128,7 @@ class PublicLandingScreen extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: () => Navigator.pushNamed(context, '/login'),
               icon: const Icon(Icons.phone_android, size: 20),
-              label: const Text('เริ่มใช้งาน'),
+              label: Text(l10n.landingStart),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryGreen,
                 foregroundColor: Colors.white,
@@ -186,25 +188,25 @@ class PublicLandingScreen extends StatelessWidget {
   }
 
   // ─── Services Section ───────────────────────────────
-  Widget _buildServicesSection(BuildContext context, bool isWide) {
+  Widget _buildServicesSection(BuildContext context, bool isWide, AppLocalizations l10n) {
     final colorScheme = Theme.of(context).colorScheme;
     final services = [
       _ServiceItem(
         icon: Icons.local_taxi_rounded,
-        title: 'เรียกรถ',
-        description: 'เรียกรถมอเตอร์ไซค์หรือรถยนต์\nไปไหนก็ได้ สะดวก ปลอดภัย',
+        title: l10n.landingServiceRideTitle,
+        description: l10n.landingServiceRideDesc,
         color: const Color(0xFF3B82F6),
       ),
       _ServiceItem(
         icon: Icons.restaurant_rounded,
-        title: 'สั่งอาหาร',
-        description: 'สั่งอาหารจากร้านใกล้คุณ\nส่งถึงบ้านรวดเร็ว',
+        title: l10n.landingServiceFoodTitle,
+        description: l10n.landingServiceFoodDesc,
         color: const Color(0xFFEF6C00),
       ),
       _ServiceItem(
         icon: Icons.inventory_2_rounded,
-        title: 'ส่งพัสดุ',
-        description: 'ส่งพัสดุถึงปลายทาง\nราคาประหยัด ติดตามได้',
+        title: l10n.landingServiceParcelTitle,
+        description: l10n.landingServiceParcelDesc,
         color: const Color(0xFF16A34A),
       ),
     ];
@@ -218,7 +220,7 @@ class PublicLandingScreen extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            'บริการของเรา',
+            l10n.landingServicesTitle,
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.w800,
@@ -227,7 +229,7 @@ class PublicLandingScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'ครบทุกบริการในแอปเดียว',
+            l10n.landingServicesSubtitle,
             style: TextStyle(fontSize: 16, color: colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 40),
@@ -290,13 +292,29 @@ class PublicLandingScreen extends StatelessWidget {
   }
 
   // ─── How It Works ───────────────────────────────────
-  Widget _buildHowItWorksSection(BuildContext context, bool isWide) {
+  Widget _buildHowItWorksSection(BuildContext context, bool isWide, AppLocalizations l10n) {
     final colorScheme = Theme.of(context).colorScheme;
     final steps = [
-      _StepItem(number: '1', title: 'สมัครสมาชิก', description: 'ลงทะเบียนด้วยเบอร์โทร'),
-      _StepItem(number: '2', title: 'เลือกบริการ', description: 'เรียกรถ สั่งอาหาร หรือส่งพัสดุ'),
-      _StepItem(number: '3', title: 'ยืนยันออเดอร์', description: 'เลือกจุดหมายและวิธีชำระเงิน'),
-      _StepItem(number: '4', title: 'รับบริการ', description: 'คนขับรับงานและมาหาคุณ'),
+      _StepItem(
+        number: l10n.landingHowStep1Number,
+        title: l10n.landingHowStep1Title,
+        description: l10n.landingHowStep1Desc,
+      ),
+      _StepItem(
+        number: l10n.landingHowStep2Number,
+        title: l10n.landingHowStep2Title,
+        description: l10n.landingHowStep2Desc,
+      ),
+      _StepItem(
+        number: l10n.landingHowStep3Number,
+        title: l10n.landingHowStep3Title,
+        description: l10n.landingHowStep3Desc,
+      ),
+      _StepItem(
+        number: l10n.landingHowStep4Number,
+        title: l10n.landingHowStep4Title,
+        description: l10n.landingHowStep4Desc,
+      ),
     ];
 
     return Container(
@@ -308,7 +326,7 @@ class PublicLandingScreen extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            'ใช้งานง่าย 4 ขั้นตอน',
+            l10n.landingHowTitle,
             style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: colorScheme.onSurface),
           ),
           const SizedBox(height: 40),
@@ -367,7 +385,7 @@ class PublicLandingScreen extends StatelessWidget {
   }
 
   // ─── Driver CTA ─────────────────────────────────────
-  Widget _buildDriverCTASection(BuildContext context, bool isWide) {
+  Widget _buildDriverCTASection(BuildContext context, bool isWide, AppLocalizations l10n) {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: isWide ? 80 : 24,
@@ -382,18 +400,18 @@ class PublicLandingScreen extends StatelessWidget {
         children: [
           const Icon(Icons.two_wheeler_rounded, color: Colors.white, size: 48),
           const SizedBox(height: 16),
-          const Text(
-            'สมัครเป็นคนขับ Jedechai',
-            style: TextStyle(
+          Text(
+            l10n.landingDriverCtaTitle,
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'สร้างรายได้เสริม ทำงานอิสระ เลือกเวลาเอง',
-            style: TextStyle(color: Colors.white70, fontSize: 15),
+          Text(
+            l10n.landingDriverCtaSubtitle,
+            style: const TextStyle(color: Colors.white70, fontSize: 15),
           ),
           const SizedBox(height: 24),
           ElevatedButton(
@@ -405,7 +423,10 @@ class PublicLandingScreen extends StatelessWidget {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               elevation: 0,
             ),
-            child: const Text('สมัครเลย', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+            child: Text(
+              l10n.landingSignupNow,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+            ),
           ),
         ],
       ),

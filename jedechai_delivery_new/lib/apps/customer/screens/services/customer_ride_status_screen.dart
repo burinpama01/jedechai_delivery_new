@@ -1,6 +1,7 @@
 ﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:http/http.dart' as http;
@@ -304,7 +305,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
           markerId: const MarkerId('driver'),
           position: LatLng(_driverPosition!.latitude, _driverPosition!.longitude),
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-          infoWindow: const InfoWindow(title: 'คนขับ'),
+          infoWindow: InfoWindow(title: AppLocalizations.of(context)!.rideStatusDriver),
         ),
       );
     });
@@ -340,7 +341,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('ไม่สามารถโทรไปที่ $phoneNumber ได้')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.rideStatusCannotCall(phoneNumber))),
         );
       }
     }
@@ -364,7 +365,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
             builder: (_) => ChatScreen(
               bookingId: booking.id,
               chatRoomId: room.id,
-              otherPartyName: _driverProfile?['full_name'] ?? 'คนขับ',
+              otherPartyName: _driverProfile?['full_name'] ?? AppLocalizations.of(context)!.rideStatusDriver,
               roomType: 'booking',
             ),
           ),
@@ -374,7 +375,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
       debugLog('❌ Error opening chat: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('ไม่สามารถเปิดแชทได้')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.rideStatusCannotOpenChat)),
         );
       }
     }
@@ -386,8 +387,8 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
       if (!serviceEnabled) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('กรุณาเปิดใช้งาน Location Service'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.rideStatusEnableLocation),
               backgroundColor: Colors.orange,
             ),
           );
@@ -414,8 +415,8 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
         if (permission == LocationPermission.denied) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('กรุณาอนุญาตให้เข้าถึงตำแหน่ง'),
+              SnackBar(
+                content: Text(AppLocalizations.of(context)!.rideStatusAllowLocation),
                 backgroundColor: Colors.orange,
               ),
             );
@@ -435,19 +436,19 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
             context: context,
             builder: (ctx) => AlertDialog(
               icon: const Icon(Icons.location_off, color: Colors.red, size: 48),
-              title: const Text('ไม่สามารถเข้าถึงตำแหน่ง'),
-              content: const Text('กรุณาเปิดการเข้าถึงตำแหน่งในการตั้งค่าของเครื่อง'),
+              title: Text(AppLocalizations.of(context)!.rideStatusLocationDenied),
+              content: Text(AppLocalizations.of(context)!.rideStatusLocationDeniedBody),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('ตกลง'),
+                  child: Text(AppLocalizations.of(context)!.rideStatusOk),
                 ),
                 ElevatedButton(
                   onPressed: () {
                     Navigator.of(ctx).pop();
                     Geolocator.openAppSettings();
                   },
-                  child: const Text('เปิดการตั้งค่า'),
+                  child: Text(AppLocalizations.of(context)!.rideStatusOpenSettings),
                 ),
               ],
             ),
@@ -516,8 +517,8 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
         position: LatLng(booking.originLat, booking.originLng),
         infoWindow: InfoWindow(
           title: booking.serviceType == 'food'
-              ? 'ร้านค้า: ${booking.pickupAddress ?? 'ร้านอาหาร'}'
-              : 'จุดรับ: ${booking.pickupAddress ?? 'จุดรับ'}',
+              ? AppLocalizations.of(context)!.rideStatusMerchantMarker(booking.pickupAddress ?? AppLocalizations.of(context)!.rideStatusMerchantDefault)
+              : AppLocalizations.of(context)!.rideStatusPickupMarker(booking.pickupAddress ?? AppLocalizations.of(context)!.rideStatusPickupDefault),
         ),
         icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
       ),
@@ -529,7 +530,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
         Marker(
           markerId: const MarkerId('driver'),
           position: LatLng(_driverPosition!.latitude, _driverPosition!.longitude),
-          infoWindow: const InfoWindow(title: 'คนขับ'),
+          infoWindow: InfoWindow(title: AppLocalizations.of(context)!.rideStatusDriver),
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
         ),
       );
@@ -539,7 +540,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
         Marker(
           markerId: const MarkerId('current'),
           position: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
-          infoWindow: const InfoWindow(title: 'ตำแหน่งของคุณ'),
+          infoWindow: InfoWindow(title: AppLocalizations.of(context)!.rideStatusYourLocation),
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
         ),
       );
@@ -551,7 +552,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
         markerId: const MarkerId('destination'),
         position: LatLng(booking.destLat, booking.destLng),
         infoWindow: InfoWindow(
-          title: 'จุดหมาย: ${booking.destinationAddress ?? 'ปลายทาง'}',
+          title: AppLocalizations.of(context)!.rideStatusDestMarker(booking.destinationAddress ?? AppLocalizations.of(context)!.rideStatusDestDefault),
         ),
         icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
       ),
@@ -721,7 +722,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
       appBar: AppBar(
         backgroundColor: AppTheme.primaryGreen,
         foregroundColor: Colors.white,
-        title: const Text('สถานะการเดินทาง'),
+        title: Text(AppLocalizations.of(context)!.rideStatusTitle),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -806,7 +807,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                   // Driver Info
                   if (booking.driverId != null) ...[
                     Text(
-                      'ข้อมูลคนขับ',
+                      AppLocalizations.of(context)!.rideStatusDriverInfo,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -845,7 +846,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                                       ),
                                     ),
                                     Text(
-                                      _driverProfile?['vehicle_type'] ?? 'รถจักรยานยนต์',
+                                      _driverProfile?['vehicle_type'] ?? AppLocalizations.of(context)!.rideStatusMotorcycle,
                                       style: TextStyle(
                                         fontSize: 14,
                                         color: colorScheme.onSurfaceVariant,
@@ -874,7 +875,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                                       ? () => _makePhoneCall(_driverProfile!['phone_number'])
                                       : null,
                                   icon: const Icon(Icons.phone, size: 18),
-                                  label: const Text('โทร'),
+                                  label: Text(AppLocalizations.of(context)!.rideStatusCall),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.green,
                                     foregroundColor: Colors.white,
@@ -889,7 +890,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                                 child: ElevatedButton.icon(
                                   onPressed: () => _openChat(),
                                   icon: const Icon(Icons.chat, size: 18),
-                                  label: const Text('แชท'),
+                                  label: Text(AppLocalizations.of(context)!.rideStatusChat),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppTheme.accentBlue,
                                     foregroundColor: Colors.white,
@@ -917,28 +918,28 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                     child: Column(
                       children: [
                         if (booking.serviceType == 'food') ...[
-                          _buildInfoRow('ค่าอาหาร', '฿${booking.price.ceil()}'),
+                          _buildInfoRow(AppLocalizations.of(context)!.rideStatusFoodCost, '฿${booking.price.ceil()}'),
                           const SizedBox(height: 6),
-                          _buildInfoRow('ค่าจัดส่ง', '฿${booking.deliveryFee?.ceil() ?? 0}'),
+                          _buildInfoRow(AppLocalizations.of(context)!.rideStatusDeliveryFee, '฿${booking.deliveryFee?.ceil() ?? 0}'),
                           if (couponDiscount > 0) ...[
                             const SizedBox(height: 6),
                             _buildInfoRow(
                               _hideCouponBreakdown
-                                  ? 'ส่วนลดจากคูปอง'
+                                  ? AppLocalizations.of(context)!.rideStatusCouponDiscount
                                   : (_couponCode() != null &&
                                           _couponCode()!.isNotEmpty
-                                      ? 'ส่วนลดคูปอง (${_couponCode()!})'
-                                      : 'ส่วนลดคูปอง'),
+                                      ? AppLocalizations.of(context)!.rideStatusCouponDiscountWithCode(_couponCode()!)
+                                      : AppLocalizations.of(context)!.rideStatusCouponDiscount),
                               '-฿${couponDiscount.ceil()}',
                             ),
                           ],
                           const SizedBox(height: 6),
-                          _buildInfoRow('ระยะทาง', '${booking.distanceKm.toStringAsFixed(1)} กม.'),
+                          _buildInfoRow(AppLocalizations.of(context)!.rideStatusDistance, AppLocalizations.of(context)!.rideStatusDistanceKm(booking.distanceKm.toStringAsFixed(1))),
                           const Divider(height: 16),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('รวมทั้งหมด', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                              Text(AppLocalizations.of(context)!.rideStatusGrandTotal, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                               Text(
                                 '฿${totalAmount.ceil()}',
                                 style: const TextStyle(
@@ -950,16 +951,16 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                             ],
                           ),
                         ] else ...[
-                          _buildInfoRow('ระยะทาง', '${booking.distanceKm.toStringAsFixed(1)} กม.'),
+                          _buildInfoRow(AppLocalizations.of(context)!.rideStatusDistance, AppLocalizations.of(context)!.rideStatusDistanceKm(booking.distanceKm.toStringAsFixed(1))),
                           if (couponDiscount > 0) ...[
                             const SizedBox(height: 6),
                             _buildInfoRow(
                               _hideCouponBreakdown
-                                  ? 'ส่วนลดจากคูปอง'
+                                  ? AppLocalizations.of(context)!.rideStatusCouponDiscount
                                   : (_couponCode() != null &&
                                           _couponCode()!.isNotEmpty
-                                      ? 'ส่วนลดคูปอง (${_couponCode()!})'
-                                      : 'ส่วนลดคูปอง'),
+                                      ? AppLocalizations.of(context)!.rideStatusCouponDiscountWithCode(_couponCode()!)
+                                      : AppLocalizations.of(context)!.rideStatusCouponDiscount),
                               '-฿${couponDiscount.ceil()}',
                             ),
                           ],
@@ -967,7 +968,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('ค่าบริการ', style: TextStyle(fontWeight: FontWeight.bold)),
+                              Text(AppLocalizations.of(context)!.rideStatusServiceFee, style: const TextStyle(fontWeight: FontWeight.bold)),
                               Text(
                                 '฿${totalAmount.ceil()}',
                                 style: const TextStyle(
@@ -1006,8 +1007,8 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                       ),
                       child: Text(
                         booking.status == 'completed' 
-                            ? 'เดินทางเสร็จสิ้น'
-                            : 'ยกเลิกการเดินทาง',
+                            ? AppLocalizations.of(context)!.rideStatusTripCompleted
+                            : AppLocalizations.of(context)!.rideStatusCancelTrip,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -1052,23 +1053,23 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
     final booking = _currentBooking ?? widget.booking;
     switch (booking.status) {
       case 'accepted':
-        return 'คนขับรับงานแล้ว';
+        return AppLocalizations.of(context)!.rideStatusAccepted;
       case 'driver_accepted':
-        return 'คนขับกำลังไปรับอาหาร';
+        return AppLocalizations.of(context)!.rideStatusDriverGoingPickup;
       case 'arrived':
-        return 'คนขับถึงจุดรับแล้ว';
+        return AppLocalizations.of(context)!.rideStatusArrivedPickup;
       case 'arrived_at_merchant':
-        return 'คนขับถึงร้านแล้ว';
+        return AppLocalizations.of(context)!.rideStatusArrivedMerchant;
       case 'ready_for_pickup':
-        return 'อาหารพร้อม';
+        return AppLocalizations.of(context)!.rideStatusFoodReady;
       case 'picking_up_order':
-        return 'คนขับรับอาหารแล้ว';
+        return AppLocalizations.of(context)!.rideStatusPickedUp;
       case 'in_transit':
-        return 'กำลังเดินทาง';
+        return AppLocalizations.of(context)!.rideStatusInTransit;
       case 'completed':
-        return 'เดินทางเสร็จสิ้น';
+        return AppLocalizations.of(context)!.rideStatusCompleted;
       default:
-        return 'รอดำเนินการ';
+        return AppLocalizations.of(context)!.rideStatusPending;
     }
   }
 
@@ -1076,23 +1077,23 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
     final booking = _currentBooking ?? widget.booking;
     switch (booking.status) {
       case 'accepted':
-        return 'คนขับกำลังมารับ';
+        return AppLocalizations.of(context)!.rideStatusDriverComing;
       case 'driver_accepted':
-        return 'คนขับกำลังไปรับอาหาร';
+        return AppLocalizations.of(context)!.rideStatusDriverGoingFood;
       case 'arrived':
-        return 'คนขับถึงจุดรับแล้ว';
+        return AppLocalizations.of(context)!.rideStatusDriverArrivedPickup;
       case 'arrived_at_merchant':
-        return 'คนขับถึงร้านแล้ว รออาหาร';
+        return AppLocalizations.of(context)!.rideStatusDriverAtMerchantWaiting;
       case 'ready_for_pickup':
-        return 'อาหารพร้อม คนขับกำลังรับ';
+        return AppLocalizations.of(context)!.rideStatusFoodReadyDriverPickup;
       case 'picking_up_order':
-        return 'คนขับรับอาหารแล้ว กำลังมาส่ง';
+        return AppLocalizations.of(context)!.rideStatusDriverPickedUpDelivering;
       case 'in_transit':
-        return 'กำลังนำทางไปปลายทาง';
+        return AppLocalizations.of(context)!.rideStatusNavigating;
       case 'completed':
-        return 'เดินทางเสร็จสิ้น';
+        return AppLocalizations.of(context)!.rideStatusDriverCompleted;
       default:
-        return 'รอคนขับ';
+        return AppLocalizations.of(context)!.rideStatusWaitingDriver;
     }
   }
 
@@ -1119,7 +1120,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'ร้านค้าปฏิเสธออเดอร์',
+              AppLocalizations.of(context)!.rideStatusMerchantRejected,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -1130,7 +1131,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
           ],
         ),
         content: Text(
-          'ขออภัย ร้านค้าไม่สามารถรับออเดอร์ของคุณได้ในขณะนี้\n\nกรุณาลองสั่งใหม่อีกครั้ง หรือเลือกร้านอื่น',
+          AppLocalizations.of(context)!.rideStatusMerchantRejectedBody,
           style: TextStyle(fontSize: 15, color: colorScheme.onSurface, height: 1.5),
           textAlign: TextAlign.center,
         ),
@@ -1151,7 +1152,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('เข้าใจแล้ว', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              child: Text(AppLocalizations.of(context)!.rideStatusUnderstood, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
           ),
         ],
@@ -1192,7 +1193,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              isFood ? '🎉 จัดส่งสำเร็จแล้ว!' : '🎉 เดินทางเสร็จสิ้น!',
+              isFood ? AppLocalizations.of(context)!.rideStatusDeliverySuccess : AppLocalizations.of(context)!.rideStatusTripSuccess,
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen),
               textAlign: TextAlign.center,
             ),
@@ -1203,7 +1204,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'ขอบคุณที่ใช้บริการ',
+                AppLocalizations.of(context)!.rideStatusThankYou,
                 style: TextStyle(fontSize: 16, color: colorScheme.onSurface),
               ),
               const SizedBox(height: 16),
@@ -1223,7 +1224,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'หมายเลขออเดอร์',
+                          AppLocalizations.of(context)!.rideStatusOrderNumber,
                           style: TextStyle(
                             fontSize: 11,
                             color: colorScheme.onSurfaceVariant,
@@ -1265,9 +1266,9 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('ยอดเงินทั้งหมด', style: TextStyle(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w500)),
+                            Text(AppLocalizations.of(context)!.rideStatusTotalAmount, style: const TextStyle(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w500)),
                             if (isFood)
-                              const Text('รวมค่าจัดส่ง', style: TextStyle(fontSize: 12, color: Colors.white60)),
+                              Text(AppLocalizations.of(context)!.rideStatusIncludingDelivery, style: const TextStyle(fontSize: 12, color: Colors.white60)),
                           ],
                         ),
                         Text(
@@ -1289,14 +1290,14 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                           children: [
                             Column(
                               children: [
-                                const Text('ค่าอาหาร', style: TextStyle(fontSize: 11, color: Colors.white70)),
+                                Text(AppLocalizations.of(context)!.rideStatusFoodCost, style: const TextStyle(fontSize: 11, color: Colors.white70)),
                                 Text('฿${foodCost.ceil()}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
                               ],
                             ),
                             Container(width: 1, height: 24, color: Colors.white30),
                             Column(
                               children: [
-                                const Text('ค่าจัดส่ง', style: TextStyle(fontSize: 11, color: Colors.white70)),
+                                Text(AppLocalizations.of(context)!.rideStatusDeliveryFee, style: const TextStyle(fontSize: 11, color: Colors.white70)),
                                 Text('฿${deliveryFee.ceil()}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
                               ],
                             ),
@@ -1308,8 +1309,8 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                       const SizedBox(height: 8),
                       Text(
                         couponCode != null && couponCode.isNotEmpty
-                            ? 'ใช้คูปอง $couponCode ลด ฿${couponDiscount.ceil()}'
-                            : 'ใช้คูปอง ลด ฿${couponDiscount.ceil()}',
+                            ? AppLocalizations.of(context)!.rideStatusUsedCouponWithCode(couponCode, couponDiscount.ceil().toString())
+                            : AppLocalizations.of(context)!.rideStatusUsedCoupon(couponDiscount.ceil().toString()),
                         style: const TextStyle(
                           fontSize: 12,
                           color: Colors.white,
@@ -1340,7 +1341,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('เข้าใจแล้ว', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              child: Text(AppLocalizations.of(context)!.rideStatusUnderstood, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
           ),
         ],
@@ -1374,12 +1375,12 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('ยกเลิกการเดินทาง'),
-        content: const Text('คุณต้องการยกเลิกการเดินทางนี้ใช่หรือไม่?'),
+        title: Text(AppLocalizations.of(context)!.rideStatusCancelTripTitle),
+        content: Text(AppLocalizations.of(context)!.rideStatusCancelConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('ไม่'),
+            child: Text(AppLocalizations.of(context)!.rideStatusNo),
           ),
           TextButton(
             onPressed: () async {
@@ -1397,7 +1398,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                   // Show success message
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: const Text('ยกเลิกการเดินทางสำเร็จ'),
+                      content: Text(AppLocalizations.of(context)!.rideStatusCancelSuccess),
                       backgroundColor: Theme.of(context).colorScheme.tertiary,
                     ),
                   );
@@ -1420,12 +1421,12 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                     context: context,
                     builder: (ctx) => AlertDialog(
                       icon: Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error, size: 48),
-                      title: const Text('ยกเลิกไม่สำเร็จ'),
-                      content: Text('เกิดข้อผิดพลาดในการยกเลิก: $e'),
+                      title: Text(AppLocalizations.of(context)!.rideStatusCancelFailed),
+                      content: Text(AppLocalizations.of(context)!.rideStatusCancelError(e.toString())),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.of(ctx).pop(),
-                          child: const Text('ตกลง'),
+                          child: Text(AppLocalizations.of(context)!.rideStatusOk),
                         ),
                       ],
                     ),
@@ -1433,9 +1434,9 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                 }
               }
             },
-            child: const Text(
-              'ใช่',
-              style: TextStyle(color: Colors.red),
+            child: Text(
+              AppLocalizations.of(context)!.rideStatusYes,
+              style: const TextStyle(color: Colors.red),
             ),
           ),
         ],

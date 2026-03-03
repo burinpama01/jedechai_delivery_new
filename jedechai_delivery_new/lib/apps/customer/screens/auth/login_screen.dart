@@ -2,10 +2,12 @@
 import 'package:flutter/services.dart';
 import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import '../../../../common/widgets/app_network_image.dart';
+import '../../../../common/widgets/language_switcher.dart';
 import '../../../../common/services/auth_service.dart';
 import '../../../../common/services/system_config_service.dart';
 import '../../../../common/services/referral_service.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
 
@@ -71,9 +73,10 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('เข้าสู่ระบบสำเร็จ'),
+          SnackBar(
+            content: Text(l10n.loginSuccessSnack),
             backgroundColor: AppTheme.primaryGreen,
           ),
         );
@@ -86,7 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       if (mounted) {
-        _showErrorDialog(_getThaiErrorMessage(e.toString()));
+        _showErrorDialog(_getErrorMessage(context, e.toString()));
       }
     } finally {
       if (mounted) {
@@ -95,32 +98,37 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  String _getThaiErrorMessage(String error) {
-    if (error.contains('Invalid login credentials') || error.contains('invalid_credentials')) {
-      return 'อีเมลหรือรหัสผ่านไม่ถูกต้อง\nกรุณาตรวจสอบแล้วลองใหม่อีกครั้ง';
+  String _getErrorMessage(BuildContext context, String error) {
+    final l10n = AppLocalizations.of(context)!;
+    if (error.contains('Invalid login credentials') ||
+        error.contains('invalid_credentials')) {
+      return l10n.loginErrorInvalidCredentials;
     } else if (error.contains('Email not confirmed')) {
-      return 'อีเมลยังไม่ได้ยืนยัน\nกรุณาตรวจสอบอีเมลของคุณ';
+      return l10n.loginErrorEmailNotConfirmed;
     } else if (error.contains('User not found')) {
-      return 'ไม่พบบัญชีผู้ใช้นี้\nกรุณาสมัครสมาชิกก่อน';
+      return l10n.loginErrorUserNotFound;
     } else if (error.contains('Too many requests') || error.contains('rate_limit')) {
-      return 'คุณลองเข้าสู่ระบบบ่อยเกินไป\nกรุณารอสักครู่แล้วลองใหม่';
-    } else if (error.contains('SocketException') || error.contains('Failed host lookup') || error.contains('เชื่อมต่อ')) {
-      return 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้\nกรุณาตรวจสอบอินเทอร์เน็ตของคุณ';
+      return l10n.loginErrorTooManyRequests;
+    } else if (error.contains('SocketException') ||
+        error.contains('Failed host lookup') ||
+        error.contains('เชื่อมต่อ')) {
+      return l10n.loginErrorCannotConnect;
     } else if (error.contains('network')) {
-      return 'เกิดปัญหาด้านเครือข่าย\nกรุณาลองใหม่อีกครั้ง';
+      return l10n.loginErrorNetwork;
     }
-    return 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง';
+    return l10n.loginErrorGeneric;
   }
 
   void _showErrorDialog(String message) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         icon: const Icon(Icons.error_outline, color: Colors.red, size: 48),
-        title: const Text(
-          'เข้าสู่ระบบไม่สำเร็จ',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        title: Text(
+          l10n.loginErrorDialogTitle,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         content: Text(
           message,
@@ -139,7 +147,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              child: const Text('ตกลง', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              child: Text(
+                l10n.commonOk,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
             ),
           ),
         ],
@@ -159,6 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final theme = Theme.of(context);
     final onSurface = theme.colorScheme.onSurface;
     final secondaryText = onSurface.withValues(alpha: 0.82);
+    final l10n = AppLocalizations.of(context)!;
 
     return PopScope(
       canPop: false,
@@ -172,8 +184,8 @@ class _LoginScreenState extends State<LoginScreen> {
         }
         _lastBackPressTime = now;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('กดอีกครั้งเพื่อออกจากแอป'),
+          SnackBar(
+            content: Text(l10n.loginBackPressToExit),
             duration: Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
           ),
@@ -188,6 +200,17 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainer,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const LanguageSwitcher(),
+                  ),
+                ),
                 const SizedBox(height: 48),
                 
                 // Logo
@@ -215,7 +238,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // Welcome Text
                 Text(
-                  'ยินดีต้อนรับ',
+                  l10n.loginWelcomeTitle,
                   style: theme.textTheme.headlineMedium?.copyWith(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -225,7 +248,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'เข้าสู่ระบบเพื่อเริ่มใช้งาน',
+                  l10n.loginWelcomeSubtitle,
                   style: theme.textTheme.bodyLarge?.copyWith(
                     fontSize: 16,
                     color: secondaryText,
@@ -237,18 +260,18 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Email Field
                 TextFormField(
                   controller: _emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'อีเมล',
-                    prefixIcon: Icon(Icons.email_outlined),
+                  decoration: InputDecoration(
+                    labelText: l10n.loginEmailLabel,
+                    prefixIcon: const Icon(Icons.email_outlined),
                   ),
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'กรุณากรอกอีเมล';
+                      return l10n.loginValidationEmailRequired;
                     }
                     if (!value.contains('@') || !value.contains('.')) {
-                      return 'อีเมลไม่ถูกต้อง';
+                      return l10n.loginValidationEmailInvalid;
                     }
                     return null;
                   },
@@ -259,7 +282,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextFormField(
                   controller: _passwordController,
                   decoration: InputDecoration(
-                    labelText: 'รหัสผ่าน',
+                    labelText: l10n.loginPasswordLabel,
                     prefixIcon: const Icon(Icons.lock_outlined),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -279,10 +302,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   onFieldSubmitted: (_) => _signIn(),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'กรุณากรอกรหัสผ่าน';
+                      return l10n.loginValidationPasswordRequired;
                     }
                     if (value.length < 6) {
-                      return 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร';
+                      return l10n.loginValidationPasswordMinLength;
                     }
                     return null;
                   },
@@ -302,9 +325,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             );
                           },
-                    child: const Text(
-                      'ลืมรหัสผ่าน?',
-                      style: TextStyle(fontSize: 14),
+                    child: Text(
+                      l10n.loginForgotPassword,
+                      style: const TextStyle(fontSize: 14),
                     ),
                   ),
                 ),
@@ -325,9 +348,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           )
-                        : const Text(
-                            'เข้าสู่ระบบ',
-                            style: TextStyle(
+                        : Text(
+                            l10n.loginButton,
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
                             ),
@@ -341,7 +364,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'ยังไม่มีบัญชี? ',
+                      l10n.loginNoAccountPrefix,
                       style: TextStyle(color: secondaryText),
                     ),
                     TextButton(
@@ -354,9 +377,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               );
                             },
-                      child: const Text(
-                        'สมัครสมาชิก',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.loginRegisterButton,
+                        style: const TextStyle(
                           fontWeight: FontWeight.w600,
                         ),
                       ),

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../common/services/parcel_service.dart';
 import '../../../common/models/parcel_detail.dart';
 import '../../../common/services/image_picker_service.dart';
@@ -79,12 +80,12 @@ class _DriverParcelConfirmationScreenState
 
   Future<void> _submitConfirmation() async {
     if (_confirmPhoto == null) {
-      _showErrorDialog('กรุณาถ่ายรูปยืนยัน');
+      _showErrorDialog(AppLocalizations.of(context)!.parcelConfirmPhotoRequired);
       return;
     }
 
     if (widget.confirmationType == 'delivery' && _signaturePhoto == null) {
-      _showErrorDialog('กรุณาถ่ายรูปลายเซ็นผู้รับ');
+      _showErrorDialog(AppLocalizations.of(context)!.parcelConfirmSignatureRequired);
       return;
     }
 
@@ -104,7 +105,7 @@ class _DriverParcelConfirmationScreenState
       );
 
       if (confirmPhotoUrl == null) {
-        throw Exception('อัปโหลดรูปไม่สำเร็จ');
+        throw Exception(AppLocalizations.of(context)!.parcelConfirmUploadFailed);
       }
 
       if (widget.confirmationType == 'pickup') {
@@ -114,12 +115,12 @@ class _DriverParcelConfirmationScreenState
           photoUrl: confirmPhotoUrl,
         );
 
-        if (!success) throw Exception('อัปเดตสถานะไม่สำเร็จ');
+        if (!success) throw Exception(AppLocalizations.of(context)!.parcelConfirmUpdateFailed);
 
         if (mounted) {
           _showSuccessDialog(
-            'รับพัสดุสำเร็จ!',
-            'บันทึกรูปภาพเรียบร้อย\nกรุณาเดินทางไปส่งพัสดุ',
+            AppLocalizations.of(context)!.parcelConfirmPickupSuccess,
+            AppLocalizations.of(context)!.parcelConfirmPickupSuccessBody,
           );
         }
       } else {
@@ -142,19 +143,19 @@ class _DriverParcelConfirmationScreenState
           signaturePhotoUrl: signatureUrl,
         );
 
-        if (!success) throw Exception('อัปเดตสถานะไม่สำเร็จ');
+        if (!success) throw Exception(AppLocalizations.of(context)!.parcelConfirmUpdateFailed);
 
         if (mounted) {
           _showSuccessDialog(
-            'ส่งพัสดุสำเร็จ!',
-            'บันทึกรูปภาพและลายเซ็นเรียบร้อย\nงานเสร็จสมบูรณ์',
+            AppLocalizations.of(context)!.parcelConfirmDeliverySuccess,
+            AppLocalizations.of(context)!.parcelConfirmDeliverySuccessBody,
           );
         }
       }
     } catch (e) {
       debugLog('❌ Error submitting confirmation: $e');
       if (mounted) {
-        _showErrorDialog('เกิดข้อผิดพลาด\nกรุณาลองใหม่อีกครั้ง');
+        _showErrorDialog(AppLocalizations.of(context)!.parcelConfirmError);
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -167,7 +168,7 @@ class _DriverParcelConfirmationScreenState
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         icon: const Icon(Icons.error_outline, color: Colors.red, size: 48),
-        title: const Text('เกิดข้อผิดพลาด',
+        title: Text(AppLocalizations.of(context)!.parcelConfirmErrorTitle,
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         content: Text(message,
             textAlign: TextAlign.center,
@@ -185,7 +186,7 @@ class _DriverParcelConfirmationScreenState
                     borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              child: const Text('ตกลง',
+              child: Text(AppLocalizations.of(context)!.parcelConfirmOk,
                   style:
                       TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             ),
@@ -201,20 +202,20 @@ class _DriverParcelConfirmationScreenState
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        icon: const Icon(Icons.check_circle, color: AppTheme.accentBlue, size: 48),
+        icon:
+            const Icon(Icons.check_circle, color: AppTheme.accentBlue, size: 48),
         title: Text(title,
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         content: Text(message,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 15, height: 1.5)),
-        actionsAlignment: MainAxisAlignment.center,
+            style: TextStyle(color: Colors.grey[600])),
         actions: [
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
                 Navigator.of(ctx).pop();
-                Navigator.of(context).pop(true); // ส่ง true กลับ = สำเร็จ
+                Navigator.of(context).pop(true);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.accentBlue,
@@ -223,7 +224,7 @@ class _DriverParcelConfirmationScreenState
                     borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              child: const Text('ตกลง',
+              child: Text(AppLocalizations.of(context)!.parcelConfirmOk,
                   style:
                       TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             ),
@@ -239,7 +240,7 @@ class _DriverParcelConfirmationScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isPickup ? 'ยืนยันรับพัสดุ' : 'ยืนยันส่งพัสดุ'),
+        title: Text(isPickup ? AppLocalizations.of(context)!.parcelConfirmPickupTitle : AppLocalizations.of(context)!.parcelConfirmDeliveryTitle),
         backgroundColor: AppTheme.accentBlue,
         foregroundColor: Colors.white,
       ),
@@ -284,7 +285,7 @@ class _DriverParcelConfirmationScreenState
       return Card(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Text('ไม่พบข้อมูลพัสดุ',
+          child: Text(AppLocalizations.of(context)!.parcelConfirmNoData,
               style: TextStyle(color: Colors.grey[600])),
         ),
       );
@@ -303,20 +304,20 @@ class _DriverParcelConfirmationScreenState
               children: [
                 const Icon(Icons.local_shipping, color: AppTheme.accentBlue),
                 const SizedBox(width: 8),
-                const Text('ข้อมูลพัสดุ',
+                Text(AppLocalizations.of(context)!.parcelConfirmParcelInfo,
                     style:
                         TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ],
             ),
             const Divider(height: 20),
-            _infoRow('ผู้ส่ง', '${pd.senderName} (${pd.senderPhone})'),
-            _infoRow('ผู้รับ', '${pd.recipientName} (${pd.recipientPhone})'),
-            _infoRow('ขนาด', pd.sizeDisplayText),
+            _infoRow(AppLocalizations.of(context)!.parcelConfirmSender, '${pd.senderName} (${pd.senderPhone})'),
+            _infoRow(AppLocalizations.of(context)!.parcelConfirmRecipient, '${pd.recipientName} (${pd.recipientPhone})'),
+            _infoRow(AppLocalizations.of(context)!.parcelConfirmSize, pd.sizeDisplayText),
             if (pd.description != null && pd.description!.isNotEmpty)
-              _infoRow('รายละเอียด', pd.description!),
+              _infoRow(AppLocalizations.of(context)!.parcelConfirmDescription, pd.description!),
             if (pd.estimatedWeightKg != null)
-              _infoRow('น้ำหนัก', '${pd.estimatedWeightKg} กก.'),
-            _infoRow('สถานะ', pd.statusDisplayText),
+              _infoRow(AppLocalizations.of(context)!.parcelConfirmWeightKg, AppLocalizations.of(context)!.parcelConfirmWeightValue(pd.estimatedWeightKg.toString())),
+            _infoRow(AppLocalizations.of(context)!.parcelConfirmStatus, pd.statusDisplayText),
           ],
         ),
       ),
@@ -354,7 +355,7 @@ class _DriverParcelConfirmationScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('รูปพัสดุจากลูกค้า',
+            Text(AppLocalizations.of(context)!.parcelConfirmCustomerPhoto,
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             ClipRRect(
@@ -383,14 +384,14 @@ class _DriverParcelConfirmationScreenState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              isPickup ? 'ถ่ายรูปยืนยันรับพัสดุ *' : 'ถ่ายรูปยืนยันส่งพัสดุ *',
+              isPickup ? AppLocalizations.of(context)!.parcelConfirmPickupPhotoTitle : AppLocalizations.of(context)!.parcelConfirmDeliveryPhotoTitle,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
             Text(
               isPickup
-                  ? 'ถ่ายรูปพัสดุที่รับมาเพื่อยืนยัน'
-                  : 'ถ่ายรูปพัสดุที่ส่งถึงผู้รับ',
+                  ? AppLocalizations.of(context)!.parcelConfirmPickupPhotoDesc
+                  : AppLocalizations.of(context)!.parcelConfirmDeliveryPhotoDesc,
               style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
             const SizedBox(height: 12),
@@ -414,10 +415,10 @@ class _DriverParcelConfirmationScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('ถ่ายรูปลายเซ็นผู้รับ *',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.parcelConfirmSignatureTitle,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            Text('ถ่ายรูปลายเซ็นหรือบัตรประชาชนผู้รับ',
+            Text(AppLocalizations.of(context)!.parcelConfirmSignatureDesc,
                 style: TextStyle(fontSize: 12, color: Colors.grey[600])),
             const SizedBox(height: 12),
             _buildPhotoBox(
@@ -477,7 +478,7 @@ class _DriverParcelConfirmationScreenState
                 children: [
                   Icon(Icons.camera_alt, size: 48, color: Colors.grey[400]),
                   const SizedBox(height: 8),
-                  Text('แตะเพื่อถ่ายรูป',
+                  Text(AppLocalizations.of(context)!.parcelConfirmTapToPhoto,
                       style: TextStyle(color: Colors.grey[500], fontSize: 14)),
                 ],
               ),
@@ -499,7 +500,7 @@ class _DriverParcelConfirmationScreenState
                     color: Colors.white, strokeWidth: 2))
             : Icon(isPickup ? Icons.check_circle : Icons.done_all),
         label: Text(
-          isPickup ? 'ยืนยันรับพัสดุ' : 'ยืนยันส่งพัสดุสำเร็จ',
+          isPickup ? AppLocalizations.of(context)!.parcelConfirmPickupBtn : AppLocalizations.of(context)!.parcelConfirmDeliveryBtn,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         style: ElevatedButton.styleFrom(

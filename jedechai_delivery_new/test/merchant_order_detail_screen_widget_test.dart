@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jedechai_delivery_new/apps/merchant/screens/order_detail_screen.dart';
+import 'package:jedechai_delivery_new/l10n/app_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
   group('MerchantOrderDetailScreen widget', () {
@@ -26,6 +28,13 @@ void main() {
     testWidgets('does not show delivery fee row/text (ค่าส่ง) in merchant view', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
           home: MerchantOrderDetailScreen(
             order: _baseOrder(),
             loadRemoteData: false,
@@ -42,6 +51,13 @@ void main() {
     testWidgets('does not show coupon/discount breakdown text in merchant view', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
           home: MerchantOrderDetailScreen(
             order: _baseOrder(overrides: {
               'coupon_code': 'WELCOME20',

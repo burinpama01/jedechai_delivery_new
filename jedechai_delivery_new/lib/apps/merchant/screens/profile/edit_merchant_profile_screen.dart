@@ -9,6 +9,7 @@ import '../../../../common/services/image_picker_service.dart';
 import '../../../../common/services/storage_service.dart';
 import '../../../../common/utils/platform_adaptive.dart';
 import '../../../../common/widgets/app_network_image.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../customer/screens/services/delivery_map_picker_screen.dart';
 
 /// Edit Merchant Profile Screen
@@ -52,15 +53,18 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
     'sat',
     'sun'
   ];
-  static const Map<String, String> _weekdayThai = {
-    'mon': 'จ',
-    'tue': 'อ',
-    'wed': 'พ',
-    'thu': 'พฤ',
-    'fri': 'ศ',
-    'sat': 'ส',
-    'sun': 'อา',
-  };
+  Map<String, String> _weekdayLabels(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return {
+      'mon': l10n.editProfileDayMon,
+      'tue': l10n.editProfileDayTue,
+      'wed': l10n.editProfileDayWed,
+      'thu': l10n.editProfileDayThu,
+      'fri': l10n.editProfileDayFri,
+      'sat': l10n.editProfileDaySat,
+      'sun': l10n.editProfileDaySun,
+    };
+  }
 
   TimeOfDay _parseTimeString(String value,
       {TimeOfDay fallback = const TimeOfDay(hour: 8, minute: 0)}) {
@@ -237,7 +241,7 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
     try {
       final userId = AuthService.userId;
       if (userId == null) {
-        throw Exception('ไม่พบข้อมูลผู้ใช้');
+        throw Exception(AppLocalizations.of(context)!.menuMgmtUserNotFound);
       }
 
       // Upload shop photo if a new one was selected
@@ -267,10 +271,10 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('บันทึกข้อมูลสำเร็จ'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.editProfileSaveSuccess),
             backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
+            duration: const Duration(seconds: 2),
           ),
         );
         Navigator.of(context).pop(true); // Return true to indicate success
@@ -279,7 +283,7 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('ไม่สามารถบันทึกข้อมูลได้: $e'),
+            content: Text(AppLocalizations.of(context)!.editProfileSaveFailed(e.toString())),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -300,7 +304,7 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('แก้ไขข้อมูลร้าน'),
+        title: Text(AppLocalizations.of(context)!.editProfileTitle),
         backgroundColor: AppTheme.accentOrange,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -362,7 +366,7 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
             ),
             const SizedBox(height: 8),
             Center(
-              child: Text('แตะเพื่อเปลี่ยนรูปร้าน',
+              child: Text(AppLocalizations.of(context)!.editProfileTapPhoto,
                   style: TextStyle(
                     fontSize: 12,
                     color: colorScheme.onSurfaceVariant,
@@ -373,11 +377,11 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
             // Shop Name Field
             _buildTextField(
               controller: _nameController,
-              label: 'ชื่อร้าน',
+              label: AppLocalizations.of(context)!.editProfileShopName,
               icon: Icons.store,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'กรุณากรอกชื่อร้าน';
+                  return AppLocalizations.of(context)!.editProfileShopNameRequired;
                 }
                 return null;
               },
@@ -387,7 +391,7 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
             // Email Field (Read-only)
             _buildTextField(
               controller: TextEditingController(text: widget.currentEmail),
-              label: 'อีเมล',
+              label: AppLocalizations.of(context)!.editProfileEmail,
               icon: Icons.email,
               enabled: false,
             ),
@@ -396,13 +400,13 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
             // Phone Field
             _buildTextField(
               controller: _phoneController,
-              label: 'เบอร์โทรศัพท์',
+              label: AppLocalizations.of(context)!.editProfilePhone,
               icon: Icons.phone,
               keyboardType: TextInputType.phone,
               validator: (value) {
                 if (value != null && value.isNotEmpty) {
                   if (value.length < 9 || value.length > 10) {
-                    return 'กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง';
+                    return AppLocalizations.of(context)!.editProfilePhoneInvalid;
                   }
                 }
                 return null;
@@ -413,7 +417,7 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
             // Address Field
             _buildTextField(
               controller: _addressController,
-              label: 'ที่อยู่ร้าน',
+              label: AppLocalizations.of(context)!.editProfileAddress,
               icon: Icons.location_on,
               maxLines: 3,
             ),
@@ -439,15 +443,15 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'ปักหมุดตำแหน่งร้าน',
+                          Text(
+                            AppLocalizations.of(context)!.editProfilePinLocation,
                             style: TextStyle(fontWeight: FontWeight.w600),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             (_shopLat != null && _shopLng != null)
                                 ? 'Lat: ${_shopLat!.toStringAsFixed(5)}, Lng: ${_shopLng!.toStringAsFixed(5)}'
-                                : 'ยังไม่ได้เลือกตำแหน่งบนแผนที่',
+                                : AppLocalizations.of(context)!.editProfileNoLocation,
                             style: TextStyle(
                               fontSize: 12,
                               color: colorScheme.onSurfaceVariant,
@@ -467,7 +471,7 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
             const SizedBox(height: 32),
 
             Text(
-              'วันที่เปิดร้าน',
+              AppLocalizations.of(context)!.editProfileOpenDays,
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -480,7 +484,7 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
               children: _weekdayKeys.map((day) {
                 final isSelected = _shopOpenDays.contains(day);
                 return FilterChip(
-                  label: Text(_weekdayThai[day] ?? day),
+                  label: Text(_weekdayLabels(context)[day] ?? day),
                   selected: isSelected,
                   selectedColor: AppTheme.accentOrange.withValues(alpha: 0.18),
                   checkmarkColor: AppTheme.accentOrange,
@@ -512,13 +516,13 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
               children: [
                 Expanded(
                   child: _buildTimeSelectCard(
-                    label: 'เวลาเปิด',
+                    label: AppLocalizations.of(context)!.editProfileOpenTime,
                     value: _shopOpenTime,
                     onTap: () async {
                       final picked = await PlatformAdaptive.pickTime(
                         context: context,
                         initialTime: _shopOpenTime,
-                        title: 'เวลาเปิด',
+                        title: AppLocalizations.of(context)!.editProfileOpenTime,
                       );
                       if (picked != null) {
                         setState(() => _shopOpenTime = picked);
@@ -529,13 +533,13 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildTimeSelectCard(
-                    label: 'เวลาปิด',
+                    label: AppLocalizations.of(context)!.editProfileCloseTime,
                     value: _shopCloseTime,
                     onTap: () async {
                       final picked = await PlatformAdaptive.pickTime(
                         context: context,
                         initialTime: _shopCloseTime,
-                        title: 'เวลาปิด',
+                        title: AppLocalizations.of(context)!.editProfileCloseTime,
                       );
                       if (picked != null) {
                         setState(() => _shopCloseTime = picked);
@@ -556,9 +560,9 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
                     : () {
                         if (_shopOpenDays.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
+                            SnackBar(
                               content:
-                                  Text('กรุณาเลือกวันเปิดร้านอย่างน้อย 1 วัน'),
+                                  Text(AppLocalizations.of(context)!.editProfileSelectDayRequired),
                               backgroundColor: Colors.red,
                             ),
                           );
@@ -584,8 +588,8 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
                               AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
-                    : const Text(
-                        'บันทึกข้อมูล',
+                    : Text(
+                        AppLocalizations.of(context)!.editProfileSaveBtn,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,

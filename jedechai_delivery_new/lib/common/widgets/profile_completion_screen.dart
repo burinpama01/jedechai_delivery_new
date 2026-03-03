@@ -5,6 +5,7 @@ import '../../utils/debug_logger.dart';
 import '../services/auth_service.dart';
 import '../services/image_picker_service.dart';
 import '../services/storage_service.dart';
+import '../../l10n/app_localizations.dart';
 import 'app_network_image.dart';
 import '../../theme/app_theme.dart';
 
@@ -48,7 +49,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
   final _bankAccountNumberController = TextEditingController();
   final _bankAccountNameController = TextEditingController();
 
-  String _selectedVehicleType = 'มอเตอร์ไซค์';
+  String _selectedVehicleType = 'motorcycle';
 
   // Driver document uploads
   File? _idCardFile;
@@ -86,14 +87,14 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
         lower == 'motorcycle' ||
         lower.contains('moto') ||
         lower.contains('bike')) {
-      return 'มอเตอร์ไซค์';
+      return 'motorcycle';
     }
 
     if (raw.contains('รถยนต์') ||
         lower == 'car' ||
         lower.contains('car') ||
         lower.contains('sedan')) {
-      return 'รถยนต์';
+      return 'car';
     }
 
     return raw;
@@ -134,7 +135,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
 
     try {
       final userId = AuthService.userId;
-      if (userId == null) throw Exception('ไม่พบข้อมูลผู้ใช้');
+      if (userId == null) throw Exception(AppLocalizations.of(context)!.menuMgmtUserNotFound);
 
       final updateData = <String, dynamic>{
         'full_name': _fullNameController.text.trim(),
@@ -146,7 +147,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
       };
 
       if (_isDriver) {
-        updateData['vehicle_type'] = _normalizeVehicleTypeLabel(_selectedVehicleType);
+        updateData['vehicle_type'] = _selectedVehicleType;
         updateData['license_plate'] = _licensePlateController.text.trim();
         // Upload documents if selected
         if (_idCardFile != null) {
@@ -178,8 +179,8 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ บันทึกข้อมูลโปรไฟล์สำเร็จ'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.profileCompleteSaveSuccess),
           ),
         );
         widget.onCompleted();
@@ -189,7 +190,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ เกิดข้อผิดพลาด: $e'),
+            content: Text(AppLocalizations.of(context)!.profileCompleteError(e.toString())),
           ),
         );
       }
@@ -201,15 +202,24 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final roleText = _isDriver ? 'คนขับ' : 'ร้านค้า';
+    final l10n = AppLocalizations.of(context)!;
+    final roleText = _isDriver ? l10n.profileCompleteRoleDriver : l10n.profileCompleteRoleMerchant;
     final steps = _isDriver
-        ? ['ข้อมูลส่วนตัว', 'ข้อมูลรถ', 'เอกสาร', 'ธนาคาร']
-        : ['ข้อมูลร้านค้า', 'ข้อมูลธนาคาร'];
+        ? [
+            l10n.profileCompleteStepPersonalTitle,
+            l10n.profileCompleteStepVehicleTitle,
+            l10n.profileCompleteStepDocsTitle,
+            l10n.profileCompleteStepBankTitle,
+          ]
+        : [
+            l10n.profileCompleteStepMerchantTitle,
+            l10n.profileCompleteStepBankTitle,
+          ];
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: Text('กรอกข้อมูล$roleText'),
+        title: Text(l10n.profileCompleteTitle(roleText)),
         backgroundColor: AppTheme.primaryGreen,
         foregroundColor: colorScheme.onPrimary,
         automaticallyImplyLeading: false,
@@ -224,7 +234,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
               size: 18,
             ),
             label: Text(
-              'ออกจากระบบ',
+              l10n.profileCompleteLogout,
               style: TextStyle(
                 color: colorScheme.onPrimary.withValues(alpha: 0.8),
                 fontSize: 12,
@@ -345,7 +355,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: const Text('ย้อนกลับ'),
+                        child: Text(l10n.profileCompleteBack),
                       ),
                     ),
                   if (_currentStep > 0) const SizedBox(width: 12),
@@ -369,7 +379,9 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                               ),
                             )
                           : Text(
-                              _currentStep < steps.length - 1 ? 'ถัดไป' : 'บันทึกและเริ่มใช้งาน',
+                              _currentStep < steps.length - 1
+                                  ? l10n.profileCompleteNext
+                                  : l10n.profileCompleteSaveStart,
                               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                             ),
                     ),
@@ -389,15 +401,16 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
     // Validate document uploads on step 2 for drivers
     if (_isDriver && _currentStep == 2) {
       final missing = <String>[];
-      if (_idCardFile == null) missing.add('รูปบัตรประชาชน');
-      if (_driverLicenseFile == null) missing.add('ใบขับขี่');
-      if (_vehiclePhotoFile == null) missing.add('รูปรถ');
-      if (_licensePlatePhotoFile == null) missing.add('รูปป้ายทะเบียน');
+      final l10n = AppLocalizations.of(context)!;
+      if (_idCardFile == null) missing.add(l10n.profileCompleteDocIdCard);
+      if (_driverLicenseFile == null) missing.add(l10n.profileCompleteDocDriverLicense);
+      if (_vehiclePhotoFile == null) missing.add(l10n.profileCompleteDocVehiclePhoto);
+      if (_licensePlatePhotoFile == null) missing.add(l10n.profileCompleteDocPlatePhoto);
       
       if (missing.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('กรุณาอัปโหลด: ${missing.join(", ")}'),
+            content: Text(AppLocalizations.of(context)!.profileCompleteUploadMissing(missing.join(", "))),
             duration: const Duration(seconds: 3),
           ),
         );
@@ -439,22 +452,26 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
     return _StepCard(
       key: key,
       icon: Icons.person,
-      title: 'ข้อมูลส่วนตัว',
-      subtitle: 'กรุณากรอกข้อมูลของคุณ',
+      title: AppLocalizations.of(context)!.profileCompleteStepPersonalTitle,
+      subtitle: AppLocalizations.of(context)!.profileCompleteStepPersonalSubtitle,
       children: [
         _buildField(
           controller: _fullNameController,
-          label: 'ชื่อ-นามสกุล',
+          label: AppLocalizations.of(context)!.profileCompleteFullNameLabel,
           icon: Icons.badge,
-          validator: (v) => v == null || v.trim().isEmpty ? 'กรุณากรอกชื่อ' : null,
+          validator: (v) => v == null || v.trim().isEmpty
+              ? AppLocalizations.of(context)!.profileCompleteFullNameRequired
+              : null,
         ),
         const SizedBox(height: 16),
         _buildField(
           controller: _phoneController,
-          label: 'เบอร์โทรศัพท์',
+          label: AppLocalizations.of(context)!.profileCompletePhoneLabel,
           icon: Icons.phone,
           keyboardType: TextInputType.phone,
-          validator: (v) => v == null || v.trim().length < 9 ? 'กรุณากรอกเบอร์โทร' : null,
+          validator: (v) => v == null || v.trim().length < 9
+              ? AppLocalizations.of(context)!.profileCompletePhoneRequired
+              : null,
         ),
       ],
     );
@@ -464,24 +481,37 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
     return _StepCard(
       key: key,
       icon: Icons.directions_car,
-      title: 'ข้อมูลรถ',
-      subtitle: 'กรุณาเลือกประเภทรถและกรอกทะเบียน',
+      title: AppLocalizations.of(context)!.profileCompleteStepVehicleTitle,
+      subtitle: AppLocalizations.of(context)!.profileCompleteStepVehicleSubtitle,
       children: [
-        const Text('ประเภทรถ', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+        Text(
+          AppLocalizations.of(context)!.profileCompleteVehicleTypeLabel,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+        ),
         const SizedBox(height: 8),
         Wrap(
           spacing: 10,
           children: [
-            _vehicleChip('มอเตอร์ไซค์', 'มอเตอร์ไซค์', Icons.two_wheeler),
-            _vehicleChip('รถยนต์', 'รถยนต์', Icons.directions_car),
+            _vehicleChip(
+              'motorcycle',
+              AppLocalizations.of(context)!.profileCompleteVehicleMotorcycle,
+              Icons.two_wheeler,
+            ),
+            _vehicleChip(
+              'car',
+              AppLocalizations.of(context)!.profileCompleteVehicleCar,
+              Icons.directions_car,
+            ),
           ],
         ),
         const SizedBox(height: 16),
         _buildField(
           controller: _licensePlateController,
-          label: 'เลขทะเบียนรถ',
+          label: AppLocalizations.of(context)!.profileCompletePlateLabel,
           icon: Icons.confirmation_number,
-          validator: (v) => v == null || v.trim().isEmpty ? 'กรุณากรอกทะเบียน' : null,
+          validator: (v) => v == null || v.trim().isEmpty
+              ? AppLocalizations.of(context)!.profileCompletePlateRequired
+              : null,
         ),
       ],
     );
@@ -491,39 +521,39 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
     return _StepCard(
       key: key,
       icon: Icons.folder_open,
-      title: 'อัปโหลดเอกสาร',
-      subtitle: 'กรุณาถ่ายรูปเอกสารของคุณ',
+      title: AppLocalizations.of(context)!.profileCompleteStepDocsTitle,
+      subtitle: AppLocalizations.of(context)!.profileCompleteStepDocsSubtitle,
       children: [
         _buildDocUploadTile(
-          label: 'รูปบัตรประชาชน',
+          label: AppLocalizations.of(context)!.profileCompleteDocIdCard,
           icon: Icons.credit_card,
           file: _idCardFile,
           onTap: () => _pickDocument('id_card'),
         ),
         const SizedBox(height: 12),
         _buildDocUploadTile(
-          label: 'ใบขับขี่',
+          label: AppLocalizations.of(context)!.profileCompleteDocDriverLicense,
           icon: Icons.badge,
           file: _driverLicenseFile,
           onTap: () => _pickDocument('license'),
         ),
         const SizedBox(height: 12),
         _buildDocUploadTile(
-          label: 'รูปรถ',
+          label: AppLocalizations.of(context)!.profileCompleteDocVehiclePhoto,
           icon: Icons.directions_car,
           file: _vehiclePhotoFile,
           onTap: () => _pickDocument('vehicle'),
         ),
         const SizedBox(height: 12),
         _buildDocUploadTile(
-          label: 'รูปป้ายทะเบียน',
+          label: AppLocalizations.of(context)!.profileCompleteDocPlatePhoto,
           icon: Icons.confirmation_number,
           file: _licensePlatePhotoFile,
           onTap: () => _pickDocument('plate'),
         ),
         const SizedBox(height: 8),
         Text(
-          '* กรุณาอัปโหลดเอกสารทั้ง 4 รายการ',
+          AppLocalizations.of(context)!.profileCompleteDocsHint,
           style: TextStyle(
             fontSize: 12,
             color: Theme.of(context).colorScheme.error,
@@ -575,7 +605,9 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                   )),
                   const SizedBox(height: 2),
                   Text(
-                    hasFile ? 'เลือกรูปแล้ว ✓' : 'แตะเพื่อถ่ายรูปหรือเลือกจากแกลเลอรี',
+                    hasFile
+                        ? AppLocalizations.of(context)!.profileCompleteDocSelected
+                        : AppLocalizations.of(context)!.profileCompleteDocTapToPick,
                     style: TextStyle(
                       fontSize: 12,
                       color: hasFile
@@ -630,30 +662,36 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
     return _StepCard(
       key: key,
       icon: Icons.store,
-      title: 'ข้อมูลร้านค้า',
-      subtitle: 'กรุณากรอกข้อมูลร้านค้าของคุณ',
+      title: AppLocalizations.of(context)!.profileCompleteStepMerchantTitle,
+      subtitle: AppLocalizations.of(context)!.profileCompleteStepMerchantSubtitle,
       children: [
         _buildField(
           controller: _fullNameController,
-          label: 'ชื่อร้านค้า / เจ้าของ',
+          label: AppLocalizations.of(context)!.profileCompleteMerchantNameLabel,
           icon: Icons.storefront,
-          validator: (v) => v == null || v.trim().isEmpty ? 'กรุณากรอกชื่อ' : null,
+          validator: (v) => v == null || v.trim().isEmpty
+              ? AppLocalizations.of(context)!.profileCompleteFullNameRequired
+              : null,
         ),
         const SizedBox(height: 16),
         _buildField(
           controller: _phoneController,
-          label: 'เบอร์โทรศัพท์',
+          label: AppLocalizations.of(context)!.profileCompletePhoneLabel,
           icon: Icons.phone,
           keyboardType: TextInputType.phone,
-          validator: (v) => v == null || v.trim().length < 9 ? 'กรุณากรอกเบอร์โทร' : null,
+          validator: (v) => v == null || v.trim().length < 9
+              ? AppLocalizations.of(context)!.profileCompletePhoneRequired
+              : null,
         ),
         const SizedBox(height: 16),
         _buildField(
           controller: _shopAddressController,
-          label: 'ที่อยู่ร้าน',
+          label: AppLocalizations.of(context)!.profileCompleteAddressLabel,
           icon: Icons.location_on,
           maxLines: 2,
-          validator: (v) => v == null || v.trim().isEmpty ? 'กรุณากรอกที่อยู่' : null,
+          validator: (v) => v == null || v.trim().isEmpty
+              ? AppLocalizations.of(context)!.profileCompleteAddressRequired
+              : null,
         ),
       ],
     );
@@ -663,26 +701,26 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
     return _StepCard(
       key: key,
       icon: Icons.account_balance,
-      title: 'ข้อมูลธนาคาร',
-      subtitle: 'สำหรับรับเงินจากระบบ (ไม่บังคับ)',
+      title: AppLocalizations.of(context)!.profileCompleteStepBankTitle,
+      subtitle: AppLocalizations.of(context)!.profileCompleteStepBankSubtitle,
       children: [
         _buildField(
           controller: _bankNameController,
-          label: 'ชื่อธนาคาร',
+          label: AppLocalizations.of(context)!.profileCompleteBankNameLabel,
           icon: Icons.account_balance,
-          hint: 'เช่น กสิกรไทย, ไทยพาณิชย์',
+          hint: AppLocalizations.of(context)!.profileCompleteBankNameHint,
         ),
         const SizedBox(height: 16),
         _buildField(
           controller: _bankAccountNumberController,
-          label: 'เลขบัญชี',
+          label: AppLocalizations.of(context)!.profileCompleteBankAccountNumberLabel,
           icon: Icons.numbers,
           keyboardType: TextInputType.number,
         ),
         const SizedBox(height: 16),
         _buildField(
           controller: _bankAccountNameController,
-          label: 'ชื่อบัญชี',
+          label: AppLocalizations.of(context)!.profileCompleteBankAccountNameLabel,
           icon: Icons.person_outline,
         ),
       ],

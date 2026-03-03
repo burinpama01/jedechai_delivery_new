@@ -15,6 +15,7 @@ import '../../../common/services/notification_sender.dart';
 import '../../../common/utils/order_code_formatter.dart';
 import '../../../common/widgets/location_disclosure_dialog.dart';
 import 'order_detail_screen.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Merchant Orders Screen
 ///
@@ -72,16 +73,15 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
       builder: (context) {
         final colorScheme = Theme.of(context).colorScheme;
         return AlertDialog(
-          title: const Text('ปิดร้าน?'),
-          content: const Text(
-            'เมื่อกดปิดร้านเอง จะปิดการใช้งาน เปิด-ปิด ร้านอัตโนมัติ\n'
-            'สามารถเปิดใช้งานฟีเจอร์นี้ได้ที่หน้าตั้งค่า',
+          title: Text(AppLocalizations.of(context)!.merchantCloseShopTitle),
+          content: Text(
+            AppLocalizations.of(context)!.merchantCloseShopBody,
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
               child: Text(
-                'ยกเลิก',
+                AppLocalizations.of(context)!.merchantCloseShopCancel,
                 style: TextStyle(color: colorScheme.onSurfaceVariant),
               ),
             ),
@@ -91,7 +91,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 backgroundColor: colorScheme.error,
                 foregroundColor: colorScheme.onError,
               ),
-              child: const Text('ปิดร้าน'),
+              child: Text(AppLocalizations.of(context)!.merchantCloseShopConfirm),
             ),
           ],
         );
@@ -387,7 +387,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               ),
               const SizedBox(width: 12),
               Text(
-                '🚨 ออเดอร์ใหม่!',
+                AppLocalizations.of(context)!.merchantNewOrderAlert,
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -405,8 +405,8 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 color: colorScheme.error,
               ),
               const SizedBox(height: 16),
-              const Text(
-                'คุณมีออเดอร์ใหม่รอการยืนยัน!',
+              Text(
+                AppLocalizations.of(context)!.merchantNewOrderWaiting,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -415,7 +415,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'เสียงจะแจ้งเตือนซ้ำต่อเนื่องจนกว่าคุณกดหยุด',
+                AppLocalizations.of(context)!.merchantAlarmDesc,
                 style: TextStyle(
                   fontSize: 14,
                   color: colorScheme.onSurfaceVariant,
@@ -440,14 +440,14 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.stop),
-                    SizedBox(width: 8),
+                    const Icon(Icons.stop),
+                    const SizedBox(width: 8),
                     Text(
-                      'หยุดเสียง / รับทราบ',
-                      style: TextStyle(
+                      AppLocalizations.of(context)!.merchantStopAlarm,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -468,7 +468,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _error = 'ไม่พบข้อมูลผู้ใช้';
+          _error = AppLocalizations.of(context)!.merchantUserNotFound;
         });
       }
       return;
@@ -673,7 +673,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
 
       final userId = AuthService.userId;
       if (userId == null) {
-        throw Exception('ไม่พบข้อมูลผู้ใช้');
+        throw Exception(AppLocalizations.of(context)!.merchantUserNotFound);
       }
 
       final response = await Supabase.instance.client
@@ -827,7 +827,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
 
       final userId = AuthService.userId;
       if (userId == null) {
-        throw Exception('ไม่พบข้อมูลผู้ใช้');
+        throw Exception(AppLocalizations.of(context)!.merchantUserNotFound);
       }
 
       final updateData = {
@@ -862,8 +862,8 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           SnackBar(
             content: Text(
               value
-                  ? (autoDisabled ? 'เปิดร้านแล้ว (ปิดอัตโนมัติถูกปิด)' : 'เปิดร้านแล้ว')
-                  : (autoDisabled ? 'ปิดร้านแล้ว (ปิดอัตโนมัติถูกปิด)' : 'ปิดร้านแล้ว'),
+                  ? (autoDisabled ? AppLocalizations.of(context)!.merchantShopOpenedAutoOff : AppLocalizations.of(context)!.merchantShopOpened)
+                  : (autoDisabled ? AppLocalizations.of(context)!.merchantShopClosedAutoOff : AppLocalizations.of(context)!.merchantShopClosed),
             ),
             backgroundColor:
                 value ? AppTheme.accentOrange : colorScheme.outline,
@@ -883,7 +883,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('ไม่สามารถเปลี่ยนสถานะร้าน: $e'),
+            content: Text(AppLocalizations.of(context)!.merchantShopStatusError(e.toString())),
             backgroundColor: Theme.of(context).colorScheme.error,
             duration: const Duration(seconds: 3),
           ),
@@ -988,7 +988,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
         if (!triggeredAutomatically) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('ออเดอร์ได้รับการยืนยันแล้ว!'),
+              content: Text(AppLocalizations.of(context)!.merchantOrderConfirmed),
               backgroundColor: Theme.of(context).colorScheme.secondary,
               duration: const Duration(seconds: 2),
             ),
@@ -1085,48 +1085,48 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
   // ignore: unused_element
   String _getDriverStatus(String status, Map<String, dynamic> booking) {
     if (status == 'pending' || status == 'pending_merchant') {
-      return 'คนขับ: รอคนขับรับงาน...';
+      return AppLocalizations.of(context)!.merchantDriverStatusWaiting;
     } else if (status == 'driver_accepted' || status == 'matched') {
-      final driverName = booking['driver_name'] ?? 'คนขับ';
-      return 'คนขับ: $driverName กำลังมา';
+      final driverName = booking['driver_name'] ?? AppLocalizations.of(context)!.merchantDriverDefault;
+      return AppLocalizations.of(context)!.merchantDriverStatusComing(driverName);
     } else if (status == 'in_transit') {
-      final driverName = booking['driver_name'] ?? 'คนขับ';
-      return 'คนขับ: $driverName ถึงร้านแล้ว';
+      final driverName = booking['driver_name'] ?? AppLocalizations.of(context)!.merchantDriverDefault;
+      return AppLocalizations.of(context)!.merchantDriverStatusArrived(driverName);
     } else if (status == 'preparing') {
-      return 'คนขับ: รอร้านทำอาหาร';
+      return AppLocalizations.of(context)!.merchantDriverStatusPreparing;
     } else if (status == 'ready_for_pickup') {
-      return 'คนขับ: รออาหารพร้อม';
+      return AppLocalizations.of(context)!.merchantDriverStatusReady;
     } else {
-      return 'คนขับ: รอดำเนินการ';
+      return AppLocalizations.of(context)!.merchantDriverStatusDefault;
     }
   }
 
   String _getStatusText(String status) {
     switch (status) {
       case 'pending_merchant':
-        return 'ออเดอร์ใหม่';
+        return AppLocalizations.of(context)!.merchantStatusNewOrder;
       case 'pending':
-        return 'รอยืนยัน';
+        return AppLocalizations.of(context)!.merchantStatusPending;
       case 'preparing':
-        return 'กำลังทำอาหาร';
+        return AppLocalizations.of(context)!.merchantStatusPreparing;
       case 'driver_accepted':
-        return 'คนขับรับงานแล้ว';
+        return AppLocalizations.of(context)!.merchantStatusDriverAccepted;
       case 'arrived_at_merchant':
-        return 'คนขับถึงร้านแล้ว';
+        return AppLocalizations.of(context)!.merchantStatusArrivedAtMerchant;
       case 'matched':
-        return 'จับคู่คนขับแล้ว';
+        return AppLocalizations.of(context)!.merchantStatusMatched;
       case 'ready_for_pickup':
-        return 'อาหารพร้อมแล้ว';
+        return AppLocalizations.of(context)!.merchantStatusReadyForPickup;
       case 'picking_up_order':
-        return 'คนขับกำลังรับอาหาร';
+        return AppLocalizations.of(context)!.merchantStatusPickingUp;
       case 'in_transit':
-        return 'กำลังจัดส่ง';
+        return AppLocalizations.of(context)!.merchantStatusInTransit;
       case 'completed':
-        return 'เสร็จสิ้น';
+        return AppLocalizations.of(context)!.merchantStatusCompleted;
       case 'cancelled':
-        return 'ยกเลิก';
+        return AppLocalizations.of(context)!.merchantStatusCancelled;
       default:
-        return 'ไม่ทราบสถานะ';
+        return AppLocalizations.of(context)!.merchantStatusUnknown;
     }
   }
 
@@ -1136,7 +1136,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: Text(_showHistory ? 'ประวัติออเดอร์' : 'ออเดอร์'),
+        title: Text(_showHistory ? AppLocalizations.of(context)!.merchantAppBarHistory : AppLocalizations.of(context)!.merchantAppBarOrders),
         backgroundColor: colorScheme.surface,
         elevation: 0,
         foregroundColor: colorScheme.onSurface,
@@ -1146,8 +1146,8 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
             icon: Icon(_showHistory ? Icons.list : Icons.history),
             onPressed: _toggleView,
             tooltip: _showHistory
-                ? 'ดูออเดอร์ที่กำลังดำเนินการ'
-                : 'ดูประวัติออเดอร์',
+                ? AppLocalizations.of(context)!.merchantTooltipActiveOrders
+                : AppLocalizations.of(context)!.merchantTooltipHistory,
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -1155,9 +1155,9 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               await _fetchShopStatus();
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('รีเฟรชข้อมูลแล้ว'),
-                    duration: Duration(seconds: 1),
+                  SnackBar(
+                    content: Text(AppLocalizations.of(context)!.merchantRefreshed),
+                    duration: const Duration(seconds: 1),
                   ),
                 );
               }
@@ -1191,7 +1191,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'เกิดข้อผิดพลาด',
+              AppLocalizations.of(context)!.merchantErrorOccurred,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -1214,7 +1214,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 backgroundColor: AppTheme.accentOrange,
                 foregroundColor: colorScheme.onPrimary,
               ),
-              child: const Text('ลองใหม่'),
+              child: Text(AppLocalizations.of(context)!.merchantRetry),
             ),
           ],
         ),
@@ -1268,7 +1268,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 await _fetchShopStatus();
                 _setupOrdersStream();
               },
-              child: const Text('ลองใหม่'),
+              child: Text(AppLocalizations.of(context)!.merchantRetry),
             ),
           ],
         ),
@@ -1305,7 +1305,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
             ),
             const SizedBox(height: 20),
             Text(
-              'ไม่มีออเดอร์ใหม่',
+              AppLocalizations.of(context)!.merchantNoOrders,
               style: TextStyle(
                 fontSize: 20,
                 color: colorScheme.onSurface,
@@ -1315,8 +1315,8 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
             const SizedBox(height: 8),
             Text(
               _isShopOpen
-                  ? 'ออเดอร์ใหม่จะปรากฏที่นี่ทันที'
-                  : 'เปิดร้านเพื่อรับออเดอร์',
+                  ? AppLocalizations.of(context)!.merchantOrdersWillAppear
+                  : AppLocalizations.of(context)!.merchantOpenShopToReceive,
               style: TextStyle(
                 fontSize: 14,
                 color: colorScheme.onSurfaceVariant,
@@ -1376,7 +1376,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'สถานะร้าน',
+                  AppLocalizations.of(context)!.merchantShopStatus,
                   style: TextStyle(
                     color: colorScheme.onPrimary,
                     fontSize: 18,
@@ -1406,7 +1406,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            _isShopOpen ? 'ร้านเปิด' : 'ร้านปิด',
+            _isShopOpen ? AppLocalizations.of(context)!.merchantShopOpen : AppLocalizations.of(context)!.merchantShopClosed2,
             style: TextStyle(
               color: colorScheme.onPrimary,
               fontSize: 24,
@@ -1416,8 +1416,8 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           const SizedBox(height: 8),
           Text(
             _isShopOpen
-                ? 'ลูกค้าสามารถสั่งอาหารได้'
-                : 'ร้านปิดให้บริการชั่วคราว',
+                ? AppLocalizations.of(context)!.merchantShopOpenDesc
+                : AppLocalizations.of(context)!.merchantShopClosedDesc,
             style: TextStyle(
               color: colorScheme.onPrimary.withValues(alpha: 0.9),
               fontSize: 14,
@@ -1436,8 +1436,8 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               const SizedBox(width: 6),
               Text(
                 _orderAcceptMode == _acceptModeAuto
-                    ? 'รับออเดอร์อัตโนมัติ'
-                    : 'รับออเดอร์ด้วยตนเอง',
+                    ? AppLocalizations.of(context)!.merchantAcceptModeAuto
+                    : AppLocalizations.of(context)!.merchantAcceptModeManual,
                 style: TextStyle(
                   color: colorScheme.onPrimary.withValues(alpha: 0.95),
                   fontSize: 13,
@@ -1459,8 +1459,8 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               const SizedBox(width: 6),
               Text(
                 _shopAutoScheduleEnabled
-                    ? 'เปิด-ปิดร้านอัตโนมัติ: เปิดใช้งาน'
-                    : 'เปิด-ปิดร้านอัตโนมัติ: ปิดใช้งาน',
+                    ? AppLocalizations.of(context)!.merchantAutoScheduleOn
+                    : AppLocalizations.of(context)!.merchantAutoScheduleOff,
                 style: TextStyle(
                   color: colorScheme.onPrimary.withValues(alpha: 0.95),
                   fontSize: 13,
@@ -1637,8 +1637,8 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                           Expanded(
                             child: Text(
                               scheduledAt.isAfter(DateTime.now())
-                                  ? 'ออเดอร์นัดเวลา: ${_formatScheduledDateTime(scheduledAt)}'
-                                  : 'เวลานัดรับ: ${_formatScheduledDateTime(scheduledAt)}',
+                                  ? AppLocalizations.of(context)!.merchantScheduledOrder(_formatScheduledDateTime(scheduledAt))
+                                  : AppLocalizations.of(context)!.merchantPickupTime(_formatScheduledDateTime(scheduledAt)),
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -1699,7 +1699,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'ระยะทาง ${distanceKm.toStringAsFixed(1)} กม.',
+                                AppLocalizations.of(context)!.merchantDistance(distanceKm.toStringAsFixed(1)),
                                 style: TextStyle(
                                     fontSize: 12,
                                     color: colorScheme.onSurfaceVariant),
@@ -1751,17 +1751,17 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
   }
 
   String _formatAddress(dynamic address) {
-    if (address == null) return 'ไม่ระบุ';
+    if (address == null) return AppLocalizations.of(context)!.merchantAddressNotSpecified;
     if (address is String) {
       // Check if address string contains "Instance of" or "AddressPlacemark"
       if (address.contains('Instance of') ||
           address.contains('AddressPlacemark')) {
-        return '📍 ตำแหน่งตามหมุดปักของลูกค้า';
+        return AppLocalizations.of(context)!.merchantAddressPinLocation;
       }
       return address;
     }
     if (address.toString() == 'Instance of \'AddressPlacemark\'') {
-      return '📍 ตำแหน่งตามหมุดปักของลูกค้า';
+      return AppLocalizations.of(context)!.merchantAddressPinLocation;
     }
     return address.toString();
   }
@@ -1784,9 +1784,9 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text(
-                  'รับออเดอร์',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                child: Text(
+                  AppLocalizations.of(context)!.merchantAcceptOrder,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                 ),
               ),
             ),
@@ -1811,7 +1811,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'กำลังเตรียมอาหาร',
+                AppLocalizations.of(context)!.merchantPreparingFood,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -1821,7 +1821,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                'กดเข้าไปดูรายละเอียด',
+                AppLocalizations.of(context)!.merchantTapForDetails,
                 style: TextStyle(
                   fontSize: 14,
                   color: colorScheme.secondary,
@@ -1850,7 +1850,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'คนขับรับงานแล้ว',
+                AppLocalizations.of(context)!.merchantDriverAcceptedCard,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -1860,7 +1860,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                'กำลังประกอบอาหาร',
+                AppLocalizations.of(context)!.merchantCookingFood,
                 style: TextStyle(
                   fontSize: 14,
                   color: colorScheme.primary,
@@ -1889,7 +1889,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'จับคู่คนขับแล้ว',
+                AppLocalizations.of(context)!.merchantDriverMatchedCard,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -1899,7 +1899,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                'กดเข้าไปดูรายละเอียด',
+                AppLocalizations.of(context)!.merchantTapForDetails,
                 style: TextStyle(
                   fontSize: 14,
                   color: colorScheme.secondary,
@@ -1928,7 +1928,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'คนขับกำลังเดินทางมาที่ร้าน',
+                AppLocalizations.of(context)!.merchantDriverTravelingToShop,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -1938,7 +1938,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                'กรุณาเตรียมอาหารให้พร้อม',
+                AppLocalizations.of(context)!.merchantPrepareFood,
                 style: TextStyle(
                   fontSize: 14,
                   color: colorScheme.tertiary,
@@ -1967,7 +1967,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'คนขับถึงร้านแล้ว',
+                AppLocalizations.of(context)!.merchantDriverArrivedCard,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -1977,7 +1977,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                'กดเข้าไปดูรายละเอียด',
+                AppLocalizations.of(context)!.merchantTapForDetails,
                 style: TextStyle(
                   fontSize: 14,
                   color: colorScheme.tertiary,
@@ -2006,7 +2006,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'คนขับกำลังรับออเดอร์',
+                AppLocalizations.of(context)!.merchantDriverPickingUpCard,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -2016,7 +2016,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                'กำลังนำส่งให้ลูกค้า',
+                AppLocalizations.of(context)!.merchantDeliveringToCustomer,
                 style: TextStyle(
                   fontSize: 14,
                   color: colorScheme.secondary,
@@ -2045,7 +2045,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'กำลังนำส่งอาหาร',
+                AppLocalizations.of(context)!.merchantDelivering,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -2055,7 +2055,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                'ออเดอร์กำลังเดินทางถึงลูกค้า',
+                AppLocalizations.of(context)!.merchantOrderEnRoute,
                 style: TextStyle(
                   fontSize: 14,
                   color: colorScheme.primary,
@@ -2084,7 +2084,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'คนขับมารับออเดอร์แล้ว',
+                AppLocalizations.of(context)!.merchantDriverPickedUpCard,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -2094,7 +2094,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                'ออเดอร์นี้เสร็จสิ้นสำหรับร้านค้า',
+                AppLocalizations.of(context)!.merchantOrderDoneForMerchant,
                 style: TextStyle(
                   fontSize: 14,
                   color: colorScheme.secondary,
@@ -2136,13 +2136,13 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
 
   String _getTimeAgo(Duration duration) {
     if (duration.inMinutes < 1) {
-      return 'เมื่อสักครู่';
+      return AppLocalizations.of(context)!.merchantTimeJustNow;
     } else if (duration.inMinutes < 60) {
-      return 'เมื่อ ${duration.inMinutes} นาทีที่แล้ว';
+      return AppLocalizations.of(context)!.merchantTimeMinutesAgo(duration.inMinutes.toString());
     } else if (duration.inHours < 24) {
-      return 'เมื่อ ${duration.inHours} ชั่วโมงที่แล้ว';
+      return AppLocalizations.of(context)!.merchantTimeHoursAgo(duration.inHours.toString());
     } else {
-      return 'เมื่อ ${duration.inDays} วันที่แล้ว';
+      return AppLocalizations.of(context)!.merchantTimeDaysAgo(duration.inDays.toString());
     }
   }
 
@@ -2183,12 +2183,12 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
 
       // Get merchant profile for notification
       final merchantProfile = await _getMerchantProfile();
-      final merchantName = merchantProfile?['full_name'] ?? 'ร้านค้า';
+      final merchantName = merchantProfile?['full_name'] ?? AppLocalizations.of(context)!.merchantNotifMerchantDefault;
 
       final success = await NotificationSender.sendNotification(
         targetUserId: customerId,
-        title: '✅ ร้านยืนยันออเดอร์แล้ว!',
-        body: '$merchantName กำลังเตรียมอาหารของคุณ',
+        title: AppLocalizations.of(context)!.merchantNotifOrderAccepted,
+        body: AppLocalizations.of(context)!.merchantNotifPreparingBody(merchantName),
         data: {
           'type': 'merchant_accepted',
           'booking_id': booking['id'] as String,
@@ -2216,15 +2216,15 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
 
       // Get merchant profile
       final merchantProfile = await _getMerchantProfile();
-      final merchantName = merchantProfile?['full_name'] ?? 'ร้านค้า';
+      final merchantName = merchantProfile?['full_name'] ?? AppLocalizations.of(context)!.merchantNotifMerchantDefault;
 
       // Notify customer
       if (customerId != null && customerId.isNotEmpty) {
         debugLog('📤 Sending food ready notification to customer: $customerId');
         await NotificationSender.sendNotification(
           targetUserId: customerId,
-          title: '🍔 อาหารพร้อมแล้ว!',
-          body: '$merchantName เตรียมอาหารเสร็จแล้ว รอคนขับมารับ',
+          title: AppLocalizations.of(context)!.merchantNotifFoodReadyCustomer,
+          body: AppLocalizations.of(context)!.merchantNotifFoodReadyCustomerBody(merchantName),
           data: {
             'type': 'food_ready',
             'booking_id': booking['id'] as String,
@@ -2239,8 +2239,8 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
         debugLog('📤 Sending food ready notification to driver: $driverId');
         await NotificationSender.sendNotification(
           targetUserId: driverId,
-          title: '🍔 อาหารพร้อมรับแล้ว!',
-          body: '$merchantName เตรียมอาหารเสร็จแล้ว พร้อมรับได้เลย',
+          title: AppLocalizations.of(context)!.merchantNotifFoodReadyDriver,
+          body: AppLocalizations.of(context)!.merchantNotifFoodReadyDriverBody(merchantName),
           data: {
             'type': 'food_ready_driver',
             'booking_id': booking['id'] as String,
@@ -2287,7 +2287,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              _showHistory ? 'ดูประวัติออเดอร์' : 'ดูออเดอร์ที่กำลังดำเนินการ'),
+              _showHistory ? AppLocalizations.of(context)!.merchantViewHistory : AppLocalizations.of(context)!.merchantViewActive),
           duration: const Duration(seconds: 1),
         ),
       );

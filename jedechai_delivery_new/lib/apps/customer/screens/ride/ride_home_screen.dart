@@ -1,5 +1,6 @@
 import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
@@ -60,20 +61,31 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
   double _estimatedPickupSurcharge = 0.0;
 
   // Vehicle types with rate keys for service_rates table
+  // 'name' is the DB key (Thai) used for driver matching; 'displayName'/'desc' are localized in build
   final List<Map<String, dynamic>> _vehicleTypes = [
     {
       'name': 'มอเตอร์ไซค์',
       'icon': Icons.two_wheeler,
       'rateKey': 'ride_motorcycle',
-      'desc': 'เร็ว ประหยัด'
+      'displayNameKey': 'motorcycle',
     },
     {
       'name': 'รถยนต์',
       'icon': Icons.directions_car,
       'rateKey': 'ride_car',
-      'desc': 'สะดวกสบาย'
+      'displayNameKey': 'car',
     },
   ];
+
+  String _getVehicleDisplayName(BuildContext context, String key) {
+    final l10n = AppLocalizations.of(context)!;
+    return key == 'motorcycle' ? l10n.rideMotorcycle : l10n.rideCar;
+  }
+
+  String _getVehicleDesc(BuildContext context, String key) {
+    final l10n = AppLocalizations.of(context)!;
+    return key == 'motorcycle' ? l10n.rideMotorcycleDesc : l10n.rideCarDesc;
+  }
 
   // Ride rates loaded from DB (keyed by service_type)
   Map<String, Map<String, num>> _rideRates = {};
@@ -537,15 +549,15 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text('เลือกวิธีชำระเงิน',
-                    style:
+                Text(AppLocalizations.of(context)!.rideSelectPayment,
+                    style: const
                         TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
                 _buildPaymentOption(
-                    ctx, 'cash', 'เงินสด', Icons.payments_outlined),
+                    ctx, 'cash', AppLocalizations.of(context)!.rideCash, Icons.payments_outlined),
                 const SizedBox(height: 8),
                 _buildPaymentOption(
-                    ctx, 'transfer', 'โอนเงิน', Icons.account_balance),
+                    ctx, 'transfer', AppLocalizations.of(context)!.rideTransfer, Icons.account_balance),
               ],
             ),
           ),
@@ -602,11 +614,11 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
 
   Future<void> _callDriver() async {
     if (_currentLocation == null || _selectedDestination == null) {
-      _showMessage('กรุณาเลือกจุดหมายปลายทาง', Colors.orange);
+      _showMessage(AppLocalizations.of(context)!.rideSelectDestination, Colors.orange);
       return;
     }
     if (_selectedVehicleIndex < 0) {
-      _showMessage('กรุณาเลือกประเภทรถก่อนเรียก', Colors.orange);
+      _showMessage(AppLocalizations.of(context)!.rideSelectVehicle, Colors.orange);
       return;
     }
 
@@ -615,7 +627,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
     try {
       final currentUser = AuthService.currentUser;
       if (currentUser == null) {
-        _showMessage('กรุณาเข้าสู่ระบบ', Theme.of(context).colorScheme.error);
+        _showMessage(AppLocalizations.of(context)!.ridePleaseLogin, Theme.of(context).colorScheme.error);
         return;
       }
 
@@ -631,10 +643,10 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
       debugLog('   └─ Pickup surcharge: ฿${_estimatedPickupSurcharge.toStringAsFixed(2)}');
       debugLog('   └─ Vehicle: $vehicleName');
 
-      final noteLines = <String>['ประเภทรถ: $vehicleName'];
+      final noteLines = <String>[AppLocalizations.of(context)!.rideNoteVehicleType(vehicleName)];
       if (_estimatedPickupSurcharge > 0) {
         noteLines.add(
-          'เพิ่มระยะคนขับ→จุดรับ ${_estimatedDriverToPickupKm.toStringAsFixed(2)} กม. (+฿${_estimatedPickupSurcharge.toStringAsFixed(2)})',
+          AppLocalizations.of(context)!.rideNotePickupSurcharge(_estimatedDriverToPickupKm.toStringAsFixed(2), _estimatedPickupSurcharge.toStringAsFixed(2)),
         );
       }
 
@@ -646,7 +658,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
             'vehicle_type': vehicleName,
             'origin_lat': _currentLocation!.latitude,
             'origin_lng': _currentLocation!.longitude,
-            'pickup_address': 'ตำแหน่งปัจจุบัน',
+            'pickup_address': AppLocalizations.of(context)!.ridePickupAddress,
             'dest_lat': _selectedDestination!.latitude,
             'dest_lng': _selectedDestination!.longitude,
             'destination_address': _selectedAddress,
@@ -663,7 +675,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
 
       final booking = Booking.fromJson(response);
 
-      _showMessage('กำลังค้นหาคนขับ...', AppTheme.primaryGreen);
+      _showMessage(AppLocalizations.of(context)!.rideSearchingDriver, AppTheme.primaryGreen);
 
       // Send notification to matching vehicle type drivers only
       await _notifyDriversAboutNewRide(booking, vehicleName);
@@ -675,7 +687,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
         ),
       );
     } catch (e) {
-      _showMessage('เกิดข้อผิดพลาด: $e', Theme.of(context).colorScheme.error);
+      _showMessage(AppLocalizations.of(context)!.rideError(e.toString()), Theme.of(context).colorScheme.error);
     } finally {
       setState(() => _isLoading = false);
     }
@@ -743,9 +755,9 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
         if (driverToken != null && driverToken.isNotEmpty) {
           final success = await NotificationSender.sendNotification(
             targetUserId: driverId,
-            title: '🚗 งานใหม่! รับส่งผู้โดยสาร',
+            title: AppLocalizations.of(context)!.rideNotifTitle,
             body:
-                'มีคนเรียกรถจาก ${booking.pickupAddress ?? 'จุดเริ่มต้น'} ไป ${booking.destinationAddress ?? 'จุดหมาย'} - ราคา ฿${booking.price}',
+                AppLocalizations.of(context)!.rideNotifBody(booking.pickupAddress ?? AppLocalizations.of(context)!.rideNotifPickupFallback, booking.destinationAddress ?? AppLocalizations.of(context)!.rideNotifDestFallback, booking.price.toString()),
             data: {
               'type': 'new_ride_request',
               'booking_id': booking.id,
@@ -888,7 +900,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                             color: AppTheme.primaryGreen, size: 20),
                         const SizedBox(width: 8),
                         Text(
-                          'เรียกรถ',
+                          AppLocalizations.of(context)!.rideTitle,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -938,8 +950,8 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                       Expanded(
                         child: Text(
                           _currentLocation != null
-                              ? 'ตำแหน่งปัจจุบัน'
-                              : 'กำลังหาตำแหน่ง...',
+                              ? AppLocalizations.of(context)!.rideCurrentLocation
+                              : AppLocalizations.of(context)!.rideFindingLocation,
                           style: TextStyle(
                             fontSize: 14,
                             color: colorScheme.onSurfaceVariant,
@@ -969,7 +981,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                         child: TextField(
                           controller: _destinationController,
                           decoration: InputDecoration(
-                            hintText: 'ไปไหน? แตะแผนที่เพื่อเลือก',
+                            hintText: AppLocalizations.of(context)!.rideDestHint,
                             hintStyle: TextStyle(
                                 color: colorScheme.onSurfaceVariant,
                                 fontSize: 14),
@@ -1075,7 +1087,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                                   ? () => _onVehicleChanged(index)
                                   : () {
                                       _showMessage(
-                                          'ไม่มี$vehicleNameออนไลน์ในขณะนี้',
+                                          AppLocalizations.of(context)!.rideNoVehicleOnline(_getVehicleDisplayName(context, v['displayNameKey'] as String)),
                                           Colors.orange);
                                     },
                               child: Opacity(
@@ -1112,7 +1124,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                                                   ? AppTheme.primaryGreen
                                                   : colorScheme.onSurfaceVariant),
                                       const SizedBox(height: 4),
-                                      Text(vehicleName,
+                                      Text(_getVehicleDisplayName(context, v['displayNameKey'] as String),
                                           style: TextStyle(
                                             fontSize: 12,
                                             fontWeight:
@@ -1128,8 +1140,8 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                                       const SizedBox(height: 2),
                                       Text(
                                         onlineCount > 0
-                                            ? 'ออนไลน์ $onlineCount คน'
-                                            : 'ไม่มีคนขับ',
+                                            ? AppLocalizations.of(context)!.rideOnlineCount(onlineCount.toString())
+                                            : AppLocalizations.of(context)!.rideNoDrivers,
                                         style: TextStyle(
                                           fontSize: 9,
                                           color: onlineCount > 0
@@ -1163,7 +1175,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                                   color: colorScheme.onSurfaceVariant),
                               const SizedBox(width: 8),
                               Text(
-                                  '${_estimatedDistance.toStringAsFixed(1)} กม.',
+                                  AppLocalizations.of(context)!.rideDistanceKm(_estimatedDistance.toStringAsFixed(1)),
                                   style: TextStyle(
                                       fontSize: 14,
                                       color: colorScheme.onSurfaceVariant)),
@@ -1200,7 +1212,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                               ),
                               const SizedBox(width: 10),
                               Text(
-                                _paymentMethod == 'cash' ? 'เงินสด' : 'โอนเงิน',
+                                _paymentMethod == 'cash' ? AppLocalizations.of(context)!.rideCash : AppLocalizations.of(context)!.rideTransfer,
                                 style: TextStyle(
                                     fontSize: 14,
                                     color: colorScheme.onSurfaceVariant),
@@ -1241,10 +1253,10 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                                       color: Colors.white, strokeWidth: 2.5))
                               : Text(
                                   _selectedDestination == null
-                                      ? 'เลือกจุดหมายปลายทาง'
+                                      ? AppLocalizations.of(context)!.rideBtnSelectDest
                                       : _selectedVehicleIndex < 0
-                                          ? 'กรุณาเลือกประเภทรถ'
-                                          : 'เรียกรถ — ฿${_estimatedPrice.ceil()}',
+                                          ? AppLocalizations.of(context)!.rideBtnSelectVehicle
+                                          : AppLocalizations.of(context)!.rideBtnCallRide(_estimatedPrice.ceil().toString()),
                                   style: const TextStyle(
                                       fontSize: 17,
                                       fontWeight: FontWeight.bold),

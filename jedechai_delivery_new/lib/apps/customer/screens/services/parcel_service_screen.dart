@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../common/services/location_service.dart';
 import '../../../../common/services/parcel_service.dart';
@@ -63,37 +64,23 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
   int _nearbyOnlineDrivers = 0;
   double _driverSearchRadiusKm = 30.0;
 
-  // Size options
-  final List<Map<String, dynamic>> _sizeOptions = [
-    {
-      'value': 'small',
-      'label': 'เล็ก (S)',
-      'desc': 'ซองจดหมาย, เอกสาร',
-      'icon': Icons.mail,
-      'multiplier': 1.0
-    },
-    {
-      'value': 'medium',
-      'label': 'กลาง (M)',
-      'desc': 'กล่องพัสดุ ไม่เกิน 5 กก.',
-      'icon': Icons.inventory_2,
-      'multiplier': 1.3
-    },
-    {
-      'value': 'large',
-      'label': 'ใหญ่ (L)',
-      'desc': 'กล่องใหญ่ ไม่เกิน 15 กก.',
-      'icon': Icons.widgets,
-      'multiplier': 1.6
-    },
-    {
-      'value': 'xlarge',
-      'label': 'พิเศษ (XL)',
-      'desc': 'สิ่งของขนาดใหญ่ ไม่เกิน 30 กก.',
-      'icon': Icons.local_shipping,
-      'multiplier': 2.0
-    },
+  // Size options (multipliers only - labels are localized)
+  static const List<Map<String, dynamic>> _sizeMultipliers = [
+    {'value': 'small', 'icon': Icons.mail, 'multiplier': 1.0},
+    {'value': 'medium', 'icon': Icons.inventory_2, 'multiplier': 1.3},
+    {'value': 'large', 'icon': Icons.widgets, 'multiplier': 1.6},
+    {'value': 'xlarge', 'icon': Icons.local_shipping, 'multiplier': 2.0},
   ];
+
+  List<Map<String, dynamic>> _getSizeOptions() {
+    final l10n = AppLocalizations.of(context)!;
+    return [
+      {'value': 'small', 'label': l10n.parcelSizeSmall, 'desc': l10n.parcelSizeSmallDesc, 'icon': Icons.mail, 'multiplier': 1.0},
+      {'value': 'medium', 'label': l10n.parcelSizeMedium, 'desc': l10n.parcelSizeMediumDesc, 'icon': Icons.inventory_2, 'multiplier': 1.3},
+      {'value': 'large', 'label': l10n.parcelSizeLarge, 'desc': l10n.parcelSizeLargeDesc, 'icon': Icons.widgets, 'multiplier': 1.6},
+      {'value': 'xlarge', 'label': l10n.parcelSizeXLarge, 'desc': l10n.parcelSizeXLargeDesc, 'icon': Icons.local_shipping, 'multiplier': 2.0},
+    ];
+  }
 
   @override
   void initState() {
@@ -169,13 +156,13 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
         _pickupLng = lng;
         _pickupController.text = address.isNotEmpty
             ? address
-            : 'จุดรับ (${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)})';
+            : AppLocalizations.of(context)!.parcelPickupCoord(lat.toStringAsFixed(5), lng.toStringAsFixed(5));
       } else {
         _dropoffLat = lat;
         _dropoffLng = lng;
         _dropoffController.text = address.isNotEmpty
             ? address
-            : 'จุดส่ง (${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)})';
+            : AppLocalizations.of(context)!.parcelDropoffCoord(lat.toStringAsFixed(5), lng.toStringAsFixed(5));
       }
     });
 
@@ -236,7 +223,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
           _pickupLat = position.latitude;
           _pickupLng = position.longitude;
           _pickupController.text =
-              'ตำแหน่งปัจจุบัน (${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)})';
+              AppLocalizations.of(context)!.parcelCurrentLocation(position.latitude.toStringAsFixed(4), position.longitude.toStringAsFixed(4));
           _isLoadingLocation = false;
         });
         await _checkNearbyOnlineDrivers();
@@ -289,7 +276,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
     if (_estimatedDistance <= 0) return;
 
     final sizeOption =
-        _sizeOptions.firstWhere((s) => s['value'] == _selectedSize);
+        _sizeMultipliers.firstWhere((s) => s['value'] == _selectedSize);
     final multiplier = sizeOption['multiplier'] as double;
 
     // Base: 20 baht + 5 baht/km (from service_rates) × size multiplier
@@ -319,14 +306,14 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
   Future<void> _bookParcel() async {
     if (!_formKey.currentState!.validate()) return;
     if (_pickupLat == null || _pickupLng == null) {
-      _showErrorDialog('กรุณารอระบุตำแหน่ง\nหรือเปิด GPS แล้วลองใหม่');
+      _showErrorDialog(AppLocalizations.of(context)!.parcelErrorNoLocation);
       return;
     }
 
     await _checkNearbyOnlineDrivers();
     if (_nearbyOnlineDrivers <= 0) {
       _showErrorDialog(
-          'ไม่พบคนขับออนไลน์ภายในรัศมี ${_driverSearchRadiusKm.toStringAsFixed(0)} กม.\nกรุณาลองใหม่อีกครั้งภายหลัง');
+          AppLocalizations.of(context)!.parcelErrorNoDrivers(_driverSearchRadiusKm.toStringAsFixed(0)));
       return;
     }
 
@@ -373,7 +360,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
       );
 
       if (booking == null) {
-        throw Exception('ไม่สามารถสร้างการจองได้');
+        throw Exception(AppLocalizations.of(context)!.parcelErrorCreateBooking);
       }
 
       if (mounted) {
@@ -386,7 +373,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
     } catch (e) {
       debugLog('❌ Error booking parcel: $e');
       if (mounted) {
-        _showErrorDialog('ไม่สามารถจองส่งพัสดุได้\nกรุณาลองใหม่อีกครั้ง');
+        _showErrorDialog(AppLocalizations.of(context)!.parcelErrorBookFailed);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -399,9 +386,9 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         icon: const Icon(Icons.error_outline, color: Colors.red, size: 48),
-        title: const Text(
-          'เกิดข้อผิดพลาด',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        title: Text(
+          AppLocalizations.of(context)!.parcelErrorTitle,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         content: Text(
           message,
@@ -421,8 +408,8 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                     borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              child: const Text('ตกลง',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              child: Text(AppLocalizations.of(context)!.parcelOk,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             ),
           ),
         ],
@@ -446,8 +433,8 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
       ),
       child: Text(
         hasDriver
-            ? 'พบคนขับออนไลน์ใกล้คุณ $_nearbyOnlineDrivers คน (ในรัศมี ${_driverSearchRadiusKm.toStringAsFixed(0)} กม.)'
-            : 'ยังไม่พบคนขับออนไลน์ในรัศมี ${_driverSearchRadiusKm.toStringAsFixed(0)} กม.',
+            ? AppLocalizations.of(context)!.parcelDriversFound(_nearbyOnlineDrivers.toString(), _driverSearchRadiusKm.toStringAsFixed(0))
+            : AppLocalizations.of(context)!.parcelNoDriversNearby(_driverSearchRadiusKm.toStringAsFixed(0)),
         style: TextStyle(
             fontSize: 12, fontWeight: FontWeight.w600, color: textColor),
       ),
@@ -477,7 +464,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ส่งพัสดุ'),
+        title: Text(AppLocalizations.of(context)!.parcelTitle),
         backgroundColor: AppTheme.accentBlue,
         foregroundColor: Colors.white,
       ),
@@ -526,22 +513,22 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
         ),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(Icons.local_shipping, color: Colors.white, size: 40),
-          SizedBox(width: 12),
+          const Icon(Icons.local_shipping, color: Colors.white, size: 40),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('บริการส่งพัสดุ',
-                    style: TextStyle(
+                Text(AppLocalizations.of(context)!.parcelHeaderTitle,
+                    style: const TextStyle(
                         color: Colors.white,
                         fontSize: 20,
                         fontWeight: FontWeight.bold)),
-                SizedBox(height: 4),
-                Text('ส่งของถึงที่ รวดเร็ว ปลอดภัย',
-                    style: TextStyle(color: Colors.white70, fontSize: 14)),
+                const SizedBox(height: 4),
+                Text(AppLocalizations.of(context)!.parcelHeaderSubtitle,
+                    style: const TextStyle(color: Colors.white70, fontSize: 14)),
               ],
             ),
           ),
@@ -565,16 +552,16 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 Icon(Icons.person_pin_circle,
                     color: Colors.green[700], size: 22),
                 const SizedBox(width: 8),
-                const Text('ข้อมูลผู้ส่ง',
+                Text(AppLocalizations.of(context)!.parcelSenderInfo,
                     style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ],
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _senderNameController,
               decoration: InputDecoration(
-                labelText: 'ชื่อผู้ส่ง',
+                labelText: AppLocalizations.of(context)!.parcelSenderName,
                 prefixIcon: const Icon(Icons.person),
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -582,14 +569,14 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 fillColor: colorScheme.surfaceContainerHighest,
               ),
               validator: (v) =>
-                  v == null || v.isEmpty ? 'กรุณาระบุชื่อผู้ส่ง' : null,
+                  v == null || v.isEmpty ? AppLocalizations.of(context)!.parcelSenderNameRequired : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _senderPhoneController,
               keyboardType: TextInputType.phone,
               decoration: InputDecoration(
-                labelText: 'เบอร์โทรผู้ส่ง',
+                labelText: AppLocalizations.of(context)!.parcelSenderPhone,
                 prefixIcon: const Icon(Icons.phone),
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -597,13 +584,13 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 fillColor: colorScheme.surfaceContainerHighest,
               ),
               validator: (v) =>
-                  v == null || v.isEmpty ? 'กรุณาระบุเบอร์โทรผู้ส่ง' : null,
+                  v == null || v.isEmpty ? AppLocalizations.of(context)!.parcelSenderPhoneRequired : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _pickupController,
               decoration: InputDecoration(
-                labelText: 'ที่อยู่จุดรับพัสดุ',
+                labelText: AppLocalizations.of(context)!.parcelPickupAddress,
                 prefixIcon: const Icon(Icons.my_location, color: Colors.green),
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -611,19 +598,19 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 fillColor: colorScheme.surfaceContainerHighest,
               ),
               validator: (v) =>
-                  v == null || v.isEmpty ? 'กรุณาระบุจุดรับพัสดุ' : null,
+                  v == null || v.isEmpty ? AppLocalizations.of(context)!.parcelPickupRequired : null,
             ),
             const SizedBox(height: 10),
             OutlinedButton.icon(
               onPressed: () => _pickLocationOnMap(isPickup: true),
               icon: const Icon(Icons.pin_drop, size: 18),
-              label: const Text('ปักหมุดจุดรับบนแผนที่'),
+              label: Text(AppLocalizations.of(context)!.parcelPinPickup),
             ),
             if (_pickupLat != null && _pickupLng != null)
               Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
-                  'พิกัดจุดรับ: ${_pickupLat!.toStringAsFixed(5)}, ${_pickupLng!.toStringAsFixed(5)}',
+                  AppLocalizations.of(context)!.parcelPickupCoords(_pickupLat!.toStringAsFixed(5), _pickupLng!.toStringAsFixed(5)),
                   style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                 ),
               ),
@@ -647,9 +634,9 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
               children: [
                 Icon(Icons.location_on, color: Colors.red[700], size: 22),
                 const SizedBox(width: 8),
-                const Expanded(
-                    child: Text('ข้อมูลผู้รับ',
-                        style: TextStyle(
+                Expanded(
+                    child: Text(AppLocalizations.of(context)!.parcelRecipientInfo,
+                        style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold))),
                 GestureDetector(
                   onTap: _pickSavedAddressForDropoff,
@@ -662,14 +649,14 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                       border: Border.all(
                           color: AppTheme.primaryGreen.withValues(alpha: 0.3)),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.bookmark_outline,
+                        const Icon(Icons.bookmark_outline,
                             size: 16, color: AppTheme.primaryGreen),
-                        SizedBox(width: 4),
-                        Text('ที่อยู่บันทึก',
-                            style: TextStyle(
+                        const SizedBox(width: 4),
+                        Text(AppLocalizations.of(context)!.parcelSavedAddresses,
+                            style: const TextStyle(
                                 fontSize: 12,
                                 color: AppTheme.primaryGreen,
                                 fontWeight: FontWeight.w600)),
@@ -683,13 +670,13 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
             OutlinedButton.icon(
               onPressed: () => _pickLocationOnMap(isPickup: false),
               icon: const Icon(Icons.pin_drop, size: 18),
-              label: const Text('ปักหมุดจุดส่งบนแผนที่'),
+              label: Text(AppLocalizations.of(context)!.parcelPinDropoff),
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _recipientNameController,
               decoration: InputDecoration(
-                labelText: 'ชื่อผู้รับ',
+                labelText: AppLocalizations.of(context)!.parcelRecipientName,
                 prefixIcon: const Icon(Icons.person),
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -697,14 +684,14 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 fillColor: colorScheme.surfaceContainerHighest,
               ),
               validator: (v) =>
-                  v == null || v.isEmpty ? 'กรุณาระบุชื่อผู้รับ' : null,
+                  v == null || v.isEmpty ? AppLocalizations.of(context)!.parcelRecipientNameRequired : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _recipientPhoneController,
               keyboardType: TextInputType.phone,
               decoration: InputDecoration(
-                labelText: 'เบอร์โทรผู้รับ',
+                labelText: AppLocalizations.of(context)!.parcelRecipientPhone,
                 prefixIcon: const Icon(Icons.phone),
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -712,13 +699,13 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 fillColor: colorScheme.surfaceContainerHighest,
               ),
               validator: (v) =>
-                  v == null || v.isEmpty ? 'กรุณาระบุเบอร์โทรผู้รับ' : null,
+                  v == null || v.isEmpty ? AppLocalizations.of(context)!.parcelRecipientPhoneRequired : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _dropoffController,
               decoration: InputDecoration(
-                labelText: 'ที่อยู่จุดส่งพัสดุ',
+                labelText: AppLocalizations.of(context)!.parcelDropoffAddress,
                 prefixIcon: const Icon(Icons.location_on, color: Colors.red),
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -735,7 +722,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                     : null,
               ),
               validator: (v) =>
-                  v == null || v.isEmpty ? 'กรุณาระบุจุดส่งพัสดุ' : null,
+                  v == null || v.isEmpty ? AppLocalizations.of(context)!.parcelDropoffRequired : null,
               onChanged: (value) {
                 if (value.length > 5) {
                   _calculateRealDistance();
@@ -746,7 +733,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  'ระยะทางโดยประมาณ: ${_estimatedDistance.toStringAsFixed(1)} กม.',
+                  AppLocalizations.of(context)!.parcelEstimatedDistance(_estimatedDistance.toStringAsFixed(1)),
                   style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
                 ),
               ),
@@ -754,7 +741,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
-                  'พิกัดจุดส่ง: ${_dropoffLat!.toStringAsFixed(5)}, ${_dropoffLng!.toStringAsFixed(5)}',
+                  AppLocalizations.of(context)!.parcelDropoffCoords(_dropoffLat!.toStringAsFixed(5), _dropoffLng!.toStringAsFixed(5)),
                   style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                 ),
               ),
@@ -773,10 +760,10 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('ขนาดพัสดุ',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.parcelSizeTitle,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
-            ..._sizeOptions.map((option) => RadioListTile<String>(
+            ..._getSizeOptions().map((option) => RadioListTile<String>(
                   value: option['value'],
                   groupValue: _selectedSize,
                   onChanged: (v) {
@@ -807,14 +794,14 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('รายละเอียดพัสดุ',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.parcelDetailsTitle,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             TextFormField(
               controller: _descriptionController,
               maxLines: 3,
               decoration: InputDecoration(
-                labelText: 'อธิบายสิ่งของ (เช่น เอกสาร, อาหาร, เสื้อผ้า)',
+                labelText: AppLocalizations.of(context)!.parcelDescriptionLabel,
                 prefixIcon: const Padding(
                   padding: EdgeInsets.only(bottom: 50),
                   child: Icon(Icons.description),
@@ -825,7 +812,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 fillColor: colorScheme.surfaceContainerHighest,
               ),
               validator: (v) =>
-                  v == null || v.isEmpty ? 'กรุณาอธิบายสิ่งของ' : null,
+                  v == null || v.isEmpty ? AppLocalizations.of(context)!.parcelDescriptionRequired : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -833,7 +820,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
               decoration: InputDecoration(
-                labelText: 'น้ำหนักโดยประมาณ (กก.) - ไม่บังคับ',
+                labelText: AppLocalizations.of(context)!.parcelWeightLabel,
                 prefixIcon: const Icon(Icons.scale),
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -857,10 +844,10 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('รูปภาพพัสดุ',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.parcelPhotoTitle,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            Text('ถ่ายรูปพัสดุเพื่อให้คนขับเห็นสิ่งของ (ไม่บังคับ)',
+            Text(AppLocalizations.of(context)!.parcelPhotoHint,
                 style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
             const SizedBox(height: 12),
             GestureDetector(
@@ -907,7 +894,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                           Icon(Icons.add_a_photo,
                               size: 48, color: colorScheme.onSurfaceVariant),
                           const SizedBox(height: 8),
-                          Text('แตะเพื่อถ่ายรูปหรือเลือกรูป',
+                          Text(AppLocalizations.of(context)!.parcelPhotoTap,
                               style: TextStyle(
                                   color: colorScheme.onSurfaceVariant, fontSize: 14)),
                         ],
@@ -935,11 +922,11 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('ค่าบริการโดยประมาณ',
+              Text(AppLocalizations.of(context)!.parcelEstimatedFee,
                   style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
               const SizedBox(height: 2),
               Text(
-                'ระยะทาง ${_estimatedDistance.toStringAsFixed(1)} กม.',
+                AppLocalizations.of(context)!.parcelDistanceKm(_estimatedDistance.toStringAsFixed(1)),
                 style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
               ),
             ],
@@ -973,14 +960,14 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 height: 24,
                 child: CircularProgressIndicator(
                     color: Colors.white, strokeWidth: 2))
-            : const Row(
+            : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.local_shipping, size: 22),
-                  SizedBox(width: 8),
-                  Text('จองส่งพัสดุ',
+                  const Icon(Icons.local_shipping, size: 22),
+                  const SizedBox(width: 8),
+                  Text(AppLocalizations.of(context)!.parcelBookButton,
                       style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ],
               ),
       ),

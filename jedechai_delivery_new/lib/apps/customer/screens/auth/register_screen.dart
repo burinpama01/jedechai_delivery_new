@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../common/services/auth_service.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'login_screen.dart';
 
 /// Register Screen
@@ -28,22 +29,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
-  final List<Map<String, dynamic>> _roles = [
+  List<Map<String, dynamic>> _getRoles(AppLocalizations l10n) => [
     {
       'value': 'customer',
-      'label': 'ลูกค้า',
+      'label': l10n.accountRoleCustomer,
       'icon': Icons.person,
       'color': AppTheme.primaryGreen,
     },
     {
       'value': 'driver',
-      'label': 'คนขับ',
+      'label': l10n.accountRoleDriver,
       'icon': Icons.local_taxi,
       'color': AppTheme.accentBlue,
     },
     {
       'value': 'merchant',
-      'label': 'ร้านค้า',
+      'label': l10n.accountRoleMerchant,
       'icon': Icons.store,
       'color': AppTheme.accentOrange,
     },
@@ -54,7 +55,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     // Check if passwords match
     if (_passwordController.text != _confirmPasswordController.text) {
-      _showErrorDialog('รหัสผ่านไม่ตรงกัน\nกรุณาตรวจสอบแล้วลองใหม่');
+      _showErrorDialog(AppLocalizations.of(context)!.registerErrorPasswordMismatch);
       return;
     }
 
@@ -73,7 +74,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             .eq('phone_number', phone)
             .maybeSingle();
         if (phoneCheck != null) {
-          _showErrorDialog('เบอร์โทรศัพท์นี้ถูกใช้งานแล้ว\nกรุณาใช้เบอร์โทรอื่นหรือเข้าสู่ระบบ');
+          _showErrorDialog(AppLocalizations.of(context)!.registerErrorPhoneUsed);
           return;
         }
         
@@ -84,7 +85,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             .eq('email', email)
             .maybeSingle();
         if (emailCheck != null) {
-          _showErrorDialog('อีเมลนี้ถูกใช้งานแล้ว\nกรุณาเข้าสู่ระบบหรือใช้อีเมลอื่น');
+          _showErrorDialog(AppLocalizations.of(context)!.registerErrorEmailUsed);
           return;
         }
       } catch (dupCheckError) {
@@ -154,7 +155,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       debugLog('   StackTrace: $stackTrace');
       debugLog('═══════════════════════════════════════');
       if (mounted) {
-        _showErrorDialog(_getThaiErrorMessage(e.toString()));
+        _showErrorDialog(_getLocalizedErrorMessage(e.toString()));
       }
     } finally {
       if (mounted) {
@@ -163,30 +164,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  String _getThaiErrorMessage(String error) {
+  String _getLocalizedErrorMessage(String error) {
+    final l10n = AppLocalizations.of(context)!;
     if (error.contains('already registered') || error.contains('already exists') || error.contains('User already registered')) {
-      return 'อีเมลนี้ถูกใช้งานแล้ว\nกรุณาเข้าสู่ระบบหรือใช้อีเมลอื่น';
+      return l10n.registerErrorEmailAlreadyRegistered;
     } else if (error.contains('weak password') || error.contains('Password')) {
-      return 'รหัสผ่านไม่ปลอดภัย\nกรุณาใช้รหัสผ่านที่มีความยาวอย่างน้อย 6 ตัวอักษร';
+      return l10n.registerErrorWeakPassword;
     } else if (error.contains('invalid email') || error.contains('Invalid email')) {
-      return 'รูปแบบอีเมลไม่ถูกต้อง\nกรุณาตรวจสอบอีเมลของคุณ';
+      return l10n.registerErrorInvalidEmail;
     } else if (error.contains('SocketException') || error.contains('Failed host lookup') || error.contains('เชื่อมต่อ')) {
-      return 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้\nกรุณาตรวจสอบอินเทอร์เน็ตของคุณ';
+      return l10n.registerErrorCannotConnect;
     } else if (error.contains('Too many requests') || error.contains('rate_limit')) {
-      return 'คุณลองบ่อยเกินไป\nกรุณารอสักครู่แล้วลองใหม่';
+      return l10n.registerErrorTooManyRequests;
     }
-    return 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง';
+    return l10n.registerErrorGeneric;
   }
 
   void _showErrorDialog(String message) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         icon: const Icon(Icons.error_outline, color: Colors.red, size: 48),
-        title: const Text(
-          'สมัครไม่สำเร็จ',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        title: Text(
+          l10n.registerErrorDialogTitle,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         content: Text(
           message,
@@ -205,7 +208,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              child: const Text('ตกลง', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              child: Text(l10n.commonOk, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             ),
           ),
         ],
@@ -214,7 +217,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _showSuccessDialog() {
-    final referralCode = _selectedRole == 'customer'
+    final l10n = AppLocalizations.of(context)!;
+    final referralCode = _selectedRole == 'customer' || _selectedRole == 'driver'
         ? _referralCodeController.text.trim()
         : '';
     showDialog(
@@ -223,14 +227,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         icon: const Icon(Icons.check_circle, color: AppTheme.primaryGreen, size: 48),
-        title: const Text(
-          'สมัครสำเร็จ!',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        title: Text(
+          l10n.registerSuccessTitle,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
-        content: const Text(
-          'ลงทะเบียนเรียบร้อยแล้ว\nกรุณาเข้าสู่ระบบเพื่อเริ่มใช้งาน',
+        content: Text(
+          l10n.registerSuccessBody,
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 15, height: 1.5),
+          style: const TextStyle(fontSize: 15, height: 1.5),
         ),
         actionsAlignment: MainAxisAlignment.center,
         actions: [
@@ -251,7 +255,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              child: const Text('เข้าสู่ระบบ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              child: Text(l10n.registerSuccessGoToLogin, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             ),
           ),
         ],
@@ -273,10 +277,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+    final roles = _getRoles(l10n);
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('สมัครสมาชิก'),
+        title: Text(l10n.registerTitle),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -289,7 +295,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               
               // Welcome Text
               Text(
-                'สร้างบัญชีใหม่',
+                l10n.registerHeader,
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -298,7 +304,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'กรุณากรอกข้อมูลเพื่อสมัครสมาชิก',
+                l10n.registerSubheader,
                 style: TextStyle(
                   fontSize: 16,
                   color: colorScheme.onSurfaceVariant,
@@ -308,7 +314,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               // Role Selection
               Text(
-                'เลือกประเภทบัญชี',
+                l10n.registerSelectRole,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -317,7 +323,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 12),
               Row(
-                children: _roles.map((role) {
+                children: roles.map((role) {
                   final isSelected = _selectedRole == role['value'];
                   return Expanded(
                     child: Padding(
@@ -332,6 +338,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           setState(() {
                             _selectedRole = role['value'] as String;
                           });
+                          if (_selectedRole == 'merchant') {
+                            _referralCodeController.clear();
+                          }
                           debugLog('✅ Role updated to: $_selectedRole');
                         },
                       ),
@@ -344,14 +353,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
               // Full Name Field
               TextFormField(
                 controller: _fullNameController,
-                decoration: const InputDecoration(
-                  labelText: 'ชื่อ-นามสกุล',
-                  prefixIcon: Icon(Icons.person_outline),
+                decoration: InputDecoration(
+                  labelText: _selectedRole == 'merchant' ? l10n.registerShopNameLabel : l10n.registerFullNameLabel,
+                  prefixIcon: const Icon(Icons.person_outline),
                 ),
                 textCapitalization: TextCapitalization.words,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'กรุณากรอกชื่อ-นามสกุล';
+                    return _selectedRole == 'merchant'
+                        ? l10n.registerValidationShopNameRequired
+                        : l10n.registerValidationFullNameRequired;
                   }
                   return null;
                 },
@@ -361,17 +372,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
               // Phone Field
               TextFormField(
                 controller: _phoneController,
-                decoration: const InputDecoration(
-                  labelText: 'เบอร์โทรศัพท์',
-                  prefixIcon: Icon(Icons.phone_outlined),
+                decoration: InputDecoration(
+                  labelText: l10n.registerPhoneLabel,
+                  prefixIcon: const Icon(Icons.phone_outlined),
                 ),
                 keyboardType: TextInputType.phone,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'กรุณากรอกเบอร์โทรศัพท์';
+                    return l10n.registerValidationPhoneRequired;
                   }
                   if (value.length < 10) {
-                    return 'เบอร์โทรศัพท์ไม่ถูกต้อง';
+                    return l10n.registerValidationPhoneInvalid;
                   }
                   return null;
                 },
@@ -381,29 +392,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
               // Email Field
               TextFormField(
                 controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'อีเมล',
-                  prefixIcon: Icon(Icons.email_outlined),
+                decoration: InputDecoration(
+                  labelText: l10n.registerEmailLabel,
+                  prefixIcon: const Icon(Icons.email_outlined),
                 ),
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'กรุณากรอกอีเมล';
+                    return l10n.registerValidationEmailRequired;
                   }
                   if (!value.contains('@') || !value.contains('.')) {
-                    return 'อีเมลไม่ถูกต้อง';
+                    return l10n.registerValidationEmailInvalid;
                   }
                   return null;
                 },
               ),
               const SizedBox(height: 16),
 
-              if (_selectedRole == 'customer') ...[
+              if (_selectedRole == 'customer' || _selectedRole == 'driver') ...[
                 TextFormField(
                   controller: _referralCodeController,
-                  decoration: const InputDecoration(
-                    labelText: 'โค้ดแนะนำจากเพื่อน (ถ้ามี)',
-                    prefixIcon: Icon(Icons.card_giftcard_outlined),
+                  decoration: InputDecoration(
+                    labelText: l10n.registerReferralCodeLabel,
+                    prefixIcon: const Icon(Icons.card_giftcard_outlined),
                   ),
                   textCapitalization: TextCapitalization.characters,
                 ),
@@ -414,7 +425,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextFormField(
                 controller: _passwordController,
                 decoration: InputDecoration(
-                  labelText: 'รหัสผ่าน',
+                  labelText: l10n.registerPasswordLabel,
                   prefixIcon: const Icon(Icons.lock_outlined),
                   suffixIcon: IconButton(
                     icon: Icon(
@@ -430,10 +441,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 obscureText: _obscurePassword,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'กรุณากรอกรหัสผ่าน';
+                    return l10n.registerValidationPasswordRequired;
                   }
                   if (value.length < 6) {
-                    return 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร';
+                    return l10n.registerValidationPasswordMinLength;
                   }
                   return null;
                 },
@@ -444,7 +455,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextFormField(
                 controller: _confirmPasswordController,
                 decoration: InputDecoration(
-                  labelText: 'ยืนยันรหัสผ่าน',
+                  labelText: l10n.registerConfirmPasswordLabel,
                   prefixIcon: const Icon(Icons.lock_outlined),
                   suffixIcon: IconButton(
                     icon: Icon(
@@ -462,10 +473,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 obscureText: _obscureConfirmPassword,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'กรุณายืนยันรหัสผ่าน';
+                    return l10n.registerValidationConfirmPasswordRequired;
                   }
                   if (value != _passwordController.text) {
-                    return 'รหัสผ่านไม่ตรงกัน';
+                    return l10n.registerValidationPasswordMismatch;
                   }
                   return null;
                 },
@@ -486,9 +497,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                      : const Text(
-                          'สมัครสมาชิก',
-                          style: TextStyle(
+                      : Text(
+                          l10n.registerButton,
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
                           ),
@@ -502,7 +513,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'มีบัญชีแล้ว? ',
+                    l10n.registerHaveAccountPrefix,
                     style: TextStyle(color: colorScheme.onSurfaceVariant),
                   ),
                   TextButton(
@@ -511,9 +522,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         MaterialPageRoute(builder: (_) => const LoginScreen()),
                       );
                     },
-                    child: const Text(
-                      'เข้าสู่ระบบ',
-                      style: TextStyle(fontWeight: FontWeight.w600),
+                    child: Text(
+                      l10n.registerGoToLogin,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],

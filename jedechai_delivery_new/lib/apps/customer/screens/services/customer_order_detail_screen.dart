@@ -15,6 +15,7 @@ import '../../../../common/widgets/chat_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'customer_ride_status_screen.dart';
 import '../../customer.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Customer Order Detail Screen
 /// 
@@ -290,7 +291,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
         backgroundColor: colorScheme.surface,
         elevation: 0,
         title: Text(
-          'รายละเอียดออเดอร์',
+          AppLocalizations.of(context)!.orderDetailScreenTitle,
           style: TextStyle(
             color: colorScheme.onSurface,
             fontWeight: FontWeight.bold,
@@ -309,7 +310,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                 onPressed: _showCancelOrderDialog,
                 icon: Icon(Icons.cancel, size: 16, color: colorScheme.error),
                 label: Text(
-                  'ยกเลิก',
+                  AppLocalizations.of(context)!.orderDetailCancel,
                   style: TextStyle(
                     color: colorScheme.error,
                     fontWeight: FontWeight.bold,
@@ -412,7 +413,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _getServiceTypeText(widget.booking.serviceType),
+                      _getServiceTypeText(context, widget.booking.serviceType),
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -420,7 +421,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                       ),
                     ),
                     Text(
-                      'ออเดอร์ ${OrderCodeFormatter.format(widget.booking.id)}',
+                      AppLocalizations.of(context)!.orderDetailOrderId(OrderCodeFormatter.format(widget.booking.id)),
                       style: TextStyle(
                         fontSize: 14,
                         color: colorScheme.onSurfaceVariant,
@@ -437,7 +438,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
               Icon(Icons.access_time, size: 16, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: 8),
               Text(
-                'สั่งเมื่อ: ${_formatDateTime(widget.booking.createdAt)}',
+                AppLocalizations.of(context)!.orderDetailOrderedAt(_formatDateTime(widget.booking.createdAt)),
                 style: TextStyle(
                   fontSize: 14,
                   color: colorScheme.onSurfaceVariant,
@@ -469,7 +470,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'สถานที่',
+            AppLocalizations.of(context)!.orderDetailLocationTitle,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -501,7 +502,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'จุดรับ',
+                        AppLocalizations.of(context)!.orderDetailPickup,
                         style: TextStyle(
                           fontSize: 12,
                           color: colorScheme.onSurfaceVariant,
@@ -547,7 +548,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'จุดหมายปลายทาง',
+                      AppLocalizations.of(context)!.orderDetailDestination,
                       style: TextStyle(
                         fontSize: 12,
                         color: colorScheme.onSurfaceVariant,
@@ -602,7 +603,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'ข้อมูลคนขับ',
+            AppLocalizations.of(context)!.orderDetailDriverTitle,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -657,7 +658,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _driverInfo!['full_name'] ?? 'ไม่ระบุชื่อ',
+                            _driverInfo!['full_name'] ?? AppLocalizations.of(context)!.orderDetailDriverUnnamed,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -725,14 +726,14 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                               ),
                             );
                           },
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 10),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.location_on, color: Colors.white, size: 18),
-                                SizedBox(width: 6),
-                                Text('ติดตาม', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                                const Icon(Icons.location_on, color: Colors.white, size: 18),
+                                const SizedBox(width: 6),
+                                Text(AppLocalizations.of(context)!.orderDetailTrack, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
                               ],
                             ),
                           ),
@@ -749,14 +750,14 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                           child: InkWell(
                             borderRadius: BorderRadius.circular(12),
                             onTap: () => _openChat(),
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 10),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.chat_bubble, color: Colors.white, size: 18),
-                                  SizedBox(width: 6),
-                                  Text('แชท', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                                  const Icon(Icons.chat_bubble, color: Colors.white, size: 18),
+                                  const SizedBox(width: 6),
+                                  Text(AppLocalizations.of(context)!.orderDetailChat, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
                                 ],
                               ),
                             ),
@@ -779,19 +780,19 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                               } else {
                                 if (mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('ไม่สามารถโทรไปที่ $phone ได้')),
+                                    SnackBar(content: Text(AppLocalizations.of(context)!.orderDetailCannotCall(phone))),
                                   );
                                 }
                               }
                             },
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 10),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.phone, color: Colors.white, size: 18),
-                                  SizedBox(width: 6),
-                                  Text('โทร', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                                  const Icon(Icons.phone, color: Colors.white, size: 18),
+                                  const SizedBox(width: 6),
+                                  Text(AppLocalizations.of(context)!.orderDetailCall, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
                                 ],
                               ),
                             ),
@@ -827,7 +828,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'รายการอาหาร',
+            AppLocalizations.of(context)!.orderDetailItemsTitle,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -845,7 +846,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
             )
           else if (_orderItems.isEmpty)
             Text(
-              'ไม่พบรายการอาหาร',
+              AppLocalizations.of(context)!.orderDetailNoItems,
               style: TextStyle(
                 fontSize: 14,
                 color: colorScheme.onSurfaceVariant,
@@ -875,7 +876,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          item['menu_item']?['name'] ?? item['item_name'] ?? 'ไม่ระบุชื่อ',
+                          item['menu_item']?['name'] ?? item['item_name'] ?? AppLocalizations.of(context)!.orderDetailItemUnnamed,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -885,7 +886,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                         if (item['quantity'] != null) ...[
                           const SizedBox(height: 2),
                           Text(
-                            'จำนวน: ${item['quantity']}',
+                            AppLocalizations.of(context)!.orderDetailQuantity(item['quantity'].toString()),
                             style: TextStyle(
                               fontSize: 12,
                               color: colorScheme.onSurfaceVariant,
@@ -907,7 +908,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'เพิ่มเติม:',
+          AppLocalizations.of(context)!.orderDetailOptionsLabel,
           style: TextStyle(
             fontSize: 10,
             color: AppTheme.accentOrange,
@@ -921,7 +922,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
           
           if (option is Map) {
             // กรณีเป็น Object: {"name": "เส้นเล็ก", "price": 0}
-            optionName = option['name'] ?? option['item_name'] ?? 'ตัวเลือก';
+            optionName = option['name'] ?? option['item_name'] ?? AppLocalizations.of(context)!.orderDetailOptionDefault;
             
             // (เสริม) ถ้าอยากโชว์ราคาเพิ่ม
             // final price = (option['price'] as num?)?.toDouble() ?? 0.0;
@@ -969,7 +970,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
 
   String _formatAddress(dynamic address) {
     if (address == null) {
-      return 'ไม่ระบุที่อยู่';
+      return AppLocalizations.of(context)!.orderDetailAddressUnknown;
     }
     
     // Handle Map/JSON object addresses
@@ -1000,7 +1001,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
           parts.add(address['country'].toString());
         }
         
-        return parts.isNotEmpty ? parts.join(', ') : 'ไม่ระบุที่อยู่';
+        return parts.isNotEmpty ? parts.join(', ') : AppLocalizations.of(context)!.orderDetailAddressUnknown;
       } catch (e) {
         debugLog('❌ Error parsing address map: $e');
       }
@@ -1014,7 +1015,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
         if (coordPattern.hasMatch(address)) {
           final cleaned = address.replaceAll(coordPattern, '').replaceAll(RegExp(r'\s*[—\-]\s*$'), '').trim();
           if (cleaned.isNotEmpty) return cleaned;
-          return 'ตำแหน่งปัจจุบัน';
+          return AppLocalizations.of(context)!.orderDetailAddressCurrent;
         }
         
         // Try to parse as JSON if it looks like JSON
@@ -1036,7 +1037,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
         
         // Check if it's an "Instance of" string
         if (address.contains('Instance of')) {
-          return 'ไม่ระบุที่อยู่';
+          return AppLocalizations.of(context)!.orderDetailAddressUnknown;
         }
         
         // Return regular string
@@ -1049,7 +1050,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
     
     // Handle AddressPlacemark objects
     if (address.toString().contains('AddressPlacemark')) {
-      return 'ไม่ระบุที่อยู่';
+      return AppLocalizations.of(context)!.orderDetailAddressUnknown;
     }
     
     // Fallback
@@ -1102,7 +1103,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'รายละเอียดราคา',
+            AppLocalizations.of(context)!.orderDetailPriceTitle,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -1117,7 +1118,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                 final itemPrice = (item['price'] as num?)?.toDouble() ?? 0.0;
                 final quantity = (item['quantity'] as num?)?.toInt() ?? 1;
                 final itemTotal = itemPrice * quantity;
-                final itemName = item['name'] ?? item['item_name'] ?? item['menu_item']?['name'] ?? 'ไม่ระบุชื่อ';
+                final itemName = item['name'] ?? item['item_name'] ?? item['menu_item']?['name'] ?? AppLocalizations.of(context)!.orderDetailItemUnnamed;
                 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
@@ -1153,7 +1154,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'ค่าอาหาร',
+                  AppLocalizations.of(context)!.orderDetailFoodCost,
                   style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
                 ),
                 Text(
@@ -1174,7 +1175,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'ค่าจัดส่ง',
+                    AppLocalizations.of(context)!.orderDetailDeliveryFee,
                     style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
                   ),
                   Text(
@@ -1196,10 +1197,10 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                 children: [
                   Text(
                     hideCouponBreakdown
-                        ? 'ส่วนลดจากคูปอง'
+                        ? AppLocalizations.of(context)!.orderDetailCouponDiscount
                         : (couponCode != null && couponCode.isNotEmpty
-                            ? 'ส่วนลดคูปอง ($couponCode)'
-                            : 'ส่วนลดคูปอง'),
+                            ? AppLocalizations.of(context)!.orderDetailCouponDiscountCode(couponCode)
+                            : AppLocalizations.of(context)!.orderDetailCouponDiscount),
                     style: TextStyle(
                       fontSize: 14,
                       color: colorScheme.secondary,
@@ -1223,11 +1224,11 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'ระยะทาง',
+                  AppLocalizations.of(context)!.orderDetailDistance,
                   style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
                 ),
                 Text(
-                  '${booking.distanceKm.toStringAsFixed(1)} กม.',
+                  AppLocalizations.of(context)!.orderDetailDistanceKm(booking.distanceKm.toStringAsFixed(1)),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -1245,7 +1246,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  _getServiceTypeText(booking.serviceType),
+                  _getServiceTypeText(context, booking.serviceType),
                   style: TextStyle(
                     fontSize: 14,
                     color: colorScheme.onSurface,
@@ -1268,10 +1269,10 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                 children: [
                   Text(
                     hideCouponBreakdown
-                        ? 'ส่วนลดจากคูปอง'
+                        ? AppLocalizations.of(context)!.orderDetailCouponDiscount
                         : (couponCode != null && couponCode.isNotEmpty
-                            ? 'ส่วนลดคูปอง ($couponCode)'
-                            : 'ส่วนลดคูปอง'),
+                            ? AppLocalizations.of(context)!.orderDetailCouponDiscountCode(couponCode)
+                            : AppLocalizations.of(context)!.orderDetailCouponDiscount),
                     style: TextStyle(fontSize: 14, color: colorScheme.secondary),
                   ),
                   Text(
@@ -1294,7 +1295,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'รวมทั้งหมด',
+                AppLocalizations.of(context)!.orderDetailTotal,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -1320,14 +1321,15 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
     return '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
-  String _getServiceTypeText(String serviceType) {
+  String _getServiceTypeText(BuildContext context, String serviceType) {
+    final l10n = AppLocalizations.of(context)!;
     switch (serviceType) {
       case 'ride':
-        return 'บริการรถส่ง';
+        return l10n.orderDetailServiceRide;
       case 'food':
-        return 'สั่งอาหาร';
+        return l10n.orderDetailServiceFood;
       case 'parcel':
-        return 'ส่งพัสดุ';
+        return l10n.orderDetailServiceParcel;
       default:
         return serviceType;
     }
@@ -1388,31 +1390,32 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
   }
 
   String _getStatusText(String status) {
+    final l10n = AppLocalizations.of(context)!;
     switch (status.toLowerCase()) {
       case 'pending':
-        return 'รอดำเนินการ';
+        return l10n.orderDetailStatusPending;
       case 'pending_merchant':
-        return 'รอร้านค้ายืนยัน';
+        return l10n.orderDetailStatusPendingMerchant;
       case 'preparing':
-        return 'กำลังเตรียมอาหาร';
+        return l10n.orderDetailStatusPreparing;
       case 'ready_for_pickup':
-        return 'อาหารพร้อมรับ';
+        return l10n.orderDetailStatusReady;
       case 'driver_accepted':
-        return 'คนขับรับออเดอร์แล้ว';
+        return l10n.orderDetailStatusDriverAccepted;
       case 'accepted':
       case 'confirmed':
-        return 'ยืนยันแล้ว';
+        return l10n.orderDetailStatusConfirmed;
       case 'arrived':
       case 'arrived_at_merchant':
-        return 'ถึงจุดรับแล้ว';
+        return l10n.orderDetailStatusArrived;
       case 'picking_up_order':
-        return 'กำลังรับอาหาร';
+        return l10n.orderDetailStatusPickingUp;
       case 'in_transit':
-        return 'กำลังจัดส่ง';
+        return l10n.orderDetailStatusInTransit;
       case 'completed':
-        return 'เสร็จสิ้น';
+        return l10n.orderDetailStatusCompleted;
       case 'cancelled':
-        return 'ยกเลิก';
+        return l10n.orderDetailStatusCancelled;
       default:
         return status;
     }
@@ -1439,9 +1442,9 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
               child: const Icon(Icons.cancel, color: Colors.red, size: 48),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'ร้านค้าปฏิเสธออเดอร์',
-              style: TextStyle(
+            Text(
+              AppLocalizations.of(context)!.orderDetailCancelledTitle,
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: Colors.red,
@@ -1454,7 +1457,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'ขออภัย ร้านค้าไม่สามารถรับออเดอร์ของคุณได้ในขณะนี้',
+              AppLocalizations.of(context)!.orderDetailCancelledBody,
               style: TextStyle(
                 fontSize: 15,
                 color: colorScheme.onSurface,
@@ -1478,7 +1481,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'หมายเลขออเดอร์',
+                        AppLocalizations.of(context)!.orderDetailOrderNumber,
                         style: TextStyle(
                           fontSize: 11,
                           color: colorScheme.onSurfaceVariant,
@@ -1502,7 +1505,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
             ),
             const SizedBox(height: 12),
             Text(
-              'กรุณาลองสั่งใหม่อีกครั้ง หรือเลือกร้านอื่น',
+              AppLocalizations.of(context)!.orderDetailCancelledRetry,
               style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
@@ -1525,7 +1528,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('เข้าใจแล้ว', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              child: Text(AppLocalizations.of(context)!.orderDetailUnderstood, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
           ),
         ],
@@ -1539,7 +1542,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
     if (customerId == null || booking.driverId == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('ไม่สามารถเปิดแชทได้')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.orderDetailChatError)),
         );
       }
       return;
@@ -1558,7 +1561,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
           MaterialPageRoute(
             builder: (context) => ChatScreen(
               chatRoomId: room.id,
-              otherPartyName: _driverInfo?['full_name'] ?? 'คนขับ',
+              otherPartyName: _driverInfo?['full_name'] ?? AppLocalizations.of(context)!.orderDetailDriverDefault,
               bookingId: booking.id,
               roomType: 'booking',
             ),
@@ -1569,7 +1572,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
       debugLog('❌ Error opening chat: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('ไม่สามารถเปิดแชทได้')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.orderDetailChatError)),
         );
       }
     }
@@ -1604,7 +1607,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
             ),
             const SizedBox(height: 16),
             Text(
-              isFood ? '🎉 จัดส่งสำเร็จแล้ว!' : '🎉 เดินทางเสร็จสิ้น!',
+              isFood ? AppLocalizations.of(context)!.orderDetailCompletedFood : AppLocalizations.of(context)!.orderDetailCompletedRide,
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen),
               textAlign: TextAlign.center,
             ),
@@ -1615,7 +1618,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'ขอบคุณที่ใช้บริการ',
+                AppLocalizations.of(context)!.orderDetailThankYou,
                 style: TextStyle(fontSize: 16, color: colorScheme.onSurface),
               ),
               const SizedBox(height: 16),
@@ -1635,7 +1638,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'หมายเลขออเดอร์',
+                          AppLocalizations.of(context)!.orderDetailOrderNumber,
                           style: TextStyle(
                             fontSize: 11,
                             color: colorScheme.onSurfaceVariant,
@@ -1677,9 +1680,9 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('ยอดเงินทั้งหมด', style: TextStyle(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w500)),
+                            Text(AppLocalizations.of(context)!.orderDetailTotalAmount, style: const TextStyle(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w500)),
                             if (isFood)
-                              const Text('รวมค่าจัดส่ง', style: TextStyle(fontSize: 12, color: Colors.white60)),
+                              Text(AppLocalizations.of(context)!.orderDetailIncludingDelivery, style: const TextStyle(fontSize: 12, color: Colors.white60)),
                           ],
                         ),
                         Text(
@@ -1701,14 +1704,14 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                           children: [
                             Column(
                               children: [
-                                const Text('ค่าอาหาร', style: TextStyle(fontSize: 11, color: Colors.white70)),
+                                Text(AppLocalizations.of(context)!.orderDetailFoodCost, style: const TextStyle(fontSize: 11, color: Colors.white70)),
                                 Text('฿${foodCost.ceil()}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
                               ],
                             ),
                             Container(width: 1, height: 24, color: Colors.white30),
                             Column(
                               children: [
-                                const Text('ค่าจัดส่ง', style: TextStyle(fontSize: 11, color: Colors.white70)),
+                                Text(AppLocalizations.of(context)!.orderDetailDeliveryFee, style: const TextStyle(fontSize: 11, color: Colors.white70)),
                                 Text('฿${deliveryFee.ceil()}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
                               ],
                             ),
@@ -1720,8 +1723,8 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                       const SizedBox(height: 8),
                       Text(
                         couponCode != null && couponCode.isNotEmpty
-                            ? 'ใช้คูปอง $couponCode ลด ฿${couponDiscount.ceil()}'
-                            : 'ใช้คูปอง ลด ฿${couponDiscount.ceil()}',
+                            ? AppLocalizations.of(context)!.orderDetailCouponUsed(couponCode, couponDiscount.ceil().toString())
+                            : AppLocalizations.of(context)!.orderDetailCouponUsedNoCode(couponDiscount.ceil().toString()),
                         style: const TextStyle(
                           fontSize: 12,
                           color: Colors.white,
@@ -1755,9 +1758,9 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                 ),
                 elevation: 2,
               ),
-              child: const Text(
-                'เข้าใจแล้ว',
-                style: TextStyle(
+              child: Text(
+                AppLocalizations.of(context)!.orderDetailUnderstood,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -1790,7 +1793,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          'ยืนยันการยกเลิกออเดอร์',
+          AppLocalizations.of(context)!.orderDetailCancelConfirmTitle,
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: Theme.of(context).colorScheme.onSurface,
@@ -1800,13 +1803,13 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'คุณต้องการยกเลิกออเดอร์นี้ใช่หรือไม่?',
-              style: TextStyle(fontSize: 16),
+            Text(
+              AppLocalizations.of(context)!.orderDetailCancelConfirmBody,
+              style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 12),
             Text(
-              'หมายเหตุ: ไม่สามารถยกเลิกออเดอร์ที่กำลังดำเนินการได้',
+              AppLocalizations.of(context)!.orderDetailCancelNote,
               style: TextStyle(
                 fontSize: 14,
                 color: colorScheme.onSurfaceVariant,
@@ -1818,7 +1821,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
-              'ไม่ยกเลิก',
+              AppLocalizations.of(context)!.orderDetailCancelKeep,
               style: TextStyle(color: colorScheme.onSurfaceVariant),
             ),
           ),
@@ -1831,7 +1834,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
             ),
-            child: const Text('ยืนยันยกเลิก'),
+            child: Text(AppLocalizations.of(context)!.orderDetailCancelConfirm),
           ),
         ],
       ),
@@ -1857,7 +1860,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                 ),
               ),
               SizedBox(width: 12),
-              Text('กำลังยกเลิกออเดอร์...'),
+              Text(AppLocalizations.of(context)!.orderDetailCancelling),
             ],
           ),
           duration: Duration(seconds: 3),
@@ -1876,7 +1879,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('ออเดอร์ถูกยกเลิกเรียบร้อยแล้ว'),
+            content: Text(AppLocalizations.of(context)!.orderDetailCancelSuccess),
             backgroundColor: Theme.of(context).colorScheme.tertiary,
           ),
         );
@@ -1894,7 +1897,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('ไม่สามารถยกเลิกออเดอร์ได้: $e'),
+            content: Text(AppLocalizations.of(context)!.orderDetailCancelError(e.toString())),
             backgroundColor: Colors.red,
           ),
         );

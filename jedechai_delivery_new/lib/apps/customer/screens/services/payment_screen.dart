@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../common/models/booking.dart';
 import '../../../../common/services/payment_service.dart';
@@ -20,29 +21,32 @@ class _PaymentScreenState extends State<PaymentScreen> {
   String _selectedMethod = 'cash';
   bool _isProcessing = false;
 
-  final List<Map<String, dynamic>> _paymentMethods = [
-    {
-      'id': 'cash',
-      'label': 'เงินสด',
-      'subtitle': 'ชำระเงินสดกับคนขับ',
-      'icon': Icons.money,
-      'color': AppTheme.primaryGreen,
-    },
-    {
-      'id': 'promptpay',
-      'label': 'PromptPay',
-      'subtitle': 'โอนผ่าน QR Code',
-      'icon': Icons.qr_code,
-      'color': const Color(0xFF1A3C6E),
-    },
-    {
-      'id': 'mobile_banking',
-      'label': 'Mobile Banking',
-      'subtitle': 'โอนผ่านแอปธนาคาร',
-      'icon': Icons.account_balance,
-      'color': AppTheme.accentBlue,
-    },
-  ];
+  List<Map<String, dynamic>> _getPaymentMethods(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return [
+      {
+        'id': 'cash',
+        'label': l10n.payCash,
+        'subtitle': l10n.payCashSubtitle,
+        'icon': Icons.money,
+        'color': AppTheme.primaryGreen,
+      },
+      {
+        'id': 'promptpay',
+        'label': 'PromptPay',
+        'subtitle': l10n.payPromptPaySubtitle,
+        'icon': Icons.qr_code,
+        'color': const Color(0xFF1A3C6E),
+      },
+      {
+        'id': 'mobile_banking',
+        'label': 'Mobile Banking',
+        'subtitle': l10n.payMobileBankingSubtitle,
+        'icon': Icons.account_balance,
+        'color': AppTheme.accentBlue,
+      },
+    ];
+  }
 
   Future<void> _processPayment() async {
     setState(() => _isProcessing = true);
@@ -71,7 +75,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('เกิดข้อผิดพลาด: $e'),
+            content: Text(AppLocalizations.of(context)!.payError(e.toString())),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -99,14 +103,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
               child: const Icon(Icons.check_circle, size: 60, color: AppTheme.primaryGreen),
             ),
             const SizedBox(height: 20),
-            const Text('ชำระเงินสำเร็จ!',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.paySuccess,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text('฿${widget.booking.totalAmount.ceil()}',
                 style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen)),
             const SizedBox(height: 8),
             Text(
-              _selectedMethod == 'cash' ? 'กรุณาเตรียมเงินสดให้คนขับ' : 'รายการชำระเงินบันทึกแล้ว',
+              _selectedMethod == 'cash' ? AppLocalizations.of(context)!.payCashPrepare : AppLocalizations.of(context)!.payRecorded,
               style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
@@ -124,7 +128,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                child: const Text('ตกลง', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                child: Text(AppLocalizations.of(context)!.payOk, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -138,7 +142,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('การชำระเงิน'),
+        title: Text(AppLocalizations.of(context)!.payTitle),
         backgroundColor: AppTheme.primaryGreen,
         foregroundColor: Colors.white,
       ),
@@ -156,7 +160,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
                   // เลือกวิธีชำระเงิน
                   Text(
-                    'เลือกวิธีชำระเงิน',
+                    AppLocalizations.of(context)!.paySelectMethod,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -165,8 +169,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ),
                   const SizedBox(height: 14),
 
-                  ...List.generate(_paymentMethods.length, (i) {
-                    final method = _paymentMethods[i];
+                  ...List.generate(_getPaymentMethods(context).length, (i) {
+                    final method = _getPaymentMethods(context)[i];
                     final isSelected = _selectedMethod == method['id'];
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
@@ -243,14 +247,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: const Color(0xFF1A3C6E).withValues(alpha: 0.2)),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
-                          Icon(Icons.info_outline, color: Color(0xFF1A3C6E), size: 20),
-                          SizedBox(width: 10),
+                          const Icon(Icons.info_outline, color: Color(0xFF1A3C6E), size: 20),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              'ระบบจะสร้าง QR Code สำหรับโอนเงินผ่าน PromptPay ให้อัตโนมัติ',
-                              style: TextStyle(fontSize: 13, color: Color(0xFF1A3C6E)),
+                              AppLocalizations.of(context)!.payPromptPayNote,
+                              style: const TextStyle(fontSize: 13, color: Color(0xFF1A3C6E)),
                             ),
                           ),
                         ],
@@ -291,7 +295,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
                         )
                       : Text(
-                          'ชำระเงิน ฿${widget.booking.totalAmount.ceil()}',
+                          AppLocalizations.of(context)!.payButton(widget.booking.totalAmount.ceil().toString()),
                           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                 ),
@@ -317,8 +321,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
       ),
       child: Column(
         children: [
-          const Text('ยอดรวมทั้งหมด',
-              style: TextStyle(fontSize: 15, color: Colors.white70)),
+          Text(AppLocalizations.of(context)!.payTotalAmount,
+              style: const TextStyle(fontSize: 15, color: Colors.white70)),
           const SizedBox(height: 6),
           Text('฿${widget.booking.totalAmount.ceil()}',
               style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white)),
@@ -333,9 +337,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _buildMiniAmount('ค่าอาหาร', '฿${widget.booking.price.ceil()}'),
+                  _buildMiniAmount(AppLocalizations.of(context)!.payFoodCost, '฿${widget.booking.price.ceil()}'),
                   Container(width: 1, height: 24, color: Colors.white30, margin: const EdgeInsets.symmetric(horizontal: 14)),
-                  _buildMiniAmount('ค่าส่ง', '฿${widget.booking.deliveryFee!.ceil()}'),
+                  _buildMiniAmount(AppLocalizations.of(context)!.payDeliveryFee, '฿${widget.booking.deliveryFee!.ceil()}'),
                 ],
               ),
             ),

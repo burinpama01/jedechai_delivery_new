@@ -1,7 +1,7 @@
 name: jedechai_delivery_new
 description: Super App for Food Delivery, Parcel Delivery, and Passenger Transport
 publish_to: 'none'
-version: 1.1.0+37
+version: 1.1.0+38
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -115,6 +115,7 @@ flutter_launcher_icons:
   adaptive_icon_foreground: "assets/images/logo_512.png"
 
 flutter:
+  generate: true
   uses-material-design: true
   assets:
     - .env

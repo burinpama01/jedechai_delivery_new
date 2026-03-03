@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../common/models/booking.dart';
 import '../../../../common/utils/order_code_formatter.dart';
@@ -15,10 +16,11 @@ class BookingConfirmationScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final serviceLabel = {
-      'food': 'สั่งอาหาร',
-      'ride': 'เรียกรถ',
-      'parcel': 'ส่งพัสดุ',
+      'food': l10n.confirmServiceFood,
+      'ride': l10n.confirmServiceRide,
+      'parcel': l10n.confirmServiceParcel,
     }[booking.serviceType] ?? booking.serviceType;
 
     final serviceIcon = {
@@ -51,11 +53,11 @@ class BookingConfirmationScreen extends StatelessWidget {
                       child: const Icon(Icons.check_circle, size: 80, color: AppTheme.primaryGreen),
                     ),
                     const SizedBox(height: 20),
-                    const Text('จองสำเร็จ!',
-                        style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+                    Text(l10n.confirmSuccess,
+                        style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 6),
                     Text(
-                        'ออเดอร์ ${OrderCodeFormatter.formatByServiceType(booking.id, serviceType: booking.serviceType)}',
+                        l10n.confirmOrderCode(OrderCodeFormatter.formatByServiceType(booking.id, serviceType: booking.serviceType)),
                         style: const TextStyle(fontSize: 15, color: Colors.grey)),
 
                     const SizedBox(height: 28),
@@ -93,22 +95,22 @@ class BookingConfirmationScreen extends StatelessWidget {
                           const SizedBox(height: 16),
 
                           // จุดรับ
-                          _buildInfoRow(Icons.circle, AppTheme.primaryGreen, 'จุดรับ',
-                              booking.pickupAddress ?? 'ไม่ระบุ'),
+                          _buildInfoRow(Icons.circle, AppTheme.primaryGreen, l10n.confirmPickup,
+                              booking.pickupAddress ?? l10n.confirmNotSpecified),
                           const SizedBox(height: 14),
 
                           // จุดส่ง
-                          _buildInfoRow(Icons.location_on, Colors.red, 'จุดส่ง',
-                              booking.destinationAddress ?? 'ไม่ระบุ'),
+                          _buildInfoRow(Icons.location_on, Colors.red, l10n.confirmDestination,
+                              booking.destinationAddress ?? l10n.confirmNotSpecified),
                           const SizedBox(height: 14),
 
                           // ระยะทาง
-                          _buildInfoRow(Icons.straighten, Colors.blue, 'ระยะทาง',
-                              '${booking.distanceKm.toStringAsFixed(1)} กม.'),
+                          _buildInfoRow(Icons.straighten, Colors.blue, l10n.confirmDistance,
+                              l10n.confirmDistanceKm(booking.distanceKm.toStringAsFixed(1))),
                           const SizedBox(height: 14),
 
                           // วันที่สร้าง
-                          _buildInfoRow(Icons.access_time, Colors.orange, 'เวลาสั่ง',
+                          _buildInfoRow(Icons.access_time, Colors.orange, l10n.confirmOrderTime,
                               dateFormat.format(booking.createdAt)),
                         ],
                       ),
@@ -129,16 +131,16 @@ class BookingConfirmationScreen extends StatelessWidget {
                       child: Column(
                         children: [
                           if (booking.serviceType == 'food' && booking.deliveryFee != null) ...[
-                            _buildPriceRow('ค่าอาหาร', '฿${booking.price.ceil()}'),
+                            _buildPriceRow(l10n.confirmFoodCost, '฿${booking.price.ceil()}'),
                             const SizedBox(height: 8),
-                            _buildPriceRow('ค่าจัดส่ง', '฿${booking.deliveryFee!.ceil()}'),
+                            _buildPriceRow(l10n.confirmDeliveryFee, '฿${booking.deliveryFee!.ceil()}'),
                             Divider(color: Colors.white.withValues(alpha: 0.3), height: 20),
                           ],
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('ยอดรวม',
-                                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: Colors.white)),
+                              Text(l10n.confirmTotal,
+                                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: Colors.white)),
                               Text('฿${booking.totalAmount.ceil()}',
                                   style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
                             ],
@@ -149,7 +151,7 @@ class BookingConfirmationScreen extends StatelessWidget {
                               const Icon(Icons.payment, color: Colors.white70, size: 16),
                               const SizedBox(width: 6),
                               Text(
-                                booking.paymentMethod == 'cash' ? 'ชำระเงินสด' : (booking.paymentMethod ?? 'เงินสด'),
+                                booking.paymentMethod == 'cash' ? l10n.confirmPayCash : (booking.paymentMethod ?? l10n.confirmCash),
                                 style: const TextStyle(fontSize: 13, color: Colors.white70),
                               ),
                             ],
@@ -182,7 +184,7 @@ class BookingConfirmationScreen extends StatelessWidget {
                         );
                       },
                       icon: const Icon(Icons.map),
-                      label: const Text('ติดตามออเดอร์', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                      label: Text(l10n.confirmTrackOrder, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryGreen,
                         foregroundColor: Colors.white,
@@ -195,7 +197,7 @@ class BookingConfirmationScreen extends StatelessWidget {
                     width: double.infinity,
                     child: TextButton(
                       onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
-                      child: const Text('กลับหน้าหลัก', style: TextStyle(fontSize: 16, color: Colors.grey)),
+                      child: Text(l10n.confirmBackToHome, style: const TextStyle(fontSize: 16, color: Colors.grey)),
                     ),
                   ),
                 ],

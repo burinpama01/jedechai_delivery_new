@@ -21,6 +21,7 @@ import '../../../../common/services/system_config_service.dart';
 import '../../../../common/utils/platform_adaptive.dart';
 import 'saved_addresses_screen.dart';
 import '../../../../common/models/saved_address.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Food Checkout Screen — หน้ายืนยันคำสั่งซื้อ
 ///
@@ -46,7 +47,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
   String _deliveryMode = 'current';
   double? _customerLat;
   double? _customerLng;
-  String _customerAddress = 'ตำแหน่งปัจจุบัน';
+  String _customerAddress = '';
 
   // ── ข้อมูลร้านค้า ──
   double? _merchantLat;
@@ -154,7 +155,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       firstDate: firstDate,
       lastDate: lastDate,
       locale: const Locale('th', 'TH'),
-      title: 'เลือกวันที่จัดส่ง',
+      title: AppLocalizations.of(context)!.foodSchedulePickDate,
     );
 
     if (pickedDate == null) return;
@@ -162,7 +163,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
     final pickedTime = await PlatformAdaptive.pickTime(
       context: context,
       initialTime: TimeOfDay.fromDateTime(initialDate),
-      title: 'เลือกเวลาจัดส่ง',
+      title: AppLocalizations.of(context)!.foodSchedulePickTime,
     );
 
     if (pickedTime == null) return;
@@ -178,8 +179,8 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
     if (selected.isBefore(now.add(const Duration(minutes: 20)))) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('กรุณาเลือกเวลาอย่างน้อย 20 นาทีจากเวลาปัจจุบัน'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.foodScheduleMinTime),
           backgroundColor: Colors.orange,
         ),
       );
@@ -327,16 +328,16 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
           position.latitude,
           position.longitude,
         );
-        _customerAddress = addr ?? 'ตำแหน่งปัจจุบัน';
+        _customerAddress = addr ?? AppLocalizations.of(context)!.foodAddressCurrentLocation;
         debugLog('📍 Reverse geocoded address: $_customerAddress');
       } catch (_) {
-        _customerAddress = 'ตำแหน่งปัจจุบัน';
+        _customerAddress = AppLocalizations.of(context)!.foodAddressCurrentLocation;
       }
     } catch (e) {
       debugLog('⚠️ Cannot get current location: $e');
       _customerLat = 13.7563;
       _customerLng = 100.5018;
-      _customerAddress = 'ตำแหน่งปัจจุบัน (ไม่สามารถระบุได้)';
+      _customerAddress = AppLocalizations.of(context)!.foodAddressUnknown;
     }
   }
 
@@ -423,16 +424,15 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         icon: Icon(Icons.warning_amber_rounded,
             color: Colors.orange[700], size: 48),
-        title: const Text(
-          'อยู่นอกระยะทางที่กำหนด',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        title: Text(
+          AppLocalizations.of(context)!.foodDistanceWarningTitle,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'ตำแหน่งจัดส่งของคุณอยู่ห่างจากร้านค้า ${_distanceKm.toStringAsFixed(1)} กม.\n'
-              'ซึ่งเกินระยะเริ่มต้นที่กำหนดไว้ ${_maxDeliveryRadius.toStringAsFixed(0)} กม.',
+              AppLocalizations.of(context)!.foodDistanceWarningBody(_distanceKm.toStringAsFixed(1), _maxDeliveryRadius.toStringAsFixed(0)),
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 15, height: 1.5),
             ),
@@ -450,7 +450,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'ค่าส่งจะคิดตามระยะทางจริง: ฿${_deliveryFee.ceil()}',
+                      AppLocalizations.of(context)!.foodDistanceWarningFee(_deliveryFee.ceil().toString()),
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -476,7 +476,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                     borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              child: const Text('รับทราบ', style: TextStyle(fontSize: 16)),
+              child: Text(AppLocalizations.of(context)!.foodDistanceWarningOk, style: const TextStyle(fontSize: 16)),
             ),
           ),
         ],
@@ -568,33 +568,33 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         return Scaffold(
           backgroundColor: colorScheme.surface,
           appBar: AppBar(
-            title: const Text('ยืนยันคำสั่งซื้อ'),
+            title: Text(AppLocalizations.of(context)!.foodCheckoutTitle),
             backgroundColor: AppTheme.accentOrange,
             foregroundColor: Colors.white,
             elevation: 0,
           ),
           body: cart.isEmpty
-              ? const Center(child: Text('ตะกร้าว่างเปล่า'))
+              ? Center(child: Text(AppLocalizations.of(context)!.foodCartEmpty))
               : SingleChildScrollView(
                   child: Column(
                     children: [
                       // Restaurant info
                       _buildSection(
                         icon: Icons.store,
-                        title: 'ร้านอาหาร',
+                        title: AppLocalizations.of(context)!.foodCheckoutRestaurant,
                         child: Text(cart.merchantName ?? '',
                             style: const TextStyle(fontSize: 15)),
                       ),
                       // ── ที่อยู่จัดส่ง (เลือกได้ 2 แบบ) ──
                       _buildSection(
                         icon: Icons.location_on,
-                        title: 'ที่อยู่จัดส่ง',
+                        title: AppLocalizations.of(context)!.foodCheckoutDeliveryAddress,
                         child: _buildDeliveryAddressSelector(),
                       ),
                       // Order items
                       _buildSection(
                         icon: Icons.receipt_long,
-                        title: 'รายการอาหาร (${cart.totalItems} รายการ)',
+                        title: AppLocalizations.of(context)!.foodCheckoutItemsTitle(cart.totalItems.toString()),
                         child: Column(
                           children: cart.items.map((item) {
                             return Padding(
@@ -634,14 +634,14 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                       // Note
                       _buildSection(
                         icon: Icons.schedule,
-                        title: 'เวลาจัดส่ง',
+                        title: AppLocalizations.of(context)!.foodScheduleTitle,
                         child: Column(
                           children: [
                             _buildScheduleOptionTile(
                               icon: Icons.flash_on,
-                              label: 'จัดส่งทันที',
+                              label: AppLocalizations.of(context)!.foodScheduleNow,
                               subtitle:
-                                  'ร้านจะเริ่มเตรียมอาหารทันทีหลังยืนยันออเดอร์',
+                                  AppLocalizations.of(context)!.foodScheduleNowDesc,
                               isSelected: !_isScheduledOrder,
                               onTap: () {
                                 setState(() {
@@ -653,10 +653,10 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                             const SizedBox(height: 8),
                             _buildScheduleOptionTile(
                               icon: Icons.calendar_today,
-                              label: 'ตั้งเวลาจัดส่ง',
+                              label: AppLocalizations.of(context)!.foodScheduleLater,
                               subtitle: _scheduledAt == null
-                                  ? 'เลือกวันและเวลาที่ต้องการรับอาหาร'
-                                  : 'กำหนดไว้: ${_formatScheduledDateTime(_scheduledAt!)}',
+                                  ? AppLocalizations.of(context)!.foodScheduleLaterDesc
+                                  : AppLocalizations.of(context)!.foodScheduleLaterSet(_formatScheduledDateTime(_scheduledAt!)),
                               isSelected: _isScheduledOrder,
                               onTap: () async {
                                 setState(() => _isScheduledOrder = true);
@@ -669,11 +669,11 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
 
                       _buildSection(
                         icon: Icons.note_alt_outlined,
-                        title: 'หมายเหตุถึงร้าน',
+                        title: AppLocalizations.of(context)!.foodCheckoutNoteTitle,
                         child: TextField(
                           controller: _noteController,
                           decoration: InputDecoration(
-                            hintText: 'เช่น ไม่ใส่ผัก, เผ็ดน้อย...',
+                            hintText: AppLocalizations.of(context)!.foodCheckoutNoteHint,
                             hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
                             border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10)),
@@ -686,19 +686,19 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                       // Payment method
                       _buildSection(
                         icon: Icons.payment,
-                        title: 'วิธีชำระเงิน',
+                        title: AppLocalizations.of(context)!.foodCheckoutPaymentTitle,
                         child: Column(
                           children: [
-                            _buildPaymentOption('cash', 'เงินสด', Icons.money),
+                            _buildPaymentOption('cash', AppLocalizations.of(context)!.foodCheckoutPayCash, Icons.money),
                             _buildPaymentOption(
-                                'transfer', 'โอนเงิน', Icons.account_balance),
+                                'transfer', AppLocalizations.of(context)!.foodCheckoutPayTransfer, Icons.account_balance),
                           ],
                         ),
                       ),
                       // ── คูปองส่วนลด ──
                       _buildSection(
                         icon: Icons.local_offer,
-                        title: 'โค้ดส่วนลด',
+                        title: AppLocalizations.of(context)!.foodPromoCodeTitle,
                         child: CouponEntryWidget(
                           serviceType: 'food',
                           orderAmount: cart.subtotal,
@@ -755,7 +755,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                                     strokeWidth: 2, color: Colors.white),
                               )
                             : Text(
-                                'ยืนยันสั่งอาหาร — ฿${_calculateFinalTotal(cart.subtotal, _deliveryFee).ceil()}',
+                                '${AppLocalizations.of(context)!.foodCheckoutConfirmButton} — ฿${_calculateFinalTotal(cart.subtotal, _deliveryFee).ceil()}',
                                 style: const TextStyle(
                                     fontSize: 16, fontWeight: FontWeight.bold),
                               ),
@@ -776,7 +776,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         // ตัวเลือก 1: ตำแหน่งปัจจุบัน
         _buildAddressOption(
           icon: Icons.my_location,
-          label: 'ตำแหน่งปัจจุบัน',
+          label: AppLocalizations.of(context)!.foodAddressCurrentLocation,
           isSelected: _deliveryMode == 'current',
           onTap: _useCurrentLocation,
         ),
@@ -784,7 +784,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         // ตัวเลือก 2: ปักหมุดบนแผนที่
         _buildAddressOption(
           icon: Icons.pin_drop,
-          label: 'ปักหมุดบนแผนที่',
+          label: AppLocalizations.of(context)!.foodAddressPinOnMap,
           isSelected: _deliveryMode == 'pin',
           onTap: _openMapPicker,
         ),
@@ -792,13 +792,13 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         // ตัวเลือก 3: ที่อยู่ที่บันทึกไว้
         _buildAddressOption(
           icon: Icons.bookmark_outline,
-          label: 'ที่อยู่ที่บันทึกไว้',
+          label: AppLocalizations.of(context)!.foodAddressSaved,
           isSelected: _deliveryMode == 'saved',
           onTap: _openSavedAddresses,
         ),
         // แสดงที่อยู่ที่เลือก
         if ((_deliveryMode == 'pin' || _deliveryMode == 'saved') &&
-            _customerAddress != 'ตำแหน่งปัจจุบัน') ...[
+            _customerAddress.isNotEmpty) ...[
           const SizedBox(height: 10),
           Container(
             width: double.infinity,
@@ -834,7 +834,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
               Icon(Icons.directions_car, size: 14, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: 4),
               Text(
-                'ระยะทาง: ${_distanceKm.toStringAsFixed(1)} กม.',
+                AppLocalizations.of(context)!.foodAddressDistance(_distanceKm.toStringAsFixed(1)),
                 style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
               ),
             ],
@@ -902,13 +902,13 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       ),
       child: Column(
         children: [
-          _buildPriceRow('ค่าอาหาร', '฿${cart.subtotal.ceil()}'),
+          _buildPriceRow(AppLocalizations.of(context)!.foodCartFoodCost, '฿${cart.subtotal.ceil()}'),
           const SizedBox(height: 8),
           _isCalculatingFee
               ? Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('ค่าจัดส่ง',
+                    Text(AppLocalizations.of(context)!.foodCartDeliveryFee,
                         style:
                             TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
                     SizedBox(
@@ -920,22 +920,22 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                   ],
                 )
               : _buildPriceRow(
-                  'ค่าจัดส่ง (${_distanceKm.toStringAsFixed(1)} กม.)',
+                  AppLocalizations.of(context)!.foodDeliveryFeeWithDist(_distanceKm.toStringAsFixed(1)),
                   '฿${_deliveryFee.ceil()}',
                 ),
           if (_couponDiscount > 0) ...[
             const SizedBox(height: 8),
             _buildPriceRow(
-              _hideCouponBreakdown ? 'ส่วนลดจากคูปอง' : 'ส่วนลดคูปอง',
+              AppLocalizations.of(context)!.foodCouponDiscount,
               '-฿${_couponDiscount.ceil()}',
               isGreen: true,
             ),
           ],
           const Divider(height: 20),
           _buildPriceRow(
-            'รวมทั้งหมด',
+            AppLocalizations.of(context)!.foodCartTotal,
             _isCalculatingFee
-                ? 'กำลังคำนวณ...'
+                ? AppLocalizations.of(context)!.foodCalculating
                 : '฿${_calculateFinalTotal(cart.subtotal, _deliveryFee).ceil()}',
             isBold: true,
             isOrange: true,
@@ -1026,10 +1026,10 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
 
     try {
       final userId = Supabase.instance.client.auth.currentUser?.id;
-      if (userId == null) throw Exception('กรุณาเข้าสู่ระบบ');
+      if (userId == null) throw Exception(AppLocalizations.of(context)!.foodCheckoutLoginRequired);
 
       if (_customerLat == null || _customerLng == null) {
-        throw Exception('ไม่สามารถระบุตำแหน่งจัดส่งได้ กรุณาเลือกตำแหน่ง');
+        throw Exception(AppLocalizations.of(context)!.foodCheckoutLocationRequired);
       }
 
       final note = _noteController.text.trim();
@@ -1038,7 +1038,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       }
 
       if (_isScheduledOrder && _scheduledAt == null) {
-        throw Exception('กรุณาเลือกวันเวลาจัดส่ง');
+        throw Exception(AppLocalizations.of(context)!.foodScheduleRequired);
       }
 
       final scheduledAt = _isScheduledOrder ? _scheduledAt : null;
@@ -1061,10 +1061,12 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         scheduledAt: scheduledAt,
         couponCode: _appliedCoupon?.code,
         couponDiscount: _couponDiscount,
+        defaultNoteText: AppLocalizations.of(context)!.foodDefaultNote(cart.merchantName ?? ''),
+        couponNoteFormatter: (code, amount) => AppLocalizations.of(context)!.foodCouponNote(code, amount),
       );
 
       if (booking == null)
-        throw Exception('ไม่ได้รับข้อมูลออเดอร์จากเซิร์ฟเวอร์');
+        throw Exception(AppLocalizations.of(context)!.foodCheckoutNoResponse);
 
       // Record coupon usage if applied
       if (_appliedCoupon != null && _couponDiscount > 0) {
@@ -1088,10 +1090,10 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
               '📤 Sending new order notification to merchant: $merchantId');
           await NotificationSender.sendToUser(
             userId: merchantId,
-            title: '🍔 มีออเดอร์ใหม่!',
+            title: AppLocalizations.of(context)!.foodCheckoutNotifTitle,
             body: _isScheduledOrder && _scheduledAt != null
-                ? 'มีลูกค้าสั่งอาหารล่วงหน้า ฿${merchantVisibleTotal.ceil()} เวลา ${_formatScheduledDateTime(_scheduledAt!)}'
-                : 'มีลูกค้าสั่งอาหาร ฿${merchantVisibleTotal.ceil()} กรุณายืนยันออเดอร์',
+                ? AppLocalizations.of(context)!.foodCheckoutNotifScheduledBody(merchantVisibleTotal.ceil().toString(), _formatScheduledDateTime(_scheduledAt!))
+                : AppLocalizations.of(context)!.foodCheckoutNotifBody(merchantVisibleTotal.ceil().toString()),
             data: {
               'type': 'merchant_new_order',
               'booking_id': booking['id']?.toString() ?? '',
@@ -1109,8 +1111,8 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
           SnackBar(
             content: Text(
               _isScheduledOrder && _scheduledAt != null
-                  ? '✅ ตั้งเวลาสั่งอาหารสำเร็จ (${_formatScheduledDateTime(_scheduledAt!)})'
-                  : '✅ สั่งอาหารสำเร็จ! รอร้านค้ายืนยัน',
+                  ? '✅ ${AppLocalizations.of(context)!.foodCheckoutSuccessScheduled(_formatScheduledDateTime(_scheduledAt!))}'
+                  : '✅ ${AppLocalizations.of(context)!.foodCheckoutSuccessNow}',
             ),
             backgroundColor: Colors.green,
           ),
@@ -1125,12 +1127,12 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
           context: context,
           builder: (ctx) => AlertDialog(
             icon: const Icon(Icons.error_outline, color: Colors.red, size: 48),
-            title: const Text('สั่งอาหารไม่สำเร็จ'),
+            title: Text(AppLocalizations.of(context)!.foodCheckoutFailedTitle),
             content: Text('$e'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('ตกลง'),
+                child: const Text('OK'),
               ),
             ],
           ),
@@ -1159,6 +1161,8 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
     DateTime? scheduledAt,
     String? couponCode,
     double couponDiscount = 0,
+    String? defaultNoteText,
+    String Function(String code, String amount)? couponNoteFormatter,
   }) async {
     try {
       final client = Supabase.instance.client;
@@ -1184,13 +1188,13 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       }
       debugLog('   └─ status: pending_merchant');
 
-      final mergedNote = note.isNotEmpty ? note : 'สั่งอาหารจาก $merchantName';
+      final mergedNote = note.isNotEmpty ? note : (defaultNoteText ?? 'Food order from $merchantName');
       final normalizedCoupon = couponCode?.trim().toUpperCase();
       final hideBreakdown = normalizedCoupon == 'WELCOME20' ||
           normalizedCoupon == 'REFERRER20' ||
           normalizedCoupon == 'REFFERER20';
       final noteWithCoupon = (couponCode != null && couponDiscount > 0 && !hideBreakdown)
-          ? '$mergedNote\n[คูปอง: $couponCode | ส่วนลด: ฿${couponDiscount.toStringAsFixed(2)}]'
+          ? '$mergedNote\n${couponNoteFormatter != null ? couponNoteFormatter(couponCode!, couponDiscount.toStringAsFixed(2)) : "[Coupon: $couponCode | Discount: \u0e3f${couponDiscount.toStringAsFixed(2)}]"}'
           : mergedNote;
 
       // Create booking with status 'pending_merchant'

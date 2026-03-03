@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../common/services/auth_service.dart';
 import '../../../common/services/system_config_service.dart';
 import '../../../common/utils/order_code_formatter.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_theme.dart';
 import 'order_detail_screen.dart';
 
@@ -24,7 +25,10 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
 
   // Date filter
   int _selectedPeriod = 0; // 0=วันนี้, 1=สัปดาห์นี้, 2=เดือนนี้, 3=ทั้งหมด, 4=ระบุวันที่
-  final List<String> _periodLabels = ['วันนี้', 'สัปดาห์นี้', 'เดือนนี้', 'ทั้งหมด', 'ระบุวันที่'];
+  List<String> _periodLabels(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return [l10n.mchDashPeriodToday, l10n.mchDashPeriodWeek, l10n.mchDashPeriodMonth, l10n.mchDashPeriodAll, l10n.mchDashPeriodCustom];
+  }
   DateTimeRange? _customDateRange;
 
   // Stats
@@ -110,7 +114,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
 
     try {
       final merchantId = AuthService.userId;
-      if (merchantId == null) throw Exception('ไม่พบข้อมูลผู้ใช้');
+      if (merchantId == null) throw Exception('User not found');
 
       final startStr = _getStartDate().toIso8601String();
       final endStr = _getEndDate().toIso8601String();
@@ -216,12 +220,12 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
 
   String _getStatusText(String status) {
     switch (status) {
-      case 'completed': return 'สำเร็จ';
-      case 'cancelled': return 'ยกเลิก';
-      case 'preparing': return 'กำลังเตรียม';
-      case 'ready': return 'พร้อมส่ง';
-      case 'picked_up': return 'ไรเดอร์รับแล้ว';
-      case 'delivering': return 'กำลังจัดส่ง';
+      case 'completed': return AppLocalizations.of(context)!.mchDashStatusCompleted;
+      case 'cancelled': return AppLocalizations.of(context)!.mchDashStatusCancelled;
+      case 'preparing': return AppLocalizations.of(context)!.mchDashStatusPreparing;
+      case 'ready': return AppLocalizations.of(context)!.mchDashStatusReady;
+      case 'picked_up': return AppLocalizations.of(context)!.mchDashStatusPickedUp;
+      case 'delivering': return AppLocalizations.of(context)!.mchDashStatusDelivering;
       default: return status;
     }
   }
@@ -244,7 +248,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('รายงานการขาย'),
+        title: Text(AppLocalizations.of(context)!.mchDashTitle),
         backgroundColor: AppTheme.accentOrange,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -252,7 +256,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadData,
-            tooltip: 'รีเฟรช',
+            tooltip: AppLocalizations.of(context)!.mchDashRefresh,
           ),
         ],
       ),
@@ -303,7 +307,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
             Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
             const SizedBox(height: 16),
             Text(
-              'ไม่สามารถโหลดข้อมูลได้',
+              AppLocalizations.of(context)!.mchDashLoadError,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -320,7 +324,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
             ElevatedButton.icon(
               onPressed: _loadData,
               icon: const Icon(Icons.refresh),
-              label: const Text('ลองใหม่'),
+              label: Text(AppLocalizations.of(context)!.mchDashRetry),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.accentOrange,
                 foregroundColor: Colors.white,
@@ -343,9 +347,9 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: List.generate(_periodLabels.length, (index) {
+              children: List.generate(_periodLabels(context).length, (index) {
                 final isSelected = _selectedPeriod == index;
-                String chipLabel = _periodLabels[index];
+                String chipLabel = _periodLabels(context)[index];
                 if (index == 4 && _customDateRange != null && isSelected) {
                   final fmt = DateFormat('d/M/yy');
                   chipLabel = '${fmt.format(_customDateRange!.start)} - ${fmt.format(_customDateRange!.end)}';
@@ -394,7 +398,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
               OutlinedButton.icon(
                 onPressed: _pickCustomDateRange,
                 icon: const Icon(Icons.date_range, size: 18),
-                label: const Text('เลือกช่วงวันที่'),
+                label: Text(AppLocalizations.of(context)!.mchDashPickDateRange),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppTheme.accentOrange,
                   side: const BorderSide(color: AppTheme.accentOrange),
@@ -411,7 +415,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
                     _loadData();
                   },
                   icon: const Icon(Icons.clear, size: 18),
-                  label: const Text('ล้างตัวกรองวันที่'),
+                  label: Text(AppLocalizations.of(context)!.mchDashClearDateFilter),
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.red,
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
@@ -451,7 +455,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
               const Icon(Icons.trending_up, color: Colors.white, size: 20),
               const SizedBox(width: 8),
               Text(
-                'รายได้สุทธิ${_periodLabels[_selectedPeriod]}',
+                AppLocalizations.of(context)!.mchDashNetRevenue(_periodLabels(context)[_selectedPeriod]),
                 style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 14),
               ),
             ],
@@ -467,7 +471,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'เฉลี่ย ${_formatCurrency(_avgOrderValue)} / ออเดอร์',
+            AppLocalizations.of(context)!.mchDashAvgPerOrder(_formatCurrency(_avgOrderValue)),
             style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 13),
           ),
         ],
@@ -480,11 +484,11 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          Expanded(child: _buildStatCard('ออเดอร์ทั้งหมด', '$_totalOrders', Icons.receipt_long, Colors.blue)),
+          Expanded(child: _buildStatCard(AppLocalizations.of(context)!.mchDashTotalOrders, '$_totalOrders', Icons.receipt_long, Colors.blue)),
           const SizedBox(width: 10),
-          Expanded(child: _buildStatCard('สำเร็จ', '$_completedOrders', Icons.check_circle, Colors.green)),
+          Expanded(child: _buildStatCard(AppLocalizations.of(context)!.mchDashCompleted, '$_completedOrders', Icons.check_circle, Colors.green)),
           const SizedBox(width: 10),
-          Expanded(child: _buildStatCard('ยกเลิก', '$_cancelledOrders', Icons.cancel, Colors.red)),
+          Expanded(child: _buildStatCard(AppLocalizations.of(context)!.mchDashCancelled, '$_cancelledOrders', Icons.cancel, Colors.red)),
         ],
       ),
     );
@@ -532,7 +536,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'ประวัติออเดอร์',
+            AppLocalizations.of(context)!.mchDashOrderHistory,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -557,7 +561,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'ไม่มีออเดอร์ในช่วงเวลานี้',
+                    AppLocalizations.of(context)!.mchDashNoOrders,
                     style: TextStyle(color: colorScheme.onSurfaceVariant),
                   ),
                 ],
@@ -686,7 +690,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Text('ดูรายละเอียด', style: TextStyle(fontSize: 12, color: AppTheme.accentOrange, fontWeight: FontWeight.w500)),
+                Text(AppLocalizations.of(context)!.mchDashViewDetail, style: TextStyle(fontSize: 12, color: AppTheme.accentOrange, fontWeight: FontWeight.w500)),
                 const SizedBox(width: 2),
                 Icon(Icons.chevron_right, size: 16, color: AppTheme.accentOrange),
               ],

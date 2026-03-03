@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../common/models/coupon.dart';
 import '../../../../common/models/menu_item.dart';
@@ -135,7 +136,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
       // Group by category
       _menuByCategory = {};
       for (final item in _menuItems) {
-        final cat = (item['category'] as String?) ?? 'อื่นๆ';
+        final cat = (item['category'] as String?) ?? AppLocalizations.of(context)!.restCategoryOther;
         _menuByCategory.putIfAbsent(cat, () => []).add(item);
       }
       _categories = _menuByCategory.keys.toList();
@@ -292,11 +293,11 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
               const SizedBox(width: 16),
               Icon(Icons.access_time, size: 16, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: 4),
-              Text('20-30 นาที', style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13)),
+              Text(AppLocalizations.of(context)!.restDeliveryTime, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13)),
               const SizedBox(width: 16),
               Icon(Icons.delivery_dining, size: 16, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: 4),
-              Text('ค่าส่ง ฿15', style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13)),
+              Text(AppLocalizations.of(context)!.restDeliveryFee, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13)),
             ],
           ),
           if (_shopAddress != null && _shopAddress!.isNotEmpty) ...[
@@ -363,7 +364,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                     await Clipboard.setData(ClipboardData(text: coupon.code));
                     if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('คัดลอกโค้ด ${coupon.code} แล้ว')),
+                      SnackBar(content: Text(AppLocalizations.of(context)!.restCouponCopied(coupon.code))),
                     );
                   },
                   borderRadius: BorderRadius.circular(10),
@@ -391,7 +392,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
             ),
             const SizedBox(height: 4),
             Text(
-              'แตะเพื่อคัดลอกโค้ดไปใช้ตอนชำระเงิน',
+              AppLocalizations.of(context)!.restCouponHint,
               style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
             ),
           ],
@@ -428,14 +429,14 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
           Icon(Icons.restaurant_menu, size: 64, color: colorScheme.outlineVariant),
           const SizedBox(height: 16),
           Text(
-            'ไม่มีเมนูในขณะนี้',
+            AppLocalizations.of(context)!.restNoMenu,
             style: TextStyle(fontSize: 16, color: colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
             onPressed: _fetchData,
             icon: const Icon(Icons.refresh),
-            label: const Text('รีเฟรช'),
+            label: Text(AppLocalizations.of(context)!.restRefresh),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.accentOrange,
               foregroundColor: Colors.white,
@@ -457,7 +458,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
             Icon(Icons.error_outline, size: 64, color: colorScheme.error),
             const SizedBox(height: 16),
             Text(
-              'ไม่สามารถโหลดเมนูได้',
+              AppLocalizations.of(context)!.restCannotLoadMenu,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -466,14 +467,14 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              'กรุณาลองใหม่อีกครั้ง',
+              AppLocalizations.of(context)!.restTryAgain,
               style: TextStyle(color: colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: _fetchData,
               icon: const Icon(Icons.refresh),
-              label: const Text('ลองใหม่'),
+              label: Text(AppLocalizations.of(context)!.restRetry),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.accentOrange,
                 foregroundColor: Colors.white,
@@ -498,12 +499,12 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('เปลี่ยนร้านอาหาร?'),
-          content: Text('ตะกร้ามีอาหารจาก "${cart.merchantName}" อยู่\nต้องการล้างตะกร้าและสั่งจากร้านนี้แทนหรือไม่?'),
+          title: Text(AppLocalizations.of(context)!.restSwitchRestaurant),
+          content: Text(AppLocalizations.of(context)!.restSwitchRestaurantBody(cart.merchantName ?? '')),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('ยกเลิก'),
+              child: Text(AppLocalizations.of(context)!.restCancel),
             ),
             ElevatedButton(
               onPressed: () {
@@ -519,7 +520,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                 backgroundColor: AppTheme.accentOrange,
                 foregroundColor: Colors.white,
               ),
-              child: const Text('ล้างและเพิ่ม'),
+              child: Text(AppLocalizations.of(context)!.restClearAndAdd),
             ),
           ],
         ),
@@ -534,7 +535,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('✅ เพิ่ม $name ลงตะกร้าแล้ว'),
+        content: Text(AppLocalizations.of(context)!.restAddedToCart(name)),
         backgroundColor: colorScheme.tertiary,
         duration: const Duration(seconds: 1),
         behavior: SnackBarBehavior.floating,
@@ -600,10 +601,10 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'ดูตะกร้า',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15),
+                        AppLocalizations.of(context)!.restViewCart,
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15),
                       ),
                     ),
                     Text(
@@ -653,15 +654,15 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                       children: [
                         const Icon(Icons.shopping_bag, color: AppTheme.accentOrange),
                         const SizedBox(width: 8),
-                        const Expanded(
-                          child: Text('ตะกร้าของคุณ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        Expanded(
+                          child: Text(AppLocalizations.of(context)!.restYourCart, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                         ),
                         TextButton(
                           onPressed: () {
                             cart.clearCart();
                             Navigator.of(context).pop();
                           },
-                          child: Text('ล้าง', style: TextStyle(color: colorScheme.error)),
+                          child: Text(AppLocalizations.of(context)!.restClear, style: TextStyle(color: colorScheme.error)),
                         ),
                       ],
                     ),
@@ -734,7 +735,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('รวม', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                              Text(AppLocalizations.of(context)!.restTotal, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                               Text('฿${cart.subtotal.ceil()}',
                                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.accentOrange)),
                             ],
@@ -758,7 +759,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                                 elevation: 0,
                               ),
-                              child: Text('ไปชำระเงิน — ฿${cart.subtotal.ceil()}',
+                              child: Text(AppLocalizations.of(context)!.restGoToCheckout(cart.subtotal.ceil().toString()),
                                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                             ),
                           ),
@@ -834,7 +835,7 @@ class _MenuItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final name = item['name'] ?? 'ไม่ระบุชื่อ';
+    final name = item['name'] ?? AppLocalizations.of(context)!.restItemNoName;
     final description = item['description'] ?? '';
     final price = (item['price'] as num?)?.toDouble() ?? 0.0;
     final imageUrl = item['image_url'] as String?;
@@ -903,7 +904,7 @@ class _MenuItemCard extends StatelessWidget {
                           border: Border.all(color: colorScheme.secondary.withValues(alpha: 0.35)),
                         ),
                         child: Text(
-                          'ต้องเลือกตัวเลือก',
+                          AppLocalizations.of(context)!.restMustSelectOption,
                           style: TextStyle(
                             fontSize: 10,
                             color: colorScheme.onSecondaryContainer,
@@ -956,7 +957,7 @@ class _MenuItemCard extends StatelessWidget {
     final price = (item['price'] as num?)?.toDouble() ?? 0.0;
     onAddToCart(CartItem(
       menuItemId: item['id'] as String,
-      name: item['name'] ?? 'ไม่ระบุ',
+      name: item['name'] ?? 'N/A',
       description: item['description'] as String?,
       imageUrl: item['image_url'] as String?,
       basePrice: price,
@@ -964,7 +965,7 @@ class _MenuItemCard extends StatelessWidget {
   }
 
   void _navigateToDetails(BuildContext context) async {
-    final name = item['name'] ?? 'ไม่ระบุชื่อ';
+    final name = item['name'] ?? AppLocalizations.of(context)!.restItemNoName;
     final description = item['description'] ?? '';
     final price = (item['price'] as num?)?.toDouble() ?? 0.0;
     final imageUrl = item['image_url'] as String?;

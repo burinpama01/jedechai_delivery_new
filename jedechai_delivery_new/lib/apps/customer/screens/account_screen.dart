@@ -15,7 +15,9 @@ import '../../../common/services/account_deletion_service.dart';
 import '../../../common/utils/platform_adaptive.dart';
 import '../../../common/screens/profile_screen.dart';
 import '../../../common/widgets/app_network_image.dart';
+import '../../../common/widgets/language_switcher.dart';
 import '../../../theme/app_theme.dart';
+import '../../../l10n/app_localizations.dart';
 import 'auth/login_screen.dart';
 import 'rewards/my_coupons_screen.dart';
 import 'rewards/referral_screen.dart';
@@ -295,9 +297,10 @@ class _AccountScreenState extends State<AccountScreen> {
       final userId = AuthService.userId;
       if (userId == null) return;
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('กำลังอัพโหลดรูปภาพ...'),
+          SnackBar(
+            content: Text(l10n.accountUploadingImage),
             duration: Duration(seconds: 2),
           ),
         );
@@ -310,9 +313,10 @@ class _AccountScreenState extends State<AccountScreen> {
         await _profileService.updateProfile(userId: userId, avatarUrl: url);
         await _fetchUserProfile();
         if (mounted) {
+          final l10n = AppLocalizations.of(context)!;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('อัพโหลดรูปโปรไฟล์สำเร็จ!'),
+            SnackBar(
+              content: Text(l10n.accountUploadSuccess),
               backgroundColor: Colors.green,
             ),
           );
@@ -321,9 +325,10 @@ class _AccountScreenState extends State<AccountScreen> {
     } catch (e) {
       debugLog('❌ Error uploading avatar: $e');
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('อัพโหลดรูปไม่สำเร็จ: $e'),
+            content: Text(l10n.accountUploadFailed(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -332,31 +337,32 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Future<void> _editProfileField(String field) async {
-    final label = field == 'full_name' ? 'ชื่อ' : 'เบอร์โทร';
-    final hint = field == 'full_name' ? 'ชื่อ-นามสกุล' : 'เบอร์โทรศัพท์';
+    final l10n = AppLocalizations.of(context)!;
+    final label = field == 'full_name' ? l10n.accountEditName : l10n.accountEditPhone;
+    final hint = field == 'full_name' ? l10n.accountEditNameHint : l10n.accountEditPhoneHint;
     final controller = TextEditingController(text: _userProfile?[field] ?? '');
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('แก้ไข$label'),
+        title: Text(label),
         content: TextField(
           controller: controller,
           keyboardType: field == 'phone_number'
               ? TextInputType.phone
               : TextInputType.name,
           decoration: InputDecoration(
-            hintText: 'กรอก$hint',
+            hintText: hint,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('ยกเลิก'),
+            child: Text(l10n.accountEditCancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: const Text('บันทึก'),
+            child: Text(l10n.accountEditSave),
           ),
         ],
       ),
@@ -370,8 +376,8 @@ class _AccountScreenState extends State<AccountScreen> {
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('อัปเดตสำเร็จ!'),
+            SnackBar(
+              content: Text(l10n.accountEditSuccess),
               backgroundColor: Colors.green,
             ),
           );
@@ -381,7 +387,7 @@ class _AccountScreenState extends State<AccountScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('อัปเดตไม่สำเร็จ: $e'),
+              content: Text(l10n.accountEditError(e.toString())),
               backgroundColor: Colors.red,
             ),
           );
@@ -392,6 +398,7 @@ class _AccountScreenState extends State<AccountScreen> {
 
   void _showDeleteAccountDialog() {
     final reasonController = TextEditingController();
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -401,24 +408,24 @@ class _AccountScreenState extends State<AccountScreen> {
           color: Colors.red[700],
           size: 48,
         ),
-        title: const Text(
-          'ลบบัญชีผู้ใช้',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          l10n.accountDeleteDialogTitle,
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'เมื่อยืนยันแล้ว คำขอจะถูกส่งไปยังแอดมินเพื่ออนุมัติ\nระหว่างรออนุมัติจะไม่สามารถใช้งานบัญชีได้',
+            Text(
+              l10n.accountDeleteDialogBody,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, height: 1.5),
+              style: const TextStyle(fontSize: 14, height: 1.5),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: reasonController,
               maxLines: 2,
               decoration: InputDecoration(
-                hintText: 'เหตุผลในการลบบัญชี (ไม่บังคับ)',
+                hintText: l10n.accountDeleteReasonHint,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -431,7 +438,7 @@ class _AccountScreenState extends State<AccountScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('ยกเลิก'),
+            child: Text(l10n.accountCancel),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -445,7 +452,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: const Text('ยืนยันลบบัญชี'),
+            child: Text(l10n.accountDeleteConfirm),
           ),
         ],
       ),
@@ -461,9 +468,10 @@ class _AccountScreenState extends State<AccountScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('ไม่สามารถส่งคำขอได้: $e'),
+            content: Text(l10n.accountDeleteRequestSubmitFailed(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -472,24 +480,25 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   void _showLogoutConfirmation() {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('ออกจากระบบ'),
-        content: const Text('คุณต้องการออกจากระบบใช่หรือไม่?'),
+        title: Text(l10n.accountLogoutDialogTitle),
+        content: Text(l10n.accountLogoutDialogBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('ยกเลิก'),
+            child: Text(l10n.accountCancel),
           ),
           TextButton(
             onPressed: () {
               Navigator.of(ctx).pop();
               _signOut();
             },
-            child: const Text(
-              'ออกจากระบบ',
-              style: TextStyle(color: Colors.red),
+            child: Text(
+              l10n.accountLogout,
+              style: const TextStyle(color: Colors.red),
             ),
           ),
         ],
@@ -508,9 +517,10 @@ class _AccountScreenState extends State<AccountScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('ออกจากระบบไม่สำเร็จ: $e'),
+            content: Text(l10n.accountUpdateFailed(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -525,9 +535,10 @@ class _AccountScreenState extends State<AccountScreen> {
     try {
       if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
         if (mounted) {
+          final l10n = AppLocalizations.of(context)!;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('ไม่สามารถเปิดลิงก์ได้'),
+            SnackBar(
+              content: Text(l10n.accountOpenLinkFailed),
               backgroundColor: Colors.red,
             ),
           );
@@ -536,9 +547,10 @@ class _AccountScreenState extends State<AccountScreen> {
     } catch (e) {
       debugLog('❌ Error opening privacy policy: $e');
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('เกิดข้อผิดพลาด: $e'),
+            content: Text(l10n.accountErrorGeneric(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -560,13 +572,20 @@ class _AccountScreenState extends State<AccountScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('บัญชี'),
+        title: Text(l10n.accountTitle),
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
         elevation: 0,
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 8),
+            child: LanguageSwitcher(),
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(
@@ -586,6 +605,7 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Widget _buildError() {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -594,9 +614,9 @@ class _AccountScreenState extends State<AccountScreen> {
           children: [
             Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
             const SizedBox(height: 16),
-            const Text(
-              'โหลดข้อมูลไม่สำเร็จ',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              l10n.accountErrorTitle,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
@@ -613,7 +633,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   ios: CupertinoIcons.refresh,
                 ),
               ),
-              label: const Text('ลองใหม่'),
+              label: Text(l10n.accountRetry),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _accent,
                 foregroundColor: Colors.white,
@@ -652,6 +672,7 @@ class _AccountScreenState extends State<AccountScreen> {
   Widget _buildProfileHeader() {
     final avatarUrl = _userProfile?['avatar_url'] as String?;
     final hasAvatar = avatarUrl != null && avatarUrl.isNotEmpty;
+    final l10n = AppLocalizations.of(context)!;
 
     return Container(
       width: double.infinity,
@@ -725,7 +746,7 @@ class _AccountScreenState extends State<AccountScreen> {
           ),
           const SizedBox(height: 14),
           Text(
-            _userProfile?['full_name'] ?? 'ผู้ใช้',
+            _userProfile?['full_name'] ?? l10n.accountUserFallback,
             style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
@@ -739,9 +760,9 @@ class _AccountScreenState extends State<AccountScreen> {
               color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Text(
-              'ลูกค้า',
-              style: TextStyle(
+            child: Text(
+              l10n.accountRoleCustomer,
+              style: const TextStyle(
                 fontSize: 12,
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
@@ -758,16 +779,17 @@ class _AccountScreenState extends State<AccountScreen> {
   // ============================================================
 
   Widget _buildInfoCard() {
+    final l10n = AppLocalizations.of(context)!;
     return _card(
-      title: 'ข้อมูลส่วนตัว',
+      title: l10n.accountInfoTitle,
       children: [
         _infoRow(
           PlatformAdaptive.icon(
             android: Icons.person,
             ios: CupertinoIcons.person,
           ),
-          'ชื่อ',
-          _userProfile?['full_name'] ?? 'ยังไม่ได้ตั้งค่า',
+          l10n.accountInfoName,
+          _userProfile?['full_name'] ?? l10n.accountNotSet,
           () => _editProfileField('full_name'),
         ),
         _divider(),
@@ -776,8 +798,8 @@ class _AccountScreenState extends State<AccountScreen> {
             android: Icons.phone,
             ios: CupertinoIcons.phone,
           ),
-          'เบอร์โทร',
-          _userProfile?['phone_number'] ?? 'ยังไม่ได้ตั้งค่า',
+          l10n.accountInfoPhone,
+          _userProfile?['phone_number'] ?? l10n.accountNotSet,
           () => _editProfileField('phone_number'),
         ),
         _divider(),
@@ -786,7 +808,7 @@ class _AccountScreenState extends State<AccountScreen> {
             android: Icons.email_outlined,
             ios: CupertinoIcons.mail,
           ),
-          'อีเมล',
+          l10n.accountInfoEmail,
           AuthService.currentUser?.email ?? '-',
           null,
         ),
@@ -799,15 +821,16 @@ class _AccountScreenState extends State<AccountScreen> {
   // ============================================================
 
   Widget _buildMenuCard() {
+    final l10n = AppLocalizations.of(context)!;
     return _card(
-      title: 'เมนู',
+      title: l10n.accountMenuTitle,
       children: [
         _menuItem(
           PlatformAdaptive.icon(
             android: Icons.edit,
             ios: CupertinoIcons.pencil,
           ),
-          'แก้ไขโปรไฟล์',
+          l10n.accountMenuEditProfile,
           _navigateToEditProfile,
         ),
         _divider(),
@@ -816,7 +839,7 @@ class _AccountScreenState extends State<AccountScreen> {
             android: Icons.card_giftcard,
             ios: CupertinoIcons.gift,
           ),
-          'คูปองของฉัน',
+          l10n.accountMenuCoupons,
           () {
             Navigator.push(
               context,
@@ -830,7 +853,7 @@ class _AccountScreenState extends State<AccountScreen> {
             android: Icons.people_alt_outlined,
             ios: CupertinoIcons.person_2,
           ),
-          'ชวนเพื่อนรับรางวัล',
+          l10n.accountMenuReferral,
           () {
             Navigator.push(
               context,
@@ -844,10 +867,10 @@ class _AccountScreenState extends State<AccountScreen> {
             android: Icons.help_outline,
             ios: CupertinoIcons.question_circle,
           ),
-          'ช่วยเหลือ',
+          l10n.accountMenuHelp,
           () {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('ฟีเจอร์นี้จะมาในเวอร์ชันถัดไป')),
+              SnackBar(content: Text(l10n.accountFeatureComingSoon)),
             );
           },
         ),
@@ -857,7 +880,7 @@ class _AccountScreenState extends State<AccountScreen> {
             android: Icons.privacy_tip_outlined,
             ios: CupertinoIcons.shield,
           ),
-          'นโยบายความเป็นส่วนตัว',
+          l10n.accountMenuPrivacyPolicy,
           _openPrivacyPolicy,
         ),
       ],
@@ -870,6 +893,7 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Widget _buildAppInfoCard() {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -888,7 +912,7 @@ class _AccountScreenState extends State<AccountScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'ข้อมูลแอป',
+            l10n.accountAppInfoTitle,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -899,7 +923,7 @@ class _AccountScreenState extends State<AccountScreen> {
           Row(
             children: [
               Text(
-                'เวอร์ชัน',
+                l10n.accountVersionLabel,
                 style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
               ),
               const Spacer(),
@@ -925,7 +949,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   padding:
                       const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
                   child: Text(
-                    _appVersion ?? 'กำลังโหลด...',
+                    _appVersion ?? l10n.accountLoading,
                     style: TextStyle(
                         fontSize: 13, color: colorScheme.onSurfaceVariant),
                   ),
@@ -937,7 +961,7 @@ class _AccountScreenState extends State<AccountScreen> {
           Row(
             children: [
               Text(
-                'พัฒนาโดย',
+                l10n.accountDevelopedByLabel,
                 style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
               ),
               const Spacer(),
@@ -957,6 +981,7 @@ class _AccountScreenState extends State<AccountScreen> {
   // ============================================================
 
   Widget _buildLogoutButton() {
+    final l10n = AppLocalizations.of(context)!;
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
@@ -968,9 +993,9 @@ class _AccountScreenState extends State<AccountScreen> {
           ),
           size: 20,
         ),
-        label: const Text(
-          'ออกจากระบบ',
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+        label: Text(
+          l10n.accountLogout,
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
         ),
         style: OutlinedButton.styleFrom(
           foregroundColor: Colors.red,
@@ -986,6 +1011,7 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Widget _buildDeleteAccountButton() {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     return SizedBox(
       width: double.infinity,
       child: TextButton.icon(
@@ -997,7 +1023,7 @@ class _AccountScreenState extends State<AccountScreen> {
           ),
           size: 20,
         ),
-        label: const Text('ลบบัญชี', style: TextStyle(fontSize: 14)),
+        label: Text(l10n.accountDelete, style: const TextStyle(fontSize: 14)),
         style: TextButton.styleFrom(
           foregroundColor: colorScheme.onSurfaceVariant,
           padding: const EdgeInsets.symmetric(vertical: 12),

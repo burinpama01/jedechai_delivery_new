@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../../../common/config/env_config.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 
@@ -23,7 +24,7 @@ class DeliveryMapPickerScreen extends StatefulWidget {
 class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
   GoogleMapController? _mapController;
   LatLng _selectedPosition = const LatLng(13.7563, 100.5018); // Default: Bangkok
-  String _addressText = 'กำลังโหลดที่อยู่...';
+  String _addressText = '';
   bool _isLoadingAddress = false;
   bool _isLoadingLocation = true;
 
@@ -79,14 +80,14 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
         if (address.isNotEmpty) {
           setState(() => _addressText = address);
         } else {
-          setState(() => _addressText = 'ตำแหน่ง: ${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)}');
+          if (mounted) setState(() => _addressText = AppLocalizations.of(context)!.mapPickerPosition(position.latitude.toStringAsFixed(5), position.longitude.toStringAsFixed(5)));
         }
       } else {
-        setState(() => _addressText = 'ตำแหน่ง: ${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)}');
+        if (mounted) setState(() => _addressText = AppLocalizations.of(context)!.mapPickerPosition(position.latitude.toStringAsFixed(5), position.longitude.toStringAsFixed(5)));
       }
     } catch (e) {
       debugLog('❌ Reverse geocode error: $e');
-      setState(() => _addressText = 'ตำแหน่ง: ${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)}');
+      if (mounted) setState(() => _addressText = AppLocalizations.of(context)!.mapPickerPosition(position.latitude.toStringAsFixed(5), position.longitude.toStringAsFixed(5)));
     } finally {
       setState(() => _isLoadingAddress = false);
     }
@@ -115,7 +116,7 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('เลือกตำแหน่งจัดส่ง'),
+        title: Text(AppLocalizations.of(context)!.mapPickerTitle),
         backgroundColor: AppTheme.accentOrange,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -181,7 +182,7 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
                                 Icon(Icons.location_on, color: Colors.red.shade700, size: 20),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'ตำแหน่งจัดส่ง',
+                                  AppLocalizations.of(context)!.mapPickerDeliveryLocation,
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
@@ -204,7 +205,7 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
                                       ),
                                       const SizedBox(width: 8),
                                       Text(
-                                        'กำลังค้นหาที่อยู่...',
+                                        AppLocalizations.of(context)!.mapPickerSearching,
                                         style: TextStyle(
                                           color: colorScheme.onSurfaceVariant,
                                           fontSize: 13,
@@ -227,7 +228,7 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
                               child: ElevatedButton.icon(
                                 onPressed: _isLoadingAddress ? null : _confirmLocation,
                                 icon: const Icon(Icons.check, size: 20),
-                                label: const Text('ยืนยันตำแหน่งนี้', style: TextStyle(fontWeight: FontWeight.bold)),
+                                label: Text(AppLocalizations.of(context)!.mapPickerConfirm, style: const TextStyle(fontWeight: FontWeight.bold)),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppTheme.accentOrange,
                                   foregroundColor: Colors.white,

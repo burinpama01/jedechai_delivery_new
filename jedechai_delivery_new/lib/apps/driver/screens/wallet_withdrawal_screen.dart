@@ -5,6 +5,7 @@ import '../../../common/services/wallet_service.dart';
 import '../../../common/services/auth_service.dart';
 import '../../../theme/app_theme.dart';
 import '../../../utils/debug_logger.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Wallet Withdrawal Screen
 ///
@@ -35,20 +36,23 @@ class _WalletWithdrawalScreenState extends State<WalletWithdrawalScreen> {
   bool _isSubmitting = false;
 
   // รายชื่อธนาคาร
-  final List<String> _bankList = [
-    'ธนาคารกสิกรไทย',
-    'ธนาคารไทยพาณิชย์',
-    'ธนาคารกรุงเทพ',
-    'ธนาคารกรุงไทย',
-    'ธนาคารกรุงศรีอยุธยา',
-    'ธนาคารทหารไทยธนชาต',
-    'ธนาคารออมสิน',
-    'ธนาคารเกียรตินาคินภัทร',
-    'ธนาคารซีไอเอ็มบีไทย',
-    'ธนาคารทิสโก้',
-    'ธนาคารยูโอบี',
-    'ธนาคารแลนด์ แอนด์ เฮ้าส์',
-  ];
+  List<String> _getBankList(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return [
+      l10n.withdrawBankKasikorn,
+      l10n.withdrawBankSCB,
+      l10n.withdrawBankBangkok,
+      l10n.withdrawBankKrungthai,
+      l10n.withdrawBankKrungsri,
+      l10n.withdrawBankTTB,
+      l10n.withdrawBankGSB,
+      l10n.withdrawBankKKP,
+      l10n.withdrawBankCIMB,
+      l10n.withdrawBankTisco,
+      l10n.withdrawBankUOB,
+      l10n.withdrawBankLH,
+    ];
+  }
 
   @override
   void initState() {
@@ -104,11 +108,11 @@ class _WalletWithdrawalScreenState extends State<WalletWithdrawalScreen> {
 
     final amount = double.tryParse(_amountController.text) ?? 0;
     if (amount <= 0) {
-      _showErrorDialog('กรุณาระบุจำนวนเงินที่ต้องการถอน');
+      _showErrorDialog(AppLocalizations.of(context)!.withdrawAmountRequired);
       return;
     }
     if (amount > _currentBalance) {
-      _showErrorDialog('ยอดเงินไม่เพียงพอ\nคงเหลือ: ฿${_currentBalance.toStringAsFixed(2)}');
+      _showErrorDialog(AppLocalizations.of(context)!.withdrawInsufficientBalance(_currentBalance.toStringAsFixed(2)));
       return;
     }
 
@@ -138,13 +142,13 @@ class _WalletWithdrawalScreenState extends State<WalletWithdrawalScreen> {
         }
       } else {
         if (mounted) {
-          _showErrorDialog('ไม่สามารถแจ้งถอนเงินได้\nกรุณาลองใหม่อีกครั้ง');
+          _showErrorDialog(AppLocalizations.of(context)!.withdrawFailed);
         }
       }
     } catch (e) {
       debugLog('❌ Error submitting withdrawal: $e');
       if (mounted) {
-        _showErrorDialog('เกิดข้อผิดพลาด\nกรุณาลองใหม่อีกครั้ง');
+        _showErrorDialog(AppLocalizations.of(context)!.withdrawGenericError);
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -157,8 +161,8 @@ class _WalletWithdrawalScreenState extends State<WalletWithdrawalScreen> {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         icon: const Icon(Icons.error_outline, color: Colors.red, size: 48),
-        title: const Text('เกิดข้อผิดพลาด',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text(AppLocalizations.of(context)!.withdrawErrorTitle,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         content: Text(message,
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 15, height: 1.5)),
@@ -173,7 +177,7 @@ class _WalletWithdrawalScreenState extends State<WalletWithdrawalScreen> {
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              child: const Text('ตกลง'),
+              child: Text(AppLocalizations.of(context)!.withdrawOk),
             ),
           ),
         ],
@@ -187,10 +191,10 @@ class _WalletWithdrawalScreenState extends State<WalletWithdrawalScreen> {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         icon: const Icon(Icons.check_circle, color: AppTheme.accentBlue, size: 48),
-        title: const Text('แจ้งถอนเงินสำเร็จ',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text(AppLocalizations.of(context)!.withdrawSuccessTitle,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         content: Text(
-          'ระบบได้รับคำขอถอนเงิน ฿${amount.toStringAsFixed(0)} แล้ว\n\nAdmin จะตรวจสอบและโอนเงินภายใน 1-3 วันทำการ',
+          AppLocalizations.of(context)!.withdrawSuccessBody(amount.toStringAsFixed(0)),
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 15, height: 1.5),
         ),
@@ -205,7 +209,7 @@ class _WalletWithdrawalScreenState extends State<WalletWithdrawalScreen> {
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              child: const Text('ตกลง'),
+              child: Text(AppLocalizations.of(context)!.withdrawOk),
             ),
           ),
         ],
@@ -217,7 +221,7 @@ class _WalletWithdrawalScreenState extends State<WalletWithdrawalScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ถอนเงิน'),
+        title: Text(AppLocalizations.of(context)!.withdrawTitle),
         backgroundColor: Colors.orange[700],
         foregroundColor: Colors.white,
       ),
@@ -260,8 +264,8 @@ class _WalletWithdrawalScreenState extends State<WalletWithdrawalScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('ยอดเงินคงเหลือ',
-              style: TextStyle(color: Colors.white70, fontSize: 14)),
+          Text(AppLocalizations.of(context)!.withdrawBalance,
+              style: const TextStyle(color: Colors.white70, fontSize: 14)),
           const SizedBox(height: 4),
           Text(
             '฿${NumberFormat('#,##0.00').format(_currentBalance)}',
@@ -282,24 +286,24 @@ class _WalletWithdrawalScreenState extends State<WalletWithdrawalScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('จำนวนเงินที่ต้องการถอน',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.withdrawAmountSectionTitle,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             TextFormField(
               controller: _amountController,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               decoration: InputDecoration(
-                labelText: 'จำนวนเงิน (บาท)',
+                labelText: AppLocalizations.of(context)!.withdrawAmountLabel,
                 prefixText: '฿ ',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 filled: true,
                 fillColor: Colors.grey[50],
-                helperText: 'ขั้นต่ำ ฿100',
+                helperText: AppLocalizations.of(context)!.withdrawMinHelper,
               ),
               validator: (v) {
-                if (v == null || v.isEmpty) return 'กรุณาระบุจำนวนเงิน';
+                if (v == null || v.isEmpty) return AppLocalizations.of(context)!.withdrawAmountValidation;
                 final amount = double.tryParse(v);
-                if (amount == null || amount < 100) return 'ขั้นต่ำ ฿100';
+                if (amount == null || amount < 100) return AppLocalizations.of(context)!.withdrawMinValidation;
                 return null;
               },
             ),
@@ -318,54 +322,54 @@ class _WalletWithdrawalScreenState extends State<WalletWithdrawalScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('ข้อมูลบัญชีธนาคาร',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.withdrawBankInfoTitle,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             // ธนาคาร dropdown
             DropdownButtonFormField<String>(
               initialValue: _bankNameController.text.isNotEmpty &&
-                      _bankList.contains(_bankNameController.text)
+                      _getBankList(context).contains(_bankNameController.text)
                   ? _bankNameController.text
                   : null,
               decoration: InputDecoration(
-                labelText: 'ธนาคาร',
+                labelText: AppLocalizations.of(context)!.withdrawBankLabel,
                 prefixIcon: const Icon(Icons.account_balance),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 filled: true,
                 fillColor: Colors.grey[50],
               ),
-              items: _bankList
+              items: _getBankList(context)
                   .map((bank) => DropdownMenuItem(value: bank, child: Text(bank, style: const TextStyle(fontSize: 14))))
                   .toList(),
               onChanged: (v) {
                 if (v != null) _bankNameController.text = v;
               },
-              validator: (v) => v == null ? 'กรุณาเลือกธนาคาร' : null,
+              validator: (v) => v == null ? AppLocalizations.of(context)!.withdrawBankValidation : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _accountNumberController,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                labelText: 'เลขบัญชี',
+                labelText: AppLocalizations.of(context)!.withdrawAccountNumLabel,
                 prefixIcon: const Icon(Icons.credit_card),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 filled: true,
                 fillColor: Colors.grey[50],
               ),
-              validator: (v) => v == null || v.isEmpty ? 'กรุณาระบุเลขบัญชี' : null,
+              validator: (v) => v == null || v.isEmpty ? AppLocalizations.of(context)!.withdrawAccountNumValidation : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _accountNameController,
               decoration: InputDecoration(
-                labelText: 'ชื่อบัญชี',
+                labelText: AppLocalizations.of(context)!.withdrawAccountNameLabel,
                 prefixIcon: const Icon(Icons.person),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 filled: true,
                 fillColor: Colors.grey[50],
               ),
-              validator: (v) => v == null || v.isEmpty ? 'กรุณาระบุชื่อบัญชี' : null,
+              validator: (v) => v == null || v.isEmpty ? AppLocalizations.of(context)!.withdrawAccountNameValidation : null,
             ),
           ],
         ),
@@ -386,7 +390,7 @@ class _WalletWithdrawalScreenState extends State<WalletWithdrawalScreen> {
                 child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
             : const Icon(Icons.send),
         label: Text(
-          _isSubmitting ? 'กำลังดำเนินการ...' : 'แจ้งถอนเงิน',
+          _isSubmitting ? AppLocalizations.of(context)!.withdrawProcessing : AppLocalizations.of(context)!.withdrawSubmitBtn,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         style: ElevatedButton.styleFrom(
@@ -405,8 +409,8 @@ class _WalletWithdrawalScreenState extends State<WalletWithdrawalScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('ประวัติคำขอถอนเงิน',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Text(AppLocalizations.of(context)!.withdrawHistoryTitle,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
         ..._history.map((req) => _buildHistoryCard(req)),
       ],
@@ -425,19 +429,19 @@ class _WalletWithdrawalScreenState extends State<WalletWithdrawalScreen> {
     switch (status) {
       case 'completed':
         statusColor = Colors.green;
-        statusText = 'โอนแล้ว';
+        statusText = AppLocalizations.of(context)!.withdrawStatusCompleted;
         break;
       case 'rejected':
         statusColor = Colors.red;
-        statusText = 'ปฏิเสธ';
+        statusText = AppLocalizations.of(context)!.withdrawStatusRejected;
         break;
       case 'cancelled':
         statusColor = Colors.grey;
-        statusText = 'ยกเลิก';
+        statusText = AppLocalizations.of(context)!.withdrawStatusCancelled;
         break;
       default:
         statusColor = Colors.orange;
-        statusText = 'รอดำเนินการ';
+        statusText = AppLocalizations.of(context)!.withdrawStatusPending;
     }
 
     return Card(

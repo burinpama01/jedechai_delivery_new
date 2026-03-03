@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_theme.dart';
 import '../../../common/services/auth_service.dart';
 import '../../../common/services/profile_service.dart';
@@ -136,7 +137,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('ตกลง'),
+            child: Text(AppLocalizations.of(context)!.customerHomeOk),
           ),
         ],
       ),
@@ -322,7 +323,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               _buildActiveOrdersPanel(),
               const SizedBox(height: 22),
               Text(
-                'บริการยอดนิยม',
+                AppLocalizations.of(context)!.customerHomePopularServices,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
@@ -378,8 +379,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'สวัสดี',
+                    Text(
+                      AppLocalizations.of(context)!.customerHomeGreeting,
                       style: TextStyle(
                         color: Colors.white70,
                         fontSize: 14,
@@ -400,7 +401,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               IconButton(
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('ยังไม่มีการแจ้งเตือนใหม่')),
+                    SnackBar(content: Text(AppLocalizations.of(context)!.customerHomeNoNewNotifications)),
                   );
                 },
                 icon: const Icon(Icons.notifications, color: Colors.white),
@@ -409,7 +410,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'อยากให้เราช่วยอะไรวันนี้',
+            AppLocalizations.of(context)!.customerHomeHelpToday,
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.9),
               fontSize: 16,
@@ -420,11 +421,11 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           Row(
             children: [
               Expanded(
-                child: _buildHeroChip('พร้อมให้บริการ 24/7'),
+                child: _buildHeroChip(AppLocalizations.of(context)!.customerHomeAvailable247),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: _buildHeroChip('ติดตามงานแบบเรียลไทม์'),
+                child: _buildHeroChip(AppLocalizations.of(context)!.customerHomeRealtimeTracking),
               ),
             ],
           ),
@@ -473,7 +474,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           Row(
             children: [
               Text(
-                'ออเดอร์ที่ค้างอยู่',
+                AppLocalizations.of(context)!.customerHomePendingOrders,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -498,7 +499,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    '${_activeBookings.length} งาน',
+                    AppLocalizations.of(context)!.customerHomeJobCount(_activeBookings.length.toString()),
                     style: const TextStyle(
                       color: AppTheme.primaryGreen,
                       fontWeight: FontWeight.w700,
@@ -519,7 +520,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Text(
-                'ตอนนี้ยังไม่มีงานค้างอยู่ เริ่มต้นบริการใหม่ได้เลย',
+                AppLocalizations.of(context)!.customerHomeNoJobs,
                 style: TextStyle(
                   fontSize: 13,
                   color: colorScheme.onSurfaceVariant,
@@ -540,8 +541,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             Expanded(
               child: _buildServiceCard(
                 icon: Icons.directions_car,
-                title: 'เรียกรถ',
-                subtitle: 'รวดเร็ว ปลอดภัย',
+                title: AppLocalizations.of(context)!.customerHomeCallRide,
+                subtitle: AppLocalizations.of(context)!.customerHomeCallRideSubtitle,
                 color: AppTheme.accentBlue,
                 onTap: () {
                   Navigator.of(context).push(
@@ -556,8 +557,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             Expanded(
               child: _buildServiceCard(
                 icon: Icons.restaurant,
-                title: 'สั่งอาหาร',
-                subtitle: 'สั่งจากร้านใกล้คุณ',
+                title: AppLocalizations.of(context)!.customerHomeOrderFood,
+                subtitle: AppLocalizations.of(context)!.customerHomeOrderFoodSubtitle,
                 color: AppTheme.accentOrange,
                 onTap: () {
                   Navigator.of(context).push(
@@ -573,8 +574,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         const SizedBox(height: 12),
         _buildServiceCard(
           icon: Icons.local_shipping,
-          title: 'ส่งพัสดุ',
-          subtitle: 'ส่งของถึงปลายทาง',
+          title: AppLocalizations.of(context)!.customerHomeSendParcel,
+          subtitle: AppLocalizations.of(context)!.customerHomeSendParcelSubtitle,
           color: AppTheme.primaryGreen,
           isFullWidth: true,
           onTap: () {
@@ -595,7 +596,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'ตัวช่วยด่วน',
+          AppLocalizations.of(context)!.customerHomeQuickActions,
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -608,8 +609,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             Expanded(
               child: _buildQuickActionCard(
                 icon: Icons.history,
-                title: 'ประวัติ',
-                subtitle: 'การจอง',
+                title: AppLocalizations.of(context)!.customerHomeHistory,
+                subtitle: AppLocalizations.of(context)!.customerHomeBookings,
                 color: Colors.blueGrey,
                 onTap: () {
                   Navigator.of(context).push(
@@ -622,8 +623,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             Expanded(
               child: _buildQuickActionCard(
                 icon: Icons.favorite,
-                title: 'ที่บันทึก',
-                subtitle: 'สถานที่',
+                title: AppLocalizations.of(context)!.customerHomeSaved,
+                subtitle: AppLocalizations.of(context)!.customerHomePlaces,
                 color: Colors.red,
                 onTap: () {
                   Navigator.of(context).push(
@@ -636,12 +637,12 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             Expanded(
               child: _buildQuickActionCard(
                 icon: Icons.support_agent,
-                title: 'ช่วยเหลือ',
-                subtitle: 'ติดต่อเรา',
+                title: AppLocalizations.of(context)!.customerHomeHelp,
+                subtitle: AppLocalizations.of(context)!.customerHomeContactUs,
                 color: const Color(0xFF6C63FF),
                 onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('ระบบช่วยเหลือกำลังพัฒนา')),
+                    SnackBar(content: Text(AppLocalizations.of(context)!.customerHomeHelpDeveloping)),
                   );
                 },
               ),
@@ -661,7 +662,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'โปรโมชั่น',
+          AppLocalizations.of(context)!.customerHomePromotions,
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -707,7 +708,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                           )
                         : Center(
                             child: Text(
-                              b['title'] ?? 'โปรโมชั่น',
+                              b['title'] ?? AppLocalizations.of(context)!.customerHomePromotions,
                               style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -747,7 +748,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           children: [
             Icon(Icons.confirmation_number, color: AppTheme.primaryGreen, size: 28),
             const SizedBox(width: 8),
-            const Expanded(child: Text('โค้ดส่วนลด', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+            Expanded(child: Text(AppLocalizations.of(context)!.customerHomeDiscountCode, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
           ],
         ),
         content: Column(
@@ -778,13 +779,13 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            const Text('นำโค้ดนี้ไปใช้ตอนสั่งซื้อเพื่อรับส่วนลด', style: TextStyle(fontSize: 12, color: Colors.grey)),
+            Text(AppLocalizations.of(context)!.customerHomePromoCodeHint, style: const TextStyle(fontSize: 12, color: Colors.grey)),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('ปิด'),
+            child: Text(AppLocalizations.of(context)!.customerHomeClose),
           ),
           ElevatedButton.icon(
             onPressed: () {
@@ -792,14 +793,14 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('คัดลอกโค้ด "$code" แล้ว'),
+                  content: Text(AppLocalizations.of(context)!.customerHomeCopiedCode(code)),
                   backgroundColor: AppTheme.primaryGreen,
                   duration: const Duration(seconds: 2),
                 ),
               );
             },
             icon: const Icon(Icons.copy, size: 16),
-            label: const Text('คัดลอกโค้ด'),
+            label: Text(AppLocalizations.of(context)!.customerHomeCopyCode),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryGreen,
               foregroundColor: Colors.white,
@@ -1034,7 +1035,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'ออเดอร์ ${OrderCodeFormatter.formatByServiceType(booking.id, serviceType: booking.serviceType)}',
+                          AppLocalizations.of(context)!.customerHomeOrderCode(OrderCodeFormatter.formatByServiceType(booking.id, serviceType: booking.serviceType)),
                           style: TextStyle(
                             fontSize: 11,
                             color: colorScheme.onSurfaceVariant,
@@ -1104,7 +1105,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'จุดหมายปลายทาง',
+                              AppLocalizations.of(context)!.customerHomeDestination,
                               style: TextStyle(
                                 fontSize: 11,
                                 color: colorScheme.onSurfaceVariant,
@@ -1153,7 +1154,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'จุดรับ',
+                                AppLocalizations.of(context)!.customerHomePickupPoint,
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: colorScheme.onSurfaceVariant,
@@ -1202,7 +1203,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              '${booking.distanceKm.toStringAsFixed(1)} กม.',
+                              AppLocalizations.of(context)!.customerHomeDistanceKm(booking.distanceKm.toStringAsFixed(1)),
                               style: TextStyle(
                                 fontSize: 13,
                                 color: colorScheme.onSurfaceVariant,
@@ -1248,7 +1249,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'สั่งเมื่อ: ${_formatDateTime(booking.createdAt)}',
+                        AppLocalizations.of(context)!.customerHomeOrderedAt(_formatDateTime(booking.createdAt)),
                         style: TextStyle(
                           fontSize: 14,
                           color: colorScheme.onSurfaceVariant,
@@ -1281,11 +1282,11 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   String _getServiceTypeText(String serviceType) {
     switch (serviceType.toLowerCase()) {
       case 'ride':
-        return 'เรียกรถ';
+        return AppLocalizations.of(context)!.customerHomeCallRide;
       case 'food':
-        return 'สั่งอาหาร';
+        return AppLocalizations.of(context)!.customerHomeOrderFood;
       case 'parcel':
-        return 'ส่งพัสดุ';
+        return AppLocalizations.of(context)!.customerHomeSendParcel;
       default:
         return serviceType;
     }
@@ -1335,34 +1336,34 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     switch (status.toLowerCase()) {
       case 'pending':
       case 'searching':
-        return 'รอดำเนินการ';
+        return AppLocalizations.of(context)!.customerHomeStatusPending;
       case 'pending_merchant':
-        return 'รอร้านค้ายืนยัน';
+        return AppLocalizations.of(context)!.customerHomeStatusPendingMerchant;
       case 'preparing':
-        return 'กำลังเตรียมอาหาร';
+        return AppLocalizations.of(context)!.customerHomeStatusPreparing;
       case 'ready_for_pickup':
-        return 'อาหารพร้อมรับ';
+        return AppLocalizations.of(context)!.customerHomeStatusReadyPickup;
       case 'driver_assigned':
       case 'driver_accepted':
-        return 'คนขับรับออเดอร์แล้ว';
+        return AppLocalizations.of(context)!.customerHomeStatusDriverAccepted;
       case 'accepted':
       case 'confirmed':
-        return 'ยืนยันแล้ว';
+        return AppLocalizations.of(context)!.customerHomeStatusConfirmed;
       case 'arrived':
-        return 'ถึงจุดรับแล้ว';
+        return AppLocalizations.of(context)!.customerHomeStatusArrived;
       case 'arrived_at_merchant':
-        return 'คนขับถึงร้านแล้ว';
+        return AppLocalizations.of(context)!.customerHomeStatusArrivedMerchant;
       case 'matched':
-        return 'จับคู่คนขับแล้ว';
+        return AppLocalizations.of(context)!.customerHomeStatusMatched;
       case 'picking_up_order':
-        return 'กำลังรับอาหาร';
+        return AppLocalizations.of(context)!.customerHomeStatusPickingUp;
       case 'in_progress':
       case 'in_transit':
-        return 'กำลังจัดส่ง';
+        return AppLocalizations.of(context)!.customerHomeStatusInTransit;
       case 'completed':
-        return 'เสร็จสิ้น';
+        return AppLocalizations.of(context)!.customerHomeStatusCompleted;
       case 'cancelled':
-        return 'ยกเลิก';
+        return AppLocalizations.of(context)!.customerHomeStatusCancelled;
       default:
         return status;
     }
@@ -1370,11 +1371,11 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
   String _formatAddress(dynamic address) {
     if (address == null) {
-      return 'ไม่ระบุที่อยู่';
+      return AppLocalizations.of(context)!.customerHomeAddressNotSpecified;
     }
     
     final addressStr = address.toString().trim();
-    if (addressStr.isEmpty) return 'ไม่ระบุที่อยู่';
+    if (addressStr.isEmpty) return AppLocalizations.of(context)!.customerHomeAddressNotSpecified;
     
     // Clean up coordinate-only patterns like "ตำแหน่ง: 19.16282, 100.84155"
     final coordPattern = RegExp(r'ตำแหน่ง:\s*[\d.]+,\s*[\d.]+');
@@ -1382,7 +1383,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       // Remove the coordinate part, keep the name part if any (e.g. "ดดเ — ตำแหน่ง: ...")
       final cleaned = addressStr.replaceAll(coordPattern, '').replaceAll(RegExp(r'\s*[—\-]\s*$'), '').trim();
       if (cleaned.isNotEmpty) return cleaned;
-      return 'ตำแหน่งปัจจุบัน';
+      return AppLocalizations.of(context)!.customerHomeCurrentLocation;
     }
     
     // Handle AddressPlacemark object
@@ -1402,13 +1403,13 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           if (address['locality'] != null && address['locality'].toString().isNotEmpty) {
             parts.add(address['locality'].toString());
           }
-          return parts.isNotEmpty ? parts.join(', ') : 'ไม่ระบุที่อยู่';
+          return parts.isNotEmpty ? parts.join(', ') : AppLocalizations.of(context)!.customerHomeAddressNotSpecified;
         }
       } catch (e) {
         debugLog('❌ Error parsing address: $e');
       }
       if (addressStr != 'Instance of AddressPlacemark') return addressStr;
-      return 'ไม่ระบุที่อยู่';
+      return AppLocalizations.of(context)!.customerHomeAddressNotSpecified;
     }
     
     return addressStr;
