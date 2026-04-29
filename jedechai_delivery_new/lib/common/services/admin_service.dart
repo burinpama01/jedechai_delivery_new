@@ -358,8 +358,12 @@ class AdminService {
     String? shopAddress,
   }) async {
     try {
+      await _ensureAdmin();
       final adminId = AuthService.userId;
       if (adminId == null) return false;
+
+      if (latitude < -90 || latitude > 90) return false;
+      if (longitude < -180 || longitude > 180) return false;
 
       await _client.from('profiles').update({
         'latitude': latitude,

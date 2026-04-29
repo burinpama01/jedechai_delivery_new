@@ -611,6 +611,51 @@ class BookingService {
     }).eq('id', bookingId);
   }
 
+  /// Admin override: update store location in a booking.
+  ///
+  /// This updates `origin_lat`, `origin_lng`, and `pickup_address` regardless
+  /// of booking status, but only when caller is admin.
+  Future<void> updateOrderStoreLocationByAdmin({
+    required String bookingId,
+    required double latitude,
+    required double longitude,
+    required String address,
+    String? reason,
+  }) async {
+    final role = AuthService.currentUserRole;
+    if (role != 'admin') {
+      throw Exception('ไม่มีสิทธิ์แก้ตำแหน่งร้านในออเดอร์');
+    }
+
+    if (latitude < -90 || latitude > 90) {
+      throw Exception('Latitude ไม่ถูกต้อง');
+    }
+    if (longitude < -180 || longitude > 180) {
+      throw Exception('Longitude ไม่ถูกต้อง');
+    }
+
+    final booking = await getBookingById(bookingId);
+    if (booking == null) {
+      throw Exception('Booking not found');
+    }
+
+    final noteReason = (reason ?? '').trim();
+    final noteText = noteReason.isNotEmpty
+        ? 'Admin location fix (${DateTime.now().toIso8601String()}): $noteReason'
+        : 'Admin location fix (${DateTime.now().toIso8601String()})';
+    final mergedNotes = (booking.notes ?? '').trim().isEmpty
+        ? noteText
+        : '${booking.notes}\n$noteText';
+
+    await _client.from('bookings').update({
+      'origin_lat': latitude,
+      'origin_lng': longitude,
+      'pickup_address': address.trim(),
+      'notes': mergedNotes,
+      'updated_at': DateTime.now().toIso8601String(),
+    }).eq('id', bookingId);
+  }
+
   /// Get pending bookings (for drivers)
   /// Phase 4D: Fixed filter — drivers should NOT see pending_merchant or
   /// preparing orders. They should only see:

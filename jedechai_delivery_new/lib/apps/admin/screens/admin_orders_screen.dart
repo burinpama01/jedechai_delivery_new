@@ -1,7 +1,11 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../common/services/admin_service.dart';
+import '../../../common/services/booking_service.dart';
 import '../../../utils/debug_logger.dart';
+import '../../customer/screens/services/delivery_map_picker_screen.dart';
 import '../theme/admin_theme.dart';
 
 /// Admin Orders Screen
@@ -19,8 +23,11 @@ class AdminOrdersScreen extends StatefulWidget {
 
 class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
   final _client = Supabase.instance.client;
+  final _bookingService = BookingService();
+  final _adminService = AdminService();
 
   List<Map<String, dynamic>> _orders = [];
+  final Set<String> _updatingOrderIds = <String>{};
   bool _isLoading = true;
   String _filterService = 'all';
   String _filterStatus = 'all';
@@ -192,6 +199,8 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
         ? DateFormat('dd/MM/yyyy HH:mm')
             .format(DateTime.parse(order['created_at']).toLocal())
         : '-';
+    final orderId = order['id']?.toString() ?? '';
+    final isUpdating = _updatingOrderIds.contains(orderId);
 
     // Service icon & color
     IconData serviceIcon;
@@ -330,9 +339,169 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                         color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8))),
               ],
             ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: isUpdating || orderId.isEmpty
+                    ? null
+                    : () => _handleEditStoreLocation(order),
+                icon: isUpdating
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.edit_location_alt_outlined, size: 18),
+                label: Text(
+                  isUpdating ? 'กำลังบันทึก...' : 'แก้ตำแหน่งร้านในออเดอร์',
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _handleEditStoreLocation(Map<String, dynamic> order) async {
+    final bookingId = order['id']?.toString();
+    if (bookingId == null || bookingId.isEmpty) return;
+
+    final currentLat = (order['origin_lat'] as num?)?.toDouble();
+    final currentLng = (order['origin_lng'] as num?)?.toDouble();
+    final initialPosition = (currentLat != null && currentLng != null)
+        ? LatLng(currentLat, currentLng)
+        : null;
+
+    final picked = await Navigator.of(context).push<Map<String, dynamic>>(
+      MaterialPageRoute(
+        builder: (_) => DeliveryMapPickerScreen(initialPosition: initialPosition),
+      ),
+    );
+    if (!mounted || picked == null) return;
+
+    final newLat = (picked['lat'] as num?)?.toDouble();
+    final newLng = (picked['lng'] as num?)?.toDouble();
+    final newAddress = picked['address']?.toString().trim() ?? '';
+    if (newLat == null || newLng == null || newAddress.isEmpty) {
+      _showSnack('ข้อมูลตำแหน่งไม่ครบถ้วน');
+      return;
+    }
+
+    if (newLat < -90 || newLat > 90 || newLng < -180 || newLng > 180) {
+      _showSnack('ค่าพิกัดไม่ถูกต้อง');
+      return;
+    }
+
+    final reason = await _askLocationFixReason(
+      currentAddress: (order['pickup_address'] ?? order['origin_address'] ?? '-')
+          .toString(),
+      newAddress: newAddress,
+    );
+    if (!mounted || reason == null) return;
+
+    setState(() => _updatingOrderIds.add(bookingId));
+
+    final previousLat = (order['origin_lat'] as num?)?.toDouble();
+    final previousLng = (order['origin_lng'] as num?)?.toDouble();
+    final previousAddress =
+        (order['pickup_address'] ?? order['origin_address'] ?? '').toString();
+
+    try {
+      await _bookingService.updateOrderStoreLocationByAdmin(
+        bookingId: bookingId,
+        latitude: newLat,
+        longitude: newLng,
+        address: newAddress,
+        reason: reason,
+      );
+
+      final merchantId = order['merchant_id']?.toString();
+      if (merchantId != null && merchantId.isNotEmpty) {
+        final merchantUpdated = await _adminService.updateMerchantLocation(
+          merchantId: merchantId,
+          latitude: newLat,
+          longitude: newLng,
+          shopAddress: newAddress,
+        );
+        if (!merchantUpdated) {
+          await _bookingService.updateOrderStoreLocationByAdmin(
+            bookingId: bookingId,
+            latitude: previousLat ?? newLat,
+            longitude: previousLng ?? newLng,
+            address: previousAddress.isEmpty ? newAddress : previousAddress,
+            reason: 'rollback after merchant profile sync failed',
+          );
+          throw Exception('อัปเดตตำแหน่งร้านหลักไม่สำเร็จ');
+        }
+      }
+
+      _showSnack('อัปเดตตำแหน่งร้านสำเร็จ');
+      await _loadOrders();
+    } catch (e) {
+      debugLog('❌ Failed to edit store location for booking $bookingId: $e');
+      _showSnack('อัปเดตไม่สำเร็จ: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _updatingOrderIds.remove(bookingId));
+      }
+    }
+  }
+
+  Future<String?> _askLocationFixReason({
+    required String currentAddress,
+    required String newAddress,
+  }) async {
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('เหตุผลการแก้ตำแหน่งร้าน'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('เดิม: $currentAddress', maxLines: 2, overflow: TextOverflow.ellipsis),
+              const SizedBox(height: 6),
+              Text('ใหม่: $newAddress', maxLines: 2, overflow: TextOverflow.ellipsis),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  hintText: 'เช่น ลูกค้าแจ้งว่าหมุดร้านคลาดเคลื่อน',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('ยกเลิก'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final reason = controller.text.trim();
+                if (reason.isEmpty) return;
+                Navigator.of(context).pop(reason);
+              },
+              child: const Text('ยืนยัน'),
+            ),
+          ],
+        );
+      },
+    );
+    controller.dispose();
+    return result;
+  }
+
+  void _showSnack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 }
