@@ -1031,6 +1031,9 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       if (_customerLat == null || _customerLng == null) {
         throw Exception(AppLocalizations.of(context)!.foodCheckoutLocationRequired);
       }
+      if (_merchantLat == null || _merchantLng == null) {
+        throw Exception('ไม่พบตำแหน่งร้านค้า กรุณาให้ร้านค้าตั้งค่าตำแหน่งร้านก่อนรับออเดอร์');
+      }
 
       final note = _noteController.text.trim();
       if (note.isNotEmpty) {
@@ -1053,6 +1056,8 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         subtotal: cart.subtotal,
         deliveryFee: _deliveryFee,
         distanceKm: _distanceKm,
+        merchantLat: _merchantLat!,
+        merchantLng: _merchantLng!,
         customerLat: _customerLat!,
         customerLng: _customerLng!,
         customerAddress: _customerAddress,
@@ -1153,6 +1158,8 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
     required double subtotal,
     required double deliveryFee,
     required double distanceKm,
+    required double merchantLat,
+    required double merchantLng,
     required double customerLat,
     required double customerLng,
     required String customerAddress,
@@ -1166,9 +1173,6 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
   }) async {
     try {
       final client = Supabase.instance.client;
-
-      final merchantLat = 13.7563;
-      final merchantLng = 100.5018;
 
       debugLog('📝 Creating food order:');
       debugLog('   └─ merchant: $merchantName ($merchantId)');

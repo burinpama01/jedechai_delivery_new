@@ -2314,9 +2314,6 @@ class _BookingServiceHelper {
     try {
       final client = Supabase.instance.client;
 
-      const fallbackMerchantLat = 13.7563;
-      const fallbackMerchantLng = 100.5018;
-
       // Get merchant location + custom fee settings
       Map<String, dynamic>? merchantProfile;
       try {
@@ -2325,13 +2322,14 @@ class _BookingServiceHelper {
             .select(
                 'latitude, longitude, gp_rate, merchant_gp_system_rate, merchant_gp_driver_rate, custom_base_fare, custom_base_distance, custom_per_km, custom_delivery_fee')
             .eq('id', merchantId)
-            .single();
+            .maybeSingle();
       } catch (_) {}
 
-      final merchantLat = (merchantProfile?['latitude'] as num?)?.toDouble() ??
-          fallbackMerchantLat;
-      final merchantLng = (merchantProfile?['longitude'] as num?)?.toDouble() ??
-          fallbackMerchantLng;
+      final merchantLat = (merchantProfile?['latitude'] as num?)?.toDouble();
+      final merchantLng = (merchantProfile?['longitude'] as num?)?.toDouble();
+      if (merchantLat == null || merchantLng == null) {
+        throw Exception('ไม่พบตำแหน่งร้านค้า กรุณาให้ร้านค้าตั้งค่าตำแหน่งร้านก่อนรับออเดอร์');
+      }
 
       // Calculate distance (straight-line fallback)
       double distanceKm = 3.0;

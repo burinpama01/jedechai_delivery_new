@@ -739,24 +739,38 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       },
     );
 
-    if (confirmed != true || selectedReason == null) return;
+    final cancellationReason = selectedReason;
+    if (confirmed != true || cancellationReason == null) return;
 
     try {
       setState(() => _isUpdatingStatus = true);
 
-      await SupabaseService.client.from('bookings').update({
-        'status': 'cancelled',
-        'cancel_reason': selectedReason,
-        'cancelled_by': 'driver',
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', _booking!.id);
+      final updatedAt = DateTime.now().toIso8601String();
+      try {
+        await SupabaseService.client.from('bookings').update({
+          'status': 'cancelled',
+          'cancellation_reason': 'driver_cancelled: $cancellationReason',
+          'cancelled_by': 'driver',
+          'updated_at': updatedAt,
+        }).eq('id', _booking!.id);
+      } catch (e) {
+        if (!_isMissingCancellationColumnError(e)) rethrow;
+
+        debugLog(
+          '⚠️ Cancellation metadata columns missing, retrying status-only cancel: $e',
+        );
+        await SupabaseService.client.from('bookings').update({
+          'status': 'cancelled',
+          'updated_at': updatedAt,
+        }).eq('id', _booking!.id);
+      }
 
       // Notify customer
       if (_booking!.customerId.isNotEmpty) {
         await NotificationSender.sendNotification(
           targetUserId: _booking!.customerId,
           title: l10n.driverNavCancelNotifTitle,
-          body: l10n.driverNavCancelNotifBody(selectedReason!),
+          body: l10n.driverNavCancelNotifBody(cancellationReason),
           data: {
             'type': 'booking_cancelled',
             'booking_id': _booking!.id,
@@ -779,6 +793,15 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     } finally {
       if (mounted) setState(() => _isUpdatingStatus = false);
     }
+  }
+
+  bool _isMissingCancellationColumnError(Object error) {
+    final message = error.toString();
+    return message.contains('PGRST204') &&
+        (message.contains('cancellation_reason') ||
+            message.contains('cancel_reason') ||
+            message.contains('cancelled_by') ||
+            message.contains('cancelled_at'));
   }
 
   Future<void> _setupRealtimeUpdates() async {
