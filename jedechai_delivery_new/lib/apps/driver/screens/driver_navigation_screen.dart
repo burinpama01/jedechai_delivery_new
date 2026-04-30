@@ -1461,34 +1461,23 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           debugLog('✅ Route drawn successfully with ${polylineCoordinates.length} points');
         } else {
           debugLog('❌ No polyline points found in route');
-          _drawStraightLine(origin, destination);
         }
       } else {
-        debugLog('❌ Directions API error: ${data['status']}');
-        _drawStraightLine(origin, destination);
+        debugLog(
+          '❌ Directions API error: ${data['status']} - ${data['error_message'] ?? 'Unknown error'}',
+        );
       }
     } catch (e) {
       debugLog('❌ Error drawing route: $e');
-      _drawStraightLine(origin, destination);
     }
   }
 
   void _drawStraightLine(LatLng origin, LatLng destination) {
-    // Fallback: draw straight line if API fails
-    if (mounted) {
-      setState(() {
-        _polylines.clear();
-        _polylines.add(
-          Polyline(
-            polylineId: const PolylineId('route'),
-            color: AppTheme.accentBlue,
-            width: 5,
-            points: [origin, destination],
-          ),
-        );
-      });
-      debugLog('⚠️ Drew fallback straight line');
-    }
+    debugLog(
+      '⚠️ Directions route unavailable; skipped misleading straight line '
+      'from ${origin.latitude},${origin.longitude} to '
+      '${destination.latitude},${destination.longitude}',
+    );
   }
 
   Future<void> _updateJobStatus(String newStatus) async {
