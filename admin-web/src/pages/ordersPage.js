@@ -143,6 +143,7 @@ export function renderOrderRows(orders) {
     const canAdminAccept = typeof canAdminMerchantAccept === 'function' ? canAdminMerchantAccept(o) : false;
     const canAdminReady = typeof canAdminMarkFoodReady === 'function' ? canAdminMarkFoodReady(o) : false;
     const canEditPickup = o.status !== 'completed' && o.status !== 'cancelled';
+    const totalAmount = Number(o.price || 0) + Number(o.delivery_fee || 0);
 
     let actions = '';
     if (canReassign || canRebroadcast || canAdminAccept || canAdminReady || canEditPickup) {
@@ -167,7 +168,7 @@ export function renderOrderRows(orders) {
       <td class="px-4 py-3 text-xs">${dName}</td>
       <td class="px-4 py-3 text-gray-600 max-w-[120px] truncate">${o.pickup_address || '-'}</td>
       <td class="px-4 py-3 text-gray-600 max-w-[120px] truncate">${o.destination_address || '-'}</td>
-      <td class="px-4 py-3 font-semibold">฿${fmt(Math.round(o.price))}</td>
+      <td class="px-4 py-3 font-semibold">฿${fmt(Math.round(totalAmount))}${o.service_type === 'food' ? `<div class="text-[10px] text-gray-400">อาหาร ฿${fmt(Math.round(o.price || 0))} + ส่ง ฿${fmt(Math.round(o.delivery_fee || 0))}</div>` : ''}</td>
       <td class="px-4 py-3">${typeof statusBadge === 'function' ? statusBadge(o.status) : o.status}</td>
       <td class="px-4 py-3 text-gray-500 text-xs">${fmtDate(o.created_at)}</td>
       <td class="px-4 py-3 whitespace-nowrap">${actions}</td>
@@ -196,11 +197,13 @@ export function exportOrdersCsv() {
     คนขับ: globalThis._orderDriverMap?.[o.driver_id] || (o.driver_id ? o.driver_id.substring(0, 8) : '-'),
     จุดรับ: o.pickup_address || '-',
     จุดส่ง: o.destination_address || '-',
-    ราคา: Math.round(o.price || 0),
+    ยอดรวม: Math.round(Number(o.price || 0) + Number(o.delivery_fee || 0)),
+    ค่าอาหาร: o.service_type === 'food' ? Math.round(o.price || 0) : '',
+    ค่าส่ง: o.service_type === 'food' ? Math.round(o.delivery_fee || 0) : '',
     สถานะ: o.status || '-',
     วันที่: fmtDate(o.created_at),
   }));
-  exportRowsToCsv(reportFilename('orders_report', 'csv', from, to), ['เลขออเดอร์', 'ประเภท', 'คนขับ', 'จุดรับ', 'จุดส่ง', 'ราคา', 'สถานะ', 'วันที่'], rows);
+  exportRowsToCsv(reportFilename('orders_report', 'csv', from, to), ['เลขออเดอร์', 'ประเภท', 'คนขับ', 'จุดรับ', 'จุดส่ง', 'ยอดรวม', 'ค่าอาหาร', 'ค่าส่ง', 'สถานะ', 'วันที่'], rows);
 }
 
 export function exportOrdersExcel() {
@@ -213,11 +216,13 @@ export function exportOrdersExcel() {
     คนขับ: globalThis._orderDriverMap?.[o.driver_id] || (o.driver_id ? o.driver_id.substring(0, 8) : '-'),
     จุดรับ: o.pickup_address || '-',
     จุดส่ง: o.destination_address || '-',
-    ราคา: Math.round(o.price || 0),
+    ยอดรวม: Math.round(Number(o.price || 0) + Number(o.delivery_fee || 0)),
+    ค่าอาหาร: o.service_type === 'food' ? Math.round(o.price || 0) : '',
+    ค่าส่ง: o.service_type === 'food' ? Math.round(o.delivery_fee || 0) : '',
     สถานะ: o.status || '-',
     วันที่: fmtDate(o.created_at),
   }));
-  exportRowsToExcel(reportFilename('orders_report', 'xls', from, to), ['เลขออเดอร์', 'ประเภท', 'คนขับ', 'จุดรับ', 'จุดส่ง', 'ราคา', 'สถานะ', 'วันที่'], rows);
+  exportRowsToExcel(reportFilename('orders_report', 'xls', from, to), ['เลขออเดอร์', 'ประเภท', 'คนขับ', 'จุดรับ', 'จุดส่ง', 'ยอดรวม', 'ค่าอาหาร', 'ค่าส่ง', 'สถานะ', 'วันที่'], rows);
 }
 
 export function wireOrdersBridge() {

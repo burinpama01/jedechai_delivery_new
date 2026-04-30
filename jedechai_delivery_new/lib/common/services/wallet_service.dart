@@ -1,6 +1,7 @@
 ﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'system_config_service.dart';
+import '../utils/driver_amount_calculator.dart';
 import '../utils/order_code_formatter.dart';
 
 /// WalletService - Service สำหรับจัดการกระเป๋าเงินคนขับ
@@ -111,14 +112,14 @@ class WalletService {
   }) {
     final deliveryRate = deliverySystemRate ?? platformFeeRate ?? 0.15;
     final merchantSystemRate = merchantGpSystemRate ?? merchantGpRate ?? 0.10;
-
-    // คงไว้เพื่อรองรับการเรียกใช้งานแบบส่งค่ามา แม้ไม่ได้ใช้หักจริง
-    // ignore: unused_local_variable
-    final driverSupportRate = merchantGpDriverRate ?? 0.0;
-    
-    final deliverySystemFee = deliveryFee * deliveryRate;
-    final merchantSystemGP = foodPrice * merchantSystemRate;
-    return (deliverySystemFee + merchantSystemGP).ceilToDouble();
+    final settlement = DriverAmountCalculator.foodOrderSettlement(
+      foodPrice: foodPrice,
+      deliveryFee: deliveryFee,
+      deliverySystemRate: deliveryRate,
+      merchantGpSystemRate: merchantSystemRate,
+      merchantGpDriverRate: merchantGpDriverRate ?? 0.0,
+    );
+    return settlement.appEarnings;
   }
 
   /// ตรวจสอบว่าคนขับมีเงินพอรับงาน food หรือไม่ (per-job check)
@@ -146,7 +147,8 @@ class WalletService {
       final deliveryRate =
           deliverySystemRateOverride ?? _configService.platformFeeRate;
       final merchantSystemRate =
-          merchantGpSystemRateOverride ?? _configService.merchantGpRate;
+          merchantGpSystemRateOverride ??
+          _configService.merchantGpSystemRateDefault;
       
       final estimatedDeduction = estimateFoodDeduction(
         deliveryFee: deliveryFee,
@@ -267,21 +269,27 @@ class WalletService {
       final deliverySystemRate =
           deliverySystemRateOverride ?? _configService.platformFeeRate;
       final merchantGpSystemRate =
-          merchantGpSystemRateOverride ?? _configService.merchantGpRate;
-      final merchantGpDriverRate = merchantGpDriverRateOverride ?? 0.0;
-      
+          merchantGpSystemRateOverride ??
+          _configService.merchantGpSystemRateDefault;
+      final merchantGpDriverRate =
+          merchantGpDriverRateOverride ??
+          _configService.merchantGpDriverRateDefault;
+
       // คำนวณค่าธรรมเนียมจากค่าที่ตั้งค่าในระบบ/ร้านค้า
-      final deliverySystemFee =
-          (deliveryFee * deliverySystemRate).ceilToDouble();
-      final merchantSystemGP =
-          (foodPrice * merchantGpSystemRate).ceilToDouble();
-      final merchantDriverGP =
-          (foodPrice * merchantGpDriverRate).ceilToDouble();
+      final settlement = DriverAmountCalculator.foodOrderSettlement(
+        foodPrice: foodPrice,
+        deliveryFee: deliveryFee,
+        deliverySystemRate: deliverySystemRate,
+        merchantGpSystemRate: merchantGpSystemRate,
+        merchantGpDriverRate: merchantGpDriverRate,
+      );
+      final deliverySystemFee = settlement.deliverySystemFee;
+      final merchantSystemGP = settlement.merchantSystemGP;
+      final merchantDriverGP = settlement.merchantDriverGP;
 
       var totalDeduction = deliverySystemFee + merchantSystemGP;
       var appEarnings = deliverySystemFee + merchantSystemGP;
-      var driverNetIncome =
-          (deliveryFee - deliverySystemFee) + merchantDriverGP;
+      var driverNetIncome = settlement.driverNetIncome;
       var extraSystemCharge = 0.0;
       var extraDriverSupport = 0.0;
       var couponSystemOffset = 0.0;
@@ -289,8 +297,10 @@ class WalletService {
 
       if (applyMerchantFreeDeliveryAdjustment) {
         // Additional GP from merchant coupon budget
-        extraSystemCharge = (foodPrice * merchantFreeDeliverySystemRate).ceilToDouble();
-        extraDriverSupport = (foodPrice * merchantFreeDeliveryDriverRate).ceilToDouble();
+        extraSystemCharge =
+            (foodPrice * merchantFreeDeliverySystemRate).ceilToDouble();
+        extraDriverSupport =
+            (foodPrice * merchantFreeDeliveryDriverRate).ceilToDouble();
 
         // หักเข้าระบบเฉพาะส่วน system rate
         totalDeduction += extraSystemCharge;
@@ -316,9 +326,15 @@ class WalletService {
       couponSystemOffset = funding['couponSystemOffset'] ?? 0.0;
       couponDriverOffset = funding['couponDriverOffset'] ?? 0.0;
 
-      debugLog('   └─ Delivery System Fee (${(deliverySystemRate * 100).toStringAsFixed(0)}% of $deliveryFee): $deliverySystemFee');
-      debugLog('   └─ Merchant GP System (${(merchantGpSystemRate * 100).toStringAsFixed(0)}% of $foodPrice): $merchantSystemGP');
-      debugLog('   └─ Merchant GP Driver (${(merchantGpDriverRate * 100).toStringAsFixed(0)}% of $foodPrice): $merchantDriverGP');
+      debugLog(
+        '   └─ Delivery System Fee (${(deliverySystemRate * 100).toStringAsFixed(0)}% of $deliveryFee): $deliverySystemFee',
+      );
+      debugLog(
+        '   └─ Merchant GP System (${(merchantGpSystemRate * 100).toStringAsFixed(0)}% of $foodPrice): $merchantSystemGP',
+      );
+      debugLog(
+        '   └─ Merchant GP Driver (${(merchantGpDriverRate * 100).toStringAsFixed(0)}% of $foodPrice): $merchantDriverGP',
+      );
       if (applyMerchantFreeDeliveryAdjustment) {
         debugLog('   └─ Extra Coupon GP System (${(merchantFreeDeliverySystemRate * 100).toStringAsFixed(0)}%): $extraSystemCharge');
         debugLog('   └─ Extra Coupon GP Driver (${(merchantFreeDeliveryDriverRate * 100).toStringAsFixed(0)}%): $extraDriverSupport');

@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../common/services/auth_service.dart';
 import '../../../common/services/system_config_service.dart';
+import '../../../common/services/merchant_food_config_service.dart';
+import '../../../common/utils/driver_amount_calculator.dart';
 import '../../../common/utils/order_code_formatter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_theme.dart';
@@ -37,6 +39,9 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
   int _completedOrders = 0;
   int _cancelledOrders = 0;
   double _avgOrderValue = 0;
+  double _merchantSystemRate = 0.10;
+  double _merchantDriverRate = 0.0;
+  double _deliverySystemRate = 0.02;
 
   // Order history
   List<Map<String, dynamic>> _orderHistory = [];
@@ -148,37 +153,56 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
           .select('id, price, delivery_fee, status, created_at, updated_at, notes, customer_id')
           .eq('merchant_id', merchantId)
           .eq('service_type', 'food')
-          .inFilter('status', ['completed', 'cancelled', 'preparing', 'ready', 'picked_up', 'delivering'])
+          .inFilter('status', [
+            'completed',
+            'cancelled',
+            'pending_merchant',
+            'preparing',
+            'driver_accepted',
+            'matched',
+            'arrived_at_merchant',
+            'ready_for_pickup',
+            'picking_up_order',
+            'in_transit',
+          ])
           .gte('created_at', startStr);
       if (hasDateFilter) allQuery = allQuery.lte('created_at', endStr);
       final allOrdersResponse = await allQuery.order('created_at', ascending: false).limit(50);
 
-      // Fetch merchant GP rate from system config
       final configService = SystemConfigService();
       await configService.fetchSettings();
-      final gpRate = configService.merchantGpRate;
 
-      // Try to fetch merchant's custom GP rate (column may not exist)
-      double? customGp;
+      Map<String, dynamic>? merchantProfile;
       try {
-        final merchantProfile = await Supabase.instance.client
+        merchantProfile = await Supabase.instance.client
             .from('profiles')
-            .select('custom_gp_rate')
+            .select(
+              'gp_rate, merchant_gp_system_rate, merchant_gp_driver_rate, custom_base_fare, custom_base_distance, custom_per_km, custom_delivery_fee',
+            )
             .eq('id', merchantId)
             .maybeSingle();
-        customGp = (merchantProfile?['custom_gp_rate'] as num?)?.toDouble();
-      } catch (_) {
-        // Column doesn't exist yet — use system default
-      }
-      final effectiveGpRate = customGp ?? gpRate;
+      } catch (_) {}
+      final merchantConfig = MerchantFoodConfigService.resolve(
+        merchantProfile: merchantProfile,
+        defaultMerchantSystemRate: configService.merchantGpSystemRateDefault,
+        defaultMerchantDriverRate: configService.merchantGpDriverRateDefault,
+        defaultDeliverySystemRate: configService.platformFeeRate,
+      );
 
       // Calculate stats — ยอดขายหลังหัก GP
-      double totalRevBeforeGP = 0;
+      double netRevenue = 0;
       for (final order in completedResponse) {
-        totalRevBeforeGP += (order['price'] as num?)?.toDouble() ?? 0;
+        final foodPrice = (order['price'] as num?)?.toDouble() ?? 0;
+        final deliveryFee = (order['delivery_fee'] as num?)?.toDouble() ?? 0;
+        final settlement = DriverAmountCalculator.foodOrderSettlement(
+          foodPrice: foodPrice,
+          deliveryFee: deliveryFee,
+          deliverySystemRate: merchantConfig.deliverySystemRate,
+          merchantGpSystemRate: merchantConfig.merchantGpSystemRate,
+          merchantGpDriverRate: merchantConfig.merchantGpDriverRate,
+        );
+        netRevenue += settlement.merchantReceives;
       }
-      final gpAmount = totalRevBeforeGP * effectiveGpRate;
-      final netRevenue = totalRevBeforeGP - gpAmount;
 
       if (mounted) {
         setState(() {
@@ -187,6 +211,9 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
           _completedOrders = completedResponse.length;
           _cancelledOrders = cancelledResponse.length;
           _avgOrderValue = _completedOrders > 0 ? netRevenue / _completedOrders : 0;
+          _merchantSystemRate = merchantConfig.merchantGpSystemRate;
+          _merchantDriverRate = merchantConfig.merchantGpDriverRate;
+          _deliverySystemRate = merchantConfig.deliverySystemRate;
           _orderHistory = List<Map<String, dynamic>>.from(allOrdersResponse);
           _isLoading = false;
         });
@@ -581,6 +608,16 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     final status = order['status'] as String? ?? 'unknown';
     final price = (order['price'] as num?)?.toDouble() ?? 0;
+    final deliveryFee = (order['delivery_fee'] as num?)?.toDouble() ?? 0;
+    final settlement = DriverAmountCalculator.foodOrderSettlement(
+      foodPrice: price,
+      deliveryFee: deliveryFee,
+      deliverySystemRate: _deliverySystemRate,
+      merchantGpSystemRate: _merchantSystemRate,
+      merchantGpDriverRate: _merchantDriverRate,
+    );
+    final displayAmount =
+        status == 'completed' ? settlement.merchantReceives : price;
     final orderId = OrderCodeFormatter.formatByServiceType(
       order['id']?.toString(),
       serviceType: order['service_type']?.toString(),
@@ -649,13 +686,26 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
             Row(
               children: [
                 Text(
-                  _formatCurrency(price),
+                  _formatCurrency(displayAmount),
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: colorScheme.onSurface,
                   ),
                 ),
+                if (status == 'completed') ...[
+                  const SizedBox(width: 8),
+                  Text(
+                    AppLocalizations.of(context)!.orderDetailCompletionAfterGP(
+                      ((_merchantSystemRate + _merchantDriverRate) * 100)
+                          .toStringAsFixed(0),
+                    ),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
                 const Spacer(),
                 Icon(Icons.access_time, size: 14, color: colorScheme.onSurfaceVariant),
                 const SizedBox(width: 4),

@@ -9,6 +9,8 @@ import '../../../common/models/booking.dart';
 import '../../../common/utils/driver_amount_calculator.dart';
 import '../../../common/utils/order_code_formatter.dart';
 import '../../../common/services/supabase_service.dart';
+import '../../../common/services/system_config_service.dart';
+import '../../../common/services/merchant_food_config_service.dart';
 import '../../../theme/app_theme.dart';
 import '../../../utils/debug_logger.dart';
 
@@ -36,12 +38,85 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
   static String get _googleApiKey => EnvConfig.googleMapsApiKey;
   double _couponDiscount = 0.0;
   String? _couponCode;
+  double _merchantSystemRate = 0.10;
+  double _merchantDriverRate = 0.0;
+  double _deliverySystemRate = 0.02;
 
   @override
   void initState() {
     super.initState();
     _setupMap();
     _loadCouponUsage();
+    _loadFoodSettlementRates();
+  }
+
+  Future<void> _loadFoodSettlementRates() async {
+    final booking = widget.booking;
+    if (booking.serviceType != 'food') return;
+
+    try {
+      final configService = SystemConfigService();
+      await configService.fetchSettings();
+
+      Map<String, dynamic>? merchantProfile;
+      final merchantId = booking.merchantId;
+      if (merchantId != null && merchantId.isNotEmpty) {
+        merchantProfile = await SupabaseService.client
+            .from('profiles')
+            .select(
+              'gp_rate, merchant_gp_system_rate, merchant_gp_driver_rate, custom_base_fare, custom_base_distance, custom_per_km, custom_delivery_fee',
+            )
+            .eq('id', merchantId)
+            .maybeSingle();
+      }
+
+      final config = MerchantFoodConfigService.resolve(
+        merchantProfile: merchantProfile,
+        defaultMerchantSystemRate: configService.merchantGpSystemRateDefault,
+        defaultMerchantDriverRate: configService.merchantGpDriverRateDefault,
+        defaultDeliverySystemRate: configService.platformFeeRate,
+      );
+
+      double? driverDeliverySystemRate;
+      final driverId = booking.driverId;
+      if (driverId != null && driverId.isNotEmpty) {
+        try {
+          final driverProfile = await SupabaseService.client
+              .from('profiles')
+              .select('driver_delivery_system_rate')
+              .eq('id', driverId)
+              .maybeSingle();
+          final raw = driverProfile?['driver_delivery_system_rate'];
+          if (raw != null) {
+            final rate = (raw as num).toDouble();
+            if (rate >= 0 && rate <= 1) driverDeliverySystemRate = rate;
+          }
+        } catch (e) {
+          debugLog('⚠️ Error loading driver delivery fee override: $e');
+        }
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _merchantSystemRate = config.merchantGpSystemRate;
+        _merchantDriverRate = config.merchantGpDriverRate;
+        _deliverySystemRate = driverDeliverySystemRate ?? config.deliverySystemRate;
+      });
+    } catch (e) {
+      debugLog('⚠️ Error loading food settlement rates in job detail: $e');
+    }
+  }
+
+  FoodOrderSettlement? _foodSettlement() {
+    final booking = widget.booking;
+    if (booking.serviceType != 'food') return null;
+    return DriverAmountCalculator.foodOrderSettlement(
+      foodPrice: booking.price,
+      deliveryFee: booking.deliveryFee ?? 0,
+      deliverySystemRate: _deliverySystemRate,
+      merchantGpSystemRate: _merchantSystemRate,
+      merchantGpDriverRate: _merchantDriverRate,
+    );
   }
 
   Future<void> _loadCouponUsage() async {
@@ -199,14 +274,17 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
     final hideCouponBreakdown = normalizedCouponCode == 'WELCOME20' ||
         normalizedCouponCode == 'REFERRER20' ||
         normalizedCouponCode == 'REFFERER20';
-    final commission = DriverAmountCalculator.appFee(
+    final foodSettlement = _foodSettlement();
+    final commission = DriverAmountCalculator.appFeeWithFoodFallback(
       booking: b,
       netCollectAmount: totalCollect,
+      foodSettlement: foodSettlement,
     );
-    final netEarnings = DriverAmountCalculator.netEarnings(
+    final netEarnings = DriverAmountCalculator.netEarningsWithFoodFallback(
       booking: b,
       netCollectAmount: totalCollect,
       appFeeAmount: commission,
+      foodSettlement: foodSettlement,
     );
     final l10n = AppLocalizations.of(context)!;
     final paymentLabel = (b.paymentMethod ?? 'cash') == 'cash' ? l10n.jobDetailCash : b.paymentMethod ?? '-';

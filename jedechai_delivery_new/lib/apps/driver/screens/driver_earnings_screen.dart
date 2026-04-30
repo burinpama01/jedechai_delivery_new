@@ -9,6 +9,8 @@ import 'driver_job_detail_screen.dart';
 import '../../../common/models/booking.dart';
 import '../../../common/services/wallet_service.dart';
 import '../../../common/services/auth_service.dart';
+import '../../../common/services/system_config_service.dart';
+import '../../../common/services/merchant_food_config_service.dart';
 import '../../../common/utils/driver_amount_calculator.dart';
 import '../../../common/utils/order_code_formatter.dart';
 
@@ -44,6 +46,11 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
   // Job history
   List<Map<String, dynamic>> _jobHistory = [];
   Map<String, double> _couponDiscountByBookingId = {};
+  Map<String, Map<String, dynamic>> _merchantProfilesById = {};
+  double _defaultMerchantSystemRate = 0.10;
+  double _defaultMerchantDriverRate = 0.0;
+  double _defaultDeliverySystemRate = 0.15;
+  double _standardCommissionRate = 15.0;
 
   @override
   void initState() {
@@ -140,7 +147,18 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
           .from('bookings')
           .select('*')
           .eq('driver_id', userId)
-          .inFilter('status', ['completed', 'cancelled', 'picked_up', 'delivering'])
+          .inFilter('status', [
+            'completed',
+            'cancelled',
+            'accepted',
+            'driver_accepted',
+            'matched',
+            'arrived',
+            'arrived_at_merchant',
+            'ready_for_pickup',
+            'picking_up_order',
+            'in_transit',
+          ])
           .gte('created_at', startStr);
       if (hasEndFilter) allQuery = allQuery.lte('created_at', endStr);
       final allJobsResponse = await allQuery.order('created_at', ascending: false).limit(50);
@@ -171,10 +189,68 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
         }
       }
 
+      final configService = SystemConfigService();
+      await configService.fetchSettings();
+      double? driverDeliverySystemRateOverride;
+      try {
+        final driverProfile = await Supabase.instance.client
+            .from('profiles')
+            .select('driver_delivery_system_rate')
+            .eq('id', userId)
+            .maybeSingle();
+        final raw = driverProfile?['driver_delivery_system_rate'];
+        if (raw != null) {
+          final rate = (raw as num).toDouble();
+          if (rate >= 0 && rate <= 1) driverDeliverySystemRateOverride = rate;
+        }
+      } catch (e) {
+        debugLog('⚠️ Error loading driver delivery fee override: $e');
+      }
+      final foodMerchantIds = <String>{
+        ...completedResponse
+            .where((job) => job['service_type'] == 'food')
+            .map((job) => job['merchant_id']?.toString())
+            .whereType<String>()
+            .where((id) => id.isNotEmpty),
+        ...allJobsResponse
+            .where((job) => job['service_type'] == 'food')
+            .map((job) => job['merchant_id']?.toString())
+            .whereType<String>()
+            .where((id) => id.isNotEmpty),
+      }.toList();
+
+      final merchantProfiles = <String, Map<String, dynamic>>{};
+      if (foodMerchantIds.isNotEmpty) {
+        try {
+          final profiles = await Supabase.instance.client
+              .from('profiles')
+              .select(
+                'id, gp_rate, merchant_gp_system_rate, merchant_gp_driver_rate, custom_base_fare, custom_base_distance, custom_per_km, custom_delivery_fee',
+              )
+              .inFilter('id', foodMerchantIds);
+          for (final profile in (profiles as List)) {
+            final id = profile['id']?.toString();
+            if (id != null && id.isNotEmpty) {
+              merchantProfiles[id] = Map<String, dynamic>.from(profile);
+            }
+          }
+        } catch (e) {
+          debugLog('⚠️ Error loading merchant finance profiles: $e');
+        }
+      }
+
       // Calculate stats
       double totalEarn = 0;
       for (final job in completedResponse) {
-        totalEarn += (job['driver_earnings'] as num?)?.toDouble() ?? 0;
+        totalEarn += _driverEarningsForJob(
+          job,
+          merchantProfiles: merchantProfiles,
+          defaultMerchantSystemRate: configService.merchantGpSystemRateDefault,
+          defaultMerchantDriverRate: configService.merchantGpDriverRateDefault,
+          defaultDeliverySystemRate:
+              driverDeliverySystemRateOverride ?? configService.platformFeeRate,
+          standardCommissionRate: configService.commissionRate,
+        );
       }
 
       if (mounted) {
@@ -186,6 +262,12 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
           _avgEarnings = _completedJobs > 0 ? totalEarn / _completedJobs : 0;
           _jobHistory = List<Map<String, dynamic>>.from(allJobsResponse);
           _couponDiscountByBookingId = couponDiscountMap;
+          _merchantProfilesById = merchantProfiles;
+          _defaultMerchantSystemRate = configService.merchantGpSystemRateDefault;
+          _defaultMerchantDriverRate = configService.merchantGpDriverRateDefault;
+          _defaultDeliverySystemRate =
+              driverDeliverySystemRateOverride ?? configService.platformFeeRate;
+          _standardCommissionRate = configService.commissionRate;
           _isLoading = false;
         });
       }
@@ -197,6 +279,82 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
         setState(() { _error = e.toString(); _isLoading = false; });
       }
     }
+  }
+
+  double _driverEarningsForJob(
+    Map<String, dynamic> job, {
+    required Map<String, Map<String, dynamic>> merchantProfiles,
+    required double defaultMerchantSystemRate,
+    required double defaultMerchantDriverRate,
+    required double defaultDeliverySystemRate,
+    required double standardCommissionRate,
+  }) {
+    final saved = (job['driver_earnings'] as num?)?.toDouble();
+    final serviceType = job['service_type']?.toString() ?? '';
+
+    if (serviceType == 'food') {
+      final merchantId = job['merchant_id']?.toString();
+      final config = MerchantFoodConfigService.resolve(
+        merchantProfile: merchantId == null ? null : merchantProfiles[merchantId],
+        defaultMerchantSystemRate: defaultMerchantSystemRate,
+        defaultMerchantDriverRate: defaultMerchantDriverRate,
+        defaultDeliverySystemRate: defaultDeliverySystemRate,
+      );
+      final settlement = DriverAmountCalculator.foodOrderSettlement(
+        foodPrice: (job['price'] as num?)?.toDouble() ?? 0,
+        deliveryFee: (job['delivery_fee'] as num?)?.toDouble() ?? 0,
+        deliverySystemRate: config.deliverySystemRate,
+        merchantGpSystemRate: config.merchantGpSystemRate,
+        merchantGpDriverRate: config.merchantGpDriverRate,
+      );
+      return DriverAmountCalculator.shouldUseFoodSettlementFallback(
+        savedAmount: saved,
+        fallbackAmount: settlement.driverNetIncome,
+      )
+          ? settlement.driverNetIncome
+          : (saved ?? 0);
+    }
+
+    final price = (job['price'] as num?)?.toDouble() ?? 0;
+    final fallback = (price - (price * (standardCommissionRate / 100)).ceilToDouble())
+        .clamp(0.0, double.infinity)
+        .toDouble();
+    if (saved == null || (saved <= 0 && fallback > 0)) return fallback;
+    return saved;
+  }
+
+  double _appEarningsForJob(Map<String, dynamic> job) {
+    final saved = (job['app_earnings'] as num?)?.toDouble();
+    final serviceType = job['service_type']?.toString() ?? '';
+
+    if (serviceType == 'food') {
+      final merchantId = job['merchant_id']?.toString();
+      final config = MerchantFoodConfigService.resolve(
+        merchantProfile:
+            merchantId == null ? null : _merchantProfilesById[merchantId],
+        defaultMerchantSystemRate: _defaultMerchantSystemRate,
+        defaultMerchantDriverRate: _defaultMerchantDriverRate,
+        defaultDeliverySystemRate: _defaultDeliverySystemRate,
+      );
+      final settlement = DriverAmountCalculator.foodOrderSettlement(
+        foodPrice: (job['price'] as num?)?.toDouble() ?? 0,
+        deliveryFee: (job['delivery_fee'] as num?)?.toDouble() ?? 0,
+        deliverySystemRate: config.deliverySystemRate,
+        merchantGpSystemRate: config.merchantGpSystemRate,
+        merchantGpDriverRate: config.merchantGpDriverRate,
+      );
+      return DriverAmountCalculator.shouldUseFoodSettlementFallback(
+        savedAmount: saved,
+        fallbackAmount: settlement.appEarnings,
+      )
+          ? settlement.appEarnings
+          : (saved ?? 0);
+    }
+
+    final price = (job['price'] as num?)?.toDouble() ?? 0;
+    final fallback = (price * (_standardCommissionRate / 100)).ceilToDouble();
+    if (saved == null || (saved <= 0 && fallback > 0)) return fallback;
+    return saved;
   }
 
   String _formatCurrency(double amount) {
@@ -577,8 +735,17 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
   Widget _buildJobCard(Map<String, dynamic> job) {
     final colorScheme = Theme.of(context).colorScheme;
     final status = job['status'] as String? ?? 'unknown';
-    final driverEarnings = (job['driver_earnings'] as num?)?.toDouble() ?? 0;
-    final appEarnings = (job['app_earnings'] as num?)?.toDouble() ?? 0;
+    final driverEarnings = status == 'completed'
+        ? _driverEarningsForJob(
+            job,
+            merchantProfiles: _merchantProfilesById,
+            defaultMerchantSystemRate: _defaultMerchantSystemRate,
+            defaultMerchantDriverRate: _defaultMerchantDriverRate,
+            defaultDeliverySystemRate: _defaultDeliverySystemRate,
+            standardCommissionRate: _standardCommissionRate,
+          )
+        : 0.0;
+    final appEarnings = status == 'completed' ? _appEarningsForJob(job) : 0.0;
     // final price = (job['price'] as num?)?.toDouble() ?? 0;
     // final deliveryFee = (job['delivery_fee'] as num?)?.toDouble() ?? 0;
     final serviceType = job['service_type'] as String? ?? 'unknown';

@@ -8,6 +8,8 @@ import 'package:jedechai_delivery_new/theme/app_theme.dart';
 import '../../../common/services/notification_sender.dart';
 import '../../../common/services/auth_service.dart';
 import '../../../common/services/system_config_service.dart';
+import '../../../common/services/merchant_food_config_service.dart';
+import '../../../common/utils/driver_amount_calculator.dart';
 import '../../../common/utils/order_code_formatter.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -41,6 +43,9 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
   Timer? _autoRefreshTimer;
   Map<String, dynamic>? _currentOrder;
   double _effectiveGpRate = 0.10; // default, will be loaded dynamically
+  double _merchantGpSystemRate = 0.10;
+  double _merchantGpDriverRate = 0.0;
+  double _deliverySystemRate = 0.02;
   String? _driverName;
   String? _driverPhone;
 
@@ -165,34 +170,56 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
     });
   }
 
+  FoodOrderSettlement _foodSettlement(Map<String, dynamic> order) {
+    final price = order['price'] is int
+        ? (order['price'] as int).toDouble()
+        : (order['price'] as num?)?.toDouble() ?? 0.0;
+    final deliveryFee = order['delivery_fee'] is int
+        ? (order['delivery_fee'] as int).toDouble()
+        : (order['delivery_fee'] as num?)?.toDouble() ?? 0.0;
+    return DriverAmountCalculator.foodOrderSettlement(
+      foodPrice: price,
+      deliveryFee: deliveryFee,
+      deliverySystemRate: _deliverySystemRate,
+      merchantGpSystemRate: _merchantGpSystemRate,
+      merchantGpDriverRate: _merchantGpDriverRate,
+    );
+  }
+
   Future<void> _fetchGpRate() async {
     try {
       final merchantId = AuthService.userId;
       if (merchantId == null) return;
 
-      // Try merchant's custom GP rate first
-      double? customGp;
+      Map<String, dynamic>? merchantProfile;
       try {
-        final profile = await Supabase.instance.client
+        merchantProfile = await Supabase.instance.client
             .from('profiles')
-            .select('gp_rate')
+            .select(
+              'gp_rate, merchant_gp_system_rate, merchant_gp_driver_rate, custom_base_fare, custom_base_distance, custom_per_km, custom_delivery_fee',
+            )
             .eq('id', merchantId)
             .maybeSingle();
-        customGp = (profile?['gp_rate'] as num?)?.toDouble();
       } catch (_) {}
 
-      if (customGp != null && customGp > 0) {
-        if (mounted) setState(() => _effectiveGpRate = customGp!);
-        debugLog('💰 GP rate from merchant profile: ${(customGp * 100).toStringAsFixed(0)}%');
-        return;
-      }
-
-      // Fallback to system default
       final configService = SystemConfigService();
       await configService.fetchSettings();
-      final systemGp = configService.merchantGpRate;
-      if (mounted) setState(() => _effectiveGpRate = systemGp);
-      debugLog('💰 GP rate from system config: ${(systemGp * 100).toStringAsFixed(0)}%');
+      final config = MerchantFoodConfigService.resolve(
+        merchantProfile: merchantProfile,
+        defaultMerchantSystemRate: configService.merchantGpSystemRateDefault,
+        defaultMerchantDriverRate: configService.merchantGpDriverRateDefault,
+        defaultDeliverySystemRate: configService.platformFeeRate,
+      );
+
+      if (mounted) {
+        setState(() {
+          _merchantGpSystemRate = config.merchantGpSystemRate;
+          _merchantGpDriverRate = config.merchantGpDriverRate;
+          _effectiveGpRate = config.merchantGpTotalRate;
+          _deliverySystemRate = config.deliverySystemRate;
+        });
+      }
+      debugLog('💰 Merchant finance config loaded: ${config.summary}');
     } catch (e) {
       debugLog('⚠️ Error loading GP rate, using default: $e');
     }
@@ -499,8 +526,9 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
     final distanceKm = order['distance_km'] is int
         ? (order['distance_km'] as int).toDouble()
         : (order['distance_km'] as num?)?.toDouble() ?? 0.0;
-    final gpAmount = price * _effectiveGpRate;
-    final merchantReceives = price - gpAmount;
+    final settlement = _foodSettlement(order);
+    final gpAmount = settlement.merchantGP;
+    final merchantReceives = settlement.merchantReceives;
     final createdAt = DateTime.parse(order['created_at'] as String).toLocal();
     final scheduledAtStr = order['scheduled_at'] as String?;
     final scheduledAt = scheduledAtStr != null ? DateTime.tryParse(scheduledAtStr)?.toLocal() : null;
@@ -1561,7 +1589,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                       ],
                     ),
                     Text(
-                      '฿${(price - (price * _effectiveGpRate)).toStringAsFixed(0)}',
+                      '฿${_foodSettlement(order).merchantReceives.toStringAsFixed(0)}',
                       style: const TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,

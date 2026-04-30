@@ -71,6 +71,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   String? _couponCode;
   double _merchantSystemRatePreview = 0.10;
   double _merchantDriverRatePreview = 0.0;
+  double _deliverySystemRatePreview = 0.02;
   
   // Merchant info (for food orders)
   String _merchantName = '';
@@ -185,6 +186,23 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     );
   }
 
+  FoodOrderSettlement _foodSettlementPreview(Booking booking) {
+    return DriverAmountCalculator.foodOrderSettlement(
+      foodPrice: booking.price,
+      deliveryFee: booking.deliveryFee ?? 0,
+      deliverySystemRate: _deliverySystemRatePreview,
+      merchantGpSystemRate: _merchantSystemRatePreview,
+      merchantGpDriverRate: _merchantDriverRatePreview,
+    );
+  }
+
+  bool _shouldUseFoodSettlementFallback(double? savedAmount, double fallback) {
+    return DriverAmountCalculator.shouldUseFoodSettlementFallback(
+      savedAmount: savedAmount,
+      fallbackAmount: fallback,
+    );
+  }
+
   Future<void> _loadMerchantFinancePreview() async {
     final booking = _booking;
     if (booking == null || booking.serviceType != 'food') return;
@@ -207,15 +225,36 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
       final config = MerchantFoodConfigService.resolve(
         merchantProfile: merchantProfile,
-        defaultMerchantSystemRate: configService.merchantGpRate,
-        defaultMerchantDriverRate: 0.0,
+        defaultMerchantSystemRate: configService.merchantGpSystemRateDefault,
+        defaultMerchantDriverRate: configService.merchantGpDriverRateDefault,
         defaultDeliverySystemRate: configService.platformFeeRate,
       );
+
+      double? driverDeliverySystemRate;
+      final driverId = booking.driverId ?? AuthService.userId;
+      if (driverId != null && driverId.isNotEmpty) {
+        try {
+          final driverProfile = await SupabaseService.client
+              .from('profiles')
+              .select('driver_delivery_system_rate')
+              .eq('id', driverId)
+              .maybeSingle();
+          final raw = driverProfile?['driver_delivery_system_rate'];
+          if (raw != null) {
+            final rate = (raw as num).toDouble();
+            if (rate >= 0 && rate <= 1) driverDeliverySystemRate = rate;
+          }
+        } catch (e) {
+          debugLog('⚠️ Failed to load driver delivery fee override: $e');
+        }
+      }
 
       if (!mounted) return;
       setState(() {
         _merchantSystemRatePreview = config.merchantGpSystemRate;
         _merchantDriverRatePreview = config.merchantGpDriverRate;
+        _deliverySystemRatePreview =
+            driverDeliverySystemRate ?? config.deliverySystemRate;
       });
 
       debugLog('💡 Merchant finance preview loaded: ${config.summary}');
@@ -3115,12 +3154,13 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     final l10n = AppLocalizations.of(context)!;
     
     final foodPrice = _booking!.price;
+    final settlement = _foodSettlementPreview(_booking!);
     final merchantChargeRate =
         (_merchantSystemRatePreview + _merchantDriverRatePreview)
             .clamp(0.0, 1.0)
             .toDouble();
-    final serviceFee = foodPrice * merchantChargeRate;
-    final merchantReceives = foodPrice - serviceFee;
+    final serviceFee = settlement.merchantGP;
+    final merchantReceives = settlement.merchantReceives;
 
     showDialog(
       context: context,
@@ -3225,15 +3265,32 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     final foodPrice = booking.price;
     final deliveryFee = booking.deliveryFee ?? 0;
     final totalCollect = _netCollectAmount(booking);
-    final commission = DriverAmountCalculator.appFee(
+    final fallbackSettlement = isFood ? _foodSettlementPreview(booking) : null;
+    final savedCommission = DriverAmountCalculator.appFeeWithFoodFallback(
       booking: booking,
       netCollectAmount: totalCollect,
+      foodSettlement: fallbackSettlement,
     );
-    final netEarnings = DriverAmountCalculator.netEarnings(
+    final commission = fallbackSettlement != null &&
+            _shouldUseFoodSettlementFallback(
+              booking.appEarnings,
+              fallbackSettlement.appEarnings,
+            )
+        ? fallbackSettlement.appEarnings
+        : savedCommission;
+    final savedNetEarnings = DriverAmountCalculator.netEarningsWithFoodFallback(
       booking: booking,
       netCollectAmount: totalCollect,
       appFeeAmount: commission,
+      foodSettlement: fallbackSettlement,
     );
+    final netEarnings = fallbackSettlement != null &&
+            _shouldUseFoodSettlementFallback(
+              booking.driverEarnings,
+              fallbackSettlement.driverNetIncome,
+            )
+        ? fallbackSettlement.driverNetIncome
+        : savedNetEarnings;
     final normalizedCouponCode = _couponCode?.trim().toUpperCase();
     final hideCouponBreakdown = normalizedCouponCode == 'WELCOME20' ||
         normalizedCouponCode == 'REFERRER20' ||
@@ -3362,12 +3419,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     final foodPrice = booking.price;
     final deliveryFee = booking.deliveryFee ?? 0;
     final totalCollect = _netCollectAmount(booking);
-    final merchantChargeRate =
-        (_merchantSystemRatePreview + _merchantDriverRatePreview)
-            .clamp(0.0, 1.0)
-            .toDouble();
-    final serviceFee = isFood ? foodPrice * merchantChargeRate : 0.0;
-    final payToMerchant = isFood ? foodPrice - serviceFee : 0.0;
+    final settlement = isFood ? _foodSettlementPreview(booking) : null;
+    final payToMerchant = settlement?.merchantReceives ?? 0.0;
 
     return Container(
       padding: const EdgeInsets.all(12),

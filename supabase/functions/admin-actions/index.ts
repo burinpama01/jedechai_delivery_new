@@ -455,6 +455,19 @@ async function handleEditProfile(supabase, body) {
   const { id, update_data } = body;
   if (!id || !update_data) return errorResponse("Missing 'id' or 'update_data'");
 
+  if (update_data.driver_delivery_system_rate !== undefined) {
+    const rawRate = update_data.driver_delivery_system_rate;
+    if (rawRate === null || rawRate === "") {
+      update_data.driver_delivery_system_rate = null;
+    } else {
+      const rate = Number(rawRate);
+      if (!Number.isFinite(rate) || rate < 0 || rate > 1) {
+        return errorResponse("driver_delivery_system_rate must be between 0 and 1");
+      }
+      update_data.driver_delivery_system_rate = rate;
+    }
+  }
+
   const { error } = await supabase
     .from("profiles")
     .update(update_data)
@@ -482,12 +495,8 @@ async function handleEditMerchant(supabase, body) {
   // Handle system_config key-value updates for merchant-specific settings
   if (system_config_updates && typeof system_config_updates === "object") {
     for (const [key, value] of Object.entries(system_config_updates)) {
-      await supabase
-        .from("system_config")
-        .upsert(
-          { key, value: String(value), updated_at: new Date().toISOString() },
-          { onConflict: "key" },
-        );
+      const { error } = await upsertSystemConfigKeyValue(supabase, key, value);
+      if (error) return errorResponse(`Failed to save '${key}': ${error.message}`);
     }
   }
 
@@ -899,18 +908,30 @@ async function handleUpsertSystemConfigKV(supabase, body) {
   if (!rows || !Array.isArray(rows) || !rows.length)
     return errorResponse("Missing 'rows' array");
 
-  const nowIso = new Date().toISOString();
   for (const row of rows) {
     if (!row.key) continue;
-    const { error } = await supabase
-      .from("system_config")
-      .upsert(
-        { key: row.key, value: String(row.value ?? ""), updated_at: nowIso },
-        { onConflict: "key" },
-      );
-    if (error) return errorResponse(`Failed to upsert '${row.key}': ${error.message}`);
+    const { error } = await upsertSystemConfigKeyValue(supabase, row.key, row.value);
+    if (error) return errorResponse(`Failed to save '${row.key}': ${error.message}`);
   }
   return jsonResponse({ success: true });
+}
+
+async function upsertSystemConfigKeyValue(supabase, key: string, value: unknown) {
+  const nowIso = new Date().toISOString();
+  const payload = { value: String(value ?? ""), updated_at: nowIso };
+
+  const { data: updated, error: updateError } = await supabase
+    .from("system_config")
+    .update(payload)
+    .eq("key", key)
+    .select("key");
+  if (updateError) return { error: updateError };
+  if ((updated || []).length > 0) return { error: null };
+
+  const { error: insertError } = await supabase
+    .from("system_config")
+    .insert({ key, ...payload });
+  return { error: insertError };
 }
 
 // ─── Account Deletion ─────────────────────────────────

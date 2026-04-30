@@ -205,6 +205,26 @@ class BookingService {
     return parsed;
   }
 
+  Future<double?> _getDriverDeliverySystemRateOverride(String? driverId) async {
+    if (driverId == null || driverId.trim().isEmpty) return null;
+
+    try {
+      final profile = await _client
+          .from('profiles')
+          .select('driver_delivery_system_rate')
+          .eq('id', driverId)
+          .maybeSingle();
+      final raw = profile?['driver_delivery_system_rate'];
+      if (raw == null) return null;
+      final rate = (raw as num).toDouble();
+      if (rate < 0 || rate > 1) return null;
+      return rate;
+    } catch (e) {
+      debugLog('⚠️ Failed to load driver delivery fee override: $e');
+      return null;
+    }
+  }
+
   /// Get all bookings for current user
   Future<List<Booking>> getUserBookings() async {
     final userId = AuthService.userId;
@@ -474,6 +494,9 @@ class BookingService {
             merchantId: booking.merchantId,
             configService: configService,
           );
+          final driverDeliverySystemRate =
+              await _getDriverDeliverySystemRateOverride(booking.driverId) ??
+                  merchantFoodConfig.deliverySystemRate;
 
           // ── Food Order Financial Logic ──
           // price = food cost (menu items total)
@@ -520,7 +543,7 @@ class BookingService {
             bookingId: bookingId,
             couponCode: couponCode,
             couponDiscountAmount: couponDiscountAmount,
-            deliverySystemRateOverride: merchantFoodConfig.deliverySystemRate,
+            deliverySystemRateOverride: driverDeliverySystemRate,
             merchantGpSystemRateOverride: merchantFoodConfig.merchantGpSystemRate,
             merchantGpDriverRateOverride: merchantFoodConfig.merchantGpDriverRate,
             applyMerchantFreeDeliveryAdjustment: applyFreeDeliveryAdjustment,
@@ -726,6 +749,9 @@ class BookingService {
         merchantId: booking.merchantId,
         configService: configService,
       );
+      final driverDeliverySystemRate =
+          await _getDriverDeliverySystemRateOverride(driverId) ??
+              merchantFoodConfig.deliverySystemRate;
 
       final couponFinance = await _getFoodCouponFinanceContext(
         bookingId: booking.id,
@@ -736,7 +762,7 @@ class BookingService {
       var estimatedDeduction = WalletService.estimateFoodDeduction(
         deliveryFee: deliveryFee,
         foodPrice: foodPrice,
-        deliverySystemRate: merchantFoodConfig.deliverySystemRate,
+        deliverySystemRate: driverDeliverySystemRate,
         merchantGpSystemRate: merchantFoodConfig.merchantGpSystemRate,
       );
       var extraCouponDeduction = 0.0;
@@ -758,7 +784,7 @@ class BookingService {
         deliveryFee: deliveryFee,
         foodPrice: foodPrice,
         extraEstimatedDeduction: extraCouponDeduction,
-        deliverySystemRateOverride: merchantFoodConfig.deliverySystemRate,
+        deliverySystemRateOverride: driverDeliverySystemRate,
         merchantGpSystemRateOverride: merchantFoodConfig.merchantGpSystemRate,
       );
 

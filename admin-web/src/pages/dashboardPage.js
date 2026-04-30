@@ -76,7 +76,7 @@ export async function dashboardFilter() {
   const [periodOrders, completedPeriod, revenueData, pendingDrivers, pendingMerchants, pendingWithdrawals, totalUsers, profilesByRole, recentOrders] = await Promise.all([
     supabase.from('bookings').select('id', { count: 'exact', head: true }).gte('created_at', startDate).lte('created_at', endDate),
     supabase.from('bookings').select('id', { count: 'exact', head: true }).gte('created_at', startDate).lte('created_at', endDate).eq('status', 'completed'),
-    supabase.from('bookings').select('price, service_type').gte('created_at', startDate).lte('created_at', endDate).eq('status', 'completed'),
+    supabase.from('bookings').select('price, delivery_fee, service_type').gte('created_at', startDate).lte('created_at', endDate).eq('status', 'completed'),
     supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'driver').eq('approval_status', 'pending'),
     supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'merchant').eq('approval_status', 'pending'),
     supabase.from('withdrawal_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
@@ -85,7 +85,10 @@ export async function dashboardFilter() {
     supabase.from('bookings').select('*').gte('created_at', startDate).lte('created_at', endDate).order('created_at', { ascending: false }).limit(10),
   ]);
 
-  const revenue = (revenueData.data || []).reduce((s, r) => s + (r.price || 0), 0);
+  const revenue = (revenueData.data || []).reduce(
+    (s, r) => s + Number(r.price || 0) + Number(r.delivery_fee || 0),
+    0,
+  );
   const serviceCounts = { food: 0, ride: 0, parcel: 0 };
   (revenueData.data || []).forEach((r) => {
     if (serviceCounts[r.service_type] !== undefined) serviceCounts[r.service_type] += 1;

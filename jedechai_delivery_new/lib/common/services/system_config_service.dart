@@ -62,6 +62,8 @@ class SystemConfigService {
           commissionRate: 15.0,
           platformFeeRate: 0.15,
           merchantGpRate: 0.10,
+          merchantGpSystemRateDefault: 0.10,
+          merchantGpDriverRateDefault: 0.0,
           maxDeliveryRadius: 30.0,
         );
         debugLog(
@@ -172,6 +174,12 @@ class SystemConfigService {
   /// ดึงอัตรา Merchant GP (สำหรับ food delivery)
   double get merchantGpRate => _systemConfig?.merchantGpRate ?? 0.10;
 
+  double get merchantGpSystemRateDefault =>
+      _systemConfig?.merchantGpSystemRateDefault ?? merchantGpRate;
+
+  double get merchantGpDriverRateDefault =>
+      _systemConfig?.merchantGpDriverRateDefault ?? 0.0;
+
   /// ดึง URL โลโก้แอป
   String? get logoUrl => _systemConfig?.logoUrl;
 
@@ -260,6 +268,8 @@ class SystemConfig {
   final double commissionRate;
   final double platformFeeRate;
   final double merchantGpRate;
+  final double merchantGpSystemRateDefault;
+  final double merchantGpDriverRateDefault;
   final double maxDeliveryRadius;
   final DetectionRadiusConfig detectionRadiusConfig;
   final String? logoUrl;
@@ -270,6 +280,8 @@ class SystemConfig {
     required this.commissionRate,
     required this.platformFeeRate,
     required this.merchantGpRate,
+    this.merchantGpSystemRateDefault = 0.10,
+    this.merchantGpDriverRateDefault = 0.0,
     this.maxDeliveryRadius = 30.0,
     this.detectionRadiusConfig = const DetectionRadiusConfig(),
     this.logoUrl,
@@ -282,6 +294,12 @@ class SystemConfig {
       commissionRate: (json['commission_rate'] as num?)?.toDouble() ?? 15.0,
       platformFeeRate: (json['platform_fee_rate'] as num?)?.toDouble() ?? 0.15,
       merchantGpRate: (json['merchant_gp_rate'] as num?)?.toDouble() ?? 0.10,
+      merchantGpSystemRateDefault:
+          (json['merchant_gp_system_rate_default'] as num?)?.toDouble() ??
+              (json['merchant_gp_rate'] as num?)?.toDouble() ??
+              0.10,
+      merchantGpDriverRateDefault:
+          (json['merchant_gp_driver_rate_default'] as num?)?.toDouble() ?? 0.0,
       maxDeliveryRadius:
           (json['max_delivery_radius'] as num?)?.toDouble() ?? 30.0,
       detectionRadiusConfig:
@@ -297,6 +315,8 @@ class SystemConfig {
       'commission_rate': commissionRate,
       'platform_fee_rate': platformFeeRate,
       'merchant_gp_rate': merchantGpRate,
+      'merchant_gp_system_rate_default': merchantGpSystemRateDefault,
+      'merchant_gp_driver_rate_default': merchantGpDriverRateDefault,
       'max_delivery_radius': maxDeliveryRadius,
       'detection_radius_config': detectionRadiusConfig.toJson(),
       'logo_url': logoUrl,
@@ -306,7 +326,7 @@ class SystemConfig {
 
   @override
   String toString() {
-    return 'SystemConfig(minWallet: $driverMinWallet฿, commission: $commissionRate%, platformFee: $platformFeeRate%, merchantGP: $merchantGpRate%, maxRadius: ${maxDeliveryRadius}km, detectRadius: ${detectionRadiusConfig.toJson()}, logo: ${logoUrl != null}, splash: ${splashUrl != null})';
+    return 'SystemConfig(minWallet: $driverMinWallet฿, commission: $commissionRate%, platformFee: $platformFeeRate%, merchantGP: $merchantGpRate%, merchantGPSystemDefault: $merchantGpSystemRateDefault%, merchantGPDriverDefault: $merchantGpDriverRateDefault%, maxRadius: ${maxDeliveryRadius}km, detectRadius: ${detectionRadiusConfig.toJson()}, logo: ${logoUrl != null}, splash: ${splashUrl != null})';
   }
 }
 

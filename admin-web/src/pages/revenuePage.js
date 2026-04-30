@@ -33,7 +33,7 @@ export async function renderRevenuePage(el, ctx) {
 
   const { data: drivers } = await supabase
     .from('profiles')
-    .select('id, full_name, phone_number')
+    .select('id, full_name, phone_number, driver_delivery_system_rate')
     .eq('role', 'driver')
     .order('full_name');
 
@@ -97,7 +97,7 @@ export async function loadRevenue(ctx) {
   const [bookingsRes, commissionRes, configRes] = await Promise.all([
     supabase
       .from('bookings')
-      .select('price, delivery_fee, service_type, status, created_at')
+      .select('driver_id, price, delivery_fee, service_type, status, created_at, app_earnings, driver_earnings')
       .gte('created_at', startDate)
       .lte('created_at', endDate)
       .eq('status', 'completed'),
@@ -107,7 +107,10 @@ export async function loadRevenue(ctx) {
       .gte('created_at', startDate)
       .lte('created_at', endDate)
       .eq('type', 'commission'),
-    supabase.from('system_config').select('platform_fee_rate, merchant_gp_rate, commission_rate').maybeSingle(),
+    supabase
+      .from('system_config')
+      .select('platform_fee_rate, merchant_gp_rate, merchant_gp_system_rate_default, merchant_gp_driver_rate_default, commission_rate')
+      .maybeSingle(),
   ]);
 
   if (scopedDriverIds.length) {
@@ -144,13 +147,15 @@ export async function loadRevenue(ctx) {
   const items = bookingsRes.data || [];
   const commissions = commissionRes.data || [];
   const config = configRes.data || {};
+  const driverRateMap = new Map(driverList.map((d) => [d.id, Number(d.driver_delivery_system_rate)]));
   const wallets = walletsRes.data || [];
   const walletDeductions = walletTxRes.data || [];
   const topups = topupRes.data || [];
   const withdrawals = withdrawalRes.data || [];
   const pfRate = config.platform_fee_rate || 0.15;
-  const mgRate = config.merchant_gp_rate || 0.1;
+  const mgRate = config.merchant_gp_system_rate_default || config.merchant_gp_rate || 0.1;
   const cmRate = config.commission_rate || 15;
+  const ceilMoney = (value) => Math.max(0, Math.ceil(Number(value || 0)));
 
   const byType = {
     food: { count: 0, revenue: 0, platformFee: 0 },
@@ -165,10 +170,13 @@ export async function loadRevenue(ctx) {
     const amt = (b.price || 0) + (b.delivery_fee || 0);
     totalRevenue += amt;
     let pf = 0;
-    if (type === 'food') {
-      pf = (b.delivery_fee || 0) * pfRate + (b.price || 0) * mgRate;
+    if (Number(b.app_earnings || 0) > 0) {
+      pf = Number(b.app_earnings || 0);
+    } else if (type === 'food') {
+      const driverRate = Number.isFinite(driverRateMap.get(b.driver_id)) ? driverRateMap.get(b.driver_id) : pfRate;
+      pf = ceilMoney((b.delivery_fee || 0) * driverRate) + ceilMoney((b.price || 0) * mgRate);
     } else {
-      pf = (b.price || 0) * (cmRate / 100);
+      pf = ceilMoney((b.price || 0) * (cmRate / 100));
     }
     totalPlatformIncome += pf;
     if (byType[type]) {
@@ -179,7 +187,7 @@ export async function loadRevenue(ctx) {
   });
 
   const actualCommission = commissions.reduce((s, c) => s + Math.abs(c.amount || 0), 0);
-  const platformIncome = actualCommission > 0 ? actualCommission : totalPlatformIncome;
+  const platformIncome = totalPlatformIncome;
 
   const byDate = {};
   items.forEach((b) => {

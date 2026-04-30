@@ -309,6 +309,10 @@ export async function editDriverProfile(id, ctx) {
 
   const { data: d } = await supabase.from('profiles').select('*').eq('id', id).single();
   if (!d) return;
+  const driverDeliverySystemRatePercent =
+    d.driver_delivery_system_rate === null || d.driver_delivery_system_rate === undefined
+      ? ''
+      : (Number(d.driver_delivery_system_rate || 0) * 100).toFixed(2).replace(/\.?0+$/, '');
 
   document.getElementById('editDriverModal')?.remove();
   const modal = document.createElement('div');
@@ -358,6 +362,15 @@ export async function editDriverProfile(id, ctx) {
             </select>
           </div>
           <div><label class="block text-sm font-medium mb-1">เหตุผลระงับ/ปฏิเสธ</label><input id="editDrvReason" value="${(d.rejection_reason || '').replace(/"/g, '&quot;')}" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="ระบุเหตุผล (ถ้ามี)" /></div>
+        </div>
+
+        <div class="border-t pt-4">
+          <p class="text-sm font-bold mb-3">Delivery fee deduction</p>
+          <div class="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+            <label class="block text-sm font-medium mb-1">หักค่าส่งเข้าระบบรายคนขับ (%)</label>
+            <input id="editDrvDeliverySystemRate" type="number" min="0" max="100" step="0.01" value="${driverDeliverySystemRatePercent}" class="w-full border rounded-lg px-3 py-2 text-sm bg-white" placeholder="ว่าง = ใช้ค่า default ของร้าน/ระบบ" />
+            <p class="mt-1 text-xs text-gray-500">ใช้กับออเดอร์อาหารเท่านั้น เช่น ใส่ 5 หมายถึงหัก 5% ของค่าส่งจากคนขับรายนี้</p>
+          </div>
         </div>
 
         <div class="border-t pt-4">
@@ -420,6 +433,16 @@ export async function submitEditDriver(id, ctx) {
       bank_account_name: document.getElementById('editDrvAccName')?.value,
       updated_at: new Date().toISOString(),
     };
+    const deliverySystemRateRaw = (document.getElementById('editDrvDeliverySystemRate')?.value || '').trim();
+    if (deliverySystemRateRaw === '') {
+      updateData.driver_delivery_system_rate = null;
+    } else {
+      const deliverySystemRatePercent = Number(deliverySystemRateRaw);
+      if (!Number.isFinite(deliverySystemRatePercent) || deliverySystemRatePercent < 0 || deliverySystemRatePercent > 100) {
+        throw new Error('กรุณากรอกเปอร์เซ็นต์หักค่าส่งระหว่าง 0-100');
+      }
+      updateData.driver_delivery_system_rate = deliverySystemRatePercent / 100;
+    }
     const reason = document.getElementById('editDrvReason')?.value;
     if (reason) updateData.rejection_reason = reason;
     if (updateData.approval_status === 'approved') updateData.approved_at = new Date().toISOString();
