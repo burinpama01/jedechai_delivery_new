@@ -3,6 +3,8 @@
 # Build outputs
 /build/
 **/build/
+/tools/
+/.gstack_jedechai/
 
 # Dart / Flutter tooling
 **/.dart_tool/

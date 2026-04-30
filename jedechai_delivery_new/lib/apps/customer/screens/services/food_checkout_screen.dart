@@ -335,8 +335,8 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       }
     } catch (e) {
       debugLog('⚠️ Cannot get current location: $e');
-      _customerLat = 13.7563;
-      _customerLng = 100.5018;
+      _customerLat = null;
+      _customerLng = null;
       _customerAddress = AppLocalizations.of(context)!.foodAddressUnknown;
     }
   }
@@ -1232,12 +1232,15 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       final items = cartItems.map((item) {
         final qty = item['quantity'] ?? 1;
         final basePrice = (item['base_price'] ?? item['price']) as num;
+        final selectedOptions = item['selected_options'];
         return {
           'booking_id': bookingId,
           'menu_item_id': item['id'],
           'name': item['name'] ?? '',
           'price': basePrice,
           'quantity': qty,
+          'selected_options': selectedOptions is List ? selectedOptions : <String>[],
+          'options': selectedOptions is List ? selectedOptions : <String>[],
         };
       }).toList();
 

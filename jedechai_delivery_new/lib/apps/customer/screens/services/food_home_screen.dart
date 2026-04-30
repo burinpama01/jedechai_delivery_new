@@ -1881,8 +1881,6 @@ class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
   bool _isPlacingOrder = false;
   String _paymentMethod = 'cash';
   final TextEditingController _noteController = TextEditingController();
-  static const double _fallbackLat = 13.7563;
-  static const double _fallbackLng = 100.5018;
 
   @override
   void dispose() {
@@ -2155,8 +2153,8 @@ class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
   }
 
   Future<Map<String, dynamic>> _resolveCustomerLocationForOrder() async {
-    var lat = _fallbackLat;
-    var lng = _fallbackLng;
+    double? lat;
+    double? lng;
 
     try {
       final locationEnabled = await Geolocator.isLocationServiceEnabled();
@@ -2166,8 +2164,11 @@ class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
           if (mounted) {
             final accepted =
                 await LocationDisclosureHelper.showIfNeeded(context);
-            if (!accepted)
-              return {'lat': lat, 'lng': lng, 'address': AppLocalizations.of(context)!.foodCheckoutCurrentLocation};
+            if (!accepted) {
+              throw Exception(
+                AppLocalizations.of(context)!.foodCheckoutLocationRequired,
+              );
+            }
           }
           permission = await Geolocator.requestPermission();
         }
@@ -2184,6 +2185,10 @@ class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
       }
     } catch (e) {
       debugLog('⚠️ Unable to fetch current customer location: $e');
+    }
+
+    if (lat == null || lng == null) {
+      throw Exception(AppLocalizations.of(context)!.foodCheckoutLocationRequired);
     }
 
     var address = AppLocalizations.of(context)!.foodCheckoutCurrentLocation;
@@ -2420,12 +2425,15 @@ class _BookingServiceHelper {
       final items = cartItems.map((item) {
         final qty = item['quantity'] ?? 1;
         final basePrice = (item['base_price'] ?? item['price']) as num;
+        final selectedOptions = item['selected_options'];
         return {
           'booking_id': bookingId,
           'menu_item_id': item['id'],
           'name': item['name'] ?? '',
           'price': basePrice,
           'quantity': qty,
+          'selected_options': selectedOptions is List ? selectedOptions : <String>[],
+          'options': selectedOptions is List ? selectedOptions : <String>[],
         };
       }).toList();
 

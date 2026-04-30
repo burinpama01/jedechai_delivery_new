@@ -175,6 +175,7 @@ export async function refreshPendingOrders(ctx) {
         </td>
         <td class="px-3 py-2.5 whitespace-nowrap">
           <div class="flex items-center gap-1">
+            <button onclick="showEditPickupLocationModal('${o.id}')" class="px-2 py-1 bg-blue-100 text-blue-600 rounded-lg text-[10px] font-medium hover:bg-blue-200 transition-colors">แก้พิกัด</button>
             ${canDispatch ? `<button onclick="pendingDispatch('${o.id}')" class="px-2 py-1 bg-blue-500 text-white rounded-lg text-[10px] font-medium hover:bg-blue-600 transition-colors">โยนงาน</button>` : (o.driver_id ? `<button onclick="pendingDispatch('${o.id}','${o.driver_id}')" class="px-2 py-1 bg-amber-500 text-white rounded-lg text-[10px] font-medium hover:bg-amber-600 transition-colors">ย้าย</button>` : '')}
             ${canAdminAccept ? `<button onclick="adminMerchantAcceptOrder('${o.id}')" class="px-2 py-1 bg-emerald-500 text-white rounded-lg text-[10px] font-medium hover:bg-emerald-600 transition-colors">รับแทนร้าน</button>` : ''}
             ${canAdminReady ? `<button onclick="adminMarkFoodReady('${o.id}')" class="px-2 py-1 bg-teal-500 text-white rounded-lg text-[10px] font-medium hover:bg-teal-600 transition-colors">อาหารพร้อม</button>` : ''}
@@ -303,6 +304,7 @@ export async function showPendingOrderDetail(orderId, ctx) {
         </div>
         ${itemsHtml}
         <div class="flex gap-2 pt-2 flex-wrap">
+          <button onclick="showEditPickupLocationModal('${orderId}')" class="px-3 py-1.5 bg-blue-100 text-blue-600 rounded-lg text-xs font-semibold">แก้พิกัด Pickup</button>
           ${canDispatchInDetail ? `<button onclick=\"pendingDispatch('${orderId}')\" class=\"px-3 py-1.5 bg-blue-500 text-white rounded-lg text-xs font-semibold\">โยนงาน</button>` : ''}
           ${canAdminAcceptInDetail ? `<button onclick=\"adminMerchantAcceptOrder('${orderId}')\" class=\"px-3 py-1.5 bg-emerald-500 text-white rounded-lg text-xs font-semibold\">รับแทนร้าน</button>` : ''}
           ${canAdminReadyInDetail ? `<button onclick=\"adminMarkFoodReady('${orderId}')\" class=\"px-3 py-1.5 bg-teal-500 text-white rounded-lg text-xs font-semibold\">อาหารพร้อม</button>` : ''}

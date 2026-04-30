@@ -2299,6 +2299,26 @@ async function adminMarkFoodReady(orderId) {
   await _adminActAsMerchantOrder(orderId, 'ready');
 }
 
+async function showEditPickupLocationModal(orderId) {
+  const bridged = window.__adminWebBridge?.showEditPickupLocationModal;
+  if (typeof bridged === 'function') {
+    return bridged(orderId, { supabase, showToast, escapeHtml, callAdminAction });
+  }
+  alert('ฟังก์ชันแก้พิกัดยังไม่พร้อมใช้งาน กรุณารีเฟรชหน้าเว็บ');
+}
+
+function useMerchantPickupLocation() {
+  const bridged = window.__adminWebBridge?.useMerchantPickupLocation;
+  if (typeof bridged === 'function') return bridged();
+}
+
+async function submitPickupLocation(orderId) {
+  const bridged = window.__adminWebBridge?.submitPickupLocation;
+  if (typeof bridged === 'function') {
+    return bridged(orderId, { supabase, showToast, escapeHtml, callAdminAction });
+  }
+}
+
 async function _adminActAsMerchantOrder(orderId, action) {
   const isAccept = action === 'accept';
   const confirmText = isAccept
@@ -8639,4 +8659,3 @@ function showToast(message, type = 'success') {
   document.body.appendChild(toast);
   setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.5s'; setTimeout(() => toast.remove(), 500); }, 3000);
 }
-

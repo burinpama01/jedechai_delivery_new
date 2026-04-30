@@ -142,9 +142,11 @@ export function renderOrderRows(orders) {
     const canRebroadcast = ['pending','pending_merchant','driver_accepted','matched','preparing','arrived_at_merchant','ready_for_pickup'].includes(o.status);
     const canAdminAccept = typeof canAdminMerchantAccept === 'function' ? canAdminMerchantAccept(o) : false;
     const canAdminReady = typeof canAdminMarkFoodReady === 'function' ? canAdminMarkFoodReady(o) : false;
+    const canEditPickup = o.status !== 'completed' && o.status !== 'cancelled';
 
     let actions = '';
-    if (canReassign || canRebroadcast || canAdminAccept || canAdminReady) {
+    if (canReassign || canRebroadcast || canAdminAccept || canAdminReady || canEditPickup) {
+      if (canEditPickup) actions += `<button onclick=\"showEditPickupLocationModal('${o.id}')\" class=\"px-2 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-200 mr-1\">แก้พิกัด</button>`;
       if (canRebroadcast) actions += `<button onclick=\"rebroadcastOrder('${o.id}','${o.service_type}')\" class=\"px-2 py-1 bg-purple-100 text-purple-700 rounded-lg text-xs font-medium hover:bg-purple-200 mr-1\" title=\"โยนออเดอร์ใหม่ให้คนขับทุกคนเห็น\">🔄 โยนใหม่</button>`;
       if (canReassign) actions += `<button onclick=\"showReassignModal('${o.id}','${(dName).replace(/'/g,'')}')\" class=\"px-2 py-1 bg-orange-100 text-orange-700 rounded-lg text-xs font-medium hover:bg-orange-200 mr-1\">ย้ายคนขับ</button>`;
       if (canAdminAccept) actions += `<button onclick=\"adminMerchantAcceptOrder('${o.id}')\" class=\"px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-medium hover:bg-emerald-200 mr-1\">รับแทนร้าน</button>`;

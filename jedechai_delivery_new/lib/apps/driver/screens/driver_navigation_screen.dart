@@ -468,8 +468,9 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           .single();
       
       debugLog('📋 Booking response: $response');
-      
-      _booking = Booking.fromJson(response);
+
+      final repairedResponse = await _repairFoodPickupLocationIfNeeded(response);
+      _booking = Booking.fromJson(repairedResponse);
       _lastKnownStatus = _booking?.status;
       await _loadCouponUsageForBooking(widget.bookingId);
       await _loadMerchantFinancePreview();
@@ -541,7 +542,9 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
             .eq('id', widget.bookingId)
             .single();
         
-        _booking = Booking.fromJson(fallbackResponse);
+        final repairedFallbackResponse =
+            await _repairFoodPickupLocationIfNeeded(fallbackResponse);
+        _booking = Booking.fromJson(repairedFallbackResponse);
         await _loadCouponUsageForBooking(widget.bookingId);
         await _loadMerchantFinancePreview();
         
@@ -573,6 +576,87 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           });
         }
       }
+    }
+  }
+
+  double? _toDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString());
+  }
+
+  bool _isValidCoordinate(double? lat, double? lng) {
+    if (lat == null || lng == null) return false;
+    if (lat == 0.0 && lng == 0.0) return false;
+    return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+  }
+
+  bool _isBangkokDefaultCoordinate(double? lat, double? lng) {
+    if (!_isValidCoordinate(lat, lng)) return false;
+    return Geolocator.distanceBetween(lat!, lng!, 13.7563, 100.5018) <= 100;
+  }
+
+  Future<Map<String, dynamic>> _repairFoodPickupLocationIfNeeded(
+    Map<String, dynamic> bookingJson,
+  ) async {
+    if (bookingJson['service_type'] != 'food') return bookingJson;
+
+    final merchantId = bookingJson['merchant_id'] as String?;
+    if (merchantId == null || merchantId.isEmpty) return bookingJson;
+
+    final originLat = _toDouble(bookingJson['origin_lat']);
+    final originLng = _toDouble(bookingJson['origin_lng']);
+    final hasBadPickup = !_isValidCoordinate(originLat, originLng) ||
+        _isBangkokDefaultCoordinate(originLat, originLng);
+    if (!hasBadPickup) return bookingJson;
+
+    try {
+      final merchantProfile = await SupabaseService.client
+          .from('profiles')
+          .select('full_name, shop_address, latitude, longitude')
+          .eq('id', merchantId)
+          .maybeSingle();
+      if (merchantProfile == null) return bookingJson;
+
+      final merchantLat = _toDouble(merchantProfile['latitude']);
+      final merchantLng = _toDouble(merchantProfile['longitude']);
+      if (!_isValidCoordinate(merchantLat, merchantLng)) {
+        debugLog('⚠️ Merchant profile has no valid location for repair: $merchantId');
+        return bookingJson;
+      }
+
+      final pickupAddress =
+          (merchantProfile['shop_address'] as String?)?.trim().isNotEmpty == true
+              ? (merchantProfile['shop_address'] as String).trim()
+              : ((merchantProfile['full_name'] as String?) ??
+                  (bookingJson['pickup_address'] as String?) ??
+                  '');
+
+      final repaired = Map<String, dynamic>.from(bookingJson)
+        ..['origin_lat'] = merchantLat
+        ..['origin_lng'] = merchantLng
+        ..['pickup_address'] = pickupAddress;
+
+      debugLog(
+        '🛠️ Repaired food pickup location for booking ${bookingJson['id']}: '
+        '$originLat,$originLng -> $merchantLat,$merchantLng',
+      );
+
+      try {
+        await SupabaseService.client.from('bookings').update({
+          'origin_lat': merchantLat,
+          'origin_lng': merchantLng,
+          'pickup_address': pickupAddress,
+          'updated_at': DateTime.now().toIso8601String(),
+        }).eq('id', bookingJson['id']);
+      } catch (e) {
+        debugLog('⚠️ Could not persist repaired pickup location: $e');
+      }
+
+      return repaired;
+    } catch (e) {
+      debugLog('⚠️ Could not repair food pickup location: $e');
+      return bookingJson;
     }
   }
   
@@ -815,22 +899,26 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           .stream(primaryKey: ['id'])
           .eq('id', widget.bookingId)
           .execute()
-          .listen((data) {
+          .listen((data) async {
             debugLog('📡 Stream update received: ${data.length} items');
             if (data.isNotEmpty && mounted) {
-              final updatedBooking = Booking.fromJson(data.first);
+              final repairedData =
+                  await _repairFoodPickupLocationIfNeeded(data.first);
+              if (!mounted) return;
+
+              final updatedBooking = Booking.fromJson(repairedData);
               debugLog('📡 Booking updated from stream: ${updatedBooking.status}');
               
               setState(() {
                 _booking = updatedBooking;
+                _pickupLocation =
+                    LatLng(updatedBooking.originLat, updatedBooking.originLng);
+                _destinationLocation =
+                    LatLng(updatedBooking.destLat, updatedBooking.destLng);
               });
 
               _loadCouponUsageForBooking(updatedBooking.id);
               _loadMerchantFinancePreview();
-              
-              // Update locations if changed
-              _pickupLocation = LatLng(updatedBooking.originLat, updatedBooking.originLng);
-              _destinationLocation = LatLng(updatedBooking.destLat, updatedBooking.destLng);
               
               _updateMapForStatus();
               
@@ -1969,7 +2057,14 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
                         // Parse options from either 'options' or 'selected_options'
                         final List<Map<String, dynamic>> parsedOptions = [];
-                        final rawOpts = selectedOptions ?? options;
+                        dynamic rawOpts = selectedOptions ?? options;
+                        if (rawOpts is String && rawOpts.trim().isNotEmpty) {
+                          try {
+                            rawOpts = jsonDecode(rawOpts);
+                          } catch (_) {
+                            rawOpts = [rawOpts];
+                          }
+                        }
                         if (rawOpts != null && rawOpts is List) {
                           for (final opt in rawOpts) {
                             if (opt is Map) {
@@ -2339,7 +2434,9 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                   initialCameraPosition: CameraPosition(
                     target: _currentPosition != null
                         ? LatLng(_currentPosition!.latitude, _currentPosition!.longitude)
-                        : (_pickupLocation ?? const LatLng(13.7563, 100.5018)),
+                        : (_pickupLocation ??
+                            _destinationLocation ??
+                            const LatLng(7.8804, 98.3923)),
                     zoom: 14,
                   ),
                   markers: _markers,

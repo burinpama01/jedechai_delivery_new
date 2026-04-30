@@ -918,12 +918,18 @@ class BookingService {
   /// DB columns: booking_id, menu_item_id, name, price, quantity
   Future<void> insertBookingItems(String bookingId, List<Map<String, dynamic>> items) async {
     try {
-      final bookingItems = items.map((item) => {
-        'booking_id': bookingId,
-        'menu_item_id': item['id'],
-        'name': item['name'],
-        'price': item['price'],
-        'quantity': item['quantity'] ?? 1,
+      final bookingItems = items.map((item) {
+        final selectedOptions = item['selected_options'];
+        return {
+          'booking_id': bookingId,
+          'menu_item_id': item['id'],
+          'name': item['name'],
+          'price': item['price'],
+          'quantity': item['quantity'] ?? 1,
+          'selected_options':
+              selectedOptions is List ? selectedOptions : <String>[],
+          'options': selectedOptions is List ? selectedOptions : <String>[],
+        };
       }).toList();
 
       await _client.from('booking_items').insert(bookingItems);

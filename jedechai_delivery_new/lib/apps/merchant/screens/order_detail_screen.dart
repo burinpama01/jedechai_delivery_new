@@ -1,5 +1,6 @@
 ﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -263,6 +264,19 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
         _error = AppLocalizations.of(context)!.orderDetailLoadItemsError(e.toString());
       });
     }
+  }
+
+  List<dynamic> _parseItemOptions(Map<String, dynamic> item) {
+    dynamic rawOptions = item['selected_options'] ?? item['options'];
+    if (rawOptions is String && rawOptions.trim().isNotEmpty) {
+      try {
+        rawOptions = jsonDecode(rawOptions);
+      } catch (_) {
+        rawOptions = [rawOptions];
+      }
+    }
+    if (rawOptions is List) return rawOptions;
+    return const [];
   }
 
   Future<void> _acceptOrder() async {
@@ -865,7 +879,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                                           ),
                                         ),
                                       ],
-                                      if (item['options'] != null && item['options'] is List && (item['options'] as List).isNotEmpty) ...[
+                                      if (_parseItemOptions(item).isNotEmpty) ...[
                                         const SizedBox(height: 4),
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -885,7 +899,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                                                 ),
                                               ),
                                               const SizedBox(height: 2),
-                                              ...(item['options'] as List).map((option) {
+                                              ..._parseItemOptions(item).map((option) {
                                                 // 🛠️ Logic แกะข้อมูล: รองรับทั้งแบบ String และ JSON Map
                                                 String optionName = '';
                                                 
