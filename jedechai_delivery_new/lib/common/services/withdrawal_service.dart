@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/debug_logger.dart';
+import 'admin_line_notification_service.dart';
 import 'auth_service.dart';
 import 'wallet_service.dart';
 
@@ -62,7 +63,8 @@ class WithdrawalService {
       final rpcResult = await _client.rpc('wallet_deduct', params: {
         'p_user_id': userId,
         'p_amount': amount,
-        'p_description': 'แจ้งถอนเงิน ฿${amount.ceil()} ไปยัง $bankName $bankAccountNumber',
+        'p_description':
+            'แจ้งถอนเงิน ฿${amount.ceil()} ไปยัง $bankName $bankAccountNumber',
         'p_type': 'withdrawal',
       });
       if (rpcResult is Map && rpcResult['success'] != true) {
@@ -71,6 +73,20 @@ class WithdrawalService {
       }
 
       debugLog('✅ Withdrawal request created: ฿$amount');
+      await AdminLineNotificationService.notify(
+        eventType: 'withdrawal_request',
+        title: 'JDC: คำขอถอนเงินใหม่',
+        message:
+            'มีคำขอถอนเงินใหม่ จำนวน ฿${amount.toStringAsFixed(0)} รอแอดมินตรวจสอบ',
+        data: {
+          'user_id': userId,
+          'amount': amount.toStringAsFixed(0),
+          'bank_name': bankName,
+          'account_number': bankAccountNumber,
+          'account_name': bankAccountName,
+        },
+      );
+
       return true;
     } catch (e) {
       debugLog('❌ Error creating withdrawal request: $e');
@@ -134,14 +150,12 @@ class WithdrawalService {
 
       await _client
           .from('wallets')
-          .update({'balance': newBalance})
-          .eq('id', wallet.id);
+          .update({'balance': newBalance}).eq('id', wallet.id);
 
       // อัปเดตสถานะคำขอ
       await _client
           .from('withdrawal_requests')
-          .update({'status': 'cancelled'})
-          .eq('id', requestId);
+          .update({'status': 'cancelled'}).eq('id', requestId);
 
       debugLog('✅ Withdrawal request cancelled, refunded ฿$amount');
       return true;

@@ -3894,12 +3894,25 @@ async function renderSettings(el) {
           <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">อีเมลสำรอง (CC)</label>
             <input type="email" id="settAdminEmailCC" value="${config.admin_notification_email_cc || ''}" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all" placeholder="backup@example.com">
+            <label class="mt-4 flex items-center gap-2 text-xs font-semibold text-gray-600">
+              <input type="checkbox" id="settAdminLineEnabled" ${config.admin_line_enabled ? 'checked' : ''} class="w-4 h-4 text-green-600 rounded border-gray-300">
+              เปิดใช้งาน LINE แจ้งเตือนแอดมิน
+            </label>
+            <label class="block text-xs font-semibold text-gray-500 mt-3 mb-1.5 uppercase tracking-wider">LINE recipient ID</label>
+            <input type="text" id="settAdminLineRecipient" value="${config.admin_line_recipient_id || ''}" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all" placeholder="U..., C..., หรือ R...">
+            <p class="text-xs text-gray-400 mt-1.5">ใช้ userId, groupId หรือ roomId ที่ LINE Official Account สามารถ push message ได้</p>
             <p class="text-xs text-gray-400 mt-1.5">อีเมล CC เพิ่มเติม (ถ้ามี)</p>
           </div>
         </div>
         <div class="mt-4 flex gap-3">
           <button onclick="saveAdminEmail()" class="px-5 py-2.5 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-indigo-200" style="background:linear-gradient(135deg,#6366f1,#818cf8);">
             <span class="material-icons-round text-sm align-middle mr-1">save</span> บันทึกอีเมล
+          </button>
+          <button onclick="saveAdminLine()" class="px-5 py-2.5 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-green-200" style="background:linear-gradient(135deg,#16a34a,#22c55e);">
+            <span class="material-icons-round text-sm align-middle mr-1">save</span> บันทึก LINE
+          </button>
+          <button onclick="testAdminLine()" class="px-5 py-2.5 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-emerald-200" style="background:linear-gradient(135deg,#059669,#10b981);">
+            <span class="material-icons-round text-sm align-middle mr-1">send</span> ทดสอบ LINE
           </button>
           <button onclick="testAdminEmail()" class="px-5 py-2.5 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-red-200" style="background:linear-gradient(135deg,#ef4444,#f87171);">
             <span class="material-icons-round text-sm align-middle mr-1">send</span> ทดสอบส่งอีเมล
@@ -4746,6 +4759,90 @@ async function testAdminEmail() {
   } catch (e) {
     console.error('Test email error:', e);
     showToast('ส่งอีเมลไม่สำเร็จ: ' + (e.message || 'ตรวจสอบ Edge Function'), 'error');
+  }
+}
+
+// ============================================
+// Save Admin LINE settings
+// ============================================
+async function saveAdminLine() {
+  try {
+    const bridged = window.__adminWebBridge?.saveAdminLine;
+    if (typeof bridged === 'function') return await bridged({ supabase, supabaseAuth, currentUser, callAdminAction, showToast, escapeHtml, fmt, fmtDate, refreshCurrentPage });
+  } catch (_) {}
+
+  const enabled = document.getElementById('settAdminLineEnabled')?.checked || false;
+  const recipientId = document.getElementById('settAdminLineRecipient')?.value?.trim();
+
+  try {
+    await _upsertSystemConfig({
+      admin_line_enabled: enabled,
+      admin_line_recipient_id: recipientId || null,
+    });
+    showToast('บันทึก LINE แจ้งเตือนแอดมินสำเร็จ', 'success');
+  } catch (e) {
+    console.error('Save LINE exception:', e);
+    showToast('บันทึก LINE ไม่สำเร็จ: ' + (e.message || e), 'error');
+  }
+}
+
+// ============================================
+// Test Admin LINE (via Edge Function)
+// ============================================
+async function testAdminLine() {
+  try {
+    const bridged = window.__adminWebBridge?.testAdminLine;
+    if (typeof bridged === 'function') return await bridged({ supabase, supabaseAuth, currentUser, callAdminAction, showToast, escapeHtml, fmt, fmtDate, refreshCurrentPage });
+  } catch (_) {}
+
+  const recipientId = document.getElementById('settAdminLineRecipient')?.value?.trim();
+  if (!recipientId) { showToast('กรุณากรอก LINE recipient ID ก่อน', 'error'); return; }
+
+  showToast('กำลังส่ง LINE ทดสอบ...', 'info');
+  try {
+    const { data, error } = await supabase.functions.invoke('send-admin-line', {
+      body: {
+        test: true,
+        title: 'JDC Admin Test',
+        message: 'ทดสอบระบบแจ้งเตือนแอดมินผ่าน LINE จาก Jedechai Delivery',
+        event_type: 'admin_line_test',
+        to: recipientId,
+        data: { source: 'admin_web_legacy' },
+      },
+    });
+    if (error) {
+      const details = await readFunctionError(error);
+      throw new Error(details || error.message || 'edge_function_failed');
+    }
+    if (data?.success === false) throw new Error(data?.result?.error ? JSON.stringify(data.result.error) : 'line_send_failed');
+    showToast('ส่ง LINE ทดสอบสำเร็จ', 'success');
+  } catch (e) {
+    console.error('Test LINE error:', e);
+    showToast('ส่ง LINE ไม่สำเร็จ: ' + (e.message || 'ตรวจสอบ Edge Function/LINE token'), 'error');
+  }
+}
+
+async function readFunctionError(error) {
+  const response = error?.context;
+  if (!response || typeof response.text !== 'function') return '';
+
+  try {
+    const raw = await response.text();
+    if (!raw) return '';
+    try {
+      const data = JSON.parse(raw);
+      if (data?.error) return String(data.error);
+      if (data?.result?.error) {
+        return typeof data.result.error === 'string'
+          ? data.result.error
+          : JSON.stringify(data.result.error);
+      }
+      return JSON.stringify(data);
+    } catch (_) {
+      return raw;
+    }
+  } catch (_) {
+    return '';
   }
 }
 

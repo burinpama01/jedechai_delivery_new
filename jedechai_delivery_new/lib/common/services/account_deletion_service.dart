@@ -1,6 +1,7 @@
 import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_service.dart';
+import 'admin_line_notification_service.dart';
 
 /// Service สำหรับจัดการคำขอลบบัญชีผู้ใช้
 class AccountDeletionService {
@@ -34,8 +35,21 @@ class AccountDeletionService {
     // อัปเดตสถานะใน profiles
     await _supabase
         .from('profiles')
-        .update({'deletion_status': 'pending'})
-        .eq('id', userId);
+        .update({'deletion_status': 'pending'}).eq('id', userId);
+
+    await AdminLineNotificationService.notify(
+      eventType: 'account_deletion_request',
+      title: 'JDC: มีคำขอลบบัญชีใหม่',
+      message:
+          'มีคำขอลบบัญชีใหม่จาก ${profile?['full_name'] ?? user?.email ?? userId}',
+      data: {
+        'user_id': userId,
+        'email': user?.email ?? '',
+        'role': profile?['role'] ?? 'customer',
+        'name': profile?['full_name'] ?? '',
+        'reason': reason ?? '',
+      },
+    );
 
     debugLog('🗑️ Account deletion requested for $userId');
   }
@@ -66,9 +80,7 @@ class AccountDeletionService {
   static Future<List<Map<String, dynamic>>> getAllRequests({
     String? statusFilter,
   }) async {
-    final baseQuery = _supabase
-        .from('account_deletion_requests')
-        .select('*');
+    final baseQuery = _supabase.from('account_deletion_requests').select('*');
 
     final filtered = (statusFilter != null && statusFilter.isNotEmpty)
         ? baseQuery.eq('status', statusFilter)
@@ -101,8 +113,7 @@ class AccountDeletionService {
     // อัปเดตสถานะใน profiles
     await _supabase
         .from('profiles')
-        .update({'deletion_status': 'approved'})
-        .eq('id', targetUserId);
+        .update({'deletion_status': 'approved'}).eq('id', targetUserId);
 
     debugLog('✅ Account deletion approved for $targetUserId by $adminId');
   }
@@ -131,8 +142,7 @@ class AccountDeletionService {
     // ลบสถานะ deletion ใน profiles (กลับไปใช้งานได้ปกติ)
     await _supabase
         .from('profiles')
-        .update({'deletion_status': null})
-        .eq('id', targetUserId);
+        .update({'deletion_status': null}).eq('id', targetUserId);
 
     debugLog('❌ Account deletion rejected for $targetUserId by $adminId');
   }

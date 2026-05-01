@@ -1,4 +1,4 @@
-﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
+import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/booking.dart';
 import 'mock_auth_service.dart';
@@ -8,9 +8,10 @@ import 'system_config_service.dart';
 import 'merchant_food_config_service.dart';
 import 'fare_adjustment_service.dart';
 import 'notification_sender.dart';
+import 'admin_line_notification_service.dart';
 
 /// Booking Service
-/// 
+///
 /// Handles all booking-related database operations
 class BookingService {
   SupabaseClient get _client {
@@ -35,21 +36,24 @@ class BookingService {
       if (usage == null) return null;
 
       final couponId = usage['coupon_id'] as String?;
-      final discountAmount = (usage['discount_amount'] as num?)?.toDouble() ?? 0;
+      final discountAmount =
+          (usage['discount_amount'] as num?)?.toDouble() ?? 0;
       if (couponId == null || couponId.isEmpty) return null;
 
       final coupon = await _client
           .from('coupons')
-          .select('discount_type, merchant_id, merchant_gp_charge_rate, merchant_gp_system_rate, merchant_gp_driver_rate')
+          .select(
+              'discount_type, merchant_id, merchant_gp_charge_rate, merchant_gp_system_rate, merchant_gp_driver_rate')
           .eq('id', couponId)
           .maybeSingle();
 
       if (coupon == null) return null;
 
-      final isMerchantCoupon =
-          (coupon['merchant_id'] as String?) != null && (coupon['merchant_id'] as String?) == merchantId;
+      final isMerchantCoupon = (coupon['merchant_id'] as String?) != null &&
+          (coupon['merchant_id'] as String?) == merchantId;
       final isFreeDelivery = coupon['discount_type'] == 'free_delivery';
-      final fullyWaivedDelivery = deliveryFee <= 0 || discountAmount >= deliveryFee;
+      final fullyWaivedDelivery =
+          deliveryFee <= 0 || discountAmount >= deliveryFee;
 
       if (!isMerchantCoupon || !isFreeDelivery || !fullyWaivedDelivery) {
         return null;
@@ -63,9 +67,15 @@ class BookingService {
           ? (totalRateDefault - systemRateDefault)
           : 0.0;
 
-      final chargeRate = (coupon['merchant_gp_charge_rate'] as num?)?.toDouble() ?? totalRateDefault;
-      final systemRate = (coupon['merchant_gp_system_rate'] as num?)?.toDouble() ?? systemRateDefault;
-      final driverRate = (coupon['merchant_gp_driver_rate'] as num?)?.toDouble() ?? driverRateDefault;
+      final chargeRate =
+          (coupon['merchant_gp_charge_rate'] as num?)?.toDouble() ??
+              totalRateDefault;
+      final systemRate =
+          (coupon['merchant_gp_system_rate'] as num?)?.toDouble() ??
+              systemRateDefault;
+      final driverRate =
+          (coupon['merchant_gp_driver_rate'] as num?)?.toDouble() ??
+              driverRateDefault;
 
       return {
         'chargeRate': chargeRate,
@@ -112,9 +122,8 @@ class BookingService {
   }
 
   Future<Map<String, double>> _loadMerchantGpSplitDefaults(
-    SystemConfigService configService,
-    {String? merchantId}
-  ) async {
+      SystemConfigService configService,
+      {String? merchantId}) async {
     final fallbackSystem = configService.merchantGpRate;
     final fallbackDriver = 0.0;
 
@@ -124,7 +133,8 @@ class BookingService {
     try {
       final row = await _client
           .from('system_config')
-          .select('merchant_gp_system_rate_default, merchant_gp_driver_rate_default')
+          .select(
+              'merchant_gp_system_rate_default, merchant_gp_driver_rate_default')
           .maybeSingle();
       if (row != null) {
         final columnSystem = row['merchant_gp_system_rate_default'];
@@ -240,9 +250,7 @@ class BookingService {
           .order('created_at', ascending: false)
           .limit(20);
 
-      return (response as List)
-          .map((json) => Booking.fromJson(json))
-          .toList();
+      return (response as List).map((json) => Booking.fromJson(json)).toList();
     } catch (e) {
       throw Exception('Failed to fetch bookings: $e');
     }
@@ -251,11 +259,8 @@ class BookingService {
   /// Get booking by ID
   Future<Booking?> getBookingById(String bookingId) async {
     try {
-      final response = await _client
-          .from('bookings')
-          .select()
-          .eq('id', bookingId)
-          .single();
+      final response =
+          await _client.from('bookings').select().eq('id', bookingId).single();
       return Booking.fromJson(response);
     } catch (e) {
       throw Exception('Failed to fetch booking: $e');
@@ -269,7 +274,7 @@ class BookingService {
           .from('booking_items')
           .select('*, menu_item:menu_items(name, image_url, price)')
           .eq('booking_id', bookingId);
-      
+
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
       debugLog('Failed to fetch booking items: $e');
@@ -278,7 +283,7 @@ class BookingService {
   }
 
   /// Create a new ride booking
-  /// 
+  ///
   /// Throws Exception if user is not authenticated or creation fails
   /// Price is calculated automatically based on distance
   Future<Booking?> createRideBooking({
@@ -287,8 +292,10 @@ class BookingService {
     required double destLat,
     required double destLng,
     required double distanceKm,
-    Object? pickupAddress,      // Phase 6: Accept Object? instead of dynamic for type safety
-    Object? destinationAddress, // Phase 6: Accept Object? instead of dynamic for type safety
+    Object?
+        pickupAddress, // Phase 6: Accept Object? instead of dynamic for type safety
+    Object?
+        destinationAddress, // Phase 6: Accept Object? instead of dynamic for type safety
     String? notes,
     DateTime? scheduledAt,
   }) async {
@@ -303,18 +310,22 @@ class BookingService {
       String formatAddress(dynamic addressInput) {
         if (addressInput == null) return '';
         String addrStr = addressInput.toString();
-        
+
         // ถ้าเป็น Object หรือ String ที่มีคำว่า Instance of...
-        if (addrStr.contains('AddressPlacemark') || addrStr.contains('Instance of')) {
+        if (addrStr.contains('AddressPlacemark') ||
+            addrStr.contains('Instance of')) {
           if (addressInput is Map) {
-             final parts = <String>[];
-             if (addressInput['address']?.toString().isNotEmpty == true) parts.add(addressInput['address']);
-             if (addressInput['street']?.toString().isNotEmpty == true) parts.add(addressInput['street']);
-             if (addressInput['locality']?.toString().isNotEmpty == true) parts.add(addressInput['locality']);
-             return parts.isNotEmpty ? parts.join(', ') : 'Selected Location';
+            final parts = <String>[];
+            if (addressInput['address']?.toString().isNotEmpty == true)
+              parts.add(addressInput['address']);
+            if (addressInput['street']?.toString().isNotEmpty == true)
+              parts.add(addressInput['street']);
+            if (addressInput['locality']?.toString().isNotEmpty == true)
+              parts.add(addressInput['locality']);
+            return parts.isNotEmpty ? parts.join(', ') : 'Selected Location';
           }
           // ถ้าเป็น Object แต่ไม่ใช่ Map ให้คืนค่า Default (หรือชื่อสถานที่ถ้ามี)
-          return 'Selected Location'; 
+          return 'Selected Location';
         }
         return addrStr; // ถ้าเป็น String ปกติก็คืนค่าเลย
       }
@@ -331,27 +342,43 @@ class BookingService {
       );
 
       debugLog('💰 Calculated ride price: $calculatedPrice THB');
-      debugLog('📍 Cleaned Addresses -> Pickup: $cleanPickup, Dest: $cleanDest');
+      debugLog(
+          '📍 Cleaned Addresses -> Pickup: $cleanPickup, Dest: $cleanDest');
 
-      final response = await _client.from('bookings').insert({
-        'customer_id': userId,
-        'service_type': 'ride',
-        'origin_lat': originLat,
-        'origin_lng': originLng,
-        'dest_lat': destLat,
-        'dest_lng': destLng,
-        'distance_km': distanceKm,
-        'price': calculatedPrice,
-        'pickup_address': cleanPickup,      // ใช้ค่าที่ Clean แล้ว
-        'destination_address': cleanDest,   // ใช้ค่าที่ Clean แล้ว
-        'notes': notes,
-        'status': 'pending',
-        'payment_method': 'cash',
-        'scheduled_at': scheduledAt?.toIso8601String(),
-      }).select().single();
+      final response = await _client
+          .from('bookings')
+          .insert({
+            'customer_id': userId,
+            'service_type': 'ride',
+            'origin_lat': originLat,
+            'origin_lng': originLng,
+            'dest_lat': destLat,
+            'dest_lng': destLng,
+            'distance_km': distanceKm,
+            'price': calculatedPrice,
+            'pickup_address': cleanPickup, // ใช้ค่าที่ Clean แล้ว
+            'destination_address': cleanDest, // ใช้ค่าที่ Clean แล้ว
+            'notes': notes,
+            'status': 'pending',
+            'payment_method': 'cash',
+            'scheduled_at': scheduledAt?.toIso8601String(),
+          })
+          .select()
+          .single();
 
       final booking = Booking.fromJson(response);
-      
+      await _notifyAdminNewBooking(
+        booking: booking,
+        eventType: 'ride_order_new',
+        title: 'JDC: มีคำขอเรียกรถใหม่',
+        message:
+            'มีคำขอเรียกรถใหม่ ฿${calculatedPrice.toStringAsFixed(0)} ระยะทาง ${distanceKm.toStringAsFixed(2)} กม.',
+        extraData: {
+          'pickup': cleanPickup,
+          'destination': cleanDest,
+        },
+      );
+
       // Notify drivers
       debugLog('📤 Sending new ride booking notification to drivers...');
       await _notifyDriversAboutNewRide(booking);
@@ -364,7 +391,7 @@ class BookingService {
   }
 
   /// Create a new booking (unified method for all services)
-  /// 
+  ///
   /// Throws Exception if user is not authenticated or creation fails
   /// Price is calculated automatically based on service type and distance
   Future<Booking?> createBooking({
@@ -385,10 +412,11 @@ class BookingService {
   }) async {
     try {
       double calculatedPrice;
-      
+
       if (serviceType == 'food' && deliveryFee != null) {
         // For food orders, price should be food cost only (delivery fee stored separately)
-        calculatedPrice = deliveryFee; // This will be overridden by the calling code
+        calculatedPrice =
+            deliveryFee; // This will be overridden by the calling code
         debugLog('💰 Food order - delivery fee: $deliveryFee THB');
       } else {
         // Calculate price automatically for non-food orders
@@ -397,30 +425,48 @@ class BookingService {
         calculatedPrice = (await configService.calculateDeliveryFee(
           serviceType: serviceType,
           distanceKm: distanceKm,
-        )).toDouble();
+        ))
+            .toDouble();
         debugLog('💰 Calculated $serviceType price: $calculatedPrice THB');
       }
 
-      final response = await _client.from('bookings').insert({
-        'customer_id': customerId,
-        'service_type': serviceType,
-        'merchant_id': merchantId,
-        'origin_lat': originLat,
-        'origin_lng': originLng,
-        'pickup_address': pickupAddress,
-        'dest_lat': destLat,
-        'dest_lng': destLng,
-        'destination_address': destinationAddress,
-        'distance_km': distanceKm,
-        'price': calculatedPrice,
-        'delivery_fee': serviceType == 'food' ? deliveryFee : null,
-        'notes': notes,
-        'status': 'pending',
-        'payment_method': paymentMethod ?? 'cash',
-        'scheduled_at': scheduledAt?.toIso8601String(),
-      }).select().single();
+      final response = await _client
+          .from('bookings')
+          .insert({
+            'customer_id': customerId,
+            'service_type': serviceType,
+            'merchant_id': merchantId,
+            'origin_lat': originLat,
+            'origin_lng': originLng,
+            'pickup_address': pickupAddress,
+            'dest_lat': destLat,
+            'dest_lng': destLng,
+            'destination_address': destinationAddress,
+            'distance_km': distanceKm,
+            'price': calculatedPrice,
+            'delivery_fee': serviceType == 'food' ? deliveryFee : null,
+            'notes': notes,
+            'status': 'pending',
+            'payment_method': paymentMethod ?? 'cash',
+            'scheduled_at': scheduledAt?.toIso8601String(),
+          })
+          .select()
+          .single();
 
-      return Booking.fromJson(response);
+      final booking = Booking.fromJson(response);
+      await _notifyAdminNewBooking(
+        booking: booking,
+        eventType: '${serviceType}_order_new',
+        title: 'JDC: มีออเดอร์ใหม่',
+        message:
+            'มีออเดอร์ $serviceType ใหม่ ฿${calculatedPrice.toStringAsFixed(0)} ระยะทาง ${distanceKm.toStringAsFixed(2)} กม.',
+        extraData: {
+          if (pickupAddress != null) 'pickup': pickupAddress,
+          if (destinationAddress != null) 'destination': destinationAddress,
+        },
+      );
+
+      return booking;
     } catch (e) {
       debugLog('Failed to create booking: $e');
       return null;
@@ -428,11 +474,11 @@ class BookingService {
   }
 
   /// Update booking status
-  /// 
+  ///
   /// Automatically handles financial logic when status is 'completed':
   /// - Food orders: Platform Fee (15% of delivery_fee) + Merchant GP (10% of food price)
   /// - Other orders: Standard commission deduction (from system_config)
-  /// 
+  ///
   /// Saves driver_earnings and app_earnings to booking record.
   Future<void> updateBookingStatus(
     String bookingId,
@@ -463,9 +509,8 @@ class BookingService {
     // Update the booking status
     await _client
         .from('bookings')
-        .update({'status': newStatus})
-        .eq('id', bookingId);
-    
+        .update({'status': newStatus}).eq('id', bookingId);
+
     debugLog('✅ DEBUG: Booking status updated in database');
 
     // If job is completed, handle financial deductions
@@ -473,11 +518,11 @@ class BookingService {
       try {
         debugLog('🔍 DEBUG: Job completed, processing financial logic...');
         debugLog('   └─ Booking ID: $bookingId');
-        
+
         // Fetch booking details
         final booking = await getBookingById(bookingId);
         debugLog('   └─ Booking data: ${booking?.toJson()}');
-        
+
         if (booking == null || booking.driverId == null) {
           debugLog('❌ Missing required data for commission deduction:');
           debugLog('   └─ Booking exists: ${booking != null}');
@@ -544,12 +589,17 @@ class BookingService {
             couponCode: couponCode,
             couponDiscountAmount: couponDiscountAmount,
             deliverySystemRateOverride: driverDeliverySystemRate,
-            merchantGpSystemRateOverride: merchantFoodConfig.merchantGpSystemRate,
-            merchantGpDriverRateOverride: merchantFoodConfig.merchantGpDriverRate,
+            merchantGpSystemRateOverride:
+                merchantFoodConfig.merchantGpSystemRate,
+            merchantGpDriverRateOverride:
+                merchantFoodConfig.merchantGpDriverRate,
             applyMerchantFreeDeliveryAdjustment: applyFreeDeliveryAdjustment,
-            merchantFreeDeliveryChargeRate: couponFinance?['chargeRate'] ?? 0.25,
-            merchantFreeDeliverySystemRate: couponFinance?['systemRate'] ?? 0.10,
-            merchantFreeDeliveryDriverRate: couponFinance?['driverRate'] ?? 0.15,
+            merchantFreeDeliveryChargeRate:
+                couponFinance?['chargeRate'] ?? 0.25,
+            merchantFreeDeliverySystemRate:
+                couponFinance?['systemRate'] ?? 0.10,
+            merchantFreeDeliveryDriverRate:
+                couponFinance?['driverRate'] ?? 0.15,
           );
 
           if (result != null) {
@@ -560,9 +610,12 @@ class BookingService {
             }).eq('id', bookingId);
 
             debugLog('✅ Food commission deducted & earnings saved:');
-            debugLog('   └─ Delivery System Fee: ${result['deliverySystemFee'] ?? result['platformFee']}');
-            debugLog('   └─ Merchant GP (System): ${result['merchantSystemGP'] ?? result['merchantGP']}');
-            debugLog('   └─ Merchant GP (Driver): ${result['merchantDriverGP'] ?? 0}');
+            debugLog(
+                '   └─ Delivery System Fee: ${result['deliverySystemFee'] ?? result['platformFee']}');
+            debugLog(
+                '   └─ Merchant GP (System): ${result['merchantSystemGP'] ?? result['merchantGP']}');
+            debugLog(
+                '   └─ Merchant GP (Driver): ${result['merchantDriverGP'] ?? 0}');
             debugLog('   └─ Total Deduction: ${result['totalDeduction']}');
             debugLog('   └─ Driver Net Income: ${result['driverNetIncome']}');
           } else {
@@ -583,7 +636,8 @@ class BookingService {
             // Calculate and save earnings for ride/parcel
             final configService = SystemConfigService();
             await configService.fetchSettings();
-            final commission = configService.calculateCommission(booking.price.toInt());
+            final commission =
+                configService.calculateCommission(booking.price.toInt());
             final driverNet = booking.price - commission;
 
             await _client.from('bookings').update({
@@ -685,21 +739,19 @@ class BookingService {
   /// - 'pending' (ride/parcel ready for pickup)
   /// - 'ready_for_pickup' (food orders where merchant finished preparing)
   Future<List<Booking>> getPendingBookings() async {
-      final response = await _client
-          .from('bookings')
-          .select()
-          .filter('driver_id', 'is', 'null')
-          .or('status.in.(pending,ready_for_pickup)')
-          .order('created_at', ascending: false)
-          .limit(50);
+    final response = await _client
+        .from('bookings')
+        .select()
+        .filter('driver_id', 'is', 'null')
+        .or('status.in.(pending,ready_for_pickup)')
+        .order('created_at', ascending: false)
+        .limit(50);
 
-    return (response as List)
-        .map((json) => Booking.fromJson(json))
-        .toList();
+    return (response as List).map((json) => Booking.fromJson(json)).toList();
   }
 
   /// Accept booking (for drivers)
-  /// 
+  ///
   /// Checks wallet balance before allowing driver to accept job.
   /// For food orders: calculates estimated deduction (Platform Fee 15% + Merchant GP 10%)
   /// and checks if driver has enough balance.
@@ -714,7 +766,8 @@ class BookingService {
       throw Exception('Booking not found');
     }
 
-    if (booking.scheduledAt != null && booking.scheduledAt!.isAfter(DateTime.now())) {
+    if (booking.scheduledAt != null &&
+        booking.scheduledAt!.isAfter(DateTime.now())) {
       throw Exception(
         'งานนี้ตั้งเวลารับไว้ที่ ${_formatScheduledDateTime(booking.scheduledAt!)} ยังไม่สามารถรับงานได้',
       );
@@ -728,10 +781,11 @@ class BookingService {
     if (booking.serviceType == 'food') {
       // Food order: check against estimated deduction
       var deliveryFee = booking.deliveryFee ?? 0;
-      final foodPrice = booking.price; // price field = food cost for food orders
+      final foodPrice =
+          booking.price; // price field = food cost for food orders
 
-      final foodPickupSurcharge = await FareAdjustmentService
-          .calculateFoodFarPickupSurcharge(
+      final foodPickupSurcharge =
+          await FareAdjustmentService.calculateFoodFarPickupSurcharge(
         merchantId: booking.merchantId ?? '',
         driverId: driverId,
         merchantLat: booking.originLat,
@@ -758,7 +812,7 @@ class BookingService {
         merchantId: booking.merchantId,
         deliveryFee: deliveryFee,
       );
-      
+
       var estimatedDeduction = WalletService.estimateFoodDeduction(
         deliveryFee: deliveryFee,
         foodPrice: foodPrice,
@@ -800,18 +854,21 @@ class BookingService {
         final configService = SystemConfigService();
         await configService.fetchSettings();
         final minWallet = configService.driverMinWallet;
-        throw Exception('ยอดเงินในกระเป๋าไม่พอรับงานนี้ กรุณาเติมเงินอย่างน้อย $minWallet บาท');
+        throw Exception(
+            'ยอดเงินในกระเป๋าไม่พอรับงานนี้ กรุณาเติมเงินอย่างน้อย $minWallet บาท');
       }
 
       if (booking.serviceType == 'ride') {
         final config = await FareAdjustmentService.loadRideFarPickupConfig();
-        final distanceKm = await FareAdjustmentService.getDriverToPickupDistanceKm(
+        final distanceKm =
+            await FareAdjustmentService.getDriverToPickupDistanceKm(
           driverId: driverId,
           pickupLat: booking.originLat,
           pickupLng: booking.originLng,
         );
         if (distanceKm != null) {
-          final surcharge = FareAdjustmentService.calculateRideFarPickupSurcharge(
+          final surcharge =
+              FareAdjustmentService.calculateRideFarPickupSurcharge(
             driverToPickupDistanceKm: distanceKm,
             vehicleType: booking.notes ?? booking.serviceType,
             config: config,
@@ -852,7 +909,7 @@ class BookingService {
     if (updates.isNotEmpty) {
       await _client.from('bookings').update(updates).eq('id', bookingId);
     }
-    
+
     debugLog('✅ Driver accepted job: $bookingId with status: $newStatus');
   }
 
@@ -867,7 +924,7 @@ class BookingService {
   }
 
   /// Create a new food booking
-  /// 
+  ///
   /// Creates a booking with service_type='food' and status='pending_merchant'
   /// Price is calculated automatically based on distance
   Future<Booking?> createFoodBooking({
@@ -891,7 +948,8 @@ class BookingService {
     }
 
     try {
-      debugLog('💰 Food order - food cost: $foodCost THB, delivery fee: $deliveryFee THB');
+      debugLog(
+          '💰 Food order - food cost: $foodCost THB, delivery fee: $deliveryFee THB');
       debugLog('💰 Total: ${foodCost + deliveryFee} THB');
 
       // Format customer address to readable string
@@ -901,7 +959,7 @@ class BookingService {
       } else {
         formattedCustomerAddress = 'Current Location';
       }
-      
+
       debugLog('📍 Address formatting:');
       debugLog('   └─ Original: $customerAddress');
       debugLog('   └─ Formatted: $formattedCustomerAddress');
@@ -924,16 +982,31 @@ class BookingService {
         'payment_method': 'cash',
         'scheduled_at': scheduledAt?.toIso8601String(),
       };
-      
+
       debugLog('📝 Inserting booking data:');
       debugLog('   └─ price (food cost): ฿$foodCost');
       debugLog('   └─ delivery_fee: ฿$deliveryFee');
       debugLog('   └─ service_type: food');
       debugLog('   └─ status: pending_merchant');
-      
-      final response = await _client.from('bookings').insert(bookingData).select().single();
 
-      return Booking.fromJson(response);
+      final response =
+          await _client.from('bookings').insert(bookingData).select().single();
+
+      final booking = Booking.fromJson(response);
+      await _notifyAdminNewBooking(
+        booking: booking,
+        eventType: 'food_order_new',
+        title: 'JDC: มีออเดอร์อาหารใหม่',
+        message:
+            'มีออเดอร์อาหารใหม่จากร้าน $merchantId ยอดอาหาร ฿${foodCost.toStringAsFixed(0)} ค่าส่ง ฿${deliveryFee.toStringAsFixed(0)}',
+        extraData: {
+          'merchant_id': merchantId,
+          'merchant_address': merchantAddress,
+          'customer_address': formattedCustomerAddress,
+        },
+      );
+
+      return booking;
     } catch (e) {
       debugLog('Failed to create food booking: $e');
       return null;
@@ -942,7 +1015,8 @@ class BookingService {
 
   /// Insert booking items for food orders
   /// DB columns: booking_id, menu_item_id, name, price, quantity
-  Future<void> insertBookingItems(String bookingId, List<Map<String, dynamic>> items) async {
+  Future<void> insertBookingItems(
+      String bookingId, List<Map<String, dynamic>> items) async {
     try {
       final bookingItems = items.map((item) {
         final selectedOptions = item['selected_options'];
@@ -966,6 +1040,34 @@ class BookingService {
     }
   }
 
+  Future<void> _notifyAdminNewBooking({
+    required Booking booking,
+    required String eventType,
+    required String title,
+    required String message,
+    Map<String, dynamic>? extraData,
+  }) async {
+    await AdminLineNotificationService.notify(
+      eventType: eventType,
+      title: title,
+      message: message,
+      data: {
+        'booking_id': booking.id,
+        'service_type': booking.serviceType,
+        'customer_id': booking.customerId,
+        'status': booking.status,
+        'price': booking.price.toStringAsFixed(0),
+        'delivery_fee': booking.deliveryFee?.toStringAsFixed(0),
+        'distance_km': booking.distanceKm.toStringAsFixed(2),
+        'payment_method': booking.paymentMethod,
+        if (booking.merchantId != null) 'merchant_id': booking.merchantId,
+        if (booking.scheduledAt != null)
+          'scheduled_at': booking.scheduledAt!.toIso8601String(),
+        ...?extraData,
+      },
+    );
+  }
+
   /// Notify available drivers about new ride booking
   Future<void> _notifyDriversAboutNewRide(Booking booking) async {
     try {
@@ -975,35 +1077,36 @@ class BookingService {
       debugLog('   └─ Price: ${booking.price}');
       debugLog('   └─ Pickup: ${booking.pickupAddress}');
       debugLog('   └─ Destination: ${booking.destinationAddress}');
-      
+
       // Get all available drivers (drivers with FCM tokens)
       final driversResponse = await _client
           .from('profiles')
           .select('id, email, fcm_token')
           .eq('role', 'driver')
           .not('fcm_token', 'is', null);
-      
+
       debugLog('📊 Found ${driversResponse.length} drivers with FCM tokens');
-      
+
       if (driversResponse.isEmpty) {
         debugLog('⚠️ No drivers found with FCM tokens');
         return;
       }
-      
+
       int successCount = 0;
       int failCount = 0;
-      
+
       for (final driver in driversResponse) {
         final driverId = driver['id'] as String;
         final driverToken = driver['fcm_token'] as String?;
-        
+
         if (driverToken != null && driverToken.isNotEmpty) {
           debugLog('📤 Sending notification to driver: ${driver['email']}');
-          
+
           final success = await NotificationSender.sendNotification(
             targetUserId: driverId,
             title: '🚨 งานใหม่! รับส่งผู้โดยสาร',
-            body: 'มีคนเรียกรถจาก ${booking.pickupAddress ?? 'จุดเริ่มต้น'} ไป ${booking.destinationAddress ?? 'จุดหมาย'} - ราคา ฿${booking.price}',
+            body:
+                'มีคนเรียกรถจาก ${booking.pickupAddress ?? 'จุดเริ่มต้น'} ไป ${booking.destinationAddress ?? 'จุดหมาย'} - ราคา ฿${booking.price}',
             data: {
               'type': 'new_booking',
               'booking_id': booking.id,
@@ -1019,7 +1122,7 @@ class BookingService {
               'distance_km': booking.distanceKm.toString(),
             },
           );
-          
+
           if (success) {
             successCount++;
             debugLog('✅ Notification sent successfully to: ${driver['email']}');
@@ -1032,12 +1135,11 @@ class BookingService {
           debugLog('❌ Driver ${driver['email']} has no FCM token');
         }
       }
-      
+
       debugLog('📊 Notification summary:');
       debugLog('   └─ Total drivers: ${driversResponse.length}');
       debugLog('   └─ Successful: $successCount');
       debugLog('   └─ Failed: $failCount');
-      
     } catch (e) {
       debugLog('❌ Error notifying drivers: $e');
       debugLog('   └─ Stack trace: ${StackTrace.current}');
@@ -1051,8 +1153,8 @@ class BookingService {
         .stream(primaryKey: ['id'])
         .eq('id', bookingId)
         .map((data) {
-      if (data.isEmpty) return null;
-      return Booking.fromJson(data.first);
-    });
+          if (data.isEmpty) return null;
+          return Booking.fromJson(data.first);
+        });
   }
 }

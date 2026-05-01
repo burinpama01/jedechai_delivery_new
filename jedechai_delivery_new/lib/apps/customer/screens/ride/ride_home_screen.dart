@@ -5,6 +5,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:http/http.dart' as http;
+import 'dart:async';
 import 'dart:convert';
 import '../../../../theme/app_theme.dart';
 import '../../../../common/services/auth_service.dart';
@@ -13,6 +14,7 @@ import '../../../../common/services/supabase_service.dart';
 import '../../../../common/services/system_config_service.dart';
 import '../../../../common/models/booking.dart';
 import '../../../../common/services/notification_sender.dart';
+import '../../../../common/services/admin_line_notification_service.dart';
 import '../../../../common/config/env_config.dart';
 import '../../../../common/widgets/location_disclosure_dialog.dart';
 import '../services/waiting_for_driver_screen.dart';
@@ -550,14 +552,20 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                 ),
                 const SizedBox(height: 16),
                 Text(AppLocalizations.of(context)!.rideSelectPayment,
-                    style: const
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
                 _buildPaymentOption(
-                    ctx, 'cash', AppLocalizations.of(context)!.rideCash, Icons.payments_outlined),
+                    ctx,
+                    'cash',
+                    AppLocalizations.of(context)!.rideCash,
+                    Icons.payments_outlined),
                 const SizedBox(height: 8),
                 _buildPaymentOption(
-                    ctx, 'transfer', AppLocalizations.of(context)!.rideTransfer, Icons.account_balance),
+                    ctx,
+                    'transfer',
+                    AppLocalizations.of(context)!.rideTransfer,
+                    Icons.account_balance),
               ],
             ),
           ),
@@ -600,7 +608,9 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected ? AppTheme.primaryGreen : colorScheme.onSurface,
+                  color: isSelected
+                      ? AppTheme.primaryGreen
+                      : colorScheme.onSurface,
                 )),
             const Spacer(),
             if (isSelected)
@@ -614,11 +624,13 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
 
   Future<void> _callDriver() async {
     if (_currentLocation == null || _selectedDestination == null) {
-      _showMessage(AppLocalizations.of(context)!.rideSelectDestination, Colors.orange);
+      _showMessage(
+          AppLocalizations.of(context)!.rideSelectDestination, Colors.orange);
       return;
     }
     if (_selectedVehicleIndex < 0) {
-      _showMessage(AppLocalizations.of(context)!.rideSelectVehicle, Colors.orange);
+      _showMessage(
+          AppLocalizations.of(context)!.rideSelectVehicle, Colors.orange);
       return;
     }
 
@@ -627,7 +639,8 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
     try {
       final currentUser = AuthService.currentUser;
       if (currentUser == null) {
-        _showMessage(AppLocalizations.of(context)!.ridePleaseLogin, Theme.of(context).colorScheme.error);
+        _showMessage(AppLocalizations.of(context)!.ridePleaseLogin,
+            Theme.of(context).colorScheme.error);
         return;
       }
 
@@ -639,14 +652,20 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
           '   └─ Destination: ${_selectedDestination!.latitude}, ${_selectedDestination!.longitude}');
       debugLog('   └─ Distance: $_estimatedDistance km');
       debugLog('   └─ Price: ฿$_estimatedPrice');
-      debugLog('   └─ Driver→Pickup: ${_estimatedDriverToPickupKm.toStringAsFixed(2)} km');
-      debugLog('   └─ Pickup surcharge: ฿${_estimatedPickupSurcharge.toStringAsFixed(2)}');
+      debugLog(
+          '   └─ Driver→Pickup: ${_estimatedDriverToPickupKm.toStringAsFixed(2)} km');
+      debugLog(
+          '   └─ Pickup surcharge: ฿${_estimatedPickupSurcharge.toStringAsFixed(2)}');
       debugLog('   └─ Vehicle: $vehicleName');
 
-      final noteLines = <String>[AppLocalizations.of(context)!.rideNoteVehicleType(vehicleName)];
+      final noteLines = <String>[
+        AppLocalizations.of(context)!.rideNoteVehicleType(vehicleName)
+      ];
       if (_estimatedPickupSurcharge > 0) {
         noteLines.add(
-          AppLocalizations.of(context)!.rideNotePickupSurcharge(_estimatedDriverToPickupKm.toStringAsFixed(2), _estimatedPickupSurcharge.toStringAsFixed(2)),
+          AppLocalizations.of(context)!.rideNotePickupSurcharge(
+              _estimatedDriverToPickupKm.toStringAsFixed(2),
+              _estimatedPickupSurcharge.toStringAsFixed(2)),
         );
       }
 
@@ -674,8 +693,26 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
       debugLog('✅ Booking created successfully: ${response['id']}');
 
       final booking = Booking.fromJson(response);
+      unawaited(AdminLineNotificationService.notify(
+        eventType: 'ride_order_new',
+        title: 'JDC: มีคำขอเรียกรถใหม่',
+        message:
+            'มีคำขอเรียกรถใหม่ ($vehicleName) ฿${_estimatedPrice.toStringAsFixed(0)} ระยะทาง ${_estimatedDistance.toStringAsFixed(2)} กม.',
+        data: {
+          'booking_id': booking.id,
+          'customer_id': currentUser.id,
+          'vehicle_type': vehicleName,
+          'pickup': AppLocalizations.of(context)!.ridePickupAddress,
+          'destination': _selectedAddress,
+          'distance_km': _estimatedDistance.toStringAsFixed(2),
+          'price': _estimatedPrice.toStringAsFixed(0),
+          'payment_method': _paymentMethod,
+          'pickup_surcharge': _estimatedPickupSurcharge.toStringAsFixed(0),
+        },
+      ));
 
-      _showMessage(AppLocalizations.of(context)!.rideSearchingDriver, AppTheme.primaryGreen);
+      _showMessage(AppLocalizations.of(context)!.rideSearchingDriver,
+          AppTheme.primaryGreen);
 
       // Send notification to matching vehicle type drivers only
       await _notifyDriversAboutNewRide(booking, vehicleName);
@@ -687,7 +724,8 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
         ),
       );
     } catch (e) {
-      _showMessage(AppLocalizations.of(context)!.rideError(e.toString()), Theme.of(context).colorScheme.error);
+      _showMessage(AppLocalizations.of(context)!.rideError(e.toString()),
+          Theme.of(context).colorScheme.error);
     } finally {
       setState(() => _isLoading = false);
     }
@@ -756,8 +794,12 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
           final success = await NotificationSender.sendNotification(
             targetUserId: driverId,
             title: AppLocalizations.of(context)!.rideNotifTitle,
-            body:
-                AppLocalizations.of(context)!.rideNotifBody(booking.pickupAddress ?? AppLocalizations.of(context)!.rideNotifPickupFallback, booking.destinationAddress ?? AppLocalizations.of(context)!.rideNotifDestFallback, booking.price.toString()),
+            body: AppLocalizations.of(context)!.rideNotifBody(
+                booking.pickupAddress ??
+                    AppLocalizations.of(context)!.rideNotifPickupFallback,
+                booking.destinationAddress ??
+                    AppLocalizations.of(context)!.rideNotifDestFallback,
+                booking.price.toString()),
             data: {
               'type': 'new_ride_request',
               'booking_id': booking.id,
@@ -950,8 +992,10 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                       Expanded(
                         child: Text(
                           _currentLocation != null
-                              ? AppLocalizations.of(context)!.rideCurrentLocation
-                              : AppLocalizations.of(context)!.rideFindingLocation,
+                              ? AppLocalizations.of(context)!
+                                  .rideCurrentLocation
+                              : AppLocalizations.of(context)!
+                                  .rideFindingLocation,
                           style: TextStyle(
                             fontSize: 14,
                             color: colorScheme.onSurfaceVariant,
@@ -981,7 +1025,8 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                         child: TextField(
                           controller: _destinationController,
                           decoration: InputDecoration(
-                            hintText: AppLocalizations.of(context)!.rideDestHint,
+                            hintText:
+                                AppLocalizations.of(context)!.rideDestHint,
                             hintStyle: TextStyle(
                                 color: colorScheme.onSurfaceVariant,
                                 fontSize: 14),
@@ -1087,7 +1132,12 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                                   ? () => _onVehicleChanged(index)
                                   : () {
                                       _showMessage(
-                                          AppLocalizations.of(context)!.rideNoVehicleOnline(_getVehicleDisplayName(context, v['displayNameKey'] as String)),
+                                          AppLocalizations.of(context)!
+                                              .rideNoVehicleOnline(
+                                                  _getVehicleDisplayName(
+                                                      context,
+                                                      v['displayNameKey']
+                                                          as String)),
                                           Colors.orange);
                                     },
                               child: Opacity(
@@ -1122,9 +1172,12 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                                               ? colorScheme.onSurfaceVariant
                                               : isSelected
                                                   ? AppTheme.primaryGreen
-                                                  : colorScheme.onSurfaceVariant),
+                                                  : colorScheme
+                                                      .onSurfaceVariant),
                                       const SizedBox(height: 4),
-                                      Text(_getVehicleDisplayName(context, v['displayNameKey'] as String),
+                                      Text(
+                                          _getVehicleDisplayName(context,
+                                              v['displayNameKey'] as String),
                                           style: TextStyle(
                                             fontSize: 12,
                                             fontWeight:
@@ -1140,8 +1193,11 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                                       const SizedBox(height: 2),
                                       Text(
                                         onlineCount > 0
-                                            ? AppLocalizations.of(context)!.rideOnlineCount(onlineCount.toString())
-                                            : AppLocalizations.of(context)!.rideNoDrivers,
+                                            ? AppLocalizations.of(context)!
+                                                .rideOnlineCount(
+                                                    onlineCount.toString())
+                                            : AppLocalizations.of(context)!
+                                                .rideNoDrivers,
                                         style: TextStyle(
                                           fontSize: 9,
                                           color: onlineCount > 0
@@ -1175,7 +1231,8 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                                   color: colorScheme.onSurfaceVariant),
                               const SizedBox(width: 8),
                               Text(
-                                  AppLocalizations.of(context)!.rideDistanceKm(_estimatedDistance.toStringAsFixed(1)),
+                                  AppLocalizations.of(context)!.rideDistanceKm(
+                                      _estimatedDistance.toStringAsFixed(1)),
                                   style: TextStyle(
                                       fontSize: 14,
                                       color: colorScheme.onSurfaceVariant)),
@@ -1212,7 +1269,10 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                               ),
                               const SizedBox(width: 10),
                               Text(
-                                _paymentMethod == 'cash' ? AppLocalizations.of(context)!.rideCash : AppLocalizations.of(context)!.rideTransfer,
+                                _paymentMethod == 'cash'
+                                    ? AppLocalizations.of(context)!.rideCash
+                                    : AppLocalizations.of(context)!
+                                        .rideTransfer,
                                 style: TextStyle(
                                     fontSize: 14,
                                     color: colorScheme.onSurfaceVariant),
@@ -1253,10 +1313,15 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                                       color: Colors.white, strokeWidth: 2.5))
                               : Text(
                                   _selectedDestination == null
-                                      ? AppLocalizations.of(context)!.rideBtnSelectDest
+                                      ? AppLocalizations.of(context)!
+                                          .rideBtnSelectDest
                                       : _selectedVehicleIndex < 0
-                                          ? AppLocalizations.of(context)!.rideBtnSelectVehicle
-                                          : AppLocalizations.of(context)!.rideBtnCallRide(_estimatedPrice.ceil().toString()),
+                                          ? AppLocalizations.of(context)!
+                                              .rideBtnSelectVehicle
+                                          : AppLocalizations.of(context)!
+                                              .rideBtnCallRide(_estimatedPrice
+                                                  .ceil()
+                                                  .toString()),
                                   style: const TextStyle(
                                       fontSize: 17,
                                       fontWeight: FontWeight.bold),

@@ -18,6 +18,7 @@ import '../../../../common/models/coupon.dart';
 import '../../../../common/services/coupon_service.dart';
 import '../../../../common/services/merchant_food_config_service.dart';
 import '../../../../common/services/system_config_service.dart';
+import '../../../../common/services/admin_line_notification_service.dart';
 import '../../../../common/utils/platform_adaptive.dart';
 import 'saved_addresses_screen.dart';
 import '../../../../common/models/saved_address.dart';
@@ -107,13 +108,16 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
               : colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppTheme.accentOrange : colorScheme.outlineVariant,
+            color:
+                isSelected ? AppTheme.accentOrange : colorScheme.outlineVariant,
           ),
         ),
         child: Row(
           children: [
             Icon(icon,
-                color: isSelected ? AppTheme.accentOrange : colorScheme.onSurfaceVariant),
+                color: isSelected
+                    ? AppTheme.accentOrange
+                    : colorScheme.onSurfaceVariant),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
@@ -124,7 +128,8 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                    style: TextStyle(
+                        fontSize: 12, color: colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -286,7 +291,8 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         }
         if (merchantConfig.baseDistanceKm != null) {
           _baseDistance = merchantConfig.baseDistanceKm!;
-          debugLog('🏠 Merchant base distance: ${merchantConfig.baseDistanceKm}km');
+          debugLog(
+              '🏠 Merchant base distance: ${merchantConfig.baseDistanceKm}km');
         }
         if (merchantConfig.perKmCharge != null) {
           _perKmCharge = merchantConfig.perKmCharge!;
@@ -328,10 +334,12 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
           position.latitude,
           position.longitude,
         );
-        _customerAddress = addr ?? AppLocalizations.of(context)!.foodAddressCurrentLocation;
+        _customerAddress =
+            addr ?? AppLocalizations.of(context)!.foodAddressCurrentLocation;
         debugLog('📍 Reverse geocoded address: $_customerAddress');
       } catch (_) {
-        _customerAddress = AppLocalizations.of(context)!.foodAddressCurrentLocation;
+        _customerAddress =
+            AppLocalizations.of(context)!.foodAddressCurrentLocation;
       }
     } catch (e) {
       debugLog('⚠️ Cannot get current location: $e');
@@ -432,7 +440,9 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              AppLocalizations.of(context)!.foodDistanceWarningBody(_distanceKm.toStringAsFixed(1), _maxDeliveryRadius.toStringAsFixed(0)),
+              AppLocalizations.of(context)!.foodDistanceWarningBody(
+                  _distanceKm.toStringAsFixed(1),
+                  _maxDeliveryRadius.toStringAsFixed(0)),
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 15, height: 1.5),
             ),
@@ -450,7 +460,8 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      AppLocalizations.of(context)!.foodDistanceWarningFee(_deliveryFee.ceil().toString()),
+                      AppLocalizations.of(context)!.foodDistanceWarningFee(
+                          _deliveryFee.ceil().toString()),
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -476,7 +487,8 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                     borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              child: Text(AppLocalizations.of(context)!.foodDistanceWarningOk, style: const TextStyle(fontSize: 16)),
+              child: Text(AppLocalizations.of(context)!.foodDistanceWarningOk,
+                  style: const TextStyle(fontSize: 16)),
             ),
           ),
         ],
@@ -581,20 +593,23 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                       // Restaurant info
                       _buildSection(
                         icon: Icons.store,
-                        title: AppLocalizations.of(context)!.foodCheckoutRestaurant,
+                        title: AppLocalizations.of(context)!
+                            .foodCheckoutRestaurant,
                         child: Text(cart.merchantName ?? '',
                             style: const TextStyle(fontSize: 15)),
                       ),
                       // ── ที่อยู่จัดส่ง (เลือกได้ 2 แบบ) ──
                       _buildSection(
                         icon: Icons.location_on,
-                        title: AppLocalizations.of(context)!.foodCheckoutDeliveryAddress,
+                        title: AppLocalizations.of(context)!
+                            .foodCheckoutDeliveryAddress,
                         child: _buildDeliveryAddressSelector(),
                       ),
                       // Order items
                       _buildSection(
                         icon: Icons.receipt_long,
-                        title: AppLocalizations.of(context)!.foodCheckoutItemsTitle(cart.totalItems.toString()),
+                        title: AppLocalizations.of(context)!
+                            .foodCheckoutItemsTitle(cart.totalItems.toString()),
                         child: Column(
                           children: cart.items.map((item) {
                             return Padding(
@@ -619,7 +634,8 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                                             item.selectedOptions.join(', '),
                                             style: TextStyle(
                                                 fontSize: 12,
-                                                color: colorScheme.onSurfaceVariant),
+                                                color: colorScheme
+                                                    .onSurfaceVariant),
                                           ),
                                       ],
                                     ),
@@ -639,9 +655,10 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                           children: [
                             _buildScheduleOptionTile(
                               icon: Icons.flash_on,
-                              label: AppLocalizations.of(context)!.foodScheduleNow,
-                              subtitle:
-                                  AppLocalizations.of(context)!.foodScheduleNowDesc,
+                              label:
+                                  AppLocalizations.of(context)!.foodScheduleNow,
+                              subtitle: AppLocalizations.of(context)!
+                                  .foodScheduleNowDesc,
                               isSelected: !_isScheduledOrder,
                               onTap: () {
                                 setState(() {
@@ -653,10 +670,15 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                             const SizedBox(height: 8),
                             _buildScheduleOptionTile(
                               icon: Icons.calendar_today,
-                              label: AppLocalizations.of(context)!.foodScheduleLater,
+                              label: AppLocalizations.of(context)!
+                                  .foodScheduleLater,
                               subtitle: _scheduledAt == null
-                                  ? AppLocalizations.of(context)!.foodScheduleLaterDesc
-                                  : AppLocalizations.of(context)!.foodScheduleLaterSet(_formatScheduledDateTime(_scheduledAt!)),
+                                  ? AppLocalizations.of(context)!
+                                      .foodScheduleLaterDesc
+                                  : AppLocalizations.of(context)!
+                                      .foodScheduleLaterSet(
+                                          _formatScheduledDateTime(
+                                              _scheduledAt!)),
                               isSelected: _isScheduledOrder,
                               onTap: () async {
                                 setState(() => _isScheduledOrder = true);
@@ -669,12 +691,15 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
 
                       _buildSection(
                         icon: Icons.note_alt_outlined,
-                        title: AppLocalizations.of(context)!.foodCheckoutNoteTitle,
+                        title:
+                            AppLocalizations.of(context)!.foodCheckoutNoteTitle,
                         child: TextField(
                           controller: _noteController,
                           decoration: InputDecoration(
-                            hintText: AppLocalizations.of(context)!.foodCheckoutNoteHint,
-                            hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+                            hintText: AppLocalizations.of(context)!
+                                .foodCheckoutNoteHint,
+                            hintStyle:
+                                TextStyle(color: colorScheme.onSurfaceVariant),
                             border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10)),
                             contentPadding: const EdgeInsets.symmetric(
@@ -686,12 +711,20 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                       // Payment method
                       _buildSection(
                         icon: Icons.payment,
-                        title: AppLocalizations.of(context)!.foodCheckoutPaymentTitle,
+                        title: AppLocalizations.of(context)!
+                            .foodCheckoutPaymentTitle,
                         child: Column(
                           children: [
-                            _buildPaymentOption('cash', AppLocalizations.of(context)!.foodCheckoutPayCash, Icons.money),
                             _buildPaymentOption(
-                                'transfer', AppLocalizations.of(context)!.foodCheckoutPayTransfer, Icons.account_balance),
+                                'cash',
+                                AppLocalizations.of(context)!
+                                    .foodCheckoutPayCash,
+                                Icons.money),
+                            _buildPaymentOption(
+                                'transfer',
+                                AppLocalizations.of(context)!
+                                    .foodCheckoutPayTransfer,
+                                Icons.account_balance),
                           ],
                         ),
                       ),
@@ -831,11 +864,14 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
           const SizedBox(height: 8),
           Row(
             children: [
-              Icon(Icons.directions_car, size: 14, color: colorScheme.onSurfaceVariant),
+              Icon(Icons.directions_car,
+                  size: 14, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: 4),
               Text(
-                AppLocalizations.of(context)!.foodAddressDistance(_distanceKm.toStringAsFixed(1)),
-                style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                AppLocalizations.of(context)!
+                    .foodAddressDistance(_distanceKm.toStringAsFixed(1)),
+                style: TextStyle(
+                    fontSize: 12, color: colorScheme.onSurfaceVariant),
               ),
             ],
           ),
@@ -859,7 +895,8 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? AppTheme.accentOrange : colorScheme.outlineVariant,
+            color:
+                isSelected ? AppTheme.accentOrange : colorScheme.outlineVariant,
             width: isSelected ? 2 : 1,
           ),
           color: isSelected
@@ -870,7 +907,9 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
           children: [
             Icon(icon,
                 size: 20,
-                color: isSelected ? AppTheme.accentOrange : colorScheme.onSurfaceVariant),
+                color: isSelected
+                    ? AppTheme.accentOrange
+                    : colorScheme.onSurfaceVariant),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -878,7 +917,9 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  color: isSelected ? AppTheme.accentOrange : colorScheme.onSurface,
+                  color: isSelected
+                      ? AppTheme.accentOrange
+                      : colorScheme.onSurface,
                 ),
               ),
             ),
@@ -902,15 +943,16 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       ),
       child: Column(
         children: [
-          _buildPriceRow(AppLocalizations.of(context)!.foodCartFoodCost, '฿${cart.subtotal.ceil()}'),
+          _buildPriceRow(AppLocalizations.of(context)!.foodCartFoodCost,
+              '฿${cart.subtotal.ceil()}'),
           const SizedBox(height: 8),
           _isCalculatingFee
               ? Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(AppLocalizations.of(context)!.foodCartDeliveryFee,
-                        style:
-                            TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
+                        style: TextStyle(
+                            fontSize: 14, color: colorScheme.onSurfaceVariant)),
                     SizedBox(
                       width: 16,
                       height: 16,
@@ -920,7 +962,8 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                   ],
                 )
               : _buildPriceRow(
-                  AppLocalizations.of(context)!.foodDeliveryFeeWithDist(_distanceKm.toStringAsFixed(1)),
+                  AppLocalizations.of(context)!
+                      .foodDeliveryFeeWithDist(_distanceKm.toStringAsFixed(1)),
                   '฿${_deliveryFee.ceil()}',
                 ),
           if (_couponDiscount > 0) ...[
@@ -1026,13 +1069,17 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
 
     try {
       final userId = Supabase.instance.client.auth.currentUser?.id;
-      if (userId == null) throw Exception(AppLocalizations.of(context)!.foodCheckoutLoginRequired);
+      if (userId == null)
+        throw Exception(
+            AppLocalizations.of(context)!.foodCheckoutLoginRequired);
 
       if (_customerLat == null || _customerLng == null) {
-        throw Exception(AppLocalizations.of(context)!.foodCheckoutLocationRequired);
+        throw Exception(
+            AppLocalizations.of(context)!.foodCheckoutLocationRequired);
       }
       if (_merchantLat == null || _merchantLng == null) {
-        throw Exception('ไม่พบตำแหน่งร้านค้า กรุณาให้ร้านค้าตั้งค่าตำแหน่งร้านก่อนรับออเดอร์');
+        throw Exception(
+            'ไม่พบตำแหน่งร้านค้า กรุณาให้ร้านค้าตั้งค่าตำแหน่งร้านก่อนรับออเดอร์');
       }
 
       final note = _noteController.text.trim();
@@ -1066,8 +1113,10 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         scheduledAt: scheduledAt,
         couponCode: _appliedCoupon?.code,
         couponDiscount: _couponDiscount,
-        defaultNoteText: AppLocalizations.of(context)!.foodDefaultNote(cart.merchantName ?? ''),
-        couponNoteFormatter: (code, amount) => AppLocalizations.of(context)!.foodCouponNote(code, amount),
+        defaultNoteText: AppLocalizations.of(context)!
+            .foodDefaultNote(cart.merchantName ?? ''),
+        couponNoteFormatter: (code, amount) =>
+            AppLocalizations.of(context)!.foodCouponNote(code, amount),
       );
 
       if (booking == null)
@@ -1097,8 +1146,11 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
             userId: merchantId,
             title: AppLocalizations.of(context)!.foodCheckoutNotifTitle,
             body: _isScheduledOrder && _scheduledAt != null
-                ? AppLocalizations.of(context)!.foodCheckoutNotifScheduledBody(merchantVisibleTotal.ceil().toString(), _formatScheduledDateTime(_scheduledAt!))
-                : AppLocalizations.of(context)!.foodCheckoutNotifBody(merchantVisibleTotal.ceil().toString()),
+                ? AppLocalizations.of(context)!.foodCheckoutNotifScheduledBody(
+                    merchantVisibleTotal.ceil().toString(),
+                    _formatScheduledDateTime(_scheduledAt!))
+                : AppLocalizations.of(context)!.foodCheckoutNotifBody(
+                    merchantVisibleTotal.ceil().toString()),
             data: {
               'type': 'merchant_new_order',
               'booking_id': booking['id']?.toString() ?? '',
@@ -1192,12 +1244,16 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       }
       debugLog('   └─ status: pending_merchant');
 
-      final mergedNote = note.isNotEmpty ? note : (defaultNoteText ?? 'Food order from $merchantName');
+      final mergedNote = note.isNotEmpty
+          ? note
+          : (defaultNoteText ?? 'Food order from $merchantName');
       final normalizedCoupon = couponCode?.trim().toUpperCase();
       final hideBreakdown = normalizedCoupon == 'WELCOME20' ||
           normalizedCoupon == 'REFERRER20' ||
           normalizedCoupon == 'REFFERER20';
-      final noteWithCoupon = (couponCode != null && couponDiscount > 0 && !hideBreakdown)
+      final noteWithCoupon = (couponCode != null &&
+              couponDiscount > 0 &&
+              !hideBreakdown)
           ? '$mergedNote\n${couponNoteFormatter != null ? couponNoteFormatter(couponCode!, couponDiscount.toStringAsFixed(2)) : "[Coupon: $couponCode | Discount: \u0e3f${couponDiscount.toStringAsFixed(2)}]"}'
           : mergedNote;
 
@@ -1239,7 +1295,8 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
           'name': item['name'] ?? '',
           'price': basePrice,
           'quantity': qty,
-          'selected_options': selectedOptions is List ? selectedOptions : <String>[],
+          'selected_options':
+              selectedOptions is List ? selectedOptions : <String>[],
           'options': selectedOptions is List ? selectedOptions : <String>[],
         };
       }).toList();
@@ -1248,6 +1305,25 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         await client.from('booking_items').insert(items);
         debugLog('✅ ${items.length} booking items inserted');
       }
+
+      await AdminLineNotificationService.notify(
+        eventType: 'food_order_new',
+        title: 'JDC: มีออเดอร์อาหารใหม่',
+        message:
+            'มีออเดอร์อาหารใหม่จาก $merchantName ยอดอาหาร ฿${subtotal.toStringAsFixed(0)} ค่าส่ง ฿${deliveryFee.toStringAsFixed(0)}',
+        data: {
+          'booking_id': bookingId,
+          'customer_id': userId,
+          'merchant_id': merchantId,
+          'merchant_name': merchantName,
+          'items': cartItems.length,
+          'subtotal': subtotal.toStringAsFixed(0),
+          'delivery_fee': deliveryFee.toStringAsFixed(0),
+          'payment_method': paymentMethod,
+          'customer_address': customerAddress,
+          'scheduled_at': scheduledAt?.toIso8601String(),
+        },
+      );
 
       debugLog('✅ Food order completed: $bookingId');
       return response;

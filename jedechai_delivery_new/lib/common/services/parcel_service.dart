@@ -4,6 +4,7 @@ import '../models/parcel_detail.dart';
 import '../models/booking.dart';
 import 'auth_service.dart';
 import 'system_config_service.dart';
+import 'admin_line_notification_service.dart';
 
 /// ParcelService - บริการจัดการพัสดุ
 ///
@@ -55,25 +56,31 @@ class ParcelService {
       final sizeMultiplier = _getSizeMultiplier(parcelSize);
       final finalPrice = (calculatedPrice * sizeMultiplier).round();
 
-      debugLog('💰 Parcel price: $finalPrice THB (base: $calculatedPrice × $sizeMultiplier)');
+      debugLog(
+          '💰 Parcel price: $finalPrice THB (base: $calculatedPrice × $sizeMultiplier)');
 
       // 2. สร้าง booking
-      final bookingResponse = await _client.from('bookings').insert({
-        'customer_id': userId,
-        'service_type': 'parcel',
-        'origin_lat': originLat,
-        'origin_lng': originLng,
-        'dest_lat': destLat,
-        'dest_lng': destLng,
-        'distance_km': distanceKm,
-        'price': finalPrice,
-        'pickup_address': pickupAddress,
-        'destination_address': destinationAddress,
-        'notes': 'พัสดุ: ${description ?? "-"}\nขนาด: $parcelSize\nผู้รับ: $recipientName $recipientPhone',
-        'status': 'pending',
-        'payment_method': 'cash',
-        'scheduled_at': scheduledAt?.toIso8601String(),
-      }).select().single();
+      final bookingResponse = await _client
+          .from('bookings')
+          .insert({
+            'customer_id': userId,
+            'service_type': 'parcel',
+            'origin_lat': originLat,
+            'origin_lng': originLng,
+            'dest_lat': destLat,
+            'dest_lng': destLng,
+            'distance_km': distanceKm,
+            'price': finalPrice,
+            'pickup_address': pickupAddress,
+            'destination_address': destinationAddress,
+            'notes':
+                'พัสดุ: ${description ?? "-"}\nขนาด: $parcelSize\nผู้รับ: $recipientName $recipientPhone',
+            'status': 'pending',
+            'payment_method': 'cash',
+            'scheduled_at': scheduledAt?.toIso8601String(),
+          })
+          .select()
+          .single();
 
       final booking = Booking.fromJson(bookingResponse);
       debugLog('✅ Booking created: ${booking.id}');
@@ -95,6 +102,24 @@ class ParcelService {
       });
 
       debugLog('✅ Parcel details created for booking: ${booking.id}');
+      await AdminLineNotificationService.notify(
+        eventType: 'parcel_order_new',
+        title: 'JDC: มีออเดอร์ส่งพัสดุใหม่',
+        message:
+            'มีออเดอร์ส่งพัสดุใหม่ ฿${finalPrice.toStringAsFixed(0)} ระยะทาง ${distanceKm.toStringAsFixed(2)} กม.',
+        data: {
+          'booking_id': booking.id,
+          'customer_id': userId,
+          'sender_name': senderName,
+          'sender_phone': senderPhone,
+          'recipient_name': recipientName,
+          'recipient_phone': recipientPhone,
+          'parcel_size': parcelSize,
+          'pickup': pickupAddress,
+          'destination': destinationAddress,
+          'scheduled_at': scheduledAt?.toIso8601String(),
+        },
+      );
       return booking;
     } catch (e) {
       debugLog('❌ Error creating parcel booking: $e');

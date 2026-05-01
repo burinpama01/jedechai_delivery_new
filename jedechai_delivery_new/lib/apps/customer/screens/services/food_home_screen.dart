@@ -12,6 +12,7 @@ import '../../../../common/services/notification_sender.dart';
 import '../../../../common/services/supabase_service.dart';
 import '../../../../common/services/merchant_food_config_service.dart';
 import '../../../../common/services/system_config_service.dart';
+import '../../../../common/services/admin_line_notification_service.dart';
 import '../../../../common/widgets/app_network_image.dart';
 import '../../../../common/widgets/location_disclosure_dialog.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -45,13 +46,19 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
   bool _isOutOfRestaurantCoverage = false;
 
   List<_FoodCategory> _getCategories(AppLocalizations l10n) => [
-    _FoodCategory('all', l10n.foodCategoryAll, Icons.apps, const Color(0xFFFF6B35)),
-    _FoodCategory('อาหารตามสั่ง', l10n.foodCategoryMadeToOrder, Icons.restaurant, const Color(0xFFEF4444)),
-    _FoodCategory('ก๋วยเตี๋ยว', l10n.foodCategoryNoodles, Icons.ramen_dining, const Color(0xFFF59E0B)),
-    _FoodCategory('เครื่องดื่ม', l10n.foodCategoryDrinks, Icons.local_cafe, const Color(0xFF8B5CF6)),
-    _FoodCategory('ของหวาน', l10n.foodCategoryDesserts, Icons.cake, const Color(0xFFEC4899)),
-    _FoodCategory('ฟาสต์ฟู้ด', l10n.foodCategoryFastFood, Icons.fastfood, const Color(0xFF10B981)),
-  ];
+        _FoodCategory(
+            'all', l10n.foodCategoryAll, Icons.apps, const Color(0xFFFF6B35)),
+        _FoodCategory('อาหารตามสั่ง', l10n.foodCategoryMadeToOrder,
+            Icons.restaurant, const Color(0xFFEF4444)),
+        _FoodCategory('ก๋วยเตี๋ยว', l10n.foodCategoryNoodles,
+            Icons.ramen_dining, const Color(0xFFF59E0B)),
+        _FoodCategory('เครื่องดื่ม', l10n.foodCategoryDrinks, Icons.local_cafe,
+            const Color(0xFF8B5CF6)),
+        _FoodCategory('ของหวาน', l10n.foodCategoryDesserts, Icons.cake,
+            const Color(0xFFEC4899)),
+        _FoodCategory('ฟาสต์ฟู้ด', l10n.foodCategoryFastFood, Icons.fastfood,
+            const Color(0xFF10B981)),
+      ];
 
   @override
   void initState() {
@@ -237,7 +244,8 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
       bool _isShopOpenNow(Map<String, dynamic> merchant) {
         final autoEnabled = merchant['shop_auto_schedule_enabled'] == true;
         final rawStatus = merchant['shop_status'];
-        final bool statusOpen = rawStatus == true || rawStatus == 1 || rawStatus == 'true';
+        final bool statusOpen =
+            rawStatus == true || rawStatus == 1 || rawStatus == 'true';
 
         if (!autoEnabled) {
           return statusOpen;
@@ -259,7 +267,10 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
         final openMinute = int.tryParse(openParts[1]);
         final closeHour = int.tryParse(closeParts[0]);
         final closeMinute = int.tryParse(closeParts[1]);
-        if (openHour == null || openMinute == null || closeHour == null || closeMinute == null) {
+        if (openHour == null ||
+            openMinute == null ||
+            closeHour == null ||
+            closeMinute == null) {
           return statusOpen;
         }
 
@@ -480,7 +491,8 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                 child: Row(
                   children: [
                     IconButton(
-                      icon: Icon(Icons.arrow_back, color: colorScheme.onPrimary),
+                      icon:
+                          Icon(Icons.arrow_back, color: colorScheme.onPrimary),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                     Expanded(
@@ -559,8 +571,8 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                         color: colorScheme.onSurfaceVariant,
                         fontSize: 15,
                       ),
-                      prefixIcon:
-                          Icon(Icons.search, color: colorScheme.onSurfaceVariant),
+                      prefixIcon: Icon(Icons.search,
+                          color: colorScheme.onSurfaceVariant),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
                               icon: Icon(
@@ -623,8 +635,9 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                       ),
                       child: Icon(
                         cat.icon,
-                        color:
-                            isSelected ? cat.color : colorScheme.onSurfaceVariant,
+                        color: isSelected
+                            ? cat.color
+                            : colorScheme.onSurfaceVariant,
                         size: 28,
                       ),
                     ),
@@ -767,7 +780,8 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
               const SizedBox(width: 6),
               Text(
                 l10n.foodHomeTopSelling,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const Spacer(),
               Text(
@@ -839,7 +853,8 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                                   fit: BoxFit.cover,
                                   width: double.infinity,
                                   height: 100,
-                                  backgroundColor: colorScheme.surfaceContainerHighest,
+                                  backgroundColor:
+                                      colorScheme.surfaceContainerHighest,
                                 )
                               else
                                 const GrayscaleLogoPlaceholder(
@@ -854,7 +869,8 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(colors: [
                                       AppTheme.accentOrange,
-                                      AppTheme.accentOrange.withValues(alpha: 0.75)
+                                      AppTheme.accentOrange
+                                          .withValues(alpha: 0.75)
                                     ]),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
@@ -875,17 +891,20 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: colorScheme.scrim.withValues(alpha: 0.6),
+                                    color: colorScheme.scrim
+                                        .withValues(alpha: 0.6),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(Icons.shopping_bag,
-                                          size: 10, color: colorScheme.onPrimary),
+                                          size: 10,
+                                          color: colorScheme.onPrimary),
                                       const SizedBox(width: 2),
                                       Text(
-                                        l10n.foodHomeSoldCount(salesCount.toString()),
+                                        l10n.foodHomeSoldCount(
+                                            salesCount.toString()),
                                         style: TextStyle(
                                             color: colorScheme.onPrimary,
                                             fontSize: 9,
@@ -957,8 +976,8 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
             const SizedBox(width: 8),
             Expanded(
                 child: Text(AppLocalizations.of(context)!.foodPromoCodeTitle,
-                    style:
-                        const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold))),
           ],
         ),
         content: Column(
@@ -1012,7 +1031,8 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(AppLocalizations.of(context)!.foodPromoCodeCopied(code)),
+                  content: Text(
+                      AppLocalizations.of(context)!.foodPromoCodeCopied(code)),
                   backgroundColor: AppTheme.accentOrange,
                   duration: const Duration(seconds: 2),
                 ),
@@ -1045,7 +1065,8 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
           const Spacer(),
           if (!_isLoading)
             Text(
-              AppLocalizations.of(context)!.foodHomeRestaurantCount(_filteredRestaurants.length.toString()),
+              AppLocalizations.of(context)!.foodHomeRestaurantCount(
+                  _filteredRestaurants.length.toString()),
               style: TextStyle(
                 fontSize: 13,
                 color: colorScheme.onSurfaceVariant,
@@ -1181,7 +1202,8 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
             _searchQuery.isNotEmpty
                 ? AppLocalizations.of(context)!.foodHomeEmptySearchHint
                 : (_isOutOfRestaurantCoverage
-                    ? AppLocalizations.of(context)!.foodHomeEmptyNoAreaHint(_restaurantRadiusKm.toStringAsFixed(0))
+                    ? AppLocalizations.of(context)!.foodHomeEmptyNoAreaHint(
+                        _restaurantRadiusKm.toStringAsFixed(0))
                     : AppLocalizations.of(context)!.foodHomeEmptyTryLater),
             style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
             textAlign: TextAlign.center,
@@ -1279,7 +1301,8 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
       MaterialPageRoute(
         builder: (context) => RestaurantDetailScreen(
           merchantId: restaurant['id'],
-          merchantName: restaurant['full_name'] ?? AppLocalizations.of(context)!.foodHomeRestaurantDefault,
+          merchantName: restaurant['full_name'] ??
+              AppLocalizations.of(context)!.foodHomeRestaurantDefault,
         ),
       ),
     );
@@ -1311,7 +1334,8 @@ class _FixedHeightSliverHeaderDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => height;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
     return child;
   }
 
@@ -1399,7 +1423,8 @@ class _RestaurantCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
+                          color: colorScheme.secondaryContainer
+                              .withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -1442,30 +1467,37 @@ class _RestaurantCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text('(100+)',
-                          style:
-                              TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: colorScheme.onSurfaceVariant)),
                       const SizedBox(width: 12),
                       if (distanceKm != null) ...[
-                        Icon(Icons.near_me, size: 14, color: colorScheme.onSurfaceVariant),
+                        Icon(Icons.near_me,
+                            size: 14, color: colorScheme.onSurfaceVariant),
                         const SizedBox(width: 2),
-                        Text(l10n.foodHomeDistanceKm(distanceKm.toStringAsFixed(1)),
+                        Text(
+                            l10n.foodHomeDistanceKm(
+                                distanceKm.toStringAsFixed(1)),
                             style: TextStyle(
-                                fontSize: 12, color: colorScheme.onSurfaceVariant)),
+                                fontSize: 12,
+                                color: colorScheme.onSurfaceVariant)),
                       ] else ...[
                         Icon(Icons.access_time,
                             size: 14, color: colorScheme.onSurfaceVariant),
                         const SizedBox(width: 2),
                         Text(l10n.foodHomeEstTime,
                             style: TextStyle(
-                                fontSize: 12, color: colorScheme.onSurfaceVariant)),
+                                fontSize: 12,
+                                color: colorScheme.onSurfaceVariant)),
                       ],
                       const SizedBox(width: 12),
                       Icon(Icons.delivery_dining,
                           size: 14, color: colorScheme.onSurfaceVariant),
                       const SizedBox(width: 2),
                       Text('฿15',
-                          style:
-                              TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: colorScheme.onSurfaceVariant)),
                     ],
                   ),
                   if (address.isNotEmpty) ...[
@@ -1479,7 +1511,8 @@ class _RestaurantCard extends StatelessWidget {
                           child: Text(
                             address,
                             style: TextStyle(
-                                fontSize: 12, color: colorScheme.onSurfaceVariant),
+                                fontSize: 12,
+                                color: colorScheme.onSurfaceVariant),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -1523,7 +1556,8 @@ class _CartBottomSheet extends StatelessWidget {
             return Container(
               decoration: BoxDecoration(
                 color: colorScheme.surface,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(20)),
               ),
               child: Column(
                 children: [
@@ -1570,7 +1604,8 @@ class _CartBottomSheet extends StatelessWidget {
                               cart.clearCart();
                               Navigator.of(context).pop();
                             },
-                            child: Text(AppLocalizations.of(context)!.foodCartClear,
+                            child: Text(
+                                AppLocalizations.of(context)!.foodCartClear,
                                 style: TextStyle(color: colorScheme.error)),
                           ),
                       ],
@@ -1588,7 +1623,8 @@ class _CartBottomSheet extends StatelessWidget {
                                     size: 64,
                                     color: colorScheme.outlineVariant),
                                 const SizedBox(height: 12),
-                                Text(AppLocalizations.of(context)!.foodCartEmpty,
+                                Text(
+                                    AppLocalizations.of(context)!.foodCartEmpty,
                                     style: TextStyle(
                                         fontSize: 16,
                                         color: colorScheme.onSurfaceVariant)),
@@ -1634,7 +1670,9 @@ class _CartBottomSheet extends StatelessWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(AppLocalizations.of(context)!.foodCartFoodCost,
+                                Text(
+                                    AppLocalizations.of(context)!
+                                        .foodCartFoodCost,
                                     style: TextStyle(
                                         color: colorScheme.onSurfaceVariant)),
                                 Text('฿${cart.subtotal.ceil()}'),
@@ -1644,13 +1682,16 @@ class _CartBottomSheet extends StatelessWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(AppLocalizations.of(context)!.foodCartDeliveryFee,
+                                Text(
+                                    AppLocalizations.of(context)!
+                                        .foodCartDeliveryFee,
                                     style: TextStyle(
                                         color: colorScheme.onSurfaceVariant)),
                                 Text(
                                   cart.deliveryFee > 0
                                       ? '฿${cart.deliveryFee.ceil()}'
-                                      : AppLocalizations.of(context)!.foodCartDeliveryCalcLater,
+                                      : AppLocalizations.of(context)!
+                                          .foodCartDeliveryCalcLater,
                                   style: TextStyle(
                                     color: cart.deliveryFee > 0
                                         ? null
@@ -1666,7 +1707,8 @@ class _CartBottomSheet extends StatelessWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(AppLocalizations.of(context)!.foodCartTotal,
+                                Text(
+                                    AppLocalizations.of(context)!.foodCartTotal,
                                     style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16)),
@@ -1909,22 +1951,24 @@ class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
                       // Restaurant info
                       _buildSection(
                         icon: Icons.store,
-                        title: AppLocalizations.of(context)!.foodCheckoutRestaurant,
+                        title: AppLocalizations.of(context)!
+                            .foodCheckoutRestaurant,
                         child: Text(cart.merchantName ?? '',
                             style: const TextStyle(fontSize: 15)),
                       ),
                       // Delivery address
                       _buildSection(
                         icon: Icons.location_on,
-                        title: AppLocalizations.of(context)!.foodCheckoutDeliveryAddress,
+                        title: AppLocalizations.of(context)!
+                            .foodCheckoutDeliveryAddress,
                         child: Row(
                           children: [
                             Expanded(
                               child: Text(
-                                AppLocalizations.of(context)!.foodCheckoutCurrentLocation,
+                                AppLocalizations.of(context)!
+                                    .foodCheckoutCurrentLocation,
                                 style: TextStyle(
-                                    fontSize: 15,
-                                    color: colorScheme.onSurface),
+                                    fontSize: 15, color: colorScheme.onSurface),
                               ),
                             ),
                             Icon(Icons.my_location,
@@ -1935,7 +1979,8 @@ class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
                       // Order items
                       _buildSection(
                         icon: Icons.receipt_long,
-                        title: AppLocalizations.of(context)!.foodCheckoutItemsTitle(cart.totalItems.toString()),
+                        title: AppLocalizations.of(context)!
+                            .foodCheckoutItemsTitle(cart.totalItems.toString()),
                         child: Column(
                           children: cart.items.map((item) {
                             return Padding(
@@ -1976,13 +2021,15 @@ class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
                       // Note
                       _buildSection(
                         icon: Icons.note_alt_outlined,
-                        title: AppLocalizations.of(context)!.foodCheckoutNoteTitle,
+                        title:
+                            AppLocalizations.of(context)!.foodCheckoutNoteTitle,
                         child: TextField(
                           controller: _noteController,
                           decoration: InputDecoration(
-                            hintText: AppLocalizations.of(context)!.foodCheckoutNoteHint,
-                            hintStyle: TextStyle(
-                                color: colorScheme.onSurfaceVariant),
+                            hintText: AppLocalizations.of(context)!
+                                .foodCheckoutNoteHint,
+                            hintStyle:
+                                TextStyle(color: colorScheme.onSurfaceVariant),
                             border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10)),
                             contentPadding: const EdgeInsets.symmetric(
@@ -1994,12 +2041,20 @@ class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
                       // Payment method
                       _buildSection(
                         icon: Icons.payment,
-                        title: AppLocalizations.of(context)!.foodCheckoutPaymentTitle,
+                        title: AppLocalizations.of(context)!
+                            .foodCheckoutPaymentTitle,
                         child: Column(
                           children: [
-                            _buildPaymentOption('cash', AppLocalizations.of(context)!.foodCheckoutPayCash, Icons.money),
                             _buildPaymentOption(
-                                'transfer', AppLocalizations.of(context)!.foodCheckoutPayTransfer, Icons.account_balance),
+                                'cash',
+                                AppLocalizations.of(context)!
+                                    .foodCheckoutPayCash,
+                                Icons.money),
+                            _buildPaymentOption(
+                                'transfer',
+                                AppLocalizations.of(context)!
+                                    .foodCheckoutPayTransfer,
+                                Icons.account_balance),
                           ],
                         ),
                       ),
@@ -2014,9 +2069,13 @@ class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
                         child: Column(
                           children: [
                             _buildPriceRow(
-                                AppLocalizations.of(context)!.foodCartFoodCost, '฿${cart.subtotal.ceil()}'),
+                                AppLocalizations.of(context)!.foodCartFoodCost,
+                                '฿${cart.subtotal.ceil()}'),
                             const SizedBox(height: 8),
-                            _buildPriceRow(AppLocalizations.of(context)!.foodCheckoutDeliveryEstimate, '฿30'),
+                            _buildPriceRow(
+                                AppLocalizations.of(context)!
+                                    .foodCheckoutDeliveryEstimate,
+                                '฿30'),
                             const Divider(height: 20),
                             _buildPriceRow(
                               AppLocalizations.of(context)!.foodCartTotal,
@@ -2069,7 +2128,8 @@ class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
                                     color: colorScheme.onPrimary),
                               )
                             : Text(
-                                AppLocalizations.of(context)!.foodCheckoutConfirmButton,
+                                AppLocalizations.of(context)!
+                                    .foodCheckoutConfirmButton,
                                 style: const TextStyle(
                                     fontSize: 16, fontWeight: FontWeight.bold),
                               ),
@@ -2188,7 +2248,8 @@ class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
     }
 
     if (lat == null || lng == null) {
-      throw Exception(AppLocalizations.of(context)!.foodCheckoutLocationRequired);
+      throw Exception(
+          AppLocalizations.of(context)!.foodCheckoutLocationRequired);
     }
 
     var address = AppLocalizations.of(context)!.foodCheckoutCurrentLocation;
@@ -2251,8 +2312,7 @@ class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
           await NotificationSender.sendToUser(
             userId: merchantId,
             title: l10n.foodCheckoutNotifTitle,
-            body:
-                l10n.foodCheckoutNotifBody(cart.subtotal.ceil().toString()),
+            body: l10n.foodCheckoutNotifBody(cart.subtotal.ceil().toString()),
             data: {
               'type': 'merchant_new_order',
               'booking_id': booking['id']?.toString() ?? '',
@@ -2333,7 +2393,8 @@ class _BookingServiceHelper {
       final merchantLat = (merchantProfile?['latitude'] as num?)?.toDouble();
       final merchantLng = (merchantProfile?['longitude'] as num?)?.toDouble();
       if (merchantLat == null || merchantLng == null) {
-        throw Exception('ไม่พบตำแหน่งร้านค้า กรุณาให้ร้านค้าตั้งค่าตำแหน่งร้านก่อนรับออเดอร์');
+        throw Exception(
+            'ไม่พบตำแหน่งร้านค้า กรุณาให้ร้านค้าตั้งค่าตำแหน่งร้านก่อนรับออเดอร์');
       }
 
       // Calculate distance (straight-line fallback)
@@ -2432,7 +2493,8 @@ class _BookingServiceHelper {
           'name': item['name'] ?? '',
           'price': basePrice,
           'quantity': qty,
-          'selected_options': selectedOptions is List ? selectedOptions : <String>[],
+          'selected_options':
+              selectedOptions is List ? selectedOptions : <String>[],
           'options': selectedOptions is List ? selectedOptions : <String>[],
         };
       }).toList();
@@ -2440,6 +2502,24 @@ class _BookingServiceHelper {
       if (items.isNotEmpty) {
         await client.from('booking_items').insert(items);
       }
+
+      await AdminLineNotificationService.notify(
+        eventType: 'food_order_new',
+        title: 'JDC: มีออเดอร์อาหารใหม่',
+        message:
+            'มีออเดอร์อาหารใหม่จาก $merchantName ยอดอาหาร ฿${subtotal.toStringAsFixed(0)} ค่าส่ง ฿${deliveryFee.toStringAsFixed(0)}',
+        data: {
+          'booking_id': bookingId,
+          'customer_id': userId,
+          'merchant_id': merchantId,
+          'merchant_name': merchantName,
+          'items': cartItems.length,
+          'subtotal': subtotal.toStringAsFixed(0),
+          'delivery_fee': deliveryFee.toStringAsFixed(0),
+          'payment_method': paymentMethod,
+          'customer_address': normalizedCustomerAddress,
+        },
+      );
 
       debugLog('✅ Food order created: $bookingId');
       return response;

@@ -274,6 +274,70 @@ export async function saveAdminEmail(ctx) {
   }
 }
 
+export async function saveAdminLine(ctx) {
+  _ctx = ctx || _ctx;
+  const { showToast, _upsertSystemConfig } = _deps();
+  await _ensureFns();
+
+  const enabled = document.getElementById('settAdminLineEnabled')?.checked || false;
+  const recipientId = document.getElementById('settAdminLineRecipient')?.value?.trim();
+
+  try {
+    await _upsertSystemConfig({
+      admin_line_enabled: enabled,
+      admin_line_recipient_id: recipientId || null,
+    });
+
+    showToast('บันทึก LINE แจ้งเตือนแอดมินสำเร็จ', 'success');
+  } catch (e) {
+    try {
+      console.error('Save LINE exception:', e);
+    } catch (_) {}
+    showToast('บันทึก LINE ไม่สำเร็จ: ' + (e?.message || e), 'error');
+  }
+}
+
+export async function testAdminLine(ctx) {
+  _ctx = ctx || _ctx;
+  const { showToast, supabase } = _deps();
+
+  const recipientId = document.getElementById('settAdminLineRecipient')?.value?.trim();
+  if (!recipientId) {
+    showToast('กรุณากรอก LINE recipient ID ก่อน', 'error');
+    return;
+  }
+
+  showToast('กำลังส่ง LINE ทดสอบ...', 'info');
+  try {
+    const { data, error } = await supabase.functions.invoke('send-admin-line', {
+      body: {
+        test: true,
+        title: 'JDC Admin Test',
+        message: 'ทดสอบระบบแจ้งเตือนแอดมินผ่าน LINE จาก Jedechai Delivery',
+        event_type: 'admin_line_test',
+        to: recipientId,
+        data: {
+          source: 'admin_web_settings',
+        },
+      },
+    });
+    if (error) {
+      const details = await readFunctionError(error);
+      throw new Error(details || error.message || 'edge_function_failed');
+    }
+    if (data?.success === false) {
+      throw new Error(data?.result?.error ? JSON.stringify(data.result.error) : 'line_send_failed');
+    }
+
+    showToast('ส่ง LINE ทดสอบสำเร็จ', 'success');
+  } catch (e) {
+    try {
+      console.error('Test LINE error:', e);
+    } catch (_) {}
+    showToast('ส่ง LINE ไม่สำเร็จ: ' + (e?.message || 'ตรวจสอบ Edge Function/LINE token'), 'error');
+  }
+}
+
 export async function testAdminEmail(ctx) {
   _ctx = ctx || _ctx;
   const { showToast, supabase } = _deps();
@@ -325,6 +389,30 @@ export async function testAdminEmail(ctx) {
   }
 }
 
+async function readFunctionError(error) {
+  const response = error?.context;
+  if (!response || typeof response.text !== 'function') return '';
+
+  try {
+    const raw = await response.text();
+    if (!raw) return '';
+    try {
+      const data = JSON.parse(raw);
+      if (data?.error) return String(data.error);
+      if (data?.result?.error) {
+        return typeof data.result.error === 'string'
+          ? data.result.error
+          : JSON.stringify(data.result.error);
+      }
+      return JSON.stringify(data);
+    } catch (_) {
+      return raw;
+    }
+  } catch (_) {
+    return '';
+  }
+}
+
 export function wireSettingsActionsBridge() {
   globalThis.__adminWebBridge = globalThis.__adminWebBridge || {};
   globalThis.__adminWebBridge.saveGeneralSettings = saveGeneralSettings;
@@ -334,5 +422,7 @@ export function wireSettingsActionsBridge() {
   globalThis.__adminWebBridge.savePromoSettings = savePromoSettings;
   globalThis.__adminWebBridge.saveLandingSettings = saveLandingSettings;
   globalThis.__adminWebBridge.saveAdminEmail = saveAdminEmail;
+  globalThis.__adminWebBridge.saveAdminLine = saveAdminLine;
   globalThis.__adminWebBridge.testAdminEmail = testAdminEmail;
+  globalThis.__adminWebBridge.testAdminLine = testAdminLine;
 }

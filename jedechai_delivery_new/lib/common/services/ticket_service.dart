@@ -3,6 +3,7 @@ import '../../utils/debug_logger.dart';
 import '../models/support_ticket.dart';
 import 'auth_service.dart';
 import 'notification_sender.dart';
+import 'admin_line_notification_service.dart';
 
 /// Ticket Service
 ///
@@ -40,7 +41,14 @@ class TicketService {
       debugLog('✅ Created support ticket: ${response['id']}');
 
       // Notify admins
-      await _notifyAdmins(subject);
+      await _notifyAdmins(
+        subject: subject,
+        ticketId: response['id'] as String,
+        userId: userId,
+        category: category,
+        priority: priority,
+        bookingId: bookingId,
+      );
 
       return SupportTicket.fromJson(response);
     } catch (e) {
@@ -75,9 +83,7 @@ class TicketService {
   /// Get all tickets (admin)
   Future<List<SupportTicket>> getAllTickets({String? statusFilter}) async {
     try {
-      var query = _client
-          .from('support_tickets')
-          .select();
+      var query = _client.from('support_tickets').select();
 
       if (statusFilter != null && statusFilter != 'all') {
         query = query.eq('status', statusFilter);
@@ -95,7 +101,8 @@ class TicketService {
   }
 
   /// Update ticket status (admin)
-  Future<bool> updateTicketStatus(String ticketId, String newStatus, {String? resolution}) async {
+  Future<bool> updateTicketStatus(String ticketId, String newStatus,
+      {String? resolution}) async {
     try {
       final updateData = <String, dynamic>{
         'status': newStatus,
@@ -129,9 +136,7 @@ class TicketService {
   /// Get ticket stats (admin dashboard)
   Future<Map<String, int>> getTicketStats() async {
     try {
-      final response = await _client
-          .from('support_tickets')
-          .select('status');
+      final response = await _client.from('support_tickets').select('status');
 
       final stats = <String, int>{
         'open': 0,
@@ -150,17 +155,28 @@ class TicketService {
       return stats;
     } catch (e) {
       debugLog('❌ Error fetching ticket stats: $e');
-      return {'open': 0, 'in_progress': 0, 'resolved': 0, 'closed': 0, 'total': 0};
+      return {
+        'open': 0,
+        'in_progress': 0,
+        'resolved': 0,
+        'closed': 0,
+        'total': 0
+      };
     }
   }
 
   /// Notify admins about new ticket
-  Future<void> _notifyAdmins(String subject) async {
+  Future<void> _notifyAdmins({
+    required String subject,
+    required String ticketId,
+    required String userId,
+    required String category,
+    required String priority,
+    String? bookingId,
+  }) async {
     try {
-      final admins = await _client
-          .from('profiles')
-          .select('id')
-          .eq('role', 'admin');
+      final admins =
+          await _client.from('profiles').select('id').eq('role', 'admin');
 
       for (final admin in admins) {
         await NotificationSender.sendNotification(
@@ -170,6 +186,19 @@ class TicketService {
           data: {'type': 'new_ticket'},
         );
       }
+
+      await AdminLineNotificationService.notify(
+        eventType: 'support_ticket_new',
+        title: 'JDC: มี Ticket ใหม่',
+        message: 'มี Ticket ใหม่: $subject',
+        data: {
+          'ticket_id': ticketId,
+          'user_id': userId,
+          'category': category,
+          'priority': priority,
+          'booking_id': bookingId,
+        },
+      );
     } catch (e) {
       debugLog('❌ Error notifying admins: $e');
     }
