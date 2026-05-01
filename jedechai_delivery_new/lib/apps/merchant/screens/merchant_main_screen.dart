@@ -8,7 +8,7 @@ import 'menu_management_screen.dart';
 import 'merchant_settings_screen.dart';
 
 /// Merchant Main Screen
-/// 
+///
 /// Main navigation wrapper for merchant app with 4 tabs:
 /// 1. ออเดอร์ (Orders) — real-time order management
 /// 2. เมนู (Menu) — menu item management
@@ -61,54 +61,59 @@ class _MerchantMainScreenState extends State<MerchantMainScreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, _) => _onPopInvoked(didPop),
       child: Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
+        body: IndexedStack(
+          index: _currentIndex,
+          children: _screens,
         ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: colorScheme.surface,
-          selectedItemColor: AppTheme.accentOrange,
-          unselectedItemColor: colorScheme.onSurfaceVariant,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w400, fontSize: 13),
-          items: [
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.receipt_long_outlined),
-              activeIcon: const Icon(Icons.receipt_long),
-              label: AppLocalizations.of(context)!.merchantNavOrders,
+        bottomNavigationBar: SafeArea(
+          top: false,
+          child: Container(
+            decoration: BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
+                ),
+              ],
             ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.restaurant_menu_outlined),
-              activeIcon: const Icon(Icons.restaurant_menu),
-              label: AppLocalizations.of(context)!.merchantNavMenu,
+            child: BottomNavigationBar(
+              currentIndex: _currentIndex,
+              onTap: (index) => setState(() => _currentIndex = index),
+              type: BottomNavigationBarType.fixed,
+              backgroundColor: colorScheme.surface,
+              selectedItemColor: AppTheme.accentOrange,
+              unselectedItemColor: colorScheme.onSurfaceVariant,
+              selectedLabelStyle:
+                  const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              unselectedLabelStyle:
+                  const TextStyle(fontWeight: FontWeight.w400, fontSize: 13),
+              items: [
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.receipt_long_outlined),
+                  activeIcon: const Icon(Icons.receipt_long),
+                  label: AppLocalizations.of(context)!.merchantNavOrders,
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.restaurant_menu_outlined),
+                  activeIcon: const Icon(Icons.restaurant_menu),
+                  label: AppLocalizations.of(context)!.merchantNavMenu,
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.bar_chart_outlined),
+                  activeIcon: const Icon(Icons.bar_chart),
+                  label: AppLocalizations.of(context)!.merchantNavReport,
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.person_outline),
+                  activeIcon: const Icon(Icons.person),
+                  label: AppLocalizations.of(context)!.merchantNavAccount,
+                ),
+              ],
             ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.bar_chart_outlined),
-              activeIcon: const Icon(Icons.bar_chart),
-              label: AppLocalizations.of(context)!.merchantNavReport,
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.person_outline),
-              activeIcon: const Icon(Icons.person),
-              label: AppLocalizations.of(context)!.merchantNavAccount,
-            ),
-          ],
+          ),
         ),
       ),
-    ),
     );
   }
 }

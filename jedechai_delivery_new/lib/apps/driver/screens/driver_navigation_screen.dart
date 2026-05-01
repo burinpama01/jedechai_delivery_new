@@ -1,4 +1,4 @@
-﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
+import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
@@ -29,7 +29,7 @@ import 'driver_job_detail_screen.dart';
 import '../../../l10n/app_localizations.dart';
 
 /// Driver Navigation Screen
-/// 
+///
 /// Real-time navigation and status management for drivers
 class DriverNavigationScreen extends StatefulWidget {
   final String bookingId;
@@ -49,19 +49,19 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   GoogleMapController? _mapController;
   final Set<Marker> _markers = {};
   final Set<Polyline> _polylines = {};
-  
+
   // Location
   Position? _currentPosition;
   LatLng? _pickupLocation;
   LatLng? _destinationLocation;
-  
+
   // Booking data
   Booking? _booking;
   bool _isLoading = true;
   bool _isUpdatingStatus = false;
   String? _lastKnownStatus;
   bool _isInfoPanelCollapsed = false;
-  
+
   // Customer info
   // ignore: unused_field
   Map<String, dynamic>? _customerProfile;
@@ -72,11 +72,11 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   double _merchantSystemRatePreview = 0.10;
   double _merchantDriverRatePreview = 0.0;
   double _deliverySystemRatePreview = 0.02;
-  
+
   // Merchant info (for food orders)
   String _merchantName = '';
   String _merchantPhone = '';
-  
+
   // Animation
   late AnimationController _pulseController;
   // ignore: unused_field
@@ -86,7 +86,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   DateTime? _lastLocationUpdate;
   StreamSubscription<Position>? _positionStreamSub;
   StreamSubscription<List<Map<String, dynamic>>>? _bookingStreamSub;
-  
+
   // Constants
   static String get _googleApiKey => EnvConfig.googleMapsApiKey;
   static const double kAllowedRadiusMeters = 100.0; // Geofencing radius
@@ -95,9 +95,10 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   @override
   void initState() {
     super.initState();
-    
-    debugLog('🧭 DriverNavigationScreen initialized with bookingId: ${widget.bookingId}');
-    
+
+    debugLog(
+        '🧭 DriverNavigationScreen initialized with bookingId: ${widget.bookingId}');
+
     // Pulse animation
     _pulseController = AnimationController(
       duration: const Duration(seconds: 2),
@@ -111,7 +112,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       curve: Curves.easeInOut,
     ));
     _pulseController.repeat(reverse: true);
-    
+
     // Initialize
     _initializeScreen();
     _startAutoRefresh();
@@ -273,7 +274,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   void _startLocationUpdates() {
     _locationUpdateTimer?.cancel();
-    _locationUpdateTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
+    _locationUpdateTimer =
+        Timer.periodic(const Duration(seconds: 10), (_) async {
       if (!mounted || _currentPosition == null) return;
       await _updateDriverLocation();
     });
@@ -288,7 +290,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
     // Throttle: Only update if at least 10 seconds have passed since last update
     if (_lastLocationUpdate != null) {
-      final timeSinceLastUpdate = DateTime.now().difference(_lastLocationUpdate!);
+      final timeSinceLastUpdate =
+          DateTime.now().difference(_lastLocationUpdate!);
       if (timeSinceLastUpdate.inSeconds < 10) {
         return;
       }
@@ -301,15 +304,12 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         return;
       }
 
-      await SupabaseService.client
-          .from('profiles')
-          .update({
-            'latitude': _currentPosition!.latitude,
-            'longitude': _currentPosition!.longitude,
-            'is_online': true,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', driverId);
+      await SupabaseService.client.from('profiles').update({
+        'latitude': _currentPosition!.latitude,
+        'longitude': _currentPosition!.longitude,
+        'is_online': true,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', driverId);
 
       // Also update driver_locations table (admin map reads from here)
       final existing = await SupabaseService.client
@@ -317,33 +317,29 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           .select('driver_id')
           .eq('driver_id', driverId)
           .maybeSingle();
-      
+
       if (existing != null) {
-        await SupabaseService.client
-            .from('driver_locations')
-            .update({
-              'location_lat': _currentPosition!.latitude,
-              'location_lng': _currentPosition!.longitude,
-              'is_online': true,
-              'is_available': false,
-              'current_booking_id': widget.bookingId,
-            })
-            .eq('driver_id', driverId);
+        await SupabaseService.client.from('driver_locations').update({
+          'location_lat': _currentPosition!.latitude,
+          'location_lng': _currentPosition!.longitude,
+          'is_online': true,
+          'is_available': false,
+          'current_booking_id': widget.bookingId,
+        }).eq('driver_id', driverId);
       } else {
-        await SupabaseService.client
-            .from('driver_locations')
-            .insert({
-              'driver_id': driverId,
-              'location_lat': _currentPosition!.latitude,
-              'location_lng': _currentPosition!.longitude,
-              'is_online': true,
-              'is_available': false,
-              'current_booking_id': widget.bookingId,
-            });
+        await SupabaseService.client.from('driver_locations').insert({
+          'driver_id': driverId,
+          'location_lat': _currentPosition!.latitude,
+          'location_lng': _currentPosition!.longitude,
+          'is_online': true,
+          'is_available': false,
+          'current_booking_id': widget.bookingId,
+        });
       }
 
       _lastLocationUpdate = DateTime.now();
-      debugLog('📍 Driver location updated: ${_currentPosition!.latitude}, ${_currentPosition!.longitude}');
+      debugLog(
+          '📍 Driver location updated: ${_currentPosition!.latitude}, ${_currentPosition!.longitude}');
     } catch (e) {
       debugLog('❌ Error updating driver location: $e');
     }
@@ -393,7 +389,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     try {
       // Check location permission
       LocationPermission permission = await Geolocator.checkPermission();
-      
+
       if (permission == LocationPermission.denied) {
         // แสดง Prominent Disclosure ก่อนขอ permission จากระบบ (Google Play Policy)
         if (mounted) {
@@ -406,7 +402,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(AppLocalizations.of(context)!.driverNavLocationPermSnack),
+                content: Text(
+                    AppLocalizations.of(context)!.driverNavLocationPermSnack),
                 backgroundColor: Theme.of(context).colorScheme.tertiary,
                 duration: const Duration(seconds: 3),
               ),
@@ -415,7 +412,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           return;
         }
       }
-      
+
       if (permission == LocationPermission.deniedForever) {
         debugLog('⚠️ Location permission denied forever');
         if (mounted) {
@@ -427,8 +424,10 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                 color: Theme.of(context).colorScheme.error,
                 size: 48,
               ),
-              title: Text(AppLocalizations.of(context)!.driverNavLocationDeniedTitle),
-              content: Text(AppLocalizations.of(context)!.driverNavLocationDeniedBody),
+              title: Text(
+                  AppLocalizations.of(context)!.driverNavLocationDeniedTitle),
+              content: Text(
+                  AppLocalizations.of(context)!.driverNavLocationDeniedBody),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
@@ -439,7 +438,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                     Navigator.of(ctx).pop();
                     Geolocator.openAppSettings();
                   },
-                  child: Text(AppLocalizations.of(context)!.driverNavOpenSettings),
+                  child:
+                      Text(AppLocalizations.of(context)!.driverNavOpenSettings),
                 ),
               ],
             ),
@@ -447,21 +447,22 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         }
         return;
       }
-      
+
       debugLog('📍 Getting current location...');
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
         timeLimit: const Duration(seconds: 10),
       );
-      
-      debugLog('✅ Location obtained: ${position.latitude}, ${position.longitude}');
-      
+
+      debugLog(
+          '✅ Location obtained: ${position.latitude}, ${position.longitude}');
+
       if (mounted) {
         setState(() {
           _currentPosition = position;
         });
       }
-      
+
       // Listen for location updates
       await _positionStreamSub?.cancel();
       _positionStreamSub = Geolocator.getPositionStream(
@@ -479,7 +480,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       }, onError: (error) {
         debugLog('❌ Location stream error: $error');
       });
-      
+
       // Start periodic location updates to Supabase for real-time tracking
       _startLocationUpdates();
     } catch (e) {
@@ -498,36 +499,38 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   Future<void> _fetchBookingDetails() async {
     try {
       debugLog('🔍 Fetching booking details for: ${widget.bookingId}');
-      
+
       // Fetch booking details
       final response = await SupabaseService.client
           .from('bookings')
           .select()
           .eq('id', widget.bookingId)
           .single();
-      
+
       debugLog('📋 Booking response: $response');
 
-      final repairedResponse = await _repairFoodPickupLocationIfNeeded(response);
+      final repairedResponse =
+          await _repairFoodPickupLocationIfNeeded(response);
       _booking = Booking.fromJson(repairedResponse);
       _lastKnownStatus = _booking?.status;
       await _loadCouponUsageForBooking(widget.bookingId);
       await _loadMerchantFinancePreview();
-      
+
       // Fetch customer profile separately
       if (_booking?.customerId != null) {
         await _fetchCustomerProfile(_booking!.customerId);
       }
       await _fetchMerchantProfile();
-      
-      debugLog('✅ Booking fetched: ${_booking?.serviceType} - ${_booking?.status}');
+
+      debugLog(
+          '✅ Booking fetched: ${_booking?.serviceType} - ${_booking?.status}');
       debugLog('📋 Booking details:');
       debugLog('   └─ ID: ${_booking?.id}');
       debugLog('   └─ Status: ${_booking?.status}');
       debugLog('   └─ Driver ID: ${_booking?.driverId}');
       debugLog('   └─ Service Type: ${_booking?.serviceType}');
       debugLog('   └─ Price: ${_booking?.price}');
-      
+
       // Check if booking is cancelled
       if (_booking?.status == 'cancelled') {
         if (mounted) {
@@ -538,21 +541,23 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         }
         return;
       }
-      
+
       // Extract locations
       if (_booking != null) {
         _pickupLocation = LatLng(_booking!.originLat, _booking!.originLng);
-        debugLog('📍 Pickup location: ${_booking!.originLat}, ${_booking!.originLng}');
+        debugLog(
+            '📍 Pickup location: ${_booking!.originLat}, ${_booking!.originLng}');
         _destinationLocation = LatLng(_booking!.destLat, _booking!.destLng);
-        debugLog('📍 Destination location: ${_booking!.destLat}, ${_booking!.destLng}');
+        debugLog(
+            '📍 Destination location: ${_booking!.destLat}, ${_booking!.destLng}');
       }
-      
+
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
       }
-      
+
       // Initialize map after a delay to ensure map controller is ready
       // Also wait for current position if not available yet
       Future.delayed(const Duration(milliseconds: 500), () {
@@ -572,7 +577,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     } catch (e) {
       debugLog('❌ Error fetching booking: $e');
       debugLog('❌ Error stack trace: ${StackTrace.current}');
-      
+
       // Try fetching without join as fallback
       try {
         final fallbackResponse = await SupabaseService.client
@@ -580,30 +585,30 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
             .select()
             .eq('id', widget.bookingId)
             .single();
-        
+
         final repairedFallbackResponse =
             await _repairFoodPickupLocationIfNeeded(fallbackResponse);
         _booking = Booking.fromJson(repairedFallbackResponse);
         await _loadCouponUsageForBooking(widget.bookingId);
         await _loadMerchantFinancePreview();
-        
+
         // Extract locations
         if (_booking != null) {
           _pickupLocation = LatLng(_booking!.originLat, _booking!.originLng);
           _destinationLocation = LatLng(_booking!.destLat, _booking!.destLng);
         }
-        
+
         // Fetch customer profile separately
         if (_booking?.customerId != null) {
           await _fetchCustomerProfile(_booking!.customerId);
         }
-        
+
         if (mounted) {
           setState(() {
             _isLoading = false;
           });
         }
-        
+
         if (_mapController != null) {
           _initializeMap();
         }
@@ -660,12 +665,14 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       final merchantLat = _toDouble(merchantProfile['latitude']);
       final merchantLng = _toDouble(merchantProfile['longitude']);
       if (!_isValidCoordinate(merchantLat, merchantLng)) {
-        debugLog('⚠️ Merchant profile has no valid location for repair: $merchantId');
+        debugLog(
+            '⚠️ Merchant profile has no valid location for repair: $merchantId');
         return bookingJson;
       }
 
       final pickupAddress =
-          (merchantProfile['shop_address'] as String?)?.trim().isNotEmpty == true
+          (merchantProfile['shop_address'] as String?)?.trim().isNotEmpty ==
+                  true
               ? (merchantProfile['shop_address'] as String).trim()
               : ((merchantProfile['full_name'] as String?) ??
                   (bookingJson['pickup_address'] as String?) ??
@@ -698,19 +705,21 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       return bookingJson;
     }
   }
-  
+
   Future<void> _fetchCustomerProfile(String customerId) async {
     try {
       debugLog('🔍 Fetching customer profile for: $customerId');
       final profileService = ProfileService();
       final profile = await profileService.getProfileById(customerId);
-      
+
       if (profile != null) {
         _customerProfile = profile;
-        _customerName = profile['full_name'] ?? AppLocalizations.of(context)!.driverNavCustomerDefault;
-        _customerPhone = profile['phone_number'] ?? AppLocalizations.of(context)!.driverNavPhoneUnknown;
+        _customerName = profile['full_name'] ??
+            AppLocalizations.of(context)!.driverNavCustomerDefault;
+        _customerPhone = profile['phone_number'] ??
+            AppLocalizations.of(context)!.driverNavPhoneUnknown;
         debugLog('✅ Customer profile fetched: $_customerName, $_customerPhone');
-        
+
         if (mounted) {
           setState(() {});
         }
@@ -732,7 +741,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           .maybeSingle();
       if (profile != null && mounted) {
         setState(() {
-          _merchantName = profile['full_name'] ?? AppLocalizations.of(context)!.driverNavMerchantDefault;
+          _merchantName = profile['full_name'] ??
+              AppLocalizations.of(context)!.driverNavMerchantDefault;
           _merchantPhone = profile['phone_number'] ?? '';
         });
       }
@@ -743,7 +753,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   Future<void> _callMerchant() async {
     if (_merchantPhone.isEmpty) {
-      _showErrorSnackBar(AppLocalizations.of(context)!.driverNavNoMerchantPhone);
+      _showErrorSnackBar(
+          AppLocalizations.of(context)!.driverNavNoMerchantPhone);
       return;
     }
     final uri = Uri.parse('tel:$_merchantPhone');
@@ -792,9 +803,12 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
             return AlertDialog(
               title: Row(
                 children: [
-                  Icon(Icons.cancel_outlined, color: colorScheme.error, size: 24),
+                  Icon(Icons.cancel_outlined,
+                      color: colorScheme.error, size: 24),
                   const SizedBox(width: 8),
-                  Text(l10n.driverNavCancelTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(l10n.driverNavCancelTitle,
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold)),
                 ],
               ),
               content: Column(
@@ -803,28 +817,33 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                 children: [
                   Text(
                     l10n.driverNavCancelSelectReason,
-                    style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+                    style: TextStyle(
+                        fontSize: 14, color: colorScheme.onSurfaceVariant),
                   ),
                   const SizedBox(height: 12),
                   ...reasons.map((reason) => RadioListTile<String>(
-                    title: Text(reason, style: const TextStyle(fontSize: 13)),
-                    value: reason,
-                    groupValue: selectedReason,
-                    dense: true,
-                    activeColor: colorScheme.error,
-                    onChanged: (val) => setDialogState(() => selectedReason = val),
-                  )),
+                        title:
+                            Text(reason, style: const TextStyle(fontSize: 13)),
+                        value: reason,
+                        groupValue: selectedReason,
+                        dense: true,
+                        activeColor: colorScheme.error,
+                        onChanged: (val) =>
+                            setDialogState(() => selectedReason = val),
+                      )),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: colorScheme.errorContainer.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: colorScheme.error.withValues(alpha: 0.4)),
+                      border: Border.all(
+                          color: colorScheme.error.withValues(alpha: 0.4)),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.warning_amber_rounded, size: 18, color: colorScheme.error),
+                        Icon(Icons.warning_amber_rounded,
+                            size: 18, color: colorScheme.error),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -928,8 +947,9 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   }
 
   Future<void> _setupRealtimeUpdates() async {
-    debugLog('📡 Setting up real-time updates for booking: ${widget.bookingId}');
-    
+    debugLog(
+        '📡 Setting up real-time updates for booking: ${widget.bookingId}');
+
     // Use proper stream with execute()
     try {
       await _bookingStreamSub?.cancel();
@@ -946,8 +966,9 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
               if (!mounted) return;
 
               final updatedBooking = Booking.fromJson(repairedData);
-              debugLog('📡 Booking updated from stream: ${updatedBooking.status}');
-              
+              debugLog(
+                  '📡 Booking updated from stream: ${updatedBooking.status}');
+
               setState(() {
                 _booking = updatedBooking;
                 _pickupLocation =
@@ -958,14 +979,14 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
               _loadCouponUsageForBooking(updatedBooking.id);
               _loadMerchantFinancePreview();
-              
+
               _updateMapForStatus();
-              
+
               // Handle completion
               if (updatedBooking.status == 'completed') {
                 _showCompletionDialog();
               }
-              
+
               // Handle cancellation
               if (updatedBooking.status == 'cancelled') {
                 _showCancellationDialog();
@@ -982,22 +1003,23 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   /// Initialize map with markers and route immediately
   void _initializeMap() {
     if (_booking == null || _mapController == null) {
-      debugLog('⚠️ Cannot initialize map - booking: ${_booking != null}, mapController: ${_mapController != null}');
+      debugLog(
+          '⚠️ Cannot initialize map - booking: ${_booking != null}, mapController: ${_mapController != null}');
       return;
     }
-    
+
     debugLog('🗺️ Initializing map with booking status: ${_booking!.status}');
     debugLog('📍 Pickup location: $_pickupLocation');
     debugLog('📍 Destination location: $_destinationLocation');
     debugLog('📍 Current position: $_currentPosition');
-    
+
     // Always show pickup and destination markers first
     _addInitialMarkers();
-    
+
     // Draw route based on status
     _updateMapForStatus();
   }
-  
+
   /// Add initial markers (pickup and destination)
   void _addInitialMarkers() {
     if (_pickupLocation == null && _destinationLocation == null) {
@@ -1008,15 +1030,18 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           _markers.clear();
           _markers.add(Marker(
             markerId: const MarkerId('driver'),
-            position: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+            position:
+                LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+            icon:
+                BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
             infoWindow: const InfoWindow(title: 'Your Location'),
           ));
         });
         _mapController?.animateCamera(
           CameraUpdate.newCameraPosition(
             CameraPosition(
-              target: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+              target: LatLng(
+                  _currentPosition!.latitude, _currentPosition!.longitude),
               zoom: 15,
             ),
           ),
@@ -1024,37 +1049,42 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       }
       return;
     }
-    
-    debugLog('📍 Adding markers - Pickup: $_pickupLocation, Destination: $_destinationLocation');
-    
+
+    debugLog(
+        '📍 Adding markers - Pickup: $_pickupLocation, Destination: $_destinationLocation');
+
     setState(() {
       _markers.clear();
-      
+
       // Add driver marker if current position is available
       if (_currentPosition != null) {
         _markers.add(Marker(
           markerId: const MarkerId('driver'),
-          position: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+          position:
+              LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
           infoWindow: const InfoWindow(title: 'Your Location'),
         ));
         debugLog('📍 Added driver marker');
       }
-      
+
       // Add pickup marker
       if (_pickupLocation != null) {
         _markers.add(Marker(
           markerId: const MarkerId('pickup'),
           position: _pickupLocation!,
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+          icon:
+              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
           infoWindow: InfoWindow(
             title: AppLocalizations.of(context)!.driverNavMarkerPickup,
-            snippet: _booking?.pickupAddress ?? AppLocalizations.of(context)!.driverNavMarkerPickupFallback,
+            snippet: _booking?.pickupAddress ??
+                AppLocalizations.of(context)!.driverNavMarkerPickupFallback,
           ),
         ));
-        debugLog('📍 Added pickup marker at ${_pickupLocation!.latitude}, ${_pickupLocation!.longitude}');
+        debugLog(
+            '📍 Added pickup marker at ${_pickupLocation!.latitude}, ${_pickupLocation!.longitude}');
       }
-      
+
       // Add destination marker
       if (_destinationLocation != null) {
         _markers.add(Marker(
@@ -1063,23 +1093,25 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
           infoWindow: InfoWindow(
             title: AppLocalizations.of(context)!.driverNavMarkerDest,
-            snippet: _booking?.destinationAddress ?? AppLocalizations.of(context)!.driverNavMarkerDestFallback,
+            snippet: _booking?.destinationAddress ??
+                AppLocalizations.of(context)!.driverNavMarkerDestFallback,
           ),
         ));
-        debugLog('📍 Added destination marker at ${_destinationLocation!.latitude}, ${_destinationLocation!.longitude}');
+        debugLog(
+            '📍 Added destination marker at ${_destinationLocation!.latitude}, ${_destinationLocation!.longitude}');
       }
     });
-    
+
     debugLog('📍 Total markers: ${_markers.length}');
-    
+
     // Auto-zoom to fit all markers
     _zoomToFitMarkers();
   }
-  
+
   /// Zoom map to fit all markers
   void _zoomToFitMarkers() {
     if (_markers.isEmpty || _mapController == null) return;
-    
+
     try {
       final positions = _markers.map((marker) => marker.position).toList();
       if (positions.length < 2) {
@@ -1091,23 +1123,23 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         );
         return;
       }
-      
+
       final bounds = _calculateBounds(positions);
       _mapController?.animateCamera(
-        CameraUpdate.newLatLngBounds(bounds, 100),
+        CameraUpdate.newLatLngBounds(bounds, 120),
       );
     } catch (e) {
       debugLog('❌ Error zooming to fit markers: $e');
     }
   }
-  
+
   void _updateMapForStatus() {
     if (_booking == null || _isUpdatingStatus) return;
-    
+
     debugLog('🗺️ Updating map for status: ${_booking!.status}');
-    
+
     switch (_booking!.status) {
-      case 'accepted':        // Ride - going to pickup
+      case 'accepted': // Ride - going to pickup
       case 'driver_accepted': // Food - going to merchant
         if (_currentPosition != null && _pickupLocation != null) {
           _drawRouteToPickup();
@@ -1117,8 +1149,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         break;
       case 'arrived':
       case 'arrived_at_merchant': // Food - at merchant
-      case 'ready_for_pickup':    // Food - waiting for food
-      case 'picking_up_order':    // Food - picking up
+      case 'ready_for_pickup': // Food - waiting for food
+      case 'picking_up_order': // Food - picking up
         _focusOnPickup();
         break;
       case 'in_transit':
@@ -1142,16 +1174,19 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   Future<void> _drawRouteToPickup() async {
     if (_currentPosition == null || _pickupLocation == null) {
-      debugLog('⚠️ Cannot draw route - CurrentPosition: ${_currentPosition != null}, PickupLocation: ${_pickupLocation != null}');
+      debugLog(
+          '⚠️ Cannot draw route - CurrentPosition: ${_currentPosition != null}, PickupLocation: ${_pickupLocation != null}');
       // Still show markers even without route
       _addInitialMarkers();
       return;
     }
-    
+
     debugLog('🗺️ Drawing route to pickup location');
-    debugLog('   └─ From: ${_currentPosition!.latitude}, ${_currentPosition!.longitude}');
-    debugLog('   └─ To: ${_pickupLocation!.latitude}, ${_pickupLocation!.longitude}');
-    
+    debugLog(
+        '   └─ From: ${_currentPosition!.latitude}, ${_currentPosition!.longitude}');
+    debugLog(
+        '   └─ To: ${_pickupLocation!.latitude}, ${_pickupLocation!.longitude}');
+
     try {
       final url = Uri.parse(
         'https://maps.googleapis.com/maps/api/directions/json'
@@ -1164,106 +1199,129 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       debugLog('🌐 Requesting directions from Google Maps API...');
       final response = await http.get(url);
       final data = json.decode(response.body);
-      
+
       debugLog('📡 Directions API response status: ${data['status']}');
 
-      if (data['status'] == 'OK' && data['routes'] != null && (data['routes'] as List).isNotEmpty) {
+      if (data['status'] == 'OK' &&
+          data['routes'] != null &&
+          (data['routes'] as List).isNotEmpty) {
         final routes = data['routes'] as List;
         final route = routes[0] as Map<String, dynamic>;
-        final encodedPolyline = route['overview_polyline']?['points'] as String?;
-        
+        final encodedPolyline =
+            route['overview_polyline']?['points'] as String?;
+
         if (encodedPolyline == null) {
           debugLog('❌ No polyline points found');
-          _addInitialMarkers(); // Fallback to markers only
+          _drawStraightLine(
+            LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+            _pickupLocation!,
+          );
           return;
         }
-        
+
         debugLog('✅ Polyline encoded: ${encodedPolyline.substring(0, 50)}...');
         final points = _polylinePoints.decodePolyline(encodedPolyline);
         debugLog('✅ Decoded ${points.length} points');
-        
+
         if (mounted) {
           setState(() {
             _polylines.clear();
             _markers.clear();
-            
+
             // Add driver marker
             _markers.add(Marker(
               markerId: const MarkerId('driver'),
-              position: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
-              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+              position: LatLng(
+                  _currentPosition!.latitude, _currentPosition!.longitude),
+              icon: BitmapDescriptor.defaultMarkerWithHue(
+                  BitmapDescriptor.hueBlue),
               infoWindow: const InfoWindow(title: 'Your Location'),
             ));
-            
+
             // Add pickup marker
             _markers.add(Marker(
               markerId: const MarkerId('pickup'),
               position: _pickupLocation!,
-              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+              icon: BitmapDescriptor.defaultMarkerWithHue(
+                  BitmapDescriptor.hueGreen),
               infoWindow: InfoWindow(
                 title: 'Pickup',
                 snippet: _booking?.pickupAddress ?? 'Pickup Location',
               ),
             ));
-            
+
             // Add destination marker if available
             if (_destinationLocation != null) {
               _markers.add(Marker(
                 markerId: const MarkerId('destination'),
                 position: _destinationLocation!,
-                icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+                icon: BitmapDescriptor.defaultMarkerWithHue(
+                    BitmapDescriptor.hueRed),
                 infoWindow: InfoWindow(
                   title: 'Destination',
                   snippet: _booking?.destinationAddress ?? 'Destination',
                 ),
               ));
             }
-            
+
             // Add polyline
             _polylines.add(Polyline(
               polylineId: const PolylineId('route_to_pickup'),
               color: AppTheme.accentBlue,
               width: 5,
-              points: points.map((point) => LatLng(point.latitude, point.longitude)).toList(),
+              points: points
+                  .map((point) => LatLng(point.latitude, point.longitude))
+                  .toList(),
             ));
-            
-            debugLog('✅ Route drawn: ${_polylines.length} polylines, ${_markers.length} markers');
+
+            debugLog(
+                '✅ Route drawn: ${_polylines.length} polylines, ${_markers.length} markers');
           });
-          
+
           // Move camera to show route
-          final routePoints = points.map((p) => LatLng(p.latitude, p.longitude)).toList();
+          final routePoints =
+              points.map((p) => LatLng(p.latitude, p.longitude)).toList();
           final bounds = _calculateBounds(routePoints);
-          _mapController?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 100));
+          _mapController
+              ?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 100));
           debugLog('✅ Camera moved to show route');
         }
       } else {
-        debugLog('❌ Directions API error: ${data['status']} - ${data['error_message'] ?? 'Unknown error'}');
-        _addInitialMarkers(); // Fallback to markers only
+        debugLog(
+            '❌ Directions API error: ${data['status']} - ${data['error_message'] ?? 'Unknown error'}');
+        _drawStraightLine(
+          LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+          _pickupLocation!,
+        );
       }
     } catch (e) {
       debugLog('❌ Error drawing route to pickup: $e');
       debugLog('❌ Error stack trace: ${StackTrace.current}');
-      _addInitialMarkers(); // Fallback to markers only
+      _drawStraightLine(
+        LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+        _pickupLocation!,
+      );
     }
   }
 
   Future<void> _focusOnPickup() async {
     if (_pickupLocation == null) return;
-    
+
     debugLog('🗺️ Focusing on pickup location');
-    
+
     setState(() {
       _polylines.clear();
       _markers.clear();
-      
+
       _markers.add(Marker(
         markerId: const MarkerId('pickup'),
         position: _pickupLocation!,
         icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-        infoWindow: InfoWindow(title: 'Pickup: ${_booking?.pickupAddress ?? 'Location'}'),
+        infoWindow: InfoWindow(
+            title: 'Pickup: ${_booking?.pickupAddress ?? 'Location'}'),
       ));
     });
-    
+
     _mapController?.animateCamera(CameraUpdate.newCameraPosition(
       CameraPosition(target: _pickupLocation!, zoom: 17),
     ));
@@ -1271,14 +1329,14 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   Future<void> _drawRouteToDestination() async {
     if (_destinationLocation == null) return;
-    
+
     // Use current driver position if available, otherwise fallback to pickup
     final originLat = _currentPosition?.latitude ?? _pickupLocation?.latitude;
     final originLng = _currentPosition?.longitude ?? _pickupLocation?.longitude;
     if (originLat == null || originLng == null) return;
-    
+
     debugLog('🗺️ Drawing route to destination from driver position');
-    
+
     try {
       final url = Uri.parse(
         'https://maps.googleapis.com/maps/api/directions/json'
@@ -1294,56 +1352,76 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       if (data['status'] == 'OK' && data['routes'].isNotEmpty) {
         final routes = data['routes'] as List;
         final route = routes[0] as Map<String, dynamic>;
-        final encodedPolyline = route['overview_polyline']?['points'] as String?;
-        
+        final encodedPolyline =
+            route['overview_polyline']?['points'] as String?;
+
         if (encodedPolyline == null) {
           debugLog('❌ No polyline points found');
+          _drawStraightLine(
+              LatLng(originLat, originLng), _destinationLocation!);
           return;
         }
-        
+
         final points = _polylinePoints.decodePolyline(encodedPolyline);
-        
+
         setState(() {
           _polylines.clear();
           _markers.clear();
-          
+
           // Add driver marker
           if (_currentPosition != null) {
             _markers.add(Marker(
               markerId: const MarkerId('driver'),
-              position: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
-              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-              infoWindow: InfoWindow(title: AppLocalizations.of(context)!.driverNavMarkerDriver),
+              position: LatLng(
+                  _currentPosition!.latitude, _currentPosition!.longitude),
+              icon: BitmapDescriptor.defaultMarkerWithHue(
+                  BitmapDescriptor.hueBlue),
+              infoWindow: InfoWindow(
+                  title: AppLocalizations.of(context)!.driverNavMarkerDriver),
             ));
           }
-          
+
           // Add destination marker
           _markers.add(Marker(
             markerId: const MarkerId('destination'),
             position: _destinationLocation!,
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-            infoWindow: InfoWindow(title: '${AppLocalizations.of(context)!.driverNavMarkerDest}: ${_booking?.destinationAddress ?? AppLocalizations.of(context)!.driverNavMarkerPosition}'),
+            icon:
+                BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+            infoWindow: InfoWindow(
+                title:
+                    '${AppLocalizations.of(context)!.driverNavMarkerDest}: ${_booking?.destinationAddress ?? AppLocalizations.of(context)!.driverNavMarkerPosition}'),
           ));
-          
+
           // Add polyline
           _polylines.add(Polyline(
             polylineId: const PolylineId('route_to_destination'),
             color: AppTheme.accentBlue,
             width: 5,
-            points: points.map((point) => LatLng(point.latitude, point.longitude)).toList(),
+            points: points
+                .map((point) => LatLng(point.latitude, point.longitude))
+                .toList(),
           ));
         });
-        
+
         // Move camera to show route
-        final allPoints = points.map((p) => LatLng(p.latitude, p.longitude)).toList();
+        final allPoints =
+            points.map((p) => LatLng(p.latitude, p.longitude)).toList();
         if (_currentPosition != null) {
-          allPoints.add(LatLng(_currentPosition!.latitude, _currentPosition!.longitude));
+          allPoints.add(
+              LatLng(_currentPosition!.latitude, _currentPosition!.longitude));
         }
         final bounds = _calculateBounds(allPoints);
-        _mapController?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 100));
+        _mapController
+            ?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 100));
+      } else {
+        debugLog(
+          '❌ Directions API error: ${data['status']} - ${data['error_message'] ?? 'Unknown error'}',
+        );
+        _drawStraightLine(LatLng(originLat, originLng), _destinationLocation!);
       }
     } catch (e) {
       debugLog('❌ Error drawing route to destination: $e');
+      _drawStraightLine(LatLng(originLat, originLng), _destinationLocation!);
     }
   }
 
@@ -1352,14 +1430,14 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     double maxLat = points.first.latitude;
     double minLng = points.first.longitude;
     double maxLng = points.first.longitude;
-    
+
     for (final point in points) {
       minLat = math.min(minLat, point.latitude);
       maxLat = math.max(maxLat, point.latitude);
       minLng = math.min(minLng, point.longitude);
       maxLng = math.max(maxLng, point.longitude);
     }
-    
+
     return LatLngBounds(
       southwest: LatLng(minLat, minLng),
       northeast: LatLng(maxLat, maxLng),
@@ -1381,9 +1459,12 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           _markers.add(
             Marker(
               markerId: const MarkerId('driver'),
-              position: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
-              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-              infoWindow: InfoWindow(title: AppLocalizations.of(context)!.driverNavMarkerYou),
+              position: LatLng(
+                  _currentPosition!.latitude, _currentPosition!.longitude),
+              icon: BitmapDescriptor.defaultMarkerWithHue(
+                  BitmapDescriptor.hueBlue),
+              infoWindow: InfoWindow(
+                  title: AppLocalizations.of(context)!.driverNavMarkerYou),
             ),
           );
         });
@@ -1396,17 +1477,19 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     LatLng targetLocation;
     String targetLabel;
     BitmapDescriptor targetIcon;
-    
+
     if (_booking!.status == 'in_transit') {
       if (_destinationLocation == null) return;
       targetLocation = _destinationLocation!;
       targetLabel = AppLocalizations.of(context)!.driverNavMarkerDest;
-      targetIcon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
+      targetIcon =
+          BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
     } else {
       if (_pickupLocation == null) return;
       targetLocation = _pickupLocation!;
       targetLabel = AppLocalizations.of(context)!.driverNavMarkerPickup;
-      targetIcon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen);
+      targetIcon =
+          BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen);
     }
 
     // Update markers immediately (don't clear polylines — keep old route visible until new one arrives)
@@ -1415,9 +1498,11 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       _markers.add(
         Marker(
           markerId: const MarkerId('driver'),
-          position: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+          position:
+              LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-          infoWindow: InfoWindow(title: AppLocalizations.of(context)!.driverNavMarkerYou),
+          infoWindow: InfoWindow(
+              title: AppLocalizations.of(context)!.driverNavMarkerYou),
         ),
       );
       _markers.add(
@@ -1434,8 +1519,11 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           Marker(
             markerId: const MarkerId('destination'),
             position: _destinationLocation!,
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-            infoWindow: InfoWindow(title: '${AppLocalizations.of(context)!.driverNavMarkerDest}: ${_booking?.destinationAddress ?? ''}'),
+            icon:
+                BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+            infoWindow: InfoWindow(
+                title:
+                    '${AppLocalizations.of(context)!.driverNavMarkerDest}: ${_booking?.destinationAddress ?? ''}'),
           ),
         );
       }
@@ -1451,8 +1539,9 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       return;
     }
 
-    final origin = LatLng(_currentPosition!.latitude, _currentPosition!.longitude);
-    
+    final origin =
+        LatLng(_currentPosition!.latitude, _currentPosition!.longitude);
+
     try {
       final url = Uri.parse(
         'https://maps.googleapis.com/maps/api/directions/json'
@@ -1464,17 +1553,21 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
       debugLog('🗺️ Requesting directions from Google Maps API...');
       debugLog('🗺️ Origin: ${origin.latitude}, ${origin.longitude}');
-      debugLog('🗺️ Destination: ${destination.latitude}, ${destination.longitude}');
-      
+      debugLog(
+          '🗺️ Destination: ${destination.latitude}, ${destination.longitude}');
+
       final response = await http.get(url);
       final data = json.decode(response.body);
 
       debugLog('📡 Directions API response status: ${data['status']}');
 
-      if (data['status'] == 'OK' && data['routes'] != null && (data['routes'] as List).isNotEmpty) {
+      if (data['status'] == 'OK' &&
+          data['routes'] != null &&
+          (data['routes'] as List).isNotEmpty) {
         final routes = data['routes'] as List;
         final route = routes[0] as Map<String, dynamic>;
-        final encodedPolyline = route['overview_polyline']?['points'] as String?;
+        final encodedPolyline =
+            route['overview_polyline']?['points'] as String?;
 
         if (encodedPolyline != null) {
           final points = _polylinePoints.decodePolyline(encodedPolyline);
@@ -1497,50 +1590,77 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
             });
           }
 
-          debugLog('✅ Route drawn successfully with ${polylineCoordinates.length} points');
+          debugLog(
+              '✅ Route drawn successfully with ${polylineCoordinates.length} points');
         } else {
           debugLog('❌ No polyline points found in route');
+          _drawStraightLine(origin, destination);
         }
       } else {
         debugLog(
           '❌ Directions API error: ${data['status']} - ${data['error_message'] ?? 'Unknown error'}',
         );
+        _drawStraightLine(origin, destination);
       }
     } catch (e) {
       debugLog('❌ Error drawing route: $e');
+      _drawStraightLine(origin, destination);
     }
   }
 
   void _drawStraightLine(LatLng origin, LatLng destination) {
+    if (!mounted) return;
+    final points = [origin, destination];
+    setState(() {
+      _polylines.clear();
+      _polylines.add(
+        Polyline(
+          polylineId: const PolylineId('route_fallback'),
+          color: AppTheme.accentBlue.withValues(alpha: 0.75),
+          width: 4,
+          patterns: [PatternItem.dash(24), PatternItem.gap(12)],
+          points: points,
+        ),
+      );
+    });
+
+    try {
+      _mapController?.animateCamera(
+        CameraUpdate.newLatLngBounds(_calculateBounds(points), 120),
+      );
+    } catch (e) {
+      debugLog('⚠️ Could not fit fallback route bounds: $e');
+    }
+
     debugLog(
-      '⚠️ Directions route unavailable; skipped misleading straight line '
-      'from ${origin.latitude},${origin.longitude} to '
+      '⚠️ Directions route unavailable; drew fallback line from '
+      '${origin.latitude},${origin.longitude} to '
       '${destination.latitude},${destination.longitude}',
     );
   }
 
   Future<void> _updateJobStatus(String newStatus) async {
     if (_isUpdatingStatus || _booking == null) return;
-    
+
     setState(() {
       _isUpdatingStatus = true;
     });
-    
+
     try {
       debugLog('🔄 Updating status from ${_booking!.status} to: $newStatus');
       debugLog('📋 Booking ID: ${widget.bookingId}');
       debugLog('👤 Driver ID: ${AuthService.userId}');
-      
+
       // Add timestamp for debugging
       final timestamp = DateTime.now().toIso8601String();
       debugLog('🕐 Update timestamp: $timestamp');
-      
+
       // Prepare update data
       final updateData = {
         'status': newStatus,
         'updated_at': timestamp,
       };
-      
+
       // Add driver_id if not already set
       if (_booking!.driverId == null || _booking!.driverId!.isEmpty) {
         final driverId = AuthService.userId;
@@ -1550,21 +1670,23 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         } else {
           debugLog('❌ Driver ID is null - cannot update');
           if (mounted) {
-            _showErrorSnackBar(AppLocalizations.of(context)!.driverNavNoDriverData);
+            _showErrorSnackBar(
+                AppLocalizations.of(context)!.driverNavNoDriverData);
           }
           return;
         }
       }
-      
+
       debugLog('📤 Update data: $updateData');
-      
+
       debugLog('🔍 DEBUG: About to call BookingService.updateBookingStatus');
-      debugLog('   └─ This should trigger commission deduction for completed jobs');
-      
+      debugLog(
+          '   └─ This should trigger commission deduction for completed jobs');
+
       // Use BookingService to ensure commission deduction works
       final bookingService = BookingService();
       await bookingService.updateBookingStatus(widget.bookingId, newStatus);
-      
+
       // Save trip tracking data when completing
       if (newStatus == 'completed') {
         try {
@@ -1578,7 +1700,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           tripData['completed_at'] = DateTime.now().toIso8601String();
           // actual_distance_km = estimated distance (can be improved with GPS tracking)
           tripData['actual_distance_km'] = _booking!.distanceKm;
-          
+
           if (tripData.isNotEmpty) {
             await SupabaseService.client
                 .from('bookings')
@@ -1590,41 +1712,44 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           debugLog('⚠️ Error saving trip data (non-blocking): $e');
         }
       }
-      
+
       // Fetch updated booking data
       final result = await SupabaseService.client
           .from('bookings')
           .select()
           .eq('id', widget.bookingId);
-      
+
       debugLog('✅ Status update result: $result');
-      
+
       if (result.isNotEmpty) {
         setState(() {
           _booking = Booking.fromJson(result[0]);
         });
-        
+
         // Send notification to customer about status change
         await _notifyCustomerStatusUpdate(result[0], newStatus);
-        
+
         // If driver arrived at merchant, also notify merchant
-        if (newStatus == 'arrived_at_merchant' && _booking!.serviceType == 'food') {
+        if (newStatus == 'arrived_at_merchant' &&
+            _booking!.serviceType == 'food') {
           await _notifyMerchantDriverArrived(result[0]);
         }
-        
+
         if (mounted) {
-          _showSuccessSnackBar(AppLocalizations.of(context)!.driverNavStatusUpdated);
-          
+          _showSuccessSnackBar(
+              AppLocalizations.of(context)!.driverNavStatusUpdated);
+
           // Show merchant payment dialog when picking up food
-          if (newStatus == 'picking_up_order' && _booking!.serviceType == 'food') {
+          if (newStatus == 'picking_up_order' &&
+              _booking!.serviceType == 'food') {
             _showMerchantPaymentDialog();
           }
-          
+
           // Launch Google Maps Navigation when starting trip
           if (newStatus == 'in_transit') {
             _launchGoogleMapsNavigation();
           }
-          
+
           // Handle completion
           if (newStatus == 'completed') {
             _showCompletionDialog();
@@ -1638,7 +1763,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       debugLog('❌ Error type: ${e.runtimeType}');
       debugLog('❌ Error details: ${e.toString()}');
       debugLog('❌ Stack trace: ${StackTrace.current}');
-      
+
       // Try to get more specific error info
       if (e.toString().contains('permission_denied')) {
         debugLog('❌ Permission denied - check RLS policies');
@@ -1648,16 +1773,19 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       } else if (e.toString().contains('no rows')) {
         debugLog('❌ No rows found - booking may not exist');
         if (mounted) {
-          _showErrorSnackBar(AppLocalizations.of(context)!.driverNavBookingNotFound);
+          _showErrorSnackBar(
+              AppLocalizations.of(context)!.driverNavBookingNotFound);
         }
       } else if (e.toString().contains('foreign_key')) {
         debugLog('❌ Foreign key constraint - driver_id may be invalid');
         if (mounted) {
-          _showErrorSnackBar(AppLocalizations.of(context)!.driverNavDriverInvalid);
+          _showErrorSnackBar(
+              AppLocalizations.of(context)!.driverNavDriverInvalid);
         }
       } else {
         if (mounted) {
-          _showErrorSnackBar(AppLocalizations.of(context)!.driverNavStatusUpdateError(e.toString()));
+          _showErrorSnackBar(AppLocalizations.of(context)!
+              .driverNavStatusUpdateError(e.toString()));
         }
       }
     } finally {
@@ -1677,10 +1805,17 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     final double destLat;
     final double destLng;
     final status = _booking!.status;
-    
+
     // ถ้ายังไม่ถึงจุดรับ → นำทางไปจุดรับ (origin)
     // ถ้าถึงจุดรับแล้ว / กำลังส่ง → นำทางไปจุดส่ง (destination)
-    final goingToPickup = ['accepted', 'driver_accepted', 'matched', 'preparing', 'arrived_at_merchant', 'arrived'].contains(status);
+    final goingToPickup = [
+      'accepted',
+      'driver_accepted',
+      'matched',
+      'preparing',
+      'arrived_at_merchant',
+      'arrived'
+    ].contains(status);
     if (goingToPickup) {
       destLat = _booking!.originLat;
       destLng = _booking!.originLng;
@@ -1711,7 +1846,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       } else {
         debugLog('❌ Cannot launch Google Maps');
         if (mounted) {
-          _showErrorSnackBar(AppLocalizations.of(context)!.driverNavCannotOpenMaps);
+          _showErrorSnackBar(
+              AppLocalizations.of(context)!.driverNavCannotOpenMaps);
         }
       }
     } catch (e) {
@@ -1726,8 +1862,9 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     final status = _booking?.status ?? 'unknown';
     final serviceType = _booking?.serviceType ?? 'ride';
     final l10n = AppLocalizations.of(context)!;
-    debugLog('🎯 Getting action button text for status: $status, service: $serviceType');
-    
+    debugLog(
+        '🎯 Getting action button text for status: $status, service: $serviceType');
+
     if (serviceType == 'food') {
       switch (status) {
         case 'accepted':
@@ -1797,17 +1934,18 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   Future<void> _handleActionPress() async {
     if (_isUpdatingStatus || _booking == null) {
-      debugLog('⚠️ Cannot handle action - isUpdating: $_isUpdatingStatus, booking: ${_booking != null}');
+      debugLog(
+          '⚠️ Cannot handle action - isUpdating: $_isUpdatingStatus, booking: ${_booking != null}');
       return;
     }
-    
+
     debugLog('🎯 Handling action press - Current status: ${_booking!.status}');
-    
+
     String newStatus;
     bool requiresProximityCheck = false;
-    
+
     final serviceType = _booking!.serviceType;
-    
+
     // ═══════════════════════════════════════════════
     // Status flow แยกตาม serviceType
     // ═══════════════════════════════════════════════
@@ -1815,7 +1953,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     // PARCEL: accepted/driver_accepted → arrived → in_transit → completed
     // FOOD:   driver_accepted/accepted → arrived_at_merchant → (wait) → ready_for_pickup → picking_up_order → in_transit → completed
     // ═══════════════════════════════════════════════
-    
+
     if (serviceType == 'food') {
       // ─── Food flow ───
       switch (_booking!.status) {
@@ -1829,7 +1967,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(AppLocalizations.of(context)!.driverNavWaitMerchantReady),
+                content: Text(
+                    AppLocalizations.of(context)!.driverNavWaitMerchantReady),
                 backgroundColor: Theme.of(context).colorScheme.tertiary,
                 duration: const Duration(seconds: 3),
               ),
@@ -1849,7 +1988,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           break;
         default:
           debugLog('⚠️ Unknown food status: ${_booking!.status}');
-          _showErrorSnackBar(AppLocalizations.of(context)!.driverNavInvalidStatus(_booking!.status));
+          _showErrorSnackBar(AppLocalizations.of(context)!
+              .driverNavInvalidStatus(_booking!.status));
           return;
       }
     } else {
@@ -1869,11 +2009,12 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           break;
         default:
           debugLog('⚠️ Unknown ride/parcel status: ${_booking!.status}');
-          _showErrorSnackBar(AppLocalizations.of(context)!.driverNavInvalidStatus(_booking!.status));
+          _showErrorSnackBar(AppLocalizations.of(context)!
+              .driverNavInvalidStatus(_booking!.status));
           return;
       }
     }
-    
+
     // Perform proximity check if required
     if (requiresProximityCheck) {
       final isWithinRange = await _checkProximity();
@@ -1881,7 +2022,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         return; // Don't proceed if not within range
       }
     }
-    
+
     debugLog('🔄 Updating status from ${_booking!.status} to $newStatus');
     _updateJobStatus(newStatus);
   }
@@ -1890,19 +2031,20 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     final l10n = AppLocalizations.of(context)!;
     try {
       debugLog('📍 Checking proximity to target location...');
-      
+
       // Get current driver position
       final currentPosition = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
-      
-      debugLog('📍 Driver current position: ${currentPosition.latitude}, ${currentPosition.longitude}');
-      
+
+      debugLog(
+          '📍 Driver current position: ${currentPosition.latitude}, ${currentPosition.longitude}');
+
       // Determine target location based on service type and status
       double targetLat;
       double targetLng;
       String locationName;
-      
+
       final status = _booking!.status;
       final serviceType = _booking!.serviceType;
 
@@ -1911,7 +2053,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         targetLat = _booking!.destLat;
         targetLng = _booking!.destLng;
         locationName = l10n.driverNavProxCustomerDest;
-        debugLog('📍 Target: Customer destination (${targetLat}, ${targetLng})');
+        debugLog(
+            '📍 Target: Customer destination (${targetLat}, ${targetLng})');
       } else if (serviceType == 'food' && status == 'driver_accepted') {
         // Food - check distance to merchant (origin) when arriving
         targetLat = _booking!.originLat;
@@ -1923,30 +2066,34 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         targetLat = _booking!.originLat;
         targetLng = _booking!.originLng;
         locationName = l10n.driverNavProxMerchant;
-        debugLog('📍 Target: Merchant location for pickup (${targetLat}, ${targetLng})');
+        debugLog(
+            '📍 Target: Merchant location for pickup (${targetLat}, ${targetLng})');
       } else if (serviceType == 'ride' && status == 'accepted') {
         // Ride - check distance to pickup location (origin)
         targetLat = _booking!.originLat;
         targetLng = _booking!.originLng;
         locationName = l10n.driverNavProxRidePickup;
         debugLog('📍 Target: Pickup location (${targetLat}, ${targetLng})');
-      } else if (serviceType == 'parcel' && (status == 'accepted' || status == 'driver_accepted')) {
+      } else if (serviceType == 'parcel' &&
+          (status == 'accepted' || status == 'driver_accepted')) {
         // Parcel - check distance to pickup (origin)
         targetLat = _booking!.originLat;
         targetLng = _booking!.originLng;
         locationName = l10n.driverNavProxParcelPickup;
-        debugLog('📍 Target: Parcel pickup location (${targetLat}, ${targetLng})');
+        debugLog(
+            '📍 Target: Parcel pickup location (${targetLat}, ${targetLng})');
       } else if (serviceType == 'parcel' && status == 'ready_for_pickup') {
         // Parcel - check distance to pickup (origin) before starting delivery
         targetLat = _booking!.originLat;
         targetLng = _booking!.originLng;
         locationName = l10n.driverNavProxParcelPickup;
-        debugLog('📍 Target: Parcel pickup for delivery (${targetLat}, ${targetLng})');
+        debugLog(
+            '📍 Target: Parcel pickup for delivery (${targetLat}, ${targetLng})');
       } else {
         debugLog('⚠️ Unexpected service type or status for proximity check');
         return true; // Allow if not a case we're checking
       }
-      
+
       // Calculate distance using Geolocator
       final distanceInMeters = Geolocator.distanceBetween(
         currentPosition.latitude,
@@ -1954,9 +2101,10 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         targetLat,
         targetLng,
       );
-      
-      debugLog('📏 Distance to $locationName: ${distanceInMeters.toStringAsFixed(1)}m (allowed: ${kAllowedRadiusMeters}m)');
-      
+
+      debugLog(
+          '📏 Distance to $locationName: ${distanceInMeters.toStringAsFixed(1)}m (allowed: ${kAllowedRadiusMeters}m)');
+
       if (distanceInMeters <= kAllowedRadiusMeters) {
         debugLog('✅ Driver is within allowed radius');
         return true;
@@ -1973,7 +2121,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
               ),
               title: Text(l10n.driverNavTooFarTitle),
               content: Text(
-                l10n.driverNavTooFarBody(distanceInMeters.toStringAsFixed(0), kAllowedRadiusMeters.toStringAsFixed(0)),
+                l10n.driverNavTooFarBody(distanceInMeters.toStringAsFixed(0),
+                    kAllowedRadiusMeters.toStringAsFixed(0)),
               ),
               actions: [
                 TextButton(
@@ -2058,30 +2207,38 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Row(
             children: [
-              Icon(Icons.restaurant_menu, color: colorScheme.tertiary, size: 28),
+              Icon(Icons.restaurant_menu,
+                  color: colorScheme.tertiary, size: 28),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(l10n.driverNavOrderItemsTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                child: Text(l10n.driverNavOrderItemsTitle,
+                    style: const TextStyle(
+                        fontSize: 20, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
           content: orderItems.isEmpty
-              ? Text(l10n.driverNavOrderItemsEmpty, style: const TextStyle(fontSize: 16))
+              ? Text(l10n.driverNavOrderItemsEmpty,
+                  style: const TextStyle(fontSize: 16))
               : SizedBox(
                   width: double.maxFinite,
                   child: SingleChildScrollView(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: orderItems.map((item) {
-                        final name = item['name'] ?? item['item_name'] ?? l10n.driverNavItemUnspecified;
+                        final name = item['name'] ??
+                            item['item_name'] ??
+                            l10n.driverNavItemUnspecified;
                         final qty = (item['quantity'] as num?)?.toInt() ?? 1;
                         final price = (item['price'] as num?)?.toDouble() ?? 0;
                         final options = item['options'];
                         final selectedOptions = item['selected_options'];
-                        final specialInstructions = item['special_instructions'] as String?;
+                        final specialInstructions =
+                            item['special_instructions'] as String?;
 
                         // Parse options from either 'options' or 'selected_options'
                         final List<Map<String, dynamic>> parsedOptions = [];
@@ -2109,7 +2266,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                           decoration: BoxDecoration(
                             color: colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: colorScheme.outlineVariant),
+                            border:
+                                Border.all(color: colorScheme.outlineVariant),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -2117,16 +2275,29 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                               Row(
                                 children: [
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
                                       color: colorScheme.tertiaryContainer,
                                       borderRadius: BorderRadius.circular(8),
                                     ),
-                                    child: Text('x$qty', style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.tertiary, fontSize: 15)),
+                                    child: Text('x$qty',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: colorScheme.tertiary,
+                                            fontSize: 15)),
                                   ),
                                   const SizedBox(width: 10),
-                                  Expanded(child: Text(name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
-                                  Text('฿${(price * qty).toStringAsFixed(0)}', style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.tertiary, fontSize: 16)),
+                                  Expanded(
+                                      child: Text(name,
+                                          style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600))),
+                                  Text('฿${(price * qty).toStringAsFixed(0)}',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: colorScheme.tertiary,
+                                          fontSize: 16)),
                                 ],
                               ),
                               if (parsedOptions.isNotEmpty) ...[
@@ -2135,25 +2306,51 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                   width: double.infinity,
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: colorScheme.tertiaryContainer.withValues(alpha: 0.45),
+                                    color: colorScheme.tertiaryContainer
+                                        .withValues(alpha: 0.45),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Text(l10n.driverNavOptionsLabel, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colorScheme.tertiary)),
+                                      Text(l10n.driverNavOptionsLabel,
+                                          style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                              color: colorScheme.tertiary)),
                                       const SizedBox(height: 4),
                                       ...parsedOptions.map((opt) {
-                                        final optName = opt['name']?.toString() ?? '';
-                                        final optPrice = (opt['price'] as num?)?.toDouble() ?? 0;
+                                        final optName =
+                                            opt['name']?.toString() ?? '';
+                                        final optPrice = (opt['price'] as num?)
+                                                ?.toDouble() ??
+                                            0;
                                         return Padding(
-                                          padding: const EdgeInsets.only(bottom: 2),
+                                          padding:
+                                              const EdgeInsets.only(bottom: 2),
                                           child: Row(
                                             children: [
-                                              Text('  • ', style: TextStyle(color: colorScheme.tertiary, fontSize: 14)),
-                                              Expanded(child: Text(optName, style: TextStyle(fontSize: 14, color: colorScheme.onSurface))),
+                                              Text('  • ',
+                                                  style: TextStyle(
+                                                      color:
+                                                          colorScheme.tertiary,
+                                                      fontSize: 14)),
+                                              Expanded(
+                                                  child: Text(optName,
+                                                      style: TextStyle(
+                                                          fontSize: 14,
+                                                          color: colorScheme
+                                                              .onSurface))),
                                               if (optPrice > 0)
-                                                Text('+฿${optPrice.toStringAsFixed(0)}', style: TextStyle(fontSize: 13, color: colorScheme.tertiary, fontWeight: FontWeight.w500)),
+                                                Text(
+                                                    '+฿${optPrice.toStringAsFixed(0)}',
+                                                    style: TextStyle(
+                                                        fontSize: 13,
+                                                        color: colorScheme
+                                                            .tertiary,
+                                                        fontWeight:
+                                                            FontWeight.w500)),
                                             ],
                                           ),
                                         );
@@ -2162,14 +2359,23 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                   ),
                                 ),
                               ],
-                              if (specialInstructions != null && specialInstructions.isNotEmpty) ...[
+                              if (specialInstructions != null &&
+                                  specialInstructions.isNotEmpty) ...[
                                 const SizedBox(height: 6),
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Icon(Icons.note_alt_outlined, size: 16, color: colorScheme.onSurfaceVariant),
+                                    Icon(Icons.note_alt_outlined,
+                                        size: 16,
+                                        color: colorScheme.onSurfaceVariant),
                                     const SizedBox(width: 4),
-                                    Expanded(child: Text(specialInstructions, style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant, fontStyle: FontStyle.italic))),
+                                    Expanded(
+                                        child: Text(specialInstructions,
+                                            style: TextStyle(
+                                                fontSize: 13,
+                                                color: colorScheme
+                                                    .onSurfaceVariant,
+                                                fontStyle: FontStyle.italic))),
                                   ],
                                 ),
                               ],
@@ -2189,9 +2395,12 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                   backgroundColor: AppTheme.accentBlue,
                   foregroundColor: colorScheme.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
-                child: Text(AppLocalizations.of(context)!.driverNavClose, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                child: Text(AppLocalizations.of(context)!.driverNavClose,
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -2205,8 +2414,10 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   /// โทรหาลูกค้า
   Future<void> _callCustomer() async {
-    if (_customerPhone.isEmpty || _customerPhone == AppLocalizations.of(context)!.driverNavPhoneUnknown) {
-      _showErrorSnackBar(AppLocalizations.of(context)!.driverNavNoCustomerPhone);
+    if (_customerPhone.isEmpty ||
+        _customerPhone == AppLocalizations.of(context)!.driverNavPhoneUnknown) {
+      _showErrorSnackBar(
+          AppLocalizations.of(context)!.driverNavNoCustomerPhone);
       return;
     }
     final uri = Uri.parse('tel:$_customerPhone');
@@ -2248,7 +2459,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         return l10n.driverNavStatusPickedUp;
       case 'in_transit':
         if (serviceType == 'food') return l10n.driverNavStatusFoodDelivering;
-        if (serviceType == 'parcel') return l10n.driverNavStatusParcelDelivering;
+        if (serviceType == 'parcel')
+          return l10n.driverNavStatusParcelDelivering;
         return l10n.driverNavStatusRideTraveling;
       case 'completed':
         return l10n.driverNavStatusCompleted;
@@ -2360,7 +2572,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(AppLocalizations.of(context)!.driverNavBackTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(AppLocalizations.of(context)!.driverNavBackTitle,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         content: Text(AppLocalizations.of(context)!.driverNavBackBody),
         actions: [
           TextButton(
@@ -2422,494 +2635,538 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         }
       },
       child: Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.driverNavActiveJob, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-            Text(OrderCodeFormatter.format(booking.id), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w400)),
+        appBar: AppBar(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.driverNavActiveJob,
+                  style: const TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w600)),
+              Text(OrderCodeFormatter.format(booking.id),
+                  style: const TextStyle(
+                      fontSize: 11, fontWeight: FontWeight.w400)),
+            ],
+          ),
+          backgroundColor: AppTheme.accentBlue,
+          foregroundColor: colorScheme.onPrimary,
+          actions: [
+            // ปุ่มโทรหาลูกค้า
+            Container(
+              margin: const EdgeInsets.only(right: 12),
+              decoration: BoxDecoration(
+                color: colorScheme.onPrimary.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.phone, size: 22),
+                onPressed: _callCustomer,
+                tooltip: l10n.driverNavCallCustomer,
+              ),
+            ),
           ],
         ),
-        backgroundColor: AppTheme.accentBlue,
-        foregroundColor: colorScheme.onPrimary,
-        actions: [
-          // ปุ่มโทรหาลูกค้า
-          Container(
-            margin: const EdgeInsets.only(right: 12),
-            decoration: BoxDecoration(
-              color: colorScheme.onPrimary.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.phone, size: 22),
-              onPressed: _callCustomer,
-              tooltip: l10n.driverNavCallCustomer,
-            ),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // ===== แผนที่ =====
-          Expanded(
-            child: Stack(
-              children: [
-                GoogleMap(
-                  onMapCreated: (controller) {
-                    _mapController = controller;
-                    _initializeMap();
-                  },
-                  initialCameraPosition: CameraPosition(
-                    target: _currentPosition != null
-                        ? LatLng(_currentPosition!.latitude, _currentPosition!.longitude)
-                        : (_pickupLocation ??
-                            _destinationLocation ??
-                            const LatLng(7.8804, 98.3923)),
-                    zoom: 14,
+        body: Column(
+          children: [
+            // ===== แผนที่ =====
+            Expanded(
+              child: Stack(
+                children: [
+                  GoogleMap(
+                    onMapCreated: (controller) {
+                      _mapController = controller;
+                      _initializeMap();
+                    },
+                    initialCameraPosition: CameraPosition(
+                      target: _currentPosition != null
+                          ? LatLng(_currentPosition!.latitude,
+                              _currentPosition!.longitude)
+                          : (_pickupLocation ??
+                              _destinationLocation ??
+                              const LatLng(7.8804, 98.3923)),
+                      zoom: 14,
+                    ),
+                    markers: _markers,
+                    polylines: _polylines,
+                    myLocationEnabled: true,
+                    myLocationButtonEnabled: false,
+                    zoomControlsEnabled: false,
+                    padding: const EdgeInsets.only(bottom: 60),
                   ),
-                  markers: _markers,
-                  polylines: _polylines,
-                  myLocationEnabled: true,
-                  myLocationButtonEnabled: false,
-                  zoomControlsEnabled: false,
-                  padding: const EdgeInsets.only(bottom: 60),
-                ),
-                // ปุ่ม Zoom + My Location (ขวาบน)
-                Positioned(
-                  right: 12,
-                  top: 12,
-                  child: Column(
-                    children: [
-                      _buildMapButton(Icons.my_location, () {
-                        if (_currentPosition != null) {
-                          _mapController?.animateCamera(
-                            CameraUpdate.newCameraPosition(
-                              CameraPosition(
-                                target: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
-                                zoom: 16,
-                              ),
-                            ),
-                          );
-                        }
-                      }),
-                      const SizedBox(height: 8),
-                      _buildMapButton(Icons.zoom_out_map, _zoomToFitMarkers),
-                    ],
-                  ),
-                ),
-                // ปุ่ม Zoom +/- (ขวาล่าง)
-                Positioned(
-                  right: 12,
-                  bottom: 12,
-                  child: Column(
-                    children: [
-                      _buildMapButton(Icons.add, () {
-                        _mapController?.animateCamera(CameraUpdate.zoomIn());
-                      }),
-                      const SizedBox(height: 4),
-                      _buildMapButton(Icons.remove, () {
-                        _mapController?.animateCamera(CameraUpdate.zoomOut());
-                      }),
-                    ],
-                  ),
-                ),
-                Positioned(
-                  left: 12,
-                  right: 72,
-                  top: 12,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _buildFloatingInfoChip(
-                          _getServiceTypeIcon(),
-                          l10n.driverNavChipType,
-                          _getServiceTypeName(),
-                          AppTheme.accentBlue,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildFloatingInfoChip(
-                          Icons.route_rounded,
-                          l10n.driverNavChipDistance,
-                          distanceText,
-                          colorScheme.tertiary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // ===== Bottom Panel =====
-          GestureDetector(
-            onVerticalDragEnd: (details) {
-              if (details.primaryVelocity == null) return;
-              if (details.primaryVelocity! > 120) {
-                setState(() => _isInfoPanelCollapsed = true);
-              } else if (details.primaryVelocity! < -120) {
-                setState(() => _isInfoPanelCollapsed = false);
-              }
-            },
-            child: Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainer,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-              boxShadow: [
-                BoxShadow(
-                  color: colorScheme.shadow.withValues(alpha: 0.12),
-                  blurRadius: 16,
-                  offset: const Offset(0, -4),
-                ),
-              ],
-            ),
-            child: SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
+                  // ปุ่ม Zoom + My Location (ขวาบน)
+                  Positioned(
+                    right: 12,
+                    top: 12,
+                    child: Column(
                       children: [
-                        Expanded(
-                          child: Center(
-                            child: Container(
-                              width: 56,
-                              height: 5,
-                              decoration: BoxDecoration(
-                                color: colorScheme.outlineVariant,
-                                borderRadius: BorderRadius.circular(99),
+                        _buildMapButton(Icons.my_location, () {
+                          if (_currentPosition != null) {
+                            _mapController?.animateCamera(
+                              CameraUpdate.newCameraPosition(
+                                CameraPosition(
+                                  target: LatLng(_currentPosition!.latitude,
+                                      _currentPosition!.longitude),
+                                  zoom: 16,
+                                ),
                               ),
-                            ),
-                          ),
-                        ),
-                        Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () => setState(() {
-                              _isInfoPanelCollapsed = !_isInfoPanelCollapsed;
-                            }),
-                            borderRadius: BorderRadius.circular(20),
-                            child: Padding(
-                              padding: const EdgeInsets.all(4),
-                              child: Icon(
-                                _isInfoPanelCollapsed
-                                    ? Icons.keyboard_arrow_up_rounded
-                                    : Icons.keyboard_arrow_down_rounded,
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ),
-                        ),
+                            );
+                          }
+                        }),
+                        const SizedBox(height: 8),
+                        _buildMapButton(Icons.zoom_out_map, _zoomToFitMarkers),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    // ─── แถบสถานะ + นำทาง + โทร ───
-                    Row(
+                  ),
+                  // ปุ่ม Zoom +/- (ขวาล่าง)
+                  Positioned(
+                    right: 12,
+                    bottom: 12,
+                    child: Column(
                       children: [
-                        // Status text
+                        _buildMapButton(Icons.add, () {
+                          _mapController?.animateCamera(CameraUpdate.zoomIn());
+                        }),
+                        const SizedBox(height: 4),
+                        _buildMapButton(Icons.remove, () {
+                          _mapController?.animateCamera(CameraUpdate.zoomOut());
+                        }),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    left: 12,
+                    right: 72,
+                    top: 12,
+                    child: Row(
+                      children: [
                         Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(_getStatusIcon(), size: 18, color: AppTheme.accentBlue),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    _getStatusBarText(),
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: colorScheme.onSurface,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
+                          child: _buildFloatingInfoChip(
+                            _getServiceTypeIcon(),
+                            l10n.driverNavChipType,
+                            _getServiceTypeName(),
+                            AppTheme.accentBlue,
                           ),
                         ),
                         const SizedBox(width: 8),
-                        // ปุ่มนำทาง Google Maps
-                        _buildActionCircleButton(
-                          Icons.navigation_rounded,
-                          colorScheme.secondary,
-                          _launchGoogleMapsNavigation,
-                          tooltip: l10n.driverNavTooltipNav,
-                        ),
-                        const SizedBox(width: 6),
-                        // ปุ่มแชท
-                        _buildActionCircleButton(
-                          Icons.chat_rounded,
-                          colorScheme.tertiary,
-                          _openChat,
-                          tooltip: l10n.driverNavTooltipChat,
-                        ),
-                        const SizedBox(width: 6),
-                        // ปุ่มโทร
-                        _buildActionCircleButton(
-                          Icons.phone_rounded,
-                          AppTheme.accentBlue,
-                          _callCustomer,
-                          tooltip: l10n.driverNavCallCustomer,
+                        Expanded(
+                          child: _buildFloatingInfoChip(
+                            Icons.route_rounded,
+                            l10n.driverNavChipDistance,
+                            distanceText,
+                            colorScheme.tertiary,
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                  ),
+                ],
+              ),
+            ),
 
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton.icon(
-                        onPressed: _isUpdatingStatus ? null : _handleActionPress,
-                        icon: _isUpdatingStatus
-                            ? SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: colorScheme.onPrimary,
-                                ),
-                              )
-                            : Icon(_getMainActionIcon(), size: 22),
-                        label: Text(
-                          _getActionButtonText(),
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _getMainActionColor(),
-                          foregroundColor: colorScheme.onPrimary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          elevation: 2,
-                        ),
-                      ),
+            // ===== Bottom Panel =====
+            GestureDetector(
+              onVerticalDragEnd: (details) {
+                if (details.primaryVelocity == null) return;
+                if (details.primaryVelocity! > 120) {
+                  setState(() => _isInfoPanelCollapsed = true);
+                } else if (details.primaryVelocity! < -120) {
+                  setState(() => _isInfoPanelCollapsed = false);
+                }
+              },
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainer,
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(20)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colorScheme.shadow.withValues(alpha: 0.12),
+                      blurRadius: 16,
+                      offset: const Offset(0, -4),
                     ),
-                    if (_isInfoPanelCollapsed) ...[
-                      const SizedBox(height: 2),
-                    ] else ...[
-                    // ─── ปุ่มดูรายการอาหาร (เฉพาะ food) ───
-                    if (booking.serviceType == 'food') ...[
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 42,
-                        child: OutlinedButton.icon(
-                          onPressed: _showOrderItemsDialog,
-                          icon: Icon(
-                            Icons.receipt_long,
-                            size: 18,
-                            color: colorScheme.tertiary,
-                          ),
-                          label: Text(l10n.driverNavViewFoodItems, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.tertiary)),
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: colorScheme.tertiary.withValues(alpha: 0.5)),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 10),
-
-                    // ─── ข้อมูลลูกค้า ───
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: colorScheme.primary.withValues(alpha: 0.2),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 16,
-                            backgroundColor: colorScheme.primary.withValues(alpha: 0.24),
-                            child: Icon(Icons.person, size: 18, color: colorScheme.onPrimary),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _customerName,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: colorScheme.onPrimaryContainer,
+                  ],
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Center(
+                                child: Container(
+                                  width: 56,
+                                  height: 5,
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.outlineVariant,
+                                    borderRadius: BorderRadius.circular(99),
                                   ),
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                Text(
-                                  _customerPhone,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: colorScheme.onPrimaryContainer
-                                        .withValues(alpha: 0.8),
+                              ),
+                            ),
+                            Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () => setState(() {
+                                  _isInfoPanelCollapsed =
+                                      !_isInfoPanelCollapsed;
+                                }),
+                                borderRadius: BorderRadius.circular(20),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(4),
+                                  child: Icon(
+                                    _isInfoPanelCollapsed
+                                        ? Icons.keyboard_arrow_up_rounded
+                                        : Icons.keyboard_arrow_down_rounded,
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        // ─── แถบสถานะ + นำทาง + โทร ───
+                        Row(
+                          children: [
+                            // Status text
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.surfaceContainerHighest,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(_getStatusIcon(),
+                                        size: 18, color: AppTheme.accentBlue),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        _getStatusBarText(),
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          color: colorScheme.onSurface,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            // ปุ่มนำทาง Google Maps
+                            _buildActionCircleButton(
+                              Icons.navigation_rounded,
+                              colorScheme.secondary,
+                              _launchGoogleMapsNavigation,
+                              tooltip: l10n.driverNavTooltipNav,
+                            ),
+                            const SizedBox(width: 6),
+                            // ปุ่มแชท
+                            _buildActionCircleButton(
+                              Icons.chat_rounded,
+                              colorScheme.tertiary,
+                              _openChat,
+                              tooltip: l10n.driverNavTooltipChat,
+                            ),
+                            const SizedBox(width: 6),
+                            // ปุ่มโทร
+                            _buildActionCircleButton(
+                              Icons.phone_rounded,
+                              AppTheme.accentBlue,
+                              _callCustomer,
+                              tooltip: l10n.driverNavCallCustomer,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton.icon(
+                            onPressed:
+                                _isUpdatingStatus ? null : _handleActionPress,
+                            icon: _isUpdatingStatus
+                                ? SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: colorScheme.onPrimary,
+                                    ),
+                                  )
+                                : Icon(_getMainActionIcon(), size: 22),
+                            label: Text(
+                              _getActionButtonText(),
+                              style: const TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _getMainActionColor(),
+                              foregroundColor: colorScheme.onPrimary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              elevation: 2,
+                            ),
+                          ),
+                        ),
+                        if (_isInfoPanelCollapsed) ...[
+                          const SizedBox(height: 2),
+                        ] else ...[
+                          // ─── ปุ่มดูรายการอาหาร (เฉพาะ food) ───
+                          if (booking.serviceType == 'food') ...[
+                            const SizedBox(height: 8),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 42,
+                              child: OutlinedButton.icon(
+                                onPressed: _showOrderItemsDialog,
+                                icon: Icon(
+                                  Icons.receipt_long,
+                                  size: 18,
+                                  color: colorScheme.tertiary,
+                                ),
+                                label: Text(l10n.driverNavViewFoodItems,
+                                    style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: colorScheme.tertiary)),
+                                style: OutlinedButton.styleFrom(
+                                  side: BorderSide(
+                                      color: colorScheme.tertiary
+                                          .withValues(alpha: 0.5)),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12)),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 10),
+
+                          // ─── ข้อมูลลูกค้า ───
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color:
+                                    colorScheme.primary.withValues(alpha: 0.2),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 16,
+                                  backgroundColor: colorScheme.primary
+                                      .withValues(alpha: 0.24),
+                                  child: Icon(Icons.person,
+                                      size: 18, color: colorScheme.onPrimary),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _customerName,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          color: colorScheme.onPrimaryContainer,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      Text(
+                                        _customerPhone,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: colorScheme.onPrimaryContainer
+                                              .withValues(alpha: 0.8),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                // Mini call button
+                                InkWell(
+                                  onTap: _callCustomer,
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: colorScheme.primaryContainer,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      Icons.phone,
+                                      size: 16,
+                                      color: colorScheme.primary,
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          // Mini call button
-                          InkWell(
-                            onTap: _callCustomer,
-                            borderRadius: BorderRadius.circular(20),
-                            child: Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: colorScheme.primaryContainer,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.phone,
-                                size: 16,
-                                color: colorScheme.primary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 10),
+                          const SizedBox(height: 10),
 
-                    // ─── ร้านค้า (เฉพาะ food) ───
-                    if (booking.serviceType == 'food' && _merchantName.isNotEmpty) ...[
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: colorScheme.secondaryContainer,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: colorScheme.secondary.withValues(alpha: 0.22),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 16,
-                              backgroundColor:
-                                  colorScheme.secondary.withValues(alpha: 0.24),
-                              child: Icon(
-                                Icons.store,
-                                size: 18,
-                                color: colorScheme.onSecondaryContainer,
+                          // ─── ร้านค้า (เฉพาะ food) ───
+                          if (booking.serviceType == 'food' &&
+                              _merchantName.isNotEmpty) ...[
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: colorScheme.secondaryContainer,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: colorScheme.secondary
+                                      .withValues(alpha: 0.22),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              child: Row(
                                 children: [
-                                  Text(
-                                    _merchantName,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
+                                  CircleAvatar(
+                                    radius: 16,
+                                    backgroundColor: colorScheme.secondary
+                                        .withValues(alpha: 0.24),
+                                    child: Icon(
+                                      Icons.store,
+                                      size: 18,
                                       color: colorScheme.onSecondaryContainer,
                                     ),
-                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  if (_merchantPhone.isNotEmpty)
-                                    Text(
-                                      _merchantPhone,
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: colorScheme.onSecondaryContainer
-                                            .withValues(alpha: 0.8),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          _merchantName,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: colorScheme
+                                                .onSecondaryContainer,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        if (_merchantPhone.isNotEmpty)
+                                          Text(
+                                            _merchantPhone,
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: colorScheme
+                                                  .onSecondaryContainer
+                                                  .withValues(alpha: 0.8),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (showMerchantCallButton)
+                                    InkWell(
+                                      onTap: _callMerchant,
+                                      borderRadius: BorderRadius.circular(20),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: colorScheme.tertiaryContainer,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          Icons.phone,
+                                          size: 16,
+                                          color: colorScheme.tertiary,
+                                        ),
                                       ),
                                     ),
                                 ],
                               ),
                             ),
-                            if (showMerchantCallButton)
-                              InkWell(
-                                onTap: _callMerchant,
-                                borderRadius: BorderRadius.circular(20),
-                                child: Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.tertiaryContainer,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    Icons.phone,
-                                    size: 16,
-                                    color: colorScheme.tertiary,
+                            const SizedBox(height: 10),
+                          ],
+
+                          // ─── การ์ดการเงิน ───
+                          _buildFinancialCard(booking),
+                          const SizedBox(height: 10),
+
+                          // ─── ปุ่ม Support Chat + ยกเลิกงาน ───
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: _openSupportChat,
+                                  icon:
+                                      const Icon(Icons.support_agent, size: 18),
+                                  label: Text(l10n.driverNavReportIssue,
+                                      style: const TextStyle(fontSize: 13)),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: colorScheme.primary,
+                                    side: BorderSide(
+                                      color: colorScheme.primary
+                                          .withValues(alpha: 0.5),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 10),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(10)),
                                   ),
                                 ),
                               ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                    ],
-
-                    // ─── การ์ดการเงิน ───
-                    _buildFinancialCard(booking),
-                    const SizedBox(height: 10),
-
-                    // ─── ปุ่ม Support Chat + ยกเลิกงาน ───
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _openSupportChat,
-                            icon: const Icon(Icons.support_agent, size: 18),
-                            label: Text(l10n.driverNavReportIssue, style: const TextStyle(fontSize: 13)),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: colorScheme.primary,
-                              side: BorderSide(
-                                color: colorScheme.primary.withValues(alpha: 0.5),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed:
+                                      _isUpdatingStatus ? null : _cancelJob,
+                                  icon: const Icon(Icons.cancel_outlined,
+                                      size: 18),
+                                  label: Text(l10n.driverNavCancelJob,
+                                      style: const TextStyle(fontSize: 13)),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: colorScheme.error,
+                                    side: BorderSide(
+                                      color: colorScheme.error
+                                          .withValues(alpha: 0.5),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 10),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(10)),
+                                  ),
+                                ),
                               ),
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _isUpdatingStatus ? null : _cancelJob,
-                            icon: const Icon(Icons.cancel_outlined, size: 18),
-                            label: Text(l10n.driverNavCancelJob, style: const TextStyle(fontSize: 13)),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: colorScheme.error,
-                              side: BorderSide(
-                                color: colorScheme.error.withValues(alpha: 0.5),
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                          ),
-                        ),
+                        ],
                       ],
                     ),
-                    ],
-                  ],
+                  ),
                 ),
               ),
             ),
-          ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
     );
   }
 
@@ -2932,7 +3189,9 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   }
 
   /// ปุ่มกลมสำหรับ action (นำทาง, โทร)
-  Widget _buildActionCircleButton(IconData icon, Color color, VoidCallback onPressed, {String? tooltip}) {
+  Widget _buildActionCircleButton(
+      IconData icon, Color color, VoidCallback onPressed,
+      {String? tooltip}) {
     final colorScheme = Theme.of(context).colorScheme;
     return Material(
       elevation: 1,
@@ -3066,7 +3325,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     );
   }
 
-  Future<void> _notifyCustomerStatusUpdate(Map<String, dynamic> booking, String newStatus) async {
+  Future<void> _notifyCustomerStatusUpdate(
+      Map<String, dynamic> booking, String newStatus) async {
     try {
       final customerId = booking['customer_id'] as String?;
       if (customerId == null || customerId.isEmpty) return;
@@ -3087,7 +3347,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     }
   }
 
-  Future<void> _notifyMerchantDriverArrived(Map<String, dynamic> booking) async {
+  Future<void> _notifyMerchantDriverArrived(
+      Map<String, dynamic> booking) async {
     try {
       final merchantId = booking['merchant_id'] as String?;
       if (merchantId == null || merchantId.isEmpty) return;
@@ -3152,7 +3413,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     if (_booking == null || !mounted) return;
     final colorScheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
-    
+
     final foodPrice = _booking!.price;
     final settlement = _foodSettlementPreview(_booking!);
     final merchantChargeRate =
@@ -3175,12 +3436,16 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                 color: AppTheme.accentBlue.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.payments, color: AppTheme.accentBlue, size: 48),
+              child: const Icon(Icons.payments,
+                  color: AppTheme.accentBlue, size: 48),
             ),
             const SizedBox(height: 12),
             Text(
               l10n.driverNavPaymentTitle,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.accentBlue),
+              style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.accentBlue),
               textAlign: TextAlign.center,
             ),
           ],
@@ -3190,7 +3455,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           children: [
             Text(
               l10n.driverNavPaymentBody,
-              style: TextStyle(fontSize: 15, color: colorScheme.onSurface, height: 1.5),
+              style: TextStyle(
+                  fontSize: 15, color: colorScheme.onSurface, height: 1.5),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -3199,15 +3465,21 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
               decoration: BoxDecoration(
                 color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: colorScheme.secondary.withValues(alpha: 0.35)),
+                border: Border.all(
+                    color: colorScheme.secondary.withValues(alpha: 0.35)),
               ),
               child: Column(
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(l10n.driverNavPaymentSales, style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
-                      Text('฿${foodPrice.toStringAsFixed(0)}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                      Text(l10n.driverNavPaymentSales,
+                          style: TextStyle(
+                              fontSize: 14,
+                              color: colorScheme.onSurfaceVariant)),
+                      Text('฿${foodPrice.toStringAsFixed(0)}',
+                          style: const TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w600)),
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -3215,18 +3487,30 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        l10n.driverNavPaymentDeduction((merchantChargeRate * 100).toStringAsFixed(0)),
-                        style: TextStyle(fontSize: 13, color: colorScheme.error),
+                        l10n.driverNavPaymentDeduction(
+                            (merchantChargeRate * 100).toStringAsFixed(0)),
+                        style:
+                            TextStyle(fontSize: 13, color: colorScheme.error),
                       ),
-                      Text('-฿${serviceFee.toStringAsFixed(0)}', style: TextStyle(fontSize: 13, color: colorScheme.error)),
+                      Text('-฿${serviceFee.toStringAsFixed(0)}',
+                          style: TextStyle(
+                              fontSize: 13, color: colorScheme.error)),
                     ],
                   ),
                   const Divider(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(l10n.driverNavPaymentToMerchant, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colorScheme.secondary)),
-                      Text('฿${merchantReceives.toStringAsFixed(0)}', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: colorScheme.secondary)),
+                      Text(l10n.driverNavPaymentToMerchant,
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.secondary)),
+                      Text('฿${merchantReceives.toStringAsFixed(0)}',
+                          style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.secondary)),
                     ],
                   ),
                 ],
@@ -3242,12 +3526,15 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                 Navigator.of(context).pop();
               },
               icon: const Icon(Icons.delivery_dining),
-              label: Text(l10n.driverNavPaymentDeliver, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              label: Text(l10n.driverNavPaymentDeliver,
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.accentBlue,
                 foregroundColor: colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
             ),
           ),
@@ -3329,11 +3616,15 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                 ),
                 child: Column(
                   children: [
-                    _buildSummaryRow(l10n.driverNavCompletionCollect, '฿${totalCollect.ceil()}', colorScheme.onSurface, isBold: true),
+                    _buildSummaryRow(l10n.driverNavCompletionCollect,
+                        '฿${totalCollect.ceil()}', colorScheme.onSurface,
+                        isBold: true),
                     if (isFood) ...[
                       const SizedBox(height: 4),
-                      _buildSummaryRow(l10n.driverNavCompletionFoodCost, '฿${foodPrice.ceil()}', colorScheme.tertiary),
-                      _buildSummaryRow(l10n.driverNavCompletionDeliveryFee, '฿${deliveryFee.ceil()}', colorScheme.primary),
+                      _buildSummaryRow(l10n.driverNavCompletionFoodCost,
+                          '฿${foodPrice.ceil()}', colorScheme.tertiary),
+                      _buildSummaryRow(l10n.driverNavCompletionDeliveryFee,
+                          '฿${deliveryFee.ceil()}', colorScheme.primary),
                     ],
                     if (_couponDiscount > 0) ...[
                       const SizedBox(height: 4),
@@ -3341,7 +3632,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                         hideCouponBreakdown
                             ? l10n.driverNavCompletionCouponPlatform
                             : (_couponCode != null && _couponCode!.isNotEmpty
-                                ? l10n.driverNavCompletionCouponCode(_couponCode!)
+                                ? l10n
+                                    .driverNavCompletionCouponCode(_couponCode!)
                                 : l10n.driverNavCompletionCoupon),
                         '-฿${_couponDiscount.ceil()}',
                         colorScheme.secondary,
@@ -3374,7 +3666,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                       Navigator.of(context).pop();
                       Navigator.of(context).pushReplacement(
                         MaterialPageRoute(
-                          builder: (context) => DriverJobDetailScreen(booking: booking),
+                          builder: (context) =>
+                              DriverJobDetailScreen(booking: booking),
                         ),
                       );
                     },
@@ -3392,7 +3685,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                     onPressed: () {
                       Navigator.of(context).pop();
                       Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (context) => const DriverMainScreen()),
+                        MaterialPageRoute(
+                            builder: (context) => const DriverMainScreen()),
                         (route) => false,
                       );
                     },
@@ -3542,7 +3836,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           ),
           Text(
             value,
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: color),
+            style: TextStyle(
+                fontSize: 13, fontWeight: FontWeight.bold, color: color),
           ),
         ],
       ),
@@ -3550,7 +3845,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   }
 
   /// สร้างแถวสรุปรายได้สำหรับ completion dialog
-  Widget _buildSummaryRow(String label, String value, Color color, {bool isBold = false, double fontSize = 14}) {
+  Widget _buildSummaryRow(String label, String value, Color color,
+      {bool isBold = false, double fontSize = 14}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
@@ -3576,5 +3872,4 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       ),
     );
   }
-
 }

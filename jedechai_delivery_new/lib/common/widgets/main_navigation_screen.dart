@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 /// Universal Main Navigation Screen
-/// 
+///
 /// Provides consistent bottom navigation across all roles
 /// Reduces code duplication and maintains consistent UX
 class MainNavigationScreen extends StatefulWidget {
@@ -69,49 +69,52 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, _) => _onPopInvoked(didPop),
       child: Scaffold(
-      appBar: widget.showAppBar && widget.appBar != null 
-          ? PreferredSize(
-              preferredSize: const Size.fromHeight(kToolbarHeight),
-              child: widget.appBar!,
-            )
-          : null,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: widget.screens,
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: navShadowColor,
-              blurRadius: 10,
-              offset: const Offset(0, -2),
+        appBar: widget.showAppBar && widget.appBar != null
+            ? PreferredSize(
+                preferredSize: const Size.fromHeight(kToolbarHeight),
+                child: widget.appBar!,
+              )
+            : null,
+        body: IndexedStack(
+          index: _currentIndex,
+          children: widget.screens,
+        ),
+        bottomNavigationBar: SafeArea(
+          top: false,
+          child: Container(
+            decoration: BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: navShadowColor,
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: colorScheme.surface,
-          selectedItemColor: colorScheme.primary,
-          unselectedItemColor: colorScheme.onSurfaceVariant,
-          selectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 12,
+            child: BottomNavigationBar(
+              currentIndex: _currentIndex,
+              onTap: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              type: BottomNavigationBarType.fixed,
+              backgroundColor: colorScheme.surface,
+              selectedItemColor: colorScheme.primary,
+              unselectedItemColor: colorScheme.onSurfaceVariant,
+              selectedLabelStyle: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontWeight: FontWeight.w400,
+                fontSize: 12,
+              ),
+              items: widget.bottomNavItems,
+            ),
           ),
-          unselectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.w400,
-            fontSize: 12,
-          ),
-          items: widget.bottomNavItems,
         ),
       ),
-    ),
     );
   }
 }
