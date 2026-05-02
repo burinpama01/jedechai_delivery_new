@@ -693,21 +693,24 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
       debugLog('✅ Booking created successfully: ${response['id']}');
 
       final booking = Booking.fromJson(response);
+      final totalRidePrice = _estimatedPrice + _estimatedPickupSurcharge;
       unawaited(AdminLineNotificationService.notify(
         eventType: 'ride_order_new',
         title: 'JDC: มีคำขอเรียกรถใหม่',
         message:
-            'มีคำขอเรียกรถใหม่ ($vehicleName) ฿${_estimatedPrice.toStringAsFixed(0)} ระยะทาง ${_estimatedDistance.toStringAsFixed(2)} กม.',
+            'เรียกรถ $vehicleName ฿${totalRidePrice.toStringAsFixed(0)}\n'
+            'ระยะทาง ${_estimatedDistance.toStringAsFixed(2)} กม.',
         data: {
           'booking_id': booking.id,
-          'customer_id': currentUser.id,
           'vehicle_type': vehicleName,
+          'price': _estimatedPrice.toStringAsFixed(0),
+          if (_estimatedPickupSurcharge > 0)
+            'pickup_surcharge': _estimatedPickupSurcharge.toStringAsFixed(0),
+          'total': totalRidePrice.toStringAsFixed(0),
+          'distance_km': _estimatedDistance.toStringAsFixed(2),
+          'payment_method': _paymentMethod,
           'pickup': AppLocalizations.of(context)!.ridePickupAddress,
           'destination': _selectedAddress,
-          'distance_km': _estimatedDistance.toStringAsFixed(2),
-          'price': _estimatedPrice.toStringAsFixed(0),
-          'payment_method': _paymentMethod,
-          'pickup_surcharge': _estimatedPickupSurcharge.toStringAsFixed(0),
         },
       ));
 
@@ -1353,11 +1356,4 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
             BoxShadow(
                 color: colorScheme.shadow.withValues(alpha: 0.12),
                 blurRadius: 8,
-                offset: const Offset(0, 2)),
-          ],
-        ),
-        child: Icon(icon, size: 22, color: colorScheme.onSurface),
-      ),
-    );
-  }
-}
+                offset: const Offset(0, 2

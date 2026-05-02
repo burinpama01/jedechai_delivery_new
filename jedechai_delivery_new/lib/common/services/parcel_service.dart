@@ -106,18 +106,21 @@ class ParcelService {
         eventType: 'parcel_order_new',
         title: 'JDC: มีออเดอร์ส่งพัสดุใหม่',
         message:
-            'มีออเดอร์ส่งพัสดุใหม่ ฿${finalPrice.toStringAsFixed(0)} ระยะทาง ${distanceKm.toStringAsFixed(2)} กม.',
+            'พัสดุใหม่ ขนาด $parcelSize\n'
+            'ราคา ฿${finalPrice.toStringAsFixed(0)} ระยะทาง ${distanceKm.toStringAsFixed(2)} กม.\n'
+            'จาก $senderName → $recipientName',
         data: {
           'booking_id': booking.id,
-          'customer_id': userId,
+          'price': finalPrice.toStringAsFixed(0),
+          'distance_km': distanceKm.toStringAsFixed(2),
+          'parcel_size': parcelSize,
           'sender_name': senderName,
           'sender_phone': senderPhone,
           'recipient_name': recipientName,
           'recipient_phone': recipientPhone,
-          'parcel_size': parcelSize,
           'pickup': pickupAddress,
           'destination': destinationAddress,
-          'scheduled_at': scheduledAt?.toIso8601String(),
+          if (scheduledAt != null) 'scheduled_at': scheduledAt.toIso8601String(),
         },
       );
       return booking;
@@ -231,15 +234,4 @@ class ParcelService {
   double _getSizeMultiplier(String size) {
     switch (size) {
       case 'small':
-        return 1.0;
-      case 'medium':
-        return 1.3;
-      case 'large':
-        return 1.6;
-      case 'xlarge':
-        return 2.0;
-      default:
-        return 1.0;
-    }
-  }
-}
+        return 1.

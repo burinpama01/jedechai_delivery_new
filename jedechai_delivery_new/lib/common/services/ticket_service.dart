@@ -187,20 +187,14 @@ class TicketService {
         );
       }
 
+      final priorityLabel = const {
+        'low': '🟢 ต่ำ',
+        'medium': '🟡 กลาง',
+        'high': '🔴 สูง',
+      }[priority] ?? priority;
       await AdminLineNotificationService.notify(
         eventType: 'support_ticket_new',
         title: 'JDC: มี Ticket ใหม่',
-        message: 'มี Ticket ใหม่: $subject',
+        message: 'หัวข้อ: $subject\nหมวด: $category | ความสำคัญ: $priorityLabel',
         data: {
-          'ticket_id': ticketId,
-          'user_id': userId,
-          'category': category,
-          'priority': priority,
-          'booking_id': bookingId,
-        },
-      );
-    } catch (e) {
-      debugLog('❌ Error notifying admins: $e');
-    }
-  }
-}
+          'ticket_id': ti

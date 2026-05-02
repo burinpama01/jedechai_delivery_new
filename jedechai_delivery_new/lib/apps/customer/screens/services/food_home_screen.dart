@@ -2503,29 +2503,24 @@ class _BookingServiceHelper {
         await client.from('booking_items').insert(items);
       }
 
+      final totalAmount = subtotal + deliveryFee;
       await AdminLineNotificationService.notify(
         eventType: 'food_order_new',
         title: 'JDC: มีออเดอร์อาหารใหม่',
         message:
-            'มีออเดอร์อาหารใหม่จาก $merchantName ยอดอาหาร ฿${subtotal.toStringAsFixed(0)} ค่าส่ง ฿${deliveryFee.toStringAsFixed(0)}',
+            'ออเดอร์ใหม่จากร้าน $merchantName\n'
+            'รวม ฿${totalAmount.toStringAsFixed(0)} (อาหาร ฿${subtotal.toStringAsFixed(0)} + ส่ง ฿${deliveryFee.toStringAsFixed(0)})',
         data: {
           'booking_id': bookingId,
-          'customer_id': userId,
-          'merchant_id': merchantId,
-          'merchant_name': merchantName,
-          'items': cartItems.length,
+          'ร้านอาหาร': merchantName,
+          'จำนวนเมนู': cartItems.length,
           'subtotal': subtotal.toStringAsFixed(0),
           'delivery_fee': deliveryFee.toStringAsFixed(0),
+          'total': totalAmount.toStringAsFixed(0),
           'payment_method': paymentMethod,
+          'distance_km': distanceKm.toStringAsFixed(2),
           'customer_address': normalizedCustomerAddress,
         },
       );
 
-      debugLog('✅ Food order created: $bookingId');
-      return response;
-    } catch (e) {
-      debugLog('❌ Error creating food order: $e');
-      return null;
-    }
-  }
-}
+      debugLog('
