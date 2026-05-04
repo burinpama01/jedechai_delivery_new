@@ -70,7 +70,7 @@ export async function refreshPendingOrders(ctx) {
   } = _deps();
 
   const pendingStatuses = ['pending', 'pending_merchant', 'matched'];
-  const stuckStatuses = ['driver_accepted', 'preparing', 'arrived_at_merchant', 'ready_for_pickup', 'picking_up_order'];
+  const stuckStatuses = ['driver_accepted', 'accepted', 'preparing', 'arrived_at_merchant', 'ready_for_pickup', 'picking_up_order'];
 
   const [{ data: pendingOrders }, { data: stuckOrders }] = await Promise.all([
     supabase.from('bookings')

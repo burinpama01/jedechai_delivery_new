@@ -2523,4 +2523,11 @@ class _BookingServiceHelper {
         },
       );
 
-      debugLog('
+      debugLog('✅ Food order created: $bookingId');
+      return response;
+    } catch (e) {
+      debugLog('❌ Error creating food order: $e');
+      return null;
+    }
+  }
+}

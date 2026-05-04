@@ -279,7 +279,7 @@ export async function refreshMapData(ctx) {
     const dLocMap = {};
     (driverLocs || []).forEach(d => { dLocMap[d.driver_id] = d; });
 
-    const activeStatuses = ['pending','pending_merchant','preparing','driver_accepted','matched','arrived','arrived_at_merchant','ready_for_pickup','picking_up_order','in_transit'];
+    const activeStatuses = ['pending','pending_merchant','preparing','driver_accepted','accepted','matched','arrived','arrived_at_merchant','ready_for_pickup','picking_up_order','in_transit'];
     const { data: activeOrders } = await supabase
       .from('bookings')
       .select('id, driver_id, merchant_id, customer_id, status, service_type, price, delivery_fee, origin_lat, origin_lng, dest_lat, dest_lng, pickup_address, destination_address, created_at')
@@ -438,7 +438,7 @@ export async function refreshMapData(ctx) {
       const dPos = driverPosMap[o.driver_id];
       if (!dPos) return;
 
-      const prePickupStatuses = ['driver_accepted','matched','preparing','arrived_at_merchant','ready_for_pickup'];
+      const prePickupStatuses = ['driver_accepted','accepted','matched','preparing','arrived_at_merchant','ready_for_pickup'];
       const inDeliveryStatuses = ['picking_up_order','in_transit'];
 
       if (prePickupStatuses.includes(o.status)) {

@@ -335,7 +335,7 @@ export async function showReassignModal(orderId, currentDriverName, ctx) {
 
   let driverQuery = supabase
     .from('profiles')
-    .select('id, full_name, phone_number, license_plate')
+    .select('id, full_name, phone_number, license_plate, is_online')
     .eq('role', 'driver')
     .eq('approval_status', 'approved')
     .order('full_name');
@@ -346,6 +346,24 @@ export async function showReassignModal(orderId, currentDriverName, ctx) {
 
   const { data: drivers } = await driverQuery;
   if (!drivers || !drivers.length) return alert('ไม่พบคนขับที่อนุมัติแล้ว');
+
+  const driverIds = drivers.map(d => d.id).filter(Boolean);
+  const { data: driverLocs } = driverIds.length
+    ? await supabase
+      .from('driver_locations')
+      .select('driver_id, is_online')
+      .in('driver_id', driverIds)
+    : { data: [] };
+  const locMap = {};
+  (driverLocs || []).forEach(d => { locMap[d.driver_id] = d; });
+  const truthyFlag = globalThis._truthyFlag;
+  const onlineDrivers = drivers.filter(d => {
+    const loc = locMap[d.id];
+    const profileOnline = typeof truthyFlag === 'function' ? truthyFlag(d.is_online) : !!d.is_online;
+    const locOnline = loc ? (typeof truthyFlag === 'function' ? truthyFlag(loc.is_online) : !!loc.is_online) : false;
+    return profileOnline || locOnline;
+  });
+  if (!onlineDrivers.length) return alert('ไม่มีคนขับออนไลน์คนอื่น');
 
   const modal = document.createElement('div');
   modal.id = 'reassignModal';
@@ -362,7 +380,7 @@ export async function showReassignModal(orderId, currentDriverName, ctx) {
       <div class="p-6 max-h-[60vh] overflow-y-auto">
         <input type="text" id="reassignSearch" placeholder="ค้นหาคนขับ..." class="w-full border rounded-lg px-3 py-2 text-sm mb-3" oninput="filterReassignDrivers()" />
         <div id="reassignDriverList">
-          ${drivers.map(d => `
+          ${onlineDrivers.map(d => `
             <div class="reassign-driver-item flex items-center justify-between p-3 rounded-lg hover:bg-blue-50 cursor-pointer border border-gray-100 mb-2 transition-colors" data-name="${(d.full_name||'').toLowerCase()}" onclick="reassignOrder('${orderId}','${d.id}','${(d.full_name||'').replace(/'/g,'')}')">
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center"><span class="material-icons-round text-blue-600 text-sm">person</span></div>

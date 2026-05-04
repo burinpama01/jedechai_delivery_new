@@ -13,6 +13,9 @@ import '../../../common/services/system_config_service.dart';
 import '../../../common/services/merchant_food_config_service.dart';
 import '../../../common/utils/driver_amount_calculator.dart';
 import '../../../common/utils/order_code_formatter.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 /// Driver Earnings Screen
 ///
@@ -35,6 +38,12 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
     return [l10n.earnPeriodToday, l10n.earnPeriodWeek, l10n.earnPeriodMonth, l10n.earnPeriodAll, l10n.earnPeriodCustom];
   }
   DateTimeRange? _customDateRange;
+
+  // Service type filter
+  String? _selectedServiceType; // null = ทั้งหมด
+
+  // Weekly chart data
+  Map<String, double> _weeklyEarnings = {};
 
   // Stats
   double _totalEarnings = 0;
@@ -111,6 +120,30 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
     }
   }
 
+  Future<Map<String, double>> _loadWeeklyEarnings() async {
+    final userId = AuthService.userId;
+    if (userId == null) return {};
+
+    final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
+    final response = await Supabase.instance.client
+        .from('bookings')
+        .select('updated_at, driver_earnings, service_type, merchant_id, price, delivery_fee')
+        .eq('driver_id', userId)
+        .eq('status', 'completed')
+        .gte('updated_at', sevenDaysAgo.toIso8601String());
+
+    final Map<String, double> byDay = {};
+    for (final row in response) {
+      final updatedAt = row['updated_at'] as String?;
+      if (updatedAt == null) continue;
+      final date = DateTime.parse(updatedAt).toLocal();
+      final key = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      final earnings = (row['driver_earnings'] as num?)?.toDouble() ?? 0;
+      byDay[key] = (byDay[key] ?? 0) + earnings;
+    }
+    return byDay;
+  }
+
   Future<void> _loadData() async {
     setState(() { _isLoading = true; _error = null; });
 
@@ -130,6 +163,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
           .eq('status', 'completed')
           .gte('updated_at', startStr);
       if (hasEndFilter) completedQuery = completedQuery.lte('updated_at', endStr);
+      if (_selectedServiceType != null) completedQuery = completedQuery.eq('service_type', _selectedServiceType!);
       final completedResponse = await completedQuery.order('updated_at', ascending: false);
 
       // Fetch cancelled bookings in period
@@ -140,6 +174,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
           .eq('status', 'cancelled')
           .gte('updated_at', startStr);
       if (hasEndFilter) cancelledQuery = cancelledQuery.lte('updated_at', endStr);
+      if (_selectedServiceType != null) cancelledQuery = cancelledQuery.eq('service_type', _selectedServiceType!);
       final cancelledResponse = await cancelledQuery;
 
       // Fetch all jobs in period for history
@@ -161,6 +196,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
           ])
           .gte('created_at', startStr);
       if (hasEndFilter) allQuery = allQuery.lte('created_at', endStr);
+      if (_selectedServiceType != null) allQuery = allQuery.eq('service_type', _selectedServiceType!);
       final allJobsResponse = await allQuery.order('created_at', ascending: false).limit(50);
 
       final bookingIds = allJobsResponse
@@ -253,6 +289,8 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
         );
       }
 
+      final weeklyData = await _loadWeeklyEarnings();
+
       if (mounted) {
         setState(() {
           _totalEarnings = totalEarn;
@@ -268,6 +306,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
           _defaultDeliverySystemRate =
               driverDeliverySystemRateOverride ?? configService.platformFeeRate;
           _standardCommissionRate = configService.commissionRate;
+          _weeklyEarnings = weeklyData;
           _isLoading = false;
         });
       }
@@ -414,6 +453,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DriverWalletScreen())),
             tooltip: AppLocalizations.of(context)!.earnWalletTooltip,
           ),
+          IconButton(icon: const Icon(Icons.download), onPressed: _exportCsv, tooltip: 'ส่งออก CSV'),
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData, tooltip: AppLocalizations.of(context)!.earnRefresh),
         ],
       ),
@@ -430,7 +470,9 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildPeriodFilter(),
+                        _buildServiceTypeFilter(),
                         _buildRevenueSummary(),
+                        _buildWeeklyChart(),
                         _buildStatsGrid(),
                         const SizedBox(height: 8),
                         _buildWalletCard(),
@@ -916,6 +958,176 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context)!.earnOpenDetailError)),
       );
+    }
+  }
+
+  // ============================================================
+  // Service Type Filter
+  // ============================================================
+
+  Widget _buildServiceTypeFilter() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final types = <String?>[null, 'food', 'ride', 'parcel'];
+    const labels = ['ทั้งหมด', '🍔 อาหาร', '🚗 รับส่ง', '📦 พัสดุ'];
+    return Container(
+      color: colorScheme.surfaceContainer,
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: List.generate(types.length, (i) {
+            final isSelected = _selectedServiceType == types[i];
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ChoiceChip(
+                label: Text(labels[i]),
+                selected: isSelected,
+                onSelected: (_) {
+                  setState(() => _selectedServiceType = types[i]);
+                  _loadData();
+                },
+                selectedColor: AppTheme.accentBlue,
+                labelStyle: TextStyle(
+                  color: isSelected ? Colors.white : colorScheme.onSurface,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  fontSize: 13,
+                ),
+                backgroundColor: colorScheme.surfaceContainerHighest,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              ),
+            );
+          }),
+        ),
+      ),
+    );
+  }
+
+  // ============================================================
+  // Weekly Bar Chart
+  // ============================================================
+
+  Widget _buildWeeklyChart() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final now = DateTime.now();
+    final days = List.generate(
+      7,
+      (i) => DateTime(now.year, now.month, now.day).subtract(Duration(days: 6 - i)),
+    );
+    const dayLabels = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'];
+
+    final values = days.map((d) {
+      final key = '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+      return _weeklyEarnings[key] ?? 0.0;
+    }).toList();
+
+    final maxVal = values.fold(0.0, (a, b) => a > b ? a : b);
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'รายได้ 7 วันที่ผ่านมา',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colorScheme.onSurface),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 120,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: List.generate(7, (i) {
+                final val = values[i];
+                final barHeight = maxVal > 0 ? (val / maxVal * 88).clamp(4.0, 88.0) : 4.0;
+                final isToday = days[i].day == now.day && days[i].month == now.month;
+                final dayOfWeek = days[i].weekday - 1;
+                return Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      if (val > 0)
+                        Text(
+                          val >= 1000 ? '${(val / 1000).toStringAsFixed(1)}k' : val.toInt().toString(),
+                          style: TextStyle(fontSize: 9, color: colorScheme.onSurfaceVariant),
+                        ),
+                      const SizedBox(height: 2),
+                      Container(
+                        height: barHeight,
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        decoration: BoxDecoration(
+                          color: isToday
+                              ? AppTheme.accentBlue
+                              : AppTheme.accentBlue.withValues(alpha: 0.38),
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        dayLabels[dayOfWeek],
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                          color: isToday ? AppTheme.accentBlue : colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
+  // Export CSV
+  // ============================================================
+
+  Future<void> _exportCsv() async {
+    try {
+      final buf = StringBuffer();
+      buf.writeln('วันที่,ประเภท,สถานะ,รหัสงาน,รายได้คนขับ,ค่าธรรมเนียม App');
+      for (final job in _jobHistory) {
+        final status = job['status']?.toString() ?? '';
+        final serviceType = job['service_type']?.toString() ?? '';
+        final createdAt = _formatDate(job['created_at']);
+        final jobId = OrderCodeFormatter.formatByServiceType(
+          job['id']?.toString(),
+          serviceType: serviceType,
+        );
+        final driverEarnings = status == 'completed'
+            ? _driverEarningsForJob(
+                job,
+                merchantProfiles: _merchantProfilesById,
+                defaultMerchantSystemRate: _defaultMerchantSystemRate,
+                defaultMerchantDriverRate: _defaultMerchantDriverRate,
+                defaultDeliverySystemRate: _defaultDeliverySystemRate,
+                standardCommissionRate: _standardCommissionRate,
+              )
+            : 0.0;
+        final appEarnings = status == 'completed' ? _appEarningsForJob(job) : 0.0;
+        buf.writeln('$createdAt,$serviceType,$status,$jobId,${driverEarnings.toStringAsFixed(2)},${appEarnings.toStringAsFixed(2)}');
+      }
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/driver_earnings_${DateTime.now().millisecondsSinceEpoch}.csv');
+      await file.writeAsString(buf.toString(), flush: true);
+      await Share.shareXFiles([XFile(file.path)], subject: 'รายงานรายได้คนขับ');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('ส่งออกไม่สำเร็จ: $e')),
+        );
+      }
     }
   }
 

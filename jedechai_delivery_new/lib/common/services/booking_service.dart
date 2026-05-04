@@ -1,6 +1,7 @@
 import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/booking.dart';
+import '../utils/driver_amount_calculator.dart';
 import 'mock_auth_service.dart';
 import 'auth_service.dart';
 import 'wallet_service.dart';
@@ -659,6 +660,137 @@ class BookingService {
     }
   }
 
+  /// Atomically completes a booking: calculates commission, deducts wallet,
+  /// and marks as completed inside a single Postgres transaction via RPC.
+  ///
+  /// Replaces the non-atomic two-step pattern of updateBookingStatus('completed')
+  /// + walletService.deduct() that could leave the booking completed without
+  /// a corresponding wallet deduction if the deduction step threw.
+  Future<void> completeBooking(String bookingId) async {
+    final currentUserId = AuthService.userId;
+    if (currentUserId == null) throw Exception('Not authenticated');
+
+    final booking = await getBookingById(bookingId);
+    if (booking == null) throw Exception('Booking not found');
+
+    if (booking.driverId != currentUserId) {
+      throw Exception('ไม่มีสิทธิ์จบงานนี้');
+    }
+
+    double commissionAmount = 0;
+    double driverEarnings = 0;
+    double appEarnings = 0;
+
+    if (booking.serviceType == 'food') {
+      final configService = SystemConfigService();
+      await configService.fetchSettings();
+
+      final merchantFoodConfig = await _getMerchantFoodConfig(
+        merchantId: booking.merchantId,
+        configService: configService,
+      );
+      final driverDeliverySystemRate =
+          await _getDriverDeliverySystemRateOverride(booking.driverId) ??
+              merchantFoodConfig.deliverySystemRate;
+
+      final deliveryFee = booking.deliveryFee ?? 0;
+      final foodPrice = booking.price;
+
+      String? couponCode;
+      double couponDiscountAmount = 0.0;
+      try {
+        final couponUsage = await _client
+            .from('coupon_usages')
+            .select('discount_amount, coupon:coupons(code)')
+            .eq('booking_id', bookingId)
+            .maybeSingle();
+        if (couponUsage != null) {
+          couponDiscountAmount =
+              (couponUsage['discount_amount'] as num?)?.toDouble() ?? 0.0;
+          final coupon = couponUsage['coupon'] as Map<String, dynamic>?;
+          couponCode = coupon?['code'] as String?;
+        }
+      } catch (e) {
+        debugLog('⚠️ completeBooking: Failed to load coupon: $e');
+      }
+
+      final couponFinance = await _getFoodCouponFinanceContext(
+        bookingId: bookingId,
+        merchantId: booking.merchantId,
+        deliveryFee: deliveryFee,
+      );
+
+      final settlement = DriverAmountCalculator.foodOrderSettlement(
+        foodPrice: foodPrice,
+        deliveryFee: deliveryFee,
+        deliverySystemRate: driverDeliverySystemRate,
+        merchantGpSystemRate: merchantFoodConfig.merchantGpSystemRate,
+        merchantGpDriverRate: merchantFoodConfig.merchantGpDriverRate,
+      );
+
+      var totalDeduction =
+          settlement.deliverySystemFee + settlement.merchantSystemGP;
+      var calcAppEarnings = totalDeduction;
+      var driverNetIncome = settlement.driverNetIncome;
+
+      if (couponFinance != null) {
+        final extraSystemCharge =
+            (foodPrice * (couponFinance['systemRate'] ?? 0.10)).ceilToDouble();
+        final extraDriverSupport =
+            (foodPrice * (couponFinance['driverRate'] ?? 0.15)).ceilToDouble();
+        totalDeduction += extraSystemCharge;
+        calcAppEarnings += extraSystemCharge;
+        driverNetIncome += extraDriverSupport;
+      }
+
+      final funding = WalletService.applyReferralCouponFundingOffsets(
+        totalDeduction: totalDeduction,
+        appEarnings: calcAppEarnings,
+        driverNetIncome: driverNetIncome,
+        couponCode: couponCode,
+        couponDiscountAmount: couponDiscountAmount,
+      );
+
+      commissionAmount = funding['totalDeduction'] ?? totalDeduction;
+      appEarnings = funding['appEarnings'] ?? calcAppEarnings;
+      driverEarnings = funding['driverNetIncome'] ?? driverNetIncome;
+    } else {
+      final configService = SystemConfigService();
+      await configService.fetchSettings();
+      final commission =
+          configService.calculateCommission(booking.price.toInt()).toDouble();
+      commissionAmount = commission;
+      driverEarnings = booking.price - commission;
+      appEarnings = commission;
+    }
+
+    debugLog('🔒 completeBooking (atomic RPC):');
+    debugLog('   └─ Booking: $bookingId');
+    debugLog('   └─ Driver: $currentUserId');
+    debugLog('   └─ Commission: $commissionAmount');
+    debugLog('   └─ Driver earnings: $driverEarnings');
+    debugLog('   └─ App earnings: $appEarnings');
+
+    final rpcResult = await _client.rpc('complete_booking', params: {
+      'p_booking_id': bookingId,
+      'p_driver_id': currentUserId,
+      'p_commission_amount': commissionAmount,
+      'p_driver_earnings': driverEarnings,
+      'p_app_earnings': appEarnings,
+      'p_description': 'หักค่าบริการระบบ ${booking.serviceType}',
+    });
+
+    if (rpcResult is Map && rpcResult['success'] != true) {
+      final error = rpcResult['error'] ?? 'unknown';
+      if (error == 'invalid_status') {
+        throw Exception('สถานะออเดอร์ไม่ถูกต้อง กรุณารีเฟรชหน้าจอ');
+      }
+      throw Exception('ไม่สามารถจบงานได้: $error');
+    }
+
+    debugLog('✅ completeBooking RPC สำเร็จ: $bookingId');
+  }
+
   /// Cancel booking
   /// Phase 4B: Added authorization check — only the customer who created the
   /// booking (or admin) can cancel, and only from cancellable statuses.
@@ -1006,6 +1138,9 @@ class BookingService {
         },
       );
 
+      debugLog('📤 Sending new food booking notification to drivers...');
+      await _notifyDriversAboutNewRide(booking);
+
       return booking;
     } catch (e) {
       debugLog('Failed to create food booking: $e');
@@ -1068,81 +1203,92 @@ class BookingService {
     );
   }
 
+  /// Public wrapper — notify nearby drivers about any new booking
+  Future<void> notifyDriversAboutNewBooking(Booking booking) =>
+      _notifyDriversAboutNewRide(booking);
+
   /// Notify available drivers about new ride booking
   Future<void> _notifyDriversAboutNewRide(Booking booking) async {
     try {
-      debugLog('🔍 DEBUG: Notifying drivers about new ride booking');
-      debugLog('   └─ Booking ID: ${booking.id}');
-      debugLog('   └─ Service Type: ${booking.serviceType}');
-      debugLog('   └─ Price: ${booking.price}');
-      debugLog('   └─ Pickup: ${booking.pickupAddress}');
-      debugLog('   └─ Destination: ${booking.destinationAddress}');
+      debugLog('📤 Notifying nearby drivers about new booking: ${booking.id}');
+      debugLog('   └─ Service type: ${booking.serviceType}');
 
-      // Get all available drivers (drivers with FCM tokens)
-      final driversResponse = await _client
-          .from('profiles')
-          .select('id, email, fcm_token')
-          .eq('role', 'driver')
-          .not('fcm_token', 'is', null);
+      List<Map<String, dynamic>> driversToNotify = [];
 
-      debugLog('📊 Found ${driversResponse.length} drivers with FCM tokens');
+      // ใช้ get_nearby_drivers ถ้ามีพิกัดจุดรับ
+      if (booking.originLat != 0 && booking.originLng != 0) {
+        final configService = SystemConfigService();
+        await configService.fetchSettings();
+        final radiusKm = configService.driverToOrderRadiusKm;
 
-      if (driversResponse.isEmpty) {
-        debugLog('⚠️ No drivers found with FCM tokens');
+        final nearbyResult = await _client.rpc('get_nearby_drivers', params: {
+          'p_lat': booking.originLat,
+          'p_lng': booking.originLng,
+          'p_radius_km': radiusKm,
+          'p_service_type': booking.serviceType,
+        });
+
+        driversToNotify = List<Map<String, dynamic>>.from(nearbyResult ?? []);
+        debugLog('📊 Nearby drivers within ${radiusKm}km: ${driversToNotify.length}');
+      } else {
+        // fallback — no location data, notify all drivers
+        final response = await _client
+            .from('profiles')
+            .select('id, email, fcm_token')
+            .eq('role', 'driver')
+            .not('fcm_token', 'is', null);
+        driversToNotify = List<Map<String, dynamic>>.from(response);
+        debugLog('⚠️ No location data, notifying all ${driversToNotify.length} drivers');
+      }
+
+      if (driversToNotify.isEmpty) {
+        debugLog('⚠️ No drivers to notify');
         return;
       }
 
       int successCount = 0;
       int failCount = 0;
 
-      for (final driver in driversResponse) {
-        final driverId = driver['id'] as String;
+      for (final driver in driversToNotify) {
+        final driverId = (driver['driver_id'] ?? driver['id']) as String?;
         final driverToken = driver['fcm_token'] as String?;
 
-        if (driverToken != null && driverToken.isNotEmpty) {
-          debugLog('📤 Sending notification to driver: ${driver['email']}');
+        if (driverId == null || driverToken == null || driverToken.isEmpty) {
+          failCount++;
+          continue;
+        }
 
-          final success = await NotificationSender.sendNotification(
-            targetUserId: driverId,
-            title: '🚨 งานใหม่! รับส่งผู้โดยสาร',
-            body:
-                'มีคนเรียกรถจาก ${booking.pickupAddress ?? 'จุดเริ่มต้น'} ไป ${booking.destinationAddress ?? 'จุดหมาย'} - ราคา ฿${booking.price}',
-            data: {
-              'type': 'new_booking',
-              'booking_id': booking.id,
-              'customer_id': booking.customerId,
-              'service_type': booking.serviceType,
-              'origin_lat': booking.originLat.toString(),
-              'origin_lng': booking.originLng.toString(),
-              'dest_lat': booking.destLat.toString(),
-              'dest_lng': booking.destLng.toString(),
-              'price': booking.price.toString(),
-              'pickup_address': booking.pickupAddress ?? '',
-              'destination_address': booking.destinationAddress ?? '',
-              'distance_km': booking.distanceKm.toString(),
-            },
-          );
+        final success = await NotificationSender.sendNotification(
+          targetUserId: driverId,
+          title: '🚨 งานใหม่! ${booking.serviceType == 'food' ? 'ส่งอาหาร' : booking.serviceType == 'ride' ? 'รับส่งผู้โดยสาร' : 'ส่งพัสดุ'}',
+          body:
+              'มีงานจาก ${booking.pickupAddress ?? 'จุดรับ'} ไป ${booking.destinationAddress ?? 'จุดหมาย'} - ฿${booking.price.toStringAsFixed(0)}',
+          data: {
+            'type': 'new_booking',
+            'booking_id': booking.id,
+            'customer_id': booking.customerId,
+            'service_type': booking.serviceType,
+            'origin_lat': booking.originLat.toString(),
+            'origin_lng': booking.originLng.toString(),
+            'dest_lat': booking.destLat.toString(),
+            'dest_lng': booking.destLng.toString(),
+            'price': booking.price.toString(),
+            'pickup_address': booking.pickupAddress ?? '',
+            'destination_address': booking.destinationAddress ?? '',
+            'distance_km': booking.distanceKm.toString(),
+          },
+        );
 
-          if (success) {
-            successCount++;
-            debugLog('✅ Notification sent successfully to: ${driver['email']}');
-          } else {
-            failCount++;
-            debugLog('❌ Failed to send notification to: ${driver['email']}');
-          }
+        if (success) {
+          successCount++;
         } else {
           failCount++;
-          debugLog('❌ Driver ${driver['email']} has no FCM token');
         }
       }
 
-      debugLog('📊 Notification summary:');
-      debugLog('   └─ Total drivers: ${driversResponse.length}');
-      debugLog('   └─ Successful: $successCount');
-      debugLog('   └─ Failed: $failCount');
+      debugLog('📊 Notification summary: sent=$successCount, failed=$failCount');
     } catch (e) {
       debugLog('❌ Error notifying drivers: $e');
-      debugLog('   └─ Stack trace: ${StackTrace.current}');
     }
   }
 

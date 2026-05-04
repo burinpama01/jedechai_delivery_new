@@ -5,6 +5,7 @@ import '../../../common/services/parcel_service.dart';
 import '../../../common/models/parcel_detail.dart';
 import '../../../common/services/image_picker_service.dart';
 import '../../../common/services/storage_service.dart';
+import '../../../common/services/supabase_service.dart';
 import '../../../common/widgets/app_network_image.dart';
 import '../../../theme/app_theme.dart';
 import '../../../utils/debug_logger.dart';
@@ -32,6 +33,7 @@ class DriverParcelConfirmationScreen extends StatefulWidget {
 class _DriverParcelConfirmationScreenState
     extends State<DriverParcelConfirmationScreen> {
   final ParcelService _parcelService = ParcelService();
+  final TextEditingController _deliveryNoteController = TextEditingController();
 
   ParcelDetail? _parcelDetail;
   bool _isLoading = true;
@@ -45,6 +47,12 @@ class _DriverParcelConfirmationScreenState
   void initState() {
     super.initState();
     _loadParcelDetail();
+  }
+
+  @override
+  void dispose() {
+    _deliveryNoteController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadParcelDetail() async {
@@ -144,6 +152,19 @@ class _DriverParcelConfirmationScreenState
         );
 
         if (!success) throw Exception(AppLocalizations.of(context)!.parcelConfirmUpdateFailed);
+
+        // บันทึกหมายเหตุการส่ง (ถ้ามี)
+        final note = _deliveryNoteController.text.trim();
+        if (note.isNotEmpty) {
+          try {
+            await SupabaseService.client
+                .from('bookings')
+                .update({'notes': note})
+                .eq('id', widget.bookingId);
+          } catch (e) {
+            debugLog('⚠️ Failed to save delivery note: $e');
+          }
+        }
 
         if (mounted) {
           _showSuccessDialog(
@@ -268,6 +289,8 @@ class _DriverParcelConfirmationScreenState
                   // ถ่ายรูปลายเซ็น (เฉพาะตอนส่ง)
                   if (!isPickup) ...[
                     _buildSignaturePhotoSection(),
+                    const SizedBox(height: 20),
+                    _buildDeliveryNoteSection(),
                     const SizedBox(height: 20),
                   ],
 
@@ -482,6 +505,38 @@ class _DriverParcelConfirmationScreenState
                       style: TextStyle(color: Colors.grey[500], fontSize: 14)),
                 ],
               ),
+      ),
+    );
+  }
+
+  Widget _buildDeliveryNoteSection() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('หมายเหตุการส่ง',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Text('(ถ้ามี) เช่น ไม่มีคนรับ, ฝากไว้หน้าบ้าน',
+                style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _deliveryNoteController,
+              maxLines: 3,
+              textInputAction: TextInputAction.done,
+              decoration: InputDecoration(
+                hintText: 'หมายเหตุการส่ง (ถ้ามี)',
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                contentPadding: const EdgeInsets.all(12),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

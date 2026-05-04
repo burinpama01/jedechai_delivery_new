@@ -77,6 +77,9 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   String _merchantName = '';
   String _merchantPhone = '';
 
+  // ETA to next destination (minutes)
+  int? _etaMinutes;
+
   // Animation
   late AnimationController _pulseController;
   // ignore: unused_field
@@ -381,6 +384,9 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         setState(() {
           _isLoading = false;
         });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        );
       }
     }
   }
@@ -1223,6 +1229,16 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         final points = _polylinePoints.decodePolyline(encodedPolyline);
         debugLog('✅ Decoded ${points.length} points');
 
+        // Extract ETA from Directions API response
+        final legs = route['legs'] as List?;
+        if (legs != null && legs.isNotEmpty) {
+          final durationSec =
+              ((legs[0] as Map)['duration']?['value']) as int?;
+          if (durationSec != null && mounted) {
+            setState(() => _etaMinutes = (durationSec / 60).round());
+          }
+        }
+
         if (mounted) {
           setState(() {
             _polylines.clear();
@@ -1363,6 +1379,16 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         }
 
         final points = _polylinePoints.decodePolyline(encodedPolyline);
+
+        // Extract ETA from Directions API response
+        final destLegs = route['legs'] as List?;
+        if (destLegs != null && destLegs.isNotEmpty) {
+          final durationSec =
+              ((destLegs[0] as Map)['duration']?['value']) as int?;
+          if (durationSec != null && mounted) {
+            setState(() => _etaMinutes = (durationSec / 60).round());
+          }
+        }
 
         setState(() {
           _polylines.clear();
@@ -1679,13 +1705,14 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
       debugLog('📤 Update data: $updateData');
 
-      debugLog('🔍 DEBUG: About to call BookingService.updateBookingStatus');
-      debugLog(
-          '   └─ This should trigger commission deduction for completed jobs');
-
-      // Use BookingService to ensure commission deduction works
+      // Use BookingService to update status
       final bookingService = BookingService();
-      await bookingService.updateBookingStatus(widget.bookingId, newStatus);
+      if (newStatus == 'completed') {
+        // Atomic: deducts commission and marks completed in one Postgres transaction
+        await bookingService.completeBooking(widget.bookingId);
+      } else {
+        await bookingService.updateBookingStatus(widget.bookingId, newStatus);
+      }
 
       // Save trip tracking data when completing
       if (newStatus == 'completed') {
@@ -2412,6 +2439,89 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     }
   }
 
+  /// Step progress bar แสดงขั้นตอนปัจจุบันของการส่ง
+  Widget _buildStepProgressBar() {
+    final status = _booking?.status ?? '';
+    final serviceType = _booking?.serviceType ?? 'ride';
+    final colorScheme = Theme.of(context).colorScheme;
+
+    final steps = serviceType == 'food'
+        ? ['รับงาน', 'มาถึงร้าน', 'รับอาหาร', 'ส่งแล้ว']
+        : ['รับงาน', 'มาถึงจุดรับ', 'กำลังส่ง', 'เสร็จสิ้น'];
+
+    int currentStep = 0;
+    if (['accepted', 'driver_accepted'].contains(status)) {
+      currentStep = 0;
+    } else if (['arrived_at_merchant', 'arrived'].contains(status)) {
+      currentStep = 1;
+    } else if (['picking_up_order', 'in_transit', 'ready_for_pickup']
+        .contains(status)) {
+      currentStep = 2;
+    } else if (status == 'completed') {
+      currentStep = 3;
+    }
+
+    return Row(
+      children: List.generate(steps.length * 2 - 1, (i) {
+        if (i.isOdd) {
+          final lineIndex = i ~/ 2;
+          final active = lineIndex < currentStep;
+          return Expanded(
+            child: Container(
+              height: 2,
+              color: active
+                  ? AppTheme.accentBlue
+                  : colorScheme.outlineVariant,
+            ),
+          );
+        } else {
+          final stepIndex = i ~/ 2;
+          final active = stepIndex <= currentStep;
+          final isCurrent = stepIndex == currentStep;
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: active
+                      ? AppTheme.accentBlue
+                      : colorScheme.surfaceContainerHighest,
+                  shape: BoxShape.circle,
+                  border: isCurrent
+                      ? Border.all(
+                          color: AppTheme.accentBlue, width: 2)
+                      : null,
+                ),
+                child: Icon(
+                  stepIndex < currentStep ? Icons.check : Icons.circle,
+                  color: active
+                      ? Colors.white
+                      : colorScheme.outlineVariant,
+                  size: 10,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                steps[stepIndex],
+                style: TextStyle(
+                  fontSize: 9,
+                  color: active
+                      ? AppTheme.accentBlue
+                      : colorScheme.onSurfaceVariant,
+                  fontWeight: isCurrent
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                ),
+              ),
+            ],
+          );
+        }
+      }),
+    );
+  }
+
   /// โทรหาลูกค้า
   Future<void> _callCustomer() async {
     if (_customerPhone.isEmpty ||
@@ -2755,6 +2865,17 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                             colorScheme.tertiary,
                           ),
                         ),
+                        if (_etaMinutes != null) ...[
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildFloatingInfoChip(
+                              Icons.access_time_rounded,
+                              'ETA',
+                              '$_etaMinutes นาที',
+                              Colors.orange.shade700,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -2829,6 +2950,11 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                           ],
                         ),
                         const SizedBox(height: 8),
+                        // ─── Step progress bar ───
+                        if (!_isInfoPanelCollapsed) ...[
+                          _buildStepProgressBar(),
+                          const SizedBox(height: 10),
+                        ],
                         // ─── แถบสถานะ + นำทาง + โทร ───
                         Row(
                           children: [

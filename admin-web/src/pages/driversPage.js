@@ -123,6 +123,19 @@ export async function renderDriversPage(el, ctx) {
   globalThis.openDriverWalletAdjust = openDriverWalletAdjust;
 }
 
+function renderServiceTypeBadges(acceptedTypes) {
+  const serviceLabels = {
+    food: '🍔 อาหาร',
+    ride: '🚗 เรียกรถ',
+    parcel: '📦 พัสดุ',
+  };
+  const types = acceptedTypes ?? ['food', 'ride', 'parcel'];
+  if (!types.length) return '';
+  return types
+    .map((t) => `<span class="badge-service-type badge-${t}">${serviceLabels[t] ?? t}</span>`)
+    .join('');
+}
+
 export function renderDriverRows(drivers, ctx) {
   _ctx = ctx || _ctx;
   const { escapeHtml, statusBadge, onlineBadge, fmtDate, truthyFlag } = _deps();
@@ -133,7 +146,10 @@ export function renderDriverRows(drivers, ctx) {
       const isOnline = typeof truthyFlag === 'function' ? truthyFlag(d.is_online) : !!d.is_online;
       return `
         <tr class="table-row border-b border-gray-50">
-          <td class="px-4 py-3 font-medium">${escapeHtml(d.full_name) || '-'}</td>
+          <td class="px-4 py-3">
+            <div class="font-medium">${escapeHtml(d.full_name) || '-'}</div>
+            <div class="mt-1">${renderServiceTypeBadges(d.accepted_service_types)}</div>
+          </td>
           <td class="px-4 py-3 text-xs text-gray-500">${escapeHtml(globalThis._emailMap?.[d.id]) || '-'}</td>
           <td class="px-4 py-3">${escapeHtml(d.phone_number) || '-'}</td>
           <td class="px-4 py-3">${escapeHtml(d.license_plate) || '-'}</td>

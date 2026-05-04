@@ -15,9 +15,9 @@ export async function pendingDispatch(orderId, excludeDriverId, ctx) {
   const { supabase, escapeHtml } = _deps();
 
   const [{ data: allDrivers }, { data: driverLocs }, { data: activeBookings }] = await Promise.all([
-    supabase.from('profiles').select('id, full_name, phone_number, license_plate, latitude, longitude').eq('role', 'driver').eq('approval_status', 'approved'),
+    supabase.from('profiles').select('id, full_name, phone_number, license_plate, latitude, longitude, is_online').eq('role', 'driver').eq('approval_status', 'approved'),
     supabase.from('driver_locations').select('driver_id, is_online, is_available, location_lat, location_lng'),
-    supabase.from('bookings').select('driver_id').in('status', ['driver_accepted','matched','preparing','arrived_at_merchant','ready_for_pickup','picking_up_order','in_transit']),
+    supabase.from('bookings').select('driver_id').in('status', ['driver_accepted','accepted','matched','preparing','arrived_at_merchant','ready_for_pickup','picking_up_order','in_transit']),
   ]);
 
   const locMap = {};
@@ -28,7 +28,9 @@ export async function pendingDispatch(orderId, excludeDriverId, ctx) {
   const onlineDrivers = (allDrivers || []).filter(d => {
     if (d.id === excludeDriverId) return false;
     const loc = locMap[d.id];
-    const isOnline = loc ? (typeof truthyFlag === 'function' ? truthyFlag(loc.is_online) : !!loc.is_online) : true;
+    const profileOnline = typeof truthyFlag === 'function' ? truthyFlag(d.is_online) : !!d.is_online;
+    const locOnline = loc ? (typeof truthyFlag === 'function' ? truthyFlag(loc.is_online) : !!loc.is_online) : false;
+    const isOnline = profileOnline || locOnline;
     return isOnline;
   });
 

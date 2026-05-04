@@ -36,7 +36,7 @@ export async function renderOrdersPage(el, ctx) {
         <input type="date" id="ordDateTo" value="${today.toISOString().split('T')[0]}" class="border border-gray-200 rounded-xl px-3.5 py-2 text-sm bg-gray-50/50 transition-all" />
         <select id="orderStatusFilter" onchange="filterOrders()" class="text-sm border border-gray-200 rounded-xl px-3.5 py-2 bg-gray-50/50 transition-all">
           <option value="">ทุกสถานะ</option>
-          <option value="pending">รอดำเนินการ</option><option value="preparing">กำลังเตรียม</option>
+          <option value="pending">รอดำเนินการ</option><option value="accepted">คนขับรับแล้ว</option><option value="preparing">กำลังเตรียม</option>
           <option value="in_transit">กำลังส่ง</option><option value="completed">เสร็จสิ้น</option>
           <option value="cancelled">ยกเลิก</option>
         </select>
@@ -138,8 +138,8 @@ export function renderOrderRows(orders) {
 
   return orders.map(o => {
     const dName = globalThis._orderDriverMap?.[o.driver_id] || (o.driver_id ? o.driver_id.substring(0, 8) : '-');
-    const canReassign = ['pending','preparing','driver_accepted','matched','pending_merchant','arrived_at_merchant','ready_for_pickup'].includes(o.status);
-    const canRebroadcast = ['pending','pending_merchant','driver_accepted','matched','preparing','arrived_at_merchant','ready_for_pickup'].includes(o.status);
+    const canReassign = ['pending','preparing','driver_accepted','accepted','matched','pending_merchant','arrived_at_merchant','ready_for_pickup'].includes(o.status);
+    const canRebroadcast = ['pending','pending_merchant','driver_accepted','accepted','matched','preparing','arrived_at_merchant','ready_for_pickup'].includes(o.status);
     const canAdminAccept = typeof canAdminMerchantAccept === 'function' ? canAdminMerchantAccept(o) : false;
     const canAdminReady = typeof canAdminMarkFoodReady === 'function' ? canAdminMarkFoodReady(o) : false;
     const canEditPickup = o.status !== 'completed' && o.status !== 'cancelled';

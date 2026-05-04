@@ -1356,4 +1356,11 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
             BoxShadow(
                 color: colorScheme.shadow.withValues(alpha: 0.12),
                 blurRadius: 8,
-                offset: const Offset(0, 2
+                offset: const Offset(0, 2)),
+          ],
+        ),
+        child: Icon(icon, size: 22, color: colorScheme.onSurface),
+      ),
+    );
+  }
+}

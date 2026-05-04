@@ -197,4 +197,15 @@ class TicketService {
         title: 'JDC: มี Ticket ใหม่',
         message: 'หัวข้อ: $subject\nหมวด: $category | ความสำคัญ: $priorityLabel',
         data: {
-          'ticket_id': ti
+          'ticket_id': ticketId,
+          'subject': subject,
+          'category': category,
+          'priority': priorityLabel,
+          if (bookingId != null && bookingId.isNotEmpty) 'booking_id': bookingId,
+        },
+      );
+    } catch (e) {
+      debugLog('❌ Error notifying admins: $e');
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
+import 'package:jedechai_delivery_new/theme/app_theme.dart';
 import 'dart:async';
 import 'package:geolocator/geolocator.dart';
 import '../../../common/services/services.dart';
@@ -9,6 +10,9 @@ import '../../../common/widgets/location_disclosure_dialog.dart';
 import '../../../common/services/driver_foreground_service.dart';
 import '../../customer/screens/auth/login_screen.dart';
 import 'driver_navigation_screen.dart';
+import 'driver_service_type_settings.dart';
+import 'driver_performance_screen.dart';
+import 'driver_shift_screen.dart';
 import 'profile/driver_profile_screen.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -23,7 +27,7 @@ class DriverDashboardScreen extends StatefulWidget {
 }
 
 class _DriverDashboardScreenState extends State<DriverDashboardScreen>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   final user = AuthService.currentUser;
   final ProfileService _profileService = ProfileService();
   // ignore: unused_field
@@ -37,11 +41,16 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   Timer? _autoRefreshTimer;
   List<Booking> _previousJobs = []; // Track previous jobs for notification
 
+  // Animation for online indicator pulse
+  late final AnimationController _pulseController;
+  late final Animation<double> _pulseAnim;
+
   // Earnings tracking
   double _todayEarnings = 0.0;
   // ignore: unused_field
   double _totalEarnings = 0.0;
   int _todayCompletedJobs = 0;
+  Map<String, double> _earningsByType = {};
   bool _isAcceptingJob = false;
   Map<String, double> _couponDiscountByBookingId = {};
   Map<String, String?> _couponCodeByBookingId = {};
@@ -52,10 +61,20 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   double? _driverLng;
 
   bool _didCheckReferralWalletRewardDialog = false;
+  List<String>? _acceptedServiceTypes; // null = accept all service types
+
+  List<Booking> _scheduledJobs = [];
+  bool _scheduledJobsLoading = false;
 
   @override
   void initState() {
     super.initState();
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 900),
+      vsync: this,
+    )..repeat(reverse: true);
+    _pulseAnim = Tween<double>(begin: 0.4, end: 1.0).animate(
+        CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut));
     WidgetsBinding.instance.addObserver(this);
     DriverForegroundService.init();
     _loadDriverOrderDetectionRadius();
@@ -64,6 +83,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     _loadEarningsData(); // Load earnings data
     _setupJobStream();
     _startAutoRefresh();
+    _loadScheduledJobs();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAndShowReferralWalletRewardDialogIfAny();
@@ -156,6 +176,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
   @override
   void dispose() {
+    _pulseController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     _autoRefreshTimer?.cancel();
     _driverLocationSub?.cancel();
@@ -384,6 +405,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         });
       }
 
+      // Load accepted service types
+      final rawServiceTypes = _driverProfile?['accepted_service_types'];
+      if (rawServiceTypes is List) {
+        setState(() {
+          _acceptedServiceTypes = rawServiceTypes.cast<String>();
+        });
+      }
+
       await _updateOnlineStatusInDB(_isOnline);
       if (_isOnline) {
         await _startDriverLocationTracking();
@@ -473,16 +502,18 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       final todayStart = DateTime(now.year, now.month, now.day);
       final todayEnd = todayStart.add(const Duration(days: 1));
 
-      // Fetch completed bookings for earnings
+      // Fetch completed bookings for earnings (include service_type for breakdown)
       final response = await SupabaseService.client
           .from('bookings')
-          .select('driver_earnings, created_at')
+          .select('driver_earnings, created_at, service_type')
           .eq('driver_id', driverId)
           .eq('status', 'completed')
           .order('created_at', ascending: false);
 
       double todayEarnings = 0.0;
       double totalEarnings = 0.0;
+      int todayCompleted = 0;
+      final byType = <String, double>{};
 
       for (final booking in response) {
         final earnings =
@@ -493,15 +524,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
         if (createdAt.isAfter(todayStart) && createdAt.isBefore(todayEnd)) {
           todayEarnings += earnings;
-        }
-      }
-
-      // Count today's completed jobs
-      int todayCompleted = 0;
-      for (final booking in response) {
-        final createdAt = DateTime.parse(booking['created_at']);
-        if (createdAt.isAfter(todayStart) && createdAt.isBefore(todayEnd)) {
           todayCompleted++;
+          final type = booking['service_type'] as String? ?? 'other';
+          byType[type] = (byType[type] ?? 0) + earnings;
         }
       }
 
@@ -510,6 +535,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           _todayEarnings = todayEarnings;
           _totalEarnings = totalEarnings;
           _todayCompletedJobs = todayCompleted;
+          _earningsByType = byType;
         });
       }
 
@@ -529,17 +555,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         .from('bookings')
         .stream(primaryKey: ['id'])
         .inFilter('status', [
-          'pending', // Ride requests waiting for driver
-          'pending_merchant', // Food orders waiting for merchant
-          'preparing', // Food orders being prepared
-          'matched', // Food orders matched with driver
+          'pending', // Ride/parcel requests waiting for driver
           'ready_for_pickup', // Food orders ready for pickup
           'accepted', // Ride accepted by driver
           'driver_accepted', // Food accepted by driver
           'arrived', // Driver at pickup location
           'arrived_at_merchant', // Driver at merchant location
           'picking_up_order', // Driver picking up food
-          'in_transit' // Driver delivering
+          'in_transit', // Driver delivering
         ])
         .order('created_at', ascending: false)
         .execute()
@@ -591,10 +614,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
             final isPendingParcel = status == 'pending' &&
                 item['service_type'] == 'parcel' &&
                 itemDriverId == null;
-            final isAvailableFood = (status == 'pending_merchant' ||
-                    status == 'preparing' ||
-                    status == 'matched' ||
-                    status == 'ready_for_pickup') &&
+            final isAvailableFood = status == 'ready_for_pickup' &&
                 item['service_type'] == 'food' &&
                 itemDriverId == null;
             final isAssignedToThisDriver =
@@ -643,6 +663,52 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         });
 
     debugLog('✅ Job stream setup complete');
+  }
+
+  /// Load available jobs using get_nearby_bookings RPC (Postgres proximity filter)
+  Future<void> _loadAvailableJobsFromRpc() async {
+    if (_driverLat == null || _driverLng == null) return;
+    if (!_isOnline) return;
+
+    try {
+      final params = <String, dynamic>{
+        'p_driver_lat': _driverLat,
+        'p_driver_lng': _driverLng,
+        'p_radius_km': _driverOrderDetectionRadiusKm,
+      };
+      if (_acceptedServiceTypes != null) {
+        params['p_service_types'] = _acceptedServiceTypes;
+      }
+
+      final result = await SupabaseService.client.rpc(
+        'get_nearby_bookings',
+        params: params,
+      );
+
+      final rpcJobs = (result as List)
+          .map((item) => Booking.fromJson(item as Map<String, dynamic>))
+          .toList();
+
+      final driverId = AuthService.userId;
+      final assignedJobs =
+          _availableJobs.where((j) => j.driverId == driverId).toList();
+
+      final seenIds = <String>{};
+      final merged = <Booking>[];
+      for (final j in [...rpcJobs, ...assignedJobs]) {
+        if (seenIds.add(j.id)) merged.add(j);
+      }
+
+      if (mounted) {
+        setState(() => _availableJobs = merged);
+        _checkForNewJobs(merged);
+      }
+
+      debugLog(
+          '📡 RPC nearby jobs: ${rpcJobs.length}, assigned: ${assignedJobs.length}');
+    } catch (e) {
+      debugLog('❌ Error loading nearby jobs from RPC: $e');
+    }
   }
 
   /// Start auto-refresh timer (10 seconds) - fallback for when realtime stream disconnects
@@ -762,8 +828,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       // Refresh jobs stream
       _setupJobStream();
 
+      // Load nearby jobs via RPC (proximity filter)
+      await _loadAvailableJobsFromRpc();
+
       // Refresh earnings data
       await _loadEarningsData();
+
+      // Refresh scheduled jobs
+      await _loadScheduledJobs();
 
       // Small delay to show loading state
       await Future.delayed(const Duration(milliseconds: 500));
@@ -965,34 +1037,72 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: _isOnline
-                      ? Colors.green.withValues(alpha: 0.18)
+                      ? Colors.green.withValues(alpha: 0.22)
                       : Colors.white.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(
                     color: _isOnline
-                        ? Colors.greenAccent.withValues(alpha: 0.6)
+                        ? Colors.greenAccent.withValues(alpha: 0.8)
                         : Colors.white.withValues(alpha: 0.35),
+                    width: 1.5,
                   ),
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      _isOnline ? Icons.toggle_on : Icons.toggle_off,
-                      size: 18,
-                      color: Colors.white,
+                    AnimatedBuilder(
+                      animation: _pulseAnim,
+                      builder: (_, __) => Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color:
+                              _isOnline ? Colors.greenAccent : Colors.white54,
+                          shape: BoxShape.circle,
+                          boxShadow: _isOnline
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.greenAccent.withValues(
+                                        alpha: _pulseAnim.value * 0.8),
+                                    blurRadius: 4 + _pulseAnim.value * 6,
+                                    spreadRadius: _pulseAnim.value,
+                                  ),
+                                ]
+                              : null,
+                        ),
+                      ),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 6),
                     Text(
                       _isOnline ? AppLocalizations.of(context)!.driverDashOnline : AppLocalizations.of(context)!.driverDashOffline,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
+                        color: _isOnline ? Colors.greenAccent : Colors.white70,
                       ),
                     ),
                   ],
                 ),
               ),
             ),
+          ),
+          // Service type settings button
+          IconButton(
+            icon: const Icon(Icons.tune_rounded),
+            tooltip: 'ตั้งค่าประเภทงาน',
+            onPressed: () async {
+              final updated = await showModalBottomSheet<List<String>?>(
+                context: context,
+                isScrollControlled: true,
+                builder: (_) => DriverServiceTypeSettings(
+                  initialServiceTypes: _acceptedServiceTypes,
+                  driverId: AuthService.userId ?? '',
+                ),
+              );
+              if (updated != null) {
+                setState(() =>
+                    _acceptedServiceTypes = updated.isEmpty ? null : updated);
+              }
+            },
           ),
           // Profile button
           IconButton(
@@ -1037,6 +1147,42 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                     _buildCompactDriverHeader(),
                     const SizedBox(height: 14),
 
+                    // Quick action row: Performance & Shift
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => Navigator.push(context,
+                                MaterialPageRoute(builder: (_) => const DriverPerformanceScreen())),
+                            icon: const Icon(Icons.insights, size: 16),
+                            label: const Text('ผลงาน', style: TextStyle(fontSize: 12)),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppTheme.accentBlue,
+                              side: BorderSide(color: AppTheme.accentBlue.withValues(alpha: 0.4)),
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => Navigator.push(context,
+                                MaterialPageRoute(builder: (_) => const DriverShiftScreen())),
+                            icon: const Icon(Icons.schedule, size: 16),
+                            label: const Text('กะงาน', style: TextStyle(fontSize: 12)),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.green[700],
+                              side: BorderSide(color: Colors.green.withValues(alpha: 0.4)),
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+
                     // Job Feed Section
                     Row(
                       children: [
@@ -1069,6 +1215,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                     ),
                     const SizedBox(height: 16),
                     _buildJobFeed(),
+                    _buildScheduledJobsSection(),
                   ],
                 ),
               ),
@@ -1177,7 +1324,51 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               ),
             ],
           ),
+          if (_earningsByType.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _buildEarningsBreakdown(),
+          ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildEarningsBreakdown() {
+    const typeInfo = {
+      'food': ('🍔', 'อาหาร'),
+      'ride': ('🚗', 'เรียกรถ'),
+      'parcel': ('📦', 'พัสดุ'),
+    };
+    final entries = _earningsByType.entries
+        .where((e) => e.value > 0)
+        .toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: entries.map((e) {
+          final info = typeInfo[e.key] ?? ('•', e.key);
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(info.$1, style: const TextStyle(fontSize: 12)),
+              const SizedBox(width: 4),
+              Text(
+                '${info.$2} ฿${e.value.toStringAsFixed(0)}',
+                style: const TextStyle(
+                    fontSize: 11,
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w500),
+              ),
+            ],
+          );
+        }).toList(),
       ),
     );
   }
@@ -1323,10 +1514,12 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    isOfflineEmpty ? Icons.wifi_off : Icons.work_outline,
+                    isOfflineEmpty
+                        ? Icons.wifi_off
+                        : Icons.search_off_rounded,
                     size: 64,
                     color:
-                        isOfflineEmpty ? Colors.grey : const Color(0xFF3B82F6),
+                        isOfflineEmpty ? Colors.grey : Colors.grey.shade400,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -1342,12 +1535,23 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                 Text(
                   isOfflineEmpty
                       ? AppLocalizations.of(context)!.driverDashOfflineHint
-                      : AppLocalizations.of(context)!.driverDashNoJobsHint,
+                      : 'ไม่มีงานในรัศมี ${_driverOrderDetectionRadiusKm.toStringAsFixed(0)} กม.',
                   style: TextStyle(
                     fontSize: 14,
                     color: colorScheme.onSurfaceVariant,
                   ),
+                  textAlign: TextAlign.center,
                 ),
+                if (!isOfflineEmpty && !_isRefreshing) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    'ดึงหน้าจอลงเพื่อรีเฟรช',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey.shade400,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
                   onPressed: _isRefreshing ? null : _manualRefresh,
@@ -2261,6 +2465,181 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Future<void> _loadScheduledJobs() async {
+    if (!mounted) return;
+    setState(() => _scheduledJobsLoading = true);
+    try {
+      final result = await SupabaseService.client
+          .from('bookings')
+          .select()
+          .not('scheduled_at', 'is', null)
+          .eq('status', 'pending')
+          .isFilter('driver_id', null)
+          .order('scheduled_at', ascending: true);
+
+      final jobs = (result as List)
+          .map((item) => Booking.fromJson(item as Map<String, dynamic>))
+          .toList();
+
+      if (mounted) {
+        setState(() {
+          _scheduledJobs = jobs;
+          _scheduledJobsLoading = false;
+        });
+      }
+      debugLog('📅 Scheduled jobs loaded: ${jobs.length}');
+    } catch (e) {
+      debugLog('❌ Error loading scheduled jobs: $e');
+      if (mounted) {
+        setState(() => _scheduledJobsLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Widget _buildScheduledJobsSection() {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 20),
+        Row(
+          children: [
+            Text(
+              'งานนัดหมาย',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${_scheduledJobs.length}',
+                style: const TextStyle(fontSize: 12, color: Colors.orange, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (_scheduledJobsLoading)
+          const Center(child: Padding(
+            padding: EdgeInsets.all(24),
+            child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6))),
+          ))
+        else if (_scheduledJobs.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainer,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              children: [
+                Icon(Icons.event_available, size: 40, color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4)),
+                const SizedBox(height: 8),
+                Text('ไม่มีงานนัดหมาย', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+              ],
+            ),
+          )
+        else
+          ...List.generate(_scheduledJobs.length, (i) => _buildScheduledJobCard(_scheduledJobs[i])),
+      ],
+    );
+  }
+
+  Widget _buildScheduledJobCard(Booking job) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final serviceIcon = _getServiceIcon(job.serviceType);
+    final serviceColor = _getServiceColor(job.serviceType);
+    final scheduledAt = job.scheduledAt;
+
+    String scheduledText = '-';
+    if (scheduledAt != null) {
+      final local = scheduledAt.toLocal();
+      final thaiMonths = ['', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+      final day = local.day;
+      final month = thaiMonths[local.month];
+      final year = local.year + 543;
+      final hour = local.hour.toString().padLeft(2, '0');
+      final minute = local.minute.toString().padLeft(2, '0');
+      scheduledText = '$day $month $year $hour:$minute น.';
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.amber.shade300.withValues(alpha: 0.5)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 4, offset: const Offset(0, 2))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: serviceColor.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(serviceIcon, color: serviceColor, size: 18),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(_getServiceLabel(job.serviceType),
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
+                    Row(
+                      children: [
+                        const Icon(Icons.schedule, size: 12, color: Colors.orange),
+                        const SizedBox(width: 4),
+                        Text(scheduledText,
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.orange)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                '฿${job.price.toStringAsFixed(0)}',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green[700]),
+              ),
+            ],
+          ),
+          if (job.pickupAddress != null) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.location_on_outlined, size: 14, color: colorScheme.onSurfaceVariant),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    job.pickupAddress ?? '-',
+                    style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
     );
   }
 

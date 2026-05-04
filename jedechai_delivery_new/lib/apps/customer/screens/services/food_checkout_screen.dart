@@ -1321,4 +1321,18 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
           'delivery_fee': deliveryFee.toStringAsFixed(0),
           if (couponDiscount > 0) 'ส่วนลดคูปอง': '-฿${couponDiscount.toStringAsFixed(0)}',
           'total': totalAmount.toStringAsFixed(0),
-          'paym
+          'payment_method': paymentMethod,
+          'distance_km': distanceKm.toStringAsFixed(2),
+          'customer_address': customerAddress,
+          if (scheduledAt != null) 'scheduled_at': scheduledAt.toIso8601String(),
+        },
+      );
+
+      debugLog('✅ Food order completed: $bookingId');
+      return response;
+    } catch (e) {
+      debugLog('❌ Error creating food order: $e');
+      rethrow;
+    }
+  }
+}

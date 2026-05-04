@@ -5,6 +5,7 @@ import '../models/booking.dart';
 import 'auth_service.dart';
 import 'system_config_service.dart';
 import 'admin_line_notification_service.dart';
+import 'booking_service.dart';
 
 /// ParcelService - บริการจัดการพัสดุ
 ///
@@ -123,6 +124,10 @@ class ParcelService {
           if (scheduledAt != null) 'scheduled_at': scheduledAt.toIso8601String(),
         },
       );
+
+      debugLog('📤 Sending new parcel booking notification to drivers...');
+      await BookingService().notifyDriversAboutNewBooking(booking);
+
       return booking;
     } catch (e) {
       debugLog('❌ Error creating parcel booking: $e');
@@ -234,4 +239,15 @@ class ParcelService {
   double _getSizeMultiplier(String size) {
     switch (size) {
       case 'small':
-        return 1.
+        return 1.0;
+      case 'medium':
+        return 1.3;
+      case 'large':
+        return 1.6;
+      case 'xlarge':
+        return 2.0;
+      default:
+        return 1.0;
+    }
+  }
+}

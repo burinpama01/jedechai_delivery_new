@@ -607,7 +607,7 @@ function renderMiniBarChart(title, subtitle, rows, colorHex = '#6366f1') {
 function statusBadge(status) {
   const map = {
     pending: ['รอดำเนินการ','bg-amber-50 text-amber-600 border border-amber-200'], pending_merchant: ['รอร้านค้า','bg-amber-50 text-amber-600 border border-amber-200'],
-    preparing: ['กำลังเตรียม','bg-sky-50 text-sky-600 border border-sky-200'], driver_accepted: ['คนขับรับแล้ว','bg-sky-50 text-sky-600 border border-sky-200'],
+    preparing: ['กำลังเตรียม','bg-sky-50 text-sky-600 border border-sky-200'], driver_accepted: ['คนขับรับแล้ว','bg-sky-50 text-sky-600 border border-sky-200'], accepted: ['คนขับรับแล้ว','bg-sky-50 text-sky-600 border border-sky-200'],
     matched: ['จับคู่แล้ว','bg-indigo-50 text-indigo-600 border border-indigo-200'], arrived_at_merchant: ['ถึงร้านแล้ว','bg-violet-50 text-violet-600 border border-violet-200'],
     ready_for_pickup: ['พร้อมรับ','bg-teal-50 text-teal-600 border border-teal-200'], picking_up_order: ['กำลังรับ','bg-cyan-50 text-cyan-600 border border-cyan-200'],
     in_transit: ['กำลังส่ง','bg-orange-50 text-orange-600 border border-orange-200'], arrived: ['ถึงจุดรับ','bg-emerald-50 text-emerald-600 border border-emerald-200'],
@@ -1018,7 +1018,7 @@ async function renderOrders(el) {
         <input type="date" id="ordDateTo" value="${today.toISOString().split('T')[0]}" class="border border-gray-200 rounded-xl px-3.5 py-2 text-sm bg-gray-50/50 transition-all" />
         <select id="orderStatusFilter" onchange="filterOrders()" class="text-sm border border-gray-200 rounded-xl px-3.5 py-2 bg-gray-50/50 transition-all">
           <option value="">ทุกสถานะ</option>
-          <option value="pending">รอดำเนินการ</option><option value="preparing">กำลังเตรียม</option>
+          <option value="pending">รอดำเนินการ</option><option value="accepted">คนขับรับแล้ว</option><option value="preparing">กำลังเตรียม</option>
           <option value="in_transit">กำลังส่ง</option><option value="completed">เสร็จสิ้น</option>
           <option value="cancelled">ยกเลิก</option>
         </select>
@@ -1113,8 +1113,8 @@ function renderOrderRows(orders) {
   if (!orders.length) return '<tr><td colspan="9" class="px-4 py-8 text-center text-gray-400">ไม่มีข้อมูล</td></tr>';
   return orders.map(o => {
     const dName = window._orderDriverMap?.[o.driver_id] || (o.driver_id ? o.driver_id.substring(0,8) : '-');
-    const canReassign = ['pending','preparing','driver_accepted','matched','pending_merchant','arrived_at_merchant','ready_for_pickup'].includes(o.status);
-    const canRebroadcast = ['pending','pending_merchant','driver_accepted','matched','preparing','arrived_at_merchant','ready_for_pickup'].includes(o.status);
+    const canReassign = ['pending','preparing','driver_accepted','accepted','matched','pending_merchant','arrived_at_merchant','ready_for_pickup'].includes(o.status);
+    const canRebroadcast = ['pending','pending_merchant','driver_accepted','accepted','matched','preparing','arrived_at_merchant','ready_for_pickup'].includes(o.status);
     const canAdminMerchantAccept = _canAdminMerchantAccept(o);
     const canAdminMarkReady = _canAdminMarkFoodReady(o);
     let actions = '';
@@ -2187,6 +2187,7 @@ async function refreshMerchantOrderManager(merchantId) {
     'pending_merchant',
     'preparing',
     'driver_accepted',
+    'accepted',
     'arrived_at_merchant',
     'matched',
     'ready_for_pickup',
@@ -6544,7 +6545,7 @@ async function showReassignModal(orderId, currentDriverName) {
 
   let driverQuery = supabase
     .from('profiles')
-    .select('id, full_name, phone_number, license_plate')
+    .select('id, full_name, phone_number, license_plate, is_online')
     .eq('role', 'driver')
     .eq('approval_status', 'approved')
     .order('full_name');
@@ -6555,6 +6556,23 @@ async function showReassignModal(orderId, currentDriverName) {
 
   const { data: drivers } = await driverQuery;
   if (!drivers || !drivers.length) return alert('ไม่พบคนขับที่อนุมัติแล้ว');
+
+  const driverIds = drivers.map(d => d.id).filter(Boolean);
+  const { data: driverLocs } = driverIds.length
+    ? await supabase
+      .from('driver_locations')
+      .select('driver_id, is_online')
+      .in('driver_id', driverIds)
+    : { data: [] };
+  const locMap = {};
+  (driverLocs || []).forEach(d => { locMap[d.driver_id] = d; });
+  const onlineDrivers = drivers.filter(d => {
+    const loc = locMap[d.id];
+    const profileOnline = _truthyFlag(d.is_online);
+    const locOnline = loc ? _truthyFlag(loc.is_online) : false;
+    return profileOnline || locOnline;
+  });
+  if (!onlineDrivers.length) return alert('ไม่มีคนขับออนไลน์คนอื่น');
 
   const modal = document.createElement('div');
   modal.id = 'reassignModal';
@@ -6571,7 +6589,7 @@ async function showReassignModal(orderId, currentDriverName) {
       <div class="p-6 max-h-[60vh] overflow-y-auto">
         <input type="text" id="reassignSearch" placeholder="ค้นหาคนขับ..." class="w-full border rounded-lg px-3 py-2 text-sm mb-3" oninput="filterReassignDrivers()" />
         <div id="reassignDriverList">
-          ${drivers.map(d => `
+          ${onlineDrivers.map(d => `
             <div class="reassign-driver-item flex items-center justify-between p-3 rounded-lg hover:bg-blue-50 cursor-pointer border border-gray-100 mb-2 transition-colors" data-name="${(d.full_name||'').toLowerCase()}" onclick="reassignOrder('${orderId}','${d.id}','${(d.full_name||'').replace(/'/g,'')}')">
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center"><span class="material-icons-round text-blue-600 text-sm">person</span></div>
@@ -6652,7 +6670,7 @@ async function _refreshPendingOrders() {
   } catch (_) {}
 
   const pendingStatuses = ['pending','pending_merchant','matched'];
-  const stuckStatuses = ['driver_accepted','preparing','arrived_at_merchant','ready_for_pickup','picking_up_order'];
+  const stuckStatuses = ['driver_accepted','accepted','preparing','arrived_at_merchant','ready_for_pickup','picking_up_order'];
 
   const [{ data: pendingOrders }, { data: stuckOrders }] = await Promise.all([
     supabase.from('bookings').select('id, driver_id, merchant_id, customer_id, status, service_type, price, delivery_fee, pickup_address, destination_address, origin_lat, origin_lng, dest_lat, dest_lng, created_at').in('status', pendingStatuses).order('created_at', { ascending: true }),
@@ -6910,9 +6928,9 @@ async function pendingDispatch(orderId, excludeDriverId) {
 
   // Fetch drivers from profiles (same source as map page) + driver_locations + active bookings
   const [{ data: allDrivers }, { data: driverLocs }, { data: activeBookings }] = await Promise.all([
-    supabase.from('profiles').select('id, full_name, phone_number, license_plate, latitude, longitude').eq('role', 'driver').eq('approval_status', 'approved'),
+    supabase.from('profiles').select('id, full_name, phone_number, license_plate, latitude, longitude, is_online').eq('role', 'driver').eq('approval_status', 'approved'),
     supabase.from('driver_locations').select('driver_id, is_online, is_available, location_lat, location_lng'),
-    supabase.from('bookings').select('driver_id').in('status', ['driver_accepted','matched','preparing','arrived_at_merchant','ready_for_pickup','picking_up_order','in_transit']),
+    supabase.from('bookings').select('driver_id').in('status', ['driver_accepted','accepted','matched','preparing','arrived_at_merchant','ready_for_pickup','picking_up_order','in_transit']),
   ]);
 
   // Build driver_locations lookup
@@ -6923,7 +6941,7 @@ async function pendingDispatch(orderId, excludeDriverId) {
   const onlineDrivers = (allDrivers||[]).filter(d => {
     if (d.id === excludeDriverId) return false;
     const loc = locMap[d.id];
-    const isOnline = loc ? _truthyFlag(loc.is_online) : true; // same default as map page
+    const isOnline = _truthyFlag(d.is_online) || (loc ? _truthyFlag(loc.is_online) : false);
     return isOnline;
   });
 
@@ -7374,7 +7392,7 @@ function _pickBestDriverForAutoDispatch(order) {
   if (!drivers.length) return null;
 
   // Build busy order map per driver (pick the most relevant active order)
-  const activeStatuses = ['driver_accepted','matched','preparing','arrived_at_merchant','ready_for_pickup','picking_up_order','in_transit'];
+  const activeStatuses = ['driver_accepted','accepted','matched','preparing','arrived_at_merchant','ready_for_pickup','picking_up_order','in_transit'];
   const driverActiveOrders = {};
   activeOrders
     .filter(o => o.driver_id && activeStatuses.includes(o.status))
@@ -7546,7 +7564,7 @@ async function refreshMapData() {
     (driverLocs || []).forEach(d => { dLocMap[d.driver_id] = d; });
 
     // Fetch active orders with full details
-    const activeStatuses = ['pending','pending_merchant','preparing','driver_accepted','matched','arrived','arrived_at_merchant','ready_for_pickup','picking_up_order','in_transit'];
+    const activeStatuses = ['pending','pending_merchant','preparing','driver_accepted','accepted','matched','arrived','arrived_at_merchant','ready_for_pickup','picking_up_order','in_transit'];
     const { data: activeOrders } = await supabase.from('bookings').select('id, driver_id, merchant_id, customer_id, status, service_type, price, delivery_fee, origin_lat, origin_lng, dest_lat, dest_lng, pickup_address, destination_address, created_at').in('status', activeStatuses).order('created_at', { ascending: false });
 
     // Fetch driver names for orders
@@ -7706,7 +7724,7 @@ async function refreshMapData() {
       const dPos = driverPosMap[o.driver_id];
       if (!dPos) return;
 
-      const prePickupStatuses = ['driver_accepted','matched','preparing','arrived_at_merchant','ready_for_pickup'];
+      const prePickupStatuses = ['driver_accepted','accepted','matched','preparing','arrived_at_merchant','ready_for_pickup'];
       const inDeliveryStatuses = ['picking_up_order','in_transit'];
 
       if (prePickupStatuses.includes(o.status)) {
@@ -8612,6 +8630,7 @@ function getStatusStyle(status) {
     preparing: 'bg-sky-100 text-sky-800',
     matched: 'bg-orange-100 text-orange-800',
     driver_accepted: 'bg-blue-100 text-blue-800',
+    accepted: 'bg-blue-100 text-blue-800',
     arrived: 'bg-purple-100 text-purple-800',
     arrived_at_merchant: 'bg-indigo-100 text-indigo-800',
     ready_for_pickup: 'bg-cyan-100 text-cyan-800',
@@ -8630,6 +8649,7 @@ function getStatusText(status) {
     preparing: 'กำลังเตรียมอาหาร',
     matched: 'จับคู่แล้ว',
     driver_accepted: 'รับงานแล้ว',
+    accepted: 'รับงานแล้ว',
     arrived: 'ถึงจุดรับแล้ว',
     arrived_at_merchant: 'ถึงร้านแล้ว',
     ready_for_pickup: 'พร้อมรับสินค้า',
