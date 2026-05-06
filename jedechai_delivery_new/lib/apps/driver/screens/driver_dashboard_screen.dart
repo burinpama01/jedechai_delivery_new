@@ -8,6 +8,7 @@ import '../../../common/models/models.dart';
 import '../../../common/utils/order_code_formatter.dart';
 import '../../../common/widgets/location_disclosure_dialog.dart';
 import '../../../common/services/driver_foreground_service.dart';
+import '../../../common/utils/driver_job_visibility_policy.dart';
 import '../../customer/screens/auth/login_screen.dart';
 import 'driver_navigation_screen.dart';
 import 'driver_service_type_settings.dart';
@@ -40,6 +41,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   Stream<List<Booking>>? _jobsStream;
   Timer? _autoRefreshTimer;
   List<Booking> _previousJobs = []; // Track previous jobs for notification
+  final Set<String> _seenNotifiedJobIds = {};
 
   // Animation for online indicator pulse
   late final AnimationController _pulseController;
@@ -382,6 +384,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       debugLog(
         '📍 Driver live location synced: ${position.latitude}, ${position.longitude}',
       );
+      unawaited(_loadAvailableJobsFromRpc());
     } catch (e) {
       debugLog('❌ Failed syncing driver live location: $e');
     }
@@ -556,6 +559,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         .stream(primaryKey: ['id'])
         .inFilter('status', [
           'pending', // Ride/parcel requests waiting for driver
+          'pending_merchant', // Food waiting for merchant, hidden with reason
+          'preparing', // Food preparing, hidden with reason
+          'matched', // Food parallel flow, hidden until ready
           'ready_for_pickup', // Food orders ready for pickup
           'accepted', // Ride accepted by driver
           'driver_accepted', // Food accepted by driver
@@ -584,58 +590,33 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           debugLog('👤 Driver ID: $driverId, Vehicle: $myVehicleType');
 
           final availableJobs = data.where((item) {
-            // Include ride, food, and parcel services
-            final isValidService = item['service_type'] == 'food' ||
-                item['service_type'] == 'ride' ||
-                item['service_type'] == 'parcel';
+            final serviceType = item['service_type'] as String?;
             final status = item['status'] as String?;
             final itemDriverId = item['driver_id'] as String?;
-
-            // Exclude cancelled and completed bookings
-            if (status == 'cancelled' || status == 'completed') {
-              return false;
-            }
-
-            // Show jobs that are:
-            // 1. Available jobs (pending rides matching vehicle type, pending_merchant/preparing/matched/ready_for_pickup food without driver)
-            // 2. Jobs assigned to this driver (any active status)
-            // 3. Exclude cancelled and completed bookings
-            bool isPendingRide = status == 'pending' &&
-                item['service_type'] == 'ride' &&
-                itemDriverId == null;
-            // Filter ride jobs by vehicle type — only show rides matching this driver's vehicle
-            if (isPendingRide && myVehicleType.isNotEmpty) {
-              final jobVehicle =
-                  _normalizeVehicleType(item['vehicle_type'] as String?);
-              if (jobVehicle.isNotEmpty && jobVehicle != myVehicleType) {
-                isPendingRide = false;
-              }
-            }
-            final isPendingParcel = status == 'pending' &&
-                item['service_type'] == 'parcel' &&
-                itemDriverId == null;
-            final isAvailableFood = status == 'ready_for_pickup' &&
-                item['service_type'] == 'food' &&
-                itemDriverId == null;
             final isAssignedToThisDriver =
                 itemDriverId?.toString() == driverId?.toString();
-            final isUnassignedAvailableJob =
-                isPendingRide || isPendingParcel || isAvailableFood;
+            final locationReady = _driverLat != null && _driverLng != null;
             final isWithinRadius =
-                !isUnassignedAvailableJob || _isWithinDriverOrderRadius(item);
-
-            // When offline: only show jobs already assigned to this driver
-            // When online: show all available + assigned jobs
-            final shouldShow = isValidService &&
-                (_isOnline
-                    ? ((isUnassignedAvailableJob && isWithinRadius) ||
-                        isAssignedToThisDriver)
-                    : isAssignedToThisDriver);
+                isAssignedToThisDriver || _isWithinDriverOrderRadius(item);
+            final jobVehicle =
+                _normalizeVehicleType(item['vehicle_type'] as String?);
+            final visibility = DriverJobVisibilityPolicy.evaluate(
+              serviceType: serviceType,
+              status: status,
+              driverId: itemDriverId,
+              currentDriverId: driverId,
+              isOnline: _isOnline,
+              isWithinRadius: isWithinRadius,
+              acceptedServiceTypes: _acceptedServiceTypes,
+              locationReady: locationReady,
+              jobVehicleType: jobVehicle,
+              driverVehicleType: myVehicleType,
+            );
 
             debugLog(
-                '🔍 Job: ${item['id']} - Service: ${item['service_type']} - Status: $status - VehicleType: ${item['vehicle_type']} - ShouldShow: $shouldShow');
+                '🔍 Job: ${item['id']} - Service: $serviceType - Status: $status - VehicleType: ${item['vehicle_type']} - ShouldShow: ${visibility.visible} - HiddenReason: ${visibility.reason}');
 
-            return shouldShow;
+            return visibility.visible;
           }).toList();
 
           final jobs =
@@ -727,13 +708,16 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     if (_previousJobs.isEmpty) {
       // First time loading, set baseline
       _previousJobs = List.from(currentJobs);
+      _seenNotifiedJobIds.addAll(currentJobs.map((job) => job.id));
+      debugLog(
+          '🔔 Notification baseline set with ${currentJobs.length} visible job(s)');
       return;
     }
 
     // Find new jobs (jobs that weren't in previous list)
     final newJobs = currentJobs.where((currentJob) {
-      return !_previousJobs
-          .any((previousJob) => previousJob.id == currentJob.id);
+      return !_seenNotifiedJobIds.contains(currentJob.id) &&
+          !_previousJobs.any((previousJob) => previousJob.id == currentJob.id);
     }).toList();
 
     if (newJobs.isNotEmpty && mounted) {
@@ -745,6 +729,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
       // Update previous jobs list
       _previousJobs = List.from(currentJobs);
+      _seenNotifiedJobIds.addAll(newJobs.map((job) => job.id));
     }
   }
 
@@ -1482,11 +1467,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           );
         }
 
-        // Use _availableJobs if available (from manual refresh), otherwise use stream data
-        final jobs =
-            _availableJobs.isNotEmpty ? _availableJobs : (snapshot.data ?? []);
+        // Prefer fresh stream data when available; RPC/manual refresh keeps
+        // _availableJobs populated while the stream is connecting.
+        final jobs = snapshot.hasData ? (snapshot.data ?? []) : _availableJobs;
         debugLog(
-            '📊 Jobs count in UI: ${jobs.length} (from ${_availableJobs.isNotEmpty ? "manual refresh" : "stream"})');
+            '📊 Jobs count in UI: ${jobs.length} (from ${snapshot.hasData ? "stream" : "manual/RPC cache"})');
 
         if (jobs.isEmpty) {
           final isOfflineEmpty = !_isOnline;

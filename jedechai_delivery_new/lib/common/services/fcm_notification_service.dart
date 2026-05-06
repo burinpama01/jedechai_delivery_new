@@ -19,12 +19,23 @@ const String _kMerchantNewOrderChannelName = 'Merchant New Orders';
 const String _kMerchantNewOrderChannelDescription =
     'High priority alerts for new merchant food orders';
 
+const String _kDriverJobChannelId = 'driver_job_available_channel_v1';
+const String _kDriverJobChannelName = 'Driver Jobs';
+const String _kDriverJobChannelDescription =
+    'High priority alerts for jobs available to drivers';
+
 const int _kAndroidNotificationFlagInsistent = 4;
 
 bool _isMerchantNewOrderMessage(RemoteMessage message) {
   final rawType = message.data['type'] ?? message.data['notification_type'];
   final type = rawType?.toString().trim();
   return type == 'merchant_new_order';
+}
+
+bool _isDriverJobAvailableMessage(RemoteMessage message) {
+  final rawType = message.data['type'] ?? message.data['notification_type'];
+  final type = rawType?.toString().trim();
+  return type == 'driver_job_available';
 }
 
 String _resolveNotificationTitle(RemoteMessage message) {
@@ -74,6 +85,14 @@ Future<void> _ensureAndroidNotificationChannels(
     sound: RawResourceAndroidNotificationSound('alert_new_order'),
   );
 
+  const driverJobChannel = AndroidNotificationChannel(
+    _kDriverJobChannelId,
+    _kDriverJobChannelName,
+    description: _kDriverJobChannelDescription,
+    importance: Importance.max,
+    playSound: true,
+  );
+
   final androidLocalNotifications =
       localNotifications.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>();
@@ -81,10 +100,12 @@ Future<void> _ensureAndroidNotificationChannels(
   await androidLocalNotifications?.createNotificationChannel(defaultChannel);
   await androidLocalNotifications
       ?.createNotificationChannel(merchantNewOrderChannel);
+  await androidLocalNotifications?.createNotificationChannel(driverJobChannel);
 }
 
 AndroidNotificationDetails _buildAndroidNotificationDetails({
   required bool isMerchantNewOrder,
+  required bool isDriverJobAvailable,
   required bool insistent,
 }) {
   if (isMerchantNewOrder) {
@@ -110,6 +131,19 @@ AndroidNotificationDetails _buildAndroidNotificationDetails({
     );
   }
 
+  if (isDriverJobAvailable) {
+    return const AndroidNotificationDetails(
+      _kDriverJobChannelId,
+      _kDriverJobChannelName,
+      channelDescription: _kDriverJobChannelDescription,
+      importance: Importance.max,
+      priority: Priority.max,
+      playSound: true,
+      category: AndroidNotificationCategory.status,
+      showWhen: false,
+    );
+  }
+
   return const AndroidNotificationDetails(
     _kDefaultChannelId,
     _kDefaultChannelName,
@@ -122,14 +156,16 @@ AndroidNotificationDetails _buildAndroidNotificationDetails({
 
 DarwinNotificationDetails _buildDarwinNotificationDetails({
   required bool isMerchantNewOrder,
+  required bool isDriverJobAvailable,
 }) {
   return DarwinNotificationDetails(
     presentAlert: true,
     presentBadge: true,
     presentSound: true,
     sound: isMerchantNewOrder ? 'AlertNewOrder.caf' : null,
-    interruptionLevel:
-        isMerchantNewOrder ? InterruptionLevel.timeSensitive : null,
+    interruptionLevel: (isMerchantNewOrder || isDriverJobAvailable)
+        ? InterruptionLevel.timeSensitive
+        : null,
   );
 }
 
@@ -151,10 +187,12 @@ Future<void> _showBackgroundLocalNotification(RemoteMessage message) async {
   await _ensureAndroidNotificationChannels(localNotifications);
 
   final isMerchantNewOrder = _isMerchantNewOrderMessage(message);
+  final isDriverJobAvailable = _isDriverJobAvailableMessage(message);
   final notificationId = message.messageId?.hashCode ??
       DateTime.now().millisecondsSinceEpoch.remainder(1 << 31);
   final darwinDetails = _buildDarwinNotificationDetails(
     isMerchantNewOrder: isMerchantNewOrder,
+    isDriverJobAvailable: isDriverJobAvailable,
   );
 
   await localNotifications.show(
@@ -164,6 +202,7 @@ Future<void> _showBackgroundLocalNotification(RemoteMessage message) async {
     NotificationDetails(
       android: _buildAndroidNotificationDetails(
         isMerchantNewOrder: isMerchantNewOrder,
+        isDriverJobAvailable: isDriverJobAvailable,
         insistent: isMerchantNewOrder,
       ),
       iOS: darwinDetails,
@@ -199,7 +238,8 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   }
 
   final isMerchantNewOrder = _isMerchantNewOrderMessage(message);
-  if (message.notification == null || isMerchantNewOrder) {
+  final isDriverJobAvailable = _isDriverJobAvailableMessage(message);
+  if (message.notification == null || isMerchantNewOrder || isDriverJobAvailable) {
     try {
       await _showBackgroundLocalNotification(message);
       debugLog('✅ Background local notification displayed');
@@ -617,12 +657,15 @@ class FCMNotificationService {
 
     try {
       final isMerchantNewOrder = _isMerchantNewOrderMessage(message);
+      final isDriverJobAvailable = _isDriverJobAvailableMessage(message);
       final androidDetails = _buildAndroidNotificationDetails(
         isMerchantNewOrder: isMerchantNewOrder,
+        isDriverJobAvailable: isDriverJobAvailable,
         insistent: false,
       );
       final darwinDetails = _buildDarwinNotificationDetails(
         isMerchantNewOrder: isMerchantNewOrder,
+        isDriverJobAvailable: isDriverJobAvailable,
       );
 
       final notificationDetails = NotificationDetails(

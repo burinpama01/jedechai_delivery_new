@@ -20,6 +20,17 @@ function _deps() {
   };
 }
 
+function _escapeHtml(value) {
+  const escapeHtml = _ctx?.escapeHtml || globalThis.escapeHtml;
+  if (typeof escapeHtml === 'function') return escapeHtml(value);
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export async function renderOrdersPage(el, ctx) {
   _ctx = ctx || null;
 
@@ -36,7 +47,7 @@ export async function renderOrdersPage(el, ctx) {
         <input type="date" id="ordDateTo" value="${today.toISOString().split('T')[0]}" class="border border-gray-200 rounded-xl px-3.5 py-2 text-sm bg-gray-50/50 transition-all" />
         <select id="orderStatusFilter" onchange="filterOrders()" class="text-sm border border-gray-200 rounded-xl px-3.5 py-2 bg-gray-50/50 transition-all">
           <option value="">ทุกสถานะ</option>
-          <option value="pending">รอดำเนินการ</option><option value="accepted">คนขับรับแล้ว</option><option value="preparing">กำลังเตรียม</option>
+          <option value="pending">รอดำเนินการ</option><option value="pending_merchant">รอร้านค้า</option><option value="accepted">คนขับรับแล้ว</option><option value="preparing">กำลังเตรียม</option>
           <option value="in_transit">กำลังส่ง</option><option value="completed">เสร็จสิ้น</option>
           <option value="cancelled">ยกเลิก</option>
         </select>
@@ -88,10 +99,40 @@ export async function loadOrders() {
   const typeChartRows = Object.keys(typeCounts).map((k) => ({ label: k, value: typeCounts[k], displayValue: fmt(typeCounts[k]) }));
 
   const driverIds = [...new Set((orders || []).map(o => o.driver_id).filter(Boolean))];
+  const customerIds = [...new Set((orders || []).map(o => o.customer_id).filter(Boolean))];
+  const merchantIds = [...new Set((orders || []).map(o => o.merchant_id).filter(Boolean))];
   globalThis._orderDriverMap = {};
+  globalThis._orderCustomerMap = {};
+  globalThis._orderMerchantMap = {};
+  globalThis._orderItemCountMap = {};
   if (driverIds.length) {
     const { data: dProfiles } = await supabase.from('profiles').select('id, full_name').in('id', driverIds);
     (dProfiles || []).forEach(p => { globalThis._orderDriverMap[p.id] = p.full_name || p.id.substring(0, 8); });
+  }
+  if (customerIds.length) {
+    const { data: cProfiles } = await supabase.from('profiles').select('id, full_name, phone_number').in('id', customerIds);
+    (cProfiles || []).forEach(p => {
+      globalThis._orderCustomerMap[p.id] = {
+        name: p.full_name || p.id.substring(0, 8),
+        phone: p.phone_number || '',
+      };
+    });
+  }
+  if (merchantIds.length) {
+    const { data: mProfiles } = await supabase.from('profiles').select('id, full_name, shop_name, phone_number').in('id', merchantIds);
+    (mProfiles || []).forEach(p => {
+      globalThis._orderMerchantMap[p.id] = {
+        name: p.shop_name || p.full_name || p.id.substring(0, 8),
+        phone: p.phone_number || '',
+      };
+    });
+  }
+  const foodOrderIds = (orders || []).filter(o => o.service_type === 'food').map(o => o.id);
+  if (foodOrderIds.length) {
+    const { data: itemRows } = await supabase.from('booking_items').select('booking_id').in('booking_id', foodOrderIds);
+    (itemRows || []).forEach(row => {
+      globalThis._orderItemCountMap[row.booking_id] = (globalThis._orderItemCountMap[row.booking_id] || 0) + 1;
+    });
   }
 
   oc.innerHTML = `
@@ -109,6 +150,8 @@ export async function loadOrders() {
             <thead><tr class="bg-gray-50/80">
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">ID</th>
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">ประเภท</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">ลูกค้า</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">ร้าน/รายการ</th>
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">คนขับ</th>
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">จุดรับ</th>
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">จุดส่ง</th>
@@ -134,10 +177,13 @@ export function renderOrderRows(orders) {
   const canAdminMerchantAccept = globalThis._canAdminMerchantAccept;
   const canAdminMarkFoodReady = globalThis._canAdminMarkFoodReady;
 
-  if (!orders.length) return '<tr><td colspan="9" class="px-4 py-8 text-center text-gray-400">ไม่มีข้อมูล</td></tr>';
+  if (!orders.length) return '<tr><td colspan="11" class="px-4 py-8 text-center text-gray-400">ไม่มีข้อมูล</td></tr>';
 
   return orders.map(o => {
     const dName = globalThis._orderDriverMap?.[o.driver_id] || (o.driver_id ? o.driver_id.substring(0, 8) : '-');
+    const customer = globalThis._orderCustomerMap?.[o.customer_id];
+    const merchant = globalThis._orderMerchantMap?.[o.merchant_id];
+    const itemCount = globalThis._orderItemCountMap?.[o.id] || 0;
     const canReassign = ['pending','preparing','driver_accepted','accepted','matched','pending_merchant','arrived_at_merchant','ready_for_pickup'].includes(o.status);
     const canRebroadcast = ['pending','pending_merchant','driver_accepted','accepted','matched','preparing','arrived_at_merchant','ready_for_pickup'].includes(o.status);
     const canAdminAccept = typeof canAdminMerchantAccept === 'function' ? canAdminMerchantAccept(o) : false;
@@ -145,7 +191,7 @@ export function renderOrderRows(orders) {
     const canEditPickup = o.status !== 'completed' && o.status !== 'cancelled';
     const totalAmount = Number(o.price || 0) + Number(o.delivery_fee || 0);
 
-    let actions = '';
+    let actions = `<button onclick=\"showOrderDetail('${o.id}')\" class=\"px-2 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-200 mr-1\">รายละเอียด</button>`;
     if (canReassign || canRebroadcast || canAdminAccept || canAdminReady || canEditPickup) {
       if (canEditPickup) actions += `<button onclick=\"showEditPickupLocationModal('${o.id}')\" class=\"px-2 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-200 mr-1\">แก้พิกัด</button>`;
       if (canRebroadcast) actions += `<button onclick=\"rebroadcastOrder('${o.id}','${o.service_type}')\" class=\"px-2 py-1 bg-purple-100 text-purple-700 rounded-lg text-xs font-medium hover:bg-purple-200 mr-1\" title=\"โยนออเดอร์ใหม่ให้คนขับทุกคนเห็น\">🔄 โยนใหม่</button>`;
@@ -156,15 +202,21 @@ export function renderOrderRows(orders) {
         actions += `<button onclick=\"forceCancelOrder('${o.id}','${o.customer_id || ''}',${Math.round(o.price || 0)})\" class=\"px-2 py-1 bg-red-100 text-red-700 rounded-lg text-xs font-medium hover:bg-red-200\">ยกเลิก</button>`;
       }
     } else if (o.status !== 'completed' && o.status !== 'cancelled') {
-      actions = `<button onclick=\"forceCancelOrder('${o.id}','${o.customer_id || ''}',${Math.round(o.price || 0)})\" class=\"px-2 py-1 bg-red-100 text-red-700 rounded-lg text-xs font-medium hover:bg-red-200\">ยกเลิก</button>`;
-    } else {
-      actions = '<span class="text-gray-300 text-xs">-</span>';
+      actions += `<button onclick=\"forceCancelOrder('${o.id}','${o.customer_id || ''}',${Math.round(o.price || 0)})\" class=\"px-2 py-1 bg-red-100 text-red-700 rounded-lg text-xs font-medium hover:bg-red-200\">ยกเลิก</button>`;
     }
 
     return `
     <tr class="table-row border-b border-gray-50">
       <td class="px-4 py-3 font-mono text-xs text-gray-500">#${o.id.substring(0,8)}</td>
       <td class="px-4 py-3">${typeof serviceIcon === 'function' ? serviceIcon(o.service_type) : ''} ${o.service_type}</td>
+      <td class="px-4 py-3 text-xs">
+        <div class="font-semibold text-gray-700">${_escapeHtml(customer?.name || '-')}</div>
+        ${customer?.phone ? `<div class="text-[10px] text-gray-400">📞 ${_escapeHtml(customer.phone)}</div>` : ''}
+      </td>
+      <td class="px-4 py-3 text-xs">
+        <div class="font-semibold text-orange-600">${_escapeHtml(merchant?.name || (o.service_type === 'food' ? '-' : 'n/a'))}</div>
+        ${o.service_type === 'food' ? `<span class="inline-flex mt-1 px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-semibold">${itemCount} รายการ</span>` : ''}
+      </td>
       <td class="px-4 py-3 text-xs">${dName}</td>
       <td class="px-4 py-3 text-gray-600 max-w-[120px] truncate">${o.pickup_address || '-'}</td>
       <td class="px-4 py-3 text-gray-600 max-w-[120px] truncate">${o.destination_address || '-'}</td>
@@ -194,6 +246,10 @@ export function exportOrdersCsv() {
   const rows = (globalThis._filteredOrders || globalThis._allOrders || []).map((o) => ({
     เลขออเดอร์: `#${(o.id || '').substring(0, 8)}`,
     ประเภท: o.service_type || '-',
+    ลูกค้า: globalThis._orderCustomerMap?.[o.customer_id]?.name || '-',
+    เบอร์ลูกค้า: globalThis._orderCustomerMap?.[o.customer_id]?.phone || '',
+    ร้านค้า: globalThis._orderMerchantMap?.[o.merchant_id]?.name || '',
+    จำนวนรายการ: o.service_type === 'food' ? (globalThis._orderItemCountMap?.[o.id] || 0) : '',
     คนขับ: globalThis._orderDriverMap?.[o.driver_id] || (o.driver_id ? o.driver_id.substring(0, 8) : '-'),
     จุดรับ: o.pickup_address || '-',
     จุดส่ง: o.destination_address || '-',
@@ -203,7 +259,7 @@ export function exportOrdersCsv() {
     สถานะ: o.status || '-',
     วันที่: fmtDate(o.created_at),
   }));
-  exportRowsToCsv(reportFilename('orders_report', 'csv', from, to), ['เลขออเดอร์', 'ประเภท', 'คนขับ', 'จุดรับ', 'จุดส่ง', 'ยอดรวม', 'ค่าอาหาร', 'ค่าส่ง', 'สถานะ', 'วันที่'], rows);
+  exportRowsToCsv(reportFilename('orders_report', 'csv', from, to), ['เลขออเดอร์', 'ประเภท', 'ลูกค้า', 'เบอร์ลูกค้า', 'ร้านค้า', 'จำนวนรายการ', 'คนขับ', 'จุดรับ', 'จุดส่ง', 'ยอดรวม', 'ค่าอาหาร', 'ค่าส่ง', 'สถานะ', 'วันที่'], rows);
 }
 
 export function exportOrdersExcel() {
@@ -213,6 +269,10 @@ export function exportOrdersExcel() {
   const rows = (globalThis._filteredOrders || globalThis._allOrders || []).map((o) => ({
     เลขออเดอร์: `#${(o.id || '').substring(0, 8)}`,
     ประเภท: o.service_type || '-',
+    ลูกค้า: globalThis._orderCustomerMap?.[o.customer_id]?.name || '-',
+    เบอร์ลูกค้า: globalThis._orderCustomerMap?.[o.customer_id]?.phone || '',
+    ร้านค้า: globalThis._orderMerchantMap?.[o.merchant_id]?.name || '',
+    จำนวนรายการ: o.service_type === 'food' ? (globalThis._orderItemCountMap?.[o.id] || 0) : '',
     คนขับ: globalThis._orderDriverMap?.[o.driver_id] || (o.driver_id ? o.driver_id.substring(0, 8) : '-'),
     จุดรับ: o.pickup_address || '-',
     จุดส่ง: o.destination_address || '-',
@@ -222,15 +282,19 @@ export function exportOrdersExcel() {
     สถานะ: o.status || '-',
     วันที่: fmtDate(o.created_at),
   }));
-  exportRowsToExcel(reportFilename('orders_report', 'xls', from, to), ['เลขออเดอร์', 'ประเภท', 'คนขับ', 'จุดรับ', 'จุดส่ง', 'ยอดรวม', 'ค่าอาหาร', 'ค่าส่ง', 'สถานะ', 'วันที่'], rows);
+  exportRowsToExcel(reportFilename('orders_report', 'xls', from, to), ['เลขออเดอร์', 'ประเภท', 'ลูกค้า', 'เบอร์ลูกค้า', 'ร้านค้า', 'จำนวนรายการ', 'คนขับ', 'จุดรับ', 'จุดส่ง', 'ยอดรวม', 'ค่าอาหาร', 'ค่าส่ง', 'สถานะ', 'วันที่'], rows);
 }
 
 export function wireOrdersBridge() {
+  const bridge = {
+    renderOrdersPage,
+    loadOrders,
+    filterOrders,
+    renderOrderRows,
+    exportOrdersCsv,
+    exportOrdersExcel,
+  };
   globalThis.__adminWebBridge = globalThis.__adminWebBridge || {};
-  globalThis.__adminWebBridge.renderOrdersPage = renderOrdersPage;
-  globalThis.__adminWebBridge.loadOrders = loadOrders;
-  globalThis.__adminWebBridge.filterOrders = filterOrders;
-  globalThis.__adminWebBridge.renderOrderRows = renderOrderRows;
-  globalThis.__adminWebBridge.exportOrdersCsv = exportOrdersCsv;
-  globalThis.__adminWebBridge.exportOrdersExcel = exportOrdersExcel;
+  Object.assign(globalThis.__adminWebBridge, bridge);
+  Object.assign(globalThis, bridge);
 }

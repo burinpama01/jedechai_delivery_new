@@ -660,6 +660,69 @@ class BookingService {
     }
   }
 
+  Future<void> updateBookingStatusGuarded(
+    String bookingId,
+    String newStatus, {
+    required List<String> expectedStatuses,
+  }) async {
+    final currentUserId = AuthService.userId;
+    if (currentUserId == null) throw Exception('Not authenticated');
+
+    final booking = await getBookingById(bookingId);
+    if (booking == null) throw Exception('Booking not found');
+
+    final isCustomer = booking.customerId == currentUserId;
+    final isDriver = booking.driverId == currentUserId;
+    final isMerchant = booking.merchantId == currentUserId;
+    final isAdmin = AuthService.currentUserRole == 'admin';
+    if (!isCustomer && !isDriver && !isMerchant && !isAdmin) {
+      throw Exception('ไม่มีสิทธิ์เปลี่ยนสถานะออเดอร์นี้');
+    }
+
+    final response = await _client
+        .from('bookings')
+        .update({
+          'status': newStatus,
+          'updated_at': DateTime.now().toIso8601String(),
+        })
+        .eq('id', bookingId)
+        .inFilter('status', expectedStatuses)
+        .select('id');
+
+    if (response.isEmpty) {
+      throw Exception('สถานะออเดอร์เปลี่ยนแล้ว กรุณารีเฟรชหน้าจอ');
+    }
+  }
+
+  Future<void> markDriverArrivedAtMerchant(String bookingId) async {
+    final driverId = AuthService.userId;
+    if (driverId == null) throw Exception('Driver not authenticated');
+
+    final rpcResult = await _client.rpc(
+      'driver_arrived_at_merchant_guarded',
+      params: {
+        'p_booking_id': bookingId,
+        'p_driver_id': driverId,
+      },
+    );
+
+    if (rpcResult is Map && rpcResult['success'] != true) {
+      final error = rpcResult['error'] ?? 'unknown';
+      if (error == 'invalid_status') {
+        throw Exception('สถานะออเดอร์ไม่ถูกต้อง กรุณารีเฟรชหน้าจอ');
+      }
+      throw Exception('ไม่สามารถบันทึกว่าถึงร้านได้: $error');
+    }
+  }
+
+  Future<void> markFoodPickedUp(String bookingId) async {
+    await updateBookingStatusGuarded(
+      bookingId,
+      'picking_up_order',
+      expectedStatuses: const ['ready_for_pickup'],
+    );
+  }
+
   /// Atomically completes a booking: calculates commission, deducts wallet,
   /// and marks as completed inside a single Postgres transaction via RPC.
   ///
@@ -1038,6 +1101,9 @@ class BookingService {
     }
 
     // Apply additional updates (surcharge, etc.) if any
+    if (booking.serviceType == 'food' && expectedStatus == 'ready_for_pickup') {
+      updates['merchant_food_ready_at'] = DateTime.now().toIso8601String();
+    }
     if (updates.isNotEmpty) {
       await _client.from('bookings').update(updates).eq('id', bookingId);
     }

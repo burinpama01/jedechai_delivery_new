@@ -1,3 +1,5 @@
+import { renderAdminNote, renderOrderItemRows } from '../utils/orderItems.js';
+
 let _ctx = null;
 let _pendingRefreshTimer = null;
 let _pendingRealtimeChannel = null;
@@ -74,11 +76,11 @@ export async function refreshPendingOrders(ctx) {
 
   const [{ data: pendingOrders }, { data: stuckOrders }] = await Promise.all([
     supabase.from('bookings')
-      .select('id, driver_id, merchant_id, customer_id, status, service_type, price, delivery_fee, pickup_address, destination_address, origin_lat, origin_lng, dest_lat, dest_lng, created_at')
+      .select('id, driver_id, merchant_id, customer_id, status, service_type, price, delivery_fee, pickup_address, destination_address, origin_lat, origin_lng, dest_lat, dest_lng, admin_note, created_at')
       .in('status', pendingStatuses)
       .order('created_at', { ascending: true }),
     supabase.from('bookings')
-      .select('id, driver_id, merchant_id, customer_id, status, service_type, price, delivery_fee, pickup_address, destination_address, origin_lat, origin_lng, dest_lat, dest_lng, created_at')
+      .select('id, driver_id, merchant_id, customer_id, status, service_type, price, delivery_fee, pickup_address, destination_address, origin_lat, origin_lng, dest_lat, dest_lng, admin_note, created_at')
       .in('status', stuckStatuses)
       .order('created_at', { ascending: true }),
   ]);
@@ -100,6 +102,7 @@ export async function refreshPendingOrders(ctx) {
 
   const noDriver = (pendingOrders || []).filter(o => !o.driver_id);
   const waitingMerchant = (pendingOrders || []).filter(o => o.status === 'pending_merchant');
+  const allPendingForFilter = [...(pendingOrders || []), ...(stuckOrders || [])];
   const stuckLong = (stuckOrders || []).filter(o => {
     const mins = (Date.now() - new Date(o.created_at).getTime()) / 60000;
     return mins > 30;
@@ -127,10 +130,35 @@ export async function refreshPendingOrders(ctx) {
       <th class="px-3 py-2.5 text-left text-xs font-semibold text-gray-400">ลูกค้า</th>
       <th class="px-3 py-2.5 text-left text-xs font-semibold text-gray-400">ที่อยู่รับ / ส่ง</th>
       <th class="px-3 py-2.5 text-left text-xs font-semibold text-gray-400">คนขับ</th>
+      <th class="px-3 py-2.5 text-left text-xs font-semibold text-gray-400">Driver visibility</th>
       <th class="px-3 py-2.5 text-left text-xs font-semibold text-gray-400">ร้านค้า</th>
       <th class="px-3 py-2.5 text-left text-xs font-semibold text-gray-400">รอมา</th>
       <th class="px-3 py-2.5 text-left text-xs font-semibold text-gray-400">จัดการ</th>
     </tr></thead>`;
+
+  function visibilityHint(o) {
+    if (o.driver_id) {
+      return '<span class="text-blue-600 font-semibold">assigned</span>';
+    }
+    if (o.status === 'pending' && (o.service_type === 'ride' || o.service_type === 'parcel')) {
+      return '<span class="text-green-600 font-semibold">พร้อมให้คนขับรับ</span>';
+    }
+    if (o.service_type === 'food') {
+      if (o.status === 'ready_for_pickup') {
+        return '<span class="text-green-600 font-semibold">พร้อมให้คนขับรับ</span>';
+      }
+      if (o.status === 'pending_merchant') {
+        return '<span class="text-amber-600 font-semibold">ยังไม่ขึ้น: รอร้านรับ</span>';
+      }
+      if (o.status === 'preparing') {
+        return '<span class="text-amber-600 font-semibold">ยังไม่ขึ้น: ร้านกำลังเตรียม</span>';
+      }
+      if (['matched', 'driver_accepted', 'arrived_at_merchant'].includes(o.status)) {
+        return '<span class="text-amber-600 font-semibold">ยังไม่ขึ้น: รอ flow ถึงจุดรับอาหาร</span>';
+      }
+    }
+    return '<span class="text-gray-500">ตรวจด้วย visibility debug RPC</span>';
+  }
 
   function poRow(o) {
     const mins = Math.floor((Date.now() - new Date(o.created_at).getTime()) / 60000);
@@ -166,6 +194,7 @@ export async function refreshPendingOrders(ctx) {
           <div class="truncate text-green-600" title="${dest}">🏁 ${dest}</div>
         </td>
         <td class="px-3 py-2.5 text-xs">${drvInfo ? `<span class="text-blue-600 font-medium">🏍 ${drvInfo.name}</span>` : '<span class="text-red-500 font-semibold">ไม่มี</span>'}</td>
+        <td class="px-3 py-2.5 text-[10px]">${visibilityHint(o)}</td>
         <td class="px-3 py-2.5 text-xs">${merInfo ? `<span class="text-orange-600">🏪 ${merInfo.name}</span>` : '-'}</td>
         <td class="px-3 py-2.5">
           <span class="inline-flex items-center gap-1 text-xs font-semibold ${isUrgent ? 'text-red-600' : 'text-gray-500'}">
@@ -175,7 +204,8 @@ export async function refreshPendingOrders(ctx) {
         </td>
         <td class="px-3 py-2.5 whitespace-nowrap">
           <div class="flex items-center gap-1">
-            <button onclick="showEditPickupLocationModal('${o.id}')" class="px-2 py-1 bg-blue-100 text-blue-600 rounded-lg text-[10px] font-medium hover:bg-blue-200 transition-colors">แก้พิกัด</button>
+            <button onclick="showPendingOrderDetail('${o.id}')" class="px-2 py-1 bg-indigo-100 text-indigo-600 rounded-lg text-[10px] font-medium hover:bg-indigo-200 transition-colors">Coordinate</button>
+            <button onclick="showEditPickupLocationModal('${o.id}')" class="px-2 py-1 bg-blue-100 text-blue-600 rounded-lg text-[10px] font-medium hover:bg-blue-200 transition-colors">พิกัด</button>
             ${canDispatch ? `<button onclick="pendingDispatch('${o.id}')" class="px-2 py-1 bg-blue-500 text-white rounded-lg text-[10px] font-medium hover:bg-blue-600 transition-colors">โยนงาน</button>` : (o.driver_id ? `<button onclick="pendingDispatch('${o.id}','${o.driver_id}')" class="px-2 py-1 bg-amber-500 text-white rounded-lg text-[10px] font-medium hover:bg-amber-600 transition-colors">ย้าย</button>` : '')}
             ${canAdminAccept ? `<button onclick="adminMerchantAcceptOrder('${o.id}')" class="px-2 py-1 bg-emerald-500 text-white rounded-lg text-[10px] font-medium hover:bg-emerald-600 transition-colors">รับแทนร้าน</button>` : ''}
             ${canAdminReady ? `<button onclick="adminMarkFoodReady('${o.id}')" class="px-2 py-1 bg-teal-500 text-white rounded-lg text-[10px] font-medium hover:bg-teal-600 transition-colors">อาหารพร้อม</button>` : ''}
@@ -200,7 +230,7 @@ export async function refreshPendingOrders(ctx) {
         <div class="overflow-x-auto">
           <table class="w-full text-sm">${thHead}
             <tbody class="divide-y divide-gray-100">
-              ${orders.length ? orders.map(poRow).join('') : `<tr><td colspan="10" class="px-4 py-8 text-center text-gray-400 text-sm">ไม่มีรายการ 🎉</td></tr>`}
+              ${orders.length ? orders.map(poRow).join('') : `<tr><td colspan="11" class="px-4 py-8 text-center text-gray-400 text-sm">ไม่มีรายการ 🎉</td></tr>`}
             </tbody>
           </table>
         </div>
@@ -210,8 +240,19 @@ export async function refreshPendingOrders(ctx) {
   const contentEl = document.getElementById('poContent');
   if (!contentEl) return;
 
+  function quickFilterButton(label, target) {
+    return `<button onclick="showPendingQuickFilter('${target}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">${label}</button>`;
+  }
+
   contentEl.innerHTML = `
     <div class="space-y-5">
+      <div class="glass-card px-4 py-3 flex flex-wrap items-center gap-2">
+        <span class="text-xs font-semibold text-gray-400 mr-1">Quick filter</span>
+        ${quickFilterButton('ทั้งหมด', 'all')}
+        ${quickFilterButton('รอคนขับ', 'driver')}
+        ${quickFilterButton('รอร้านค้า', 'merchant')}
+        ${quickFilterButton('ค้างนาน >30น.', 'stuck')}
+      </div>
       ${tableSection(
         'hourglass_empty', 'bg-red-50 text-red-500',
         'ออเดอร์รอคนขับ', `${noDriver.length} รายการ — ต้องการมอบหมายคนขับ`,
@@ -235,11 +276,45 @@ export async function refreshPendingOrders(ctx) {
           <p class=\"text-sm text-gray-400 mt-1\">ระบบจะอัปเดตอัตโนมัติทุก 15 วินาที</p>
         </div>` : ''}
     </div>`;
+
+  globalThis._pendingQuickFilterRows = {
+    all: allPendingForFilter,
+    driver: noDriver,
+    merchant: waitingMerchant,
+    stuck: stuckLong,
+  };
+  globalThis._pendingQuickFilterRender = (target) => {
+    const rows = globalThis._pendingQuickFilterRows?.[target] || [];
+    const titles = {
+      all: ['pending_actions', 'bg-blue-50 text-blue-500', 'ทั้งหมดที่ต้องติดตาม', `${rows.length} รายการ`],
+      driver: ['hourglass_empty', 'bg-red-50 text-red-500', 'ออเดอร์รอคนขับ', `${rows.length} รายการ`],
+      merchant: ['store', 'bg-amber-50 text-amber-500', 'รอร้านค้ายืนยัน', `${rows.length} รายการ`],
+      stuck: ['warning', 'bg-purple-50 text-purple-500', 'ออเดอร์ค้างนาน (>30 นาที)', `${rows.length} รายการ`],
+    };
+    const meta = titles[target] || titles.all;
+    contentEl.innerHTML = `<div class="space-y-5">
+      <div class="glass-card px-4 py-3 flex flex-wrap items-center gap-2">
+        <span class="text-xs font-semibold text-gray-400 mr-1">Quick filter</span>
+        ${quickFilterButton('ทั้งหมด', 'all')}
+        ${quickFilterButton('รอคนขับ', 'driver')}
+        ${quickFilterButton('รอร้านค้า', 'merchant')}
+        ${quickFilterButton('ค้างนาน >30น.', 'stuck')}
+      </div>
+      ${tableSection(meta[0], meta[1], meta[2], meta[3], rows)}
+    </div>`;
+  };
+}
+
+export function showPendingQuickFilter(target) {
+  if (typeof globalThis._pendingQuickFilterRender === 'function') {
+    globalThis._pendingQuickFilterRender(target || 'all');
+  }
 }
 
 export async function showPendingOrderDetail(orderId, ctx) {
   _ctx = ctx || _ctx;
   const { supabase, fmt, fmtDate, statusBadge, serviceIcon } = _deps();
+  const escapeHtml = _ctx?.escapeHtml || globalThis.escapeHtml;
 
   const { data: o } = await supabase.from('bookings').select('*').eq('id', orderId).single();
   if (!o) return alert('ไม่พบออเดอร์');
@@ -257,7 +332,7 @@ export async function showPendingOrderDetail(orderId, ctx) {
       itemsHtml = `
         <div class="mt-3 border-t border-gray-100 pt-3">
           <p class="text-xs font-semibold text-gray-500 mb-1.5">📋 รายการอาหาร</p>
-          ${items.map(it => `<div class=\"flex justify-between text-xs py-0.5\"><span>${it.name || it.menu_name || '-'} x${it.quantity || 1}</span><span class=\"text-gray-500\">฿${fmt(Math.round((it.price || 0) * (it.quantity || 1)))}</span></div>`).join('')}
+          ${renderOrderItemRows(items, fmt, escapeHtml)}
         </div>`;
     }
   }
@@ -265,6 +340,7 @@ export async function showPendingOrderDetail(orderId, ctx) {
   const canDispatchInDetail = !o.driver_id && (globalThis.MAP_DISPATCHABLE_STATUSES || []).includes(o.status);
   const canAdminAcceptInDetail = typeof globalThis._canAdminMerchantAccept === 'function' ? globalThis._canAdminMerchantAccept(o) : false;
   const canAdminReadyInDetail = typeof globalThis._canAdminMarkFoodReady === 'function' ? globalThis._canAdminMarkFoodReady(o) : false;
+  const canEditItemsInDetail = o.service_type === 'food' && ['pending_merchant', 'accepted', 'preparing'].includes(o.status);
 
   const modal = document.createElement('div');
   modal.id = 'poDetailModal';
@@ -303,8 +379,10 @@ export async function showPendingOrderDetail(orderId, ctx) {
           </div>` : ''}
         </div>
         ${itemsHtml}
+        ${renderAdminNote(o.admin_note, escapeHtml)}
         <div class="flex gap-2 pt-2 flex-wrap">
           <button onclick="showEditPickupLocationModal('${orderId}')" class="px-3 py-1.5 bg-blue-100 text-blue-600 rounded-lg text-xs font-semibold">แก้พิกัด Pickup</button>
+          ${canEditItemsInDetail ? `<button onclick=\"showEditOrderItemsModal('${orderId}')\" class=\"px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold\">แก้ไขรายการ</button>` : ''}
           ${canDispatchInDetail ? `<button onclick=\"pendingDispatch('${orderId}')\" class=\"px-3 py-1.5 bg-blue-500 text-white rounded-lg text-xs font-semibold\">โยนงาน</button>` : ''}
           ${canAdminAcceptInDetail ? `<button onclick=\"adminMerchantAcceptOrder('${orderId}')\" class=\"px-3 py-1.5 bg-emerald-500 text-white rounded-lg text-xs font-semibold\">รับแทนร้าน</button>` : ''}
           ${canAdminReadyInDetail ? `<button onclick=\"adminMarkFoodReady('${orderId}')\" class=\"px-3 py-1.5 bg-teal-500 text-white rounded-lg text-xs font-semibold\">อาหารพร้อม</button>` : ''}
@@ -317,9 +395,15 @@ export async function showPendingOrderDetail(orderId, ctx) {
 }
 
 export function wirePendingOrdersBridge() {
+  const bridge = {
+    renderPendingOrdersPage,
+    refreshPendingOrders,
+    showPendingOrderDetail,
+    showPendingQuickFilter,
+    disposePendingOrdersPage,
+  };
   globalThis.__adminWebBridge = globalThis.__adminWebBridge || {};
-  globalThis.__adminWebBridge.renderPendingOrdersPage = renderPendingOrdersPage;
-  globalThis.__adminWebBridge.refreshPendingOrders = refreshPendingOrders;
-  globalThis.__adminWebBridge.showPendingOrderDetail = showPendingOrderDetail;
-  globalThis.__adminWebBridge.disposePendingOrdersPage = disposePendingOrdersPage;
+  Object.assign(globalThis.__adminWebBridge, bridge);
+  Object.assign(globalThis, bridge);
+  globalThis._refreshPendingOrders = refreshPendingOrders;
 }

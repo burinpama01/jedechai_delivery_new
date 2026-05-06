@@ -233,6 +233,9 @@ serve(async (req) => {
       case "rebroadcast_order":
         result = await handleRebroadcastOrder(supabaseAdmin, body);
         break;
+      case "edit_order_items":
+        result = await handleEditOrderItems(supabaseAdmin, body);
+        break;
 
       // ─── Wallet ───
       case "wallet_adjust":
@@ -941,8 +944,8 @@ async function handleApproveAccountDeletion(supabase, body) {
   if (!id) return errorResponse("Missing 'id'");
   const nowIso = new Date().toISOString();
   const { error } = await supabase
-    .from("deletion_requests")
-    .update({ status: "approved", processed_at: nowIso, updated_at: nowIso })
+    .from("account_deletion_requests")
+    .update({ status: "approved", reviewed_at: nowIso })
     .eq("id", id);
   if (error) return errorResponse(error.message);
   return jsonResponse({ success: true });
@@ -953,8 +956,8 @@ async function handleRejectAccountDeletion(supabase, body) {
   if (!id) return errorResponse("Missing 'id'");
   const nowIso = new Date().toISOString();
   const { error } = await supabase
-    .from("deletion_requests")
-    .update({ status: "rejected", admin_note: reason || "", processed_at: nowIso, updated_at: nowIso })
+    .from("account_deletion_requests")
+    .update({ status: "rejected", rejection_reason: reason || "", reviewed_at: nowIso })
     .eq("id", id);
   if (error) return errorResponse(error.message);
   return jsonResponse({ success: true });
@@ -1247,6 +1250,131 @@ async function handleRebroadcastOrder(supabase, body) {
     .eq("id", order_id);
   if (error) return errorResponse(error.message);
   return jsonResponse({ success: true });
+}
+
+async function handleEditOrderItems(supabase, body) {
+  const { booking_id, new_items, admin_note } = body;
+  if (!booking_id) return errorResponse("Missing 'booking_id'");
+  if (!Array.isArray(new_items) || new_items.length === 0) {
+    return errorResponse("new_items must contain at least one item");
+  }
+
+  const { data: booking, error: bookingErr } = await supabase
+    .from("bookings")
+    .select("id, status, service_type, merchant_id, customer_id, payment_method, price")
+    .eq("id", booking_id)
+    .maybeSingle();
+  if (bookingErr) return errorResponse(bookingErr.message);
+  if (!booking) return errorResponse("Booking not found", 404);
+  if (booking.service_type !== "food") return errorResponse("Only food orders can edit items");
+  if (!["pending_merchant", "accepted", "preparing"].includes(booking.status)) {
+    return errorResponse("Order status cannot edit items");
+  }
+
+  const normalizedItems = new_items.map((item) => ({
+    booking_id,
+    menu_item_id: item.menu_item_id || null,
+    name: String(item.name || item.menu_name || "").trim(),
+    quantity: Math.max(1, Number.parseInt(item.quantity || 1, 10) || 1),
+    price: Number(item.price || 0) || 0,
+    selected_options: item.selected_options || [],
+    options: item.options || [],
+    note: String(item.note || "").trim() || null,
+  }));
+
+  if (normalizedItems.some((item) => !item.menu_item_id)) return errorResponse("menu_item_id is required");
+  if (normalizedItems.some((item) => !item.name)) return errorResponse("item name is required");
+  if (normalizedItems.some((item) => item.price < 0)) return errorResponse("item price is invalid");
+
+  const menuIds = [...new Set(normalizedItems.map((item) => item.menu_item_id))];
+  const { data: menuRows, error: menuErr } = await supabase
+    .from("menu_items")
+    .select("id, merchant_id")
+    .in("id", menuIds);
+  if (menuErr) return errorResponse(menuErr.message);
+  if ((menuRows || []).length !== menuIds.length) return errorResponse("Some menu items were not found");
+  if ((menuRows || []).some((item) => item.merchant_id !== booking.merchant_id)) {
+    return errorResponse("Menu item merchant mismatch");
+  }
+
+  const originalPrice = Number(booking.price || 0) || 0;
+  const newFoodTotal = normalizedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const priceDiff = Math.round(newFoodTotal - originalPrice);
+
+  if (String(booking.payment_method || "").toLowerCase() === "wallet" && priceDiff > 0) {
+    const { data: wallet, error: walletErr } = await supabase
+      .from("wallets")
+      .select("id, balance")
+      .eq("user_id", booking.customer_id)
+      .maybeSingle();
+    if (walletErr) return errorResponse(walletErr.message);
+    if (!wallet || Number(wallet.balance || 0) < priceDiff) return errorResponse("Insufficient wallet balance");
+  }
+
+  const { error: deleteErr } = await supabase
+    .from("booking_items")
+    .delete()
+    .eq("booking_id", booking_id);
+  if (deleteErr) return errorResponse(deleteErr.message);
+
+  const { error: insertErr } = await supabase.from("booking_items").insert(normalizedItems);
+  if (insertErr) return errorResponse(insertErr.message);
+
+  const { error: updateErr } = await supabase
+    .from("bookings")
+    .update({
+      price: newFoodTotal,
+      admin_note: String(admin_note || "").trim() || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", booking_id);
+  if (updateErr) return errorResponse(updateErr.message);
+
+  const paymentMethod = String(booking.payment_method || "").toLowerCase();
+  if (paymentMethod === "wallet" && priceDiff < 0) {
+    const { error: refundErr } = await supabase.rpc("wallet_topup", {
+      p_user_id: booking.customer_id,
+      p_amount: Math.abs(priceDiff),
+      p_note: "order_item_edit_refund",
+      p_ref_id: booking_id,
+    });
+    if (refundErr) return errorResponse(refundErr.message);
+  }
+  if (paymentMethod === "wallet" && priceDiff > 0) {
+    const { error: chargeErr } = await supabase.rpc("wallet_deduct", {
+      p_user_id: booking.customer_id,
+      p_amount: priceDiff,
+      p_note: "order_item_edit_charge",
+      p_ref_id: booking_id,
+    });
+    if (chargeErr) return errorResponse(chargeErr.message);
+  }
+
+  const notifications = [];
+  if (booking.customer_id) {
+    notifications.push({
+      user_id: booking.customer_id,
+      title: "Order items updated",
+      body: `Order #${String(booking_id).substring(0, 8)} items were updated by admin.`,
+      type: "order_item_edit_customer",
+      data: { type: "order_item_edit_customer", booking_id, price_diff: priceDiff },
+    });
+  }
+  if (booking.merchant_id) {
+    notifications.push({
+      user_id: booking.merchant_id,
+      title: "Order items updated",
+      body: `Order #${String(booking_id).substring(0, 8)} item list was updated.`,
+      type: "order_item_edit_merchant",
+      data: { type: "order_item_edit_merchant", booking_id, price_diff: priceDiff },
+    });
+  }
+  if (notifications.length) {
+    const { error: notifyErr } = await supabase.from("notifications").insert(notifications);
+    if (notifyErr) console.error("edit_order_items notification error:", notifyErr);
+  }
+
+  return jsonResponse({ success: true, price_diff: priceDiff, new_food_total: newFoodTotal });
 }
 
 // ─── Wallet ───────────────────────────────────────────

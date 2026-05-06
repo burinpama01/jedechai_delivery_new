@@ -5,6 +5,8 @@
 **/build/
 /tools/
 /.gstack_jedechai/
+graphify-out/
+**/graphify-out/
 
 # Dart / Flutter tooling
 **/.dart_tool/

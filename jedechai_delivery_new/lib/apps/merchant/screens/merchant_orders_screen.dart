@@ -1011,23 +1011,46 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
       // Save pending status immediately
       await _saveOrderStatus(bookingId, 'ready_for_pickup');
 
-      final result = await Supabase.instance.client
-          .from('bookings')
-          .update({'status': 'ready_for_pickup'})
-          .eq('id', bookingId)
-          .inFilter('status', ['matched', 'preparing'])
-          .select();
-
-      if (result.isEmpty) {
-        _showErrorSnackBar('Order not available for marking ready');
+      final merchantId = AuthService.userId;
+      if (merchantId == null) {
+        _showErrorSnackBar('Merchant not authenticated');
         await _clearOrderStatus(bookingId);
         return;
       }
 
+      final result = await Supabase.instance.client.rpc(
+        'mark_food_ready_guarded',
+        params: {
+          'p_booking_id': bookingId,
+          'p_merchant_id': merchantId,
+        },
+      );
+
+      if (result is Map && result['success'] != true) {
+        _showErrorSnackBar(
+          result['error']?.toString() ?? 'Order not available for marking ready',
+        );
+        await _clearOrderStatus(bookingId);
+        return;
+      }
+
+      final pendingDriverArrival =
+          result is Map && result['pending_driver_arrival'] == true;
+      if (pendingDriverArrival) {
+        _showSuccessSnackBar('บันทึกอาหารพร้อมแล้ว รอคนขับถึงร้าน');
+        return;
+      }
+
+      final booking = await Supabase.instance.client
+          .from('bookings')
+          .select()
+          .eq('id', bookingId)
+          .single();
+
       _showSuccessSnackBar('Food marked as ready for pickup');
 
       // Send notification to customer and driver
-      await _notifyFoodReady(result[0]);
+      await _notifyFoodReady(booking);
     } catch (e) {
       debugLog('❌ Failed to mark food ready: $e');
       await _clearOrderStatus(bookingId);

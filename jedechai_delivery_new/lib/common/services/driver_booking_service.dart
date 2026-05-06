@@ -27,4 +27,21 @@ class DriverBookingService {
   /// Updates booking status (non-terminal transitions).
   Future<void> updateBookingStatus(String bookingId, String newStatus) =>
       _bookingService.updateBookingStatus(bookingId, newStatus);
+
+  Future<void> updateBookingStatusGuarded(
+    String bookingId,
+    String newStatus, {
+    required List<String> expectedStatuses,
+  }) =>
+      _bookingService.updateBookingStatusGuarded(
+        bookingId,
+        newStatus,
+        expectedStatuses: expectedStatuses,
+      );
+
+  Future<void> markDriverArrivedAtMerchant(String bookingId) =>
+      _bookingService.markDriverArrivedAtMerchant(bookingId);
+
+  Future<void> markFoodPickedUp(String bookingId) =>
+      _bookingService.markFoodPickedUp(bookingId);
 }

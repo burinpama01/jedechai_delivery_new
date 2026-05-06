@@ -19,6 +19,7 @@ import '../../../common/services/chat_service.dart';
 import '../../../common/widgets/chat_screen.dart';
 import '../../../common/services/merchant_food_config_service.dart';
 import '../../../common/models/booking.dart';
+import '../../../common/utils/booking_status_policy.dart';
 import '../../../common/utils/driver_amount_calculator.dart';
 import '../../../common/utils/order_code_formatter.dart';
 import '../../../theme/app_theme.dart';
@@ -1710,8 +1711,18 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       if (newStatus == 'completed') {
         // Atomic: deducts commission and marks completed in one Postgres transaction
         await bookingService.completeBooking(widget.bookingId);
+      } else if (_booking!.serviceType == 'food' &&
+          newStatus == 'arrived_at_merchant') {
+        await bookingService.markDriverArrivedAtMerchant(widget.bookingId);
+      } else if (_booking!.serviceType == 'food' &&
+          newStatus == 'picking_up_order') {
+        await bookingService.markFoodPickedUp(widget.bookingId);
       } else {
-        await bookingService.updateBookingStatus(widget.bookingId, newStatus);
+        await bookingService.updateBookingStatusGuarded(
+          widget.bookingId,
+          newStatus,
+          expectedStatuses: [_booking!.status],
+        );
       }
 
       // Save trip tracking data when completing
@@ -1893,17 +1904,19 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         '🎯 Getting action button text for status: $status, service: $serviceType');
 
     if (serviceType == 'food') {
-      switch (status) {
-        case 'accepted':
-        case 'driver_accepted':
+      switch (BookingStatusPolicy.driverActionKey(
+        serviceType: serviceType,
+        currentStatus: status,
+      )) {
+        case DriverActionKey.arrivedMerchant:
           return l10n.driverNavFoodArrivedMerchant;
-        case 'arrived_at_merchant':
+        case DriverActionKey.waitMerchantReady:
           return l10n.driverNavFoodWaitReady;
-        case 'ready_for_pickup':
+        case DriverActionKey.pickupFood:
           return l10n.driverNavFoodPickup;
-        case 'picking_up_order':
+        case DriverActionKey.startDelivery:
           return l10n.driverNavFoodStartDelivery;
-        case 'in_transit':
+        case DriverActionKey.complete:
           return l10n.driverNavFoodComplete;
         default:
           return l10n.driverNavUpdateStatus;
@@ -1968,79 +1981,40 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
     debugLog('🎯 Handling action press - Current status: ${_booking!.status}');
 
-    String newStatus;
+    final serviceType = _booking!.serviceType;
+    final newStatus = BookingStatusPolicy.driverNextStatus(
+      serviceType: serviceType,
+      currentStatus: _booking!.status,
+    );
+    if (newStatus == null) {
+      if (serviceType == 'food' && _booking!.status == 'arrived_at_merchant') {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content:
+                  Text(AppLocalizations.of(context)!.driverNavWaitMerchantReady),
+              backgroundColor: Theme.of(context).colorScheme.tertiary,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+        return;
+      }
+      debugLog('⚠️ Unknown status: ${_booking!.status}');
+      _showErrorSnackBar(
+        AppLocalizations.of(context)!.driverNavInvalidStatus(_booking!.status),
+      );
+      return;
+    }
+
     bool requiresProximityCheck = false;
 
-    final serviceType = _booking!.serviceType;
-
-    // ═══════════════════════════════════════════════
-    // Status flow แยกตาม serviceType
-    // ═══════════════════════════════════════════════
-    // RIDE:   accepted/driver_accepted → arrived → in_transit → completed
-    // PARCEL: accepted/driver_accepted → arrived → in_transit → completed
-    // FOOD:   driver_accepted/accepted → arrived_at_merchant → (wait) → ready_for_pickup → picking_up_order → in_transit → completed
-    // ═══════════════════════════════════════════════
-
-    if (serviceType == 'food') {
-      // ─── Food flow ───
-      switch (_booking!.status) {
-        case 'accepted':
-        case 'driver_accepted':
-          newStatus = 'arrived_at_merchant';
-          requiresProximityCheck = true;
-          break;
-        case 'arrived_at_merchant':
-          // Disabled: merchant must mark food ready first
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                    AppLocalizations.of(context)!.driverNavWaitMerchantReady),
-                backgroundColor: Theme.of(context).colorScheme.tertiary,
-                duration: const Duration(seconds: 3),
-              ),
-            );
-          }
-          return;
-        case 'ready_for_pickup':
-          newStatus = 'picking_up_order';
-          requiresProximityCheck = true;
-          break;
-        case 'picking_up_order':
-          newStatus = 'in_transit';
-          break;
-        case 'in_transit':
-          newStatus = 'completed';
-          requiresProximityCheck = true;
-          break;
-        default:
-          debugLog('⚠️ Unknown food status: ${_booking!.status}');
-          _showErrorSnackBar(AppLocalizations.of(context)!
-              .driverNavInvalidStatus(_booking!.status));
-          return;
-      }
-    } else {
-      // ─── Ride / Parcel flow ───
-      switch (_booking!.status) {
-        case 'accepted':
-        case 'driver_accepted':
-          newStatus = 'arrived';
-          requiresProximityCheck = true;
-          break;
-        case 'arrived':
-          newStatus = 'in_transit'; // Start trip immediately
-          break;
-        case 'in_transit':
-          newStatus = 'completed';
-          requiresProximityCheck = true;
-          break;
-        default:
-          debugLog('⚠️ Unknown ride/parcel status: ${_booking!.status}');
-          _showErrorSnackBar(AppLocalizations.of(context)!
-              .driverNavInvalidStatus(_booking!.status));
-          return;
-      }
-    }
+    requiresProximityCheck = const {
+      'arrived',
+      'arrived_at_merchant',
+      'picking_up_order',
+      'completed',
+    }.contains(newStatus);
 
     // Perform proximity check if required
     if (requiresProximityCheck) {

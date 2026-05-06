@@ -1,3 +1,12 @@
+import {
+  buildOrderItemsPayload,
+  getOrderItemsPriceChange,
+  renderAdminNote,
+  renderContactCard,
+  renderOrderItemRows,
+  validateOrderItemsPayload,
+} from '../utils/orderItems.js';
+
 let _ctx = null;
 
 function _deps() {
@@ -36,7 +45,7 @@ async function _refreshAdminOrderViews() {
 
 export async function adminMerchantAcceptOrder(orderId, ctx) {
   _ctx = ctx || _ctx;
-  return await _adminActAsMerchantOrder(orderId, 'accept');
+  return await showAdminAcceptModal(orderId);
 }
 
 export async function adminMarkFoodReady(orderId, ctx) {
@@ -54,11 +63,60 @@ function _shortOrderId(orderId) {
   return String(orderId || '').substring(0, 8);
 }
 
+function _escapeHtml(value) {
+  const escapeHtml = _ctx?.escapeHtml || globalThis.escapeHtml;
+  if (typeof escapeHtml === 'function') return escapeHtml(value);
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function _coordText(lat, lng) {
   const la = _toNumber(lat);
   const ln = _toNumber(lng);
   if (la === null || ln === null) return '-';
   return `${la.toFixed(6)}, ${ln.toFixed(6)}`;
+}
+
+function _profileName(profile, fallback = '-') {
+  return profile?.full_name || profile?.name || fallback;
+}
+
+function _profilePhone(profile) {
+  return profile?.phone_number || profile?.phone || '';
+}
+
+function _parseJsonInput(value, fallback = []) {
+  const text = String(value || '').trim();
+  if (!text) return fallback;
+  try {
+    return JSON.parse(text);
+  } catch (_) {
+    return fallback;
+  }
+}
+
+export function toggleAdminAcceptChecklist() {
+  const checked = [...document.querySelectorAll('[data-admin-accept-check]')].every((el) => el.checked);
+  const button = document.getElementById('adminAcceptSubmit');
+  if (button) {
+    button.disabled = !checked;
+    button.classList.toggle('opacity-50', !checked);
+    button.classList.toggle('cursor-not-allowed', !checked);
+  }
+}
+
+export async function copyAdminText(value) {
+  const text = String(value || '');
+  try {
+    await navigator.clipboard?.writeText(text);
+    _deps().showToast?.('Copied', 'success');
+  } catch (_) {
+    window.prompt('Copy this value', text);
+  }
 }
 
 export async function showEditPickupLocationModal(orderId, ctx) {
@@ -167,6 +225,108 @@ export function useMerchantPickupLocation() {
   if (addrEl && merchant.address) addrEl.value = merchant.address;
 }
 
+export async function showAdminAcceptModal(orderId, ctx) {
+  _ctx = ctx || _ctx;
+  const { supabase } = _deps();
+  const escapeHtml = _escapeHtml;
+  const fmt = _ctx?.fmt || globalThis.fmt || ((value) => value);
+
+  const { data: order, error } = await supabase
+    .from('bookings')
+    .select('*')
+    .eq('id', orderId)
+    .maybeSingle();
+  if (error) return alert(error.message || JSON.stringify(error));
+  if (!order) return alert('ไม่พบออเดอร์');
+  if (order.service_type !== 'food') return alert('รับแทนร้านใช้ได้เฉพาะออเดอร์อาหาร');
+
+  const profileIds = [...new Set([order.customer_id, order.merchant_id].filter(Boolean))];
+  const profileMap = {};
+  if (profileIds.length) {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, full_name, phone_number')
+      .in('id', profileIds);
+    (profiles || []).forEach((profile) => { profileMap[profile.id] = profile; });
+  }
+
+  const { data: items } = await supabase
+    .from('booking_items')
+    .select('*')
+    .eq('booking_id', orderId);
+
+  const customer = profileMap[order.customer_id];
+  const merchant = profileMap[order.merchant_id];
+  const merchantPhone = _profilePhone(merchant);
+  const customerPhone = _profilePhone(customer);
+
+  document.getElementById('adminAcceptModal')?.remove();
+  const modal = document.createElement('div');
+  modal.id = 'adminAcceptModal';
+  modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
+  const merchantPhoneHtml = merchantPhone
+    ? `<div class="mt-2 flex items-center gap-2"><a href="tel:${escapeHtml(merchantPhone)}" class="text-orange-700 font-semibold">${escapeHtml(merchantPhone)}</a><button onclick="copyAdminText('${escapeHtml(merchantPhone)}')" class="px-2 py-1 rounded-lg bg-white text-orange-600 border border-orange-100">Copy</button></div>`
+    : '<p class="text-gray-400 mt-2">No merchant phone</p>';
+  const customerPhoneHtml = customerPhone
+    ? `<div class="mt-2 flex items-center gap-2"><a href="tel:${escapeHtml(customerPhone)}" class="text-blue-700 font-semibold">${escapeHtml(customerPhone)}</a><button onclick="copyAdminText('${escapeHtml(customerPhone)}')" class="px-2 py-1 rounded-lg bg-white text-blue-600 border border-blue-100">Copy</button></div>`
+    : '<p class="text-gray-400 mt-2">No customer phone</p>';
+  modal.innerHTML = `
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl fade-in max-h-[88vh] overflow-y-auto">
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
+        <div>
+          <h3 class="font-bold text-gray-800 text-lg">รับออเดอร์แทนร้าน</h3>
+          <p class="text-xs text-gray-400">ออเดอร์ #${escapeHtml(_shortOrderId(orderId))}</p>
+        </div>
+        <button onclick="document.getElementById('adminAcceptModal')?.remove()" class="text-gray-400 hover:text-gray-600"><span class="material-icons-round">close</span></button>
+      </div>
+      <div class="p-5 space-y-4 text-sm">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+          <div class="p-3 rounded-xl bg-orange-50 border border-orange-100">
+            <p class="text-orange-500 mb-1 font-semibold">Merchant</p>
+            <p class="font-bold text-orange-700">${escapeHtml(_profileName(merchant))}</p>
+            ${merchantPhoneHtml}
+          </div>
+          <div class="p-3 rounded-xl bg-blue-50 border border-blue-100">
+            <p class="text-blue-500 mb-1 font-semibold">Customer</p>
+            <p class="font-bold text-blue-700">${escapeHtml(_profileName(customer))}</p>
+            ${customerPhoneHtml}
+          </div>
+        </div>
+        <div>
+          <p class="text-xs font-semibold text-gray-500 mb-1.5">รายการอาหารสำหรับแจ้งร้าน</p>
+          ${renderOrderItemRows(items || [], fmt, escapeHtml)}
+        </div>
+        ${renderAdminNote(order.admin_note, escapeHtml)}
+        <div class="space-y-2 rounded-xl border border-gray-100 bg-gray-50 p-3 text-xs">
+          <label class="flex items-center gap-2 text-gray-700">
+            <input data-admin-accept-check type="checkbox" onchange="toggleAdminAcceptChecklist()" class="rounded border-gray-300" />
+            Called merchant and confirmed the order.
+          </label>
+          <label class="flex items-center gap-2 text-gray-700">
+            <input data-admin-accept-check type="checkbox" onchange="toggleAdminAcceptChecklist()" class="rounded border-gray-300" />
+            Merchant reviewed every item and selected option.
+          </label>
+        </div>
+        <label class="block text-xs font-semibold text-gray-600">Admin note
+          <textarea id="adminAcceptNote" rows="3" class="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2 text-sm" placeholder="เช่น โทรหาร้านแล้ว ร้านยืนยันรับออเดอร์">${escapeHtml(order.admin_note || '')}</textarea>
+        </label>
+        <div class="flex justify-end gap-2 pt-2">
+          <button onclick="document.getElementById('adminAcceptModal')?.remove()" class="px-4 py-2 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50">ยกเลิก</button>
+          <button id="adminAcceptSubmit" disabled onclick="submitAdminMerchantAcceptOrder('${orderId}')" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 opacity-50 cursor-not-allowed">ยืนยันรับแทนร้าน</button>
+        </div>
+      </div>
+    </div>`;
+
+  document.body.appendChild(modal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+}
+
+export async function submitAdminMerchantAcceptOrder(orderId, ctx) {
+  _ctx = ctx || _ctx;
+  const note = document.getElementById('adminAcceptNote')?.value || '';
+  return await _adminActAsMerchantOrder(orderId, 'accept', note);
+}
+
 export async function submitPickupLocation(orderId, ctx) {
   _ctx = ctx || _ctx;
   const { supabase, showToast } = _deps();
@@ -205,7 +365,7 @@ export async function submitPickupLocation(orderId, ctx) {
   }
 }
 
-async function _adminActAsMerchantOrder(orderId, action) {
+async function _adminActAsMerchantOrder(orderId, action, adminNote = '') {
   const { supabase, showToast } = _deps();
 
   const isAccept = action === 'accept';
@@ -229,29 +389,36 @@ async function _adminActAsMerchantOrder(orderId, action) {
       throw new Error('ฟีเจอร์นี้ใช้ได้เฉพาะออเดอร์อาหารเท่านั้น');
     }
 
-    let updateQuery = supabase
-      .from('bookings')
-      .update({
-        status: isAccept ? 'preparing' : 'ready_for_pickup',
-        updated_at: nowIso,
-      })
-      .eq('id', orderId);
-
     const acceptStatuses = globalThis.ADMIN_MERCHANT_ACCEPT_STATUSES;
-    const readyStatuses = globalThis.ADMIN_MERCHANT_READY_STATUSES;
+    let updatedRows = [];
 
     if (isAccept) {
+      let updateQuery = supabase
+        .from('bookings')
+        .update({
+          status: 'preparing',
+          admin_note: String(adminNote || '').trim() || null,
+          updated_at: nowIso,
+        })
+        .eq('id', orderId);
       if (Array.isArray(acceptStatuses) && acceptStatuses.length) {
         updateQuery = updateQuery.in('status', acceptStatuses);
       }
+      const { data, error: updateError } = await updateQuery.select('id, status');
+      if (updateError) throw updateError;
+      updatedRows = data || [];
     } else {
-      if (Array.isArray(readyStatuses) && readyStatuses.length) {
-        updateQuery = updateQuery.in('status', readyStatuses);
+      const { data: rpcResult, error: rpcError } = await supabase.rpc('mark_food_ready_guarded', {
+        p_booking_id: orderId,
+        p_merchant_id: booking.merchant_id,
+      });
+      if (rpcError) throw rpcError;
+      if (rpcResult?.success !== true) {
+        throw new Error(rpcResult?.error || 'ไม่สามารถอัปเดตเป็นอาหารพร้อมได้ในสถานะปัจจุบัน');
       }
+      updatedRows = [{ id: orderId, status: rpcResult.status, pending_driver_arrival: rpcResult.pending_driver_arrival }];
     }
 
-    const { data: updatedRows, error: updateError } = await updateQuery.select('id, status');
-    if (updateError) throw updateError;
     if (!updatedRows?.length) {
       throw new Error(
         isAccept
@@ -261,6 +428,7 @@ async function _adminActAsMerchantOrder(orderId, action) {
     }
 
     const shortId = orderId.substring(0, 8);
+    const pendingDriverArrival = !isAccept && updatedRows[0]?.pending_driver_arrival === true;
     const notifyRows = [];
     if (booking.merchant_id) {
       notifyRows.push({
@@ -268,7 +436,9 @@ async function _adminActAsMerchantOrder(orderId, action) {
         title: isAccept ? '🛠️ แอดมินรับออเดอร์แทนร้าน' : '✅ แอดมินกดอาหารพร้อมแทนร้าน',
         body: isAccept
           ? `ออเดอร์ #${shortId} ถูกแอดมินรับแทนร้านค้าแล้ว`
-          : `ออเดอร์ #${shortId} ถูกแอดมินอัปเดตเป็นอาหารพร้อมแล้ว`,
+          : pendingDriverArrival
+            ? `ออเดอร์ #${shortId} ถูกบันทึกว่าอาหารพร้อมแล้ว และรอคนขับถึงร้าน`
+            : `ออเดอร์ #${shortId} ถูกแอดมินอัปเดตเป็นอาหารพร้อมแล้ว`,
         type: isAccept ? 'admin_accept_order_for_merchant' : 'admin_mark_food_ready_for_merchant',
         data: {
           type: isAccept ? 'admin_accept_order_for_merchant' : 'admin_mark_food_ready_for_merchant',
@@ -283,7 +453,9 @@ async function _adminActAsMerchantOrder(orderId, action) {
         title: isAccept ? '🍳 ร้านค้าเริ่มเตรียมอาหารแล้ว' : '🍱 อาหารพร้อมจัดส่งแล้ว',
         body: isAccept
           ? `ออเดอร์ #${shortId} กำลังอยู่ระหว่างการเตรียมอาหาร`
-          : `ออเดอร์ #${shortId} พร้อมให้คนขับไปรับแล้ว`,
+          : pendingDriverArrival
+            ? `ออเดอร์ #${shortId} เตรียมเสร็จแล้ว กำลังรอคนขับถึงร้าน`
+            : `ออเดอร์ #${shortId} พร้อมให้คนขับไปรับแล้ว`,
         type: isAccept ? 'admin_customer_order_preparing' : 'admin_customer_food_ready',
         data: {
           type: isAccept ? 'admin_customer_order_preparing' : 'admin_customer_food_ready',
@@ -310,6 +482,7 @@ async function _adminActAsMerchantOrder(orderId, action) {
       await globalThis._notifyAdminActionTargets(notifyRows);
     }
 
+    document.getElementById('adminAcceptModal')?.remove();
     showToast(isAccept ? 'แอดมินรับออเดอร์แทนร้านสำเร็จ' : 'แอดมินอัปเดตเป็นอาหารพร้อมสำเร็จ', 'success');
     await _refreshAdminOrderViews();
   } catch (e) {
@@ -458,16 +631,358 @@ export async function rebroadcastOrder(orderId, serviceType, ctx) {
   }
 }
 
+function _normalizeDraftItem(item, menuItems = []) {
+  const menuItemId = item.menu_item_id || item.id || '';
+  const menuItem = menuItems.find((m) => m.id === menuItemId);
+  return {
+    draft_id: item.draft_id || (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `${Date.now()}-${Math.random()}`),
+    menu_item_id: menuItemId,
+    name: item.name || item.menu_name || menuItem?.name || '',
+    quantity: Math.max(1, Number.parseInt(item.quantity || 1, 10) || 1),
+    price: Number(item.price || item.unit_price || menuItem?.price || 0) || 0,
+    selected_options: item.selected_options || [],
+    note: item.note || '',
+  };
+}
+
+function _renderEditOrderItemsDraft() {
+  const state = globalThis._editOrderItemsState;
+  if (!state) return;
+  const { fmt, escapeHtml } = state;
+  const draftEl = document.getElementById('editOrderItemsDraft');
+  const diffEl = document.getElementById('editOrderItemsPriceDiff');
+  if (!draftEl || !diffEl) return;
+
+  const menuOptions = state.menuItems.map((menuItem) => (
+    `<option value="${escapeHtml(menuItem.id)}">${escapeHtml(menuItem.name || '-')} · ฿${fmt(Math.round(menuItem.price || 0))}</option>`
+  )).join('');
+
+  draftEl.innerHTML = state.draftItems.map((item, index) => `
+    <div class="p-3 rounded-xl border border-gray-100 bg-gray-50 space-y-2" data-index="${index}">
+      <div class="flex items-center gap-2">
+        <select onchange="editOrderItemsSwap(${index}, this.value)" class="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white">
+          ${menuOptions}
+        </select>
+        <button onclick="editOrderItemsRemove(${index})" class="px-2 py-1.5 rounded-lg bg-red-100 text-red-600 text-xs font-semibold">Remove</button>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <label class="text-[11px] text-gray-500">Qty
+          <input type="number" min="1" value="${escapeHtml(item.quantity)}" oninput="editOrderItemsUpdate(${index}, 'quantity', this.value)" class="mt-1 w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white" />
+        </label>
+        <label class="text-[11px] text-gray-500">Price
+          <input type="number" min="0" step="1" value="${escapeHtml(item.price)}" oninput="editOrderItemsUpdate(${index}, 'price', this.value)" class="mt-1 w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white" />
+        </label>
+      </div>
+      <label class="block text-[11px] text-gray-500">Options JSON
+        <textarea rows="2" oninput="editOrderItemsUpdate(${index}, 'selected_options_text', this.value)" class="mt-1 w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white">${escapeHtml(JSON.stringify(item.selected_options || []))}</textarea>
+      </label>
+      <label class="block text-[11px] text-gray-500">Item note
+        <input type="text" value="${escapeHtml(item.note || '')}" oninput="editOrderItemsUpdate(${index}, 'note', this.value)" class="mt-1 w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white" />
+      </label>
+    </div>
+  `).join('') || '<div class="text-xs text-red-500">ต้องมีอย่างน้อย 1 รายการ</div>';
+
+  state.draftItems.forEach((item, index) => {
+    const select = draftEl.querySelector(`[data-index="${index}"] select`);
+    if (select) select.value = item.menu_item_id;
+  });
+
+  const change = getOrderItemsPriceChange({
+    originalTotal: state.originalTotal,
+    items: state.draftItems,
+    paymentMethod: state.paymentMethod,
+  });
+  diffEl.className = `p-3 rounded-xl border text-xs font-semibold ${change.toneClass}`;
+  diffEl.textContent = `${change.message} · New food total ฿${fmt(change.newTotal)}`;
+}
+
+export function editOrderItemsSwap(index, menuItemId) {
+  const state = globalThis._editOrderItemsState;
+  if (!state?.draftItems[index]) return;
+  const menuItem = state.menuItems.find((item) => item.id === menuItemId);
+  if (!menuItem) return;
+  state.draftItems[index] = _normalizeDraftItem({
+    ...state.draftItems[index],
+    menu_item_id: menuItem.id,
+    name: menuItem.name,
+    price: menuItem.price,
+    selected_options: [],
+  }, state.menuItems);
+  _renderEditOrderItemsDraft();
+}
+
+export function editOrderItemsAdd() {
+  const state = globalThis._editOrderItemsState;
+  const menuItem = state?.menuItems?.[0];
+  if (!state || !menuItem) return;
+  state.draftItems.push(_normalizeDraftItem({
+    menu_item_id: menuItem.id,
+    name: menuItem.name,
+    price: menuItem.price,
+    quantity: 1,
+    selected_options: [],
+  }, state.menuItems));
+  _renderEditOrderItemsDraft();
+}
+
+export function editOrderItemsRemove(index) {
+  const state = globalThis._editOrderItemsState;
+  if (!state) return;
+  state.draftItems.splice(index, 1);
+  _renderEditOrderItemsDraft();
+}
+
+export function editOrderItemsUpdate(index, field, value) {
+  const state = globalThis._editOrderItemsState;
+  const item = state?.draftItems[index];
+  if (!item) return;
+  if (field === 'quantity') item.quantity = Math.max(1, Number.parseInt(value || 1, 10) || 1);
+  else if (field === 'price') item.price = Number(value || 0) || 0;
+  else if (field === 'selected_options_text') item.selected_options = _parseJsonInput(value, []);
+  else item[field] = value;
+  _renderEditOrderItemsDraft();
+}
+
+export async function showEditOrderItemsModal(orderId, ctx) {
+  _ctx = ctx || _ctx;
+  const { supabase } = _deps();
+  const escapeHtml = _escapeHtml;
+  const fmt = _ctx?.fmt || globalThis.fmt || ((value) => value);
+
+  const { data: order, error } = await supabase
+    .from('bookings')
+    .select('id, status, service_type, merchant_id, customer_id, payment_method, price, admin_note')
+    .eq('id', orderId)
+    .maybeSingle();
+  if (error) return alert(error.message || JSON.stringify(error));
+  if (!order) return alert('ไม่พบออเดอร์');
+  if (order.service_type !== 'food') return alert('แก้รายการได้เฉพาะออเดอร์อาหาร');
+
+  const [{ data: items }, { data: menuItems }] = await Promise.all([
+    supabase.from('booking_items').select('*').eq('booking_id', orderId),
+    supabase.from('menu_items')
+      .select('id, merchant_id, name, price, is_available, options, category')
+      .eq('merchant_id', order.merchant_id)
+      .eq('is_available', true)
+      .order('name'),
+  ]);
+  if (!menuItems?.length) return alert('ไม่พบเมนูที่เปิดขายของร้านนี้');
+
+  globalThis._editOrderItemsState = {
+    orderId,
+    originalTotal: Number(order.price || 0),
+    paymentMethod: order.payment_method || '',
+    menuItems,
+    draftItems: (items || []).map((item) => _normalizeDraftItem(item, menuItems)),
+    fmt,
+    escapeHtml,
+  };
+
+  document.getElementById('editOrderItemsModal')?.remove();
+  const modal = document.createElement('div');
+  modal.id = 'editOrderItemsModal';
+  modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
+  modal.innerHTML = `
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl fade-in max-h-[90vh] overflow-y-auto">
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
+        <div>
+          <h3 class="font-bold text-gray-800 text-lg">แก้ไขรายการอาหาร</h3>
+          <p class="text-xs text-gray-400">ออเดอร์ #${escapeHtml(_shortOrderId(orderId))} · original food ฿${fmt(Math.round(order.price || 0))}</p>
+        </div>
+        <button onclick="document.getElementById('editOrderItemsModal')?.remove()" class="text-gray-400 hover:text-gray-600"><span class="material-icons-round">close</span></button>
+      </div>
+      <div class="p-5 space-y-4">
+        <div id="editOrderItemsDraft" class="space-y-3"></div>
+        <button onclick="editOrderItemsAdd()" class="px-3 py-2 rounded-xl bg-indigo-50 text-indigo-700 text-xs font-semibold">+ เพิ่มรายการจากเมนูร้าน</button>
+        <div id="editOrderItemsPriceDiff"></div>
+        ${renderAdminNote(order.admin_note, escapeHtml)}
+        <label class="block text-xs font-semibold text-gray-600">บันทึกเหตุผล
+          <textarea id="editOrderItemsAdminNote" rows="3" class="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2 text-sm" placeholder="เช่น ร้านแจ้งว่าสินค้าหมด เปลี่ยนรายการตามที่ลูกค้ายืนยัน">${escapeHtml(order.admin_note || '')}</textarea>
+        </label>
+        <div class="flex justify-end gap-2 pt-2">
+          <button onclick="document.getElementById('editOrderItemsModal')?.remove()" class="px-4 py-2 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50">ยกเลิก</button>
+          <button onclick="submitEditOrderItems()" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700">ยืนยันการแก้ไข</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+  _renderEditOrderItemsDraft();
+}
+
+export async function submitEditOrderItems(ctx) {
+  _ctx = ctx || _ctx;
+  const { callAdminAction, showToast } = _deps();
+  const state = globalThis._editOrderItemsState;
+  if (!state) return;
+  const newItems = buildOrderItemsPayload(state.draftItems);
+  const validation = validateOrderItemsPayload(newItems);
+  if (!validation.ok) {
+    const message = validation.error === 'order_items_required'
+      ? 'ต้องมีอย่างน้อย 1 รายการ ถ้าต้องการลบทั้งหมดให้ยกเลิกออเดอร์แทน'
+      : `ข้อมูลรายการไม่ถูกต้อง: ${validation.error}`;
+    return alert(message);
+  }
+
+  try {
+    const adminNote = document.getElementById('editOrderItemsAdminNote')?.value || '';
+    await callAdminAction({
+      action: 'edit_order_items',
+      booking_id: state.orderId,
+      new_items: newItems,
+      admin_note: adminNote,
+    });
+    document.getElementById('editOrderItemsModal')?.remove();
+    showToast('แก้ไขรายการอาหารสำเร็จ', 'success');
+    await _refreshAdminOrderViews();
+  } catch (e) {
+    showToast('แก้ไขรายการไม่สำเร็จ: ' + (e.message || JSON.stringify(e)), 'error');
+  }
+}
+
+export async function showOrderDetail(orderId, ctx) {
+  _ctx = ctx || _ctx;
+  const { supabase } = _deps();
+  const escapeHtml = _escapeHtml;
+  const fmt = _ctx?.fmt || globalThis.fmt || ((value) => value);
+  const fmtDate = _ctx?.fmtDate || globalThis.fmtDate || ((value) => value || '-');
+  const statusBadge = _ctx?.statusBadge || globalThis.statusBadge || ((value) => value || '-');
+  const serviceIcon = _ctx?.serviceIcon || globalThis.serviceIcon || (() => '');
+
+  const { data: order, error } = await supabase
+    .from('bookings')
+    .select('*')
+    .eq('id', orderId)
+    .maybeSingle();
+
+  if (error) return alert(error.message || JSON.stringify(error));
+  if (!order) return alert('Order not found');
+
+  const profileIds = [...new Set([order.customer_id, order.driver_id, order.merchant_id].filter(Boolean))];
+  const profileMap = {};
+  if (profileIds.length) {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, full_name, phone_number')
+      .in('id', profileIds);
+    (profiles || []).forEach((profile) => {
+      profileMap[profile.id] = {
+        name: profile.full_name || profile.id.substring(0, 8),
+        phone: profile.phone_number || '',
+      };
+    });
+  }
+
+  let itemsHtml = '';
+  if (order.service_type === 'food') {
+    const { data: items, error: itemsError } = await supabase
+      .from('booking_items')
+      .select('*')
+      .eq('booking_id', orderId);
+    if (itemsError) {
+      itemsHtml = `<div class="text-xs text-red-500">Could not load items: ${escapeHtml(itemsError.message || JSON.stringify(itemsError))}</div>`;
+    } else if (items && items.length) {
+      itemsHtml = `
+        <div class="border-t border-gray-100 pt-3">
+          <p class="text-xs font-semibold text-gray-500 mb-1.5">Food items</p>
+          ${renderOrderItemRows(items, fmt, escapeHtml)}
+        </div>`;
+    }
+  }
+
+  const customer = profileMap[order.customer_id];
+  const driver = profileMap[order.driver_id];
+  const merchant = profileMap[order.merchant_id];
+  const dName = driver?.name || globalThis._orderDriverMap?.[order.driver_id] || (order.driver_id ? order.driver_id.substring(0, 8) : '-');
+  const totalAmount = Number(order.price || 0) + Number(order.delivery_fee || 0);
+  const canReassign = ['pending','preparing','driver_accepted','accepted','matched','pending_merchant','arrived_at_merchant','ready_for_pickup'].includes(order.status);
+  const canRebroadcast = ['pending','pending_merchant','driver_accepted','accepted','matched','preparing','arrived_at_merchant','ready_for_pickup'].includes(order.status);
+  const canAdminAccept = typeof globalThis._canAdminMerchantAccept === 'function' ? globalThis._canAdminMerchantAccept(order) : false;
+  const canAdminReady = typeof globalThis._canAdminMarkFoodReady === 'function' ? globalThis._canAdminMarkFoodReady(order) : false;
+  const canEditPickup = order.status !== 'completed' && order.status !== 'cancelled';
+  const canEditItems = order.service_type === 'food' && ['pending_merchant', 'accepted', 'preparing'].includes(order.status);
+  const canCancel = order.status !== 'completed' && order.status !== 'cancelled';
+
+  document.getElementById('orderDetailModal')?.remove();
+  const modal = document.createElement('div');
+  modal.id = 'orderDetailModal';
+  modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50';
+  modal.innerHTML = `
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 fade-in max-h-[88vh] overflow-y-auto">
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
+        <div>
+          <h3 class="font-bold text-gray-800">Order #${escapeHtml(_shortOrderId(orderId))}</h3>
+          <p class="text-xs text-gray-400">${escapeHtml(fmtDate(order.created_at))}</p>
+        </div>
+        <button onclick="document.getElementById('orderDetailModal')?.remove()" class="text-gray-400 hover:text-gray-600"><span class="material-icons-round">close</span></button>
+      </div>
+      <div class="p-5 space-y-4">
+        <div class="flex items-center gap-3 flex-wrap">
+          ${serviceIcon(order.service_type)}
+          ${statusBadge(order.status)}
+          <span class="text-lg font-bold text-gray-800">฿${fmt(Math.round(totalAmount))}</span>
+          ${order.service_type === 'food' ? `<span class="text-xs text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full">Food ฿${fmt(Math.round(order.price || 0))} + Delivery ฿${fmt(Math.round(order.delivery_fee || 0))}</span>` : ''}
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+          ${renderContactCard('person', 'Customer', customer, '', escapeHtml)}
+          ${renderContactCard('two_wheeler', 'Driver', driver || { name: dName }, driver ? 'text-blue-600' : 'text-red-500', escapeHtml)}
+          ${merchant ? renderContactCard('store', 'Merchant', merchant, 'text-orange-600', escapeHtml) : '<div class="p-3 rounded-xl bg-gray-50 text-gray-400">No merchant</div>'}
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+          <div class="p-3 rounded-xl bg-gray-50">
+            <p class="text-gray-400 mb-1">Pickup</p>
+            <p class="font-medium text-gray-700">${escapeHtml(order.pickup_address || '-')}</p>
+            <p class="text-[11px] text-gray-400 mt-1">${escapeHtml(_coordText(order.origin_lat, order.origin_lng))}</p>
+          </div>
+          <div class="p-3 rounded-xl bg-gray-50">
+            <p class="text-gray-400 mb-1">Destination</p>
+            <p class="font-medium text-gray-700">${escapeHtml(order.destination_address || '-')}</p>
+            <p class="text-[11px] text-gray-400 mt-1">${escapeHtml(_coordText(order.dest_lat, order.dest_lng))}</p>
+          </div>
+        </div>
+        ${itemsHtml}
+        ${renderAdminNote(order.admin_note, escapeHtml)}
+        <div class="flex gap-2 pt-2 flex-wrap">
+          ${canEditPickup ? `<button onclick="showEditPickupLocationModal('${orderId}')" class="px-3 py-1.5 bg-blue-100 text-blue-600 rounded-lg text-xs font-semibold">Edit pickup</button>` : ''}
+          ${canEditItems ? `<button onclick="showEditOrderItemsModal('${orderId}')" class="px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold">Edit items</button>` : ''}
+          ${canRebroadcast ? `<button onclick="rebroadcastOrder('${orderId}','${order.service_type}')" class="px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-xs font-semibold">Rebroadcast</button>` : ''}
+          ${canReassign ? `<button onclick="showReassignModal('${orderId}','${escapeHtml(String(dName).replace(/'/g, ''))}')" class="px-3 py-1.5 bg-orange-100 text-orange-700 rounded-lg text-xs font-semibold">Reassign</button>` : ''}
+          ${canAdminAccept ? `<button onclick="adminMerchantAcceptOrder('${orderId}')" class="px-3 py-1.5 bg-emerald-500 text-white rounded-lg text-xs font-semibold">Accept as merchant</button>` : ''}
+          ${canAdminReady ? `<button onclick="adminMarkFoodReady('${orderId}')" class="px-3 py-1.5 bg-teal-500 text-white rounded-lg text-xs font-semibold">Mark food ready</button>` : ''}
+          ${canCancel ? `<button onclick="forceCancelOrder('${orderId}','${order.customer_id || ''}',${Math.round(order.price || 0)})" class="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg text-xs font-semibold">Cancel</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+
+  document.body.appendChild(modal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+}
+
 export function wireOrdersActionsBridge() {
+  const bridge = {
+    adminMerchantAcceptOrder,
+    adminMarkFoodReady,
+    copyAdminText,
+    toggleAdminAcceptChecklist,
+    showAdminAcceptModal,
+    submitAdminMerchantAcceptOrder,
+    showEditOrderItemsModal,
+    editOrderItemsSwap,
+    editOrderItemsAdd,
+    editOrderItemsRemove,
+    editOrderItemsUpdate,
+    submitEditOrderItems,
+    showEditPickupLocationModal,
+    useMerchantPickupLocation,
+    submitPickupLocation,
+    showReassignModal,
+    filterReassignDrivers,
+    reassignOrder,
+    forceCancelOrder,
+    rebroadcastOrder,
+    showOrderDetail,
+  };
   globalThis.__adminWebBridge = globalThis.__adminWebBridge || {};
-  globalThis.__adminWebBridge.adminMerchantAcceptOrder = adminMerchantAcceptOrder;
-  globalThis.__adminWebBridge.adminMarkFoodReady = adminMarkFoodReady;
-  globalThis.__adminWebBridge.showEditPickupLocationModal = showEditPickupLocationModal;
-  globalThis.__adminWebBridge.useMerchantPickupLocation = useMerchantPickupLocation;
-  globalThis.__adminWebBridge.submitPickupLocation = submitPickupLocation;
-  globalThis.__adminWebBridge.showReassignModal = showReassignModal;
-  globalThis.__adminWebBridge.filterReassignDrivers = filterReassignDrivers;
-  globalThis.__adminWebBridge.reassignOrder = reassignOrder;
-  globalThis.__adminWebBridge.forceCancelOrder = forceCancelOrder;
-  globalThis.__adminWebBridge.rebroadcastOrder = rebroadcastOrder;
+  Object.assign(globalThis.__adminWebBridge, bridge);
+  Object.assign(globalThis, bridge);
 }
