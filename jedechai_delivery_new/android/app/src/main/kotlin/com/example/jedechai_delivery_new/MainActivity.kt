@@ -3,6 +3,7 @@ package com.jedechai.delivery
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.MediaPlayer
+import androidx.core.view.WindowCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -13,6 +14,7 @@ class MainActivity : FlutterActivity() {
     private var merchantAlarmPlayer: MediaPlayer? = null
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         super.onCreate(savedInstanceState)
         // Initialize Google Maps
         try {

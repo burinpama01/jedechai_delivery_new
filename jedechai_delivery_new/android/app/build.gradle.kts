@@ -207,6 +207,7 @@ afterEvaluate {
 
 dependencies {
     // Core dependencies
+    implementation("androidx.core:core-ktx:1.13.1")
     implementation("com.google.guava:listenablefuture:1.0")
     
     // แก้ไขปัญหา NoClassDefFoundError: AbstractResolvableFuture
