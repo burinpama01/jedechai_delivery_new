@@ -1,13 +1,14 @@
 let _ctx = null;
 
 function _deps() {
-  const supabase = _ctx?.supabase || globalThis.supabase;
-  const fmt = _ctx?.fmt || globalThis.fmt;
-  const fmtDate = _ctx?.fmtDate || globalThis.fmtDate;
-  const exportRowsToCsv = _ctx?.exportRowsToCsv || globalThis.exportRowsToCsv;
-  const exportRowsToExcel = _ctx?.exportRowsToExcel || globalThis.exportRowsToExcel;
-  const reportFilename = _ctx?.reportFilename || globalThis.reportFilename;
-  const renderMiniBarChart = _ctx?.renderMiniBarChart || globalThis.renderMiniBarChart;
+  const ctx = _ctx || globalThis.__adminWebContext || globalThis.__adminWebBridge || {};
+  const supabase = ctx.supabase || globalThis.supabase;
+  const fmt = ctx.fmt || globalThis.fmt || globalThis.__adminWebBridge?.fmt;
+  const fmtDate = ctx.fmtDate || globalThis.fmtDate || globalThis.__adminWebBridge?.fmtDate;
+  const exportRowsToCsv = ctx.exportRowsToCsv || globalThis.exportRowsToCsv || globalThis.__adminWebBridge?.exportRowsToCsv;
+  const exportRowsToExcel = ctx.exportRowsToExcel || globalThis.exportRowsToExcel || globalThis.__adminWebBridge?.exportRowsToExcel;
+  const reportFilename = ctx.reportFilename || globalThis.reportFilename;
+  const renderMiniBarChart = ctx.renderMiniBarChart || globalThis.renderMiniBarChart;
 
   return {
     supabase,
@@ -33,6 +34,10 @@ function _escapeHtml(value) {
 
 export async function renderOrdersPage(el, ctx) {
   _ctx = ctx || null;
+  globalThis.__adminWebContext = {
+    ...(globalThis.__adminWebContext || {}),
+    ...(ctx || {}),
+  };
 
   const today = new Date();
   const weekAgo = new Date(today);
@@ -119,10 +124,10 @@ export async function loadOrders() {
     });
   }
   if (merchantIds.length) {
-    const { data: mProfiles } = await supabase.from('profiles').select('id, full_name, shop_name, phone_number').in('id', merchantIds);
+    const { data: mProfiles } = await supabase.from('profiles').select('id, full_name, phone_number').in('id', merchantIds);
     (mProfiles || []).forEach(p => {
       globalThis._orderMerchantMap[p.id] = {
-        name: p.shop_name || p.full_name || p.id.substring(0, 8),
+        name: p.full_name || p.id.substring(0, 8),
         phone: p.phone_number || '',
       };
     });

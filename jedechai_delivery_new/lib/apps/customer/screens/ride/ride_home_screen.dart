@@ -16,6 +16,7 @@ import '../../../../common/models/booking.dart';
 import '../../../../common/services/notification_sender.dart';
 import '../../../../common/services/admin_line_notification_service.dart';
 import '../../../../common/config/env_config.dart';
+import '../../../../common/utils/notification_payload_policy.dart';
 import '../../../../common/widgets/location_disclosure_dialog.dart';
 import '../services/waiting_for_driver_screen.dart';
 import '../services/saved_addresses_screen.dart';
@@ -266,8 +267,9 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
         }
       }
 
-      // Fallback: if no driver_locations rows, check online drivers directly
-      if (counts.values.every((v) => v == 0)) {
+      // Fallback only before location is known. Once we have customer
+      // location, showing all online drivers can advertise out-of-area cars.
+      if (_currentLocation == null && counts.values.every((v) => v == 0)) {
         final fallback = await SupabaseService.client
             .from('profiles')
             .select('vehicle_type')
@@ -283,7 +285,11 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
       }
     } catch (e) {
       debugLog('❌ Error checking online drivers: $e');
-      // Fallback: show online approved drivers so button isn't permanently disabled
+      if (_currentLocation != null) {
+        if (mounted) setState(() => _onlineDriverCounts = counts);
+        return;
+      }
+      // Fallback before location is known so the screen is not empty forever.
       try {
         final fallback = await SupabaseService.client
             .from('profiles')
@@ -693,12 +699,11 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
       debugLog('✅ Booking created successfully: ${response['id']}');
 
       final booking = Booking.fromJson(response);
-      final totalRidePrice = _estimatedPrice + _estimatedPickupSurcharge;
+      final totalRidePrice = _estimatedPrice;
       unawaited(AdminLineNotificationService.notify(
         eventType: 'ride_order_new',
         title: 'JDC: มีคำขอเรียกรถใหม่',
-        message:
-            'เรียกรถ $vehicleName ฿${totalRidePrice.toStringAsFixed(0)}\n'
+        message: 'เรียกรถ $vehicleName ฿${totalRidePrice.toStringAsFixed(0)}\n'
             'ระยะทาง ${_estimatedDistance.toStringAsFixed(2)} กม.',
         data: {
           'booking_id': booking.id,
@@ -803,16 +808,21 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                 booking.destinationAddress ??
                     AppLocalizations.of(context)!.rideNotifDestFallback,
                 booking.price.toString()),
-            data: {
-              'type': 'new_ride_request',
-              'booking_id': booking.id,
-              'customer_id': booking.customerId,
-              'pickup_address': booking.pickupAddress ?? '',
-              'destination_address': booking.destinationAddress ?? '',
-              'price': booking.price.toString(),
-              'distance_km': booking.distanceKm.toString(),
-              'timestamp': DateTime.now().toIso8601String(),
-            },
+            data: NotificationPayloadPolicy.buildBookingPayload(
+              type: NotificationTypes.driverJobAvailable,
+              recipientRole: NotificationRoles.driver,
+              bookingId: booking.id,
+              serviceType: 'ride',
+              extra: {
+                'legacy_type': NotificationTypes.legacyNewRideRequest,
+                'customer_id': booking.customerId,
+                'pickup_address': booking.pickupAddress ?? '',
+                'destination_address': booking.destinationAddress ?? '',
+                'price': booking.price.toString(),
+                'distance_km': booking.distanceKm.toString(),
+                'timestamp': DateTime.now().toIso8601String(),
+              },
+            ),
           );
 
           if (success) {

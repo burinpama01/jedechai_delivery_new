@@ -2,6 +2,7 @@ import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/booking.dart';
 import '../utils/driver_amount_calculator.dart';
+import '../utils/notification_payload_policy.dart';
 import 'mock_auth_service.dart';
 import 'auth_service.dart';
 import 'wallet_service.dart';
@@ -694,7 +695,7 @@ class BookingService {
     }
   }
 
-  Future<void> markDriverArrivedAtMerchant(String bookingId) async {
+  Future<String> markDriverArrivedAtMerchant(String bookingId) async {
     final driverId = AuthService.userId;
     if (driverId == null) throw Exception('Driver not authenticated');
 
@@ -713,6 +714,10 @@ class BookingService {
       }
       throw Exception('ไม่สามารถบันทึกว่าถึงร้านได้: $error');
     }
+    if (rpcResult is Map) {
+      return rpcResult['status']?.toString() ?? 'arrived_at_merchant';
+    }
+    return 'arrived_at_merchant';
   }
 
   Future<void> markFoodPickedUp(String bookingId) async {
@@ -1273,11 +1278,94 @@ class BookingService {
   Future<void> notifyDriversAboutNewBooking(Booking booking) =>
       _notifyDriversAboutNewRide(booking);
 
+  Future<bool> _notifyVisibleDriversViaRpc(Booking booking) async {
+    try {
+      final configService = SystemConfigService();
+      await configService.fetchSettings();
+      final radiusKm = configService.driverToOrderRadiusKm;
+      final title =
+          '🚨 งานใหม่! ${booking.serviceType == 'food' ? 'ส่งอาหาร' : booking.serviceType == 'ride' ? 'รับส่งผู้โดยสาร' : 'ส่งพัสดุ'}';
+      final body =
+          'มีงานจาก ${booking.pickupAddress ?? 'จุดรับ'} ไป ${booking.destinationAddress ?? 'จุดหมาย'} - ฿${booking.price.toStringAsFixed(0)}';
+
+      final notifyResult = await _client.rpc(
+        'notify_driver_visible_job',
+        params: {
+          'p_booking_id': booking.id,
+          'p_title': title,
+          'p_body': body,
+          'p_radius_km': radiusKm,
+        },
+      );
+      final driversToNotify = List<Map<String, dynamic>>.from(
+        notifyResult ?? const [],
+      );
+      debugLog(
+          '📊 Visible driver notifications persisted within ${radiusKm}km: ${driversToNotify.length}');
+
+      int successCount = 0;
+      int failCount = 0;
+      final payload = NotificationPayloadPolicy.buildBookingPayload(
+        type: NotificationTypes.driverJobAvailable,
+        recipientRole: NotificationRoles.driver,
+        bookingId: booking.id,
+        serviceType: booking.serviceType,
+        extra: {
+          'legacy_type': NotificationTypes.legacyNewBooking,
+          'customer_id': booking.customerId,
+          'origin_lat': booking.originLat.toString(),
+          'origin_lng': booking.originLng.toString(),
+          'dest_lat': booking.destLat.toString(),
+          'dest_lng': booking.destLng.toString(),
+          'price': booking.price.toString(),
+          'pickup_address': booking.pickupAddress ?? '',
+          'destination_address': booking.destinationAddress ?? '',
+          'distance_km': booking.distanceKm.toString(),
+        },
+      );
+
+      for (final driver in driversToNotify) {
+        final driverId = driver['driver_id']?.toString();
+        final notificationId = driver['notification_id']?.toString();
+        if (driverId == null || driverId.isEmpty) {
+          failCount++;
+          continue;
+        }
+
+        final success = await NotificationSender.sendNotification(
+          targetUserId: driverId,
+          title: title,
+          body: body,
+          data: payload,
+          persistInApp: false,
+          notificationId: notificationId,
+        );
+        if (success) {
+          successCount++;
+        } else {
+          failCount++;
+        }
+      }
+
+      debugLog(
+          '📊 Driver notification summary: fcmSent=$successCount, failed=$failCount');
+      return true;
+    } catch (e) {
+      debugLog(
+          '⚠️ notify_driver_visible_job unavailable, using legacy driver notification path: $e');
+      return false;
+    }
+  }
+
   /// Notify available drivers about new ride booking
   Future<void> _notifyDriversAboutNewRide(Booking booking) async {
     try {
       debugLog('📤 Notifying nearby drivers about new booking: ${booking.id}');
       debugLog('   └─ Service type: ${booking.serviceType}');
+
+      if (await _notifyVisibleDriversViaRpc(booking)) {
+        return;
+      }
 
       List<Map<String, dynamic>> driversToNotify = [];
 
@@ -1295,7 +1383,8 @@ class BookingService {
         });
 
         driversToNotify = List<Map<String, dynamic>>.from(nearbyResult ?? []);
-        debugLog('📊 Nearby drivers within ${radiusKm}km: ${driversToNotify.length}');
+        debugLog(
+            '📊 Nearby drivers within ${radiusKm}km: ${driversToNotify.length}');
       } else {
         // fallback — no location data, notify all drivers
         final response = await _client
@@ -1304,7 +1393,8 @@ class BookingService {
             .eq('role', 'driver')
             .not('fcm_token', 'is', null);
         driversToNotify = List<Map<String, dynamic>>.from(response);
-        debugLog('⚠️ No location data, notifying all ${driversToNotify.length} drivers');
+        debugLog(
+            '⚠️ No location data, notifying all ${driversToNotify.length} drivers');
       }
 
       if (driversToNotify.isEmpty) {
@@ -1326,23 +1416,28 @@ class BookingService {
 
         final success = await NotificationSender.sendNotification(
           targetUserId: driverId,
-          title: '🚨 งานใหม่! ${booking.serviceType == 'food' ? 'ส่งอาหาร' : booking.serviceType == 'ride' ? 'รับส่งผู้โดยสาร' : 'ส่งพัสดุ'}',
+          title:
+              '🚨 งานใหม่! ${booking.serviceType == 'food' ? 'ส่งอาหาร' : booking.serviceType == 'ride' ? 'รับส่งผู้โดยสาร' : 'ส่งพัสดุ'}',
           body:
               'มีงานจาก ${booking.pickupAddress ?? 'จุดรับ'} ไป ${booking.destinationAddress ?? 'จุดหมาย'} - ฿${booking.price.toStringAsFixed(0)}',
-          data: {
-            'type': 'new_booking',
-            'booking_id': booking.id,
-            'customer_id': booking.customerId,
-            'service_type': booking.serviceType,
-            'origin_lat': booking.originLat.toString(),
-            'origin_lng': booking.originLng.toString(),
-            'dest_lat': booking.destLat.toString(),
-            'dest_lng': booking.destLng.toString(),
-            'price': booking.price.toString(),
-            'pickup_address': booking.pickupAddress ?? '',
-            'destination_address': booking.destinationAddress ?? '',
-            'distance_km': booking.distanceKm.toString(),
-          },
+          data: NotificationPayloadPolicy.buildBookingPayload(
+            type: NotificationTypes.driverJobAvailable,
+            recipientRole: NotificationRoles.driver,
+            bookingId: booking.id,
+            serviceType: booking.serviceType,
+            extra: {
+              'legacy_type': NotificationTypes.legacyNewBooking,
+              'customer_id': booking.customerId,
+              'origin_lat': booking.originLat.toString(),
+              'origin_lng': booking.originLng.toString(),
+              'dest_lat': booking.destLat.toString(),
+              'dest_lng': booking.destLng.toString(),
+              'price': booking.price.toString(),
+              'pickup_address': booking.pickupAddress ?? '',
+              'destination_address': booking.destinationAddress ?? '',
+              'distance_km': booking.distanceKm.toString(),
+            },
+          ),
         );
 
         if (success) {
@@ -1352,7 +1447,8 @@ class BookingService {
         }
       }
 
-      debugLog('📊 Notification summary: sent=$successCount, failed=$failCount');
+      debugLog(
+          '📊 Notification summary: sent=$successCount, failed=$failCount');
     } catch (e) {
       debugLog('❌ Error notifying drivers: $e');
     }

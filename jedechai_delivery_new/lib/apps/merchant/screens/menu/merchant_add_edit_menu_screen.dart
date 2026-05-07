@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../common/services/menu_option_service.dart';
@@ -11,7 +11,7 @@ import '../../../../theme/app_theme.dart';
 import '../../../../utils/debug_logger.dart';
 
 /// Merchant Add/Edit Menu Screen
-/// 
+///
 /// Enhanced version with option groups linking functionality
 /// Features: Add/Edit menu items, Link/Unlink option groups
 class MerchantAddEditMenuScreen extends StatefulWidget {
@@ -23,7 +23,8 @@ class MerchantAddEditMenuScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<MerchantAddEditMenuScreen> createState() => _MerchantAddEditMenuScreenState();
+  State<MerchantAddEditMenuScreen> createState() =>
+      _MerchantAddEditMenuScreenState();
 }
 
 class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
@@ -31,7 +32,9 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
+  final _prepTimeController = TextEditingController(text: '15');
   String _selectedCategory = 'อาหารตามสั่ง';
+  String? _selectedCategoryId;
   bool _isAvailable = true;
   File? _menuItemPhoto;
   String? _imageUrl;
@@ -49,8 +52,9 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
     'ของทานเล่น',
     'อื่นๆ',
   ];
-  
+
   List<MenuOptionGroup> _linkedOptionGroups = [];
+  List<Map<String, dynamic>> _menuCategories = [];
   bool _isLoadingOptionGroups = false;
   bool _isSaving = false;
 
@@ -60,18 +64,58 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
     _initializeData();
   }
 
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descriptionController.dispose();
+    _priceController.dispose();
+    _prepTimeController.dispose();
+    super.dispose();
+  }
+
   void _initializeData() {
     if (widget.item != null) {
       // Edit mode
       _nameController.text = widget.item!['name'] ?? '';
       _descriptionController.text = widget.item!['description'] ?? '';
       _priceController.text = widget.item!['price']?.toString() ?? '';
+      _prepTimeController.text =
+          widget.item!['prep_time_minutes']?.toString() ?? '15';
       _imageUrl = widget.item!['image_url'];
       _selectedCategory = widget.item!['category'] ?? 'อาหารตามสั่ง';
+      _selectedCategoryId = widget.item!['category_id'] as String?;
       _isAvailable = widget.item!['is_available'] ?? true;
-      
+
       // Load linked option groups
       _loadLinkedOptionGroups();
+    }
+    _loadMenuCategories();
+  }
+
+  Future<void> _loadMenuCategories() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
+    try {
+      final rows = await Supabase.instance.client
+          .from('menu_categories')
+          .select('id, name')
+          .eq('merchant_id', userId)
+          .eq('is_active', true)
+          .order('sort_order');
+      if (!mounted) return;
+      setState(() {
+        _menuCategories = List<Map<String, dynamic>>.from(rows);
+        if (_selectedCategoryId == null && _menuCategories.isNotEmpty) {
+          final matched = _menuCategories.where(
+            (category) => category['name'] == _selectedCategory,
+          );
+          if (matched.isNotEmpty) {
+            _selectedCategoryId = matched.first['id'] as String?;
+          }
+        }
+      });
+    } catch (e) {
+      debugLog('⚠️ Menu categories unavailable, using static categories: $e');
     }
   }
 
@@ -82,8 +126,9 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
 
     try {
       final menuItemId = widget.item!['id'] as String;
-      final optionGroups = await MenuOptionService().getOptionGroupsForMenuItem(menuItemId);
-      
+      final optionGroups =
+          await MenuOptionService().getOptionGroupsForMenuItem(menuItemId);
+
       if (mounted) {
         setState(() {
           _linkedOptionGroups = optionGroups;
@@ -95,7 +140,8 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
         setState(() => _isLoadingOptionGroups = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.menuEditLoadOptionsFailed(e.toString())),
+            content: Text(AppLocalizations.of(context)!
+                .menuEditLoadOptionsFailed(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -116,7 +162,8 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
       children: [
         Icon(Icons.add_a_photo, size: 48, color: Colors.grey[400]),
         const SizedBox(height: 8),
-        Text(AppLocalizations.of(context)!.menuEditTapToPhoto, style: TextStyle(color: Colors.grey[500], fontSize: 14)),
+        Text(AppLocalizations.of(context)!.menuEditTapToPhoto,
+            style: TextStyle(color: Colors.grey[500], fontSize: 14)),
       ],
     );
   }
@@ -139,7 +186,10 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
         'price': double.parse(_priceController.text),
         'image_url': _imageUrl ?? '',
         'category': _selectedCategory,
+        'category_id': _selectedCategoryId,
         'is_available': _isAvailable,
+        'prep_time_minutes':
+            int.tryParse(_prepTimeController.text.trim()) ?? 15,
       };
 
       String? menuItemId;
@@ -174,8 +224,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
           _imageUrl = uploadedUrl;
           await Supabase.instance.client
               .from('menu_items')
-              .update({'image_url': uploadedUrl})
-              .eq('id', menuItemId);
+              .update({'image_url': uploadedUrl}).eq('id', menuItemId);
           debugLog('📷 Menu item image uploaded: $uploadedUrl');
         }
       }
@@ -191,19 +240,21 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
               .eq('menu_item_id', menuItemId);
         } catch (_) {}
         // Re-link all currently selected groups
-          for (int i = 0; i < _linkedOptionGroups.length; i++) {
-            await MenuOptionService().linkOptionGroupToMenu(
-              menuItemId: menuItemId,
-              groupId: _linkedOptionGroups[i].id,
-              sortOrder: i,
-            );
-          }
+        for (int i = 0; i < _linkedOptionGroups.length; i++) {
+          await MenuOptionService().linkOptionGroupToMenu(
+            menuItemId: menuItemId,
+            groupId: _linkedOptionGroups[i].id,
+            sortOrder: i,
+          );
         }
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(widget.item == null ? AppLocalizations.of(context)!.menuEditAddSuccess : AppLocalizations.of(context)!.menuEditUpdateSuccess),
+            content: Text(widget.item == null
+                ? AppLocalizations.of(context)!.menuEditAddSuccess
+                : AppLocalizations.of(context)!.menuEditUpdateSuccess),
             backgroundColor: Colors.green,
           ),
         );
@@ -266,14 +317,16 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context)!.menuEditDeleteGroupSuccess(group.name)),
+          content: Text(AppLocalizations.of(context)!
+              .menuEditDeleteGroupSuccess(group.name)),
           backgroundColor: Colors.green,
         ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context)!.menuEditDeleteGroupFailed(e.toString())),
+          content: Text(AppLocalizations.of(context)!
+              .menuEditDeleteGroupFailed(e.toString())),
           backgroundColor: Colors.red,
         ),
       );
@@ -286,7 +339,9 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? AppLocalizations.of(context)!.menuEditTitleEdit : AppLocalizations.of(context)!.menuEditTitleAdd),
+        title: Text(isEditing
+            ? AppLocalizations.of(context)!.menuEditTitleEdit
+            : AppLocalizations.of(context)!.menuEditTitleAdd),
         backgroundColor: AppTheme.accentOrange,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -345,11 +400,15 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
                             width: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           )
                         : Text(
-                            isEditing ? AppLocalizations.of(context)!.menuEditBtnUpdate : AppLocalizations.of(context)!.menuEditBtnAdd,
+                            isEditing
+                                ? AppLocalizations.of(context)!
+                                    .menuEditBtnUpdate
+                                : AppLocalizations.of(context)!.menuEditBtnAdd,
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -377,7 +436,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        
+
         TextFormField(
           controller: _nameController,
           decoration: InputDecoration(
@@ -392,7 +451,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
           },
         ),
         const SizedBox(height: 16),
-        
+
         TextFormField(
           controller: _descriptionController,
           decoration: InputDecoration(
@@ -402,7 +461,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
           maxLines: 3,
         ),
         const SizedBox(height: 16),
-        
+
         TextFormField(
           controller: _priceController,
           decoration: InputDecoration(
@@ -422,9 +481,10 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
           },
         ),
         const SizedBox(height: 16),
-        
+
         // Image Upload Section
-        Text(AppLocalizations.of(context)!.menuEditPhotoLabel, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+        Text(AppLocalizations.of(context)!.menuEditPhotoLabel,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
         const SizedBox(height: 8),
         GestureDetector(
           onTap: _isUploadingImage ? null : _pickMenuItemPhoto,
@@ -434,7 +494,8 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
             decoration: BoxDecoration(
               color: Colors.grey[100],
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[300]!, style: BorderStyle.solid),
+              border: Border.all(
+                  color: Colors.grey[300]!, style: BorderStyle.solid),
             ),
             child: _menuItemPhoto != null
                 ? ClipRRect(
@@ -456,7 +517,8 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
                                 color: Colors.red,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.close, color: Colors.white, size: 18),
+                              child: const Icon(Icons.close,
+                                  color: Colors.white, size: 18),
                             ),
                           ),
                         ),
@@ -485,7 +547,8 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
                                     color: Colors.red,
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(Icons.close, color: Colors.white, size: 18),
+                                  child: const Icon(Icons.close,
+                                      color: Colors.white, size: 18),
                                 ),
                               ),
                             ),
@@ -499,18 +562,51 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
 
         // Category Dropdown
         DropdownButtonFormField<String>(
-          initialValue: _categoryOptions.contains(_selectedCategory) ? _selectedCategory : 'อื่นๆ',
+          initialValue: (_menuCategories.any(
+                (category) => category['id'] == _selectedCategoryId,
+              )
+                  ? _selectedCategoryId
+                  : null) ??
+              (_categoryOptions.contains(_selectedCategory)
+                  ? _selectedCategory
+                  : 'อื่นๆ'),
           decoration: InputDecoration(
             labelText: AppLocalizations.of(context)!.menuEditCategoryLabel,
             border: const OutlineInputBorder(),
             prefixIcon: const Icon(Icons.category),
           ),
-          items: _categoryOptions.map((cat) {
-            return DropdownMenuItem(value: cat, child: Text(cat));
-          }).toList(),
+          items: [
+            ..._menuCategories.map((category) {
+              return DropdownMenuItem(
+                value: category['id'] as String,
+                child: Text(category['name']?.toString() ?? ''),
+              );
+            }),
+            if (_menuCategories.isNotEmpty)
+              const DropdownMenuItem<String>(
+                enabled: false,
+                value: '__divider__',
+                child: Text('────────'),
+              ),
+            ..._categoryOptions.map((cat) {
+              return DropdownMenuItem(value: cat, child: Text(cat));
+            }),
+          ],
           onChanged: (value) {
             if (value != null) {
-              setState(() => _selectedCategory = value);
+              final dynamicCategory = _menuCategories.where(
+                (category) => category['id'] == value,
+              );
+              setState(() {
+                if (dynamicCategory.isNotEmpty) {
+                  _selectedCategoryId = value;
+                  _selectedCategory =
+                      dynamicCategory.first['name']?.toString() ?? 'อื่นๆ';
+                } else {
+                  _selectedCategoryId = null;
+                  _selectedCategory = value;
+                }
+              });
             }
           },
           validator: (value) {
@@ -521,7 +617,25 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
           },
         ),
         const SizedBox(height: 16),
-        
+
+        TextFormField(
+          controller: _prepTimeController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'เวลาเตรียมอาหาร (นาที)',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.timer_outlined),
+          ),
+          validator: (value) {
+            final minutes = int.tryParse((value ?? '').trim());
+            if (minutes == null || minutes < 1 || minutes > 180) {
+              return 'กรุณาระบุ 1-180 นาที';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+
         SwitchListTile(
           title: Text(AppLocalizations.of(context)!.menuEditAvailable),
           value: _isAvailable,
@@ -552,7 +666,8 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
             const Spacer(),
             if (_linkedOptionGroups.isNotEmpty)
               Text(
-                AppLocalizations.of(context)!.menuEditGroupCount(_linkedOptionGroups.length.toString()),
+                AppLocalizations.of(context)!
+                    .menuEditGroupCount(_linkedOptionGroups.length.toString()),
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.grey[600],
@@ -561,7 +676,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        
+
         // Linked Groups List
         if (_isLoadingOptionGroups)
           const Center(
@@ -613,9 +728,9 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
               onRemove: () => _unlinkOptionGroup(group),
             );
           }),
-        
+
         const SizedBox(height: 16),
-        
+
         // Add Option Group Button
         SizedBox(
           width: double.infinity,
@@ -649,7 +764,7 @@ class LinkedOptionGroupCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final min = group.minSelection;
     final max = group.maxSelection;
-    
+
     if (min == 0 && max == 1) {
       return l10n.optLibSelectMax1;
     } else if (min == 0 && max > 1) {
@@ -664,7 +779,7 @@ class LinkedOptionGroupCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final optionCount = group.options?.length ?? 0;
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -686,7 +801,7 @@ class LinkedOptionGroupCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            
+
             // Group Info
             Expanded(
               child: Column(
@@ -709,7 +824,8 @@ class LinkedOptionGroupCard extends StatelessWidget {
                   ),
                   if (optionCount > 0)
                     Text(
-                      AppLocalizations.of(context)!.menuEditOptionCount(optionCount.toString()),
+                      AppLocalizations.of(context)!
+                          .menuEditOptionCount(optionCount.toString()),
                       style: TextStyle(
                         fontSize: 12,
                         color: AppTheme.accentOrange,
@@ -718,7 +834,7 @@ class LinkedOptionGroupCard extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             // Remove Button
             IconButton(
               icon: const Icon(Icons.remove_circle, color: Colors.red),
@@ -734,10 +850,13 @@ class LinkedOptionGroupCard extends StatelessWidget {
   IconData _getGroupIcon() {
     final name = group.name.toLowerCase();
     if (name.contains('หวาน') || name.contains('sweet')) return Icons.cake;
-    if (name.contains('เผ็ด') || name.contains('spicy')) return Icons.local_fire_department;
-    if (name.contains('ท็อปปิ้ง') || name.contains('topping')) return Icons.add_circle;
+    if (name.contains('เผ็ด') || name.contains('spicy'))
+      return Icons.local_fire_department;
+    if (name.contains('ท็อปปิ้ง') || name.contains('topping'))
+      return Icons.add_circle;
     if (name.contains('ขนาด') || name.contains('size')) return Icons.straighten;
-    if (name.contains('เนื้อ') || name.contains('meat')) return Icons.lunch_dining;
+    if (name.contains('เนื้อ') || name.contains('meat'))
+      return Icons.lunch_dining;
     return Icons.category;
   }
 }
@@ -755,7 +874,8 @@ class OptionGroupSelectionSheet extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<OptionGroupSelectionSheet> createState() => _OptionGroupSelectionSheetState();
+  State<OptionGroupSelectionSheet> createState() =>
+      _OptionGroupSelectionSheetState();
 }
 
 class _OptionGroupSelectionSheetState extends State<OptionGroupSelectionSheet> {
@@ -778,8 +898,9 @@ class _OptionGroupSelectionSheetState extends State<OptionGroupSelectionSheet> {
         _error = null;
       });
 
-      final groups = await MenuOptionService().getOptionGroupsForMerchant(widget.merchantId);
-      
+      final groups = await MenuOptionService()
+          .getOptionGroupsForMerchant(widget.merchantId);
+
       if (mounted) {
         setState(() {
           _availableGroups = groups;
@@ -835,7 +956,7 @@ class _OptionGroupSelectionSheetState extends State<OptionGroupSelectionSheet> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              
+
               // Header
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -851,7 +972,8 @@ class _OptionGroupSelectionSheetState extends State<OptionGroupSelectionSheet> {
                     const Spacer(),
                     if (_selectedGroups.isNotEmpty)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: AppTheme.accentOrange,
                           borderRadius: BorderRadius.circular(12),
@@ -868,14 +990,14 @@ class _OptionGroupSelectionSheetState extends State<OptionGroupSelectionSheet> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Content
               Expanded(
                 child: _buildContent(scrollController),
               ),
-              
+
               // Save Button
               Container(
                 padding: const EdgeInsets.all(16),
@@ -995,7 +1117,7 @@ class _OptionGroupSelectionSheetState extends State<OptionGroupSelectionSheet> {
       itemBuilder: (context, index) {
         final group = _availableGroups[index];
         final isSelected = _selectedGroups.any((g) => g.id == group.id);
-        
+
         return OptionGroupSelectionCard(
           group: group,
           isSelected: isSelected,
@@ -1022,7 +1144,7 @@ class OptionGroupSelectionCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final min = group.minSelection;
     final max = group.maxSelection;
-    
+
     if (min == 0 && max == 1) {
       return l10n.optLibSelectMax1;
     } else if (min == 0 && max > 1) {
@@ -1037,7 +1159,7 @@ class OptionGroupSelectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final optionCount = group.options?.length ?? 0;
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
@@ -1053,7 +1175,7 @@ class OptionGroupSelectionCard extends StatelessWidget {
                 onChanged: (value) => onTap(),
                 activeColor: AppTheme.accentOrange,
               ),
-              
+
               // Icon
               Container(
                 width: 40,
@@ -1069,7 +1191,7 @@ class OptionGroupSelectionCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              
+
               // Group Info
               Expanded(
                 child: Column(
@@ -1092,7 +1214,8 @@ class OptionGroupSelectionCard extends StatelessWidget {
                     ),
                     if (optionCount > 0)
                       Text(
-                        AppLocalizations.of(context)!.menuEditOptionCount(optionCount.toString()),
+                        AppLocalizations.of(context)!
+                            .menuEditOptionCount(optionCount.toString()),
                         style: TextStyle(
                           fontSize: 12,
                           color: AppTheme.accentOrange,
@@ -1111,10 +1234,13 @@ class OptionGroupSelectionCard extends StatelessWidget {
   IconData _getGroupIcon() {
     final name = group.name.toLowerCase();
     if (name.contains('หวาน') || name.contains('sweet')) return Icons.cake;
-    if (name.contains('เผ็ด') || name.contains('spicy')) return Icons.local_fire_department;
-    if (name.contains('ท็อปปิ้ง') || name.contains('topping')) return Icons.add_circle;
+    if (name.contains('เผ็ด') || name.contains('spicy'))
+      return Icons.local_fire_department;
+    if (name.contains('ท็อปปิ้ง') || name.contains('topping'))
+      return Icons.add_circle;
     if (name.contains('ขนาด') || name.contains('size')) return Icons.straighten;
-    if (name.contains('เนื้อ') || name.contains('meat')) return Icons.lunch_dining;
+    if (name.contains('เนื้อ') || name.contains('meat'))
+      return Icons.lunch_dining;
     return Icons.category;
   }
 }

@@ -11,9 +11,14 @@ import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'package:vibration/vibration.dart';
 import '../../../common/services/auth_service.dart';
 import '../../../common/services/location_service.dart';
+import '../../../common/services/merchant_order_service.dart';
 import '../../../common/services/notification_sender.dart';
 import '../../../common/utils/order_code_formatter.dart';
 import '../../../common/widgets/location_disclosure_dialog.dart';
+import '../widgets/order_alarm_widget.dart';
+import '../widgets/order_card.dart';
+import '../widgets/order_list.dart';
+import '../widgets/shop_status_card.dart';
 import 'order_detail_screen.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -33,6 +38,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
       MethodChannel('jedechai/alarm_sound');
 
   bool _isShopOpen = false;
+  final MerchantOrderService _merchantOrderService = MerchantOrderService();
   bool _isLoading = true;
   String? _error;
   List<Map<String, dynamic>> _orders = [];
@@ -91,7 +97,8 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 backgroundColor: colorScheme.error,
                 foregroundColor: colorScheme.onError,
               ),
-              child: Text(AppLocalizations.of(context)!.merchantCloseShopConfirm),
+              child:
+                  Text(AppLocalizations.of(context)!.merchantCloseShopConfirm),
             ),
           ],
         );
@@ -371,93 +378,11 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
   }
 
   void _showAlarmDialog() {
-    final colorScheme = Theme.of(context).colorScheme;
     showDialog(
       context: context,
-      barrierDismissible: false, // Cannot dismiss by tapping outside
-      builder: (context) => PopScope(
-        canPop: false,
-        child: AlertDialog(
-          title: Row(
-            children: [
-              Icon(
-                Icons.notifications_active,
-                color: colorScheme.error,
-                size: 32,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                AppLocalizations.of(context)!.merchantNewOrderAlert,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.error,
-                ),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.delivery_dining,
-                size: 64,
-                color: colorScheme.error,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                AppLocalizations.of(context)!.merchantNewOrderWaiting,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                AppLocalizations.of(context)!.merchantAlarmDesc,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-          actions: [
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // Close dialog
-                  _stopAlarm(); // Stop alarm
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colorScheme.error,
-                  foregroundColor: colorScheme.onError,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.stop),
-                    const SizedBox(width: 8),
-                    Text(
-                      AppLocalizations.of(context)!.merchantStopAlarm,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+      barrierDismissible: false,
+      builder: (context) => MerchantOrderAlarmDialog(
+        onStopAlarm: _stopAlarm,
       ),
     );
   }
@@ -476,71 +401,61 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
 
     debugLog('🏪 Setting up orders stream for merchant: $merchantId');
 
-    _ordersStreamSubscription = Supabase.instance.client
-        .from('bookings')
-        .stream(primaryKey: ['id'])
-        .eq('service_type', 'food')
-        .listen((data) {
-          debugLog('📡 Stream received data: ${data.length} total bookings');
+    _ordersStreamSubscription =
+        _merchantOrderService.watchOrders(merchantId).listen((merchantOrders) {
+      debugLog(
+          '📡 Stream received data: ${merchantOrders.length} merchant bookings');
 
-          final merchantId = AuthService.userId;
-          final merchantOrders = data.where((item) {
-            final itemMerchantId = item['merchant_id'];
-            return itemMerchantId != null &&
-                itemMerchantId.toString() == merchantId.toString();
-          }).toList();
+      debugLog('📊 Raw merchant orders data: ${merchantOrders.length} items');
 
-          debugLog(
-              '📊 Raw merchant orders data: ${merchantOrders.length} items');
+      // Log all orders with their status for debugging
+      //for (final order in merchantOrders) {
+      //  print('📦 Order ${OrderCodeFormatter.format(order['id']?.toString())}: status=${order['status']}, merchant_id=${order['merchant_id']}');
+      //}
 
-          // Log all orders with their status for debugging
-          //for (final order in merchantOrders) {
-          //  print('📦 Order ${OrderCodeFormatter.format(order['id']?.toString())}: status=${order['status']}, merchant_id=${order['merchant_id']}');
-          //}
+      // Filter based on whether we're showing active or history
+      final filteredOrders = merchantOrders.where((item) {
+        final status = item['status'] as String? ?? '';
 
-          // Filter based on whether we're showing active or history
-          final filteredOrders = merchantOrders.where((item) {
-            final status = item['status'] as String? ?? '';
-
-            if (_showHistory) {
-              // Show completed and cancelled orders for history
-              return status == 'completed' || status == 'cancelled';
-            } else {
-              // Show only orders that merchant needs to handle
-              // ร้านค้าจบงานเมื่อคนขับรับอาหารแล้ว (picking_up_order ไม่แสดง)
-              final activeStatuses = [
-                'pending_merchant', // รอร้านค้ายืนยัน (ออเดอร์ใหม่)
-                'pending', // รอดำเนินการ
-                'preparing', // กำลังเตรียมอาหาร
-                'driver_accepted', // คนขับรับงานแล้ว (กำลังมาร้าน)
-                'arrived_at_merchant', // คนขับถึงร้านแล้ว (รออาหารพร้อม)
-                'ready_for_pickup', // อาหารพร้อมรับ
-              ];
-              final isActive = activeStatuses.contains(status);
-              if (isActive) {
-                debugLog(
-                    '✅ Active order: ${OrderCodeFormatter.format(item['id']?.toString())} - $status');
-              }
-              return isActive;
-            }
-          }).toList();
-
-          // Check for new pending_merchant orders and trigger alarm if needed
-          debugLog('🔍 Checking for new orders - Shop is open: $_isShopOpen');
-          debugLog('🔍 Notified orders count: ${_notifiedOrderIds.length}');
-
-          _checkAndTriggerNewOrderAlarm(merchantOrders);
-          _autoAcceptPendingOrders(merchantOrders);
-
-          debugLog(
-              '📋 Filtered orders (${_showHistory ? "history" : "active"}): ${filteredOrders.length} items');
-
-          if (mounted) {
-            setState(() {
-              _orders = filteredOrders;
-            });
+        if (_showHistory) {
+          // Show completed and cancelled orders for history
+          return status == 'completed' || status == 'cancelled';
+        } else {
+          // Show only orders that merchant needs to handle
+          // ร้านค้าจบงานเมื่อคนขับรับอาหารแล้ว (picking_up_order ไม่แสดง)
+          final activeStatuses = [
+            'pending_merchant', // รอร้านค้ายืนยัน (ออเดอร์ใหม่)
+            'pending', // รอดำเนินการ
+            'preparing', // กำลังเตรียมอาหาร
+            'driver_accepted', // คนขับรับงานแล้ว (กำลังมาร้าน)
+            'arrived_at_merchant', // คนขับถึงร้านแล้ว (รออาหารพร้อม)
+            'ready_for_pickup', // อาหารพร้อมรับ
+          ];
+          final isActive = activeStatuses.contains(status);
+          if (isActive) {
+            debugLog(
+                '✅ Active order: ${OrderCodeFormatter.format(item['id']?.toString())} - $status');
           }
+          return isActive;
+        }
+      }).toList();
+
+      // Check for new pending_merchant orders and trigger alarm if needed
+      debugLog('🔍 Checking for new orders - Shop is open: $_isShopOpen');
+      debugLog('🔍 Notified orders count: ${_notifiedOrderIds.length}');
+
+      _checkAndTriggerNewOrderAlarm(merchantOrders);
+      _autoAcceptPendingOrders(merchantOrders);
+
+      debugLog(
+          '📋 Filtered orders (${_showHistory ? "history" : "active"}): ${filteredOrders.length} items');
+
+      if (mounted) {
+        setState(() {
+          _orders = filteredOrders;
         });
+      }
+    });
 
     debugLog('✅ Stream setup complete');
   }
@@ -579,14 +494,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
 
       debugLog('📥 Fetching orders snapshot for merchant: $merchantId');
 
-      final response = await Supabase.instance.client
-          .from('bookings')
-          .select()
-          .eq('service_type', 'food')
-          .eq('merchant_id', merchantId)
-          .order('created_at', ascending: false);
-
-      final data = List<Map<String, dynamic>>.from(response);
+      final data = await _merchantOrderService.fetchOrders(merchantId);
 
       debugLog('📊 Total orders fetched: ${data.length}');
 
@@ -676,11 +584,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
         throw Exception(AppLocalizations.of(context)!.merchantUserNotFound);
       }
 
-      final response = await Supabase.instance.client
-          .from('profiles')
-          .select('shop_status, order_accept_mode, shop_auto_schedule_enabled')
-          .eq('id', userId)
-          .single();
+      final response = await _merchantOrderService.fetchShopStatus(userId);
 
       if (mounted) {
         final raw = response['shop_status'];
@@ -830,19 +734,11 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
         throw Exception(AppLocalizations.of(context)!.merchantUserNotFound);
       }
 
-      final updateData = {
-        'shop_status': value,
-        'is_online': value, // Sync online status with shop status
-        if (!triggeredBySchedule) 'shop_auto_schedule_enabled': false,
-        'updated_at': DateTime.now().toIso8601String(),
-      };
-
-      final updated = await Supabase.instance.client
-          .from('profiles')
-          .update(updateData)
-          .eq('id', userId)
-          .select('shop_status, shop_auto_schedule_enabled')
-          .maybeSingle();
+      final updated = await _merchantOrderService.toggleShopStatus(
+        userId,
+        value,
+        disableAutoSchedule: !triggeredBySchedule,
+      );
 
       final updatedRaw = updated?['shop_status'];
       final bool updatedStatus =
@@ -862,8 +758,12 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           SnackBar(
             content: Text(
               value
-                  ? (autoDisabled ? AppLocalizations.of(context)!.merchantShopOpenedAutoOff : AppLocalizations.of(context)!.merchantShopOpened)
-                  : (autoDisabled ? AppLocalizations.of(context)!.merchantShopClosedAutoOff : AppLocalizations.of(context)!.merchantShopClosed),
+                  ? (autoDisabled
+                      ? AppLocalizations.of(context)!.merchantShopOpenedAutoOff
+                      : AppLocalizations.of(context)!.merchantShopOpened)
+                  : (autoDisabled
+                      ? AppLocalizations.of(context)!.merchantShopClosedAutoOff
+                      : AppLocalizations.of(context)!.merchantShopClosed),
             ),
             backgroundColor:
                 value ? AppTheme.accentOrange : colorScheme.outline,
@@ -883,7 +783,8 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.merchantShopStatusError(e.toString())),
+            content: Text(AppLocalizations.of(context)!
+                .merchantShopStatusError(e.toString())),
             backgroundColor: Theme.of(context).colorScheme.error,
             duration: const Duration(seconds: 3),
           ),
@@ -892,103 +793,30 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
     }
   }
 
-  Future<void> _saveOrderStatus(String bookingId, String status) async {
-    if (_prefs != null) {
-      await _prefs!.setString('order_status_$bookingId', status);
-      await _prefs!.setString(
-          'order_updated_$bookingId', DateTime.now().toIso8601String());
-      debugLog('💾 Order status saved: $bookingId -> $status');
-    }
-  }
-
-  // ignore: unused_element
-  Future<String?> _getSavedOrderStatus(String bookingId) async {
-    if (_prefs != null) {
-      return _prefs!.getString('order_status_$bookingId');
-    }
-    return null;
-  }
-
-  String? _getSavedOrderStatusSync(String bookingId) {
-    // Synchronous version for UI building
-    if (_prefs != null) {
-      return _prefs!.getString('order_status_$bookingId');
-    }
-    return null;
-  }
-
-  Future<void> _clearOrderStatus(String bookingId) async {
-    if (_prefs != null) {
-      await _prefs!.remove('order_status_$bookingId');
-      await _prefs!.remove('order_updated_$bookingId');
-      debugLog('🗑️ Order status cleared: $bookingId');
-    }
-  }
-
   Future<void> _acceptOrder(String bookingId,
       {bool triggeredAutomatically = false}) async {
     try {
       debugLog('🏪 Merchant accepting order: $bookingId');
 
-      // Save pending status immediately
-      await _saveOrderStatus(bookingId, 'preparing');
-
-      // Get current booking to check status
-      final bookingData = await Supabase.instance.client
-          .from('bookings')
-          .select('status')
-          .eq('id', bookingId)
-          .single();
-
-      final currentStatus = bookingData['status'] as String;
-      String newStatus;
-
-      // Parallel Flow Logic
-      if (currentStatus == 'pending' || currentStatus == 'pending_merchant') {
-        newStatus = 'preparing'; // Merchant accepts first
-      } else if (currentStatus == 'driver_accepted') {
-        newStatus = 'matched'; // Driver already accepted
-      } else if (currentStatus == 'arrived_at_merchant') {
-        newStatus =
-            'ready_for_pickup'; // Driver arrived, merchant marks food ready
-      } else {
+      final result = await _merchantOrderService.acceptOrder(bookingId);
+      if (result.errorCode == 'unavailable') {
         _showErrorSnackBar('Order not available for acceptance');
-        await _clearOrderStatus(bookingId);
         return;
       }
-
-      debugLog('🔄 Updating order status from $currentStatus to $newStatus');
-
-      // Update booking with parallel flow logic
-      final result = await Supabase.instance.client
-          .from('bookings')
-          .update({
-            'status': newStatus,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', bookingId)
-          .eq('status', currentStatus)
-          .select();
-
-      debugLog('✅ Order accepted successfully: $result');
-
-      if (result.isEmpty) {
+      if (result.errorCode == 'taken' || !result.accepted) {
         _showErrorSnackBar('Order already taken or not available');
-        await _clearOrderStatus(bookingId);
         return;
       }
-
-      // Update saved status with confirmed status
-      await _saveOrderStatus(bookingId, newStatus);
 
       // Send notification to customer
-      await _notifyCustomerOrderAccepted(result[0]);
+      await _notifyCustomerOrderAccepted(result.booking!);
 
       if (mounted) {
         if (!triggeredAutomatically) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppLocalizations.of(context)!.merchantOrderConfirmed),
+              content:
+                  Text(AppLocalizations.of(context)!.merchantOrderConfirmed),
               backgroundColor: Theme.of(context).colorScheme.secondary,
               duration: const Duration(seconds: 2),
             ),
@@ -1000,7 +828,6 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
       }
     } catch (e) {
       debugLog('❌ Failed to accept order: $e');
-      await _clearOrderStatus(bookingId);
       _showErrorSnackBar('Cannot accept order: ${e.toString()}');
     }
   }
@@ -1008,52 +835,35 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
   // ignore: unused_element
   Future<void> _markFoodReady(String bookingId) async {
     try {
-      // Save pending status immediately
-      await _saveOrderStatus(bookingId, 'ready_for_pickup');
-
       final merchantId = AuthService.userId;
       if (merchantId == null) {
         _showErrorSnackBar('Merchant not authenticated');
-        await _clearOrderStatus(bookingId);
         return;
       }
 
-      final result = await Supabase.instance.client.rpc(
-        'mark_food_ready_guarded',
-        params: {
-          'p_booking_id': bookingId,
-          'p_merchant_id': merchantId,
-        },
+      final result = await _merchantOrderService.markFoodReady(
+        bookingId: bookingId,
+        merchantId: merchantId,
       );
 
-      if (result is Map && result['success'] != true) {
+      if (!result.success) {
         _showErrorSnackBar(
-          result['error']?.toString() ?? 'Order not available for marking ready',
+          result.errorMessage ?? 'Order not available for marking ready',
         );
-        await _clearOrderStatus(bookingId);
         return;
       }
 
-      final pendingDriverArrival =
-          result is Map && result['pending_driver_arrival'] == true;
-      if (pendingDriverArrival) {
+      if (result.pendingDriverArrival) {
         _showSuccessSnackBar('บันทึกอาหารพร้อมแล้ว รอคนขับถึงร้าน');
         return;
       }
 
-      final booking = await Supabase.instance.client
-          .from('bookings')
-          .select()
-          .eq('id', bookingId)
-          .single();
-
       _showSuccessSnackBar('Food marked as ready for pickup');
 
       // Send notification to customer and driver
-      await _notifyFoodReady(booking);
+      await _notifyFoodReady(result.booking!);
     } catch (e) {
       debugLog('❌ Failed to mark food ready: $e');
-      await _clearOrderStatus(bookingId);
       _showErrorSnackBar('Failed to mark food ready: $e');
     }
   }
@@ -1061,14 +871,8 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
   // ignore: unused_element
   Future<void> _finishOrder(String bookingId) async {
     try {
-      final result = await Supabase.instance.client
-          .from('bookings')
-          .update({'status': 'completed'})
-          .eq('id', bookingId)
-          .inFilter('status', ['ready_for_pickup', 'in_transit'])
-          .select();
-
-      if (result.isEmpty) {
+      final didFinish = await _merchantOrderService.finishOrder(bookingId);
+      if (!didFinish) {
         _showErrorSnackBar('Order not available for finishing');
         return;
       }
@@ -1110,11 +914,15 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
     if (status == 'pending' || status == 'pending_merchant') {
       return AppLocalizations.of(context)!.merchantDriverStatusWaiting;
     } else if (status == 'driver_accepted' || status == 'matched') {
-      final driverName = booking['driver_name'] ?? AppLocalizations.of(context)!.merchantDriverDefault;
-      return AppLocalizations.of(context)!.merchantDriverStatusComing(driverName);
+      final driverName = booking['driver_name'] ??
+          AppLocalizations.of(context)!.merchantDriverDefault;
+      return AppLocalizations.of(context)!
+          .merchantDriverStatusComing(driverName);
     } else if (status == 'in_transit') {
-      final driverName = booking['driver_name'] ?? AppLocalizations.of(context)!.merchantDriverDefault;
-      return AppLocalizations.of(context)!.merchantDriverStatusArrived(driverName);
+      final driverName = booking['driver_name'] ??
+          AppLocalizations.of(context)!.merchantDriverDefault;
+      return AppLocalizations.of(context)!
+          .merchantDriverStatusArrived(driverName);
     } else if (status == 'preparing') {
       return AppLocalizations.of(context)!.merchantDriverStatusPreparing;
     } else if (status == 'ready_for_pickup') {
@@ -1159,7 +967,9 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: Text(_showHistory ? AppLocalizations.of(context)!.merchantAppBarHistory : AppLocalizations.of(context)!.merchantAppBarOrders),
+        title: Text(_showHistory
+            ? AppLocalizations.of(context)!.merchantAppBarHistory
+            : AppLocalizations.of(context)!.merchantAppBarOrders),
         backgroundColor: colorScheme.surface,
         elevation: 0,
         foregroundColor: colorScheme.onSurface,
@@ -1179,7 +989,8 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(AppLocalizations.of(context)!.merchantRefreshed),
+                    content:
+                        Text(AppLocalizations.of(context)!.merchantRefreshed),
                     duration: const Duration(seconds: 1),
                   ),
                 );
@@ -1261,268 +1072,52 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
   }
 
   Widget _buildOrdersList() {
-    final colorScheme = Theme.of(context).colorScheme;
-    if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accentOrange),
-        ),
-      );
-    }
+    return MerchantOrderList(
+      orders: _orders,
+      isLoading: _isLoading,
+      error: _error,
+      isShopOpen: _isShopOpen,
+      onRetry: () async {
+        if (!mounted) return;
 
-    if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              _error!,
-              style: TextStyle(color: colorScheme.error),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () async {
-                if (!mounted) return;
-
-                setState(() {
-                  _error = null;
-                  _isLoading = true;
-                });
-                await _fetchShopStatus();
-                _setupOrdersStream();
-              },
-              child: Text(AppLocalizations.of(context)!.merchantRetry),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (_orders.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(32),
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.shadow.withValues(alpha: 0.12),
-              blurRadius: 4,
-              spreadRadius: 1,
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppTheme.accentOrange.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.restaurant_outlined,
-                size: 64,
-                color: AppTheme.accentOrange,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              AppLocalizations.of(context)!.merchantNoOrders,
-              style: TextStyle(
-                fontSize: 20,
-                color: colorScheme.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _isShopOpen
-                  ? AppLocalizations.of(context)!.merchantOrdersWillAppear
-                  : AppLocalizations.of(context)!.merchantOpenShopToReceive,
-              style: TextStyle(
-                fontSize: 14,
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Column(
-      children: _orders.map((order) {
-        return _buildOrderCard(order);
-      }).toList(),
+        setState(() {
+          _error = null;
+          _isLoading = true;
+        });
+        await _fetchShopStatus();
+        _setupOrdersStream();
+      },
+      orderBuilder: _buildOrderCard,
     );
   }
 
   Widget _buildShopStatusCard() {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: _isShopOpen
-              ? [
-                  AppTheme.accentOrange,
-                  AppTheme.accentOrange.withValues(alpha: 0.8),
-                ]
-              : [
-                  colorScheme.outline,
-                  colorScheme.outline.withValues(alpha: 0.8),
-                ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: (_isShopOpen ? AppTheme.accentOrange : colorScheme.outline)
-                .withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                _isShopOpen ? Icons.store : Icons.store_mall_directory,
-                color: colorScheme.onPrimary,
-                size: 28,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  AppLocalizations.of(context)!.merchantShopStatus,
-                  style: TextStyle(
-                    color: colorScheme.onPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              Switch(
-                value: _isShopOpen,
-                onChanged: (value) async {
-                  if (!mounted) return;
+    return MerchantShopStatusCard(
+      isShopOpen: _isShopOpen,
+      isAutoAcceptMode: _orderAcceptMode == _acceptModeAuto,
+      isAutoScheduleEnabled: _shopAutoScheduleEnabled,
+      onShopStatusChanged: (value) async {
+        if (!mounted) return;
 
-                  final isManualClose = value == false;
-                  if (isManualClose) {
-                    final confirmed = await _confirmManualCloseShopDialog();
-                    if (!confirmed) return;
-                  }
+        final isManualClose = value == false;
+        if (isManualClose) {
+          final confirmed = await _confirmManualCloseShopDialog();
+          if (!confirmed) return;
+        }
 
-                  await _toggleShopStatus(value);
-                },
-                activeThumbColor: colorScheme.onPrimary,
-                inactiveThumbColor: colorScheme.surfaceContainerHighest,
-                activeTrackColor: colorScheme.onPrimary.withValues(alpha: 0.5),
-                inactiveTrackColor: colorScheme.onPrimary.withValues(alpha: 0.3),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            _isShopOpen ? AppLocalizations.of(context)!.merchantShopOpen : AppLocalizations.of(context)!.merchantShopClosed2,
-            style: TextStyle(
-              color: colorScheme.onPrimary,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _isShopOpen
-                ? AppLocalizations.of(context)!.merchantShopOpenDesc
-                : AppLocalizations.of(context)!.merchantShopClosedDesc,
-            style: TextStyle(
-              color: colorScheme.onPrimary.withValues(alpha: 0.9),
-              fontSize: 14,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Icon(
-                _orderAcceptMode == _acceptModeAuto
-                    ? Icons.auto_mode_outlined
-                    : Icons.pan_tool_alt_outlined,
-                color: colorScheme.onPrimary.withValues(alpha: 0.9),
-                size: 16,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                _orderAcceptMode == _acceptModeAuto
-                    ? AppLocalizations.of(context)!.merchantAcceptModeAuto
-                    : AppLocalizations.of(context)!.merchantAcceptModeManual,
-                style: TextStyle(
-                  color: colorScheme.onPrimary.withValues(alpha: 0.95),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Icon(
-                _shopAutoScheduleEnabled
-                    ? Icons.av_timer
-                    : Icons.av_timer_outlined,
-                color: colorScheme.onPrimary.withValues(alpha: 0.9),
-                size: 16,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                _shopAutoScheduleEnabled
-                    ? AppLocalizations.of(context)!.merchantAutoScheduleOn
-                    : AppLocalizations.of(context)!.merchantAutoScheduleOff,
-                style: TextStyle(
-                  color: colorScheme.onPrimary.withValues(alpha: 0.95),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+        await _toggleShopStatus(value);
+      },
     );
   }
 
   Widget _buildOrderCard(Map<String, dynamic> order) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final status = order['status'] as String? ?? '';
-    final price = order['price'] is int
-        ? (order['price'] as int).toDouble()
-        : (order['price'] as num?)?.toDouble() ?? 0.0;
-    final distanceKm = order['distance_km'] is int
-        ? (order['distance_km'] as int).toDouble()
-        : (order['distance_km'] as num?)?.toDouble() ?? 0.0;
     final createdAtStr = order['created_at'] as String?;
-    final scheduledAtStr = order['scheduled_at'] as String?;
-    final scheduledAt =
-        scheduledAtStr != null ? DateTime.tryParse(scheduledAtStr)?.toLocal() : null;
     if (createdAtStr == null) {
       debugLog('❌ Missing created_at for order: ${order['id']}');
       return const SizedBox.shrink();
     }
-    final createdAt = DateTime.parse(createdAtStr).toLocal();
-
-    final savedStatus = _getSavedOrderStatusSync(order['id']);
-    final displayStatus = savedStatus ?? status;
-    final isNewOrder =
-        displayStatus == 'pending_merchant' || displayStatus == 'pending';
-    final statusColor = _getStatusColor(displayStatus);
-
-    return GestureDetector(
+    return MerchantOrderCard(
+      order: order,
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
@@ -1530,653 +1125,9 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           ),
         );
       },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(16),
-          border: isNewOrder
-              ? Border.all(color: colorScheme.error.withValues(alpha: 0.4), width: 2)
-              : null,
-          boxShadow: [
-            BoxShadow(
-              color: (isNewOrder ? colorScheme.error : colorScheme.shadow)
-                  .withValues(alpha: 0.08),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          children: [
-            // ── Gradient Status Header ──
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: isNewOrder
-                      ? [
-                          colorScheme.error,
-                          colorScheme.error.withValues(alpha: 0.7),
-                        ]
-                      : [statusColor, statusColor.withValues(alpha: 0.7)],
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    isNewOrder
-                        ? Icons.notifications_active
-                        : _getStatusIcon(displayStatus),
-                    color: colorScheme.onPrimary,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _getStatusText(displayStatus),
-                    style: TextStyle(
-                        color: colorScheme.onPrimary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  const Spacer(),
-                  Text(
-                    OrderCodeFormatter.format(order['id']?.toString()),
-                    style: TextStyle(
-                        color: colorScheme.onPrimary.withValues(alpha: 0.85),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500),
-                  ),
-                ],
-              ),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Price + Time Row ──
-                  Row(
-                    children: [
-                      // ยอดรวม
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: AppTheme.accentOrange.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.receipt_long,
-                                size: 16, color: AppTheme.accentOrange),
-                            const SizedBox(width: 6),
-                            Text(
-                              '฿${price.toStringAsFixed(0)}',
-                              style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppTheme.accentOrange),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // ค่าส่งไม่แสดงฝั่งร้านค้า (เป็นข้อมูลของลูกค้า/คนขับ)
-                      const Spacer(),
-                      Icon(Icons.access_time_rounded,
-                          size: 14, color: colorScheme.onSurfaceVariant),
-                      const SizedBox(width: 4),
-                      Text(
-                        _getTimeAgo(DateTime.now().difference(createdAt)),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  if (scheduledAt != null) ...[
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: colorScheme.tertiaryContainer.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: colorScheme.tertiary.withValues(alpha: 0.4),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.schedule,
-                              size: 16, color: colorScheme.tertiary),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              scheduledAt.isAfter(DateTime.now())
-                                  ? AppLocalizations.of(context)!.merchantScheduledOrder(_formatScheduledDateTime(scheduledAt))
-                                  : AppLocalizations.of(context)!.merchantPickupTime(_formatScheduledDateTime(scheduledAt)),
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: colorScheme.onSurface,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                  ],
-
-                  // ── Address + Distance ──
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 24,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                  color: colorScheme.errorContainer.withValues(alpha: 0.6),
-                                  borderRadius: BorderRadius.circular(6)),
-                              child: Icon(Icons.location_on,
-                                  size: 14, color: colorScheme.error),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                _formatAddress(order['destination_address']),
-                                style: TextStyle(
-                                    fontSize: 12, color: colorScheme.onSurface),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (distanceKm > 0) ...[
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              Container(
-                                width: 24,
-                                height: 24,
-                                decoration: BoxDecoration(
-                                    color: colorScheme.secondaryContainer.withValues(alpha: 0.6),
-                                    borderRadius: BorderRadius.circular(6)),
-                                child: Icon(Icons.straighten,
-                                    size: 14, color: colorScheme.secondary),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                AppLocalizations.of(context)!.merchantDistance(distanceKm.toStringAsFixed(1)),
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    color: colorScheme.onSurfaceVariant),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // ── Action Buttons ──
-                  _buildActionButtons(order, displayStatus),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+      onAcceptOrder: _acceptOrder,
+      statusTextBuilder: _getStatusText,
     );
-  }
-
-  IconData _getStatusIcon(String status) {
-    switch (status) {
-      case 'pending_merchant':
-      case 'pending':
-        return Icons.notifications_active;
-      case 'preparing':
-        return Icons.restaurant;
-      case 'driver_accepted':
-      case 'matched':
-        return Icons.person_pin_circle;
-      case 'arrived_at_merchant':
-        return Icons.store;
-      case 'ready_for_pickup':
-        return Icons.check_circle;
-      case 'picking_up_order':
-        return Icons.delivery_dining;
-      case 'in_transit':
-        return Icons.local_shipping;
-      case 'completed':
-        return Icons.done_all;
-      case 'cancelled':
-        return Icons.cancel;
-      default:
-        return Icons.receipt_long;
-    }
-  }
-
-  String _formatAddress(dynamic address) {
-    if (address == null) return AppLocalizations.of(context)!.merchantAddressNotSpecified;
-    if (address is String) {
-      // Check if address string contains "Instance of" or "AddressPlacemark"
-      if (address.contains('Instance of') ||
-          address.contains('AddressPlacemark')) {
-        return AppLocalizations.of(context)!.merchantAddressPinLocation;
-      }
-      return address;
-    }
-    if (address.toString() == 'Instance of \'AddressPlacemark\'') {
-      return AppLocalizations.of(context)!.merchantAddressPinLocation;
-    }
-    return address.toString();
-  }
-
-  Widget _buildActionButtons(Map<String, dynamic> order, String status) {
-    final colorScheme = Theme.of(context).colorScheme;
-    switch (status) {
-      case 'pending_merchant':
-      case 'pending':
-        return Row(
-          children: [
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () => _acceptOrder(order['id']),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accentBlue,
-                  foregroundColor: colorScheme.onPrimary,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: Text(
-                  AppLocalizations.of(context)!.merchantAcceptOrder,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ),
-          ],
-        );
-      case 'preparing':
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(12),
-            border:
-                Border.all(color: colorScheme.secondary.withValues(alpha: 0.35)),
-          ),
-          child: Column(
-            children: [
-              Icon(
-                Icons.restaurant,
-                color: colorScheme.secondary,
-                size: 32,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                AppLocalizations.of(context)!.merchantPreparingFood,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.secondary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                AppLocalizations.of(context)!.merchantTapForDetails,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: colorScheme.secondary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        );
-      case 'driver_accepted':
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: colorScheme.primaryContainer.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(12),
-            border:
-                Border.all(color: colorScheme.primary.withValues(alpha: 0.35)),
-          ),
-          child: Column(
-            children: [
-              Icon(
-                Icons.person,
-                color: colorScheme.primary,
-                size: 32,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                AppLocalizations.of(context)!.merchantDriverAcceptedCard,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.primary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                AppLocalizations.of(context)!.merchantCookingFood,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: colorScheme.primary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        );
-      case 'matched':
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(12),
-            border:
-                Border.all(color: colorScheme.secondary.withValues(alpha: 0.35)),
-          ),
-          child: Column(
-            children: [
-              Icon(
-                Icons.check_circle,
-                color: colorScheme.secondary,
-                size: 32,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                AppLocalizations.of(context)!.merchantDriverMatchedCard,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.secondary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                AppLocalizations.of(context)!.merchantTapForDetails,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: colorScheme.secondary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        );
-      case 'traveling_to_merchant':
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: colorScheme.tertiaryContainer.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(12),
-            border:
-                Border.all(color: colorScheme.tertiary.withValues(alpha: 0.35)),
-          ),
-          child: Column(
-            children: [
-              Icon(
-                Icons.directions_car,
-                color: colorScheme.tertiary,
-                size: 32,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                AppLocalizations.of(context)!.merchantDriverTravelingToShop,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.tertiary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                AppLocalizations.of(context)!.merchantPrepareFood,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: colorScheme.tertiary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        );
-      case 'arrived_at_merchant':
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: colorScheme.tertiaryContainer.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(12),
-            border:
-                Border.all(color: colorScheme.tertiary.withValues(alpha: 0.35)),
-          ),
-          child: Column(
-            children: [
-              Icon(
-                Icons.store,
-                color: colorScheme.tertiary,
-                size: 32,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                AppLocalizations.of(context)!.merchantDriverArrivedCard,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.tertiary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                AppLocalizations.of(context)!.merchantTapForDetails,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: colorScheme.tertiary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        );
-      case 'picking_up_order':
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(12),
-            border:
-                Border.all(color: colorScheme.secondary.withValues(alpha: 0.35)),
-          ),
-          child: Column(
-            children: [
-              Icon(
-                Icons.delivery_dining,
-                color: colorScheme.secondary,
-                size: 32,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                AppLocalizations.of(context)!.merchantDriverPickingUpCard,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.secondary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                AppLocalizations.of(context)!.merchantDeliveringToCustomer,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: colorScheme.secondary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        );
-      case 'in_transit':
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: colorScheme.primaryContainer.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(12),
-            border:
-                Border.all(color: colorScheme.primary.withValues(alpha: 0.35)),
-          ),
-          child: Column(
-            children: [
-              Icon(
-                Icons.local_shipping,
-                color: colorScheme.primary,
-                size: 32,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                AppLocalizations.of(context)!.merchantDelivering,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.primary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                AppLocalizations.of(context)!.merchantOrderEnRoute,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: colorScheme.primary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        );
-      case 'ready_for_pickup':
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(12),
-            border:
-                Border.all(color: colorScheme.secondary.withValues(alpha: 0.35)),
-          ),
-          child: Column(
-            children: [
-              Icon(
-                Icons.delivery_dining,
-                color: colorScheme.secondary,
-                size: 32,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                AppLocalizations.of(context)!.merchantDriverPickedUpCard,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.secondary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                AppLocalizations.of(context)!.merchantOrderDoneForMerchant,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: colorScheme.secondary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        );
-      default:
-        return const SizedBox.shrink();
-    }
-  }
-
-  Color _getStatusColor(String status) {
-    final colorScheme = Theme.of(context).colorScheme;
-    switch (status) {
-      case 'pending_merchant':
-        return colorScheme.error; // Urgent/New Order
-      case 'pending':
-        return colorScheme.tertiary;
-      case 'preparing':
-        return colorScheme.primary;
-      case 'ready_for_pickup':
-        return colorScheme.secondary;
-      case 'driver_accepted':
-      case 'matched':
-        return colorScheme.secondary; // ✅ Treat as Finished/Success
-      case 'arrived_at_merchant':
-        return colorScheme.secondary; // ✅ Also Success
-      case 'completed':
-        return colorScheme.secondary;
-      case 'cancelled':
-        return colorScheme.outline;
-      default:
-        return colorScheme.outline;
-    }
-  }
-
-  String _getTimeAgo(Duration duration) {
-    if (duration.inMinutes < 1) {
-      return AppLocalizations.of(context)!.merchantTimeJustNow;
-    } else if (duration.inMinutes < 60) {
-      return AppLocalizations.of(context)!.merchantTimeMinutesAgo(duration.inMinutes.toString());
-    } else if (duration.inHours < 24) {
-      return AppLocalizations.of(context)!.merchantTimeHoursAgo(duration.inHours.toString());
-    } else {
-      return AppLocalizations.of(context)!.merchantTimeDaysAgo(duration.inDays.toString());
-    }
-  }
-
-  String _formatScheduledDateTime(DateTime dateTime) {
-    final local = dateTime.toLocal();
-    final day = local.day.toString().padLeft(2, '0');
-    final month = local.month.toString().padLeft(2, '0');
-    final year = local.year;
-    final hour = local.hour.toString().padLeft(2, '0');
-    final minute = local.minute.toString().padLeft(2, '0');
-    return '$day/$month/$year $hour:$minute';
   }
 
   // ignore: unused_element
@@ -2206,12 +1157,14 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
 
       // Get merchant profile for notification
       final merchantProfile = await _getMerchantProfile();
-      final merchantName = merchantProfile?['full_name'] ?? AppLocalizations.of(context)!.merchantNotifMerchantDefault;
+      final merchantName = merchantProfile?['full_name'] ??
+          AppLocalizations.of(context)!.merchantNotifMerchantDefault;
 
       final success = await NotificationSender.sendNotification(
         targetUserId: customerId,
         title: AppLocalizations.of(context)!.merchantNotifOrderAccepted,
-        body: AppLocalizations.of(context)!.merchantNotifPreparingBody(merchantName),
+        body: AppLocalizations.of(context)!
+            .merchantNotifPreparingBody(merchantName),
         data: {
           'type': 'merchant_accepted',
           'booking_id': booking['id'] as String,
@@ -2239,7 +1192,8 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
 
       // Get merchant profile
       final merchantProfile = await _getMerchantProfile();
-      final merchantName = merchantProfile?['full_name'] ?? AppLocalizations.of(context)!.merchantNotifMerchantDefault;
+      final merchantName = merchantProfile?['full_name'] ??
+          AppLocalizations.of(context)!.merchantNotifMerchantDefault;
 
       // Notify customer
       if (customerId != null && customerId.isNotEmpty) {
@@ -2247,7 +1201,8 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
         await NotificationSender.sendNotification(
           targetUserId: customerId,
           title: AppLocalizations.of(context)!.merchantNotifFoodReadyCustomer,
-          body: AppLocalizations.of(context)!.merchantNotifFoodReadyCustomerBody(merchantName),
+          body: AppLocalizations.of(context)!
+              .merchantNotifFoodReadyCustomerBody(merchantName),
           data: {
             'type': 'food_ready',
             'booking_id': booking['id'] as String,
@@ -2263,7 +1218,8 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
         await NotificationSender.sendNotification(
           targetUserId: driverId,
           title: AppLocalizations.of(context)!.merchantNotifFoodReadyDriver,
-          body: AppLocalizations.of(context)!.merchantNotifFoodReadyDriverBody(merchantName),
+          body: AppLocalizations.of(context)!
+              .merchantNotifFoodReadyDriverBody(merchantName),
           data: {
             'type': 'food_ready_driver',
             'booking_id': booking['id'] as String,
@@ -2309,8 +1265,9 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-              _showHistory ? AppLocalizations.of(context)!.merchantViewHistory : AppLocalizations.of(context)!.merchantViewActive),
+          content: Text(_showHistory
+              ? AppLocalizations.of(context)!.merchantViewHistory
+              : AppLocalizations.of(context)!.merchantViewActive),
           duration: const Duration(seconds: 1),
         ),
       );

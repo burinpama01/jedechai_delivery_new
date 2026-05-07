@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_theme.dart';
+import '../../../common/screens/notification_center_screen.dart';
+import '../../../common/widgets/notification_badge_icon.dart';
 import 'merchant_dashboard_screen.dart';
 import 'merchant_orders_screen.dart';
 import 'menu_management_screen.dart';
@@ -29,6 +31,7 @@ class _MerchantMainScreenState extends State<MerchantMainScreen> {
     MerchantOrdersScreen(),
     MenuManagementScreen(),
     MerchantDashboardScreen(),
+    NotificationCenterScreen(role: 'merchant'),
     MerchantSettingsScreen(),
   ];
 
@@ -103,6 +106,15 @@ class _MerchantMainScreenState extends State<MerchantMainScreen> {
                   icon: const Icon(Icons.bar_chart_outlined),
                   activeIcon: const Icon(Icons.bar_chart),
                   label: AppLocalizations.of(context)!.merchantNavReport,
+                ),
+                const BottomNavigationBarItem(
+                  icon: NotificationBadgeIcon(
+                    icon: Icons.notifications_none,
+                  ),
+                  activeIcon: NotificationBadgeIcon(
+                    icon: Icons.notifications,
+                  ),
+                  label: 'แจ้งเตือน',
                 ),
                 BottomNavigationBarItem(
                   icon: const Icon(Icons.person_outline),

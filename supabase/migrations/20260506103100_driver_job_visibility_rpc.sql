@@ -1,9 +1,20 @@
+DROP FUNCTION IF EXISTS public.get_driver_job_visibility_debug(
+  uuid,
+  double precision,
+  double precision,
+  double precision,
+  text[]
+);
+
 CREATE OR REPLACE FUNCTION public.get_driver_job_visibility_debug(
   p_driver_id uuid,
   p_driver_lat double precision DEFAULT NULL,
   p_driver_lng double precision DEFAULT NULL,
   p_radius_km double precision DEFAULT 5.0,
-  p_service_types text[] DEFAULT NULL
+  p_service_types text[] DEFAULT NULL,
+  p_driver_online boolean DEFAULT true,
+  p_job_vehicle_type text DEFAULT NULL,
+  p_driver_vehicle_type text DEFAULT NULL
 )
 RETURNS TABLE (
   booking_id uuid,
@@ -66,6 +77,7 @@ AS $$
     CASE
       WHEN c.driver_id = p_driver_id THEN true
       WHEN c.driver_id IS NOT NULL THEN false
+      WHEN NOT p_driver_online THEN false
       WHEN p_service_types IS NOT NULL AND NOT c.service_type = ANY(p_service_types)
         THEN false
       WHEN c.service_type IN ('ride', 'parcel') AND c.status <> 'pending'
@@ -76,6 +88,11 @@ AS $$
         THEN false
       WHEN c.origin_lat IS NULL OR c.origin_lng IS NULL
         THEN false
+      WHEN c.service_type = 'ride'
+        AND NULLIF(trim(COALESCE(p_job_vehicle_type, '')), '') IS NOT NULL
+        AND NULLIF(trim(COALESCE(p_driver_vehicle_type, '')), '') IS NOT NULL
+        AND p_job_vehicle_type <> p_driver_vehicle_type
+        THEN false
       WHEN c.distance_km > p_radius_km
         THEN false
       ELSE true
@@ -83,6 +100,7 @@ AS $$
     CASE
       WHEN c.driver_id = p_driver_id THEN NULL
       WHEN c.driver_id IS NOT NULL THEN 'alreadyAssignedToOtherDriver'
+      WHEN NOT p_driver_online THEN 'driverOffline'
       WHEN p_service_types IS NOT NULL AND NOT c.service_type = ANY(p_service_types)
         THEN 'serviceTypeNotAccepted'
       WHEN c.service_type = 'food' AND c.status = 'pending_merchant'
@@ -99,6 +117,11 @@ AS $$
         THEN 'driverLocationMissing'
       WHEN c.origin_lat IS NULL OR c.origin_lng IS NULL
         THEN 'driverLocationMissing'
+      WHEN c.service_type = 'ride'
+        AND NULLIF(trim(COALESCE(p_job_vehicle_type, '')), '') IS NOT NULL
+        AND NULLIF(trim(COALESCE(p_driver_vehicle_type, '')), '') IS NOT NULL
+        AND p_job_vehicle_type <> p_driver_vehicle_type
+        THEN 'vehicleTypeMismatch'
       WHEN c.distance_km > p_radius_km
         THEN 'outsideRadius'
       ELSE NULL
@@ -112,5 +135,8 @@ GRANT EXECUTE ON FUNCTION public.get_driver_job_visibility_debug(
   double precision,
   double precision,
   double precision,
-  text[]
+  text[],
+  boolean,
+  text,
+  text
 ) TO authenticated, service_role;

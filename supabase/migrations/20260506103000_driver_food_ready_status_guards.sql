@@ -12,6 +12,10 @@ AS $$
 DECLARE
   v_booking public.bookings%ROWTYPE;
 BEGIN
+  IF auth.uid() IS NOT NULL AND auth.uid() <> p_merchant_id THEN
+    RETURN jsonb_build_object('success', false, 'error', 'merchant_auth_mismatch');
+  END IF;
+
   SELECT *
     INTO v_booking
     FROM public.bookings
@@ -77,6 +81,10 @@ DECLARE
   v_booking public.bookings%ROWTYPE;
   v_next_status text;
 BEGIN
+  IF auth.uid() IS NOT NULL AND auth.uid() <> p_driver_id THEN
+    RETURN jsonb_build_object('success', false, 'error', 'driver_auth_mismatch');
+  END IF;
+
   SELECT *
     INTO v_booking
     FROM public.bookings

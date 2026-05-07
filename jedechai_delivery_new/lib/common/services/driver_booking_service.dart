@@ -39,7 +39,7 @@ class DriverBookingService {
         expectedStatuses: expectedStatuses,
       );
 
-  Future<void> markDriverArrivedAtMerchant(String bookingId) =>
+  Future<String> markDriverArrivedAtMerchant(String bookingId) =>
       _bookingService.markDriverArrivedAtMerchant(bookingId);
 
   Future<void> markFoodPickedUp(String bookingId) =>

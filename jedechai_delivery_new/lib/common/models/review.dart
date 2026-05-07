@@ -1,5 +1,5 @@
 /// Review Model
-/// 
+///
 /// Represents a review in the system
 class Review {
   final String id;
@@ -25,7 +25,7 @@ class Review {
   });
 
   factory Review.fromJson(Map<String, dynamic> json) {
-    final ratingRaw = json['rating'];
+    final ratingRaw = json['merchant_rating'] ?? json['rating'];
     final double ratingValue;
     if (ratingRaw is num) {
       ratingValue = ratingRaw.toDouble();
@@ -49,9 +49,11 @@ class Review {
       driverId: json['driver_id'] as String?,
       merchantId: json['merchant_id'] as String?,
       rating: ratingValue,
-      comment: json['comment'] as String?,
+      comment:
+          json['merchant_comment'] as String? ?? json['comment'] as String?,
       createdAt: parseDate(json['created_at']),
-      updatedAt: json['updated_at'] != null ? parseDate(json['updated_at']) : null,
+      updatedAt:
+          json['updated_at'] != null ? parseDate(json['updated_at']) : null,
     );
   }
 

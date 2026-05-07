@@ -6,6 +6,7 @@ export 'location_service.dart';
 export 'notification_service.dart';
 export 'notification_sender.dart';
 export 'fcm_notification_service.dart';
+export 'merchant_order_service.dart';
 export 'payment_service.dart';
 export 'booking_service.dart';
 export 'geocoding_service.dart';

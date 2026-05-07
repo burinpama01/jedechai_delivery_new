@@ -14,6 +14,7 @@ import { registerMenusPage } from "./menus.js";
 import { registerRevenuePage } from "./revenue.js";
 import { registerComplaintsPage } from "./complaints.js";
 import { registerReferralsPage } from "./referrals.js";
+import { registerNotificationDeliveriesPage } from "./notification_deliveries.js";
 
 export function registerInitialPages(reg) {
   registerDashboardPage(reg);
@@ -32,4 +33,5 @@ export function registerInitialPages(reg) {
   registerRevenuePage(reg);
   registerComplaintsPage(reg);
   registerReferralsPage(reg);
+  registerNotificationDeliveriesPage(reg);
 }

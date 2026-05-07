@@ -38,6 +38,10 @@ export async function disposePendingOrdersPage(ctx) {
 
 export async function renderPendingOrdersPage(el, ctx) {
   _ctx = ctx || null;
+  globalThis.__adminWebContext = {
+    ...(globalThis.__adminWebContext || {}),
+    ...(ctx || {}),
+  };
   const { supabase } = _deps();
 
   await disposePendingOrdersPage(ctx);
@@ -160,6 +164,11 @@ export async function refreshPendingOrders(ctx) {
     return '<span class="text-gray-500">ตรวจด้วย visibility debug RPC</span>';
   }
 
+  function visibilityDebugButton(o) {
+    if (o.driver_id) return '';
+    return `<button onclick="showDriverNotificationDebug('${o.id}')" class="mt-1 block text-[10px] text-indigo-600 hover:underline">debug</button>`;
+  }
+
   function poRow(o) {
     const mins = Math.floor((Date.now() - new Date(o.created_at).getTime()) / 60000);
     const timeLabel = mins < 60 ? `${mins} นาที` : `${Math.floor(mins / 60)} ชม. ${mins % 60} น.`;
@@ -194,7 +203,7 @@ export async function refreshPendingOrders(ctx) {
           <div class="truncate text-green-600" title="${dest}">🏁 ${dest}</div>
         </td>
         <td class="px-3 py-2.5 text-xs">${drvInfo ? `<span class="text-blue-600 font-medium">🏍 ${drvInfo.name}</span>` : '<span class="text-red-500 font-semibold">ไม่มี</span>'}</td>
-        <td class="px-3 py-2.5 text-[10px]">${visibilityHint(o)}</td>
+        <td class="px-3 py-2.5 text-[10px]">${visibilityHint(o)}${visibilityDebugButton(o)}</td>
         <td class="px-3 py-2.5 text-xs">${merInfo ? `<span class="text-orange-600">🏪 ${merInfo.name}</span>` : '-'}</td>
         <td class="px-3 py-2.5">
           <span class="inline-flex items-center gap-1 text-xs font-semibold ${isUrgent ? 'text-red-600' : 'text-gray-500'}">
@@ -311,6 +320,103 @@ export function showPendingQuickFilter(target) {
   }
 }
 
+function _debugReasonLabel(reason) {
+  const labels = {
+    not_visible_status: 'สถานะไม่แสดงให้คนขับ',
+    assigned_to_other_driver: 'มีคนขับอื่นรับแล้ว',
+    service_mismatch: 'ประเภทบริการไม่ตรง',
+    offline: 'คนขับออฟไลน์',
+    waiting_merchant_accept: 'รอร้านรับออเดอร์',
+    merchant_preparing: 'ร้านกำลังเตรียม',
+    not_driver_visible_food_status: 'อาหารยังไม่พร้อมให้รับ',
+    not_driver_visible_status: 'สถานะยังไม่เปิดให้คนขับ',
+    driver_location_missing: 'ไม่มีพิกัดคนขับ',
+    booking_location_missing: 'ไม่มีพิกัดออเดอร์',
+    vehicle_mismatch: 'ประเภทรถไม่ตรง',
+    out_of_radius: 'อยู่นอกรัศมี',
+    no_token: 'ไม่มี FCM token',
+  };
+  return labels[reason] || reason || '-';
+}
+
+export async function showDriverNotificationDebug(orderId, ctx) {
+  _ctx = ctx || _ctx;
+  const { supabase, fmtDate } = _deps();
+  const escapeHtml = _ctx?.escapeHtml || globalThis.escapeHtml || ((value) => String(value ?? ''));
+
+  const modal = document.createElement('div');
+  modal.id = 'driverNotificationDebugModal';
+  modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50';
+  modal.innerHTML = `
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl mx-4 fade-in max-h-[85vh] overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div>
+          <h3 class="font-bold text-gray-800">Driver notification debug #${orderId.substring(0, 8)}</h3>
+          <p class="text-xs text-gray-400">visible / hidden reason / FCM token / delivery status</p>
+        </div>
+        <button onclick="document.getElementById('driverNotificationDebugModal')?.remove()" class="text-gray-400 hover:text-gray-600"><span class="material-icons-round">close</span></button>
+      </div>
+      <div id="driverNotificationDebugContent" class="p-5 overflow-auto max-h-[70vh]">
+        <div class="flex justify-center py-10"><div class="loader"></div></div>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+  const content = document.getElementById('driverNotificationDebugContent');
+  try {
+    const { data, error } = await supabase.rpc('get_booking_driver_notification_debug', {
+      p_booking_id: orderId,
+      p_radius_km: 5.0,
+    });
+    if (error) throw error;
+    const rows = data || [];
+    const visibleCount = rows.filter((row) => row.visible_to_driver).length;
+    const notifiedCount = rows.filter((row) => row.notification_id).length;
+    content.innerHTML = `
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+        <div class="rounded-xl border border-gray-100 p-3"><p class="text-xs text-gray-400">visible drivers</p><p class="text-xl font-bold text-emerald-600">${visibleCount}</p></div>
+        <div class="rounded-xl border border-gray-100 p-3"><p class="text-xs text-gray-400">notification rows</p><p class="text-xl font-bold text-indigo-600">${notifiedCount}</p></div>
+        <div class="rounded-xl border border-gray-100 p-3"><p class="text-xs text-gray-400">drivers checked</p><p class="text-xl font-bold text-gray-800">${rows.length}</p></div>
+      </div>
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-gray-500">
+          <tr>
+            <th class="px-3 py-2 text-left">Driver</th>
+            <th class="px-3 py-2 text-left">Status</th>
+            <th class="px-3 py-2 text-left">Reason</th>
+            <th class="px-3 py-2 text-left">Distance</th>
+            <th class="px-3 py-2 text-left">Token</th>
+            <th class="px-3 py-2 text-left">Delivery</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.length ? rows.map((row) => `
+            <tr class="border-t border-gray-100">
+              <td class="px-3 py-2">
+                <div class="font-semibold text-gray-800">${escapeHtml(row.driver_name || '-')}</div>
+                <div class="font-mono text-[10px] text-gray-400">${escapeHtml(row.driver_id || '')}</div>
+              </td>
+              <td class="px-3 py-2">
+                ${row.visible_to_driver ? '<span class="text-emerald-600 font-semibold">visible</span>' : '<span class="text-gray-500">hidden</span>'}
+                <div class="text-[10px] text-gray-400">${row.is_online ? 'online' : 'offline'} / ${row.is_available ? 'available' : 'busy'}</div>
+              </td>
+              <td class="px-3 py-2 text-xs">${escapeHtml(_debugReasonLabel(row.hidden_reason))}</td>
+              <td class="px-3 py-2 text-xs">${row.distance_km == null ? '-' : `${Number(row.distance_km).toFixed(1)} km`}</td>
+              <td class="px-3 py-2 text-xs">${row.has_fcm_token ? '<span class="text-emerald-600 font-semibold">มี</span>' : '<span class="text-red-500 font-semibold">ไม่มี</span>'}</td>
+              <td class="px-3 py-2 text-xs">
+                <div>${escapeHtml(row.delivery_status || '-')}</div>
+                <div class="text-[10px] text-gray-400">${row.delivery_created_at ? fmtDate(row.delivery_created_at) : ''}</div>
+                ${row.delivery_error ? `<div class="text-[10px] text-red-500">${escapeHtml(row.delivery_error)}</div>` : ''}
+              </td>
+            </tr>`).join('') : '<tr><td colspan="6" class="px-3 py-8 text-center text-gray-400">ไม่พบ driver สำหรับ debug</td></tr>'}
+        </tbody>
+      </table>`;
+  } catch (e) {
+    content.innerHTML = `<div class="text-red-600">โหลด driver notification debug ไม่สำเร็จ: ${escapeHtml(e.message || e)}</div>`;
+  }
+}
+
 export async function showPendingOrderDetail(orderId, ctx) {
   _ctx = ctx || _ctx;
   const { supabase, fmt, fmtDate, statusBadge, serviceIcon } = _deps();
@@ -400,6 +506,7 @@ export function wirePendingOrdersBridge() {
     refreshPendingOrders,
     showPendingOrderDetail,
     showPendingQuickFilter,
+    showDriverNotificationDebug,
     disposePendingOrdersPage,
   };
   globalThis.__adminWebBridge = globalThis.__adminWebBridge || {};

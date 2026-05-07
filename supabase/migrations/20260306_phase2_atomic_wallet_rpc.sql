@@ -485,12 +485,12 @@ AS $$
     p.phone_number,
     p.license_plate,
     p.vehicle_type,
-    dl.latitude,
-    dl.longitude,
+    dl.location_lat::double precision,
+    dl.location_lng::double precision,
     (6371 * acos(
-      LEAST(1.0, cos(radians(p_lat)) * cos(radians(dl.latitude))
-        * cos(radians(dl.longitude) - radians(p_lng))
-        + sin(radians(p_lat)) * sin(radians(dl.latitude)))
+      LEAST(1.0, cos(radians(p_lat)) * cos(radians(dl.location_lat::double precision))
+        * cos(radians(dl.location_lng::double precision) - radians(p_lng))
+        + sin(radians(p_lat)) * sin(radians(dl.location_lat::double precision)))
     )) AS distance_km,
     p.fcm_token
   FROM public.driver_locations dl
@@ -499,12 +499,12 @@ AS $$
     AND dl.is_available = true
     AND p.role = 'driver'
     AND p.approval_status = 'approved'
-    AND dl.latitude IS NOT NULL
-    AND dl.longitude IS NOT NULL
+    AND dl.location_lat IS NOT NULL
+    AND dl.location_lng IS NOT NULL
     AND (6371 * acos(
-      LEAST(1.0, cos(radians(p_lat)) * cos(radians(dl.latitude))
-        * cos(radians(dl.longitude) - radians(p_lng))
-        + sin(radians(p_lat)) * sin(radians(dl.latitude)))
+      LEAST(1.0, cos(radians(p_lat)) * cos(radians(dl.location_lat::double precision))
+        * cos(radians(dl.location_lng::double precision) - radians(p_lng))
+        + sin(radians(p_lat)) * sin(radians(dl.location_lat::double precision)))
     )) <= p_radius_km
   ORDER BY distance_km ASC
   LIMIT p_limit;

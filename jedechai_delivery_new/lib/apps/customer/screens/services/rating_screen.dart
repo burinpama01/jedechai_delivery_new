@@ -8,7 +8,7 @@ import '../../../../common/utils/order_code_formatter.dart';
 import '../../../../utils/debug_logger.dart';
 
 /// Rating Screen
-/// 
+///
 /// Shows rating and review interface after order completion
 class RatingScreen extends StatefulWidget {
   final Booking booking;
@@ -22,13 +22,16 @@ class RatingScreen extends StatefulWidget {
 class _RatingScreenState extends State<RatingScreen> {
   int _driverRating = 0;
   int _merchantRating = 0;
-  final TextEditingController _driverCommentController = TextEditingController();
-  final TextEditingController _merchantCommentController = TextEditingController();
+  final TextEditingController _driverCommentController =
+      TextEditingController();
+  final TextEditingController _merchantCommentController =
+      TextEditingController();
   bool _isSubmitting = false;
   bool _submitted = false;
 
   bool get _isFood => widget.booking.serviceType == 'food';
-  bool get _hasDriver => widget.booking.driverId != null && widget.booking.driverId!.isNotEmpty;
+  bool get _hasDriver =>
+      widget.booking.driverId != null && widget.booking.driverId!.isNotEmpty;
 
   @override
   void dispose() {
@@ -40,13 +43,18 @@ class _RatingScreenState extends State<RatingScreen> {
   Future<void> _submitRating() async {
     if (_hasDriver && _driverRating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.ratingPleaseRateDriver), backgroundColor: Colors.red),
+        SnackBar(
+            content: Text(AppLocalizations.of(context)!.ratingPleaseRateDriver),
+            backgroundColor: Colors.red),
       );
       return;
     }
     if (_isFood && _merchantRating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.ratingPleaseRateMerchant), backgroundColor: Colors.red),
+        SnackBar(
+            content:
+                Text(AppLocalizations.of(context)!.ratingPleaseRateMerchant),
+            backgroundColor: Colors.red),
       );
       return;
     }
@@ -55,7 +63,8 @@ class _RatingScreenState extends State<RatingScreen> {
 
     try {
       final userId = AuthService.userId;
-      if (userId == null) throw Exception(AppLocalizations.of(context)!.ratingUserNotFound);
+      if (userId == null)
+        throw Exception(AppLocalizations.of(context)!.ratingUserNotFound);
 
       final client = Supabase.instance.client;
 
@@ -70,10 +79,7 @@ class _RatingScreenState extends State<RatingScreen> {
             .maybeSingle();
 
         if (existing != null && existing['id'] != null) {
-          await client
-              .from('reviews')
-              .update(data)
-              .eq('id', existing['id']);
+          await client.from('reviews').update(data).eq('id', existing['id']);
         } else {
           await client.from('reviews').insert({...match, ...data});
         }
@@ -110,6 +116,10 @@ class _RatingScreenState extends State<RatingScreen> {
             'comment': _merchantCommentController.text.trim().isEmpty
                 ? null
                 : _merchantCommentController.text.trim(),
+            'merchant_rating': _merchantRating,
+            'merchant_comment': _merchantCommentController.text.trim().isEmpty
+                ? null
+                : _merchantCommentController.text.trim(),
             'updated_at': DateTime.now().toIso8601String(),
           },
         );
@@ -128,7 +138,10 @@ class _RatingScreenState extends State<RatingScreen> {
       setState(() => _isSubmitting = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.ratingError(e.toString())), backgroundColor: Colors.red),
+          SnackBar(
+              content:
+                  Text(AppLocalizations.of(context)!.ratingError(e.toString())),
+              backgroundColor: Colors.red),
         );
       }
     }
@@ -149,11 +162,13 @@ class _RatingScreenState extends State<RatingScreen> {
                   color: AppTheme.primaryGreen.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.check_circle, size: 80, color: AppTheme.primaryGreen),
+                child: const Icon(Icons.check_circle,
+                    size: 80, color: AppTheme.primaryGreen),
               ),
               const SizedBox(height: 24),
               Text(AppLocalizations.of(context)!.ratingThankYou,
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                  style: const TextStyle(
+                      fontSize: 22, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Text(AppLocalizations.of(context)!.ratingFeedbackHelps,
                   style: const TextStyle(fontSize: 16, color: Colors.grey)),
@@ -212,14 +227,19 @@ class _RatingScreenState extends State<RatingScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryGreen,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
                 ),
                 child: _isSubmitting
                     ? const SizedBox(
-                        width: 24, height: 24,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2.5),
                       )
-                    : Text(AppLocalizations.of(context)!.ratingSubmit, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    : Text(AppLocalizations.of(context)!.ratingSubmit,
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
               ),
             ),
 
@@ -229,8 +249,11 @@ class _RatingScreenState extends State<RatingScreen> {
             SizedBox(
               width: double.infinity,
               child: TextButton(
-                onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(false),
-                child: Text(AppLocalizations.of(context)!.ratingSkip, style: const TextStyle(color: Colors.grey, fontSize: 16)),
+                onPressed: _isSubmitting
+                    ? null
+                    : () => Navigator.of(context).pop(false),
+                child: Text(AppLocalizations.of(context)!.ratingSkip,
+                    style: const TextStyle(color: Colors.grey, fontSize: 16)),
               ),
             ),
           ],
@@ -242,23 +265,27 @@ class _RatingScreenState extends State<RatingScreen> {
   Widget _buildOrderSummaryCard() {
     final l10n = AppLocalizations.of(context)!;
     final serviceLabel = {
-      'food': l10n.ratingServiceFood,
-      'ride': l10n.ratingServiceRide,
-      'parcel': l10n.ratingServiceParcel,
-    }[widget.booking.serviceType] ?? widget.booking.serviceType;
+          'food': l10n.ratingServiceFood,
+          'ride': l10n.ratingServiceRide,
+          'parcel': l10n.ratingServiceParcel,
+        }[widget.booking.serviceType] ??
+        widget.booking.serviceType;
 
     final serviceIcon = {
-      'food': Icons.restaurant,
-      'ride': Icons.local_taxi,
-      'parcel': Icons.inventory_2,
-    }[widget.booking.serviceType] ?? Icons.receipt;
+          'food': Icons.restaurant,
+          'ride': Icons.local_taxi,
+          'parcel': Icons.inventory_2,
+        }[widget.booking.serviceType] ??
+        Icons.receipt;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)
+        ],
       ),
       child: Row(
         children: [
@@ -276,7 +303,8 @@ class _RatingScreenState extends State<RatingScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(serviceLabel,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 4),
                 Text(
                     OrderCodeFormatter.formatByServiceType(
@@ -288,7 +316,10 @@ class _RatingScreenState extends State<RatingScreen> {
             ),
           ),
           Text('฿${widget.booking.totalAmount.ceil()}',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen)),
+              style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryGreen)),
         ],
       ),
     );
@@ -303,13 +334,22 @@ class _RatingScreenState extends State<RatingScreen> {
     required String hintText,
   }) {
     final l10n = AppLocalizations.of(context)!;
-    final ratingLabels = ['', l10n.ratingLabel1, l10n.ratingLabel2, l10n.ratingLabel3, l10n.ratingLabel4, l10n.ratingLabel5];
+    final ratingLabels = [
+      '',
+      l10n.ratingLabel1,
+      l10n.ratingLabel2,
+      l10n.ratingLabel3,
+      l10n.ratingLabel4,
+      l10n.ratingLabel5
+    ];
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -318,7 +358,9 @@ class _RatingScreenState extends State<RatingScreen> {
             children: [
               Icon(icon, color: AppTheme.primaryGreen, size: 22),
               const SizedBox(width: 8),
-              Text(title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+              Text(title,
+                  style: const TextStyle(
+                      fontSize: 17, fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 16),
@@ -332,9 +374,13 @@ class _RatingScreenState extends State<RatingScreen> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 6),
                   child: Icon(
-                    starIndex <= rating ? Icons.star_rounded : Icons.star_outline_rounded,
+                    starIndex <= rating
+                        ? Icons.star_rounded
+                        : Icons.star_outline_rounded,
                     size: 44,
-                    color: starIndex <= rating ? const Color(0xFFFFB800) : Colors.grey.shade300,
+                    color: starIndex <= rating
+                        ? const Color(0xFFFFB800)
+                        : Colors.grey.shade300,
                   ),
                 ),
               );
@@ -347,7 +393,9 @@ class _RatingScreenState extends State<RatingScreen> {
                   style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: rating >= 4 ? AppTheme.primaryGreen : (rating >= 3 ? Colors.orange : Colors.red))),
+                      color: rating >= 4
+                          ? AppTheme.primaryGreen
+                          : (rating >= 3 ? Colors.orange : Colors.red))),
             ),
           ],
           const SizedBox(height: 16),
@@ -359,14 +407,16 @@ class _RatingScreenState extends State<RatingScreen> {
             decoration: InputDecoration(
               hintText: hintText,
               hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: Colors.grey.shade200),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
+                borderSide:
+                    const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
               ),
               filled: true,
               fillColor: Colors.grey.shade50,

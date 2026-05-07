@@ -20,6 +20,7 @@ import '../../../../common/services/merchant_food_config_service.dart';
 import '../../../../common/services/system_config_service.dart';
 import '../../../../common/services/admin_line_notification_service.dart';
 import '../../../../common/utils/platform_adaptive.dart';
+import '../../../../common/utils/notification_payload_policy.dart';
 import 'saved_addresses_screen.dart';
 import '../../../../common/models/saved_address.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -611,40 +612,45 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                         title: AppLocalizations.of(context)!
                             .foodCheckoutItemsTitle(cart.totalItems.toString()),
                         child: Column(
-                          children: cart.items.map((item) {
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              child: Row(
-                                children: [
-                                  Text('${item.quantity}x',
-                                      style: TextStyle(
-                                          color: AppTheme.accentOrange,
-                                          fontWeight: FontWeight.bold)),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(item.name,
-                                            style:
-                                                const TextStyle(fontSize: 14)),
-                                        if (item.selectedOptions.isNotEmpty)
-                                          Text(
-                                            item.selectedOptions.join(', '),
-                                            style: TextStyle(
-                                                fontSize: 12,
-                                                color: colorScheme
-                                                    .onSurfaceVariant),
-                                          ),
-                                      ],
+                          children: [
+                            _buildPrepTimeEstimate(cart),
+                            const SizedBox(height: 8),
+                            ...cart.items.map((item) {
+                              return Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 4),
+                                child: Row(
+                                  children: [
+                                    Text('${item.quantity}x',
+                                        style: TextStyle(
+                                            color: AppTheme.accentOrange,
+                                            fontWeight: FontWeight.bold)),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(item.name,
+                                              style: const TextStyle(
+                                                  fontSize: 14)),
+                                          if (item.selectedOptions.isNotEmpty)
+                                            Text(
+                                              item.selectedOptions.join(', '),
+                                              style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: colorScheme
+                                                      .onSurfaceVariant),
+                                            ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                  Text('฿${item.totalPrice.ceil()}'),
-                                ],
-                              ),
-                            );
-                          }).toList(),
+                                    Text('฿${item.totalPrice.ceil()}'),
+                                  ],
+                                ),
+                              );
+                            }),
+                          ],
                         ),
                       ),
                       // Note
@@ -988,6 +994,35 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
     );
   }
 
+  Widget _buildPrepTimeEstimate(CartProvider cart) {
+    final maxPrepTime = cart.items.fold<int>(
+      0,
+      (max, item) => item.prepTimeMinutes > max ? item.prepTimeMinutes : max,
+    );
+    if (maxPrepTime <= 0) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.accentOrange.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.timer_outlined, color: AppTheme.accentOrange),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'ร้านใช้เวลาเตรียมอาหารประมาณ $maxPrepTime นาที',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSection(
       {required IconData icon, required String title, required Widget child}) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -1151,10 +1186,16 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                     _formatScheduledDateTime(_scheduledAt!))
                 : AppLocalizations.of(context)!.foodCheckoutNotifBody(
                     merchantVisibleTotal.ceil().toString()),
-            data: {
-              'type': 'merchant_new_order',
-              'booking_id': booking['id']?.toString() ?? '',
-            },
+            data: NotificationPayloadPolicy.buildBookingPayload(
+              type: NotificationTypes.merchantOrderCreated,
+              recipientRole: NotificationRoles.merchant,
+              bookingId: booking['id']?.toString() ?? '',
+              serviceType: 'food',
+              screen: NotificationRouteScreens.merchantOrder,
+              extra: {
+                'legacy_type': NotificationTypes.legacyMerchantNewOrder,
+              },
+            ),
           );
         }
       } catch (e) {
@@ -1310,8 +1351,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       await AdminLineNotificationService.notify(
         eventType: 'food_order_new',
         title: 'JDC: มีออเดอร์อาหารใหม่',
-        message:
-            'ออเดอร์ใหม่จากร้าน $merchantName\n'
+        message: 'ออเดอร์ใหม่จากร้าน $merchantName\n'
             'รวม ฿${totalAmount.toStringAsFixed(0)} (อาหาร ฿${subtotal.toStringAsFixed(0)} + ส่ง ฿${deliveryFee.toStringAsFixed(0)}${couponDiscount > 0 ? ' - ส่วนลด ฿${couponDiscount.toStringAsFixed(0)}' : ''})',
         data: {
           'booking_id': bookingId,
@@ -1319,12 +1359,14 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
           'จำนวนเมนู': cartItems.length,
           'subtotal': subtotal.toStringAsFixed(0),
           'delivery_fee': deliveryFee.toStringAsFixed(0),
-          if (couponDiscount > 0) 'ส่วนลดคูปอง': '-฿${couponDiscount.toStringAsFixed(0)}',
+          if (couponDiscount > 0)
+            'ส่วนลดคูปอง': '-฿${couponDiscount.toStringAsFixed(0)}',
           'total': totalAmount.toStringAsFixed(0),
           'payment_method': paymentMethod,
           'distance_km': distanceKm.toStringAsFixed(2),
           'customer_address': customerAddress,
-          if (scheduledAt != null) 'scheduled_at': scheduledAt.toIso8601String(),
+          if (scheduledAt != null)
+            'scheduled_at': scheduledAt.toIso8601String(),
         },
       );
 

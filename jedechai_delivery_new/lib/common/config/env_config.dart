@@ -21,29 +21,6 @@ class EnvConfig {
   // Firebase
   static String get firebaseProjectId =>
       dotenv.env['FIREBASE_PROJECT_ID'] ?? '';
-  static String get firebasePrivateKeyId =>
-      dotenv.env['FIREBASE_PRIVATE_KEY_ID'] ?? '';
-  static String get firebasePrivateKey =>
-      (dotenv.env['FIREBASE_PRIVATE_KEY'] ?? '').replaceAll('\\n', '\n');
-  static String get firebaseClientEmail =>
-      dotenv.env['FIREBASE_CLIENT_EMAIL'] ?? '';
-  static String get firebaseClientId => dotenv.env['FIREBASE_CLIENT_ID'] ?? '';
-
-  /// Get Firebase Service Account JSON map
-  static Map<String, String> get firebaseServiceAccountJson => {
-        "type": "service_account",
-        "project_id": firebaseProjectId,
-        "private_key_id": firebasePrivateKeyId,
-        "private_key": firebasePrivateKey,
-        "client_email": firebaseClientEmail,
-        "client_id": firebaseClientId,
-        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-        "token_uri": "https://oauth2.googleapis.com/token",
-        "auth_provider_x509_cert_url":
-            "https://www.googleapis.com/oauth2/v1/certs",
-        "client_x509_cert_url":
-            "https://www.googleapis.com/robot/v1/metadata/x509/${Uri.encodeComponent(firebaseClientEmail)}",
-      };
 
   // Omise Payment Gateway
   static String get omisePublicKey => dotenv.env['OMISE_PUBLIC_KEY'] ?? '';
@@ -63,6 +40,5 @@ class EnvConfig {
   static bool get isPasswordResetRedirectConfigured =>
       passwordResetRedirectUrl.isNotEmpty;
 
-  static bool get isFirebaseConfigured =>
-      firebaseProjectId.isNotEmpty && firebasePrivateKey.isNotEmpty;
+  static bool get isFirebaseConfigured => firebaseProjectId.isNotEmpty;
 }

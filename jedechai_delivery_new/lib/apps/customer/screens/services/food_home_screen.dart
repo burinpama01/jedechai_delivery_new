@@ -15,6 +15,7 @@ import '../../../../common/services/system_config_service.dart';
 import '../../../../common/services/admin_line_notification_service.dart';
 import '../../../../common/widgets/app_network_image.dart';
 import '../../../../common/widgets/location_disclosure_dialog.dart';
+import '../../../../common/utils/notification_payload_policy.dart';
 import '../../../../l10n/app_localizations.dart';
 import 'restaurant_detail_screen.dart';
 import 'food_checkout_screen.dart';
@@ -65,13 +66,13 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
     super.initState();
     _initializeContextAndLoadRestaurants();
     _loadFoodBanners();
-    _fetchTopSellingItems();
   }
 
   Future<void> _initializeContextAndLoadRestaurants() async {
     await _loadRestaurantRadius();
     await _resolveCurrentLocation();
     await _fetchRestaurants();
+    await _fetchTopSellingItems();
   }
 
   Future<void> _loadRestaurantRadius() async {
@@ -154,6 +155,19 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
 
   Future<void> _fetchTopSellingItems() async {
     try {
+      if (_restaurants.isEmpty) {
+        if (mounted) {
+          setState(() {
+            _topSellingItems = [];
+            _isLoadingTopSelling = false;
+          });
+        }
+        return;
+      }
+
+      final visibleMerchantIds =
+          _restaurants.map((r) => r['id'] as String).toSet();
+
       // ดึง booking_items ทั้งหมดจาก completed bookings
       final bookingItemsResponse = await Supabase.instance.client
           .from('booking_items')
@@ -186,10 +200,25 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
               'id, name, price, image_url, category, merchant_id, is_available')
           .inFilter('id', topIds)
           .eq('is_available', true);
+      final visibleMenuResponse = menuResponse
+          .where(
+              (m) => visibleMerchantIds.contains(m['merchant_id'] as String?))
+          .toList();
 
       // ดึงข้อมูล merchant (ชื่อร้าน + รูป + สถานะ)
-      final merchantIds =
-          menuResponse.map((m) => m['merchant_id'] as String).toSet().toList();
+      final merchantIds = visibleMenuResponse
+          .map((m) => m['merchant_id'] as String)
+          .toSet()
+          .toList();
+      if (merchantIds.isEmpty) {
+        if (mounted) {
+          setState(() {
+            _topSellingItems = [];
+            _isLoadingTopSelling = false;
+          });
+        }
+        return;
+      }
       final merchantResponse = await Supabase.instance.client
           .from('profiles')
           .select('id, full_name, shop_photo_url, shop_status')
@@ -201,7 +230,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
       // รวมข้อมูลแล้วเรียง top
       final List<Map<String, dynamic>> topItems = [];
       for (final id in topIds) {
-        final item = menuResponse.firstWhere(
+        final item = visibleMenuResponse.firstWhere(
           (m) => m['id'] == id,
           orElse: () => <String, dynamic>{},
         );
@@ -423,7 +452,8 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
-            await Future.wait([_fetchRestaurants(), _fetchTopSellingItems()]);
+            await _fetchRestaurants();
+            await _fetchTopSellingItems();
           },
           color: AppTheme.accentOrange,
           child: CustomScrollView(
@@ -2313,10 +2343,16 @@ class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
             userId: merchantId,
             title: l10n.foodCheckoutNotifTitle,
             body: l10n.foodCheckoutNotifBody(cart.subtotal.ceil().toString()),
-            data: {
-              'type': 'merchant_new_order',
-              'booking_id': booking['id']?.toString() ?? '',
-            },
+            data: NotificationPayloadPolicy.buildBookingPayload(
+              type: NotificationTypes.merchantOrderCreated,
+              recipientRole: NotificationRoles.merchant,
+              bookingId: booking['id']?.toString() ?? '',
+              serviceType: 'food',
+              screen: NotificationRouteScreens.merchantOrder,
+              extra: {
+                'legacy_type': NotificationTypes.legacyMerchantNewOrder,
+              },
+            ),
           );
         }
       } catch (e) {
@@ -2507,8 +2543,7 @@ class _BookingServiceHelper {
       await AdminLineNotificationService.notify(
         eventType: 'food_order_new',
         title: 'JDC: มีออเดอร์อาหารใหม่',
-        message:
-            'ออเดอร์ใหม่จากร้าน $merchantName\n'
+        message: 'ออเดอร์ใหม่จากร้าน $merchantName\n'
             'รวม ฿${totalAmount.toStringAsFixed(0)} (อาหาร ฿${subtotal.toStringAsFixed(0)} + ส่ง ฿${deliveryFee.toStringAsFixed(0)})',
         data: {
           'booking_id': bookingId,

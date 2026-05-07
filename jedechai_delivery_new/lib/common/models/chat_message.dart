@@ -62,7 +62,8 @@ class ChatMessage {
   bool get hasImage => imageUrl != null && imageUrl!.isNotEmpty;
 
   @override
-  String toString() => 'ChatMessage(id: $id, sender: $senderId, message: $message)';
+  String toString() =>
+      'ChatMessage(id: $id, sender: $senderId, message: $message)';
 
   @override
   bool operator ==(Object other) {
@@ -82,7 +83,9 @@ class ChatRoom {
   final String bookingId;
   final String customerId;
   final String? driverId;
-  final String roomType; // 'booking' (customer↔driver), 'support' (customer↔admin)
+  final String? merchantId;
+  final String
+      roomType; // 'booking' (customer↔driver), 'support' (customer↔admin)
   final bool isActive;
   final DateTime createdAt;
   final DateTime? closedAt;
@@ -93,6 +96,7 @@ class ChatRoom {
     required this.bookingId,
     required this.customerId,
     this.driverId,
+    this.merchantId,
     required this.roomType,
     this.isActive = true,
     required this.createdAt,
@@ -106,6 +110,7 @@ class ChatRoom {
       bookingId: json['booking_id'] as String,
       customerId: json['customer_id'] as String,
       driverId: json['driver_id'] as String?,
+      merchantId: json['merchant_id'] as String?,
       roomType: json['room_type'] as String? ?? 'booking',
       isActive: json['is_active'] as bool? ?? true,
       createdAt: DateTime.parse(json['created_at'] as String),
@@ -121,6 +126,7 @@ class ChatRoom {
       'booking_id': bookingId,
       'customer_id': customerId,
       'driver_id': driverId,
+      'merchant_id': merchantId,
       'room_type': roomType,
       'is_active': isActive,
       'created_at': createdAt.toIso8601String(),
@@ -129,7 +135,8 @@ class ChatRoom {
   }
 
   @override
-  String toString() => 'ChatRoom(id: $id, bookingId: $bookingId, type: $roomType)';
+  String toString() =>
+      'ChatRoom(id: $id, bookingId: $bookingId, type: $roomType)';
 
   @override
   bool operator ==(Object other) {

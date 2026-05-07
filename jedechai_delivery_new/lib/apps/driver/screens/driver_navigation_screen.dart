@@ -1233,8 +1233,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         // Extract ETA from Directions API response
         final legs = route['legs'] as List?;
         if (legs != null && legs.isNotEmpty) {
-          final durationSec =
-              ((legs[0] as Map)['duration']?['value']) as int?;
+          final durationSec = ((legs[0] as Map)['duration']?['value']) as int?;
           if (durationSec != null && mounted) {
             setState(() => _etaMinutes = (durationSec / 60).round());
           }
@@ -1708,12 +1707,14 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
       // Use BookingService to update status
       final bookingService = BookingService();
+      var effectiveNewStatus = newStatus;
       if (newStatus == 'completed') {
         // Atomic: deducts commission and marks completed in one Postgres transaction
         await bookingService.completeBooking(widget.bookingId);
       } else if (_booking!.serviceType == 'food' &&
           newStatus == 'arrived_at_merchant') {
-        await bookingService.markDriverArrivedAtMerchant(widget.bookingId);
+        effectiveNewStatus =
+            await bookingService.markDriverArrivedAtMerchant(widget.bookingId);
       } else if (_booking!.serviceType == 'food' &&
           newStatus == 'picking_up_order') {
         await bookingService.markFoodPickedUp(widget.bookingId);
@@ -1765,7 +1766,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         });
 
         // Send notification to customer about status change
-        await _notifyCustomerStatusUpdate(result[0], newStatus);
+        await _notifyCustomerStatusUpdate(result[0], effectiveNewStatus);
 
         // If driver arrived at merchant, also notify merchant
         if (newStatus == 'arrived_at_merchant' &&
@@ -1778,18 +1779,18 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
               AppLocalizations.of(context)!.driverNavStatusUpdated);
 
           // Show merchant payment dialog when picking up food
-          if (newStatus == 'picking_up_order' &&
+          if (effectiveNewStatus == 'picking_up_order' &&
               _booking!.serviceType == 'food') {
             _showMerchantPaymentDialog();
           }
 
           // Launch Google Maps Navigation when starting trip
-          if (newStatus == 'in_transit') {
+          if (effectiveNewStatus == 'in_transit') {
             _launchGoogleMapsNavigation();
           }
 
           // Handle completion
-          if (newStatus == 'completed') {
+          if (effectiveNewStatus == 'completed') {
             _showCompletionDialog();
           }
         }
@@ -1991,8 +1992,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content:
-                  Text(AppLocalizations.of(context)!.driverNavWaitMerchantReady),
+              content: Text(
+                  AppLocalizations.of(context)!.driverNavWaitMerchantReady),
               backgroundColor: Theme.of(context).colorScheme.tertiary,
               duration: const Duration(seconds: 3),
             ),
@@ -2443,9 +2444,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           return Expanded(
             child: Container(
               height: 2,
-              color: active
-                  ? AppTheme.accentBlue
-                  : colorScheme.outlineVariant,
+              color: active ? AppTheme.accentBlue : colorScheme.outlineVariant,
             ),
           );
         } else {
@@ -2464,15 +2463,12 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                       : colorScheme.surfaceContainerHighest,
                   shape: BoxShape.circle,
                   border: isCurrent
-                      ? Border.all(
-                          color: AppTheme.accentBlue, width: 2)
+                      ? Border.all(color: AppTheme.accentBlue, width: 2)
                       : null,
                 ),
                 child: Icon(
                   stepIndex < currentStep ? Icons.check : Icons.circle,
-                  color: active
-                      ? Colors.white
-                      : colorScheme.outlineVariant,
+                  color: active ? Colors.white : colorScheme.outlineVariant,
                   size: 10,
                 ),
               ),
@@ -2484,9 +2480,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                   color: active
                       ? AppTheme.accentBlue
                       : colorScheme.onSurfaceVariant,
-                  fontWeight: isCurrent
-                      ? FontWeight.bold
-                      : FontWeight.normal,
+                  fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
             ],

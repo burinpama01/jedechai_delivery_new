@@ -37,8 +37,7 @@ class ChatService {
         if (driverId != null && existing['driver_id'] == null) {
           await _client
               .from('chat_rooms')
-              .update({'driver_id': driverId})
-              .eq('id', existing['id']);
+              .update({'driver_id': driverId}).eq('id', existing['id']);
           existing['driver_id'] = driverId;
         }
         return ChatRoom.fromJson(existing);
@@ -61,6 +60,50 @@ class ChatService {
       return ChatRoom.fromJson(response);
     } catch (e) {
       debugLog('❌ Error creating booking chat room: $e');
+      return null;
+    }
+  }
+
+  /// Get or create a chat room for customer <-> merchant food order support.
+  Future<ChatRoom?> getOrCreateMerchantOrderChatRoom({
+    required String bookingId,
+    required String customerId,
+    required String merchantId,
+  }) async {
+    try {
+      final existing = await _client
+          .from('chat_rooms')
+          .select()
+          .eq('booking_id', bookingId)
+          .eq('room_type', 'merchant_order')
+          .maybeSingle();
+
+      if (existing != null) {
+        if (existing['merchant_id'] == null) {
+          await _client
+              .from('chat_rooms')
+              .update({'merchant_id': merchantId}).eq('id', existing['id']);
+          existing['merchant_id'] = merchantId;
+        }
+        return ChatRoom.fromJson(existing);
+      }
+
+      final response = await _client
+          .from('chat_rooms')
+          .insert({
+            'booking_id': bookingId,
+            'customer_id': customerId,
+            'merchant_id': merchantId,
+            'room_type': 'merchant_order',
+            'is_active': true,
+          })
+          .select()
+          .single();
+
+      debugLog('✅ Created merchant order chat room for booking: $bookingId');
+      return ChatRoom.fromJson(response);
+    } catch (e) {
+      debugLog('❌ Error creating merchant order chat room: $e');
       return null;
     }
   }
@@ -204,11 +247,11 @@ class ChatService {
           },
         )
         .subscribe((status, [error]) {
-          debugLog('💬 Chat channel status: $status');
-          if (error != null) {
-            debugLog('❌ Chat channel error: $error');
-          }
-        });
+      debugLog('💬 Chat channel status: $status');
+      if (error != null) {
+        debugLog('❌ Chat channel error: $error');
+      }
+    });
 
     return _messagesController!.stream;
   }
@@ -274,9 +317,7 @@ class ChatService {
           .eq('is_active', true)
           .order('created_at', ascending: false);
 
-      return (response as List)
-          .map((json) => ChatRoom.fromJson(json))
-          .toList();
+      return (response as List).map((json) => ChatRoom.fromJson(json)).toList();
     } catch (e) {
       debugLog('❌ Error fetching support rooms: $e');
       return [];
@@ -293,7 +334,11 @@ class ChatService {
       // Get chat room + sender profile in parallel
       final futures = await Future.wait([
         _client.from('chat_rooms').select().eq('id', chatRoomId).single(),
-        _client.from('profiles').select('full_name, role').eq('id', senderId).maybeSingle(),
+        _client
+            .from('profiles')
+            .select('full_name, role')
+            .eq('id', senderId)
+            .maybeSingle(),
       ]);
 
       final room = futures[0] as Map<String, dynamic>;
@@ -303,7 +348,10 @@ class ChatService {
 
       String? targetUserId;
       if (room['customer_id'] == senderId) {
-        targetUserId = room['driver_id'] as String?;
+        targetUserId =
+            room['merchant_id'] as String? ?? room['driver_id'] as String?;
+      } else if (room['merchant_id'] == senderId) {
+        targetUserId = room['customer_id'] as String?;
       } else {
         targetUserId = room['customer_id'] as String?;
       }
@@ -314,13 +362,16 @@ class ChatService {
       final String title;
       if (senderRole == 'driver') {
         title = '💬 ข้อความจากคนขับ ($senderName)';
+      } else if (senderRole == 'merchant') {
+        title = '💬 ข้อความจากร้านค้า ($senderName)';
       } else if (senderRole == 'customer') {
         title = '💬 ข้อความจากลูกค้า ($senderName)';
       } else {
         title = '💬 ข้อความจาก $senderName';
       }
 
-      final truncatedMsg = message.length > 100 ? '${message.substring(0, 100)}...' : message;
+      final truncatedMsg =
+          message.length > 100 ? '${message.substring(0, 100)}...' : message;
 
       await NotificationSender.sendNotification(
         targetUserId: targetUserId,

@@ -17,6 +17,7 @@ import '../../../common/services/account_deletion_service.dart';
 import '../../../common/utils/platform_adaptive.dart';
 import '../../../common/widgets/app_network_image.dart';
 import '../../../common/widgets/language_switcher.dart';
+import '../../../common/widgets/reviews_screen.dart';
 import '../../customer/screens/auth/login_screen.dart';
 import '../../../l10n/app_localizations.dart';
 import 'merchant_coupon_management_screen.dart';
@@ -64,6 +65,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
       'sun': l10n.mchSetWeekSun,
     };
   }
+
   static const String _acceptModeManual = 'manual';
   static const String _acceptModeAuto = 'auto';
 
@@ -216,7 +218,9 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                         const SizedBox(height: 8),
                         const Text('DB profiles.fcm_token:'),
                         SelectableText(
-                          profileToken?.isNotEmpty == true ? profileToken! : '-',
+                          profileToken?.isNotEmpty == true
+                              ? profileToken!
+                              : '-',
                         ),
                       ],
                     ],
@@ -364,8 +368,14 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
 
   Future<void> _editProfileField(String field) async {
     final l10n = AppLocalizations.of(context)!;
-    final labels = {'full_name': l10n.mchSetShopName, 'phone_number': l10n.mchSetPhone};
-    final hints = {'full_name': l10n.mchSetHintShopName, 'phone_number': l10n.mchSetHintPhone};
+    final labels = {
+      'full_name': l10n.mchSetShopName,
+      'phone_number': l10n.mchSetPhone
+    };
+    final hints = {
+      'full_name': l10n.mchSetHintShopName,
+      'phone_number': l10n.mchSetHintPhone
+    };
     final label = labels[field] ?? field;
     final hint = hints[field] ?? '';
     final controller = TextEditingController(text: _userProfile?[field] ?? '');
@@ -625,7 +635,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             const SizedBox(height: 8),
             Text(
               _error!,
-              style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+              style:
+                  TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
@@ -747,7 +758,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
           ),
           const SizedBox(height: 14),
           Text(
-            _userProfile?['full_name'] ?? AppLocalizations.of(context)!.accountRoleMerchant,
+            _userProfile?['full_name'] ??
+                AppLocalizations.of(context)!.accountRoleMerchant,
             style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
@@ -796,7 +808,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             ios: CupertinoIcons.building_2_fill,
           ),
           AppLocalizations.of(context)!.mchSetShopName,
-          _userProfile?['full_name'] ?? AppLocalizations.of(context)!.mchSetNotSet,
+          _userProfile?['full_name'] ??
+              AppLocalizations.of(context)!.mchSetNotSet,
           () => _editProfileField('full_name'),
         ),
         _divider(),
@@ -806,7 +819,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             ios: CupertinoIcons.phone,
           ),
           AppLocalizations.of(context)!.mchSetPhone,
-          _userProfile?['phone_number'] ?? AppLocalizations.of(context)!.mchSetNotSet,
+          _userProfile?['phone_number'] ??
+              AppLocalizations.of(context)!.mchSetNotSet,
           () => _editProfileField('phone_number'),
         ),
         _divider(),
@@ -826,7 +840,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             ios: CupertinoIcons.location,
           ),
           AppLocalizations.of(context)!.mchSetAddress,
-          _userProfile?['shop_address'] ?? AppLocalizations.of(context)!.mchSetNotSet,
+          _userProfile?['shop_address'] ??
+              AppLocalizations.of(context)!.mchSetNotSet,
           null,
         ),
         _divider(),
@@ -841,7 +856,9 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                   ios: CupertinoIcons.xmark_circle_fill,
                 ),
           AppLocalizations.of(context)!.mchSetShopStatus,
-          shopStatus == true ? AppLocalizations.of(context)!.mchSetShopOpen : AppLocalizations.of(context)!.mchSetShopClosed,
+          shopStatus == true
+              ? AppLocalizations.of(context)!.mchSetShopOpen
+              : AppLocalizations.of(context)!.mchSetShopClosed,
           null,
         ),
         _divider(),
@@ -881,7 +898,9 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             ios: CupertinoIcons.timer,
           ),
           AppLocalizations.of(context)!.mchSetAutoSchedule,
-          autoScheduleEnabled ? AppLocalizations.of(context)!.mchSetAutoScheduleOn : AppLocalizations.of(context)!.mchSetAutoScheduleOff,
+          autoScheduleEnabled
+              ? AppLocalizations.of(context)!.mchSetAutoScheduleOn
+              : AppLocalizations.of(context)!.mchSetAutoScheduleOff,
           _showEditShopHoursDialog,
         ),
       ],
@@ -1060,12 +1079,14 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                       ButtonSegment<String>(
                         value: _acceptModeManual,
                         icon: Icon(Icons.pan_tool_alt_outlined),
-                        label: Text(AppLocalizations.of(context)!.mchSetAcceptManualShort),
+                        label: Text(AppLocalizations.of(context)!
+                            .mchSetAcceptManualShort),
                       ),
                       ButtonSegment<String>(
                         value: _acceptModeAuto,
                         icon: Icon(Icons.auto_mode_outlined),
-                        label: Text(AppLocalizations.of(context)!.mchSetAcceptAutoShort),
+                        label: Text(AppLocalizations.of(context)!
+                            .mchSetAcceptAutoShort),
                       ),
                     ],
                     selected: {selectedAcceptMode},
@@ -1112,8 +1133,10 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                     ),
                     subtitle: Text(
                       autoScheduleEnabled
-                          ? AppLocalizations.of(context)!.mchSetAutoScheduleOnDesc
-                          : AppLocalizations.of(context)!.mchSetAutoScheduleOffDesc,
+                          ? AppLocalizations.of(context)!
+                              .mchSetAutoScheduleOnDesc
+                          : AppLocalizations.of(context)!
+                              .mchSetAutoScheduleOffDesc,
                       style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                     onChanged: (value) {
@@ -1134,7 +1157,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                     if (selectedDays.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(AppLocalizations.of(context)!.mchSetSelectAtLeast1Day),
+                          content: Text(AppLocalizations.of(context)!
+                              .mchSetSelectAtLeast1Day),
                           backgroundColor: Colors.red,
                         ),
                       );
@@ -1180,7 +1204,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                AppLocalizations.of(context)!.mchSetShopHoursSaved(openStr, closeStr, _formatOpenDaysText(selectedDays.toList())),
+                AppLocalizations.of(context)!.mchSetShopHoursSaved(openStr,
+                    closeStr, _formatOpenDaysText(selectedDays.toList())),
               ),
               backgroundColor: Colors.green,
             ),
@@ -1191,7 +1216,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppLocalizations.of(context)!.mchSetSaveFailed(e.toString())),
+              content: Text(
+                  AppLocalizations.of(context)!.mchSetSaveFailed(e.toString())),
               backgroundColor: Colors.red,
             ),
           );
@@ -1240,6 +1266,21 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
               SnackBar(
                 content: Text(
                   AppLocalizations.of(context)!.accountFeatureComingSoon,
+                ),
+              ),
+            );
+          },
+        ),
+        _divider(),
+        _menuItem(
+          Icons.star_outline,
+          'รีวิวร้านค้า',
+          () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const ReviewsScreen(
+                  targetRole: 'merchant',
+                  title: 'รีวิวร้านค้า',
                 ),
               ),
             );

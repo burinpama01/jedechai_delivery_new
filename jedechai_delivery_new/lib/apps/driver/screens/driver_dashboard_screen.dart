@@ -9,6 +9,7 @@ import '../../../common/utils/order_code_formatter.dart';
 import '../../../common/widgets/location_disclosure_dialog.dart';
 import '../../../common/services/driver_foreground_service.dart';
 import '../../../common/utils/driver_job_visibility_policy.dart';
+import '../../../common/utils/notification_payload_policy.dart';
 import '../../customer/screens/auth/login_screen.dart';
 import 'driver_navigation_screen.dart';
 import 'driver_service_type_settings.dart';
@@ -706,11 +707,18 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   /// Check for new jobs and send notification
   void _checkForNewJobs(List<Booking> currentJobs) {
     if (_previousJobs.isEmpty) {
-      // First time loading, set baseline
+      final initialNewJobs = currentJobs
+          .where((job) =>
+              (job.driverId == null || job.driverId!.isEmpty) &&
+              !_seenNotifiedJobIds.contains(job.id))
+          .toList();
+      for (final job in initialNewJobs) {
+        _sendNewJobNotification(job);
+      }
       _previousJobs = List.from(currentJobs);
-      _seenNotifiedJobIds.addAll(currentJobs.map((job) => job.id));
+      _seenNotifiedJobIds.addAll(initialNewJobs.map((job) => job.id));
       debugLog(
-          '🔔 Notification baseline set with ${currentJobs.length} visible job(s)');
+          '🔔 Initial visible jobs notified: ${initialNewJobs.length}, total visible: ${currentJobs.length}');
       return;
     }
 
@@ -740,8 +748,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     // Show local notification
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-            AppLocalizations.of(context)!.driverDashNewJob(_getJobTypeText(job.serviceType), _getJobStatusText(job.status))),
+        content: Text(AppLocalizations.of(context)!.driverDashNewJob(
+            _getJobTypeText(job.serviceType), _getJobStatusText(job.status))),
         backgroundColor: Colors.green,
         duration: const Duration(seconds: 5),
         action: SnackBarAction(
@@ -840,7 +848,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.driverDashErrorGeneric(e.toString())),
+            content: Text(AppLocalizations.of(context)!
+                .driverDashErrorGeneric(e.toString())),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -885,7 +894,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     try {
       final driverId = AuthService.userId;
       if (driverId == null) {
-        _showErrorDialog(AppLocalizations.of(context)!.driverDashNoUser, AppLocalizations.of(context)!.driverDashPleaseLogin);
+        _showErrorDialog(AppLocalizations.of(context)!.driverDashNoUser,
+            AppLocalizations.of(context)!.driverDashPleaseLogin);
         if (mounted) setState(() => _isAcceptingJob = false);
         return;
       }
@@ -935,8 +945,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           debugLog('✅ Navigation to DriverNavigationScreen successful');
         } catch (e) {
           debugLog('❌ Navigation error: $e');
-          _showErrorDialog(
-              AppLocalizations.of(context)!.driverDashErrorTitle, AppLocalizations.of(context)!.driverDashNavError(e.toString()));
+          _showErrorDialog(AppLocalizations.of(context)!.driverDashErrorTitle,
+              AppLocalizations.of(context)!.driverDashNavError(e.toString()));
         }
       }
     } catch (e) {
@@ -950,7 +960,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
             builder: (ctx) => AlertDialog(
               icon: const Icon(Icons.account_balance_wallet,
                   color: Colors.orange, size: 48),
-              title: Text(AppLocalizations.of(context)!.driverDashInsufficientBalance),
+              title: Text(
+                  AppLocalizations.of(context)!.driverDashInsufficientBalance),
               content: Text(e.toString()),
               actions: [
                 TextButton(
@@ -977,7 +988,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           );
         }
       } else {
-        _showErrorDialog(AppLocalizations.of(context)!.driverDashCannotAccept, e.toString());
+        _showErrorDialog(
+            AppLocalizations.of(context)!.driverDashCannotAccept, e.toString());
       }
     } finally {
       if (mounted) setState(() => _isAcceptingJob = false);
@@ -1019,7 +1031,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               onTap: _toggleOnlineStatus,
               borderRadius: BorderRadius.circular(999),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: _isOnline
                       ? Colors.green.withValues(alpha: 0.22)
@@ -1058,7 +1071,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      _isOnline ? AppLocalizations.of(context)!.driverDashOnline : AppLocalizations.of(context)!.driverDashOffline,
+                      _isOnline
+                          ? AppLocalizations.of(context)!.driverDashOnline
+                          : AppLocalizations.of(context)!.driverDashOffline,
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -1137,30 +1152,42 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                       children: [
                         Expanded(
                           child: OutlinedButton.icon(
-                            onPressed: () => Navigator.push(context,
-                                MaterialPageRoute(builder: (_) => const DriverPerformanceScreen())),
+                            onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) =>
+                                        const DriverPerformanceScreen())),
                             icon: const Icon(Icons.insights, size: 16),
-                            label: const Text('ผลงาน', style: TextStyle(fontSize: 12)),
+                            label: const Text('ผลงาน',
+                                style: TextStyle(fontSize: 12)),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: AppTheme.accentBlue,
-                              side: BorderSide(color: AppTheme.accentBlue.withValues(alpha: 0.4)),
+                              side: BorderSide(
+                                  color: AppTheme.accentBlue
+                                      .withValues(alpha: 0.4)),
                               padding: const EdgeInsets.symmetric(vertical: 8),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8)),
                             ),
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: OutlinedButton.icon(
-                            onPressed: () => Navigator.push(context,
-                                MaterialPageRoute(builder: (_) => const DriverShiftScreen())),
+                            onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const DriverShiftScreen())),
                             icon: const Icon(Icons.schedule, size: 16),
-                            label: const Text('กะงาน', style: TextStyle(fontSize: 12)),
+                            label: const Text('กะงาน',
+                                style: TextStyle(fontSize: 12)),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: Colors.green[700],
-                              side: BorderSide(color: Colors.green.withValues(alpha: 0.4)),
+                              side: BorderSide(
+                                  color: Colors.green.withValues(alpha: 0.4)),
                               padding: const EdgeInsets.symmetric(vertical: 8),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8)),
                             ),
                           ),
                         ),
@@ -1188,7 +1215,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            _isRefreshing ? AppLocalizations.of(context)!.driverDashRefreshing : AppLocalizations.of(context)!.driverDashRealtime,
+                            _isRefreshing
+                                ? AppLocalizations.of(context)!
+                                    .driverDashRefreshing
+                                : AppLocalizations.of(context)!
+                                    .driverDashRealtime,
                             style: TextStyle(
                               fontSize: 10,
                               color: Colors.blue,
@@ -1209,8 +1240,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   }
 
   Widget _buildCompactDriverHeader() {
-    final driverName = _driverProfile?['full_name'] ?? AppLocalizations.of(context)!.driverDashDriverDefault;
-    final vehicle = _displayVehicleType(_driverProfile?['vehicle_type'] as String?);
+    final driverName = _driverProfile?['full_name'] ??
+        AppLocalizations.of(context)!.driverDashDriverDefault;
+    final vehicle =
+        _displayVehicleType(_driverProfile?['vehicle_type'] as String?);
 
     return Container(
       width: double.infinity,
@@ -1273,7 +1306,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                     color: Colors.white.withValues(alpha: 0.18),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.person, color: Colors.white, size: 18),
+                  child:
+                      const Icon(Icons.person, color: Colors.white, size: 18),
                 ),
               ),
             ],
@@ -1324,9 +1358,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       'ride': ('🚗', 'เรียกรถ'),
       'parcel': ('📦', 'พัสดุ'),
     };
-    final entries = _earningsByType.entries
-        .where((e) => e.value > 0)
-        .toList()
+    final entries = _earningsByType.entries.where((e) => e.value > 0).toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
     return Container(
@@ -1404,7 +1436,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     // Show feedback
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(_isOnline ? AppLocalizations.of(context)!.driverDashNowOnline : AppLocalizations.of(context)!.driverDashNowOffline),
+        content: Text(_isOnline
+            ? AppLocalizations.of(context)!.driverDashNowOnline
+            : AppLocalizations.of(context)!.driverDashNowOffline),
         backgroundColor: _isOnline ? Colors.green : Colors.grey,
         duration: const Duration(seconds: 2),
       ),
@@ -1499,17 +1533,16 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    isOfflineEmpty
-                        ? Icons.wifi_off
-                        : Icons.search_off_rounded,
+                    isOfflineEmpty ? Icons.wifi_off : Icons.search_off_rounded,
                     size: 64,
-                    color:
-                        isOfflineEmpty ? Colors.grey : Colors.grey.shade400,
+                    color: isOfflineEmpty ? Colors.grey : Colors.grey.shade400,
                   ),
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  isOfflineEmpty ? AppLocalizations.of(context)!.driverDashOfflineTitle : AppLocalizations.of(context)!.driverDashNoJobs,
+                  isOfflineEmpty
+                      ? AppLocalizations.of(context)!.driverDashOfflineTitle
+                      : AppLocalizations.of(context)!.driverDashNoJobs,
                   style: TextStyle(
                     fontSize: 20,
                     color: colorScheme.onSurface,
@@ -1678,8 +1711,12 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                     Expanded(
                       child: Text(
                         job.scheduledAt!.isAfter(DateTime.now())
-                            ? AppLocalizations.of(context)!.driverDashScheduledFrom(_formatScheduledDateTime(job.scheduledAt!))
-                            : AppLocalizations.of(context)!.driverDashScheduledAt(_formatScheduledDateTime(job.scheduledAt!)),
+                            ? AppLocalizations.of(context)!
+                                .driverDashScheduledFrom(
+                                    _formatScheduledDateTime(job.scheduledAt!))
+                            : AppLocalizations.of(context)!
+                                .driverDashScheduledAt(
+                                    _formatScheduledDateTime(job.scheduledAt!)),
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -1720,7 +1757,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            job.serviceType == 'food' ? AppLocalizations.of(context)!.driverDashPickupRestaurant : AppLocalizations.of(context)!.driverDashPickupPoint,
+                            job.serviceType == 'food'
+                                ? AppLocalizations.of(context)!
+                                    .driverDashPickupRestaurant
+                                : AppLocalizations.of(context)!
+                                    .driverDashPickupPoint,
                             style: TextStyle(
                               fontSize: 11,
                               color: colorScheme.onSurfaceVariant,
@@ -1729,8 +1770,12 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                           ),
                           Text(
                             job.serviceType == 'food'
-                                ? (job.pickupAddress ?? AppLocalizations.of(context)!.driverDashPickupFoodFallback)
-                                : (job.pickupAddress ?? AppLocalizations.of(context)!.driverDashPickupRideFallback),
+                                ? (job.pickupAddress ??
+                                    AppLocalizations.of(context)!
+                                        .driverDashPickupFoodFallback)
+                                : (job.pickupAddress ??
+                                    AppLocalizations.of(context)!
+                                        .driverDashPickupRideFallback),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -1775,8 +1820,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                         children: [
                           Text(
                             job.serviceType == 'food'
-                                ? AppLocalizations.of(context)!.driverDashDestCustomer
-                                : AppLocalizations.of(context)!.driverDashDestPoint,
+                                ? AppLocalizations.of(context)!
+                                    .driverDashDestCustomer
+                                : AppLocalizations.of(context)!
+                                    .driverDashDestPoint,
                             style: TextStyle(
                               fontSize: 11,
                               color: colorScheme.onSurfaceVariant,
@@ -1784,7 +1831,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                             ),
                           ),
                           Text(
-                            job.destinationAddress ?? AppLocalizations.of(context)!.driverDashDestFallback,
+                            job.destinationAddress ??
+                                AppLocalizations.of(context)!
+                                    .driverDashDestFallback,
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -1840,7 +1889,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
             ),
             child: Text(
               isScheduledLocked
-                  ? AppLocalizations.of(context)!.driverDashAcceptAt(_formatScheduledDateTime(job.scheduledAt!))
+                  ? AppLocalizations.of(context)!.driverDashAcceptAt(
+                      _formatScheduledDateTime(job.scheduledAt!))
                   : (job.serviceType == 'parcel'
                       ? AppLocalizations.of(context)!.driverDashAcceptParcel
                       : AppLocalizations.of(context)!.driverDashAcceptRide),
@@ -1873,7 +1923,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
             ),
             child: Text(
               isScheduledLocked
-                  ? AppLocalizations.of(context)!.driverDashAcceptAt(_formatScheduledDateTime(job.scheduledAt!))
+                  ? AppLocalizations.of(context)!.driverDashAcceptAt(
+                      _formatScheduledDateTime(job.scheduledAt!))
                   : AppLocalizations.of(context)!.driverDashAcceptFood,
               style: const TextStyle(
                 fontSize: 16,
@@ -1980,12 +2031,13 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         debugLog('✅ Navigation to DriverNavigationScreen successful');
       } catch (e) {
         debugLog('❌ Navigation error: $e');
-        _showErrorDialog(
-            AppLocalizations.of(context)!.driverDashErrorTitle, AppLocalizations.of(context)!.driverDashNavError(e.toString()));
+        _showErrorDialog(AppLocalizations.of(context)!.driverDashErrorTitle,
+            AppLocalizations.of(context)!.driverDashNavError(e.toString()));
       }
     } catch (e) {
       debugLog('❌ Failed to navigate to pickup: $e');
-      _showErrorDialog(AppLocalizations.of(context)!.driverDashErrorTitle, AppLocalizations.of(context)!.driverDashCannotNav(e.toString()));
+      _showErrorDialog(AppLocalizations.of(context)!.driverDashErrorTitle,
+          AppLocalizations.of(context)!.driverDashCannotNav(e.toString()));
     }
   }
 
@@ -2109,13 +2161,20 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         targetUserId: customerId,
         title: title,
         body: body,
-        data: {
-          'type': 'driver_accepted',
-          'booking_id': booking['id'] as String,
-          'driver_id': booking['driver_id'] as String,
-          'service_type': serviceType,
-          'timestamp': DateTime.now().toIso8601String(),
-        },
+        data: NotificationPayloadPolicy.buildBookingPayload(
+          type: NotificationTypes.customerBookingDriverAssigned,
+          recipientRole: NotificationRoles.customer,
+          bookingId: booking['id'] as String,
+          serviceType: serviceType,
+          screen: serviceType == 'ride'
+              ? NotificationRouteScreens.customerRideStatus
+              : NotificationRouteScreens.customerOrder,
+          extra: {
+            'legacy_type': 'driver_accepted',
+            'driver_id': booking['driver_id'] as String,
+            'timestamp': DateTime.now().toIso8601String(),
+          },
+        ),
       );
 
       if (success) {
@@ -2155,15 +2214,22 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         targetUserId: merchantId,
         title: l10n.driverDashNotifMerchantTitle,
         body: driverProfile != null
-            ? l10n.driverDashNotifMerchantBody(driverProfile['full_name'] ?? '', orderCode)
+            ? l10n.driverDashNotifMerchantBody(
+                driverProfile['full_name'] ?? '', orderCode)
             : l10n.driverDashNotifMerchantBodyDefault,
-        data: {
-          'type': 'driver_accepted_food',
-          'booking_id': booking['id'] as String,
-          'driver_id': booking['driver_id'] as String,
-          'merchant_id': merchantId,
-          'timestamp': DateTime.now().toIso8601String(),
-        },
+        data: NotificationPayloadPolicy.buildBookingPayload(
+          type: NotificationTypes.merchantOrderAdminAction,
+          recipientRole: NotificationRoles.merchant,
+          bookingId: booking['id'] as String,
+          serviceType: booking['service_type']?.toString() ?? 'food',
+          screen: NotificationRouteScreens.merchantOrder,
+          extra: {
+            'legacy_type': 'driver_accepted_food',
+            'driver_id': booking['driver_id'] as String,
+            'merchant_id': merchantId,
+            'timestamp': DateTime.now().toIso8601String(),
+          },
+        ),
       );
 
       if (success) {
@@ -2306,18 +2372,25 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
             Row(
               children: [
                 Expanded(
-                  child: _buildMiniDetail(AppLocalizations.of(context)!.driverDashFoodCost,
-                      '฿${foodPrice.toStringAsFixed(0)}', Colors.orange),
+                  child: _buildMiniDetail(
+                      AppLocalizations.of(context)!.driverDashFoodCost,
+                      '฿${foodPrice.toStringAsFixed(0)}',
+                      Colors.orange),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: _buildMiniDetail(AppLocalizations.of(context)!.driverDashDeliveryFee,
-                      '฿${deliveryFee.toStringAsFixed(0)}', Colors.blue),
+                  child: _buildMiniDetail(
+                      AppLocalizations.of(context)!.driverDashDeliveryFee,
+                      '฿${deliveryFee.toStringAsFixed(0)}',
+                      Colors.blue),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: _buildMiniDetail(AppLocalizations.of(context)!.driverDashDistance,
-                      AppLocalizations.of(context)!.driverDashDistanceKm(job.distanceKm.toStringAsFixed(1)), Colors.grey),
+                  child: _buildMiniDetail(
+                      AppLocalizations.of(context)!.driverDashDistance,
+                      AppLocalizations.of(context)!.driverDashDistanceKm(
+                          job.distanceKm.toStringAsFixed(1)),
+                      Colors.grey),
                 ),
               ],
             ),
@@ -2330,8 +2403,12 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                   const SizedBox(width: 4),
                   Text(
                     hideCouponBreakdown
-                        ? AppLocalizations.of(context)!.driverDashCouponDiscount(couponDiscount.toStringAsFixed(0))
-                        : AppLocalizations.of(context)!.driverDashCouponDiscountCode(couponDiscount.toStringAsFixed(0)),
+                        ? AppLocalizations.of(context)!
+                            .driverDashCouponDiscount(
+                                couponDiscount.toStringAsFixed(0))
+                        : AppLocalizations.of(context)!
+                            .driverDashCouponDiscountCode(
+                                couponDiscount.toStringAsFixed(0)),
                     style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -2392,7 +2469,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    AppLocalizations.of(context)!.driverDashDistanceKm(job.distanceKm.toStringAsFixed(1)),
+                    AppLocalizations.of(context)!.driverDashDistanceKm(
+                        job.distanceKm.toStringAsFixed(1)),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -2412,8 +2490,12 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                     const SizedBox(width: 4),
                     Text(
                       hideCouponBreakdown
-                          ? AppLocalizations.of(context)!.driverDashCouponDiscount(couponDiscount.toStringAsFixed(0))
-                          : AppLocalizations.of(context)!.driverDashCouponDiscountCode(couponDiscount.toStringAsFixed(0)),
+                          ? AppLocalizations.of(context)!
+                              .driverDashCouponDiscount(
+                                  couponDiscount.toStringAsFixed(0))
+                          : AppLocalizations.of(context)!
+                              .driverDashCouponDiscountCode(
+                                  couponDiscount.toStringAsFixed(0)),
                       style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -2497,7 +2579,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           children: [
             Text(
               'งานนัดหมาย',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface),
             ),
             const SizedBox(width: 8),
             Container(
@@ -2508,14 +2593,18 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               ),
               child: Text(
                 '${_scheduledJobs.length}',
-                style: const TextStyle(fontSize: 12, color: Colors.orange, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.orange,
+                    fontWeight: FontWeight.w600),
               ),
             ),
           ],
         ),
         const SizedBox(height: 12),
         if (_scheduledJobsLoading)
-          const Center(child: Padding(
+          const Center(
+              child: Padding(
             padding: EdgeInsets.all(24),
             child: CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6))),
@@ -2530,14 +2619,18 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
             ),
             child: Column(
               children: [
-                Icon(Icons.event_available, size: 40, color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4)),
+                Icon(Icons.event_available,
+                    size: 40,
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4)),
                 const SizedBox(height: 8),
-                Text('ไม่มีงานนัดหมาย', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+                Text('ไม่มีงานนัดหมาย',
+                    style: TextStyle(color: colorScheme.onSurfaceVariant)),
               ],
             ),
           )
         else
-          ...List.generate(_scheduledJobs.length, (i) => _buildScheduledJobCard(_scheduledJobs[i])),
+          ...List.generate(_scheduledJobs.length,
+              (i) => _buildScheduledJobCard(_scheduledJobs[i])),
       ],
     );
   }
@@ -2551,7 +2644,21 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     String scheduledText = '-';
     if (scheduledAt != null) {
       final local = scheduledAt.toLocal();
-      final thaiMonths = ['', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+      final thaiMonths = [
+        '',
+        'ม.ค.',
+        'ก.พ.',
+        'มี.ค.',
+        'เม.ย.',
+        'พ.ค.',
+        'มิ.ย.',
+        'ก.ค.',
+        'ส.ค.',
+        'ก.ย.',
+        'ต.ค.',
+        'พ.ย.',
+        'ธ.ค.'
+      ];
       final day = local.day;
       final month = thaiMonths[local.month];
       final year = local.year + 543;
@@ -2567,7 +2674,12 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.amber.shade300.withValues(alpha: 0.5)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 4, offset: const Offset(0, 2))],
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 4,
+              offset: const Offset(0, 2))
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2588,13 +2700,20 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(_getServiceLabel(job.serviceType),
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
+                        style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.onSurface)),
                     Row(
                       children: [
-                        const Icon(Icons.schedule, size: 12, color: Colors.orange),
+                        const Icon(Icons.schedule,
+                            size: 12, color: Colors.orange),
                         const SizedBox(width: 4),
                         Text(scheduledText,
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.orange)),
+                            style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.orange)),
                       ],
                     ),
                   ],
@@ -2602,7 +2721,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               ),
               Text(
                 '฿${job.price.toStringAsFixed(0)}',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green[700]),
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green[700]),
               ),
             ],
           ),
@@ -2610,12 +2732,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.location_on_outlined, size: 14, color: colorScheme.onSurfaceVariant),
+                Icon(Icons.location_on_outlined,
+                    size: 14, color: colorScheme.onSurfaceVariant),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     job.pickupAddress ?? '-',
-                    style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                    style: TextStyle(
+                        fontSize: 12, color: colorScheme.onSurfaceVariant),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

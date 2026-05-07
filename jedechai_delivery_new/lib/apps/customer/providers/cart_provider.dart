@@ -9,6 +9,7 @@ class CartItem {
   final String? imageUrl;
   final double basePrice;
   final double optionsPrice;
+  final int prepTimeMinutes;
   final List<String> selectedOptions;
   int quantity;
 
@@ -19,6 +20,7 @@ class CartItem {
     this.imageUrl,
     required this.basePrice,
     this.optionsPrice = 0,
+    this.prepTimeMinutes = 15,
     this.selectedOptions = const [],
     this.quantity = 1,
   });
@@ -26,15 +28,16 @@ class CartItem {
   double get totalPrice => (basePrice + optionsPrice) * quantity;
 
   Map<String, dynamic> toJson() => {
-    'id': menuItemId,
-    'name': name,
-    'description': description,
-    'image_url': imageUrl,
-    'base_price': basePrice,
-    'price': totalPrice,
-    'selected_options': selectedOptions,
-    'quantity': quantity,
-  };
+        'id': menuItemId,
+        'name': name,
+        'description': description,
+        'image_url': imageUrl,
+        'base_price': basePrice,
+        'price': totalPrice,
+        'selected_options': selectedOptions,
+        'prep_time_minutes': prepTimeMinutes,
+        'quantity': quantity,
+      };
 
   CartItem copyWith({int? quantity}) {
     return CartItem(
@@ -44,6 +47,7 @@ class CartItem {
       imageUrl: imageUrl,
       basePrice: basePrice,
       optionsPrice: optionsPrice,
+      prepTimeMinutes: prepTimeMinutes,
       selectedOptions: selectedOptions,
       quantity: quantity ?? this.quantity,
     );
@@ -98,7 +102,8 @@ class CartProvider extends ChangeNotifier {
     _items.add(item);
 
     debugLog('🛒 เพิ่ม ${item.name} x${item.quantity} ลงตะกร้า');
-    debugLog('   └─ ตะกร้ามี $totalItems รายการ รวม ฿${subtotal.toStringAsFixed(2)}');
+    debugLog(
+        '   └─ ตะกร้ามี $totalItems รายการ รวม ฿${subtotal.toStringAsFixed(2)}');
 
     notifyListeners();
     return true;

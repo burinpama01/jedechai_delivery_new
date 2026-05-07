@@ -1,4 +1,4 @@
-﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
+import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -115,20 +115,23 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
         serviceType: 'food',
         merchantId: widget.merchantId,
       );
-      _merchantCoupons = coupons.where((c) => c.merchantId == widget.merchantId).toList();
+      _merchantCoupons =
+          coupons.where((c) => c.merchantId == widget.merchantId).toList();
 
       // Fetch option links to determine which items have required options
       _menuItemsWithRequiredOptions = {};
       try {
         for (final item in _menuItems) {
           final menuItemId = item['id'] as String;
-          final optionGroups = await MenuOptionService().getOptionGroupsForMenuItem(menuItemId);
+          final optionGroups =
+              await MenuOptionService().getOptionGroupsForMenuItem(menuItemId);
           final hasRequired = optionGroups.any((g) => g.isRequired);
           if (hasRequired) {
             _menuItemsWithRequiredOptions.add(menuItemId);
           }
         }
-        debugLog('📊 เมนูที่มีตัวเลือกบังคับ: ${_menuItemsWithRequiredOptions.length} รายการ');
+        debugLog(
+            '📊 เมนูที่มีตัวเลือกบังคับ: ${_menuItemsWithRequiredOptions.length} รายการ');
       } catch (e) {
         debugLog('⚠️ โหลด option links ไม่ได้: $e');
       }
@@ -136,7 +139,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
       // Group by category
       _menuByCategory = {};
       for (final item in _menuItems) {
-        final cat = (item['category'] as String?) ?? AppLocalizations.of(context)!.restCategoryOther;
+        final cat = (item['category'] as String?) ??
+            AppLocalizations.of(context)!.restCategoryOther;
         _menuByCategory.putIfAbsent(cat, () => []).add(item);
       }
       _categories = _menuByCategory.keys.toList();
@@ -147,7 +151,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
         _tabController = TabController(length: _categories.length, vsync: this);
       }
 
-      debugLog('📊 ร้าน ${widget.merchantName}: ${_menuItems.length} เมนู, ${_categories.length} หมวด');
+      debugLog(
+          '📊 ร้าน ${widget.merchantName}: ${_menuItems.length} เมนู, ${_categories.length} หมวด');
 
       setState(() => _isLoading = false);
     } catch (e) {
@@ -165,7 +170,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
     return Scaffold(
       backgroundColor: colorScheme.surface,
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.accentOrange))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppTheme.accentOrange))
           : _error != null
               ? _buildErrorState()
               : _buildContent(),
@@ -203,7 +209,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                   unselectedLabelColor: colorScheme.onSurfaceVariant,
                   indicatorColor: AppTheme.accentOrange,
                   indicatorWeight: 3,
-                  labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  labelStyle: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 14),
                   tabs: _categories.map((c) => Tab(text: c)).toList(),
                 ),
               ),
@@ -288,28 +295,41 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
             children: [
               Icon(Icons.star, size: 18, color: Colors.amber[600]),
               const SizedBox(width: 4),
-              Text('4.5', style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
-              Text(' (100+)', style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13)),
+              Text('4.5',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface)),
+              Text(' (100+)',
+                  style: TextStyle(
+                      color: colorScheme.onSurfaceVariant, fontSize: 13)),
               const SizedBox(width: 16),
-              Icon(Icons.access_time, size: 16, color: colorScheme.onSurfaceVariant),
+              Icon(Icons.access_time,
+                  size: 16, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: 4),
-              Text(AppLocalizations.of(context)!.restDeliveryTime, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13)),
+              Text(AppLocalizations.of(context)!.restDeliveryTime,
+                  style: TextStyle(
+                      color: colorScheme.onSurfaceVariant, fontSize: 13)),
               const SizedBox(width: 16),
-              Icon(Icons.delivery_dining, size: 16, color: colorScheme.onSurfaceVariant),
+              Icon(Icons.delivery_dining,
+                  size: 16, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: 4),
-              Text(AppLocalizations.of(context)!.restDeliveryFee, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13)),
+              Text(AppLocalizations.of(context)!.restDeliveryFee,
+                  style: TextStyle(
+                      color: colorScheme.onSurfaceVariant, fontSize: 13)),
             ],
           ),
           if (_shopAddress != null && _shopAddress!.isNotEmpty) ...[
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.location_on_outlined, size: 16, color: colorScheme.onSurfaceVariant),
+                Icon(Icons.location_on_outlined,
+                    size: 16, color: colorScheme.onSurfaceVariant),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     _shopAddress!,
-                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+                    style: TextStyle(
+                        color: colorScheme.onSurfaceVariant, fontSize: 13),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -321,9 +341,12 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
             const SizedBox(height: 4),
             Row(
               children: [
-                Icon(Icons.phone_outlined, size: 16, color: colorScheme.onSurfaceVariant),
+                Icon(Icons.phone_outlined,
+                    size: 16, color: colorScheme.onSurfaceVariant),
                 const SizedBox(width: 4),
-                Text(_phoneNumber!, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13)),
+                Text(_phoneNumber!,
+                    style: TextStyle(
+                        color: colorScheme.onSurfaceVariant, fontSize: 13)),
               ],
             ),
           ],
@@ -335,12 +358,14 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
               decoration: BoxDecoration(
                 color: colorScheme.errorContainer,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: colorScheme.error.withValues(alpha: 0.35)),
+                border: Border.all(
+                    color: colorScheme.error.withValues(alpha: 0.35)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.local_offer, size: 14, color: colorScheme.onErrorContainer),
+                  Icon(Icons.local_offer,
+                      size: 14, color: colorScheme.onErrorContainer),
                   const SizedBox(width: 4),
                   Text(
                     _promoText!,
@@ -364,25 +389,33 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                     await Clipboard.setData(ClipboardData(text: coupon.code));
                     if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(AppLocalizations.of(context)!.restCouponCopied(coupon.code))),
+                      SnackBar(
+                          content: Text(AppLocalizations.of(context)!
+                              .restCouponCopied(coupon.code))),
                     );
                   },
                   borderRadius: BorderRadius.circular(10),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     decoration: BoxDecoration(
                       color: Colors.green.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.green.withValues(alpha: 0.25)),
+                      border: Border.all(
+                          color: Colors.green.withValues(alpha: 0.25)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.local_offer_outlined, size: 14, color: Colors.green),
+                        const Icon(Icons.local_offer_outlined,
+                            size: 14, color: Colors.green),
                         const SizedBox(width: 6),
                         Text(
                           '${coupon.code} • ${coupon.discountText}',
-                          style: const TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.w600),
+                          style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.green,
+                              fontWeight: FontWeight.w600),
                         ),
                       ],
                     ),
@@ -393,7 +426,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
             const SizedBox(height: 4),
             Text(
               AppLocalizations.of(context)!.restCouponHint,
-              style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+              style:
+                  TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
             ),
           ],
         ],
@@ -426,7 +460,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.restaurant_menu, size: 64, color: colorScheme.outlineVariant),
+          Icon(Icons.restaurant_menu,
+              size: 64, color: colorScheme.outlineVariant),
           const SizedBox(height: 16),
           Text(
             AppLocalizations.of(context)!.restNoMenu,
@@ -500,7 +535,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
         context: context,
         builder: (ctx) => AlertDialog(
           title: Text(AppLocalizations.of(context)!.restSwitchRestaurant),
-          content: Text(AppLocalizations.of(context)!.restSwitchRestaurantBody(cart.merchantName ?? '')),
+          content: Text(AppLocalizations.of(context)!
+              .restSwitchRestaurantBody(cart.merchantName ?? '')),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
@@ -575,7 +611,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                 );
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
                   color: AppTheme.accentOrange,
                   borderRadius: BorderRadius.circular(14),
@@ -590,26 +627,34 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                 child: Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.25),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         '${cart.totalItems}',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         AppLocalizations.of(context)!.restViewCart,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15),
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15),
                       ),
                     ),
                     Text(
                       '฿${cart.subtotal.ceil()}',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16),
                     ),
                   ],
                 ),
@@ -652,17 +697,22 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                     padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
                     child: Row(
                       children: [
-                        const Icon(Icons.shopping_bag, color: AppTheme.accentOrange),
+                        const Icon(Icons.shopping_bag,
+                            color: AppTheme.accentOrange),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: Text(AppLocalizations.of(context)!.restYourCart, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          child: Text(
+                              AppLocalizations.of(context)!.restYourCart,
+                              style: const TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold)),
                         ),
                         TextButton(
                           onPressed: () {
                             cart.clearCart();
                             Navigator.of(context).pop();
                           },
-                          child: Text(AppLocalizations.of(context)!.restClear, style: TextStyle(color: colorScheme.error)),
+                          child: Text(AppLocalizations.of(context)!.restClear,
+                              style: TextStyle(color: colorScheme.error)),
                         ),
                       ],
                     ),
@@ -691,9 +741,11 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                                     ? AppNetworkImage(
                                         imageUrl: item.imageUrl,
                                         fit: BoxFit.cover,
-                                        backgroundColor: colorScheme.surfaceContainerHighest,
+                                        backgroundColor:
+                                            colorScheme.surfaceContainerHighest,
                                       )
-                                    : const GrayscaleLogoPlaceholder(fit: BoxFit.contain),
+                                    : const GrayscaleLogoPlaceholder(
+                                        fit: BoxFit.contain),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -701,15 +753,22 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(item.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                  Text(item.name,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w600)),
                                   if (item.selectedOptions.isNotEmpty)
                                     Text(item.selectedOptions.join(', '),
-                                        style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
+                                        style: TextStyle(
+                                            fontSize: 12,
+                                            color:
+                                                colorScheme.onSurfaceVariant)),
                                   const SizedBox(height: 6),
                                   Row(
                                     children: [
                                       Text('฿${item.totalPrice.ceil()}',
-                                          style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.accentOrange)),
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: AppTheme.accentOrange)),
                                       const Spacer(),
                                       _buildQtyControl(cart, index, item),
                                     ],
@@ -727,7 +786,12 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
                     decoration: BoxDecoration(
                       color: colorScheme.surfaceContainer,
-                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, -2))],
+                      boxShadow: [
+                        BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            blurRadius: 8,
+                            offset: const Offset(0, -2))
+                      ],
                     ),
                     child: SafeArea(
                       child: Column(
@@ -735,9 +799,15 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(AppLocalizations.of(context)!.restTotal, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                              Text(AppLocalizations.of(context)!.restTotal,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16)),
                               Text('฿${cart.subtotal.ceil()}',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.accentOrange)),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                      color: AppTheme.accentOrange)),
                             ],
                           ),
                           const SizedBox(height: 12),
@@ -748,19 +818,27 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                                 Navigator.of(context).pop(); // close sheet
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
-                                    builder: (context) => const FoodCheckoutScreen(),
+                                    builder: (context) =>
+                                        const FoodCheckoutScreen(),
                                   ),
                                 );
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.accentOrange,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14)),
                                 elevation: 0,
                               ),
-                              child: Text(AppLocalizations.of(context)!.restGoToCheckout(cart.subtotal.ceil().toString()),
-                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                              child: Text(
+                                  AppLocalizations.of(context)!
+                                      .restGoToCheckout(
+                                          cart.subtotal.ceil().toString()),
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold)),
                             ),
                           ),
                         ],
@@ -793,13 +871,16 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
               child: Icon(
                 item.quantity > 1 ? Icons.remove : Icons.delete_outline,
                 size: 18,
-                color: item.quantity > 1 ? colorScheme.onSurfaceVariant : Colors.red,
+                color: item.quantity > 1
+                    ? colorScheme.onSurfaceVariant
+                    : Colors.red,
               ),
             ),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Text('${item.quantity}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            child: Text('${item.quantity}',
+                style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
           InkWell(
             onTap: () => cart.updateQuantity(index, item.quantity + 1),
@@ -895,13 +976,17 @@ class _MenuItemCard extends StatelessWidget {
                         color: AppTheme.accentOrange,
                       ),
                     ),
-                    if (hasRequiredOptions) ...[                      const SizedBox(height: 4),
+                    if (hasRequiredOptions) ...[
+                      const SizedBox(height: 4),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: colorScheme.secondaryContainer,
                           borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: colorScheme.secondary.withValues(alpha: 0.35)),
+                          border: Border.all(
+                              color: colorScheme.secondary
+                                  .withValues(alpha: 0.35)),
                         ),
                         child: Text(
                           AppLocalizations.of(context)!.restMustSelectOption,
@@ -955,12 +1040,14 @@ class _MenuItemCard extends StatelessWidget {
       return;
     }
     final price = (item['price'] as num?)?.toDouble() ?? 0.0;
+    final prepTime = (item['prep_time_minutes'] as num?)?.toInt() ?? 15;
     onAddToCart(CartItem(
       menuItemId: item['id'] as String,
       name: item['name'] ?? 'N/A',
       description: item['description'] as String?,
       imageUrl: item['image_url'] as String?,
       basePrice: price,
+      prepTimeMinutes: prepTime,
     ));
   }
 
@@ -968,6 +1055,7 @@ class _MenuItemCard extends StatelessWidget {
     final name = item['name'] ?? AppLocalizations.of(context)!.restItemNoName;
     final description = item['description'] ?? '';
     final price = (item['price'] as num?)?.toDouble() ?? 0.0;
+    final prepTime = (item['prep_time_minutes'] as num?)?.toInt() ?? 15;
     final imageUrl = item['image_url'] as String?;
 
     final menuItem = MenuItem(
@@ -1000,6 +1088,7 @@ class _MenuItemCard extends StatelessWidget {
         imageUrl: item['image_url'] as String?,
         basePrice: (item['price'] as num?)?.toDouble() ?? 0.0,
         optionsPrice: ((result['price'] as double?) ?? price) - price,
+        prepTimeMinutes: prepTime,
         selectedOptions: (result['selected_options'] as List<String>?) ?? [],
         quantity: result['quantity'] as int? ?? 1,
       ));
@@ -1020,7 +1109,8 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => tabBar.preferredSize.height;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       color: colorScheme.surface,

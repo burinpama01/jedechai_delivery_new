@@ -8,6 +8,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app_navigation_service.dart';
+import '../utils/notification_payload_policy.dart';
 
 const String _kDefaultChannelId = 'jedechai_channel';
 const String _kDefaultChannelName = 'JDC Notifications';
@@ -27,15 +28,11 @@ const String _kDriverJobChannelDescription =
 const int _kAndroidNotificationFlagInsistent = 4;
 
 bool _isMerchantNewOrderMessage(RemoteMessage message) {
-  final rawType = message.data['type'] ?? message.data['notification_type'];
-  final type = rawType?.toString().trim();
-  return type == 'merchant_new_order';
+  return NotificationPayloadPolicy.isMerchantNewOrder(message.data);
 }
 
 bool _isDriverJobAvailableMessage(RemoteMessage message) {
-  final rawType = message.data['type'] ?? message.data['notification_type'];
-  final type = rawType?.toString().trim();
-  return type == 'driver_job_available';
+  return NotificationPayloadPolicy.isDriverJobAvailable(message.data);
 }
 
 String _resolveNotificationTitle(RemoteMessage message) {
@@ -239,7 +236,9 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
   final isMerchantNewOrder = _isMerchantNewOrderMessage(message);
   final isDriverJobAvailable = _isDriverJobAvailableMessage(message);
-  if (message.notification == null || isMerchantNewOrder || isDriverJobAvailable) {
+  if (message.notification == null ||
+      isMerchantNewOrder ||
+      isDriverJobAvailable) {
     try {
       await _showBackgroundLocalNotification(message);
       debugLog('✅ Background local notification displayed');
@@ -298,7 +297,8 @@ class FCMNotificationService {
           }
           _fcmToken = token;
           debugLog('🔄 FCM token refreshed');
-          debugLog('   └─ Token: ${token.substring(0, token.length > 20 ? 20 : token.length)}...');
+          debugLog(
+              '   └─ Token: ${token.substring(0, token.length > 20 ? 20 : token.length)}...');
           await _saveFCMTokenToSupabase(token);
         } catch (e) {
           debugLog('❌ Failed to handle token refresh: $e');
@@ -455,7 +455,8 @@ class FCMNotificationService {
 
           if (apnsToken != null && apnsToken.isNotEmpty) {
             debugLog('✅ APNs token ready');
-            debugLog('   └─ APNs: ${apnsToken.substring(0, apnsToken.length > 12 ? 12 : apnsToken.length)}...');
+            debugLog(
+                '   └─ APNs: ${apnsToken.substring(0, apnsToken.length > 12 ? 12 : apnsToken.length)}...');
             break;
           }
 
@@ -463,7 +464,8 @@ class FCMNotificationService {
         }
 
         if (apnsToken == null || apnsToken.isEmpty) {
-          debugLog('⚠️ APNs token is still null. FCM token may be null on iOS.');
+          debugLog(
+              '⚠️ APNs token is still null. FCM token may be null on iOS.');
         }
       }
 

@@ -10,10 +10,11 @@ import {
 let _ctx = null;
 
 function _deps() {
-  const supabase = _ctx?.supabase || globalThis.supabase;
-  const callAdminAction = _ctx?.callAdminAction || globalThis.callAdminAction;
-  const showToast = _ctx?.showToast || globalThis.showToast;
-  const escapeHtml = _ctx?.escapeHtml || globalThis.escapeHtml;
+  const ctx = _ctx || globalThis.__adminWebContext || globalThis.__adminWebBridge || {};
+  const supabase = ctx.supabase || globalThis.supabase;
+  const callAdminAction = ctx.callAdminAction || globalThis.callAdminAction || globalThis.__adminWebBridge?.callAdminAction;
+  const showToast = ctx.showToast || globalThis.showToast || globalThis.__adminWebBridge?.showToast;
+  const escapeHtml = ctx.escapeHtml || globalThis.escapeHtml;
 
   return {
     supabase,

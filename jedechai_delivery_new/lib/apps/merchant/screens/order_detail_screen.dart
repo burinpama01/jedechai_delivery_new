@@ -1,4 +1,4 @@
-﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
+import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -7,14 +7,16 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:jedechai_delivery_new/theme/app_theme.dart';
 import '../../../common/services/notification_sender.dart';
 import '../../../common/services/auth_service.dart';
+import '../../../common/services/chat_service.dart';
 import '../../../common/services/system_config_service.dart';
 import '../../../common/services/merchant_food_config_service.dart';
 import '../../../common/utils/driver_amount_calculator.dart';
 import '../../../common/utils/order_code_formatter.dart';
+import '../../../common/widgets/chat_screen.dart';
 import '../../../l10n/app_localizations.dart';
 
 /// Merchant Order Detail Screen
-/// 
+///
 /// Shows detailed order information with accept/decline actions
 class MerchantOrderDetailScreen extends StatefulWidget {
   final Map<String, dynamic> order;
@@ -31,7 +33,8 @@ class MerchantOrderDetailScreen extends StatefulWidget {
   });
 
   @override
-  State<MerchantOrderDetailScreen> createState() => _MerchantOrderDetailScreenState();
+  State<MerchantOrderDetailScreen> createState() =>
+      _MerchantOrderDetailScreenState();
 }
 
 class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
@@ -75,14 +78,16 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
   }
 
   void _startAutoRefresh() {
-    debugLog('⏱️ Starting auto-refresh every 2 seconds for order: ${widget.order['id']}');
-    
-    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) async {
+    debugLog(
+        '⏱️ Starting auto-refresh every 2 seconds for order: ${widget.order['id']}');
+
+    _autoRefreshTimer =
+        Timer.periodic(const Duration(seconds: 10), (timer) async {
       if (!mounted) {
         timer.cancel();
         return;
       }
-      
+
       try {
         // Fetch latest order data
         final response = await Supabase.instance.client
@@ -90,28 +95,33 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
             .select()
             .eq('id', widget.order['id'])
             .single();
-        
+
         if (mounted) {
           final newStatus = response['status'] as String? ?? '';
           final oldStatus = _currentOrder?['status'] as String? ?? '';
-          
+
           setState(() {
             _currentOrder = response;
           });
-          debugLog('🔄 Auto-refreshed order status: $newStatus (previous: $oldStatus)');
-          
+          debugLog(
+              '🔄 Auto-refreshed order status: $newStatus (previous: $oldStatus)');
+
           // Check if status changed to picking_up_order and show dialog
-          if (newStatus == 'picking_up_order' && oldStatus != 'picking_up_order' && !_dialogShown) {
+          if (newStatus == 'picking_up_order' &&
+              oldStatus != 'picking_up_order' &&
+              !_dialogShown) {
             _dialogShown = true;
-            debugLog('💰 [AUTO-REFRESH] Status changed to picking_up_order - showing completion dialog');
+            debugLog(
+                '💰 [AUTO-REFRESH] Status changed to picking_up_order - showing completion dialog');
             debugLog('💰 [AUTO-REFRESH] Setting _dialogShown to true');
-            
+
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted) {
                 debugLog('💰 [AUTO-REFRESH] Calling _showCompletionDialog()');
                 _showCompletionDialog();
               } else {
-                debugLog('⚠️ [AUTO-REFRESH] Widget not mounted, cannot show dialog');
+                debugLog(
+                    '⚠️ [AUTO-REFRESH] Widget not mounted, cannot show dialog');
               }
             });
           }
@@ -123,51 +133,54 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
   }
 
   void _setupOrderStatusListener() {
-    debugLog('🔔 Setting up order status listener for order: ${widget.order['id']}');
+    debugLog(
+        '🔔 Setting up order status listener for order: ${widget.order['id']}');
     debugLog('🔔 Initial _dialogShown flag: $_dialogShown');
-    
+
     _orderStatusSubscription = Supabase.instance.client
         .from('bookings')
         .stream(primaryKey: ['id'])
         .eq('id', widget.order['id'])
         .listen((data) {
-      if (data.isEmpty || !mounted) {
-        debugLog('⚠️ Listener: data is empty or widget not mounted');
-        return;
-      }
-      
-      final order = data.first;
-      final status = order['status'] as String? ?? '';
-      
-      debugLog('📊 Order status update: $status');
-      debugLog('📊 Current _dialogShown flag: $_dialogShown');
-      
-      // Update current order state
-      setState(() {
-        _currentOrder = order;
-      });
-      
-      // Show completion dialog when driver picks up order
-      if (status == 'picking_up_order') {
-        debugLog('🔍 Status is picking_up_order, checking _dialogShown flag...');
-        if (!_dialogShown) {
-          _dialogShown = true;
-          debugLog('💰 Driver picked up order - showing completion dialog');
-          debugLog('💰 Setting _dialogShown to true');
-          
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              debugLog('💰 Calling _showCompletionDialog()');
-              _showCompletionDialog();
-            } else {
-              debugLog('⚠️ Widget not mounted, cannot show dialog');
-            }
+          if (data.isEmpty || !mounted) {
+            debugLog('⚠️ Listener: data is empty or widget not mounted');
+            return;
+          }
+
+          final order = data.first;
+          final status = order['status'] as String? ?? '';
+
+          debugLog('📊 Order status update: $status');
+          debugLog('📊 Current _dialogShown flag: $_dialogShown');
+
+          // Update current order state
+          setState(() {
+            _currentOrder = order;
           });
-        } else {
-          debugLog('⚠️ Dialog already shown (_dialogShown = true), skipping');
-        }
-      }
-    });
+
+          // Show completion dialog when driver picks up order
+          if (status == 'picking_up_order') {
+            debugLog(
+                '🔍 Status is picking_up_order, checking _dialogShown flag...');
+            if (!_dialogShown) {
+              _dialogShown = true;
+              debugLog('💰 Driver picked up order - showing completion dialog');
+              debugLog('💰 Setting _dialogShown to true');
+
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  debugLog('💰 Calling _showCompletionDialog()');
+                  _showCompletionDialog();
+                } else {
+                  debugLog('⚠️ Widget not mounted, cannot show dialog');
+                }
+              });
+            } else {
+              debugLog(
+                  '⚠️ Dialog already shown (_dialogShown = true), skipping');
+            }
+          }
+        });
   }
 
   FoodOrderSettlement _foodSettlement(Map<String, dynamic> order) {
@@ -249,7 +262,9 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
     if (_driverPhone == null || _driverPhone!.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.orderDetailDriverPhoneNotFound)),
+          SnackBar(
+              content: Text(AppLocalizations.of(context)!
+                  .orderDetailDriverPhoneNotFound)),
         );
       }
       return;
@@ -271,7 +286,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
       });
 
       debugLog('🔍 Fetching order items for booking: ${widget.order['id']}');
-      
+
       // booking_items table already has 'name' and 'price' columns
       final response = await Supabase.instance.client
           .from('booking_items')
@@ -279,16 +294,17 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
           .eq('booking_id', widget.order['id']);
 
       debugLog('📋 Order items response: $response');
-      
+
       setState(() {
         _orderItems = List<Map<String, dynamic>>.from(response);
       });
-      
+
       debugLog('🍽️ Loaded ${_orderItems.length} order items');
     } catch (e) {
       debugLog('❌ Error fetching order items: $e');
       setState(() {
-        _error = AppLocalizations.of(context)!.orderDetailLoadItemsError(e.toString());
+        _error = AppLocalizations.of(context)!
+            .orderDetailLoadItemsError(e.toString());
       });
     }
   }
@@ -331,7 +347,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
         setState(() {
           _currentOrder = result.first;
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)!.orderDetailAccepted),
@@ -348,7 +364,8 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
           builder: (ctx) => AlertDialog(
             icon: const Icon(Icons.error_outline, color: Colors.red, size: 48),
             title: Text(AppLocalizations.of(context)!.orderDetailAcceptFailed),
-            content: Text(AppLocalizations.of(context)!.orderDetailAcceptError(e.toString())),
+            content: Text(AppLocalizations.of(context)!
+                .orderDetailAcceptError(e.toString())),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
@@ -415,7 +432,8 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
           builder: (ctx) => AlertDialog(
             icon: const Icon(Icons.error_outline, color: Colors.red, size: 48),
             title: Text(AppLocalizations.of(context)!.orderDetailDeclineFailed),
-            content: Text(AppLocalizations.of(context)!.orderDetailDeclineError(e.toString())),
+            content: Text(AppLocalizations.of(context)!
+                .orderDetailDeclineError(e.toString())),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
@@ -434,6 +452,57 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
     }
   }
 
+  Future<void> _openCustomerChat() async {
+    final order = _currentOrder ?? widget.order;
+    final bookingId = order['id']?.toString();
+    final customerId = order['customer_id']?.toString();
+    final merchantId = AuthService.userId ?? order['merchant_id']?.toString();
+
+    if (bookingId == null ||
+        bookingId.isEmpty ||
+        customerId == null ||
+        customerId.isEmpty ||
+        merchantId == null ||
+        merchantId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.orderDetailChatError),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+      return;
+    }
+
+    final chatService = ChatService();
+    final room = await chatService.getOrCreateMerchantOrderChatRoom(
+      bookingId: bookingId,
+      customerId: customerId,
+      merchantId: merchantId,
+    );
+
+    if (!mounted) return;
+    if (room == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.orderDetailChatError),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+      return;
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ChatScreen(
+          bookingId: bookingId,
+          chatRoomId: room.id,
+          otherPartyName: 'ลูกค้า',
+          roomType: 'merchant_order',
+        ),
+      ),
+    );
+  }
+
   Future<void> _markFoodReady() async {
     setState(() {
       _isLoading = true;
@@ -447,11 +516,19 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
             'updated_at': DateTime.now().toIso8601String(),
           })
           .eq('id', widget.order['id'])
-          .inFilter('status', ['preparing', 'driver_accepted', 'arrived_at_merchant', 'matched', 'accepted', 'arrived'])
+          .inFilter('status', [
+            'preparing',
+            'driver_accepted',
+            'arrived_at_merchant',
+            'matched',
+            'accepted',
+            'arrived'
+          ])
           .select();
 
       if (result.isEmpty) {
-        throw Exception(AppLocalizations.of(context)!.orderDetailStatusUpdateFailed);
+        throw Exception(
+            AppLocalizations.of(context)!.orderDetailStatusUpdateFailed);
       }
 
       if (mounted) {
@@ -459,7 +536,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
         setState(() {
           _currentOrder = result.first;
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)!.orderDetailFoodReady),
@@ -476,7 +553,8 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
           builder: (ctx) => AlertDialog(
             icon: const Icon(Icons.error_outline, color: Colors.red, size: 48),
             title: Text(AppLocalizations.of(context)!.orderDetailUpdateFailed),
-            content: Text(AppLocalizations.of(context)!.orderDetailUpdateError(e.toString())),
+            content: Text(AppLocalizations.of(context)!
+                .orderDetailUpdateError(e.toString())),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
@@ -496,10 +574,12 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
   }
 
   String _formatAddress(dynamic address) {
-    if (address == null) return AppLocalizations.of(context)!.orderDetailAddressNotSpecified;
+    if (address == null)
+      return AppLocalizations.of(context)!.orderDetailAddressNotSpecified;
     String raw;
     if (address is String) {
-      if (address.contains('Instance of') || address.contains('AddressPlacemark')) {
+      if (address.contains('Instance of') ||
+          address.contains('AddressPlacemark')) {
         return AppLocalizations.of(context)!.orderDetailAddressPinLocation;
       }
       raw = address;
@@ -520,7 +600,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
     final order = _currentOrder ?? widget.order;
     final status = order['status'] as String? ?? '';
     final driverId = order['driver_id'] as String?;
-    final price = order['price'] is int 
+    final price = order['price'] is int
         ? (order['price'] as int).toDouble()
         : (order['price'] as num?)?.toDouble() ?? 0.0;
     final distanceKm = order['distance_km'] is int
@@ -531,7 +611,9 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
     final merchantReceives = settlement.merchantReceives;
     final createdAt = DateTime.parse(order['created_at'] as String).toLocal();
     final scheduledAtStr = order['scheduled_at'] as String?;
-    final scheduledAt = scheduledAtStr != null ? DateTime.tryParse(scheduledAtStr)?.toLocal() : null;
+    final scheduledAt = scheduledAtStr != null
+        ? DateTime.tryParse(scheduledAtStr)?.toLocal()
+        : null;
     final notes = order['notes'] as String? ?? '';
     final paymentMethod = order['payment_method'] as String? ?? 'cash';
     final hasDriver = driverId != null && driverId.isNotEmpty;
@@ -541,8 +623,17 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: Text(
-          AppLocalizations.of(context)!.orderDetailTitle(OrderCodeFormatter.formatByServiceType(order['id']?.toString(), serviceType: order['service_type']?.toString())),
+          AppLocalizations.of(context)!.orderDetailTitle(
+              OrderCodeFormatter.formatByServiceType(order['id']?.toString(),
+                  serviceType: order['service_type']?.toString())),
         ),
+        actions: [
+          IconButton(
+            tooltip: 'แชทกับลูกค้า',
+            icon: const Icon(Icons.chat_bubble_outline),
+            onPressed: _openCustomerChat,
+          ),
+        ],
         backgroundColor: colorScheme.surface,
         elevation: 0,
         foregroundColor: colorScheme.onSurface,
@@ -550,7 +641,8 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accentOrange),
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(AppTheme.accentOrange),
               ),
             )
           : SingleChildScrollView(
@@ -613,7 +705,9 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                             Icon(Icons.receipt_long_outlined,
                                 color: colorScheme.onSurfaceVariant, size: 20),
                             const SizedBox(width: 8),
-                            Text(AppLocalizations.of(context)!.orderDetailOrderInfo,
+                            Text(
+                                AppLocalizations.of(context)!
+                                    .orderDetailOrderInfo,
                                 style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -628,11 +722,26 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                             serviceType: order['service_type']?.toString(),
                           ),
                         ),
-                        _buildInfoRow(AppLocalizations.of(context)!.orderDetailOrderTime, _formatDateTime(createdAt)),
-                        _buildInfoRow(AppLocalizations.of(context)!.orderDetailPayment, paymentMethod == 'cash' ? AppLocalizations.of(context)!.orderDetailPaymentCash : AppLocalizations.of(context)!.orderDetailPaymentTransfer),
-                        _buildInfoRow(AppLocalizations.of(context)!.orderDetailDistanceLabel, AppLocalizations.of(context)!.orderDetailDistanceKm(distanceKm.toStringAsFixed(1))),
+                        _buildInfoRow(
+                            AppLocalizations.of(context)!.orderDetailOrderTime,
+                            _formatDateTime(createdAt)),
+                        _buildInfoRow(
+                            AppLocalizations.of(context)!.orderDetailPayment,
+                            paymentMethod == 'cash'
+                                ? AppLocalizations.of(context)!
+                                    .orderDetailPaymentCash
+                                : AppLocalizations.of(context)!
+                                    .orderDetailPaymentTransfer),
+                        _buildInfoRow(
+                            AppLocalizations.of(context)!
+                                .orderDetailDistanceLabel,
+                            AppLocalizations.of(context)!.orderDetailDistanceKm(
+                                distanceKm.toStringAsFixed(1))),
                         if (scheduledAt != null)
-                          _buildInfoRow(AppLocalizations.of(context)!.orderDetailScheduled, _formatDateTime(scheduledAt)),
+                          _buildInfoRow(
+                              AppLocalizations.of(context)!
+                                  .orderDetailScheduled,
+                              _formatDateTime(scheduledAt)),
                       ],
                     ),
                   ),
@@ -661,7 +770,9 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                             Icon(Icons.monetization_on_outlined,
                                 color: colorScheme.onSurfaceVariant, size: 20),
                             const SizedBox(width: 8),
-                            Text(AppLocalizations.of(context)!.orderDetailPriceBreakdown,
+                            Text(
+                                AppLocalizations.of(context)!
+                                    .orderDetailPriceBreakdown,
                                 style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -672,19 +783,31 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(AppLocalizations.of(context)!.orderDetailSalesAmount,
+                            Text(
+                                AppLocalizations.of(context)!
+                                    .orderDetailSalesAmount,
                                 style: TextStyle(
                                     fontSize: 14,
                                     color: colorScheme.onSurfaceVariant)),
-                            Text('฿${price.toStringAsFixed(0)}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                            Text('฿${price.toStringAsFixed(0)}',
+                                style: const TextStyle(
+                                    fontSize: 14, fontWeight: FontWeight.w600)),
                           ],
                         ),
                         const SizedBox(height: 6),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(AppLocalizations.of(context)!.orderDetailGpDeduction((_effectiveGpRate * 100).toStringAsFixed(0)), style: TextStyle(fontSize: 13, color: Colors.red[400])),
-                            Text('-฿${gpAmount.toStringAsFixed(0)}', style: TextStyle(fontSize: 13, color: Colors.red[400])),
+                            Text(
+                                AppLocalizations.of(context)!
+                                    .orderDetailGpDeduction(
+                                        (_effectiveGpRate * 100)
+                                            .toStringAsFixed(0)),
+                                style: TextStyle(
+                                    fontSize: 13, color: Colors.red[400])),
+                            Text('-฿${gpAmount.toStringAsFixed(0)}',
+                                style: TextStyle(
+                                    fontSize: 13, color: Colors.red[400])),
                           ],
                         ),
                         const Divider(height: 16),
@@ -697,8 +820,18 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(AppLocalizations.of(context)!.orderDetailNetReceived, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.green[800])),
-                              Text('฿${merchantReceives.toStringAsFixed(0)}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.green[800])),
+                              Text(
+                                  AppLocalizations.of(context)!
+                                      .orderDetailNetReceived,
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                      color: Colors.green[800])),
+                              Text('฿${merchantReceives.toStringAsFixed(0)}',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                      color: Colors.green[800])),
                             ],
                           ),
                         ),
@@ -730,7 +863,9 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                             Icon(Icons.location_on_outlined,
                                 color: colorScheme.onSurfaceVariant, size: 20),
                             const SizedBox(width: 8),
-                            Text(AppLocalizations.of(context)!.orderDetailDeliveryAddress,
+                            Text(
+                                AppLocalizations.of(context)!
+                                    .orderDetailDeliveryAddress,
                                 style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -753,7 +888,8 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                             ),
                           ),
                         ),
-                        if (notes.isNotEmpty && !notes.startsWith('สั่งอาหารจาก')) ...[
+                        if (notes.isNotEmpty &&
+                            !notes.startsWith('สั่งอาหารจาก')) ...[
                           const SizedBox(height: 12),
                           Container(
                             width: double.infinity,
@@ -761,20 +897,33 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                             decoration: BoxDecoration(
                               color: Colors.amber[50],
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.amber[300]!, width: 1.5),
+                              border: Border.all(
+                                  color: Colors.amber[300]!, width: 1.5),
                             ),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Icon(Icons.warning_amber_rounded, size: 22, color: Colors.amber[800]),
+                                Icon(Icons.warning_amber_rounded,
+                                    size: 22, color: Colors.amber[800]),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Text(AppLocalizations.of(context)!.orderDetailCustomerNote, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.amber[900])),
+                                      Text(
+                                          AppLocalizations.of(context)!
+                                              .orderDetailCustomerNote,
+                                          style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
+                                              color: Colors.amber[900])),
                                       const SizedBox(height: 4),
-                                      Text(notes, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.amber[900])),
+                                      Text(notes,
+                                          style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.amber[900])),
                                     ],
                                   ),
                                 ),
@@ -814,7 +963,8 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              AppLocalizations.of(context)!.orderDetailFoodItems,
+                              AppLocalizations.of(context)!
+                                  .orderDetailFoodItems,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -824,7 +974,6 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        
                         if (_error != null)
                           Container(
                             padding: const EdgeInsets.all(12),
@@ -835,12 +984,14 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.error_outline, color: Colors.red[600], size: 20),
+                                Icon(Icons.error_outline,
+                                    color: Colors.red[600], size: 20),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     _error!,
-                                    style: TextStyle(color: Colors.red[600], fontSize: 14),
+                                    style: TextStyle(
+                                        color: Colors.red[600], fontSize: 14),
                                   ),
                                 ),
                               ],
@@ -863,116 +1014,151 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                           )
                         else
                           ..._orderItems.map((item) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.accentOrange.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      '${item['quantity'] ?? 1}',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppTheme.accentOrange,
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.accentOrange
+                                            .withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          '${item['quantity'] ?? 1}',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppTheme.accentOrange,
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        item['name'] ?? item['item_name'] ?? item['menu_item']?['name'] ?? AppLocalizations.of(context)!.orderDetailItemUnnamed,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                          color: colorScheme.onSurface,
-                                        ),
-                                      ),
-                                      if (item['quantity'] != null && item['quantity'] != 1) ...[
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          AppLocalizations.of(context)!.orderDetailQuantity(item['quantity'].toString()),
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: colorScheme.onSurfaceVariant,
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            item['name'] ??
+                                                item['item_name'] ??
+                                                item['menu_item']?['name'] ??
+                                                AppLocalizations.of(context)!
+                                                    .orderDetailItemUnnamed,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              color: colorScheme.onSurface,
+                                            ),
                                           ),
-                                        ),
-                                      ],
-                                      if (_parseItemOptions(item).isNotEmpty) ...[
-                                        const SizedBox(height: 4),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: AppTheme.accentOrange.withValues(alpha: 0.1),
-                                            borderRadius: BorderRadius.circular(6),
-                                          ),
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                AppLocalizations.of(context)!.orderDetailOptions,
-                                                style: TextStyle(
-                                                  fontSize: 10,
-                                                  color: AppTheme.accentOrange,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
+                                          if (item['quantity'] != null &&
+                                              item['quantity'] != 1) ...[
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              AppLocalizations.of(context)!
+                                                  .orderDetailQuantity(
+                                                      item['quantity']
+                                                          .toString()),
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: colorScheme
+                                                    .onSurfaceVariant,
                                               ),
-                                              const SizedBox(height: 2),
-                                              ..._parseItemOptions(item).map((option) {
-                                                // 🛠️ Logic แกะข้อมูล: รองรับทั้งแบบ String และ JSON Map
-                                                String optionName = '';
-                                                
-                                                if (option is Map) {
-                                                  // กรณีเป็น Object: {"name": "เส้นเล็ก", "price": 0}
-                                                  optionName = option['name'] ?? option['item_name'] ?? AppLocalizations.of(context)!.orderDetailOptionDefault;
-                                                  
-                                                  // (เสริม) ถ้าอยากโชว์ราคาเพิ่ม
-                                                  // final price = (option['price'] as num?)?.toDouble() ?? 0.0;
-                                                  // if (price > 0) optionName += ' (+฿$price)';
-                                                } else {
-                                                  // กรณีเป็น String ธรรมดา
-                                                  optionName = option.toString();
-                                                }
-
-                                                return Padding(
-                                                  padding: const EdgeInsets.only(top: 1),
-                                                  child: Text(
-                                                    '• $optionName',
+                                            ),
+                                          ],
+                                          if (_parseItemOptions(item)
+                                              .isNotEmpty) ...[
+                                            const SizedBox(height: 4),
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: AppTheme.accentOrange
+                                                    .withValues(alpha: 0.1),
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                              ),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    AppLocalizations.of(
+                                                            context)!
+                                                        .orderDetailOptions,
                                                     style: TextStyle(
-                                                      fontSize: 11,
-                                                      color: AppTheme.accentOrange.withValues(alpha: 0.8),
-                                                      fontWeight: FontWeight.w500,
+                                                      fontSize: 10,
+                                                      color:
+                                                          AppTheme.accentOrange,
+                                                      fontWeight:
+                                                          FontWeight.w600,
                                                     ),
                                                   ),
-                                                );
-                                              }),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
+                                                  const SizedBox(height: 2),
+                                                  ..._parseItemOptions(item)
+                                                      .map((option) {
+                                                    // 🛠️ Logic แกะข้อมูล: รองรับทั้งแบบ String และ JSON Map
+                                                    String optionName = '';
+
+                                                    if (option is Map) {
+                                                      // กรณีเป็น Object: {"name": "เส้นเล็ก", "price": 0}
+                                                      optionName = option[
+                                                              'name'] ??
+                                                          option['item_name'] ??
+                                                          AppLocalizations.of(
+                                                                  context)!
+                                                              .orderDetailOptionDefault;
+
+                                                      // (เสริม) ถ้าอยากโชว์ราคาเพิ่ม
+                                                      // final price = (option['price'] as num?)?.toDouble() ?? 0.0;
+                                                      // if (price > 0) optionName += ' (+฿$price)';
+                                                    } else {
+                                                      // กรณีเป็น String ธรรมดา
+                                                      optionName =
+                                                          option.toString();
+                                                    }
+
+                                                    return Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              top: 1),
+                                                      child: Text(
+                                                        '• $optionName',
+                                                        style: TextStyle(
+                                                          fontSize: 11,
+                                                          color: AppTheme
+                                                              .accentOrange
+                                                              .withValues(
+                                                                  alpha: 0.8),
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                    Text(
+                                      '฿${(((item['price'] as num?)?.toDouble() ?? 0.0) * ((item['quantity'] as num?)?.toInt() ?? 1)).toStringAsFixed(0)}',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: colorScheme.onSurface,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                Text(
-                                  '฿${(((item['price'] as num?)?.toDouble() ?? 0.0) * ((item['quantity'] as num?)?.toInt() ?? 1)).toStringAsFixed(0)}',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: colorScheme.onSurface,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )),
+                              )),
                       ],
                     ),
                   ),
@@ -993,7 +1179,8 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                               side: const BorderSide(color: Colors.red),
                             ),
                             child: Text(
-                              AppLocalizations.of(context)!.orderDetailDeclineBtn,
+                              AppLocalizations.of(context)!
+                                  .orderDetailDeclineBtn,
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -1020,11 +1207,13 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                                     width: 20,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          Colors.white),
                                     ),
                                   )
                                 : Text(
-                                    AppLocalizations.of(context)!.orderDetailAcceptBtn,
+                                    AppLocalizations.of(context)!
+                                        .orderDetailAcceptBtn,
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
@@ -1055,7 +1244,8 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            AppLocalizations.of(context)!.orderDetailWaitingDriver,
+                            AppLocalizations.of(context)!
+                                .orderDetailWaitingDriver,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -1064,7 +1254,8 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            AppLocalizations.of(context)!.orderDetailWaitingDriverDesc,
+                            AppLocalizations.of(context)!
+                                .orderDetailWaitingDriverDesc,
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 14,
@@ -1074,12 +1265,20 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                         ],
                       ),
                     ),
-                  ] else if (hasDriver && (status == 'driver_accepted' || status == 'arrived_at_merchant' || status == 'preparing' || status == 'matched' || status == 'accepted' || status == 'arrived')) ...[
+                  ] else if (hasDriver &&
+                      (status == 'driver_accepted' ||
+                          status == 'arrived_at_merchant' ||
+                          status == 'preparing' ||
+                          status == 'matched' ||
+                          status == 'accepted' ||
+                          status == 'arrived')) ...[
                     // ปุ่มโทรหาคนขับ
-                    if (_driverName != null || _driverPhone != null) ...[                      Container(
+                    if (_driverName != null || _driverPhone != null) ...[
+                      Container(
                         width: double.infinity,
                         margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
                           color: Colors.blue[50],
                           borderRadius: BorderRadius.circular(12),
@@ -1090,14 +1289,21 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                             CircleAvatar(
                               radius: 18,
                               backgroundColor: Colors.blue[200],
-                              child: const Icon(Icons.delivery_dining, size: 20, color: Colors.white),
+                              child: const Icon(Icons.delivery_dining,
+                                  size: 20, color: Colors.white),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(_driverName ?? AppLocalizations.of(context)!.merchantDriverDefault, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                                  Text(
+                                      _driverName ??
+                                          AppLocalizations.of(context)!
+                                              .merchantDriverDefault,
+                                      style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600)),
                                   if (_driverPhone != null)
                                     Text(
                                       _driverPhone!,
@@ -1118,7 +1324,8 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                                   customBorder: const CircleBorder(),
                                   child: const Padding(
                                     padding: EdgeInsets.all(10),
-                                    child: Icon(Icons.phone, size: 20, color: Colors.white),
+                                    child: Icon(Icons.phone,
+                                        size: 20, color: Colors.white),
                                   ),
                                 ),
                               ),
@@ -1150,11 +1357,13 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                                   width: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white),
                                   ),
                                 )
                               : Text(
-                                  AppLocalizations.of(context)!.orderDetailFoodReadyBtn,
+                                  AppLocalizations.of(context)!
+                                      .orderDetailFoodReadyBtn,
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
@@ -1180,7 +1389,8 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            AppLocalizations.of(context)!.orderDetailStatusLabel(_getStatusText(status)),
+                            AppLocalizations.of(context)!
+                                .orderDetailStatusLabel(_getStatusText(status)),
                             style: TextStyle(
                               fontSize: 14,
                               color: colorScheme.onSurfaceVariant,
@@ -1312,13 +1522,11 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
   void _showCompletionDialog() {
     final order = _currentOrder ?? widget.order;
     final l10n = AppLocalizations.of(context)!;
-    final customerName = order['customer_name'] as String? ?? l10n.orderDetailCustomerDefault;
-    final price = order['price'] is int 
-        ? (order['price'] as int).toDouble()
-        : (order['price'] as num?)?.toDouble() ?? 0.0;
+    final customerName =
+        order['customer_name'] as String? ?? l10n.orderDetailCustomerDefault;
     final bookingId = order['id'].toString();
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -1367,7 +1575,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              
+
               // Order ID Section
               Container(
                 padding: const EdgeInsets.all(16),
@@ -1415,7 +1623,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              
+
               // Customer Name Section
               Container(
                 padding: const EdgeInsets.all(16),
@@ -1460,7 +1668,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              
+
               // Menu Items Section
               if (_orderItems.isNotEmpty)
                 Container(
@@ -1493,18 +1701,21 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                       ),
                       const SizedBox(height: 12),
                       ..._orderItems.map((item) {
-                        final itemName = item['name'] as String? ?? item['item_name'] as String? ?? l10n.orderDetailItemNotSpecified;
+                        final itemName = item['name'] as String? ??
+                            item['item_name'] as String? ??
+                            l10n.orderDetailItemNotSpecified;
                         final quantity = item['quantity'] as int? ?? 1;
-                        final itemPrice = item['price'] is int 
+                        final itemPrice = item['price'] is int
                             ? (item['price'] as int).toDouble()
                             : (item['price'] as num?)?.toDouble() ?? 0.0;
-                        
+
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: Colors.purple[100],
                                   borderRadius: BorderRadius.circular(6),
@@ -1545,13 +1756,16 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                   ),
                 ),
               const SizedBox(height: 12),
-              
+
               // Total Price Section
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [AppTheme.accentOrange, AppTheme.accentOrange.withValues(alpha: 0.8)],
+                    colors: [
+                      AppTheme.accentOrange,
+                      AppTheme.accentOrange.withValues(alpha: 0.8)
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -1580,7 +1794,8 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          l10n.orderDetailCompletionAfterGP((_effectiveGpRate * 100).toStringAsFixed(0)),
+                          l10n.orderDetailCompletionAfterGP(
+                              (_effectiveGpRate * 100).toStringAsFixed(0)),
                           style: const TextStyle(
                             fontSize: 12,
                             color: Colors.white60,

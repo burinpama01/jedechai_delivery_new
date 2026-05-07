@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'notification_badge_icon.dart';
+
 /// Universal Main Navigation Screen
 ///
 /// Provides consistent bottom navigation across all roles
@@ -125,11 +127,13 @@ class CustomerMainNavigationScreen extends StatelessWidget {
     super.key,
     required this.homeScreen,
     required this.activityScreen,
+    required this.notificationScreen,
     required this.accountScreen,
   });
 
   final Widget homeScreen;
   final Widget activityScreen;
+  final Widget notificationScreen;
   final Widget accountScreen;
 
   @override
@@ -138,6 +142,7 @@ class CustomerMainNavigationScreen extends StatelessWidget {
       screens: [
         homeScreen,
         activityScreen,
+        notificationScreen,
         accountScreen,
       ],
       bottomNavItems: const [
@@ -150,6 +155,11 @@ class CustomerMainNavigationScreen extends StatelessWidget {
           icon: Icon(Icons.history_outlined),
           activeIcon: Icon(Icons.history),
           label: 'กิจกรรม',
+        ),
+        BottomNavigationBarItem(
+          icon: NotificationBadgeIcon(icon: Icons.notifications_none),
+          activeIcon: NotificationBadgeIcon(icon: Icons.notifications),
+          label: 'แจ้งเตือน',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.person_outline),
@@ -167,11 +177,13 @@ class DriverMainNavigationScreen extends StatelessWidget {
     super.key,
     required this.dashboardScreen,
     required this.earningsScreen,
+    required this.notificationScreen,
     required this.profileScreen,
   });
 
   final Widget dashboardScreen;
   final Widget earningsScreen;
+  final Widget notificationScreen;
   final Widget profileScreen;
 
   @override
@@ -180,6 +192,7 @@ class DriverMainNavigationScreen extends StatelessWidget {
       screens: [
         dashboardScreen,
         earningsScreen,
+        notificationScreen,
         profileScreen,
       ],
       bottomNavItems: const [
@@ -192,6 +205,11 @@ class DriverMainNavigationScreen extends StatelessWidget {
           icon: Icon(Icons.attach_money_outlined),
           activeIcon: Icon(Icons.attach_money),
           label: 'รายได้',
+        ),
+        BottomNavigationBarItem(
+          icon: NotificationBadgeIcon(icon: Icons.notifications_none),
+          activeIcon: NotificationBadgeIcon(icon: Icons.notifications),
+          label: 'แจ้งเตือน',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.person_outline),
