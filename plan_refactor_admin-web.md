@@ -1,5 +1,10 @@
 # แผน Refactor: admin-web (Incremental / ไม่ให้โค้ดหายระหว่างทาง)
 
+## Status Update — 2026-05-08
+- ผู้ใช้ยืนยันว่ารัน Supabase migrations ทั้งหมดครบแล้ว
+- แผน refactor admin-web ต่อจากนี้ให้ถือว่า schema/RPC ล่าสุดพร้อมใช้งานแล้ว
+- Notification bug ล่าสุดที่พบอยู่ใน Flutter/Edge Function runtime path เป็นหลัก ไม่ใช่ blocker ของ admin-web modularization โดยตรง
+
 ## เป้าหมาย
 - ลดความเสี่ยงจากไฟล์ `admin-web/app.js` ที่ใหญ่และรวมทุกอย่างไว้ที่เดียว
 - ทำให้แก้ง่ายขึ้น: แยก concerns (auth, api, routing, ui, pages, state, utils)

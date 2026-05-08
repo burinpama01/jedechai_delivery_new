@@ -11,6 +11,12 @@
 - topup_requests / account_deletion_requests / reviews
 - RLS fixes (service_rates/system_config/profiles/driver_locations/driver_activity_logs)
 
+## Runtime Status Update — 2026-05-08
+- ผู้ใช้ยืนยันว่ารัน migrations ทั้งหมดด้วยตัวเองครบแล้ว
+- ให้ถือว่า database schema/RPC ล่าสุดพร้อมสำหรับการวิเคราะห์ runtime bug แล้ว
+- การ debug notification ต่อจากนี้ควรโฟกัส application flow, Edge Function authorization, FCM token/config และ delivery log มากกว่าการสงสัยว่า migration ยังไม่ถูก apply
+- ยังต้องตรวจแยกว่ามี Edge Function secrets ครบใน environment ที่ใช้งานจริงหรือไม่
+
 ---
 
 ## Audit Summary (current)

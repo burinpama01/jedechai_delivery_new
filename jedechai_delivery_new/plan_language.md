@@ -1,5 +1,9 @@
 # Plan: รองรับ 2 ภาษา (ไทย/อังกฤษ) — เฉพาะฝั่ง App (Flutter)
 
+## Status Update — 2026-05-08
+- ผู้ใช้ยืนยันว่ารัน Supabase migrations ทั้งหมดครบแล้ว
+- Notification bug ล่าสุดเกี่ยวข้องกับ payload/type และ Edge Function authorization; เมื่อแก้ notification ควรรักษาแนวทางของแผนนี้คือส่ง `type + data` ให้ครบ เพื่อให้แอปเวอร์ชั่นต่างกันยัง fallback ได้
+
 ## เป้าหมาย
 - ให้แอปรองรับภาษา **ไทย (th)** และ **อังกฤษ (en)** แบบเป็นระบบ (ไม่ hardcode string กระจายตาม screen)
 - รองรับการสลับภาษา:

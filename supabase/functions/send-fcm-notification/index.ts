@@ -100,6 +100,35 @@ function androidChannelFor(data?: Record<string, string>) {
   return "jedechai_channel";
 }
 
+async function isAllowedDriverCandidateNotification(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  targetUserId: string,
+  notificationId?: string,
+  data?: Record<string, string>,
+) {
+  if (!notificationId) return false;
+
+  const { data: notification } = await supabaseAdmin
+    .from("notifications")
+    .select("id, user_id, type, data")
+    .eq("id", notificationId)
+    .eq("user_id", targetUserId)
+    .eq("type", "driver.job.available")
+    .maybeSingle();
+  if (!notification) return false;
+
+  const notificationBookingId = notification.data?.booking_id;
+  const requestBookingId = data?.booking_id;
+  if (!notificationBookingId) return false;
+  if (requestBookingId && requestBookingId !== notificationBookingId) return false;
+
+  const requestType = data?.type ?? data?.notification_type ?? data?.legacy_type;
+  return requestType === "driver.job.available" ||
+    requestType === "driver_job_available" ||
+    requestType === "new_booking" ||
+    requestType === "new_ride_request";
+}
+
 async function isAllowedTarget(
   supabaseAdmin: ReturnType<typeof createClient>,
   callerId: string,
@@ -147,6 +176,13 @@ async function isAllowedTarget(
   const targetIsParticipant = booking.customer_id === targetUserId ||
     booking.driver_id === targetUserId ||
     booking.merchant_id === targetUserId;
+
+  if (
+    callerIsParticipant &&
+    await isAllowedDriverCandidateNotification(supabaseAdmin, targetUserId, notificationId, data)
+  ) {
+    return true;
+  }
 
   return callerIsParticipant && targetIsParticipant;
 }

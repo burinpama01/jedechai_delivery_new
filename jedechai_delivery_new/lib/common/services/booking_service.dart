@@ -1208,6 +1208,12 @@ class BookingService {
           'customer_address': formattedCustomerAddress,
         },
       );
+      await _notifyMerchantNewFoodOrder(
+        booking: booking,
+        merchantId: merchantId,
+        foodCost: foodCost,
+        deliveryFee: deliveryFee,
+      );
 
       debugLog('📤 Sending new food booking notification to drivers...');
       await _notifyDriversAboutNewRide(booking);
@@ -1244,6 +1250,41 @@ class BookingService {
       debugLog('Failed to insert booking items: $e');
       throw Exception('Failed to insert booking items: $e');
     }
+  }
+
+  Future<void> _notifyMerchantNewFoodOrder({
+    required Booking booking,
+    required String merchantId,
+    required double foodCost,
+    required double deliveryFee,
+  }) async {
+    final orderCode =
+        booking.id.length > 8 ? booking.id.substring(0, 8) : booking.id;
+    final success = await NotificationSender.sendNotification(
+      targetUserId: merchantId,
+      title: 'มีออเดอร์อาหารใหม่',
+      body:
+          'ออเดอร์ #$orderCode ยอดอาหาร ฿${foodCost.toStringAsFixed(0)} ค่าส่ง ฿${deliveryFee.toStringAsFixed(0)}',
+      data: NotificationPayloadPolicy.buildBookingPayload(
+        type: NotificationTypes.merchantOrderCreated,
+        recipientRole: NotificationRoles.merchant,
+        bookingId: booking.id,
+        serviceType: booking.serviceType,
+        screen: NotificationRouteScreens.merchantOrder,
+        extra: {
+          'legacy_type': NotificationTypes.legacyMerchantNewOrder,
+          'customer_id': booking.customerId,
+          'merchant_id': merchantId,
+          'status': booking.status,
+          'price': foodCost.toString(),
+          'delivery_fee': deliveryFee.toString(),
+        },
+      ),
+    );
+
+    debugLog(success
+        ? '✅ Merchant new food order notification sent'
+        : '⚠️ Merchant new food order notification failed');
   }
 
   Future<void> _notifyAdminNewBooking({

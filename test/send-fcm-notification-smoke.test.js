@@ -18,3 +18,10 @@ test("send-fcm-notification persists delivery outcomes", () => {
   assert.match(source, /status:\s*result\.success\s*\?\s*"sent"\s*:\s*"failed"/);
   assert.match(source, /status:\s*"skipped"/);
 });
+
+test("send-fcm-notification allows persisted driver candidate notifications", () => {
+  assert.match(source, /isAllowedDriverCandidateNotification/);
+  assert.match(source, /\.from\("notifications"\)/);
+  assert.match(source, /\.select\("id, user_id, type, data"\)/);
+  assert.match(source, /\.eq\("type",\s*"driver\.job\.available"\)/);
+});

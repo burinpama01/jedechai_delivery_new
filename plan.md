@@ -553,6 +553,24 @@ Phase 7 (Code Quality & Debt)
 
 ## 📋 Release Gates (เกณฑ์ปล่อยงานแต่ละ Phase)
 
+### Migration Status Update — 2026-05-08
+- [x] ผู้ใช้ยืนยันว่ารัน Supabase migrations ทั้งหมดด้วยตัวเองครบแล้ว
+- [x] ใช้สถานะนี้เป็น baseline ล่าสุดสำหรับการวิเคราะห์ notification bug รอบถัดไป
+- [ ] ยังต้องตรวจ production secrets/config ของ Edge Functions แยกต่างหาก เช่น `FIREBASE_SERVICE_ACCOUNT_JSON`, `FIREBASE_PROJECT_ID`, `SUPABASE_SERVICE_ROLE_KEY`
+
+### Notification Bug Analysis — 2026-05-08
+- [x] ร้านค้าไม่ได้รับ push เมื่อมี food order ใหม่: เพิ่ม merchant push ใน `createFoodBooking()` ด้วย `merchant.order.created` + legacy `merchant_new_order`
+- [x] คนขับไม่ได้รับ push สำหรับงานใหม่ที่ยังไม่ assigned: ปรับ `send-fcm-notification` ให้ยอมรับ persisted `driver.job.available` candidate notification ที่ตรง `notification_id`/`booking_id`
+- [x] Food order driver notification ถูกออกแบบให้ visible เฉพาะ `ready_for_pickup`: คง policy นี้ไว้ และ trigger notify driver หลัง flow food-ready
+- [x] บาง merchant detail flow อัปเดต status เป็น `ready_for_pickup` โดยตรง: เปลี่ยนเป็น `MerchantOrderService.markFoodReady()` แล้วเรียก `notifyDriversAboutNewBooking()`
+- [x] Review blocker: เพิ่ม migration `20260508120000_fix_food_ready_driver_notifications.sql` เพื่อให้ merchant caller เรียก `notify_driver_visible_job` ได้เฉพาะ food booking และให้ `mark_food_ready_guarded` เปลี่ยน unassigned food order เป็น `ready_for_pickup`
+- [x] Code review รอบสองผ่านสำหรับ High findings เดิม
+- [ ] Flutter targeted tests ยัง timeout ต้องตรวจ toolchain เพิ่ม; node smoke tests ผ่าน 6/6 และ `dart analyze` เฉพาะไฟล์ที่แก้ exit 0
+- [ ] ยังต้อง verify migration apply + Edge Function/FCM delivery จริงใน Supabase runtime
+- [x] Version bump ก่อน build/commit: `1.1.7+49`
+- [x] Release APK build ผ่าน: `build/app/outputs/flutter-apk/app-release.apk`
+- [x] Release AAB build ผ่าน: `build/app/outputs/bundle/release/app-release.aab`
+
 ### Phase 1 Release Gate
 - [x] ไม่มี service role key บน browser/admin assets ✅ — ลบ `SUPABASE_SERVICE_KEY` + `supabaseAdmin` ออกจาก `app.js`, `config.js`, `config.example.js`
 - [x] Privileged write ทั้งหมดผ่าน Edge Function ✅ — 40+ direct DB writes ย้ายไป `callAdminAction()` → `admin-actions` Edge Function

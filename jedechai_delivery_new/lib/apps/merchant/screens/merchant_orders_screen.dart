@@ -10,9 +10,11 @@ import 'package:geolocator/geolocator.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'package:vibration/vibration.dart';
 import '../../../common/services/auth_service.dart';
+import '../../../common/services/booking_service.dart';
 import '../../../common/services/location_service.dart';
 import '../../../common/services/merchant_order_service.dart';
 import '../../../common/services/notification_sender.dart';
+import '../../../common/models/booking.dart';
 import '../../../common/utils/order_code_formatter.dart';
 import '../../../common/widgets/location_disclosure_dialog.dart';
 import '../widgets/order_alarm_widget.dart';
@@ -859,6 +861,9 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
       }
 
       _showSuccessSnackBar('Food marked as ready for pickup');
+
+      await BookingService()
+          .notifyDriversAboutNewBooking(Booking.fromJson(result.booking!));
 
       // Send notification to customer and driver
       await _notifyFoodReady(result.booking!);

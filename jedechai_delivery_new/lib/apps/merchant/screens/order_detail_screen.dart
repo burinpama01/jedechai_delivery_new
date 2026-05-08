@@ -7,9 +7,12 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:jedechai_delivery_new/theme/app_theme.dart';
 import '../../../common/services/notification_sender.dart';
 import '../../../common/services/auth_service.dart';
+import '../../../common/services/booking_service.dart';
 import '../../../common/services/chat_service.dart';
+import '../../../common/services/merchant_order_service.dart';
 import '../../../common/services/system_config_service.dart';
 import '../../../common/services/merchant_food_config_service.dart';
+import '../../../common/models/booking.dart';
 import '../../../common/utils/driver_amount_calculator.dart';
 import '../../../common/utils/order_code_formatter.dart';
 import '../../../common/widgets/chat_screen.dart';
@@ -51,6 +54,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
   double _deliverySystemRate = 0.02;
   String? _driverName;
   String? _driverPhone;
+  final MerchantOrderService _merchantOrderService = MerchantOrderService();
 
   @override
   void initState() {
@@ -504,47 +508,53 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
   }
 
   Future<void> _markFoodReady() async {
+    final statusUpdateFailed =
+        AppLocalizations.of(context)!.orderDetailStatusUpdateFailed;
+    final foodReadyText = AppLocalizations.of(context)!.orderDetailFoodReady;
+    const pendingDriverArrivalText = 'บันทึกอาหารพร้อมแล้ว รอคนขับถึงร้าน';
+
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final result = await Supabase.instance.client
-          .from('bookings')
-          .update({
-            'status': 'ready_for_pickup',
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', widget.order['id'])
-          .inFilter('status', [
-            'preparing',
-            'driver_accepted',
-            'arrived_at_merchant',
-            'matched',
-            'accepted',
-            'arrived'
-          ])
-          .select();
+      final merchantId = AuthService.userId;
+      final bookingId = widget.order['id']?.toString();
+      if (merchantId == null || bookingId == null || bookingId.isEmpty) {
+        throw Exception(statusUpdateFailed);
+      }
 
-      if (result.isEmpty) {
-        throw Exception(
-            AppLocalizations.of(context)!.orderDetailStatusUpdateFailed);
+      final result = await _merchantOrderService.markFoodReady(
+        bookingId: bookingId,
+        merchantId: merchantId,
+      );
+      if (!result.success) {
+        throw Exception(result.errorMessage ?? statusUpdateFailed);
       }
 
       if (mounted) {
         // Update current order state to reflect the change
         setState(() {
-          _currentOrder = result.first;
+          if (result.booking != null) {
+            _currentOrder = result.booking;
+          }
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.orderDetailFoodReady),
+            content: Text(result.pendingDriverArrival
+                ? pendingDriverArrivalText
+                : foodReadyText),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 2),
           ),
         );
         // Don't pop - stay on this screen to see status updates
+      }
+
+      if (!result.pendingDriverArrival && result.booking != null) {
+        await BookingService()
+            .notifyDriversAboutNewBooking(Booking.fromJson(result.booking!));
       }
     } catch (e) {
       if (mounted) {
