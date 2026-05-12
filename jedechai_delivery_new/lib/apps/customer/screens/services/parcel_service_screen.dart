@@ -122,7 +122,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
       if (profile != null && mounted) {
         setState(() {
           _senderNameController.text = profile['full_name'] ?? '';
-          _senderPhoneController.text = profile['phone'] ?? '';
+          _senderPhoneController.text = profile['phone_number'] ?? '';
         });
       }
     } catch (e) {

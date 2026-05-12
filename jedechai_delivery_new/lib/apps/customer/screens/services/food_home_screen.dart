@@ -168,11 +168,14 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
       final visibleMerchantIds =
           _restaurants.map((r) => r['id'] as String).toSet();
 
-      // ดึง booking_items ทั้งหมดจาก completed bookings
+      // ดึง booking_items จาก completed bookings (จำกัด 90 วัน เพื่อป้องกัน unbounded query)
+      final cutoff = DateTime.now().subtract(const Duration(days: 90)).toUtc().toIso8601String();
       final bookingItemsResponse = await Supabase.instance.client
           .from('booking_items')
-          .select('menu_item_id, quantity, bookings!inner(status)')
-          .eq('bookings.status', 'completed');
+          .select('menu_item_id, quantity, bookings!inner(status, created_at)')
+          .eq('bookings.status', 'completed')
+          .gte('bookings.created_at', cutoff)
+          .limit(2000);
 
       // Aggregate ยอดขายต่อ menu_item_id
       final Map<String, int> salesMap = {};

@@ -118,16 +118,22 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
       _merchantCoupons =
           coupons.where((c) => c.merchantId == widget.merchantId).toList();
 
-      // Fetch option links to determine which items have required options
+      // Batch-fetch option links for all menu items in a single query
       _menuItemsWithRequiredOptions = {};
       try {
-        for (final item in _menuItems) {
-          final menuItemId = item['id'] as String;
-          final optionGroups =
-              await MenuOptionService().getOptionGroupsForMenuItem(menuItemId);
-          final hasRequired = optionGroups.any((g) => g.isRequired);
-          if (hasRequired) {
-            _menuItemsWithRequiredOptions.add(menuItemId);
+        final menuItemIds = _menuItems.map((item) => item['id'] as String).toList();
+        if (menuItemIds.isNotEmpty) {
+          final allLinks = await Supabase.instance.client
+              .from('menu_item_option_links')
+              .select('menu_item_id, menu_option_groups!inner(min_selection)')
+              .inFilter('menu_item_id', menuItemIds);
+          for (final link in allLinks) {
+            final group = link['menu_option_groups'] as Map<String, dynamic>?;
+            final minSel = (group?['min_selection'] as num?)?.toInt() ?? 0;
+            if (minSel > 0) {
+              final id = link['menu_item_id'] as String?;
+              if (id != null) _menuItemsWithRequiredOptions.add(id);
+            }
           }
         }
         debugLog(

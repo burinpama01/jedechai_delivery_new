@@ -2,6 +2,7 @@ import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_service.dart';
 import 'admin_line_notification_service.dart';
+import 'notification_sender.dart';
 
 /// Service สำหรับจัดการคำขอลบบัญชีผู้ใช้
 class AccountDeletionService {
@@ -30,8 +31,8 @@ class AccountDeletionService {
         .maybeSingle();
     if (existing != null) throw Exception('มีคำขอลบบัญชีที่รอดำเนินการอยู่แล้ว');
 
-    // สร้างคำขอลบ
-    await _supabase.from('account_deletion_requests').insert({
+    // INSERT คำขอลบ แล้ว UPDATE profiles — ถ้า UPDATE ล้มเหลวให้ rollback INSERT
+    final inserted = await _supabase.from('account_deletion_requests').insert({
       'user_id': userId,
       'user_email': user?.email ?? '',
       'user_role': profile?['role'] ?? 'customer',
@@ -39,12 +40,21 @@ class AccountDeletionService {
       'reason': reason ?? '',
       'status': 'pending',
       'profile_backup': profile,
-    });
+    }).select('id').single();
 
-    // อัปเดตสถานะใน profiles
-    await _supabase
-        .from('profiles')
-        .update({'deletion_status': 'pending'}).eq('id', userId);
+    final newRequestId = inserted['id'];
+    try {
+      await _supabase
+          .from('profiles')
+          .update({'deletion_status': 'pending'}).eq('id', userId);
+    } catch (e) {
+      // Rollback: ลบ request ที่เพิ่งสร้าง
+      await _supabase
+          .from('account_deletion_requests')
+          .delete()
+          .eq('id', newRequestId);
+      rethrow;
+    }
 
     await AdminLineNotificationService.notify(
       eventType: 'account_deletion_request',
@@ -140,6 +150,19 @@ class AccountDeletionService {
     await _supabase
         .from('profiles')
         .update({'deletion_status': null}).eq('id', targetUserId);
+
+    // แจ้งเตือน user ว่าคำขอถูกปฏิเสธ
+    await NotificationSender.sendToUser(
+      userId: targetUserId,
+      title: 'คำขอลบบัญชีถูกปฏิเสธ',
+      body: reason != null && reason.isNotEmpty
+          ? 'เหตุผล: $reason'
+          : 'คำขอลบบัญชีของคุณถูกปฏิเสธ คุณสามารถเข้าใช้งานได้ตามปกติ',
+      data: {
+        'type': 'account.deletion.rejected',
+        'reason': reason ?? '',
+      },
+    );
 
     debugLog('❌ Account deletion rejected for $targetUserId by $adminId');
   }

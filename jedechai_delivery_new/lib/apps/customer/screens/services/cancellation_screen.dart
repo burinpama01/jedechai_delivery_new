@@ -122,9 +122,9 @@ class _CancellationScreenState extends State<CancellationScreen> {
 
     try {
       final bookingService = BookingService();
-      await bookingService.updateBookingStatus(
+      await bookingService.cancelBooking(
         widget.booking.id,
-        'cancelled',
+        reason: _getSelectedReasonText(context),
       );
 
       if (mounted) {
