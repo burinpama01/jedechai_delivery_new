@@ -7,6 +7,7 @@ import '../../../../common/models/booking.dart';
 import '../../../../common/services/profile_service.dart';
 import '../../../../common/services/supabase_service.dart';
 import '../../../../common/services/auth_service.dart';
+import '../../../../common/services/booking_service.dart';
 import '../../../../common/services/chat_service.dart';
 import '../../../../common/utils/order_code_formatter.dart';
 import '../../../../common/widgets/chat_screen.dart';
@@ -39,9 +40,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
   late final Animation<double> _pulseAnimation;
   
   StreamSubscription<List<Map<String, dynamic>>>? _bookingStreamSubscription;
-  Timer? _autoRefreshTimer;
-  String? _lastKnownStatus;
-  String? _lastKnownDriverId;
+  Timer? _retryTimer;
   bool _isHandlingPriceAdjustment = false;
   late double _initialQuotedPrice;
   
@@ -86,43 +85,6 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
     
     // Listen to real-time booking updates
     _listenToBookingUpdates();
-    _startAutoRefresh();
-  }
-
-  void _startAutoRefresh() {
-    _autoRefreshTimer?.cancel();
-    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
-      if (!mounted) return;
-      await _refreshStatus();
-    });
-  }
-
-  Future<void> _refreshStatus() async {
-    try {
-      final response = await SupabaseService.client
-          .from('bookings')
-          .select('status, driver_id')
-          .eq('id', widget.booking.id)
-          .single();
-
-      final status = response['status'] as String?;
-      final driverId = response['driver_id'] as String?;
-
-      if (status != _lastKnownStatus || driverId != _lastKnownDriverId) {
-        _lastKnownStatus = status;
-        _lastKnownDriverId = driverId;
-
-        if (status != null) {
-          _handleBookingUpdate({
-            'id': widget.booking.id,
-            'status': status,
-            'driver_id': driverId,
-          });
-        }
-      }
-    } catch (e) {
-      debugLog('❌ Auto refresh status error: $e');
-    }
   }
 
   Future<bool> _confirmAdjustedPriceIfNeeded(Booking booking) async {
@@ -225,7 +187,8 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
               ),
             );
           }
-          Future.delayed(const Duration(seconds: 3), () {
+          _retryTimer?.cancel();
+          _retryTimer = Timer(const Duration(seconds: 3), () {
             if (mounted) {
               debugLog('🔄 Retrying stream connection...');
               _listenToBookingUpdates();
@@ -266,9 +229,6 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
     debugLog('👤 Driver ID: $driverId');
     debugLog('Customer Stream Status: $status');
     debugLog('📋 Full booking data: $bookingData');
-
-    _lastKnownStatus = status;
-    _lastKnownDriverId = driverId;
 
     final hasDriver = driverId != null && driverId.toString().isNotEmpty;
     
@@ -452,7 +412,8 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
     debugLog('🧹 Disposing WaitingForDriverScreen - canceling stream subscription');
     _bookingStreamSubscription?.cancel();
     _bookingStreamSubscription = null;
-    _autoRefreshTimer?.cancel();
+    _retryTimer?.cancel();
+    _retryTimer = null;
     _radarAnimationController.dispose();
     _pulseAnimationController.dispose();
     super.dispose();
@@ -922,12 +883,8 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
               Navigator.of(context).pop();
               
               try {
-                // Update booking status to cancelled in database
-                await SupabaseService.client
-                    .from('bookings')
-                    .update({'status': 'cancelled'})
-                    .eq('id', widget.booking.id);
-                
+                final bookingService = BookingService();
+                await bookingService.cancelBooking(widget.booking.id, reason: 'customer_cancelled_while_waiting');
                 debugLog('✅ Booking cancelled: ${widget.booking.id}');
                 
                 // Navigate back to home

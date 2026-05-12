@@ -38,7 +38,6 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
   Map<String, dynamic>? _driverInfo;
   bool _isLoadingDriver = false;
   Map<String, dynamic>? _couponUsage;
-  Timer? _autoRefreshTimer;
   StreamSubscription? _bookingStatusSubscription;
   bool _dialogShown = false;
   Booking? _currentBooking;
@@ -54,13 +53,11 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
     _fetchOrderItems();
     _fetchCouponUsage();
     _fetchDriverInfo();
-    _startAutoRefresh();
     _setupBookingStatusListener();
   }
 
   @override
   void dispose() {
-    _autoRefreshTimer?.cancel();
     _bookingStatusSubscription?.cancel();
     super.dispose();
   }
@@ -229,57 +226,6 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
         });
       }
     });
-  }
-
-  void _startAutoRefresh() {
-    // Fallback safety-net timer (realtime stream is the primary mechanism)
-    _autoRefreshTimer?.cancel();
-    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 60), (_) async {
-      if (!mounted) return;
-      
-      try {
-        final response = await SupabaseService.client
-            .from('bookings')
-            .select()
-            .eq('id', widget.booking.id)
-            .single();
-        
-        final newStatus = response['status'] as String?;
-        final oldStatus = _currentBooking?.status;
-        
-        // Only update if status actually changed
-        if (newStatus != null && newStatus != oldStatus) {
-          if (!mounted) return;
-          setState(() {
-            _currentBooking = Booking.fromJson(response);
-          });
-          
-          debugLog('🔄 [Fallback] Status changed: $oldStatus -> $newStatus');
-          
-          if (newStatus == 'completed' && !_dialogShown) {
-            _dialogShown = true;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) _showCompletionDialog();
-            });
-          }
-          if (newStatus == 'cancelled' && !_dialogShown) {
-            _dialogShown = true;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) _showCancelledByMerchantDialog();
-            });
-          }
-          
-          // Refresh driver info if needed
-          if (['accepted', 'driver_accepted', 'arrived', 'arrived_at_merchant', 'ready_for_pickup', 'picking_up_order', 'in_transit'].contains(newStatus)) {
-            await _fetchDriverInfo();
-          }
-        }
-      } catch (e) {
-        debugLog('❌ Fallback refresh error: $e');
-      }
-    });
-    
-    debugLog('✅ Fallback refresh started (60s interval - order detail)');
   }
 
   @override

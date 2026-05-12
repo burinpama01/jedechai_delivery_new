@@ -296,6 +296,9 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
       },
     );
 
+    nameController.dispose();
+    addressController.dispose();
+    noteController.dispose();
     if (result == true) {
       _loadAddresses();
     }

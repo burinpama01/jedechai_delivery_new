@@ -37,7 +37,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   List<Booking> _activeBookings = [];
   bool _isLoadingBookings = true;
   Map<String, Map<String, dynamic>> _couponUsageByBookingId = {};
-  Timer? _autoRefreshTimer;
   StreamSubscription? _bookingsStreamSubscription;
   List<Map<String, dynamic>> _banners = [];
   int _currentBannerIndex = 0;
@@ -105,7 +104,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     _loadUserProfile();
     _loadActiveBookings();
     _setupBookingsStream();
-    _startAutoRefresh();
     _loadBanners();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -149,7 +147,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
   @override
   void dispose() {
-    _autoRefreshTimer?.cancel();
     _bookingsStreamSubscription?.cancel();
     _bannerTimer?.cancel();
     _bannerController.dispose();
@@ -289,22 +286,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         });
       }
     });
-  }
-
-  void _startAutoRefresh() {
-    _autoRefreshTimer?.cancel();
-    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
-      if (!mounted) return;
-      
-      debugLog('🔄 Auto refreshing customer active bookings...');
-      
-      // Focus only on active bookings - skip cancelled/completed
-      await _loadActiveBookings();
-      
-      debugLog('🔄 Customer bookings refresh completed');
-    });
-    
-    debugLog('✅ Auto refresh started (30 seconds interval - active bookings only)');
   }
 
   @override

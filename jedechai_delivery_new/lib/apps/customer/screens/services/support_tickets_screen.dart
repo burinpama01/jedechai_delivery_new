@@ -195,6 +195,8 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
       },
     );
 
+    subjectCtrl.dispose();
+    descCtrl.dispose();
     if (result == true) _loadTickets();
   }
 

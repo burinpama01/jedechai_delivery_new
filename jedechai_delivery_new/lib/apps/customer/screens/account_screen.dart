@@ -367,6 +367,7 @@ class _AccountScreenState extends State<AccountScreen> {
         ],
       ),
     );
+    controller.dispose();
     if (result != null && result.trim().isNotEmpty) {
       try {
         await _profileService.updateProfile(
@@ -456,7 +457,7 @@ class _AccountScreenState extends State<AccountScreen> {
           ),
         ],
       ),
-    );
+    ).whenComplete(() => reasonController.dispose());
   }
 
   Future<void> _submitDeleteAccount(String reason) async {

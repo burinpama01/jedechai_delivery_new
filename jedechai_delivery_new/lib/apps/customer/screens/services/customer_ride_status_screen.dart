@@ -54,7 +54,6 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
   StreamSubscription? _driverLocationSubscription;
   bool _hasShownCompletionDialog = false;
   bool _customerInitiatedCancel = false;
-  Timer? _autoRefreshTimer;
   Position? _driverPosition;
   Map<String, dynamic>? _driverProfile;
   Map<String, dynamic>? _couponUsage;
@@ -68,7 +67,6 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
     _loadCouponUsage(widget.booking.id);
     _checkLocationPermission();
     _setupRealtimeUpdates();
-    _startAutoRefresh();
   }
 
   Future<void> _loadCouponUsage(String bookingId) async {
@@ -140,68 +138,12 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
     return total < 0 ? 0 : total;
   }
 
-  void _startAutoRefresh() {
-    _autoRefreshTimer?.cancel();
-    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
-      if (!mounted) return;
-      await _refreshStatus();
-    });
-  }
-
   @override
   void dispose() {
+    _mapController?.dispose();
     _bookingSubscription?.cancel();
     _driverLocationSubscription?.cancel();
-    _autoRefreshTimer?.cancel();
     super.dispose();
-  }
-
-  Future<void> _refreshBooking() async {
-    try {
-      final response = await SupabaseService.client
-          .from('bookings')
-          .select()
-          .eq('id', widget.booking.id)
-          .single();
-
-      final refreshed = Booking.fromJson(response);
-      if (!mounted) return;
-      setState(() {
-        _currentBooking = refreshed;
-      });
-      await _loadCouponUsage(refreshed.id);
-      _initializeMap();
-      _drawRoute();
-    } catch (e) {
-      debugLog('❌ Auto refresh booking error: $e');
-    }
-  }
-
-  Future<void> _refreshStatus() async {
-    try {
-      final response = await SupabaseService.client
-          .from('bookings')
-          .select('status')
-          .eq('id', widget.booking.id)
-          .single();
-
-      final refreshedStatus = response['status'] as String?;
-      final currentStatus = _currentBooking?.status;
-
-      if (refreshedStatus != null && refreshedStatus != currentStatus) {
-        await _refreshBooking();
-
-        if (refreshedStatus == 'completed') {
-          _showCompletionDialog();
-        }
-        
-        if (refreshedStatus == 'cancelled' && !_customerInitiatedCancel) {
-          _showCancelledByMerchantDialog();
-        }
-      }
-    } catch (e) {
-      debugLog('❌ Auto refresh status error: $e');
-    }
   }
 
   void _setupRealtimeUpdates() {
@@ -1393,8 +1335,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                 if (mounted) {
                   // Clean up subscriptions first
                   _bookingSubscription?.cancel();
-                  _autoRefreshTimer?.cancel();
-                  
+
                   // Show success message
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(

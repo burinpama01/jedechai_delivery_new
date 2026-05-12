@@ -26,6 +26,7 @@ class _MapScreenState extends State<MapScreen> {
   bool _isMapReady = false;
   Position? _currentPosition;
   bool _isLoadingLocation = false;
+  MapType _mapType = MapType.normal;
 
   // Bangkok coordinates (fallback)
   static const CameraPosition _initialPosition = CameraPosition(
@@ -63,6 +64,12 @@ class _MapScreenState extends State<MapScreen> {
     _determinePosition();
   }
 
+  @override
+  void dispose() {
+    _mapController?.dispose();
+    super.dispose();
+  }
+
   /// Determine and request location permissions
   Future<void> _determinePosition() async {
     setState(() {
@@ -73,7 +80,7 @@ class _MapScreenState extends State<MapScreen> {
       // Check if location services are enabled
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        // Location services are not enabled don't continue
+        if (mounted) setState(() => _isLoadingLocation = false);
         _showLocationServiceDialog();
         return;
       }
@@ -83,16 +90,21 @@ class _MapScreenState extends State<MapScreen> {
       if (permission == LocationPermission.denied) {
         if (mounted) {
           final accepted = await LocationDisclosureHelper.showIfNeeded(context);
-          if (!accepted) return;
+          if (!accepted) {
+          if (mounted) setState(() => _isLoadingLocation = false);
+          return;
+        }
         }
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
+          if (mounted) setState(() => _isLoadingLocation = false);
           _showPermissionDeniedDialog();
           return;
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
+        if (mounted) setState(() => _isLoadingLocation = false);
         _showPermissionDeniedForeverDialog();
         return;
       }
@@ -115,9 +127,7 @@ class _MapScreenState extends State<MapScreen> {
 
       debugLog('✅ Location obtained: ${position.latitude}, ${position.longitude}');
     } catch (e) {
-      setState(() {
-        _isLoadingLocation = false;
-      });
+      if (mounted) setState(() => _isLoadingLocation = false);
       debugLog('❌ Error getting location: $e');
       _showLocationErrorDialog(e.toString());
     }
@@ -299,7 +309,7 @@ class _MapScreenState extends State<MapScreen> {
             myLocationEnabled: true,
             myLocationButtonEnabled: false, // Disable default button, we'll add custom
             zoomControlsEnabled: false, // Disable default controls, we'll add custom
-            mapType: MapType.normal,
+            mapType: _mapType,
             compassEnabled: true,
             trafficEnabled: false,
             buildingsEnabled: true,
@@ -552,15 +562,10 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  void _toggleMapType() async {
-    if (_mapController != null) {
-      // Simple zoom toggle instead of map type change
-      final currentZoom = await _mapController!.getZoomLevel();
-      _mapController!.animateCamera(
-        CameraUpdate.zoomTo(currentZoom + 1),
-      );
-      
-      debugLog('🗺️ Zoom level changed to: ${currentZoom + 1}');
-    }
+  void _toggleMapType() {
+    setState(() {
+      _mapType = _mapType == MapType.normal ? MapType.hybrid : MapType.normal;
+    });
+    debugLog('🗺️ Map type toggled to: $_mapType');
   }
 }
