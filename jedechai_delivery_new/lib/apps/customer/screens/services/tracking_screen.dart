@@ -24,6 +24,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
   GoogleMapController? _mapController;
   late Booking _booking;
   StreamSubscription? _bookingSubscription;
+  StreamSubscription? _driverLocationSubscription;
+  String? _trackedDriverId;
   final Set<Marker> _markers = {};
 
   @override
@@ -32,18 +34,19 @@ class _TrackingScreenState extends State<TrackingScreen> {
     _booking = widget.booking;
     _setupMarkers();
     _listenToBookingUpdates();
+    if (_booking.driverId != null) {
+      _listenToDriverLocation(_booking.driverId!);
+    }
   }
 
   void _setupMarkers() {
-    _markers.clear();
-    // จุดรับ
+    _markers.removeWhere((m) => m.markerId.value == 'origin' || m.markerId.value == 'destination');
     _markers.add(Marker(
       markerId: const MarkerId('origin'),
       position: LatLng(_booking.originLat, _booking.originLng),
       icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
       infoWindow: InfoWindow(title: AppLocalizations.of(context)!.trackPickup, snippet: _booking.pickupAddress ?? ''),
     ));
-    // จุดส่ง
     _markers.add(Marker(
       markerId: const MarkerId('destination'),
       position: LatLng(_booking.destLat, _booking.destLng),
@@ -60,9 +63,12 @@ class _TrackingScreenState extends State<TrackingScreen> {
           .eq('id', _booking.id)
           .listen((data) {
         if (data.isNotEmpty && mounted) {
-          setState(() {
-            _booking = Booking.fromJson(data.first);
-          });
+          final updated = Booking.fromJson(data.first);
+          setState(() => _booking = updated);
+          // Start tracking driver location once a driver is assigned
+          if (updated.driverId != null && updated.driverId != _trackedDriverId) {
+            _listenToDriverLocation(updated.driverId!);
+          }
         }
       });
     } catch (e) {
@@ -70,9 +76,41 @@ class _TrackingScreenState extends State<TrackingScreen> {
     }
   }
 
+  void _listenToDriverLocation(String driverId) {
+    _driverLocationSubscription?.cancel();
+    _trackedDriverId = driverId;
+    try {
+      _driverLocationSubscription = Supabase.instance.client
+          .from('driver_locations')
+          .stream(primaryKey: ['id'])
+          .eq('driver_id', driverId)
+          .listen((data) {
+        if (!mounted || data.isEmpty) return;
+        final row = data.first;
+        final lat = (row['location_lat'] as num?)?.toDouble();
+        final lng = (row['location_lng'] as num?)?.toDouble();
+        if (lat == null || lng == null) return;
+        final driverPos = LatLng(lat, lng);
+        setState(() {
+          _markers.removeWhere((m) => m.markerId.value == 'driver');
+          _markers.add(Marker(
+            markerId: const MarkerId('driver'),
+            position: driverPos,
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+            infoWindow: InfoWindow(title: AppLocalizations.of(context)!.trackDriverFallback),
+          ));
+        });
+        _mapController?.animateCamera(CameraUpdate.newLatLng(driverPos));
+      });
+    } catch (e) {
+      debugLog('Error listening to driver location: $e');
+    }
+  }
+
   @override
   void dispose() {
     _bookingSubscription?.cancel();
+    _driverLocationSubscription?.cancel();
     _mapController?.dispose();
     super.dispose();
   }

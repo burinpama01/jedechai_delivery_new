@@ -78,23 +78,21 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
           .maybeSingle();
 
       if (usage == null) {
-        if (mounted) {
-          setState(() {
-            _couponUsage = null;
-          });
-        }
+        if (mounted) setState(() => _couponUsage = null);
         return;
       }
 
       String? couponCode;
+      bool isSystemCoupon = false;
       final couponId = usage['coupon_id'] as String?;
       if (couponId != null && couponId.isNotEmpty) {
         final coupon = await SupabaseService.client
             .from('coupons')
-            .select('code')
+            .select('code, is_system_coupon')
             .eq('id', couponId)
             .maybeSingle();
         couponCode = coupon?['code'] as String?;
+        isSystemCoupon = (coupon?['is_system_coupon'] as bool?) ?? false;
       }
 
       if (mounted) {
@@ -102,6 +100,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
           _couponUsage = {
             'discount_amount': usage['discount_amount'],
             'coupon_code': couponCode,
+            'is_system_coupon': isSystemCoupon,
           };
         });
       }
@@ -119,18 +118,11 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
   }
 
   bool get _hideCouponBreakdown {
-    final normalizedCouponCode = _couponCode()?.trim().toUpperCase();
-    return normalizedCouponCode == 'WELCOME20' ||
-        normalizedCouponCode == 'REFERRER20' ||
-        normalizedCouponCode == 'REFFERER20';
+    return (_couponUsage?['is_system_coupon'] as bool?) ?? false;
   }
 
   double _calculateTotalAmount(Booking booking) {
     final couponDiscount = _couponDiscountAmount();
-    final normalizedCouponCode = _couponCode()?.trim().toUpperCase();
-    final hideCouponBreakdown = normalizedCouponCode == 'WELCOME20' ||
-        normalizedCouponCode == 'REFERRER20' ||
-        normalizedCouponCode == 'REFFERER20';
     final gross = booking.serviceType == 'food'
         ? booking.price + (booking.deliveryFee ?? 0.0)
         : booking.price;
