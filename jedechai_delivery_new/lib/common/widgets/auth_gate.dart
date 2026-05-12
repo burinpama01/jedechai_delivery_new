@@ -35,6 +35,7 @@ class AuthGate extends StatefulWidget {
 
 class _AuthGateState extends State<AuthGate> {
   StreamSubscription<AuthState>? _authSubscription;
+  StreamSubscription? _deletionStatusSubscription;
   bool _isAuthenticated = false;
   bool _isLoading = true;
   String _userRole = 'customer'; // Default role
@@ -108,6 +109,7 @@ class _AuthGateState extends State<AuthGate> {
 
       // Check deletion status for all roles
       await _checkDeletionStatus();
+      _subscribeToProfileDeletionStatus();
 
       // Check approval/suspension status for all roles
       await _fetchApprovalStatus();
@@ -137,6 +139,27 @@ class _AuthGateState extends State<AuthGate> {
     } catch (e) {
       debugLog('⚠️ Error checking deletion status: $e');
     }
+  }
+
+  void _subscribeToProfileDeletionStatus() {
+    final userId = AuthService.userId;
+    if (userId == null) return;
+
+    _deletionStatusSubscription?.cancel();
+    _deletionStatusSubscription = Supabase.instance.client
+        .from('profiles')
+        .stream(primaryKey: ['id'])
+        .eq('id', userId)
+        .listen((data) {
+          if (!mounted || data.isEmpty) return;
+          final newStatus = data.first['deletion_status'] as String?;
+          if (newStatus != _deletionStatus) {
+            setState(() {
+              _deletionStatus = newStatus;
+              _signingOutForDeletion = false;
+            });
+          }
+        });
   }
 
   Future<void> _fetchAppLogo() async {
@@ -223,6 +246,7 @@ class _AuthGateState extends State<AuthGate> {
   @override
   void dispose() {
     _authSubscription?.cancel();
+    _deletionStatusSubscription?.cancel();
     super.dispose();
   }
 

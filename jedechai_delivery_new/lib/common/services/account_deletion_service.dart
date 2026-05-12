@@ -132,9 +132,13 @@ class AccountDeletionService {
     // ดึงข้อมูลคำขอ
     final request = await _supabase
         .from('account_deletion_requests')
-        .select('user_id')
+        .select('user_id, status')
         .eq('id', requestId)
         .single();
+
+    if ((request['status'] as String?) != 'pending') {
+      throw Exception('คำขอนี้ไม่อยู่ในสถานะรอดำเนินการ (${request['status']})');
+    }
 
     final targetUserId = request['user_id'] as String;
 

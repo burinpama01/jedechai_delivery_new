@@ -68,61 +68,36 @@ class _RatingScreenState extends State<RatingScreen> {
 
       final client = Supabase.instance.client;
 
-      Future<void> upsertReview({
-        required Map<String, Object> match,
-        required Map<String, dynamic> data,
-      }) async {
-        final existing = await client
-            .from('reviews')
-            .select('id')
-            .match(match)
-            .maybeSingle();
-
-        if (existing != null && existing['id'] != null) {
-          await client.from('reviews').update(data).eq('id', existing['id']);
-        } else {
-          await client.from('reviews').insert({...match, ...data});
-        }
-      }
-
       // บันทึกรีวิวคนขับ
       if (_hasDriver) {
-        await upsertReview(
-          match: {
-            'booking_id': widget.booking.id,
-            'customer_id': userId,
-            'driver_id': widget.booking.driverId!,
-          },
-          data: {
-            'rating': _driverRating.toDouble(),
-            'comment': _driverCommentController.text.trim().isEmpty
-                ? null
-                : _driverCommentController.text.trim(),
-            'updated_at': DateTime.now().toIso8601String(),
-          },
-        );
+        await client.from('reviews').upsert({
+          'booking_id': widget.booking.id,
+          'customer_id': userId,
+          'driver_id': widget.booking.driverId!,
+          'rating': _driverRating.toDouble(),
+          'comment': _driverCommentController.text.trim().isEmpty
+              ? null
+              : _driverCommentController.text.trim(),
+          'updated_at': DateTime.now().toIso8601String(),
+        }, onConflict: 'booking_id,customer_id,driver_id');
       }
 
       // บันทึกรีวิวร้านค้า (เฉพาะ food)
       if (_isFood && widget.booking.merchantId != null) {
-        await upsertReview(
-          match: {
-            'booking_id': widget.booking.id,
-            'customer_id': userId,
-            'merchant_id': widget.booking.merchantId!,
-          },
-          data: {
-            'rating': _merchantRating.toDouble(),
-            'comment': _merchantCommentController.text.trim().isEmpty
-                ? null
-                : _merchantCommentController.text.trim(),
-            'merchant_rating': _merchantRating,
-            'merchant_comment': _merchantCommentController.text.trim().isEmpty
-                ? null
-                : _merchantCommentController.text.trim(),
-            'updated_at': DateTime.now().toIso8601String(),
-          },
-        );
+        await client.from('reviews').upsert({
+          'booking_id': widget.booking.id,
+          'customer_id': userId,
+          'merchant_id': widget.booking.merchantId!,
+          'rating': _merchantRating.toDouble(),
+          'comment': _merchantCommentController.text.trim().isEmpty
+              ? null
+              : _merchantCommentController.text.trim(),
+          'merchant_rating': _merchantRating,
+          'merchant_comment': _merchantCommentController.text.trim().isEmpty
+              ? null
+              : _merchantCommentController.text.trim(),
+          'updated_at': DateTime.now().toIso8601String(),
+        }, onConflict: 'booking_id,customer_id,merchant_id');
       }
 
       setState(() {

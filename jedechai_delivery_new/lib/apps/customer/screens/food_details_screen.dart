@@ -168,19 +168,15 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
       debugLog('🔄 Navigating back with cart item:');
       debugLog('   └─ Cart Item: $cartItem');
       
-      // Pop first with the cart item data
+      // Capture before pop — context becomes invalid after pop
+      final messenger = ScaffoldMessenger.of(context);
+      final addedMsg = AppLocalizations.of(context)!.foodDetAddedToCart(widget.menuItem.name);
       Navigator.of(context).pop(cartItem);
-      
-      // Then show success message (after pop)
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context)!.foodDetAddedToCart(widget.menuItem.name)),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
+      messenger.showSnackBar(SnackBar(
+        content: Text(addedMsg),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 2),
+      ));
     } catch (e) {
       debugLog('❌ Error adding to cart: $e');
       if (mounted) {

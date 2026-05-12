@@ -461,14 +461,24 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Future<void> _submitDeleteAccount(String reason) async {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const PopScope(
+      canPop: false,
+      child: Center(child: CircularProgressIndicator()),
+    ),
+    );
     try {
       await AccountDeletionService.requestDeletion(reason: reason);
       if (mounted) {
-        // Navigate to auth gate which will show pending deletion screen
+        Navigator.of(context).pop(); // dismiss loading
         Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
       }
     } catch (e) {
       if (mounted) {
+        Navigator.of(context).pop(); // dismiss loading
         final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

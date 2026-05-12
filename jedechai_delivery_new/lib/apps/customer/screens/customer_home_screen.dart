@@ -17,6 +17,8 @@ import 'services/parcel_service_screen.dart';
 import 'services/customer_order_detail_screen.dart';
 import 'activity_screen.dart';
 import 'services/saved_addresses_screen.dart';
+import 'services/help_screen.dart';
+import '../../../common/screens/notification_center_screen.dart';
 
 /// Customer Home Screen
 /// 
@@ -383,8 +385,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               ),
               IconButton(
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(AppLocalizations.of(context)!.customerHomeNoNewNotifications)),
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const NotificationCenterScreen(role: 'customer'),
+                    ),
                   );
                 },
                 icon: const Icon(Icons.notifications, color: Colors.white),
@@ -624,8 +628,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 subtitle: AppLocalizations.of(context)!.customerHomeContactUs,
                 color: const Color(0xFF6C63FF),
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(AppLocalizations.of(context)!.customerHomeHelpDeveloping)),
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const HelpScreen()),
                   );
                 },
               ),
