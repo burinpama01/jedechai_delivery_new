@@ -21,6 +21,15 @@ class AccountDeletionService {
 
     final user = AuthService.currentUser;
 
+    // ตรวจสอบว่ามีคำขอที่รอดำเนินการอยู่แล้วหรือไม่
+    final existing = await _supabase
+        .from('account_deletion_requests')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('status', 'pending')
+        .maybeSingle();
+    if (existing != null) throw Exception('มีคำขอลบบัญชีที่รอดำเนินการอยู่แล้ว');
+
     // สร้างคำขอลบ
     await _supabase.from('account_deletion_requests').insert({
       'user_id': userId,
@@ -90,32 +99,20 @@ class AccountDeletionService {
     return List<Map<String, dynamic>>.from(response);
   }
 
-  /// อนุมัติคำขอลบบัญชี
+  /// อนุมัติคำขอลบบัญชี — เรียก Edge Function เพื่อลบ auth user ด้วย
   static Future<void> approveRequest(int requestId) async {
-    final adminId = AuthService.userId;
+    final response = await _supabase.functions.invoke(
+      'admin-actions',
+      body: {'action': 'approve_account_deletion', 'id': requestId},
+    );
 
-    // ดึงข้อมูลคำขอ
-    final request = await _supabase
-        .from('account_deletion_requests')
-        .select('*')
-        .eq('id', requestId)
-        .single();
+    if (response.status != 200) {
+      final body = response.data;
+      final message = (body is Map ? body['error'] : null) ?? 'Approval failed (${response.status})';
+      throw Exception(message);
+    }
 
-    final targetUserId = request['user_id'] as String;
-
-    // อัปเดตสถานะคำขอ
-    await _supabase.from('account_deletion_requests').update({
-      'status': 'approved',
-      'reviewed_at': DateTime.now().toIso8601String(),
-      'reviewed_by': adminId,
-    }).eq('id', requestId);
-
-    // อัปเดตสถานะใน profiles
-    await _supabase
-        .from('profiles')
-        .update({'deletion_status': 'approved'}).eq('id', targetUserId);
-
-    debugLog('✅ Account deletion approved for $targetUserId by $adminId');
+    debugLog('✅ Account deletion approved via Edge Function (request $requestId)');
   }
 
   /// ปฏิเสธคำขอลบบัญชี

@@ -942,7 +942,7 @@ class _AccountScreenState extends State<AccountScreen> {
 
                   if (_versionTapCount >= 7) {
                     _versionTapCount = 0;
-                    _showNotificationDebugDialog();
+                    if (kDebugMode) _showNotificationDebugDialog();
                   }
                 },
                 child: Padding(

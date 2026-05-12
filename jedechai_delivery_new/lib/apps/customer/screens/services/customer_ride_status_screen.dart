@@ -257,14 +257,14 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
     
     _driverLocationSubscription?.cancel();
     _driverLocationSubscription = SupabaseService.client
-        .from('profiles')
-        .stream(primaryKey: ['id'])
-        .eq('id', driverId)
+        .from('driver_locations')
+        .stream(primaryKey: ['driver_id'])
+        .eq('driver_id', driverId)
         .listen((List<Map<String, dynamic>> data) {
           if (data.isNotEmpty && mounted) {
             final profile = data.first;
-            final lat = profile['latitude'] as double?;
-            final lng = profile['longitude'] as double?;
+            final lat = (profile['location_lat'] as num?)?.toDouble();
+            final lng = (profile['location_lng'] as num?)?.toDouble();
             
             if (lat != null && lng != null) {
               debugLog('📡 Driver location update: $lat, $lng');

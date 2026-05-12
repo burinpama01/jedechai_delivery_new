@@ -41,6 +41,7 @@ class _AuthGateState extends State<AuthGate> {
   String _approvalStatus = 'approved'; // Default approval status
   String? _rejectionReason;
   String? _deletionStatus; // null = normal, 'pending' = awaiting deletion
+  bool _signingOutForDeletion = false;
   bool _profileCompleted = true; // Default true for customers/admin
   Map<String, dynamic>? _userProfile;
   String? _logoUrl;
@@ -315,6 +316,17 @@ class _AuthGateState extends State<AuthGate> {
     // Check if account is pending deletion
     if (_deletionStatus == 'pending') {
       return const PendingDeletionScreen();
+    }
+
+    // Force sign out if deletion was approved (account should no longer have access)
+    if (_deletionStatus == 'approved') {
+      if (!_signingOutForDeletion) {
+        _signingOutForDeletion = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          if (mounted) await AuthService.signOut();
+        });
+      }
+      return const LoginScreen();
     }
 
     // Check approval status for driver/merchant

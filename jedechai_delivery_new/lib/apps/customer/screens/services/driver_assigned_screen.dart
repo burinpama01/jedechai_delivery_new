@@ -32,7 +32,7 @@ class _DriverAssignedScreenState extends State<DriverAssignedScreen> {
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () {
-            Navigator.of(context).pushReplacementNamed('/home');
+            Navigator.of(context).popUntil((r) => r.isFirst);
           },
         ),
       ),
@@ -256,7 +256,7 @@ class _DriverAssignedScreenState extends State<DriverAssignedScreen> {
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              Navigator.of(context).pushReplacementNamed('/home');
+              Navigator.of(context).popUntil((r) => r.isFirst);
             },
             style: TextButton.styleFrom(
               foregroundColor: Colors.red,

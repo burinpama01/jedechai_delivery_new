@@ -38,6 +38,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   bool _isLoadingBookings = true;
   Map<String, Map<String, dynamic>> _couponUsageByBookingId = {};
   Timer? _autoRefreshTimer;
+  StreamSubscription? _bookingsStreamSubscription;
   List<Map<String, dynamic>> _banners = [];
   int _currentBannerIndex = 0;
   final PageController _bannerController = PageController();
@@ -149,6 +150,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   @override
   void dispose() {
     _autoRefreshTimer?.cancel();
+    _bookingsStreamSubscription?.cancel();
     _bannerTimer?.cancel();
     _bannerController.dispose();
     super.dispose();
@@ -246,7 +248,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     final userId = AuthService.userId;
     if (userId == null) return;
 
-    SupabaseService.client
+    _bookingsStreamSubscription = SupabaseService.client
         .from('bookings')
         .stream(primaryKey: ['id'])
         .eq('customer_id', userId)

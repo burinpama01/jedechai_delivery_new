@@ -942,12 +942,42 @@ async function upsertSystemConfigKeyValue(supabase, key: string, value: unknown)
 async function handleApproveAccountDeletion(supabase, body) {
   const { id } = body;
   if (!id) return errorResponse("Missing 'id'");
+
+  // Fetch the request to get user_id
+  const { data: request, error: fetchErr } = await supabase
+    .from("account_deletion_requests")
+    .select("user_id, status")
+    .eq("id", id)
+    .single();
+  if (fetchErr) return errorResponse(fetchErr.message);
+  if (!request) return errorResponse("Request not found", 404);
+  if (request.status !== "pending") return errorResponse("Request is not pending");
+
+  const targetUserId = request.user_id as string;
   const nowIso = new Date().toISOString();
-  const { error } = await supabase
+
+  // Update request status
+  const { error: reqErr } = await supabase
     .from("account_deletion_requests")
     .update({ status: "approved", reviewed_at: nowIso })
     .eq("id", id);
-  if (error) return errorResponse(error.message);
+  if (reqErr) return errorResponse(reqErr.message);
+
+  // Mark profile as approved for deletion
+  await supabase
+    .from("profiles")
+    .update({ deletion_status: "approved" })
+    .eq("id", targetUserId);
+
+  // Delete the auth user (this invalidates all active sessions)
+  const { error: authErr } = await supabase.auth.admin.deleteUser(targetUserId);
+  if (
+    authErr &&
+    !String(authErr.message || "").toLowerCase().includes("not found")
+  ) {
+    return errorResponse(`Auth user deletion failed: ${authErr.message}`);
+  }
+
   return jsonResponse({ success: true });
 }
 
