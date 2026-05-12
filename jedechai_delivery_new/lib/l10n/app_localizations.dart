@@ -7973,6 +7973,12 @@ abstract class AppLocalizations {
   /// **'Referral code copied'**
   String get referralCopied;
 
+  /// No description provided for @referralShareMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Join me on JDC Delivery! Use my referral code:'**
+  String get referralShareMessage;
+
   /// No description provided for @referralCodeSuccess.
   ///
   /// In en, this message translates to:

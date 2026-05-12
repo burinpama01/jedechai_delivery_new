@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../common/services/referral_service.dart';
 import '../../../../common/services/notification_service.dart';
@@ -101,6 +102,11 @@ class _ReferralScreenState extends State<ReferralScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(AppLocalizations.of(context)!.referralCopied)),
     );
+  }
+
+  void _shareReferralCode() {
+    final l10n = AppLocalizations.of(context)!;
+    Share.share('${l10n.referralShareMessage} $myReferralCode');
   }
 
   void _submitCode() async {
@@ -245,7 +251,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: _copyToClipboard,
+                onPressed: _shareReferralCode,
                 icon: const Icon(Icons.share),
                 label: Text(AppLocalizations.of(context)!.referralShareButton),
                 style: ElevatedButton.styleFrom(

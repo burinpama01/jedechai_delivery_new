@@ -4274,6 +4274,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get referralCopied => 'คัดลอกโค้ดชวนเพื่อนแล้ว';
 
   @override
+  String get referralShareMessage => 'มาใช้แอป JDC Delivery กับฉันสิ! ใส่โค้ดชวนเพื่อน:';
+
+  @override
   String get referralCodeSuccess => 'ใช้โค้ดสำเร็จ!';
 
   @override

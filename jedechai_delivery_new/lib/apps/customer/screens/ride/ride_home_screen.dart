@@ -629,14 +629,15 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
   }
 
   Future<void> _callDriver() async {
+    final l10n = AppLocalizations.of(context)!;
+    final errorColor = Theme.of(context).colorScheme.error;
+
     if (_currentLocation == null || _selectedDestination == null) {
-      _showMessage(
-          AppLocalizations.of(context)!.rideSelectDestination, Colors.orange);
+      _showMessage(l10n.rideSelectDestination, Colors.orange);
       return;
     }
     if (_selectedVehicleIndex < 0) {
-      _showMessage(
-          AppLocalizations.of(context)!.rideSelectVehicle, Colors.orange);
+      _showMessage(l10n.rideSelectVehicle, Colors.orange);
       return;
     }
 
@@ -645,8 +646,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
     try {
       final currentUser = AuthService.currentUser;
       if (currentUser == null) {
-        _showMessage(AppLocalizations.of(context)!.ridePleaseLogin,
-            Theme.of(context).colorScheme.error);
+        _showMessage(l10n.ridePleaseLogin, errorColor);
         return;
       }
 
@@ -664,12 +664,11 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
           '   └─ Pickup surcharge: ฿${_estimatedPickupSurcharge.toStringAsFixed(2)}');
       debugLog('   └─ Vehicle: $vehicleName');
 
-      final noteLines = <String>[
-        AppLocalizations.of(context)!.rideNoteVehicleType(vehicleName)
-      ];
+      final pickupAddress = l10n.ridePickupAddress;
+      final noteLines = <String>[l10n.rideNoteVehicleType(vehicleName)];
       if (_estimatedPickupSurcharge > 0) {
         noteLines.add(
-          AppLocalizations.of(context)!.rideNotePickupSurcharge(
+          l10n.rideNotePickupSurcharge(
               _estimatedDriverToPickupKm.toStringAsFixed(2),
               _estimatedPickupSurcharge.toStringAsFixed(2)),
         );
@@ -683,7 +682,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
             'vehicle_type': vehicleName,
             'origin_lat': _currentLocation!.latitude,
             'origin_lng': _currentLocation!.longitude,
-            'pickup_address': AppLocalizations.of(context)!.ridePickupAddress,
+            'pickup_address': pickupAddress,
             'dest_lat': _selectedDestination!.latitude,
             'dest_lng': _selectedDestination!.longitude,
             'destination_address': _selectedAddress,
@@ -714,34 +713,34 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
           'total': totalRidePrice.toStringAsFixed(0),
           'distance_km': _estimatedDistance.toStringAsFixed(2),
           'payment_method': _paymentMethod,
-          'pickup': AppLocalizations.of(context)!.ridePickupAddress,
+          'pickup': pickupAddress,
           'destination': _selectedAddress,
         },
       ));
 
-      _showMessage(AppLocalizations.of(context)!.rideSearchingDriver,
-          AppTheme.primaryGreen);
+      if (!mounted) return;
+      _showMessage(l10n.rideSearchingDriver, AppTheme.primaryGreen);
 
       // Send notification to matching vehicle type drivers only
-      await _notifyDriversAboutNewRide(booking, vehicleName);
+      await _notifyDriversAboutNewRide(booking, vehicleName, l10n: l10n);
 
       // Navigate to waiting screen
+      if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (context) => WaitingForDriverScreen(booking: booking),
         ),
       );
     } catch (e) {
-      _showMessage(AppLocalizations.of(context)!.rideError(e.toString()),
-          Theme.of(context).colorScheme.error);
+      if (mounted) _showMessage(l10n.rideError(e.toString()), errorColor);
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   /// Send notification to drivers with matching vehicle type
   Future<void> _notifyDriversAboutNewRide(
-      Booking booking, String vehicleType) async {
+      Booking booking, String vehicleType, {required AppLocalizations l10n}) async {
     try {
       debugLog(
           '📢 Notifying $vehicleType drivers about new ride: ${booking.id}');
@@ -801,12 +800,10 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
         if (driverToken != null && driverToken.isNotEmpty) {
           final success = await NotificationSender.sendNotification(
             targetUserId: driverId,
-            title: AppLocalizations.of(context)!.rideNotifTitle,
-            body: AppLocalizations.of(context)!.rideNotifBody(
-                booking.pickupAddress ??
-                    AppLocalizations.of(context)!.rideNotifPickupFallback,
-                booking.destinationAddress ??
-                    AppLocalizations.of(context)!.rideNotifDestFallback,
+            title: l10n.rideNotifTitle,
+            body: l10n.rideNotifBody(
+                booking.pickupAddress ?? l10n.rideNotifPickupFallback,
+                booking.destinationAddress ?? l10n.rideNotifDestFallback,
                 booking.price.toString()),
             data: NotificationPayloadPolicy.buildBookingPayload(
               type: NotificationTypes.driverJobAvailable,

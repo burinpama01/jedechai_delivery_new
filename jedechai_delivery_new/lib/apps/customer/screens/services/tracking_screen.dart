@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../common/models/booking.dart';
@@ -316,8 +317,11 @@ class _TrackingScreenState extends State<TrackingScreen> {
           if (_booking.driverPhone != null)
             IconButton(
               icon: const Icon(Icons.phone, color: AppTheme.primaryGreen),
-              onPressed: () {
-                // TODO: launch phone call
+              onPressed: () async {
+                final uri = Uri(scheme: 'tel', path: _booking.driverPhone!);
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(uri);
+                }
               },
             ),
         ],

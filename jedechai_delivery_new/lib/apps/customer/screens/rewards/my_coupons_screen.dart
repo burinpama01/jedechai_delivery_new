@@ -175,7 +175,7 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
         final couponName = (coupon is Map && coupon['name'] != null) ? coupon['name'].toString() : '-';
         final couponCode = (coupon is Map && coupon['code'] != null) ? coupon['code'].toString() : '-';
         final discountAmount = (item['discount_amount'] as num?)?.toDouble() ?? 0;
-        final createdAt = item['created_at']?.toString() ?? '';
+        final usedAt = _formatDate(item['created_at']?.toString() ?? '');
 
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
@@ -186,7 +186,7 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
               couponName,
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
-            subtitle: Text(AppLocalizations.of(context)!.couponHistoryCode(couponCode, createdAt)),
+            subtitle: Text(AppLocalizations.of(context)!.couponHistoryCode(couponCode, usedAt)),
             trailing: Text(
               '-฿${discountAmount.toStringAsFixed(0)}',
               style: TextStyle(
@@ -198,6 +198,16 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
         );
       },
     );
+  }
+
+  String _formatDate(String iso) {
+    if (iso.isEmpty) return '-';
+    try {
+      final dt = DateTime.parse(iso).toLocal();
+      return '${dt.day}/${dt.month}/${dt.year}';
+    } catch (_) {
+      return iso;
+    }
   }
 
   Widget _buildCouponCard(Coupon coupon, {required bool isMine, int? quantity}) {

@@ -4274,6 +4274,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get referralCopied => 'Referral code copied';
 
   @override
+  String get referralShareMessage => 'Join me on JDC Delivery! Use my referral code:';
+
+  @override
   String get referralCodeSuccess => 'Code used successfully!';
 
   @override
