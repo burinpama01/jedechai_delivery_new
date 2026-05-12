@@ -1783,6 +1783,7 @@
   "trackDestination": "Destination",
   "trackNotSpecified": "Not specified",
   "trackDriverFallback": "Driver",
+  "trackCallNotSupported": "Phone calls are not supported on this device",
   "trackStatusPendingTitle": "Waiting for driver",
   "trackStatusPendingSub": "Searching for a driver near you",
   "trackStatusAcceptedTitle": "Driver accepted",

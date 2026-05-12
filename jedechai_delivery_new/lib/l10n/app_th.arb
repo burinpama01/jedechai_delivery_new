@@ -1783,6 +1783,7 @@
   "trackDestination": "จุดส่ง",
   "trackNotSpecified": "ไม่ระบุ",
   "trackDriverFallback": "คนขับ",
+  "trackCallNotSupported": "อุปกรณ์นี้ไม่รองรับการโทรออก",
   "trackStatusPendingTitle": "รอคนขับรับงาน",
   "trackStatusPendingSub": "กำลังค้นหาคนขับในพื้นที่ใกล้คุณ",
   "trackStatusAcceptedTitle": "คนขับรับงานแล้ว",

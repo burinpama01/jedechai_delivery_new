@@ -321,6 +321,10 @@ class _TrackingScreenState extends State<TrackingScreen> {
                 final uri = Uri(scheme: 'tel', path: _booking.driverPhone!);
                 if (await canLaunchUrl(uri)) {
                   await launchUrl(uri);
+                } else if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(AppLocalizations.of(context)!.trackCallNotSupported)),
+                  );
                 }
               },
             ),

@@ -7241,6 +7241,12 @@ abstract class AppLocalizations {
   /// **'Driver'**
   String get trackDriverFallback;
 
+  /// No description provided for @trackCallNotSupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone calls are not supported on this device'**
+  String get trackCallNotSupported;
+
   /// No description provided for @trackStatusPendingTitle.
   ///
   /// In en, this message translates to:

@@ -3892,6 +3892,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get trackDriverFallback => 'คนขับ';
 
   @override
+  String get trackCallNotSupported => 'อุปกรณ์นี้ไม่รองรับการโทรออก';
+
+  @override
   String get trackStatusPendingTitle => 'รอคนขับรับงาน';
 
   @override

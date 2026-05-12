@@ -204,7 +204,9 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
     if (iso.isEmpty) return '-';
     try {
       final dt = DateTime.parse(iso).toLocal();
-      return '${dt.day}/${dt.month}/${dt.year}';
+      final d = dt.day.toString().padLeft(2, '0');
+      final m = dt.month.toString().padLeft(2, '0');
+      return '$d/$m/${dt.year}';
     } catch (_) {
       return iso;
     }

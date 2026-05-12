@@ -3892,6 +3892,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get trackDriverFallback => 'Driver';
 
   @override
+  String get trackCallNotSupported => 'Phone calls are not supported on this device';
+
+  @override
   String get trackStatusPendingTitle => 'Waiting for driver';
 
   @override
