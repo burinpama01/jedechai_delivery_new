@@ -26,6 +26,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
   StreamSubscription? _bookingSubscription;
   StreamSubscription? _driverLocationSubscription;
   String? _trackedDriverId;
+  bool _didInitialDriverCamera = false;
   final Set<Marker> _markers = {};
 
   @override
@@ -79,6 +80,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
   void _listenToDriverLocation(String driverId) {
     _driverLocationSubscription?.cancel();
     _trackedDriverId = driverId;
+    _didInitialDriverCamera = false;
     try {
       _driverLocationSubscription = Supabase.instance.client
           .from('driver_locations')
@@ -100,7 +102,11 @@ class _TrackingScreenState extends State<TrackingScreen> {
             infoWindow: InfoWindow(title: AppLocalizations.of(context)!.trackDriverFallback),
           ));
         });
-        _mapController?.animateCamera(CameraUpdate.newLatLng(driverPos));
+        // Animate camera only on first driver fix; subsequent updates update the marker only
+        if (!_didInitialDriverCamera) {
+          _didInitialDriverCamera = true;
+          _mapController?.animateCamera(CameraUpdate.newLatLng(driverPos));
+        }
       });
     } catch (e) {
       debugLog('Error listening to driver location: $e');
