@@ -2776,5 +2776,13 @@
       "bankName": {},
       "accountNumber": {}
     }
-  }
+  },
+
+  "pendingDeletionTitle": "Account Deletion In Progress",
+  "pendingDeletionBody": "Your account deletion request has been sent to admin.\nPlease wait for review and approval.",
+  "pendingDeletionWaiting": "While waiting for approval,\nthis account cannot be used.",
+  "pendingDeletionLogout": "Sign out",
+  "rejectedDeletionTitle": "Account Deletion Rejected",
+  "rejectedDeletionBody": "Your account deletion request was not approved.\nYou can log in and use the account normally.",
+  "rejectedDeletionBack": "Back to login"
 }

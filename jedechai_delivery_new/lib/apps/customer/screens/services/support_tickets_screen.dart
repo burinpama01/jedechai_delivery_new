@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../common/providers/language_provider.dart';
 import '../../../../common/models/support_ticket.dart';
 import '../../../../common/services/ticket_service.dart';
 import '../../../../theme/app_theme.dart';
@@ -292,7 +294,8 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
 
   Widget _buildTicketCard(SupportTicket ticket) {
     final colorScheme = Theme.of(context).colorScheme;
-    final dateStr = DateFormat('d MMM yyyy, HH:mm', 'th').format(ticket.createdAt);
+    final locale = context.watch<LanguageProvider>().localeOverride?.languageCode ?? 'th';
+    final dateStr = DateFormat('d MMM yyyy, HH:mm', locale).format(ticket.createdAt);
     final color = _statusColor(ticket.status);
 
     return Card(

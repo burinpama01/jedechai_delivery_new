@@ -27,6 +27,7 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
   String _addressText = '';
   bool _isLoadingAddress = false;
   bool _isLoadingLocation = true;
+  LatLng? _lastGeocodedPosition;
 
   @override
   void initState() {
@@ -42,6 +43,15 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
 
   Future<void> _getCurrentLocation() async {
     try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.deniedForever) {
+        if (mounted) setState(() => _isLoadingLocation = false);
+        _reverseGeocode(_selectedPosition);
+        return;
+      }
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
@@ -59,6 +69,17 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
   }
 
   Future<void> _reverseGeocode(LatLng position) async {
+    // Skip if position hasn't changed meaningfully (~50m threshold)
+    if (_lastGeocodedPosition != null) {
+      final dist = Geolocator.distanceBetween(
+        _lastGeocodedPosition!.latitude,
+        _lastGeocodedPosition!.longitude,
+        position.latitude,
+        position.longitude,
+      );
+      if (dist < 50) return;
+    }
+    _lastGeocodedPosition = position;
     setState(() => _isLoadingAddress = true);
     try {
       final apiKey = EnvConfig.googleMapsApiKey;

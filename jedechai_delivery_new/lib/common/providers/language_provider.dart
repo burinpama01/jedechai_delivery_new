@@ -44,7 +44,7 @@ class LanguageProvider extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       if (locale == null) {
-        await prefs.setString(_prefsKey, '');
+        await prefs.remove(_prefsKey);
       } else {
         final raw = [locale.languageCode, if (locale.countryCode?.isNotEmpty == true) locale.countryCode].join('_');
         await prefs.setString(_prefsKey, raw);

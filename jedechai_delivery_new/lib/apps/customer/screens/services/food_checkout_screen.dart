@@ -63,11 +63,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
   Coupon? _appliedCoupon;
   double _couponDiscount = 0;
 
-  bool get _hideCouponBreakdown {
-    final code = _appliedCoupon?.code.trim().toUpperCase();
-    if (code == null || code.isEmpty) return false;
-    return code == 'WELCOME20' || code == 'REFERRER20' || code == 'REFFERER20';
-  }
+  bool get _hideCouponBreakdown => _appliedCoupon?.isSystemCoupon ?? false;
 
   // ── อัตราค่าส่ง (โหลดจาก service_rates table — อาจถูก override โดยค่าเฉพาะร้าน) ──
   double _baseFare = 15.0; // ค่าเริ่มต้น (fallback)
@@ -1148,6 +1144,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         scheduledAt: scheduledAt,
         couponCode: _appliedCoupon?.code,
         couponDiscount: _couponDiscount,
+        hideSystemCouponBreakdown: _appliedCoupon?.isSystemCoupon ?? false,
         defaultNoteText: AppLocalizations.of(context)!
             .foodDefaultNote(cart.merchantName ?? ''),
         couponNoteFormatter: (code, amount) =>
@@ -1261,6 +1258,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
     DateTime? scheduledAt,
     String? couponCode,
     double couponDiscount = 0,
+    bool hideSystemCouponBreakdown = false,
     String? defaultNoteText,
     String Function(String code, String amount)? couponNoteFormatter,
   }) async {
@@ -1288,13 +1286,9 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       final mergedNote = note.isNotEmpty
           ? note
           : (defaultNoteText ?? 'Food order from $merchantName');
-      final normalizedCoupon = couponCode?.trim().toUpperCase();
-      final hideBreakdown = normalizedCoupon == 'WELCOME20' ||
-          normalizedCoupon == 'REFERRER20' ||
-          normalizedCoupon == 'REFFERER20';
       final noteWithCoupon = (couponCode != null &&
               couponDiscount > 0 &&
-              !hideBreakdown)
+              !hideSystemCouponBreakdown)
           ? '$mergedNote\n${couponNoteFormatter != null ? couponNoteFormatter(couponCode!, couponDiscount.toStringAsFixed(2)) : "[Coupon: $couponCode | Discount: \u0e3f${couponDiscount.toStringAsFixed(2)}]"}'
           : mergedNote;
 

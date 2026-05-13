@@ -33,11 +33,16 @@ class _TrackingScreenState extends State<TrackingScreen> {
   void initState() {
     super.initState();
     _booking = widget.booking;
-    _setupMarkers();
     _listenToBookingUpdates();
     if (_booking.driverId != null) {
       _listenToDriverLocation(_booking.driverId!);
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _setupMarkers();
   }
 
   void _setupMarkers() {
@@ -482,12 +487,25 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
     int currentIndex = statusOrder.indexOf(_booking.status);
     if (currentIndex == -1) {
-      // handle statuses not in the main flow
-      if (_booking.status == 'assigned') currentIndex = 1;
-      else if (_booking.status == 'preparing' || _booking.status == 'arrived_at_pickup') currentIndex = 2;
-      else if (_booking.status == 'delivering' || _booking.status == 'arrived_at_dropoff') currentIndex = 3;
-      else if (_booking.status == 'cancelled') currentIndex = -1;
-      else currentIndex = 0;
+      switch (_booking.status) {
+        case 'assigned':
+        case 'matched':
+          currentIndex = 1;
+        case 'preparing':
+        case 'arrived_at_pickup':
+        case 'picking_up_order':
+        case 'arrived_at_merchant':
+          currentIndex = 2;
+        case 'delivering':
+        case 'arrived_at_dropoff':
+          currentIndex = 3;
+        case 'cancelled':
+          currentIndex = -1;
+        case 'pending_merchant':
+          currentIndex = 0;
+        default:
+          currentIndex = 0;
+      }
     }
 
     return List.generate(statusOrder.length, (i) => {

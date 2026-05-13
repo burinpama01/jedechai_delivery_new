@@ -1,6 +1,7 @@
 ﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../common/services/services.dart';
 import '../../../../common/models/booking.dart';
@@ -13,6 +14,7 @@ import '../../../../common/services/auth_service.dart';
 import '../../../../common/utils/order_code_formatter.dart';
 import '../../../../common/widgets/chat_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'cancellation_screen.dart';
 import 'customer_ride_status_screen.dart';
 import '../../customer.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -101,10 +103,20 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
       if (couponId != null && couponId.isNotEmpty) {
         final coupon = await SupabaseService.client
             .from('coupons')
-            .select('code')
+            .select('code, is_system_coupon')
             .eq('id', couponId)
             .maybeSingle();
         couponCode = coupon?['code'] as String?;
+        if (mounted) {
+          setState(() {
+            _couponUsage = {
+              ...usage,
+              'coupon_code': couponCode,
+              'is_system_coupon': coupon?['is_system_coupon'] as bool? ?? false,
+            };
+          });
+        }
+        return;
       }
 
       if (mounted) {
@@ -112,6 +124,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
           _couponUsage = {
             ...usage,
             'coupon_code': couponCode,
+            'is_system_coupon': false,
           };
         });
       }
@@ -966,19 +979,19 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
         
         // Try to parse as JSON if it looks like JSON
         if (address.trim().startsWith('{') && address.trim().endsWith('}')) {
-          final addressMap = Map<String, dynamic>.from(
-            Uri.splitQueryString(address.replaceAll('{', '').replaceAll('}', '').replaceAll(',', '&'))
-          );
-          
-          final parts = <String>[];
-          if (addressMap['address']?.isNotEmpty == true) {
-            parts.add(addressMap['address']!);
+          try {
+            final addressMap = jsonDecode(address) as Map<String, dynamic>;
+            final parts = <String>[];
+            if ((addressMap['address'] as String?)?.isNotEmpty == true) {
+              parts.add(addressMap['address'] as String);
+            }
+            if ((addressMap['street'] as String?)?.isNotEmpty == true) {
+              parts.add(addressMap['street'] as String);
+            }
+            return parts.isNotEmpty ? parts.join(', ') : address;
+          } catch (_) {
+            return address;
           }
-          if (addressMap['street']?.isNotEmpty == true) {
-            parts.add(addressMap['street']!);
-          }
-          
-          return parts.isNotEmpty ? parts.join(', ') : address;
         }
         
         // Check if it's an "Instance of" string
@@ -1027,10 +1040,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
     final couponDiscount = (_couponUsage?['discount_amount'] as num?)?.toDouble() ?? 0.0;
     final couponCode = _couponUsage?['coupon_code'] as String?;
 
-    final normalizedCouponCode = couponCode?.trim().toUpperCase();
-    final hideCouponBreakdown = normalizedCouponCode == 'WELCOME20' ||
-        normalizedCouponCode == 'REFERRER20' ||
-        normalizedCouponCode == 'REFFERER20';
+    final hideCouponBreakdown = (_couponUsage?['is_system_coupon'] as bool?) ?? false;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1732,59 +1742,19 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
     return cancellableStatuses.contains(currentStatus);
   }
 
-  /// Show cancel order confirmation dialog
+  /// Show cancel order — navigate to CancellationScreen for reason selection
   void _showCancelOrderDialog() {
-    final colorScheme = Theme.of(context).colorScheme;
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          AppLocalizations.of(context)!.orderDetailCancelConfirmTitle,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              AppLocalizations.of(context)!.orderDetailCancelConfirmBody,
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              AppLocalizations.of(context)!.orderDetailCancelNote,
-              style: TextStyle(
-                fontSize: 14,
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              AppLocalizations.of(context)!.orderDetailCancelKeep,
-              style: TextStyle(color: colorScheme.onSurfaceVariant),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _cancelOrder();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: Text(AppLocalizations.of(context)!.orderDetailCancelConfirm),
-          ),
-        ],
+    final booking = _currentBooking ?? widget.booking;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CancellationScreen(booking: booking),
       ),
-    );
+    ).then((cancelled) {
+      if (cancelled == true && mounted) {
+        Navigator.of(context).pop();
+      }
+    });
   }
 
   /// Cancel the order

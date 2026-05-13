@@ -2776,5 +2776,13 @@
       "bankName": {},
       "accountNumber": {}
     }
-  }
+  },
+
+  "pendingDeletionTitle": "กำลังดำเนินการลบบัญชี",
+  "pendingDeletionBody": "คำขอลบบัญชีของคุณถูกส่งไปยังแอดมินแล้ว\nกรุณารอการตรวจสอบและอนุมัติ",
+  "pendingDeletionWaiting": "ระหว่างรอการอนุมัติ\nจะไม่สามารถใช้งานบัญชีนี้ได้",
+  "pendingDeletionLogout": "ออกจากระบบ",
+  "rejectedDeletionTitle": "คำขอลบบัญชีถูกปฏิเสธ",
+  "rejectedDeletionBody": "คำขอลบบัญชีของคุณไม่ได้รับการอนุมัติ\nคุณสามารถเข้าสู่ระบบและใช้งานได้ตามปกติ",
+  "rejectedDeletionBack": "กลับสู่หน้าล็อกอิน"
 }

@@ -52,6 +52,7 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
         _myCouponGroups = results[0] as List<WalletCouponGroup>;
         _discoverCoupons = results[1] as List<Coupon>;
         _usageHistory = results[2] as List<Map<String, dynamic>>;
+        _cachedClaimedCouponIds = null;
         _isLoading = false;
       });
     } catch (e) {
@@ -212,11 +213,16 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
     }
   }
 
+  Set<String>? _cachedClaimedCouponIds;
+
+  Set<String> get _claimedCouponIds {
+    _cachedClaimedCouponIds ??= _myCouponGroups.map((g) => g.coupon.id).toSet();
+    return _cachedClaimedCouponIds!;
+  }
+
   Widget _buildCouponCard(Coupon coupon, {required bool isMine, int? quantity}) {
     final colorScheme = Theme.of(context).colorScheme;
-
-    final claimedCouponIds = _myCouponGroups.map((g) => g.coupon.id).toSet();
-    final alreadyClaimed = claimedCouponIds.contains(coupon.id);
+    final alreadyClaimed = _claimedCouponIds.contains(coupon.id);
 
     IconData icon;
     Color iconColor;
@@ -246,7 +252,7 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.1),
+                color: iconColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: iconColor, size: 32),
@@ -272,7 +278,7 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryGreen.withOpacity(0.12),
+                            color: AppTheme.primaryGreen.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: Text(
@@ -290,7 +296,7 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
                   Text(
                     coupon.description ?? '-',
                     style: TextStyle(
-                      color: colorScheme.onSurface.withOpacity(0.7),
+                      color: colorScheme.onSurface.withValues(alpha: 0.7),
                       fontSize: 13,
                     ),
                   ),
@@ -299,7 +305,7 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
                     Text(
                       AppLocalizations.of(context)!.couponRemainingUses(quantity.toString()),
                       style: TextStyle(
-                        color: colorScheme.onSurface.withOpacity(0.75),
+                        color: colorScheme.onSurface.withValues(alpha: 0.75),
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),

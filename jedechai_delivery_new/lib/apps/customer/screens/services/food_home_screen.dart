@@ -306,8 +306,9 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
           return statusOpen;
         }
 
-        final now = TimeOfDay.now();
-        final nowMinutes = now.hour * 60 + now.minute;
+        // Use Bangkok time (UTC+7) — shop hours are set in Bangkok timezone
+        final bangkokNow = DateTime.now().toUtc().add(const Duration(hours: 7));
+        final nowMinutes = bangkokNow.hour * 60 + bangkokNow.minute;
         final openMinutes = openHour * 60 + openMinute;
         final closeMinutes = closeHour * 60 + closeMinute;
 
@@ -321,7 +322,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
         final rawDays = merchant['shop_open_days'];
         if (rawDays is List && rawDays.isNotEmpty) {
           const weekdayKeys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-          final todayKey = weekdayKeys[DateTime.now().weekday - 1];
+          final todayKey = weekdayKeys[bangkokNow.weekday - 1];
           final allowedDays = rawDays
               .map((e) => e.toString().toLowerCase().trim())
               .where((e) => weekdayKeys.contains(e))
@@ -1486,24 +1487,9 @@ class _RestaurantCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  // Rating + Distance row
+                  // Distance row
                   Row(
                     children: [
-                      Icon(Icons.star, size: 16, color: colorScheme.tertiary),
-                      const SizedBox(width: 2),
-                      Text(
-                        '4.5',
-                        style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: colorScheme.onSurface),
-                      ),
-                      const SizedBox(width: 4),
-                      Text('(100+)',
-                          style: TextStyle(
-                              fontSize: 12,
-                              color: colorScheme.onSurfaceVariant)),
-                      const SizedBox(width: 12),
                       if (distanceKm != null) ...[
                         Icon(Icons.near_me,
                             size: 14, color: colorScheme.onSurfaceVariant),
@@ -1523,14 +1509,6 @@ class _RestaurantCard extends StatelessWidget {
                                 fontSize: 12,
                                 color: colorScheme.onSurfaceVariant)),
                       ],
-                      const SizedBox(width: 12),
-                      Icon(Icons.delivery_dining,
-                          size: 14, color: colorScheme.onSurfaceVariant),
-                      const SizedBox(width: 2),
-                      Text('฿15',
-                          style: TextStyle(
-                              fontSize: 12,
-                              color: colorScheme.onSurfaceVariant)),
                     ],
                   ),
                   if (address.isNotEmpty) ...[

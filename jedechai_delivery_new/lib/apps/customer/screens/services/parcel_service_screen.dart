@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -63,6 +64,12 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
   double? _dropoffLng;
   int _nearbyOnlineDrivers = 0;
   double _driverSearchRadiusKm = 30.0;
+  Timer? _dropoffDebounceTimer;
+
+  // Parcel rates loaded from service_rates table
+  double _parcelBasePrice = 20.0;
+  double _parcelPricePerKm = 5.0;
+  double _parcelBaseDistance = 2.0;
 
   // Size options (multipliers only - labels are localized)
   static const List<Map<String, dynamic>> _sizeMultipliers = [
@@ -88,6 +95,26 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
     _getCurrentLocation();
     _loadDriverSearchRadius();
     _loadSenderProfile();
+    _loadParcelRates();
+  }
+
+  Future<void> _loadParcelRates() async {
+    try {
+      final row = await Supabase.instance.client
+          .from('service_rates')
+          .select('base_price, price_per_km, base_distance')
+          .eq('service_type', 'parcel')
+          .maybeSingle();
+      if (row != null && mounted) {
+        setState(() {
+          _parcelBasePrice = (row['base_price'] as num?)?.toDouble() ?? 20.0;
+          _parcelPricePerKm = (row['price_per_km'] as num?)?.toDouble() ?? 5.0;
+          _parcelBaseDistance = (row['base_distance'] as num?)?.toDouble() ?? 2.0;
+        });
+      }
+    } catch (_) {
+      // Keep fallback values
+    }
   }
 
   Future<void> _loadDriverSearchRadius() async {
@@ -105,6 +132,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
 
   @override
   void dispose() {
+    _dropoffDebounceTimer?.cancel();
     _senderNameController.dispose();
     _senderPhoneController.dispose();
     _pickupController.dispose();
@@ -279,21 +307,18 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
         _sizeMultipliers.firstWhere((s) => s['value'] == _selectedSize);
     final multiplier = sizeOption['multiplier'] as double;
 
-    // Base: 20 baht + 5 baht/km (from service_rates) × size multiplier
-    final basePrice = 20;
-    final pricePerKm = 5;
     final roundedDist = _estimatedDistance.round();
-    final baseDist = 2;
+    final baseDist = _parcelBaseDistance.round();
 
-    int fee;
+    double fee;
     if (roundedDist <= baseDist) {
-      fee = basePrice;
+      fee = _parcelBasePrice;
     } else {
-      fee = basePrice + ((roundedDist - baseDist) * pricePerKm);
+      fee = _parcelBasePrice + ((roundedDist - baseDist) * _parcelPricePerKm);
     }
 
-    final finalPrice = (fee * multiplier).round();
-    setState(() => _estimatedPrice = finalPrice.toDouble());
+    final finalPrice = (fee * multiplier).roundToDouble();
+    setState(() => _estimatedPrice = finalPrice);
   }
 
   Future<void> _pickParcelPhoto() async {
@@ -725,7 +750,11 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                   v == null || v.isEmpty ? AppLocalizations.of(context)!.parcelDropoffRequired : null,
               onChanged: (value) {
                 if (value.length > 5) {
-                  _calculateRealDistance();
+                  _dropoffDebounceTimer?.cancel();
+                  _dropoffDebounceTimer = Timer(
+                    const Duration(milliseconds: 500),
+                    _calculateRealDistance,
+                  );
                 }
               },
             ),

@@ -145,7 +145,7 @@ class AccountDeletionService {
     // อัปเดตสถานะคำขอ
     await _supabase.from('account_deletion_requests').update({
       'status': 'rejected',
-      'reviewed_at': DateTime.now().toIso8601String(),
+      'reviewed_at': DateTime.now().toUtc().toIso8601String(),
       'reviewed_by': adminId,
       'rejection_reason': reason ?? '',
     }).eq('id', requestId);

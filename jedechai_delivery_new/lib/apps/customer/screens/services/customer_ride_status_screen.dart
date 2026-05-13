@@ -41,15 +41,11 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
   Set<Polyline> _polylines = {};
   final PolylinePoints _polylinePoints = PolylinePoints();
   Position? _currentPosition;
-  // ignore: unused_field
-  bool _isLoadingLocation = true;
   bool _hasLocationPermission = false;
   final BookingService _bookingService = BookingService();
-  
+
   // Real-time booking state
   Booking? _currentBooking;
-  // ignore: unused_field
-  bool _isLoadingBooking = false;
   StreamSubscription? _bookingSubscription;
   StreamSubscription? _driverLocationSubscription;
   bool _hasShownCompletionDialog = false;
@@ -328,7 +324,6 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
           );
         }
         setState(() {
-          _isLoadingLocation = false;
           _hasLocationPermission = false;
         });
         _initializeMap();
@@ -340,7 +335,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
         if (mounted) {
           final accepted = await LocationDisclosureHelper.showIfNeeded(context);
           if (!accepted) {
-            setState(() { _isLoadingLocation = false; _hasLocationPermission = false; });
+            setState(() { _hasLocationPermission = false; });
             _initializeMap();
             return;
           }
@@ -356,7 +351,6 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
             );
           }
           setState(() {
-            _isLoadingLocation = false;
             _hasLocationPermission = false;
           });
           _initializeMap();
@@ -389,7 +383,6 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
           );
         }
         setState(() {
-          _isLoadingLocation = false;
           _hasLocationPermission = false;
         });
         _initializeMap();
@@ -399,12 +392,11 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
       setState(() {
         _hasLocationPermission = true;
       });
-      
+
       await _getCurrentLocation();
     } catch (e) {
       debugLog('❌ Error checking location permission: $e');
       setState(() {
-        _isLoadingLocation = false;
         _hasLocationPermission = false;
       });
       _initializeMap();
@@ -416,20 +408,16 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
-      
+
       if (mounted) {
         setState(() {
           _currentPosition = position;
-          _isLoadingLocation = false;
         });
         _initializeMap();
       }
     } catch (e) {
       debugLog('❌ Error getting current location: $e');
       if (mounted) {
-        setState(() {
-          _isLoadingLocation = false;
-        });
         _initializeMap();
       }
     }

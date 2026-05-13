@@ -286,7 +286,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
               .select()
               .eq('customer_id', userId)
               .order('created_at', ascending: false)
-              .limit(50);
+              .limit(200);
         });
 
         debugLog(
@@ -325,10 +325,9 @@ class _ActivityScreenState extends State<ActivityScreen> {
         }
       }
     } catch (e) {
-      // Fallback to mock data on any error
-      final mockBookings = MockDataService.getMockBookings();
+      debugLog('❌ Error loading bookings: $e');
       setState(() {
-        _bookings = mockBookings;
+        _error = e.toString();
         _isLoading = false;
       });
     }

@@ -101,7 +101,6 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
     super.initState();
     _getCurrentLocation();
     _loadDriverSearchRadius();
-    _checkOnlineDrivers();
     _loadRideRates();
     _loadRideFarPickupConfig();
   }
@@ -526,7 +525,15 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
         return basePrice + ((distanceInKm - baseDist) * perKm);
       }
     }
-    // Fallback hardcoded rates
+    // Fallback: use first available DB rate, then hardcoded minimum
+    if (_rideRates.isNotEmpty) {
+      final rate = _rideRates.values.first;
+      final basePrice = rate['base_price']!.toDouble();
+      final baseDist = rate['base_distance']!.toDouble();
+      final perKm = rate['price_per_km']!.toDouble();
+      if (distanceInKm <= baseDist) return basePrice;
+      return basePrice + ((distanceInKm - baseDist) * perKm);
+    }
     const double baseFare = 25.0;
     const double perKmCharge = 8.0;
     return baseFare + (distanceInKm * perKmCharge);

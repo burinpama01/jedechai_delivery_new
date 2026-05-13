@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../common/models/booking.dart';
@@ -135,14 +136,14 @@ class _DriverAssignedScreenState extends State<DriverAssignedScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                AppLocalizations.of(context)!.driverAssignedOnTheWay,
+                                widget.booking.driverName ?? AppLocalizations.of(context)!.driverAssignedOnTheWay,
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
                               Text(
-                                AppLocalizations.of(context)!.driverAssignedEta,
+                                widget.booking.driverPhone ?? AppLocalizations.of(context)!.driverAssignedEta,
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey[600],
@@ -223,7 +224,16 @@ class _DriverAssignedScreenState extends State<DriverAssignedScreen> {
             ListTile(
               leading: const Icon(Icons.phone),
               title: Text(AppLocalizations.of(context)!.driverAssignedPhone),
-              subtitle: const Text('099-999-9999'),
+              subtitle: Text(widget.booking.driverPhone ?? '-'),
+              onTap: widget.booking.driverPhone != null
+                  ? () async {
+                      final phone = widget.booking.driverPhone!.replaceAll(RegExp(r'[^0-9+]'), '');
+                      final uri = Uri.parse('tel:$phone');
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri);
+                      }
+                    }
+                  : null,
             ),
             ListTile(
               leading: const Icon(Icons.message),

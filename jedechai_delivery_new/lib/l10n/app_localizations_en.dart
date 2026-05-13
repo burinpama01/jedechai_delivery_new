@@ -5919,4 +5919,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String topupWithdrawalTransactionDescription(Object amount, Object bankName, Object accountNumber) {
     return 'Withdrawal request ฿$amount to $bankName $accountNumber';
   }
+
+  @override
+  String get pendingDeletionTitle => 'Account Deletion In Progress';
+
+  @override
+  String get pendingDeletionBody => 'Your account deletion request has been sent to admin.\nPlease wait for review and approval.';
+
+  @override
+  String get pendingDeletionWaiting => 'While waiting for approval,\nthis account cannot be used.';
+
+  @override
+  String get pendingDeletionLogout => 'Sign out';
+
+  @override
+  String get rejectedDeletionTitle => 'Account Deletion Rejected';
+
+  @override
+  String get rejectedDeletionBody => 'Your account deletion request was not approved.\nYou can log in and use the account normally.';
+
+  @override
+  String get rejectedDeletionBack => 'Back to login';
 }

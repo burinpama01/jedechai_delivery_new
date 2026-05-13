@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/auth_service.dart';
+import '../../l10n/app_localizations.dart';
 
 /// หน้ากำลังดำเนินการลบบัญชี
 /// แสดงเมื่อผู้ใช้ส่งคำขอลบบัญชีแล้วและรออนุมัติจากแอดมิน
@@ -83,6 +84,7 @@ class _PendingDeletionScreenState extends State<PendingDeletionScreen> {
   }
 
   Widget _buildPendingScreen(ColorScheme colorScheme) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: colorScheme.surface,
       body: SafeArea(
@@ -107,7 +109,7 @@ class _PendingDeletionScreenState extends State<PendingDeletionScreen> {
                 ),
                 const SizedBox(height: 32),
                 Text(
-                  'กำลังดำเนินการลบบัญชี',
+                  l10n.pendingDeletionTitle,
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -116,7 +118,7 @@ class _PendingDeletionScreenState extends State<PendingDeletionScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'คำขอลบบัญชีของคุณถูกส่งไปยังแอดมินแล้ว\nกรุณารอการตรวจสอบและอนุมัติ',
+                  l10n.pendingDeletionBody,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
@@ -144,7 +146,7 @@ class _PendingDeletionScreenState extends State<PendingDeletionScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'ระหว่างรอการอนุมัติ\nจะไม่สามารถใช้งานบัญชีนี้ได้',
+                          l10n.pendingDeletionWaiting,
                           style: TextStyle(
                             color: colorScheme.onTertiaryContainer,
                             fontSize: 14,
@@ -164,9 +166,9 @@ class _PendingDeletionScreenState extends State<PendingDeletionScreen> {
                       await AuthService.signOut();
                     },
                     icon: const Icon(Icons.logout),
-                    label: const Text(
-                      'ออกจากระบบ',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    label: Text(
+                      l10n.pendingDeletionLogout,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: colorScheme.onSurface,
@@ -186,6 +188,7 @@ class _PendingDeletionScreenState extends State<PendingDeletionScreen> {
   }
 
   Widget _buildRejectedScreen(ColorScheme colorScheme) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: colorScheme.surface,
       body: SafeArea(
@@ -210,7 +213,7 @@ class _PendingDeletionScreenState extends State<PendingDeletionScreen> {
                 ),
                 const SizedBox(height: 32),
                 Text(
-                  'คำขอลบบัญชีถูกปฏิเสธ',
+                  l10n.rejectedDeletionTitle,
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -219,7 +222,7 @@ class _PendingDeletionScreenState extends State<PendingDeletionScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'คำขอลบบัญชีของคุณไม่ได้รับการอนุมัติ\nคุณสามารถเข้าสู่ระบบและใช้งานได้ตามปกติ',
+                  l10n.rejectedDeletionBody,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
@@ -236,9 +239,9 @@ class _PendingDeletionScreenState extends State<PendingDeletionScreen> {
                       await AuthService.signOut();
                     },
                     icon: const Icon(Icons.login),
-                    label: const Text(
-                      'กลับสู่หน้าล็อกอิน',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    label: Text(
+                      l10n.rejectedDeletionBack,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                     ),
                     style: ElevatedButton.styleFrom(
                       shape: RoundedRectangleBorder(

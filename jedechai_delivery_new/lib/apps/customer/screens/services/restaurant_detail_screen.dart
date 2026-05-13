@@ -296,18 +296,9 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Rating + Delivery info
+          // Delivery info
           Row(
             children: [
-              Icon(Icons.star, size: 18, color: Colors.amber[600]),
-              const SizedBox(width: 4),
-              Text('4.5',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onSurface)),
-              Text(' (100+)',
-                  style: TextStyle(
-                      color: colorScheme.onSurfaceVariant, fontSize: 13)),
               const SizedBox(width: 16),
               Icon(Icons.access_time,
                   size: 16, color: colorScheme.onSurfaceVariant),
@@ -1036,25 +1027,6 @@ class _MenuItemCard extends StatelessWidget {
       fit: BoxFit.contain,
       padding: EdgeInsets.all(10),
     );
-  }
-
-  // ignore: unused_element
-  void _quickAdd() {
-    // ถ้ามี required options ต้องไปหน้ารายละเอียดเพื่อเลือกก่อน
-    if (hasRequiredOptions) {
-      // ใช้ Builder เพื่อเข้าถึง context ที่ถูกต้อง
-      return;
-    }
-    final price = (item['price'] as num?)?.toDouble() ?? 0.0;
-    final prepTime = (item['prep_time_minutes'] as num?)?.toInt() ?? 15;
-    onAddToCart(CartItem(
-      menuItemId: item['id'] as String,
-      name: item['name'] ?? 'N/A',
-      description: item['description'] as String?,
-      imageUrl: item['image_url'] as String?,
-      basePrice: price,
-      prepTimeMinutes: prepTime,
-    ));
   }
 
   void _navigateToDetails(BuildContext context) async {

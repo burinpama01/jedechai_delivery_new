@@ -5919,4 +5919,25 @@ class AppLocalizationsTh extends AppLocalizations {
   String topupWithdrawalTransactionDescription(Object amount, Object bankName, Object accountNumber) {
     return 'แจ้งถอนเงิน ฿$amount ไปยัง $bankName $accountNumber';
   }
+
+  @override
+  String get pendingDeletionTitle => 'กำลังดำเนินการลบบัญชี';
+
+  @override
+  String get pendingDeletionBody => 'คำขอลบบัญชีของคุณถูกส่งไปยังแอดมินแล้ว\nกรุณารอการตรวจสอบและอนุมัติ';
+
+  @override
+  String get pendingDeletionWaiting => 'ระหว่างรอการอนุมัติ\nจะไม่สามารถใช้งานบัญชีนี้ได้';
+
+  @override
+  String get pendingDeletionLogout => 'ออกจากระบบ';
+
+  @override
+  String get rejectedDeletionTitle => 'คำขอลบบัญชีถูกปฏิเสธ';
+
+  @override
+  String get rejectedDeletionBody => 'คำขอลบบัญชีของคุณไม่ได้รับการอนุมัติ\nคุณสามารถเข้าสู่ระบบและใช้งานได้ตามปกติ';
+
+  @override
+  String get rejectedDeletionBack => 'กลับสู่หน้าล็อกอิน';
 }

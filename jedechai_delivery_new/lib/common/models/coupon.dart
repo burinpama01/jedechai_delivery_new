@@ -24,6 +24,7 @@ class Coupon {
   final int usedCount; // How many times it has been used
   final int perUserLimit; // Times a single user can use it (0=unlimited)
   final bool isActive;
+  final bool isSystemCoupon; // true for system-issued coupons (WELCOME20, REFERRER20, etc.)
   final String createdByRole; // 'admin' | 'merchant'
   final double merchantGpChargeRate; // default 0.25 for merchant free-delivery coupon
   final double merchantGpSystemRate; // default from system config (commonly 0.10)
@@ -54,6 +55,7 @@ class Coupon {
     this.usedCount = 0,
     this.perUserLimit = 1,
     this.isActive = true,
+    this.isSystemCoupon = false,
     this.createdByRole = 'admin',
     this.merchantGpChargeRate = 0.0,
     this.merchantGpSystemRate = 0.0,
@@ -90,6 +92,7 @@ class Coupon {
       usedCount: json['used_count'] as int? ?? 0,
       perUserLimit: json['per_user_limit'] as int? ?? 1,
       isActive: json['is_active'] as bool? ?? true,
+      isSystemCoupon: json['is_system_coupon'] as bool? ?? false,
       createdByRole: json['created_by_role'] as String? ?? 'admin',
       merchantGpChargeRate: (json['merchant_gp_charge_rate'] as num?)?.toDouble() ?? 0.0,
       merchantGpSystemRate: (json['merchant_gp_system_rate'] as num?)?.toDouble() ?? 0.0,
@@ -123,6 +126,7 @@ class Coupon {
       'used_count': usedCount,
       'per_user_limit': perUserLimit,
       'is_active': isActive,
+      'is_system_coupon': isSystemCoupon,
       'created_by_role': createdByRole,
       'merchant_gp_charge_rate': merchantGpChargeRate,
       'merchant_gp_system_rate': merchantGpSystemRate,

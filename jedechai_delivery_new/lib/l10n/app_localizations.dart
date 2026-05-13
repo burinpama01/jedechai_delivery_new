@@ -11050,6 +11050,27 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Withdrawal request ฿{amount} to {bankName} {accountNumber}'**
   String topupWithdrawalTransactionDescription(Object amount, Object bankName, Object accountNumber);
+
+  /// Account deletion pending screen title
+  String get pendingDeletionTitle;
+
+  /// Account deletion pending screen body text
+  String get pendingDeletionBody;
+
+  /// Account deletion pending waiting note
+  String get pendingDeletionWaiting;
+
+  /// Account deletion pending logout button
+  String get pendingDeletionLogout;
+
+  /// Account deletion rejected screen title
+  String get rejectedDeletionTitle;
+
+  /// Account deletion rejected screen body text
+  String get rejectedDeletionBody;
+
+  /// Account deletion rejected back to login button
+  String get rejectedDeletionBack;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

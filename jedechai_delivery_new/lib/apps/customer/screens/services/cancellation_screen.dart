@@ -150,6 +150,7 @@ class _CancellationScreenState extends State<CancellationScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final reasons = _getReasons(context);
     final serviceLabel = {
       'food': l10n.cancelServiceFood,
       'ride': l10n.cancelServiceRide,
@@ -220,8 +221,8 @@ class _CancellationScreenState extends State<CancellationScreen> {
                   const SizedBox(height: 16),
 
                   // รายการเหตุผล
-                  ...List.generate(_getReasons(context).length, (i) {
-                    final reason = _getReasons(context)[i];
+                  ...List.generate(reasons.length, (i) {
+                    final reason = reasons[i];
                     final isSelected = _selectedReasonIndex == i;
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 10),
@@ -266,7 +267,7 @@ class _CancellationScreenState extends State<CancellationScreen> {
                   }),
 
                   // ช่องพิมพ์เหตุผลอื่น
-                  if (_selectedReasonIndex == _getReasons(context).length - 1) ...[
+                  if (_selectedReasonIndex == reasons.length - 1) ...[
                     const SizedBox(height: 8),
                     TextField(
                       controller: _otherReasonController,

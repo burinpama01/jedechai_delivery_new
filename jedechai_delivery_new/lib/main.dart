@@ -95,6 +95,11 @@ class _MyAppState extends State<MyApp> {
       ],
       child: Consumer<LanguageProvider>(
         builder: (context, languageProvider, _) {
+          if (!languageProvider.loaded) {
+            return const MaterialApp(
+              home: Scaffold(body: Center(child: CircularProgressIndicator())),
+            );
+          }
           return MaterialApp(
             title: 'JDC Delivery',
             debugShowCheckedModeBanner: false,
@@ -104,10 +109,7 @@ class _MyAppState extends State<MyApp> {
             darkTheme: AppTheme.darkTheme,
             themeMode: ThemeMode.system,
             locale: languageProvider.localeOverride,
-            supportedLocales: const [
-              Locale('th', 'TH'),
-              Locale('en', 'US'),
-            ],
+            supportedLocales: AppLocalizations.supportedLocales,
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             home: const AuthGate(),
             routes: {
