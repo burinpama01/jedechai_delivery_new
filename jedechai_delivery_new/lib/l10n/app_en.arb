@@ -1402,6 +1402,7 @@
     }
   },
   "parcelErrorNoLocation": "Please wait for location\nor enable GPS and try again",
+  "parcelErrorNoDropoff": "Please select a recipient address before booking",
   "parcelErrorNoDrivers": "No online drivers found within {radius} km\nPlease try again later",
   "@parcelErrorNoDrivers": {
     "placeholders": {
@@ -2239,6 +2240,9 @@
   "parcelConfirmTapToPhoto": "Tap to take photo",
   "parcelConfirmPickupBtn": "Confirm Pickup",
   "parcelConfirmDeliveryBtn": "Confirm Delivery Complete",
+  "parcelDeliveryNoteTitle": "Delivery Note",
+  "parcelDeliveryNoteSubtitle": "(Optional) e.g. no one home, left at door",
+  "parcelDeliveryNoteHint": "Delivery note (optional)",
 
   "merchantNavOrders": "Orders",
   "merchantNavMenu": "Menu",

@@ -1,3 +1,10 @@
+const Map<String, double> kParcelSizeMultipliers = {
+  'small': 1.0,
+  'medium': 1.3,
+  'large': 1.6,
+  'xlarge': 2.0,
+};
+
 double calculateParcelPrice({
   required double distanceKm,
   required double sizeMultiplier,

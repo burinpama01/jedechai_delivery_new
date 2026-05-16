@@ -3206,6 +3206,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get parcelErrorNoLocation => 'กรุณารอระบุตำแหน่ง\nหรือเปิด GPS แล้วลองใหม่';
 
   @override
+  String get parcelErrorNoDropoff => 'กรุณาเลือกที่อยู่ผู้รับก่อนจอง';
+
+  @override
   String parcelErrorNoDrivers(Object radius) {
     return 'ไม่พบคนขับออนไลน์ภายในรัศมี $radius กม.\nกรุณาลองใหม่อีกครั้งภายหลัง';
   }
@@ -4843,6 +4846,15 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get parcelConfirmDeliveryBtn => 'ยืนยันส่งพัสดุสำเร็จ';
+
+  @override
+  String get parcelDeliveryNoteTitle => 'หมายเหตุการส่ง';
+
+  @override
+  String get parcelDeliveryNoteSubtitle => '(ถ้ามี) เช่น ไม่มีคนรับ, ฝากไว้หน้าบ้าน';
+
+  @override
+  String get parcelDeliveryNoteHint => 'หมายเหตุการส่ง (ถ้ามี)';
 
   @override
   String get merchantNavOrders => 'ออเดอร์';

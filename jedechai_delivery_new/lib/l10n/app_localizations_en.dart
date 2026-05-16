@@ -3206,6 +3206,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get parcelErrorNoLocation => 'Please wait for location\nor enable GPS and try again';
 
   @override
+  String get parcelErrorNoDropoff => 'Please select a recipient address before booking';
+
+  @override
   String parcelErrorNoDrivers(Object radius) {
     return 'No online drivers found within $radius km\nPlease try again later';
   }
@@ -4843,6 +4846,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get parcelConfirmDeliveryBtn => 'Confirm Delivery Complete';
+
+  @override
+  String get parcelDeliveryNoteTitle => 'Delivery Note';
+
+  @override
+  String get parcelDeliveryNoteSubtitle => '(Optional) e.g. no one home, left at door';
+
+  @override
+  String get parcelDeliveryNoteHint => 'Delivery note (optional)';
 
   @override
   String get merchantNavOrders => 'Orders';

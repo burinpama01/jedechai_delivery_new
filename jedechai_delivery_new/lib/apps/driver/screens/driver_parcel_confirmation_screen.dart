@@ -5,7 +5,6 @@ import '../../../common/services/parcel_service.dart';
 import '../../../common/models/parcel_detail.dart';
 import '../../../common/services/image_picker_service.dart';
 import '../../../common/services/storage_service.dart';
-import '../../../common/services/supabase_service.dart';
 import '../../../common/widgets/app_network_image.dart';
 import '../../../theme/app_theme.dart';
 import '../../../utils/debug_logger.dart';
@@ -145,26 +144,15 @@ class _DriverParcelConfirmationScreenState
           );
         }
 
+        final note = _deliveryNoteController.text.trim();
         final success = await _parcelService.updateDeliveryPhotos(
           bookingId: widget.bookingId,
           deliveryPhotoUrl: confirmPhotoUrl,
           signaturePhotoUrl: signatureUrl,
+          deliveryNotes: note.isNotEmpty ? note : null,
         );
 
         if (!success) throw Exception(AppLocalizations.of(context)!.parcelConfirmUpdateFailed);
-
-        // บันทึกหมายเหตุการส่ง (ถ้ามี)
-        final note = _deliveryNoteController.text.trim();
-        if (note.isNotEmpty) {
-          try {
-            await SupabaseService.client
-                .from('bookings')
-                .update({'notes': note})
-                .eq('id', widget.bookingId);
-          } catch (e) {
-            debugLog('⚠️ Failed to save delivery note: $e');
-          }
-        }
 
         if (mounted) {
           _showSuccessDialog(
@@ -510,6 +498,7 @@ class _DriverParcelConfirmationScreenState
   }
 
   Widget _buildDeliveryNoteSection() {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -518,10 +507,10 @@ class _DriverParcelConfirmationScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('หมายเหตุการส่ง',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(l10n.parcelDeliveryNoteTitle,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            Text('(ถ้ามี) เช่น ไม่มีคนรับ, ฝากไว้หน้าบ้าน',
+            Text(l10n.parcelDeliveryNoteSubtitle,
                 style: TextStyle(fontSize: 12, color: Colors.grey[600])),
             const SizedBox(height: 12),
             TextFormField(
@@ -529,7 +518,7 @@ class _DriverParcelConfirmationScreenState
               maxLines: 3,
               textInputAction: TextInputAction.done,
               decoration: InputDecoration(
-                hintText: 'หมายเหตุการส่ง (ถ้ามี)',
+                hintText: l10n.parcelDeliveryNoteHint,
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10)),
                 contentPadding: const EdgeInsets.all(12),

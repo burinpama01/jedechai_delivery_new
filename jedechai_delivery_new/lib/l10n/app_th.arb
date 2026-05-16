@@ -1402,6 +1402,7 @@
     }
   },
   "parcelErrorNoLocation": "กรุณารอระบุตำแหน่ง\nหรือเปิด GPS แล้วลองใหม่",
+  "parcelErrorNoDropoff": "กรุณาเลือกที่อยู่ผู้รับก่อนจอง",
   "parcelErrorNoDrivers": "ไม่พบคนขับออนไลน์ภายในรัศมี {radius} กม.\nกรุณาลองใหม่อีกครั้งภายหลัง",
   "@parcelErrorNoDrivers": {
     "placeholders": {
@@ -2239,6 +2240,9 @@
   "parcelConfirmTapToPhoto": "แตะเพื่อถ่ายรูป",
   "parcelConfirmPickupBtn": "ยืนยันรับพัสดุ",
   "parcelConfirmDeliveryBtn": "ยืนยันส่งพัสดุสำเร็จ",
+  "parcelDeliveryNoteTitle": "หมายเหตุการส่ง",
+  "parcelDeliveryNoteSubtitle": "(ถ้ามี) เช่น ไม่มีคนรับ, ฝากไว้หน้าบ้าน",
+  "parcelDeliveryNoteHint": "หมายเหตุการส่ง (ถ้ามี)",
 
   "merchantNavOrders": "ออเดอร์",
   "merchantNavMenu": "เมนู",

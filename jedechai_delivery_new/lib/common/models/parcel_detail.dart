@@ -30,6 +30,7 @@ class ParcelDetail {
   final String parcelStatus;
   final DateTime? pickedUpAt;
   final DateTime? deliveredAt;
+  final String? deliveryNotes;
 
   // Timestamps
   final DateTime createdAt;
@@ -54,6 +55,7 @@ class ParcelDetail {
     required this.parcelStatus,
     this.pickedUpAt,
     this.deliveredAt,
+    this.deliveryNotes,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -84,6 +86,7 @@ class ParcelDetail {
       deliveredAt: json['delivered_at'] != null
           ? DateTime.parse(json['delivered_at'] as String)
           : null,
+      deliveryNotes: json['delivery_notes'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
@@ -91,7 +94,6 @@ class ParcelDetail {
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
       'booking_id': bookingId,
       'sender_name': senderName,
       'sender_phone': senderPhone,
@@ -107,10 +109,7 @@ class ParcelDetail {
       'delivery_photo_url': deliveryPhotoUrl,
       'signature_photo_url': signaturePhotoUrl,
       'parcel_status': parcelStatus,
-      'picked_up_at': pickedUpAt?.toIso8601String(),
-      'delivered_at': deliveredAt?.toIso8601String(),
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
+      'delivery_notes': deliveryNotes,
     };
   }
 

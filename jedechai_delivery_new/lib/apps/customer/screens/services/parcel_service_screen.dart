@@ -72,14 +72,6 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
   double _parcelPricePerKm = 5.0;
   double _parcelBaseDistance = 2.0;
 
-  // Size options (multipliers only - labels are localized)
-  static const List<Map<String, dynamic>> _sizeMultipliers = [
-    {'value': 'small', 'icon': Icons.mail, 'multiplier': 1.0},
-    {'value': 'medium', 'icon': Icons.inventory_2, 'multiplier': 1.3},
-    {'value': 'large', 'icon': Icons.widgets, 'multiplier': 1.6},
-    {'value': 'xlarge', 'icon': Icons.local_shipping, 'multiplier': 2.0},
-  ];
-
   List<Map<String, dynamic>> _getSizeOptions() {
     final l10n = AppLocalizations.of(context)!;
     return [
@@ -298,12 +290,13 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
   Future<void> _calculateRealDistance() async {
     if (_pickupLat == null ||
         _pickupLng == null ||
-        _dropoffController.text.isEmpty) {
+        _dropoffLat == null ||
+        _dropoffLng == null) {
       return;
     }
 
-    final destLat = _dropoffLat ?? (_pickupLat! + 0.02);
-    final destLng = _dropoffLng ?? (_pickupLng! + 0.02);
+    final destLat = _dropoffLat!;
+    final destLng = _dropoffLng!;
 
     setState(() => _isCalculatingDistance = true);
     try {
@@ -336,9 +329,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
   void _calculatePrice() {
     if (_estimatedDistance <= 0) return;
 
-    final sizeOption =
-        _sizeMultipliers.firstWhere((s) => s['value'] == _selectedSize);
-    final multiplier = sizeOption['multiplier'] as double;
+    final multiplier = kParcelSizeMultipliers[_selectedSize] ?? 1.0;
 
     final finalPrice = calculateParcelPrice(
       distanceKm: _estimatedDistance,
@@ -361,6 +352,10 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (_pickupLat == null || _pickupLng == null) {
       _showErrorDialog(AppLocalizations.of(context)!.parcelErrorNoLocation);
+      return;
+    }
+    if (_dropoffLat == null || _dropoffLng == null) {
+      _showErrorDialog(AppLocalizations.of(context)!.parcelErrorNoDropoff);
       return;
     }
 
@@ -391,14 +386,13 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
 
       // 3. สร้าง parcel booking
       final parcelService = ParcelService();
-      final destLat = _dropoffLat ?? (_pickupLat! + 0.02);
-      final destLng = _dropoffLng ?? (_pickupLng! + 0.02);
       final booking = await parcelService.createParcelBooking(
         originLat: _pickupLat!,
         originLng: _pickupLng!,
-        destLat: destLat,
-        destLng: destLng,
+        destLat: _dropoffLat!,
+        destLng: _dropoffLng!,
         distanceKm: _estimatedDistance,
+        price: _estimatedPrice,
         pickupAddress: _pickupController.text,
         destinationAddress: _dropoffController.text,
         senderName: _senderNameController.text.trim(),

@@ -5993,6 +5993,12 @@ abstract class AppLocalizations {
   /// **'Please wait for location\nor enable GPS and try again'**
   String get parcelErrorNoLocation;
 
+  /// No description provided for @parcelErrorNoDropoff.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a recipient address before booking'**
+  String get parcelErrorNoDropoff;
+
   /// No description provided for @parcelErrorNoDrivers.
   ///
   /// In en, this message translates to:
@@ -9034,6 +9040,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Confirm Delivery Complete'**
   String get parcelConfirmDeliveryBtn;
+
+  /// No description provided for @parcelDeliveryNoteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery Note'**
+  String get parcelDeliveryNoteTitle;
+
+  /// No description provided for @parcelDeliveryNoteSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'(Optional) e.g. no one home, left at door'**
+  String get parcelDeliveryNoteSubtitle;
+
+  /// No description provided for @parcelDeliveryNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery note (optional)'**
+  String get parcelDeliveryNoteHint;
 
   /// No description provided for @merchantNavOrders.
   ///
