@@ -88,9 +88,10 @@ serve(async (req) => {
     const shouldBeOpen = isShopOpenNow(merchant, bangkokNow);
     const currentStatus = merchant.shop_status === true || merchant.shop_status === 1;
     if (shouldBeOpen !== currentStatus) {
+      // Update both shop_status and is_online together to keep them in sync (ISSUE-048)
       const { error: updateError } = await supabase
         .from("profiles")
-        .update({ shop_status: shouldBeOpen })
+        .update({ shop_status: shouldBeOpen, is_online: shouldBeOpen })
         .eq("id", merchant.id);
       results.push({ id: merchant.id, changed: !updateError, shouldBeOpen });
     }

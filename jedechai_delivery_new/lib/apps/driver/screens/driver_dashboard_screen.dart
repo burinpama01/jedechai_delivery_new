@@ -43,6 +43,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   bool _jobStreamConnecting = false;
   Object? _jobStreamError;
   Timer? _autoRefreshTimer;
+  Timer? _heartbeatTimer;
   List<Booking> _previousJobs = []; // Track previous jobs for notification
   final Set<String> _seenNotifiedJobIds = {};
 
@@ -184,6 +185,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     _pulseController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     _autoRefreshTimer?.cancel();
+    _heartbeatTimer?.cancel();
     _driverLocationSub?.cancel();
     _jobStreamSubscription?.cancel();
     super.dispose();
@@ -205,9 +207,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           unawaited(_updateOnlineStatusInDB(true));
           unawaited(_startDriverLocationTracking(fromResume: true));
           unawaited(DriverForegroundService.start());
+          _startHeartbeat();
         } else {
           unawaited(_stopDriverLocationTracking());
           unawaited(DriverForegroundService.stop());
+          _stopHeartbeat();
         }
       });
     }
@@ -311,7 +315,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     _driverLocationSub = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 15,
+        distanceFilter: 30,
       ),
     ).listen(
       (position) {
@@ -332,6 +336,30 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     _lastLocationSyncAt = null;
   }
 
+  // Heartbeat: keeps last_heartbeat_at fresh so pg_cron can auto-offline stale drivers (ISSUE-042)
+  void _startHeartbeat() {
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = Timer.periodic(const Duration(seconds: 60), (_) async {
+      if (!_isOnline) return;
+      final userId = AuthService.userId;
+      if (userId == null) return;
+      try {
+        await SupabaseService.client.from('driver_locations').upsert({
+          'driver_id': userId,
+          'is_online': true,
+          'last_heartbeat_at': DateTime.now().toUtc().toIso8601String(),
+        }, onConflict: 'driver_id');
+      } catch (e) {
+        debugLog('⚠️ Heartbeat failed: $e');
+      }
+    });
+  }
+
+  void _stopHeartbeat() {
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = null;
+  }
+
   Future<void> _syncDriverLiveLocation(
     Position position, {
     bool force = false,
@@ -347,45 +375,40 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     if (userId == null) return;
 
     try {
+      // Compute real availability: online AND no active assigned booking (ISSUE-041)
+      final currentDriverId = AuthService.userId;
+      final activeStatuses = const {
+        'driver_accepted', 'arrived_at_merchant', 'picking_up_order',
+        'in_transit', 'arrived',
+      };
+      final hasActiveBooking = _availableJobs.any((j) =>
+          j.driverId == currentDriverId &&
+          activeStatuses.contains(j.status));
+      final isAvailable = _isOnline && !hasActiveBooking;
+
+      // Update profiles — no device updated_at (ISSUE-046)
       await SupabaseService.client.from('profiles').update({
         'latitude': position.latitude,
         'longitude': position.longitude,
         'is_online': true,
-        'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', userId);
 
-      final existing = await SupabaseService.client
-          .from('driver_locations')
-          .select('driver_id')
-          .eq('driver_id', userId)
-          .maybeSingle();
-
-      final locationData = {
+      // Upsert driver_locations in one round trip (ISSUE-043)
+      await SupabaseService.client.from('driver_locations').upsert({
+        'driver_id': userId,
         'location_lat': position.latitude,
         'location_lng': position.longitude,
         'is_online': true,
-        'is_available': true,
-        'current_booking_id': null,
-      };
-
-      if (existing != null) {
-        await SupabaseService.client
-            .from('driver_locations')
-            .update(locationData)
-            .eq('driver_id', userId);
-      } else {
-        await SupabaseService.client.from('driver_locations').insert({
-          'driver_id': userId,
-          ...locationData,
-        });
-      }
+        'is_available': isAvailable,
+        'last_heartbeat_at': DateTime.now().toUtc().toIso8601String(),
+      }, onConflict: 'driver_id');
 
       _lastLocationSyncAt = DateTime.now();
       final wasLocationNull = _driverLat == null;
       _driverLat = position.latitude;
       _driverLng = position.longitude;
       debugLog(
-        '📍 Driver live location synced: ${position.latitude}, ${position.longitude}',
+        '📍 Driver live location synced: ${position.latitude}, ${position.longitude} available=$isAvailable',
       );
       unawaited(_loadAvailableJobsFromRpc());
       // Rebuild stream on first GPS fix so jobs hidden by driverLocationMissing are re-evaluated (ISSUE-038)
@@ -425,14 +448,18 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       if (_isOnline) {
         await _startDriverLocationTracking();
         unawaited(DriverForegroundService.start());
+        _startHeartbeat();
       } else {
         await _stopDriverLocationTracking();
         unawaited(DriverForegroundService.stop());
+        _stopHeartbeat();
       }
 
       _setupJobStream();
     } catch (e) {
       debugLog('❌ Error loading driver profile: $e');
+      // Safe default: show offline so driver knows tracking isn't active
+      if (mounted) setState(() => _isOnline = false);
     }
   }
 
@@ -446,57 +473,24 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
       debugLog('🔄 Updating online status to: $isOnline for user: $userId');
 
-      // Update profiles table
+      // Update profiles table — let DB handle updated_at via DEFAULT/trigger
       await SupabaseService.client.from('profiles').update({
         'is_online': isOnline,
-        'updated_at': DateTime.now().toIso8601String()
       }).eq('id', userId);
       debugLog('  ✅ profiles.is_online = $isOnline');
 
-      // Also update driver_locations table (admin reads from here)
-      final existing = await SupabaseService.client
-          .from('driver_locations')
-          .select('driver_id')
-          .eq('driver_id', userId)
-          .maybeSingle();
-
-      if (existing != null) {
-        await SupabaseService.client.from('driver_locations').update({
-          'is_online': isOnline,
-          'is_available': isOnline,
-          'current_booking_id': null,
-        }).eq('driver_id', userId);
-      } else {
-        await SupabaseService.client.from('driver_locations').insert({
-          'driver_id': userId,
-          'is_online': isOnline,
-          'is_available': isOnline,
-          'location_lat': _driverProfile?['latitude'] ?? 0,
-          'location_lng': _driverProfile?['longitude'] ?? 0,
-          'current_booking_id': null,
-        });
-      }
+      // Upsert driver_locations in a single round trip (ISSUE-043)
+      await SupabaseService.client.from('driver_locations').upsert({
+        'driver_id': userId,
+        'is_online': isOnline,
+        'is_available': isOnline,
+        'location_lat': _driverLat ?? _driverProfile?['latitude'] ?? 0,
+        'location_lng': _driverLng ?? _driverProfile?['longitude'] ?? 0,
+        'last_heartbeat_at': DateTime.now().toUtc().toIso8601String(),
+      }, onConflict: 'driver_id');
       debugLog('  ✅ driver_locations.is_online = $isOnline');
-
-      // Verify the update was saved
-      final verify = await SupabaseService.client
-          .from('profiles')
-          .select('is_online')
-          .eq('id', userId)
-          .maybeSingle();
-      final savedValue = verify?['is_online'];
-      if (savedValue != isOnline) {
-        debugLog(
-            '⚠️ Verification failed! DB has is_online=$savedValue, expected $isOnline');
-        debugLog(
-            '   This may be caused by missing RLS UPDATE policy on profiles table');
-      } else {
-        debugLog('✅ Online status verified in DB: $isOnline');
-      }
     } catch (e) {
       debugLog('❌ Error updating online status: $e');
-      debugLog(
-          '   Hint: Run migration 20240226_fix_profiles_driver_locations_rls.sql');
     }
   }
 
@@ -1445,9 +1439,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     if (_isOnline) {
       unawaited(_startDriverLocationTracking());
       unawaited(DriverForegroundService.start());
+      _startHeartbeat();
     } else {
       unawaited(_stopDriverLocationTracking());
       unawaited(DriverForegroundService.stop());
+      _stopHeartbeat();
     }
 
     // Refresh job stream to apply online/offline filter immediately

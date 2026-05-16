@@ -1,12 +1,9 @@
 ﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'dart:async';
-import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:http/http.dart' as http;
 import 'supabase_service.dart';
-import '../config/env_config.dart';
 
 /// Realtime Service
 /// 
@@ -20,9 +17,6 @@ class RealtimeService {
   String? _lastDriverId;
   String? _lastBookingId;
   bool _isRefreshingToken = false;
-  // Phase 5: Guards to prevent channel leak during unsubscribe
-  bool _isUnsubscribingDriver = false;
-  bool _isUnsubscribingBooking = false;
 
   bool _isJwtExpiredError(Object error) {
     final message = error.toString();
@@ -194,101 +188,42 @@ class RealtimeService {
     }
   }
 
-  /// Get available drivers near location
+  /// Get available drivers near location.
+  /// Uses a SQL bounding-box pre-filter then Haversine in Dart — no Google
+  /// Directions API call per driver (ISSUE-044).
   Future<List<Map<String, dynamic>>> getAvailableDriversNearby({
     required double lat,
     required double lng,
     double radiusKm = 5.0,
   }) async {
-    // Note: This uses a simple distance calculation
-    // For production, consider using PostGIS functions in a database function
+    // 1° latitude ≈ 111 km; add 20 % margin for Haversine vs straight-line
+    final latDelta = (radiusKm / 111.0) * 1.2;
+    final cosLat = math.cos(lat * math.pi / 180).clamp(0.01, 1.0);
+    final lngDelta = (radiusKm / (111.0 * cosLat)) * 1.2;
+
     final response = await _client
         .from('driver_locations')
-        .select()
+        .select('*, profiles!driver_id(approval_status)')
         .eq('is_online', true)
-        .eq('is_available', true);
+        .eq('is_available', true)
+        .gte('location_lat', lat - latDelta)
+        .lte('location_lat', lat + latDelta)
+        .gte('location_lng', lng - lngDelta)
+        .lte('location_lng', lng + lngDelta);
 
     final drivers = (response as List).cast<Map<String, dynamic>>();
-    final nearbyDriverIds = <String>[];
-    
-    // Filter by distance (simple calculation)
-    // In production, use PostGIS ST_DWithin in a database function
-    final filteredDrivers = <Map<String, dynamic>>[];
-    for (final driver in drivers) {
-      final driverLat = (driver['location_lat'] as num).toDouble();
-      final driverLng = (driver['location_lng'] as num).toDouble();
-      final distance = await _calculateDistance(lat, lng, driverLat, driverLng);
-      if (distance <= radiusKm) {
-        final driverId = driver['driver_id'] as String?;
-        if (driverId != null) {
-          nearbyDriverIds.add(driverId);
-        }
-      }
-    }
 
-    if (nearbyDriverIds.isEmpty) return [];
+    return drivers.where((driver) {
+      // Verify approval status from joined profile
+      final profile = driver['profiles'] as Map<String, dynamic>?;
+      if (profile?['approval_status'] != 'approved') return false;
 
-    // Get approved drivers from profiles
-    final profileResponse = await _client
-        .from('profiles')
-        .select('id')
-        .eq('approval_status', 'approved')
-        .inFilter('id', nearbyDriverIds);
+      final driverLat = (driver['location_lat'] as num?)?.toDouble();
+      final driverLng = (driver['location_lng'] as num?)?.toDouble();
+      if (driverLat == null || driverLng == null) return false;
 
-    final approvedIds = (profileResponse as List).map((p) => p['id'] as String).toSet();
-
-    // Filter out unapproved drivers
-    for (final driver in drivers) {
-      final driverId = driver['driver_id'] as String?;
-      if (driverId != null && approvedIds.contains(driverId) && nearbyDriverIds.contains(driverId)) {
-        filteredDrivers.add(driver);
-      }
-    }
-
-    return filteredDrivers;
-  }
-
-  /// Calculate distance using Google Directions API for real road distance
-  Future<double> _calculateDistance(
-    double lat1,
-    double lng1,
-    double lat2,
-    double lng2,
-  ) async {
-    try {
-      final String googleApiKey = EnvConfig.googleMapsApiKey;
-      
-      final url = Uri.parse(
-        'https://maps.googleapis.com/maps/api/directions/json'
-        '?origin=$lat1,$lng1'
-        '&destination=$lat2,$lng2'
-        '&mode=driving'
-        '&key=$googleApiKey',
-      );
-
-      final response = await http.get(url);
-      final data = json.decode(response.body);
-
-      if (data['status'] == 'OK' && data['routes'].isNotEmpty) {
-        final routes = data['routes'] as List;
-        final route = routes[0] as Map<String, dynamic>;
-        final legs = route['legs'] as List?;
-        
-        if (legs != null && legs.isNotEmpty) {
-          final leg = legs[0] as Map<String, dynamic>;
-          final distanceValue = leg['distance']?['value'] as int?;
-          if (distanceValue != null) {
-            final realDistance = distanceValue / 1000; // Convert meters to km
-            return realDistance;
-          }
-        }
-      }
-      // Fallback to Haversine formula if no route/distance found
-      return _calculateHaversineDistance(lat1, lng1, lat2, lng2);
-    } catch (e) {
-      // Fallback to Haversine formula
-      return _calculateHaversineDistance(lat1, lng1, lat2, lng2);
-    }
+      return _calculateHaversineDistance(lat, lng, driverLat, driverLng) <= radiusKm;
+    }).toList();
   }
 
   /// Calculate distance using Haversine formula (fallback)

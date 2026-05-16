@@ -40,16 +40,16 @@ class MerchantOrderService {
     return Map<String, dynamic>.from(response);
   }
 
-  Future<Map<String, dynamic>?> toggleShopStatus(
+  Future<Map<String, dynamic>> toggleShopStatus(
     String merchantId,
     bool isOpen, {
     required bool disableAutoSchedule,
   }) async {
-    final updateData = {
+    final updateData = <String, dynamic>{
       'shop_status': isOpen,
       'is_online': isOpen,
       if (disableAutoSchedule) 'shop_auto_schedule_enabled': false,
-      'updated_at': DateTime.now().toIso8601String(),
+      // updated_at intentionally omitted — let DB DEFAULT/trigger handle it (ISSUE-046)
     };
 
     final response = await _client
@@ -59,7 +59,11 @@ class MerchantOrderService {
         .select('shop_status, shop_auto_schedule_enabled')
         .maybeSingle();
 
-    return response == null ? null : Map<String, dynamic>.from(response);
+    // Null means RLS blocked the write or the row was not found (ISSUE-047)
+    if (response == null) {
+      throw Exception('toggleShopStatus: DB returned no row — check RLS policy for merchant $merchantId');
+    }
+    return Map<String, dynamic>.from(response);
   }
 
   Future<MerchantAcceptOrderResult> acceptOrder(String bookingId) async {

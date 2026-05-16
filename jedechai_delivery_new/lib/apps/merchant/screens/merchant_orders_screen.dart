@@ -703,20 +703,20 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
         disableAutoSchedule: !triggeredBySchedule && permanentlyDisableSchedule,
       );
 
-      final updatedRaw = updated?['shop_status'];
+      final updatedRaw = updated['shop_status'];
       final bool updatedStatus =
           updatedRaw == true || updatedRaw == 1 || updatedRaw == 'true';
       debugLog(
           '✅ Shop status updated in DB: $updatedStatus (requested: $value)');
 
-      if (mounted && updated != null && updatedStatus != value) {
+      if (mounted && updatedStatus != value) {
         debugLog(
             '⚠️ Shop status mismatch after update. DB=$updatedStatus, requested=$value');
       }
 
       if (mounted) {
         final colorScheme = Theme.of(context).colorScheme;
-        final autoDisabled = updated?['shop_auto_schedule_enabled'] == false;
+        final autoDisabled = updated['shop_auto_schedule_enabled'] == false;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
