@@ -941,6 +941,12 @@ abstract class AppLocalizations {
   /// **'Customer ordered food ฿{amount} — please confirm'**
   String foodCheckoutNotifBody(Object amount);
 
+  /// No description provided for @foodPrepTimeEstimate.
+  ///
+  /// In en, this message translates to:
+  /// **'Store needs approximately {minutes} min to prepare'**
+  String foodPrepTimeEstimate(Object minutes);
+
   /// No description provided for @foodScheduleTitle.
   ///
   /// In en, this message translates to:

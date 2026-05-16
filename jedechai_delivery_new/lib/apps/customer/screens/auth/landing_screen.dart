@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../common/services/system_config_service.dart';
 import '../../../../common/widgets/app_network_image.dart';
+import '../../../../common/widgets/language_switcher.dart';
 import '../../../../theme/app_theme.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
@@ -140,6 +141,7 @@ class _LandingScreenState extends State<LandingScreen> {
             ],
           ),
         ),
+        const LanguageSwitcher(),
       ],
     );
   }
@@ -193,9 +195,9 @@ class _LandingScreenState extends State<LandingScreen> {
             spacing: 8,
             runSpacing: 8,
             children: const [
-              _ServicePill(icon: Icons.delivery_dining, label: 'Ride'),
-              _ServicePill(icon: Icons.fastfood, label: 'Food'),
-              _ServicePill(icon: Icons.inventory_2, label: 'Parcel'),
+              _ServicePill(icon: Icons.delivery_dining, label: 'เรียกรถ'),
+              _ServicePill(icon: Icons.fastfood, label: 'อาหาร'),
+              _ServicePill(icon: Icons.inventory_2, label: 'พัสดุ'),
             ],
           ),
         ],

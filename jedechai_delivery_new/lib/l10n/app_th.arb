@@ -176,6 +176,8 @@
   "foodCheckoutNotifTitle": "🍔 มีออเดอร์ใหม่!",
   "foodCheckoutNotifBody": "มีลูกค้าสั่งอาหาร ฿{amount} กรุณายืนยันออเดอร์",
   "@foodCheckoutNotifBody": { "placeholders": { "amount": {} } },
+  "foodPrepTimeEstimate": "ร้านใช้เวลาเตรียมอาหารประมาณ {minutes} นาที",
+  "@foodPrepTimeEstimate": { "placeholders": { "minutes": {} } },
 
   "foodScheduleTitle": "เวลาจัดส่ง",
   "foodScheduleNow": "จัดส่งทันที",

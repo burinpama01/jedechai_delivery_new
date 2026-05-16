@@ -845,7 +845,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                       builder: (_) => RestaurantDetailScreen(
                         merchantId: merchantId,
                         merchantName: merchantName,
-                      ),
+                      ), // distanceKm not available from popular items list
                     ),
                   );
                 },
@@ -1336,6 +1336,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
           merchantId: restaurant['id'],
           merchantName: restaurant['full_name'] ??
               AppLocalizations.of(context)!.foodHomeRestaurantDefault,
+          distanceKm: (restaurant['distance_km'] as num?)?.toDouble(),
         ),
       ),
     );

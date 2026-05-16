@@ -454,6 +454,11 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
+  String foodPrepTimeEstimate(Object minutes) {
+    return 'ร้านใช้เวลาเตรียมอาหารประมาณ $minutes นาที';
+  }
+
+  @override
   String get foodScheduleTitle => 'เวลาจัดส่ง';
 
   @override

@@ -15,6 +15,7 @@ import 'ride/ride_home_screen.dart';
 import 'services/food_home_screen.dart';
 import 'services/parcel_service_screen.dart';
 import 'services/customer_order_detail_screen.dart';
+import 'services/tracking_screen.dart';
 import 'activity_screen.dart';
 import 'services/saved_addresses_screen.dart';
 import 'services/help_screen.dart';
@@ -499,6 +500,31 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           const SizedBox(height: 12),
           if (!_isLoadingBookings && _activeBookings.isNotEmpty) ...[
             ..._activeBookings.take(2).map((booking) => _buildActiveOrderCard(booking)),
+            if (_activeBookings.length > 2) ...[
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ActivityScreen()),
+                ),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryGreen.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    'ดูทั้งหมด (${_activeBookings.length})',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: AppTheme.primaryGreen,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ] else if (!_isLoadingBookings)
             Container(
               padding: const EdgeInsets.all(16),
@@ -864,7 +890,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               child: Text(
                 subtitle,
                 style: TextStyle(
-                  fontSize: 9,
+                  fontSize: 11,
                   color: colorScheme.onSurfaceVariant,
                 ),
                 textAlign: TextAlign.center,
@@ -929,7 +955,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               child: Text(
                 subtitle,
                 style: TextStyle(
-                  fontSize: 8,
+                  fontSize: 10,
                   color: colorScheme.onSurfaceVariant,
                 ),
                 textAlign: TextAlign.center,
@@ -958,14 +984,25 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
   Widget _buildActiveOrderCard(Booking booking) {
     final colorScheme = Theme.of(context).colorScheme;
+    final trackingStatuses = {
+      'driver_assigned', 'driver_accepted', 'arrived_at_merchant',
+      'picking_up_order', 'in_transit', 'arrived',
+    };
     return GestureDetector(
       onTap: () {
-        // Navigate to order detail screen for all active orders
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => CustomerOrderDetailScreen(booking: booking),
-          ),
-        );
+        if (trackingStatuses.contains(booking.status)) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => TrackingScreen(booking: booking),
+            ),
+          );
+        } else {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => CustomerOrderDetailScreen(booking: booking),
+            ),
+          );
+        }
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),

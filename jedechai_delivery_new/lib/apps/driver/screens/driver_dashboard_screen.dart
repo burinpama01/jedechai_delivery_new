@@ -39,7 +39,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   bool _isOnline = true; // Online/Offline toggle state
   bool _isRefreshing = false; // Manual refresh state
   List<Booking> _availableJobs = [];
-  Stream<List<Booking>>? _jobsStream;
+  StreamSubscription<List<Booking>>? _jobStreamSubscription;
+  bool _jobStreamConnecting = false;
+  Object? _jobStreamError;
   Timer? _autoRefreshTimer;
   List<Booking> _previousJobs = []; // Track previous jobs for notification
   final Set<String> _seenNotifiedJobIds = {};
@@ -183,8 +185,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     WidgetsBinding.instance.removeObserver(this);
     _autoRefreshTimer?.cancel();
     _driverLocationSub?.cancel();
-    // ไม่ set offline อัตโนมัติ — คนขับต้องกดปุ่มออฟไลน์เอง
-    // ยกเว้นกรณี app ถูกปิดจริง (handled by didChangeAppLifecycleState)
+    _jobStreamSubscription?.cancel();
     super.dispose();
   }
 
@@ -380,12 +381,15 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       }
 
       _lastLocationSyncAt = DateTime.now();
+      final wasLocationNull = _driverLat == null;
       _driverLat = position.latitude;
       _driverLng = position.longitude;
       debugLog(
         '📍 Driver live location synced: ${position.latitude}, ${position.longitude}',
       );
       unawaited(_loadAvailableJobsFromRpc());
+      // Rebuild stream on first GPS fix so jobs hidden by driverLocationMissing are re-evaluated (ISSUE-038)
+      if (wasLocationNull && mounted) _setupJobStream();
     } catch (e) {
       debugLog('❌ Failed syncing driver live location: $e');
     }
@@ -552,43 +556,36 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   }
 
   void _setupJobStream() {
-    debugLog('🔄 Setting up real-time job stream...');
-    debugLog('🔄 Listening for INSERT and UPDATE events on bookings table...');
+    // Cancel old subscription before creating new one (ISSUE-039)
+    _jobStreamSubscription?.cancel();
+    _jobStreamSubscription = null;
 
-    _jobsStream = SupabaseService.client
+    debugLog('🔄 Setting up real-time job stream...');
+    if (mounted) setState(() { _jobStreamConnecting = true; _jobStreamError = null; });
+
+    final stream = SupabaseService.client
         .from('bookings')
         .stream(primaryKey: ['id'])
         .inFilter('status', [
-          'pending', // Ride/parcel requests waiting for driver
-          'pending_merchant', // Food waiting for merchant, hidden with reason
-          'preparing', // Food preparing, hidden with reason
-          'matched', // Food parallel flow, hidden until ready
-          'ready_for_pickup', // Food orders ready for pickup
-          'accepted', // Ride accepted by driver
-          'driver_accepted', // Food accepted by driver
-          'arrived', // Driver at pickup location
-          'arrived_at_merchant', // Driver at merchant location
-          'picking_up_order', // Driver picking up food
-          'in_transit', // Driver delivering
+          'pending',
+          'pending_merchant',
+          'preparing',
+          'matched',
+          'ready_for_pickup',
+          'accepted',
+          'driver_accepted',
+          'arrived',
+          'arrived_at_merchant',
+          'picking_up_order',
+          'in_transit',
         ])
         .order('created_at', ascending: false)
         .execute()
         .map((data) {
-          debugLog('📡 ===== STREAM UPDATE RECEIVED =====');
-          debugLog('🔍 Raw stream data received: ${data.length} items');
-          debugLog('🔍 Timestamp: ${DateTime.now().toIso8601String()}');
-
-          // Debug all items first
-          for (var item in data) {
-            debugLog(
-                '🔍 Raw item: ${item['id']} - Service: ${item['service_type']} - Status: ${item['status']} - Driver: ${item['driver_id']}');
-          }
-
-          // Filter for available jobs (both ride and food)
+          debugLog('📡 Stream update: ${data.length} items');
           final driverId = AuthService.userId;
           final myVehicleType =
               _normalizeVehicleType(_driverProfile?['vehicle_type'] as String?);
-          debugLog('👤 Driver ID: $driverId, Vehicle: $myVehicleType');
 
           final availableJobs = data.where((item) {
             final serviceType = item['service_type'] as String?;
@@ -613,36 +610,31 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               jobVehicleType: jobVehicle,
               driverVehicleType: myVehicleType,
             );
-
             debugLog(
-                '🔍 Job: ${item['id']} - Service: $serviceType - Status: $status - VehicleType: ${item['vehicle_type']} - ShouldShow: ${visibility.visible} - HiddenReason: ${visibility.reason}');
-
+                '🔍 Job: ${item['id']} - $serviceType/$status - show:${visibility.visible} reason:${visibility.reason}');
             return visibility.visible;
           }).toList();
 
-          final jobs =
-              availableJobs.map((item) => Booking.fromJson(item)).toList();
-          debugLog('📊 Real-time jobs received: ${jobs.length}');
-          for (var job in jobs) {
-            debugLog(
-                '📋 Job: ${job.id} - ${job.serviceType} - ${job.status} - ${job.price}');
-          }
-
-          // Update _availableJobs for UI stat cards and check for new jobs
-          if (mounted) {
-            setState(() {
-              _availableJobs = jobs;
-            });
-
-            // Load coupon discounts for displayed jobs
-            _loadCouponDiscountsForJobs(jobs);
-
-            // Check for new jobs and send notifications
-            _checkForNewJobs(jobs);
-          }
-
-          return jobs;
+          return availableJobs.map((item) => Booking.fromJson(item)).toList();
         });
+
+    _jobStreamSubscription = stream.listen(
+      (jobs) {
+        debugLog('📊 Real-time jobs: ${jobs.length}');
+        if (mounted) {
+          setState(() {
+            _availableJobs = jobs;
+            _jobStreamConnecting = false;
+          });
+          _loadCouponDiscountsForJobs(jobs);
+          _checkForNewJobs(jobs);
+        }
+      },
+      onError: (Object error) {
+        debugLog('❌ Stream error: $error');
+        if (mounted) setState(() { _jobStreamConnecting = false; _jobStreamError = error; });
+      },
+    );
 
     debugLog('✅ Job stream setup complete');
   }
@@ -1466,51 +1458,36 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
   Widget _buildJobFeed() {
     final colorScheme = Theme.of(context).colorScheme;
-    return StreamBuilder<List<Booking>>(
-      stream: _jobsStream,
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          debugLog('❌ Stream error: ${snapshot.error}');
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.error_outline,
-                  size: 64,
-                  color: Colors.red,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Error: ${snapshot.error}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.red,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+    // Using state directly — subscription managed explicitly (ISSUE-039)
+    if (_jobStreamError != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 64, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(
+              'Error: $_jobStreamError',
+              style: const TextStyle(fontSize: 16, color: Colors.red),
+              textAlign: TextAlign.center,
             ),
-          );
-        }
+          ],
+        ),
+      );
+    }
 
-        if (snapshot.connectionState == ConnectionState.waiting &&
-            _availableJobs.isEmpty) {
-          return const Center(
-            child: CircularProgressIndicator(
-              valueColor:
-                  AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6)), // Blue
-            ),
-          );
-        }
+    if (_jobStreamConnecting && _availableJobs.isEmpty) {
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6)),
+        ),
+      );
+    }
 
-        // Prefer fresh stream data when available; RPC/manual refresh keeps
-        // _availableJobs populated while the stream is connecting.
-        final jobs = snapshot.hasData ? (snapshot.data ?? []) : _availableJobs;
-        debugLog(
-            '📊 Jobs count in UI: ${jobs.length} (from ${snapshot.hasData ? "stream" : "manual/RPC cache"})');
+    final jobs = _availableJobs;
+    debugLog('📊 Jobs count in UI: ${jobs.length}');
 
-        if (jobs.isEmpty) {
+    if (jobs.isEmpty) {
           final isOfflineEmpty = !_isOnline;
           return Container(
             padding: const EdgeInsets.all(32),
@@ -1603,10 +1580,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           );
         }
 
-        return Column(
-          children: jobs.map((job) => _buildJobCard(job)).toList(),
-        );
-      },
+    return Column(
+      children: jobs.map((job) => _buildJobCard(job)).toList(),
     );
   }
 

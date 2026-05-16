@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../common/services/system_config_service.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../common/models/coupon.dart';
@@ -21,11 +22,13 @@ import 'food_checkout_screen.dart';
 class RestaurantDetailScreen extends StatefulWidget {
   final String merchantId;
   final String merchantName;
+  final double? distanceKm;
 
   const RestaurantDetailScreen({
     super.key,
     required this.merchantId,
     required this.merchantName,
+    this.distanceKm,
   });
 
   @override
@@ -50,6 +53,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
   final CustomerFavoriteService _favoriteService =
       const CustomerFavoriteService();
   List<Coupon> _merchantCoupons = [];
+  int? _estimatedDeliveryFee;
 
   TabController? _tabController;
 
@@ -59,6 +63,17 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
     _fetchData();
     _loadFavoriteState();
     _loadPromoConfig();
+    if (widget.distanceKm != null) _computeEstimatedFee(widget.distanceKm!);
+  }
+
+  Future<void> _computeEstimatedFee(double distanceKm) async {
+    try {
+      final fee = await SystemConfigService().calculateDeliveryFee(
+        serviceType: 'food',
+        distanceKm: distanceKm,
+      );
+      if (mounted) setState(() => _estimatedDeliveryFee = fee);
+    } catch (_) {}
   }
 
   Future<void> _loadFavoriteState() async {
@@ -352,7 +367,10 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
               Icon(Icons.delivery_dining,
                   size: 16, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: 4),
-              Text(AppLocalizations.of(context)!.restDeliveryFee,
+              Text(
+                  _estimatedDeliveryFee != null
+                      ? '~฿$_estimatedDeliveryFee'
+                      : AppLocalizations.of(context)!.restDeliveryFee,
                   style: TextStyle(
                       color: colorScheme.onSurfaceVariant, fontSize: 13)),
             ],

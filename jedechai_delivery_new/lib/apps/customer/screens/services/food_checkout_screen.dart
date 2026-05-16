@@ -22,6 +22,8 @@ import '../../../../common/services/admin_line_notification_service.dart';
 import '../../../../common/utils/platform_adaptive.dart';
 import '../../../../common/utils/notification_payload_policy.dart';
 import 'saved_addresses_screen.dart';
+import 'customer_order_detail_screen.dart';
+import '../../../../common/models/booking.dart';
 import '../../../../common/models/saved_address.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -1010,7 +1012,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'ร้านใช้เวลาเตรียมอาหารประมาณ $maxPrepTime นาที',
+              AppLocalizations.of(context)!.foodPrepTimeEstimate(maxPrepTime.toString()),
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
@@ -1195,21 +1197,17 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         debugLog('⚠️ Failed to send merchant notification: $e');
       }
 
+      final createdBooking = Booking.fromJson(booking);
       cart.clearCart();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _isScheduledOrder && _scheduledAt != null
-                  ? '✅ ${AppLocalizations.of(context)!.foodCheckoutSuccessScheduled(_formatScheduledDateTime(_scheduledAt!))}'
-                  : '✅ ${AppLocalizations.of(context)!.foodCheckoutSuccessNow}',
-            ),
-            backgroundColor: Colors.green,
+        // Navigate back to home first, then push the order detail screen
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => CustomerOrderDetailScreen(booking: createdBooking),
           ),
         );
-        // Pop back to home
-        Navigator.of(context).popUntil((route) => route.isFirst);
       }
     } catch (e) {
       debugLog('❌ สั่งอาหารล้มเหลว: $e');

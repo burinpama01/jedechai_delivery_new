@@ -176,6 +176,8 @@
   "foodCheckoutNotifTitle": "New order!",
   "foodCheckoutNotifBody": "Customer ordered food \u0e3f{amount} — please confirm",
   "@foodCheckoutNotifBody": { "placeholders": { "amount": {} } },
+  "foodPrepTimeEstimate": "Store needs approximately {minutes} min to prepare",
+  "@foodPrepTimeEstimate": { "placeholders": { "minutes": {} } },
 
   "foodScheduleTitle": "Delivery time",
   "foodScheduleNow": "Deliver now",
