@@ -92,10 +92,6 @@ class _RatingScreenState extends State<RatingScreen> {
           'comment': _merchantCommentController.text.trim().isEmpty
               ? null
               : _merchantCommentController.text.trim(),
-          'merchant_rating': _merchantRating,
-          'merchant_comment': _merchantCommentController.text.trim().isEmpty
-              ? null
-              : _merchantCommentController.text.trim(),
           'updated_at': DateTime.now().toIso8601String(),
         }, onConflict: 'booking_id,customer_id,merchant_id');
       }

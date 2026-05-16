@@ -8,7 +8,7 @@ import '../../../../theme/app_theme.dart';
 import '../../../../common/models/coupon.dart';
 import '../../../../common/models/menu_item.dart';
 import '../../../../common/services/coupon_service.dart';
-import '../../../../common/services/menu_option_service.dart';
+import '../../../../common/services/customer_favorite_service.dart';
 import '../../../../common/services/supabase_service.dart';
 import '../../../../common/widgets/app_network_image.dart';
 import '../../providers/cart_provider.dart';
@@ -45,7 +45,10 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
   String? _phoneNumber;
   String? _promoText;
   bool _promoEnabled = false;
+  bool _isFavorite = false;
   final CouponService _couponService = CouponService();
+  final CustomerFavoriteService _favoriteService =
+      const CustomerFavoriteService();
   List<Coupon> _merchantCoupons = [];
 
   TabController? _tabController;
@@ -54,7 +57,35 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
   void initState() {
     super.initState();
     _fetchData();
+    _loadFavoriteState();
     _loadPromoConfig();
+  }
+
+  Future<void> _loadFavoriteState() async {
+    try {
+      final isFavorite = await _favoriteService.isFavorite(widget.merchantId);
+      if (!mounted) return;
+      setState(() => _isFavorite = isFavorite);
+    } catch (e) {
+      debugLog('⚠️ โหลดสถานะร้านโปรดไม่สำเร็จ: $e');
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    final nextValue = !_isFavorite;
+    setState(() => _isFavorite = nextValue);
+    try {
+      await _favoriteService.setFavorite(
+        merchantId: widget.merchantId,
+        favorite: nextValue,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isFavorite = !nextValue);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Unable to update favorite: $e')),
+      );
+    }
   }
 
   Future<void> _loadPromoConfig() async {
@@ -121,7 +152,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
       // Batch-fetch option links for all menu items in a single query
       _menuItemsWithRequiredOptions = {};
       try {
-        final menuItemIds = _menuItems.map((item) => item['id'] as String).toList();
+        final menuItemIds =
+            _menuItems.map((item) => item['id'] as String).toList();
         if (menuItemIds.isNotEmpty) {
           final allLinks = await Supabase.instance.client
               .from('menu_item_option_links')
@@ -197,6 +229,16 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
             backgroundColor: AppTheme.accentOrange,
             foregroundColor: Colors.white,
             title: innerBoxIsScrolled ? Text(widget.merchantName) : null,
+            actions: [
+              IconButton(
+                tooltip: 'Favorite',
+                onPressed: _toggleFavorite,
+                icon: Icon(
+                  _isFavorite ? Icons.favorite : Icons.favorite_border,
+                  color: Colors.white,
+                ),
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               background: _buildCoverImage(),
             ),

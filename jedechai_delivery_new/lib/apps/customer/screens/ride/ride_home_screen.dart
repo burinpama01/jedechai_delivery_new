@@ -9,12 +9,12 @@ import 'dart:async';
 import 'dart:convert';
 import '../../../../theme/app_theme.dart';
 import '../../../../common/services/auth_service.dart';
+import '../../../../common/services/booking_service.dart';
 import '../../../../common/services/fare_adjustment_service.dart';
 import '../../../../common/services/supabase_service.dart';
 import '../../../../common/services/system_config_service.dart';
 import '../../../../common/models/booking.dart';
 import '../../../../common/services/notification_sender.dart';
-import '../../../../common/services/admin_line_notification_service.dart';
 import '../../../../common/config/env_config.dart';
 import '../../../../common/utils/notification_payload_policy.dart';
 import '../../../../common/widgets/location_disclosure_dialog.dart';
@@ -83,11 +83,6 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
   String _getVehicleDisplayName(BuildContext context, String key) {
     final l10n = AppLocalizations.of(context)!;
     return key == 'motorcycle' ? l10n.rideMotorcycle : l10n.rideCar;
-  }
-
-  String _getVehicleDesc(BuildContext context, String key) {
-    final l10n = AppLocalizations.of(context)!;
-    return key == 'motorcycle' ? l10n.rideMotorcycleDesc : l10n.rideCarDesc;
   }
 
   // Ride rates loaded from DB (keyed by service_type)
@@ -285,7 +280,18 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
     } catch (e) {
       debugLog('❌ Error checking online drivers: $e');
       if (_currentLocation != null) {
-        if (mounted) setState(() => _onlineDriverCounts = counts);
+        if (mounted) {
+          setState(() {
+            _onlineDriverCounts = counts;
+            if (_selectedVehicleIndex >= 0) {
+              final selectedVehicle =
+                  _vehicleTypes[_selectedVehicleIndex]['name'] as String;
+              if ((counts[selectedVehicle] ?? 0) <= 0) {
+                _selectedVehicleIndex = -1;
+              }
+            }
+          });
+        }
         return;
       }
       // Fallback before location is known so the screen is not empty forever.
@@ -305,8 +311,62 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
       } catch (_) {}
     }
 
-    if (mounted) setState(() => _onlineDriverCounts = counts);
+    if (mounted) {
+      setState(() {
+        _onlineDriverCounts = counts;
+        if (_selectedVehicleIndex >= 0) {
+          final selectedVehicle =
+              _vehicleTypes[_selectedVehicleIndex]['name'] as String;
+          if ((counts[selectedVehicle] ?? 0) <= 0) {
+            _selectedVehicleIndex = -1;
+          }
+        }
+      });
+    }
     debugLog('🚗 Online drivers: $counts');
+  }
+
+  Future<List<String>> _getAvailableRideDriverIds(String vehicleType) async {
+    if (_currentLocation == null) return [];
+
+    final locResponse = await SupabaseService.client
+        .from('driver_locations')
+        .select('driver_id, location_lat, location_lng')
+        .eq('is_online', true)
+        .eq('is_available', true);
+
+    final nearbyDriverIds = <String>[];
+    for (final row in (locResponse as List)) {
+      final driverId = row['driver_id'] as String?;
+      final lat = (row['location_lat'] as num?)?.toDouble();
+      final lng = (row['location_lng'] as num?)?.toDouble();
+      if (driverId == null || driverId.isEmpty || lat == null || lng == null) {
+        continue;
+      }
+      if (_isWithinDriverSearchRadius(
+        lat,
+        lng,
+        _currentLocation!.latitude,
+        _currentLocation!.longitude,
+      )) {
+        nearbyDriverIds.add(driverId);
+      }
+    }
+
+    if (nearbyDriverIds.isEmpty) return [];
+
+    final profileResponse = await SupabaseService.client
+        .from('profiles')
+        .select('id, vehicle_type')
+        .eq('approval_status', 'approved')
+        .inFilter('id', nearbyDriverIds);
+
+    return [
+      for (final row in profileResponse)
+        if (_normalizeVehicleType(row['vehicle_type'] as String?) ==
+            _normalizeVehicleType(vehicleType))
+          row['id'] as String,
+    ];
   }
 
   @override
@@ -657,7 +717,17 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
         return;
       }
 
-      final vehicleName = _vehicleTypes[_selectedVehicleIndex]['name'];
+      final vehicleName =
+          _vehicleTypes[_selectedVehicleIndex]['name'] as String;
+      final availableDrivers = await _getAvailableRideDriverIds(vehicleName);
+      if (availableDrivers.isEmpty) {
+        _showMessage(
+          'No available drivers nearby. Please try another vehicle type.',
+          errorColor,
+        );
+        return;
+      }
+
       debugLog('🚗 Creating booking...');
       debugLog(
           '   └─ Origin: ${_currentLocation!.latitude}, ${_currentLocation!.longitude}');
@@ -681,49 +751,26 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
         );
       }
 
-      final response = await SupabaseService.client
-          .from('bookings')
-          .insert({
-            'customer_id': currentUser.id,
-            'service_type': 'ride',
-            'vehicle_type': vehicleName,
-            'origin_lat': _currentLocation!.latitude,
-            'origin_lng': _currentLocation!.longitude,
-            'pickup_address': pickupAddress,
-            'dest_lat': _selectedDestination!.latitude,
-            'dest_lng': _selectedDestination!.longitude,
-            'destination_address': _selectedAddress,
-            'distance_km': _estimatedDistance,
-            'price': _estimatedPrice,
-            'status': 'pending',
-            'payment_method': _paymentMethod,
-            'notes': noteLines.join(' | '),
-          })
-          .select()
-          .single();
+      final booking = await BookingService().createRideBooking(
+        originLat: _currentLocation!.latitude,
+        originLng: _currentLocation!.longitude,
+        destLat: _selectedDestination!.latitude,
+        destLng: _selectedDestination!.longitude,
+        distanceKm: _estimatedDistance,
+        pickupAddress: pickupAddress,
+        destinationAddress: _selectedAddress,
+        notes: noteLines.join(' | '),
+        vehicleType: vehicleName,
+        paymentMethod: _paymentMethod,
+        priceOverride: _estimatedPrice,
+        notifyDrivers: false,
+      );
 
-      debugLog('✅ Booking created successfully: ${response['id']}');
+      if (booking == null) {
+        throw Exception('Failed to create ride booking');
+      }
 
-      final booking = Booking.fromJson(response);
-      final totalRidePrice = _estimatedPrice;
-      unawaited(AdminLineNotificationService.notify(
-        eventType: 'ride_order_new',
-        title: 'JDC: มีคำขอเรียกรถใหม่',
-        message: 'เรียกรถ $vehicleName ฿${totalRidePrice.toStringAsFixed(0)}\n'
-            'ระยะทาง ${_estimatedDistance.toStringAsFixed(2)} กม.',
-        data: {
-          'booking_id': booking.id,
-          'vehicle_type': vehicleName,
-          'price': _estimatedPrice.toStringAsFixed(0),
-          if (_estimatedPickupSurcharge > 0)
-            'pickup_surcharge': _estimatedPickupSurcharge.toStringAsFixed(0),
-          'total': totalRidePrice.toStringAsFixed(0),
-          'distance_km': _estimatedDistance.toStringAsFixed(2),
-          'payment_method': _paymentMethod,
-          'pickup': pickupAddress,
-          'destination': _selectedAddress,
-        },
-      ));
+      debugLog('Booking created successfully: ${booking.id}');
 
       if (!mounted) return;
       _showMessage(l10n.rideSearchingDriver, AppTheme.primaryGreen);
@@ -746,8 +793,8 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
   }
 
   /// Send notification to drivers with matching vehicle type
-  Future<void> _notifyDriversAboutNewRide(
-      Booking booking, String vehicleType, {required AppLocalizations l10n}) async {
+  Future<void> _notifyDriversAboutNewRide(Booking booking, String vehicleType,
+      {required AppLocalizations l10n}) async {
     try {
       debugLog(
           '📢 Notifying $vehicleType drivers about new ride: ${booking.id}');
@@ -817,9 +864,16 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
               recipientRole: NotificationRoles.driver,
               bookingId: booking.id,
               serviceType: 'ride',
+              route: '/driver_job_detail',
+              routeArgs: {
+                'booking_id': booking.id,
+                'service_type': 'ride',
+                'vehicle_type': vehicleType,
+              },
               extra: {
                 'legacy_type': NotificationTypes.legacyNewRideRequest,
                 'customer_id': booking.customerId,
+                'vehicle_type': vehicleType,
                 'pickup_address': booking.pickupAddress ?? '',
                 'destination_address': booking.destinationAddress ?? '',
                 'price': booking.price.toString(),
@@ -1310,7 +1364,12 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                         child: ElevatedButton(
                           onPressed: (_isLoading ||
                                   _selectedDestination == null ||
-                                  _selectedVehicleIndex < 0)
+                                  _selectedVehicleIndex < 0 ||
+                                  (_onlineDriverCounts[_vehicleTypes[
+                                                  _selectedVehicleIndex]['name']
+                                              as String] ??
+                                          0) <=
+                                      0)
                               ? null
                               : _callDriver,
                           style: ElevatedButton.styleFrom(

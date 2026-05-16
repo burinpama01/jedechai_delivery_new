@@ -1,6 +1,7 @@
 ﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'system_config_service.dart';
+import '../models/coupon.dart';
 import '../utils/driver_amount_calculator.dart';
 import '../utils/order_code_formatter.dart';
 
@@ -186,9 +187,7 @@ class WalletService {
     required double couponDiscountAmount,
   }) {
     final normalizedCouponCode = couponCode?.trim().toUpperCase();
-    final isReferralTwoSidedCoupon = normalizedCouponCode == 'WELCOME20' ||
-        normalizedCouponCode == 'REFERRER20' ||
-        normalizedCouponCode == 'REFFERER20';
+    final isReferralTwoSidedCoupon = Coupon.isSystemCouponCode(normalizedCouponCode);
 
     var updatedTotalDeduction = totalDeduction;
     var updatedAppEarnings = appEarnings;

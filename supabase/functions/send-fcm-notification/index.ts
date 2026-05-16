@@ -217,6 +217,7 @@ async function sendFcmMessage(
           aps: {
             alert: { title, body },
             sound: channelId === "merchant_new_order_channel_v1" ? "AlertNewOrder.caf" : "default",
+            "content-available": 1,
           },
         },
       },
@@ -258,19 +259,25 @@ serve(async (req) => {
   const token = bearerToken(req);
   if (!token) return errorResponse("Missing authorization", 401);
 
-  const supabaseAuth = createClient(supabaseUrl, anonKey, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-  });
-  const { data: { user }, error: userError } = await supabaseAuth.auth.getUser(token);
-  if (userError || !user) return errorResponse("Invalid token", 401);
-
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
-  const { data: callerProfile } = await supabaseAdmin
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-  const callerRole = callerProfile?.role ?? "";
+
+  // Service-role callers (e.g. admin-actions edge function) bypass user JWT check.
+  let callerId = "service";
+  let callerRole = "admin";
+  if (token !== serviceRoleKey) {
+    const supabaseAuth = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    });
+    const { data: { user }, error: userError } = await supabaseAuth.auth.getUser(token);
+    if (userError || !user) return errorResponse("Invalid token", 401);
+    callerId = user.id;
+    const { data: callerProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+    callerRole = callerProfile?.role ?? "";
+  }
 
   let requestBody: Record<string, unknown>;
   try {
@@ -302,7 +309,7 @@ serve(async (req) => {
   const uniqueUserIds = [...new Set(user_ids.map((id) => String(id)).filter(Boolean))];
   const allowedChecks = await Promise.all(
     uniqueUserIds.map((targetUserId) =>
-      isAllowedTarget(supabaseAdmin, user.id, callerRole, targetUserId, notification_id, data)
+      isAllowedTarget(supabaseAdmin, callerId, callerRole, targetUserId, notification_id, data)
     ),
   );
   if (allowedChecks.some((allowed) => !allowed)) {
@@ -320,6 +327,7 @@ serve(async (req) => {
   for (const p of profiles || []) {
     let deliveryNotificationId = notification_id || null;
     if (!deliveryNotificationId && persist_in_app !== false) {
+      // DB insert failure must NOT block FCM delivery (ISSUE-20260515-008)
       const { data: insertedNotification, error: notificationError } = await supabaseAdmin
         .from("notifications")
         .insert({
@@ -332,12 +340,13 @@ serve(async (req) => {
         .select("id")
         .maybeSingle();
       if (notificationError) {
-        return errorResponse(notificationError.message, 500);
+        console.warn(`notifications insert failed for ${p.id}:`, notificationError.message);
       }
       deliveryNotificationId = insertedNotification?.id ?? null;
     }
 
     if (!p.fcm_token) {
+      // Audit row failure must NOT block next user (ISSUE-20260515-009)
       const { error: deliveryError } = await supabaseAdmin.from("notification_deliveries").insert({
         notification_id: deliveryNotificationId,
         user_id: p.id,
@@ -346,7 +355,7 @@ serve(async (req) => {
         error: "missing_fcm_token",
       });
       if (deliveryError) {
-        return errorResponse(deliveryError.message, 500);
+        console.warn(`notification_deliveries insert failed (skipped):`, deliveryError.message);
       }
       results.push({ userId: p.id, success: false, error: "missing_fcm_token" });
       continue;
@@ -357,6 +366,7 @@ serve(async (req) => {
       await supabaseAdmin.from("profiles").update({ fcm_token: null }).eq("id", p.id);
     }
 
+    // Audit row failure must NOT affect response (ISSUE-20260515-009)
     const { error: deliveryError } = await supabaseAdmin.from("notification_deliveries").insert({
       notification_id: deliveryNotificationId,
       user_id: p.id,
@@ -366,7 +376,7 @@ serve(async (req) => {
       error: result.success ? null : JSON.stringify(result.error ?? "FCM error"),
     });
     if (deliveryError) {
-      return errorResponse(deliveryError.message, 500);
+      console.warn(`notification_deliveries insert failed:`, deliveryError.message);
     }
 
     results.push({

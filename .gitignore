@@ -5,6 +5,8 @@
 **/build/
 /tools/
 /.gstack_jedechai/
+/.claude/
+**/.claude/
 graphify-out/
 **/graphify-out/
 

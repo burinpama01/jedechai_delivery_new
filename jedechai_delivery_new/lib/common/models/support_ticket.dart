@@ -16,6 +16,9 @@ class SupportTicket {
   final DateTime createdAt;
   final DateTime? updatedAt;
   final DateTime? resolvedAt;
+  // Joined from profiles — only populated in admin queries
+  final String? userFullName;
+  final String? userPhone;
 
   const SupportTicket({
     required this.id,
@@ -31,9 +34,12 @@ class SupportTicket {
     required this.createdAt,
     this.updatedAt,
     this.resolvedAt,
+    this.userFullName,
+    this.userPhone,
   });
 
   factory SupportTicket.fromJson(Map<String, dynamic> json) {
+    final profile = json['profiles'] as Map<String, dynamic>?;
     return SupportTicket(
       id: json['id'] as String,
       userId: json['user_id'] as String,
@@ -52,6 +58,8 @@ class SupportTicket {
       resolvedAt: json['resolved_at'] != null
           ? DateTime.parse(json['resolved_at'] as String)
           : null,
+      userFullName: profile?['full_name'] as String?,
+      userPhone: profile?['phone_number'] as String?,
     );
   }
 

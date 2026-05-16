@@ -5,7 +5,7 @@ import '../../../../theme/app_theme.dart';
 import 'support_tickets_screen.dart';
 
 /// Help Screen
-/// 
+///
 /// Shows FAQ, contact info, and problem reporting
 class HelpScreen extends StatefulWidget {
   const HelpScreen({super.key});
@@ -49,19 +49,27 @@ class _HelpScreenState extends State<HelpScreen> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [AppTheme.primaryGreen, AppTheme.primaryGreen.withValues(alpha: 0.8)],
+                  colors: [
+                    AppTheme.primaryGreen,
+                    AppTheme.primaryGreen.withValues(alpha: 0.8)
+                  ],
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
                 children: [
-                  const Icon(Icons.support_agent, size: 48, color: Colors.white),
+                  const Icon(Icons.support_agent,
+                      size: 48, color: Colors.white),
                   const SizedBox(height: 12),
                   Text(AppLocalizations.of(context)!.helpCenterTitle,
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+                      style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white)),
                   const SizedBox(height: 4),
                   Text(AppLocalizations.of(context)!.helpCenterSubtitle,
-                      style: const TextStyle(fontSize: 14, color: Colors.white70)),
+                      style:
+                          const TextStyle(fontSize: 14, color: Colors.white70)),
                 ],
               ),
             ),
@@ -70,11 +78,13 @@ class _HelpScreenState extends State<HelpScreen> {
 
             // ช่องทางติดต่อ
             Text(AppLocalizations.of(context)!.helpContactTitle,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(child: _buildContactCard(
+                Expanded(
+                    child: _buildContactCard(
                   icon: Icons.phone,
                   label: AppLocalizations.of(context)!.helpPhone,
                   detail: '083-982-5982',
@@ -82,32 +92,37 @@ class _HelpScreenState extends State<HelpScreen> {
                   onTap: () => _launchUrl('tel:0839825982'),
                 )),
                 const SizedBox(width: 12),
-                Expanded(child: _buildContactCard(
+                Expanded(
+                    child: _buildContactCard(
                   icon: Icons.chat_bubble,
                   label: 'LINE',
                   detail: '@jdcdelivery',
                   color: const Color(0xFF06C755),
-                  onTap: () => _launchUrl('https://line.me/R/ti/p/%40jdcdelivery'),
+                  onTap: () =>
+                      _launchUrl('https://line.me/R/ti/p/%40jdcdelivery'),
                 )),
               ],
             ),
             const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(child: _buildContactCard(
+                Expanded(
+                    child: _buildContactCard(
                   icon: Icons.email,
                   label: AppLocalizations.of(context)!.helpEmail,
-                  detail: 'support@jdcdelivery.com',
+                  detail: 'jdcdelivery2026@gmail.com',
                   color: AppTheme.accentBlue,
-                  onTap: () => _launchUrl('mailto:support@jdcdelivery.com'),
+                  onTap: () => _launchUrl('mailto:jdcdelivery2026@gmail.com'),
                 )),
                 const SizedBox(width: 12),
-                Expanded(child: _buildContactCard(
+                Expanded(
+                    child: _buildContactCard(
                   icon: Icons.facebook,
                   label: 'Facebook',
                   detail: 'jdc.delivery',
                   color: const Color(0xFF1877F2),
-                  onTap: () => _launchUrl('https://www.facebook.com/jdc.delivery/'),
+                  onTap: () =>
+                      _launchUrl('https://www.facebook.com/jdc.delivery/'),
                 )),
               ],
             ),
@@ -116,7 +131,8 @@ class _HelpScreenState extends State<HelpScreen> {
 
             // คำถามที่พบบ่อย
             Text(AppLocalizations.of(context)!.helpFaqTitle,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             ...List.generate(_getFaqs(context).length, (i) {
               final faq = _getFaqs(context)[i];
@@ -124,7 +140,8 @@ class _HelpScreenState extends State<HelpScreen> {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: InkWell(
-                  onTap: () => setState(() => _expandedIndex = isExpanded ? null : i),
+                  onTap: () =>
+                      setState(() => _expandedIndex = isExpanded ? null : i),
                   borderRadius: BorderRadius.circular(12),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
@@ -133,7 +150,9 @@ class _HelpScreenState extends State<HelpScreen> {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isExpanded ? AppTheme.primaryGreen : Colors.grey.shade200,
+                        color: isExpanded
+                            ? AppTheme.primaryGreen
+                            : Colors.grey.shade200,
                       ),
                     ),
                     child: Column(
@@ -142,7 +161,10 @@ class _HelpScreenState extends State<HelpScreen> {
                         Row(
                           children: [
                             Icon(Icons.help_outline,
-                                color: isExpanded ? AppTheme.primaryGreen : Colors.grey, size: 20),
+                                color: isExpanded
+                                    ? AppTheme.primaryGreen
+                                    : Colors.grey,
+                                size: 20),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(faq['q']!,
@@ -155,7 +177,9 @@ class _HelpScreenState extends State<HelpScreen> {
                                   )),
                             ),
                             Icon(
-                              isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                              isExpanded
+                                  ? Icons.keyboard_arrow_up
+                                  : Icons.keyboard_arrow_down,
                               color: Colors.grey,
                             ),
                           ],
@@ -165,7 +189,8 @@ class _HelpScreenState extends State<HelpScreen> {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: AppTheme.primaryGreen.withValues(alpha: 0.05),
+                              color:
+                                  AppTheme.primaryGreen.withValues(alpha: 0.05),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(faq['a']!,
@@ -199,11 +224,14 @@ class _HelpScreenState extends State<HelpScreen> {
                   );
                 },
                 icon: const Icon(Icons.report_problem_outlined),
-                label: Text(AppLocalizations.of(context)!.helpReportProblem, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                label: Text(AppLocalizations.of(context)!.helpReportProblem,
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.accentOrange,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
                 ),
               ),
             ),
@@ -229,7 +257,10 @@ class _HelpScreenState extends State<HelpScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6)],
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04), blurRadius: 6)
+          ],
         ),
         child: Column(
           children: [
@@ -242,9 +273,12 @@ class _HelpScreenState extends State<HelpScreen> {
               child: Icon(icon, color: color, size: 24),
             ),
             const SizedBox(height: 8),
-            Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            Text(label,
+                style:
+                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
             const SizedBox(height: 2),
-            Text(detail, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+            Text(detail,
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
           ],
         ),
       ),

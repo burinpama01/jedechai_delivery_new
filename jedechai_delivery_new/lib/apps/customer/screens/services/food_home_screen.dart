@@ -7,15 +7,12 @@ import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import '../../../../theme/app_theme.dart';
 import '../../providers/cart_provider.dart';
 import 'package:geolocator/geolocator.dart';
-import '../../../../common/services/geocoding_service.dart';
-import '../../../../common/services/notification_sender.dart';
 import '../../../../common/services/supabase_service.dart';
-import '../../../../common/services/merchant_food_config_service.dart';
 import '../../../../common/services/system_config_service.dart';
-import '../../../../common/services/admin_line_notification_service.dart';
+import '../../../../common/services/customer_favorite_service.dart';
 import '../../../../common/widgets/app_network_image.dart';
 import '../../../../common/widgets/location_disclosure_dialog.dart';
-import '../../../../common/utils/notification_payload_policy.dart';
+import '../../../../common/utils/shop_schedule.dart';
 import '../../../../l10n/app_localizations.dart';
 import 'restaurant_detail_screen.dart';
 import 'food_checkout_screen.dart';
@@ -40,11 +37,16 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
   int _currentBannerIndex = 0;
   final PageController _bannerController = PageController();
   Timer? _bannerTimer;
+  Timer? _scheduleRefreshTimer;
+  List<Map<String, dynamic>> _allRadiusRestaurants = [];
   List<Map<String, dynamic>> _topSellingItems = [];
   bool _isLoadingTopSelling = true;
   Position? _currentPosition;
   double _restaurantRadiusKm = 30.0;
   bool _isOutOfRestaurantCoverage = false;
+  final CustomerFavoriteService _favoriteService =
+      const CustomerFavoriteService();
+  Set<String> _favoriteMerchantIds = {};
 
   List<_FoodCategory> _getCategories(AppLocalizations l10n) => [
         _FoodCategory(
@@ -72,7 +74,48 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
     await _loadRestaurantRadius();
     await _resolveCurrentLocation();
     await _fetchRestaurants();
+    await _fetchFavorites();
     await _fetchTopSellingItems();
+  }
+
+  Future<void> _fetchFavorites() async {
+    try {
+      final favoriteIds = await _favoriteService.getFavoriteMerchantIds();
+      if (!mounted) return;
+      setState(() => _favoriteMerchantIds = favoriteIds);
+    } catch (e) {
+      debugLog('⚠️ โหลดร้านโปรดไม่สำเร็จ: $e');
+    }
+  }
+
+  Future<void> _toggleFavorite(String merchantId) async {
+    final nextValue = !_favoriteMerchantIds.contains(merchantId);
+    setState(() {
+      if (nextValue) {
+        _favoriteMerchantIds.add(merchantId);
+      } else {
+        _favoriteMerchantIds.remove(merchantId);
+      }
+    });
+
+    try {
+      await _favoriteService.setFavorite(
+        merchantId: merchantId,
+        favorite: nextValue,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        if (nextValue) {
+          _favoriteMerchantIds.remove(merchantId);
+        } else {
+          _favoriteMerchantIds.add(merchantId);
+        }
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Unable to update favorite: $e')),
+      );
+    }
   }
 
   Future<void> _loadRestaurantRadius() async {
@@ -121,6 +164,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
   void dispose() {
     _searchController.dispose();
     _bannerTimer?.cancel();
+    _scheduleRefreshTimer?.cancel();
     _bannerController.dispose();
     super.dispose();
   }
@@ -169,7 +213,10 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
           _restaurants.map((r) => r['id'] as String).toSet();
 
       // ดึง booking_items จาก completed bookings (จำกัด 90 วัน เพื่อป้องกัน unbounded query)
-      final cutoff = DateTime.now().subtract(const Duration(days: 90)).toUtc().toIso8601String();
+      final cutoff = DateTime.now()
+          .subtract(const Duration(days: 90))
+          .toUtc()
+          .toIso8601String();
       final bookingItemsResponse = await Supabase.instance.client
           .from('booking_items')
           .select('menu_item_id, quantity, bookings!inner(status, created_at)')
@@ -273,68 +320,6 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
         _error = null;
       });
 
-      bool _isShopOpenNow(Map<String, dynamic> merchant) {
-        final autoEnabled = merchant['shop_auto_schedule_enabled'] == true;
-        final rawStatus = merchant['shop_status'];
-        final bool statusOpen =
-            rawStatus == true || rawStatus == 1 || rawStatus == 'true';
-
-        if (!autoEnabled) {
-          return statusOpen;
-        }
-
-        final openStr = (merchant['shop_open_time'] as String?)?.trim();
-        final closeStr = (merchant['shop_close_time'] as String?)?.trim();
-        if (openStr == null || closeStr == null) {
-          return statusOpen;
-        }
-
-        final openParts = openStr.split(':');
-        final closeParts = closeStr.split(':');
-        if (openParts.length < 2 || closeParts.length < 2) {
-          return statusOpen;
-        }
-
-        final openHour = int.tryParse(openParts[0]);
-        final openMinute = int.tryParse(openParts[1]);
-        final closeHour = int.tryParse(closeParts[0]);
-        final closeMinute = int.tryParse(closeParts[1]);
-        if (openHour == null ||
-            openMinute == null ||
-            closeHour == null ||
-            closeMinute == null) {
-          return statusOpen;
-        }
-
-        // Use Bangkok time (UTC+7) — shop hours are set in Bangkok timezone
-        final bangkokNow = DateTime.now().toUtc().add(const Duration(hours: 7));
-        final nowMinutes = bangkokNow.hour * 60 + bangkokNow.minute;
-        final openMinutes = openHour * 60 + openMinute;
-        final closeMinutes = closeHour * 60 + closeMinute;
-
-        bool withinHours;
-        if (openMinutes <= closeMinutes) {
-          withinHours = nowMinutes >= openMinutes && nowMinutes < closeMinutes;
-        } else {
-          withinHours = nowMinutes >= openMinutes || nowMinutes < closeMinutes;
-        }
-
-        final rawDays = merchant['shop_open_days'];
-        if (rawDays is List && rawDays.isNotEmpty) {
-          const weekdayKeys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-          final todayKey = weekdayKeys[bangkokNow.weekday - 1];
-          final allowedDays = rawDays
-              .map((e) => e.toString().toLowerCase().trim())
-              .where((e) => weekdayKeys.contains(e))
-              .toSet();
-          if (allowedDays.isNotEmpty && !allowedDays.contains(todayKey)) {
-            return false;
-          }
-        }
-
-        return withinHours;
-      }
-
       final response = await Supabase.instance.client
           .from('profiles')
           .select(
@@ -368,14 +353,12 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
         }
       }
 
-      final allRestaurants = List<Map<String, dynamic>>.from(response)
-          .where(_isShopOpenNow)
-          .toList();
-      final filteredByRadius = <Map<String, dynamic>>[];
+      final allFetched = List<Map<String, dynamic>>.from(response);
+      final radiusFiltered = <Map<String, dynamic>>[];
 
-      for (final restaurant in allRestaurants) {
+      for (final restaurant in allFetched) {
         if (_currentPosition == null) {
-          filteredByRadius.add(restaurant);
+          radiusFiltered.add(restaurant);
           continue;
         }
 
@@ -392,15 +375,26 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
             1000;
 
         if (distanceKm <= _restaurantRadiusKm) {
-          filteredByRadius.add({...restaurant, 'distance_km': distanceKm});
+          radiusFiltered.add({...restaurant, 'distance_km': distanceKm});
         }
       }
 
+      _allRadiusRestaurants = radiusFiltered;
+      _scheduleRefreshTimer?.cancel();
+      _scheduleRefreshTimer = Timer.periodic(const Duration(minutes: 5), (_) {
+        if (!mounted) return;
+        setState(() {
+          _restaurants = _allRadiusRestaurants.where(isShopOpenNow).toList();
+          _applyFilters();
+        });
+      });
+
+      final openRestaurants = radiusFiltered.where(isShopOpenNow).toList();
       setState(() {
-        _restaurants = filteredByRadius;
+        _restaurants = openRestaurants;
         _isOutOfRestaurantCoverage = _searchQuery.isEmpty &&
-            allRestaurants.isNotEmpty &&
-            filteredByRadius.isEmpty;
+            radiusFiltered.isNotEmpty &&
+            openRestaurants.isEmpty;
         _applyFilters();
         _isLoading = false;
       });
@@ -457,6 +451,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
         child: RefreshIndicator(
           onRefresh: () async {
             await _fetchRestaurants();
+            await _fetchFavorites();
             await _fetchTopSellingItems();
           },
           color: AppTheme.accentOrange,
@@ -1150,6 +1145,10 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
           (context, index) {
             return _RestaurantCard(
               restaurant: _filteredRestaurants[index],
+              isFavorite: _favoriteMerchantIds
+                  .contains(_filteredRestaurants[index]['id'] as String?),
+              onFavoriteTap: () =>
+                  _toggleFavorite(_filteredRestaurants[index]['id'] as String),
               onTap: () => _navigateToRestaurant(_filteredRestaurants[index]),
             );
           },
@@ -1330,8 +1329,8 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
     );
   }
 
-  void _navigateToRestaurant(Map<String, dynamic> restaurant) {
-    Navigator.of(context).push(
+  Future<void> _navigateToRestaurant(Map<String, dynamic> restaurant) async {
+    await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => RestaurantDetailScreen(
           merchantId: restaurant['id'],
@@ -1340,6 +1339,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
         ),
       ),
     );
+    if (mounted) await _fetchFavorites();
   }
 
   void _showCartSheet() {
@@ -1385,8 +1385,15 @@ class _FixedHeightSliverHeaderDelegate extends SliverPersistentHeaderDelegate {
 class _RestaurantCard extends StatelessWidget {
   final Map<String, dynamic> restaurant;
   final VoidCallback onTap;
+  final bool isFavorite;
+  final VoidCallback onFavoriteTap;
 
-  const _RestaurantCard({required this.restaurant, required this.onTap});
+  const _RestaurantCard({
+    required this.restaurant,
+    required this.onTap,
+    required this.isFavorite,
+    required this.onFavoriteTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1418,21 +1425,42 @@ class _RestaurantCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Restaurant Image
-            ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(16)),
-              child: Container(
-                height: 140,
-                width: double.infinity,
-                color: colorScheme.surfaceContainerHighest,
-                child: photoUrl != null && photoUrl.isNotEmpty
-                    ? AppNetworkImage(
-                        imageUrl: photoUrl,
-                        fit: BoxFit.cover,
-                        backgroundColor: colorScheme.surfaceContainerHighest,
-                      )
-                    : _buildPlaceholderImage(),
-              ),
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(16)),
+                  child: Container(
+                    height: 140,
+                    width: double.infinity,
+                    color: colorScheme.surfaceContainerHighest,
+                    child: photoUrl != null && photoUrl.isNotEmpty
+                        ? AppNetworkImage(
+                            imageUrl: photoUrl,
+                            fit: BoxFit.cover,
+                            backgroundColor:
+                                colorScheme.surfaceContainerHighest,
+                          )
+                        : _buildPlaceholderImage(),
+                  ),
+                ),
+                Positioned(
+                  right: 10,
+                  top: 10,
+                  child: Material(
+                    color: colorScheme.surface.withValues(alpha: 0.92),
+                    shape: const CircleBorder(),
+                    child: IconButton(
+                      tooltip: 'Favorite',
+                      onPressed: onFavoriteTap,
+                      icon: Icon(
+                        isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: isFavorite ? Colors.red : colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
             // Restaurant Info
             Padding(
@@ -1918,632 +1946,4 @@ class _FoodCategory {
   final IconData icon;
   final Color color;
   const _FoodCategory(this.key, this.label, this.icon, this.color);
-}
-
-// ============================================================
-// Food Checkout Screen (placeholder — จะถูกย้ายไปไฟล์แยกถ้าต้องการ)
-// ============================================================
-class _FoodCheckoutScreen extends StatefulWidget {
-  const _FoodCheckoutScreen();
-
-  @override
-  State<_FoodCheckoutScreen> createState() => _FoodCheckoutScreenState();
-}
-
-class _FoodCheckoutScreenState extends State<_FoodCheckoutScreen> {
-  bool _isPlacingOrder = false;
-  String _paymentMethod = 'cash';
-  final TextEditingController _noteController = TextEditingController();
-
-  @override
-  void dispose() {
-    _noteController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<CartProvider>(
-      builder: (context, cart, _) {
-        final colorScheme = Theme.of(context).colorScheme;
-        return Scaffold(
-          backgroundColor: colorScheme.surface,
-          appBar: AppBar(
-            title: Text(AppLocalizations.of(context)!.foodCheckoutTitle),
-            backgroundColor: AppTheme.accentOrange,
-            foregroundColor: colorScheme.onPrimary,
-            elevation: 0,
-          ),
-          body: cart.isEmpty
-              ? Center(child: Text(AppLocalizations.of(context)!.foodCartEmpty))
-              : SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      // Restaurant info
-                      _buildSection(
-                        icon: Icons.store,
-                        title: AppLocalizations.of(context)!
-                            .foodCheckoutRestaurant,
-                        child: Text(cart.merchantName ?? '',
-                            style: const TextStyle(fontSize: 15)),
-                      ),
-                      // Delivery address
-                      _buildSection(
-                        icon: Icons.location_on,
-                        title: AppLocalizations.of(context)!
-                            .foodCheckoutDeliveryAddress,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                AppLocalizations.of(context)!
-                                    .foodCheckoutCurrentLocation,
-                                style: TextStyle(
-                                    fontSize: 15, color: colorScheme.onSurface),
-                              ),
-                            ),
-                            Icon(Icons.my_location,
-                                size: 20, color: AppTheme.accentOrange),
-                          ],
-                        ),
-                      ),
-                      // Order items
-                      _buildSection(
-                        icon: Icons.receipt_long,
-                        title: AppLocalizations.of(context)!
-                            .foodCheckoutItemsTitle(cart.totalItems.toString()),
-                        child: Column(
-                          children: cart.items.map((item) {
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              child: Row(
-                                children: [
-                                  Text('${item.quantity}x',
-                                      style: TextStyle(
-                                          color: AppTheme.accentOrange,
-                                          fontWeight: FontWeight.bold)),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(item.name,
-                                            style:
-                                                const TextStyle(fontSize: 14)),
-                                        if (item.selectedOptions.isNotEmpty)
-                                          Text(
-                                            item.selectedOptions.join(', '),
-                                            style: TextStyle(
-                                                fontSize: 12,
-                                                color: colorScheme
-                                                    .onSurfaceVariant),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                  Text('฿${item.totalPrice.ceil()}'),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                      // Note
-                      _buildSection(
-                        icon: Icons.note_alt_outlined,
-                        title:
-                            AppLocalizations.of(context)!.foodCheckoutNoteTitle,
-                        child: TextField(
-                          controller: _noteController,
-                          decoration: InputDecoration(
-                            hintText: AppLocalizations.of(context)!
-                                .foodCheckoutNoteHint,
-                            hintStyle:
-                                TextStyle(color: colorScheme.onSurfaceVariant),
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10)),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 10),
-                          ),
-                          maxLines: 2,
-                        ),
-                      ),
-                      // Payment method
-                      _buildSection(
-                        icon: Icons.payment,
-                        title: AppLocalizations.of(context)!
-                            .foodCheckoutPaymentTitle,
-                        child: Column(
-                          children: [
-                            _buildPaymentOption(
-                                'cash',
-                                AppLocalizations.of(context)!
-                                    .foodCheckoutPayCash,
-                                Icons.money),
-                            _buildPaymentOption(
-                                'transfer',
-                                AppLocalizations.of(context)!
-                                    .foodCheckoutPayTransfer,
-                                Icons.account_balance),
-                          ],
-                        ),
-                      ),
-                      // Price summary
-                      Container(
-                        margin: const EdgeInsets.all(16),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: colorScheme.surfaceContainer,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Column(
-                          children: [
-                            _buildPriceRow(
-                                AppLocalizations.of(context)!.foodCartFoodCost,
-                                '฿${cart.subtotal.ceil()}'),
-                            const SizedBox(height: 8),
-                            _buildPriceRow(
-                                AppLocalizations.of(context)!
-                                    .foodCheckoutDeliveryEstimate,
-                                '฿30'),
-                            const Divider(height: 20),
-                            _buildPriceRow(
-                              AppLocalizations.of(context)!.foodCartTotal,
-                              '฿${(cart.subtotal + 30).ceil()}',
-                              isBold: true,
-                              isOrange: true,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 100),
-                    ],
-                  ),
-                ),
-          bottomNavigationBar: cart.isEmpty
-              ? null
-              : Container(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surface,
-                    boxShadow: [
-                      BoxShadow(
-                        color: colorScheme.shadow.withValues(alpha: 0.12),
-                        blurRadius: 8,
-                        offset: const Offset(0, -2),
-                      ),
-                    ],
-                  ),
-                  child: SafeArea(
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isPlacingOrder
-                            ? null
-                            : () => _placeOrder(context, cart),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.accentOrange,
-                          foregroundColor: colorScheme.onPrimary,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14)),
-                          elevation: 0,
-                        ),
-                        child: _isPlacingOrder
-                            ? SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: colorScheme.onPrimary),
-                              )
-                            : Text(
-                                AppLocalizations.of(context)!
-                                    .foodCheckoutConfirmButton,
-                                style: const TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                      ),
-                    ),
-                  ),
-                ),
-        );
-      },
-    );
-  }
-
-  Widget _buildSection(
-      {required IconData icon, required String title, required Widget child}) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 20, color: AppTheme.accentOrange),
-              const SizedBox(width: 8),
-              Text(title,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 15)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          child,
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPaymentOption(String value, String label, IconData icon) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return RadioListTile<String>(
-      value: value,
-      groupValue: _paymentMethod,
-      onChanged: (v) => setState(() => _paymentMethod = v!),
-      title: Row(
-        children: [
-          Icon(icon, size: 20, color: colorScheme.onSurfaceVariant),
-          const SizedBox(width: 8),
-          Text(label),
-        ],
-      ),
-      activeColor: AppTheme.accentOrange,
-      contentPadding: EdgeInsets.zero,
-      dense: true,
-    );
-  }
-
-  Widget _buildPriceRow(String label, String price,
-      {bool isBold = false, bool isOrange = false}) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label,
-            style: TextStyle(
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-              fontSize: isBold ? 16 : 14,
-              color: isBold ? null : colorScheme.onSurfaceVariant,
-            )),
-        Text(price,
-            style: TextStyle(
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-              fontSize: isBold ? 18 : 14,
-              color: isOrange ? AppTheme.accentOrange : null,
-            )),
-      ],
-    );
-  }
-
-  Future<Map<String, dynamic>> _resolveCustomerLocationForOrder() async {
-    double? lat;
-    double? lng;
-
-    try {
-      final locationEnabled = await Geolocator.isLocationServiceEnabled();
-      if (locationEnabled) {
-        var permission = await Geolocator.checkPermission();
-        if (permission == LocationPermission.denied) {
-          if (mounted) {
-            final accepted =
-                await LocationDisclosureHelper.showIfNeeded(context);
-            if (!accepted) {
-              throw Exception(
-                AppLocalizations.of(context)!.foodCheckoutLocationRequired,
-              );
-            }
-          }
-          permission = await Geolocator.requestPermission();
-        }
-
-        if (permission != LocationPermission.denied &&
-            permission != LocationPermission.deniedForever) {
-          final position = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.high,
-            timeLimit: const Duration(seconds: 10),
-          );
-          lat = position.latitude;
-          lng = position.longitude;
-        }
-      }
-    } catch (e) {
-      debugLog('⚠️ Unable to fetch current customer location: $e');
-    }
-
-    if (lat == null || lng == null) {
-      throw Exception(
-          AppLocalizations.of(context)!.foodCheckoutLocationRequired);
-    }
-
-    var address = AppLocalizations.of(context)!.foodCheckoutCurrentLocation;
-    try {
-      final resolved =
-          await GeocodingService.getAddressFromCoordinates(lat, lng);
-      if (resolved != null && resolved.trim().isNotEmpty) {
-        address = resolved.trim();
-      }
-    } catch (e) {
-      debugLog('⚠️ Unable to reverse-geocode customer location: $e');
-    }
-
-    return {
-      'lat': lat,
-      'lng': lng,
-      'address': address,
-    };
-  }
-
-  Future<void> _placeOrder(BuildContext context, CartProvider cart) async {
-    setState(() => _isPlacingOrder = true);
-    final l10n = AppLocalizations.of(context)!;
-
-    try {
-      final userId = Supabase.instance.client.auth.currentUser?.id;
-      if (userId == null) throw Exception(l10n.foodCheckoutLoginRequired);
-
-      // Import needed services dynamically
-      final bookingService = _BookingServiceHelper();
-
-      final note = _noteController.text.trim();
-      if (note.isNotEmpty) {
-        cart.setNote(note);
-      }
-
-      final customerLocation = await _resolveCustomerLocationForOrder();
-
-      final booking = await bookingService.createFoodOrder(
-        userId: userId,
-        merchantId: cart.merchantId!,
-        merchantName: cart.merchantName!,
-        cartItems: cart.toCartList(),
-        subtotal: cart.subtotal,
-        customerLat: customerLocation['lat'] as double,
-        customerLng: customerLocation['lng'] as double,
-        customerAddress: customerLocation['address'] as String,
-        paymentMethod: _paymentMethod,
-        note: cart.note,
-      );
-
-      if (booking == null) throw Exception(l10n.foodCheckoutCreateFailed);
-
-      // Send notification to merchant about new order
-      try {
-        final merchantId = cart.merchantId;
-        if (merchantId != null && merchantId.isNotEmpty) {
-          debugLog(
-              '📤 Sending new order notification to merchant: $merchantId');
-          await NotificationSender.sendToUser(
-            userId: merchantId,
-            title: l10n.foodCheckoutNotifTitle,
-            body: l10n.foodCheckoutNotifBody(cart.subtotal.ceil().toString()),
-            data: NotificationPayloadPolicy.buildBookingPayload(
-              type: NotificationTypes.merchantOrderCreated,
-              recipientRole: NotificationRoles.merchant,
-              bookingId: booking['id']?.toString() ?? '',
-              serviceType: 'food',
-              screen: NotificationRouteScreens.merchantOrder,
-              extra: {
-                'legacy_type': NotificationTypes.legacyMerchantNewOrder,
-              },
-            ),
-          );
-        }
-      } catch (e) {
-        debugLog('⚠️ Failed to send merchant notification: $e');
-      }
-
-      cart.clearCart();
-
-      if (mounted) {
-        // Show success and navigate
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✅ ${l10n.foodCheckoutSuccess}'),
-            backgroundColor: Theme.of(context).colorScheme.secondary,
-          ),
-        );
-        // Pop back to home
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      }
-    } catch (e) {
-      debugLog('❌ สั่งอาหารล้มเหลว: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.foodCheckoutOrderFailed(e.toString())),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isPlacingOrder = false);
-    }
-  }
-}
-
-// ============================================================
-// Booking Service Helper (bridges to existing BookingService)
-// ============================================================
-class _BookingServiceHelper {
-  Future<String> _reverseGeocodeOrDefault(double lat, double lng) async {
-    try {
-      final addr = await GeocodingService.getAddressFromCoordinates(lat, lng);
-      if (addr != null && addr.isNotEmpty) return addr;
-    } catch (_) {}
-    return 'Current location';
-  }
-
-  Future<Map<String, dynamic>?> createFoodOrder({
-    required String userId,
-    required String merchantId,
-    required String merchantName,
-    required List<Map<String, dynamic>> cartItems,
-    required double subtotal,
-    required double customerLat,
-    required double customerLng,
-    required String customerAddress,
-    required String paymentMethod,
-    required String note,
-  }) async {
-    try {
-      final client = Supabase.instance.client;
-
-      // Get merchant location + custom fee settings
-      Map<String, dynamic>? merchantProfile;
-      try {
-        merchantProfile = await client
-            .from('profiles')
-            .select(
-                'latitude, longitude, gp_rate, merchant_gp_system_rate, merchant_gp_driver_rate, custom_base_fare, custom_base_distance, custom_per_km, custom_delivery_fee')
-            .eq('id', merchantId)
-            .maybeSingle();
-      } catch (_) {}
-
-      final merchantLat = (merchantProfile?['latitude'] as num?)?.toDouble();
-      final merchantLng = (merchantProfile?['longitude'] as num?)?.toDouble();
-      if (merchantLat == null || merchantLng == null) {
-        throw Exception(
-            'ไม่พบตำแหน่งร้านค้า กรุณาให้ร้านค้าตั้งค่าตำแหน่งร้านก่อนรับออเดอร์');
-      }
-
-      // Calculate distance (straight-line fallback)
-      double distanceKm = 3.0;
-      try {
-        final dist = Geolocator.distanceBetween(
-          merchantLat,
-          merchantLng,
-          customerLat,
-          customerLng,
-        );
-        distanceKm = dist / 1000.0;
-        if (distanceKm < 0.5) distanceKm = 0.5;
-      } catch (_) {}
-
-      // Calculate delivery fee using rates (global → merchant override)
-      double baseFare = 15.0;
-      double baseDistance = 2.0;
-      double perKm = 10.0;
-      MerchantFoodConfig? merchantFoodConfig;
-      try {
-        final configService = SystemConfigService();
-        await configService.fetchSettings();
-        final rate = configService.getServiceRate('food');
-        if (rate != null) {
-          baseFare = rate.basePrice.toDouble();
-          baseDistance = rate.baseDistance.toDouble();
-          perKm = rate.pricePerKm.toDouble();
-        }
-
-        merchantFoodConfig = MerchantFoodConfigService.resolve(
-          merchantProfile: merchantProfile,
-          defaultMerchantSystemRate: configService.merchantGpRate,
-          defaultMerchantDriverRate: 0.0,
-          defaultDeliverySystemRate: configService.platformFeeRate,
-        );
-      } catch (_) {}
-
-      // Apply merchant overrides / presets
-      if (merchantFoodConfig?.baseFare != null) {
-        baseFare = merchantFoodConfig!.baseFare!;
-      }
-      if (merchantFoodConfig?.baseDistanceKm != null) {
-        baseDistance = merchantFoodConfig!.baseDistanceKm!;
-      }
-      if (merchantFoodConfig?.perKmCharge != null) {
-        perKm = merchantFoodConfig!.perKmCharge!;
-      }
-
-      double deliveryFee;
-      if (merchantFoodConfig?.fixedDeliveryFee != null) {
-        deliveryFee = merchantFoodConfig!.fixedDeliveryFee!;
-      } else if (distanceKm <= baseDistance) {
-        deliveryFee = baseFare;
-      } else {
-        deliveryFee = baseFare + ((distanceKm - baseDistance) * perKm);
-      }
-      deliveryFee = double.parse(deliveryFee.toStringAsFixed(0));
-      final normalizedCustomerAddress = customerAddress.trim().isNotEmpty
-          ? customerAddress.trim()
-          : await _reverseGeocodeOrDefault(customerLat, customerLng);
-
-      // Create booking
-      final response = await client
-          .from('bookings')
-          .insert({
-            'customer_id': userId,
-            'service_type': 'food',
-            'merchant_id': merchantId,
-            'origin_lat': merchantLat,
-            'origin_lng': merchantLng,
-            'dest_lat': customerLat,
-            'dest_lng': customerLng,
-            'pickup_address': merchantName,
-            'destination_address': normalizedCustomerAddress,
-            'distance_km': distanceKm,
-            'price': subtotal,
-            'delivery_fee': deliveryFee,
-            'notes': note.isNotEmpty ? note : 'Food order from $merchantName',
-            'status': 'pending_merchant',
-            'payment_method': paymentMethod,
-          })
-          .select()
-          .single();
-
-      final bookingId = response['id'] as String;
-
-      // Insert booking items (DB columns: booking_id, menu_item_id, quantity, price, name)
-      final items = cartItems.map((item) {
-        final qty = item['quantity'] ?? 1;
-        final basePrice = (item['base_price'] ?? item['price']) as num;
-        final selectedOptions = item['selected_options'];
-        return {
-          'booking_id': bookingId,
-          'menu_item_id': item['id'],
-          'name': item['name'] ?? '',
-          'price': basePrice,
-          'quantity': qty,
-          'selected_options':
-              selectedOptions is List ? selectedOptions : <String>[],
-          'options': selectedOptions is List ? selectedOptions : <String>[],
-        };
-      }).toList();
-
-      if (items.isNotEmpty) {
-        await client.from('booking_items').insert(items);
-      }
-
-      final totalAmount = subtotal + deliveryFee;
-      await AdminLineNotificationService.notify(
-        eventType: 'food_order_new',
-        title: 'JDC: มีออเดอร์อาหารใหม่',
-        message: 'ออเดอร์ใหม่จากร้าน $merchantName\n'
-            'รวม ฿${totalAmount.toStringAsFixed(0)} (อาหาร ฿${subtotal.toStringAsFixed(0)} + ส่ง ฿${deliveryFee.toStringAsFixed(0)})',
-        data: {
-          'booking_id': bookingId,
-          'ร้านอาหาร': merchantName,
-          'จำนวนเมนู': cartItems.length,
-          'subtotal': subtotal.toStringAsFixed(0),
-          'delivery_fee': deliveryFee.toStringAsFixed(0),
-          'total': totalAmount.toStringAsFixed(0),
-          'payment_method': paymentMethod,
-          'distance_km': distanceKm.toStringAsFixed(2),
-          'customer_address': normalizedCustomerAddress,
-        },
-      );
-
-      debugLog('✅ Food order created: $bookingId');
-      return response;
-    } catch (e) {
-      debugLog('❌ Error creating food order: $e');
-      return null;
-    }
-  }
 }

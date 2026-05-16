@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../common/config/env_config.dart';
 import '../../../common/models/booking.dart';
+import '../../../common/models/coupon.dart';
 import '../../../common/utils/driver_amount_calculator.dart';
 import '../../../common/utils/order_code_formatter.dart';
 import '../../../common/services/supabase_service.dart';
@@ -271,9 +272,7 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
       couponDiscountAmount: _couponDiscount,
     );
     final normalizedCouponCode = _couponCode?.trim().toUpperCase();
-    final hideCouponBreakdown = normalizedCouponCode == 'WELCOME20' ||
-        normalizedCouponCode == 'REFERRER20' ||
-        normalizedCouponCode == 'REFFERER20';
+    final hideCouponBreakdown = Coupon.isSystemCouponCode(normalizedCouponCode);
     final foodSettlement = _foodSettlement();
     final commission = DriverAmountCalculator.appFeeWithFoodFallback(
       booking: b,

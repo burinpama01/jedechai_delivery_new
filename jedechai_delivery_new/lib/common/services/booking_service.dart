@@ -300,6 +300,10 @@ class BookingService {
         destinationAddress, // Phase 6: Accept Object? instead of dynamic for type safety
     String? notes,
     DateTime? scheduledAt,
+    String? vehicleType,
+    String paymentMethod = 'cash',
+    double? priceOverride,
+    bool notifyDrivers = true,
   }) async {
     final userId = AuthService.userId;
     if (userId == null) {
@@ -335,13 +339,18 @@ class BookingService {
       final cleanPickup = formatAddress(pickupAddress);
       final cleanDest = formatAddress(destinationAddress);
 
-      // Calculate price automatically
-      final configService = SystemConfigService();
-      await configService.fetchSettings();
-      final calculatedPrice = await configService.calculateDeliveryFee(
-        serviceType: 'ride',
-        distanceKm: distanceKm,
-      );
+      final double calculatedPrice;
+      if (priceOverride != null) {
+        calculatedPrice = priceOverride;
+      } else {
+        final configService = SystemConfigService();
+        await configService.fetchSettings();
+        calculatedPrice = (await configService.calculateDeliveryFee(
+          serviceType: 'ride',
+          distanceKm: distanceKm,
+        ))
+            .toDouble();
+      }
 
       debugLog('💰 Calculated ride price: $calculatedPrice THB');
       debugLog(
@@ -352,6 +361,7 @@ class BookingService {
           .insert({
             'customer_id': userId,
             'service_type': 'ride',
+            if (vehicleType != null) 'vehicle_type': vehicleType,
             'origin_lat': originLat,
             'origin_lng': originLng,
             'dest_lat': destLat,
@@ -362,7 +372,7 @@ class BookingService {
             'destination_address': cleanDest, // ใช้ค่าที่ Clean แล้ว
             'notes': notes,
             'status': 'pending',
-            'payment_method': 'cash',
+            'payment_method': paymentMethod,
             'scheduled_at': scheduledAt?.toIso8601String(),
           })
           .select()
@@ -378,12 +388,16 @@ class BookingService {
         extraData: {
           'pickup': cleanPickup,
           'destination': cleanDest,
+          if (vehicleType != null) 'vehicle_type': vehicleType,
+          'payment_method': paymentMethod,
         },
       );
 
       // Notify drivers
-      debugLog('📤 Sending new ride booking notification to drivers...');
-      await _notifyDriversAboutNewRide(booking);
+      if (notifyDrivers) {
+        debugLog('📤 Sending new ride booking notification to drivers...');
+        await _notifyDriversAboutNewRide(booking);
+      }
 
       return booking;
     } catch (e) {
@@ -669,14 +683,33 @@ class BookingService {
     final currentUserId = AuthService.userId;
     if (currentUserId == null) throw Exception('Not authenticated');
 
+    final role = AuthService.currentUserRole;
+    if (role == 'driver') {
+      final result = await _client.rpc(
+        'update_booking_status_driver_guarded',
+        params: {
+          'p_booking_id': bookingId,
+          'p_new_status': newStatus,
+          'p_expected_statuses': expectedStatuses,
+        },
+      );
+      if (result is Map && result['success'] != true) {
+        final error = result['error'] ?? 'unknown';
+        if (error == 'status_mismatch') {
+          throw Exception('สถานะออเดอร์เปลี่ยนแล้ว กรุณารีเฟรชหน้าจอ');
+        }
+        throw Exception('ไม่สามารถเปลี่ยนสถานะได้: $error');
+      }
+      return;
+    }
+
     final booking = await getBookingById(bookingId);
     if (booking == null) throw Exception('Booking not found');
 
     final isCustomer = booking.customerId == currentUserId;
-    final isDriver = booking.driverId == currentUserId;
     final isMerchant = booking.merchantId == currentUserId;
-    final isAdmin = AuthService.currentUserRole == 'admin';
-    if (!isCustomer && !isDriver && !isMerchant && !isAdmin) {
+    final isAdmin = role == 'admin';
+    if (!isCustomer && !isMerchant && !isAdmin) {
       throw Exception('ไม่มีสิทธิ์เปลี่ยนสถานะออเดอร์นี้');
     }
 
@@ -1126,105 +1159,6 @@ class BookingService {
     return '$day/$month/$year $hour:$minute';
   }
 
-  /// Create a new food booking
-  ///
-  /// Creates a booking with service_type='food' and status='pending_merchant'
-  /// Price is calculated automatically based on distance
-  Future<Booking?> createFoodBooking({
-    required String merchantId,
-    required double merchantLat,
-    required double merchantLng,
-    required double customerLat,
-    required double customerLng,
-    required double distanceKm,
-    String? merchantAddress,
-    String? customerAddress,
-    String? notes,
-    required double foodCost,
-    required double deliveryFee,
-    DateTime? scheduledAt,
-  }) async {
-    final userId = AuthService.userId;
-    if (userId == null) {
-      debugLog('User not authenticated');
-      return null;
-    }
-
-    try {
-      debugLog(
-          '💰 Food order - food cost: $foodCost THB, delivery fee: $deliveryFee THB');
-      debugLog('💰 Total: ${foodCost + deliveryFee} THB');
-
-      // Format customer address to readable string
-      String formattedCustomerAddress = '';
-      if (customerAddress != null) {
-        formattedCustomerAddress = customerAddress.toString();
-      } else {
-        formattedCustomerAddress = 'Current Location';
-      }
-
-      debugLog('📍 Address formatting:');
-      debugLog('   └─ Original: $customerAddress');
-      debugLog('   └─ Formatted: $formattedCustomerAddress');
-
-      final bookingData = {
-        'customer_id': userId,
-        'service_type': 'food',
-        'merchant_id': merchantId,
-        'origin_lat': merchantLat,
-        'origin_lng': merchantLng,
-        'pickup_address': merchantAddress,
-        'dest_lat': customerLat,
-        'dest_lng': customerLng,
-        'destination_address': formattedCustomerAddress,
-        'distance_km': distanceKm,
-        'price': foodCost, // Store food cost in price field
-        'delivery_fee': deliveryFee, // Store delivery fee separately
-        'notes': notes,
-        'status': 'pending_merchant',
-        'payment_method': 'cash',
-        'scheduled_at': scheduledAt?.toIso8601String(),
-      };
-
-      debugLog('📝 Inserting booking data:');
-      debugLog('   └─ price (food cost): ฿$foodCost');
-      debugLog('   └─ delivery_fee: ฿$deliveryFee');
-      debugLog('   └─ service_type: food');
-      debugLog('   └─ status: pending_merchant');
-
-      final response =
-          await _client.from('bookings').insert(bookingData).select().single();
-
-      final booking = Booking.fromJson(response);
-      await _notifyAdminNewBooking(
-        booking: booking,
-        eventType: 'food_order_new',
-        title: 'JDC: มีออเดอร์อาหารใหม่',
-        message:
-            'มีออเดอร์อาหารใหม่จากร้าน $merchantId ยอดอาหาร ฿${foodCost.toStringAsFixed(0)} ค่าส่ง ฿${deliveryFee.toStringAsFixed(0)}',
-        extraData: {
-          'merchant_id': merchantId,
-          'merchant_address': merchantAddress,
-          'customer_address': formattedCustomerAddress,
-        },
-      );
-      await _notifyMerchantNewFoodOrder(
-        booking: booking,
-        merchantId: merchantId,
-        foodCost: foodCost,
-        deliveryFee: deliveryFee,
-      );
-
-      debugLog('📤 Sending new food booking notification to drivers...');
-      await _notifyDriversAboutNewRide(booking);
-
-      return booking;
-    } catch (e) {
-      debugLog('Failed to create food booking: $e');
-      return null;
-    }
-  }
-
   /// Insert booking items for food orders
   /// DB columns: booking_id, menu_item_id, name, price, quantity
   Future<void> insertBookingItems(
@@ -1250,41 +1184,6 @@ class BookingService {
       debugLog('Failed to insert booking items: $e');
       throw Exception('Failed to insert booking items: $e');
     }
-  }
-
-  Future<void> _notifyMerchantNewFoodOrder({
-    required Booking booking,
-    required String merchantId,
-    required double foodCost,
-    required double deliveryFee,
-  }) async {
-    final orderCode =
-        booking.id.length > 8 ? booking.id.substring(0, 8) : booking.id;
-    final success = await NotificationSender.sendNotification(
-      targetUserId: merchantId,
-      title: 'มีออเดอร์อาหารใหม่',
-      body:
-          'ออเดอร์ #$orderCode ยอดอาหาร ฿${foodCost.toStringAsFixed(0)} ค่าส่ง ฿${deliveryFee.toStringAsFixed(0)}',
-      data: NotificationPayloadPolicy.buildBookingPayload(
-        type: NotificationTypes.merchantOrderCreated,
-        recipientRole: NotificationRoles.merchant,
-        bookingId: booking.id,
-        serviceType: booking.serviceType,
-        screen: NotificationRouteScreens.merchantOrder,
-        extra: {
-          'legacy_type': NotificationTypes.legacyMerchantNewOrder,
-          'customer_id': booking.customerId,
-          'merchant_id': merchantId,
-          'status': booking.status,
-          'price': foodCost.toString(),
-          'delivery_fee': deliveryFee.toString(),
-        },
-      ),
-    );
-
-    debugLog(success
-        ? '✅ Merchant new food order notification sent'
-        : '⚠️ Merchant new food order notification failed');
   }
 
   Future<void> _notifyAdminNewBooking({

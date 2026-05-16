@@ -78,15 +78,21 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
     }
   }
 
-  Future<void> _showAddEditDialog({SavedAddress? existing}) async {
-    final nameController = TextEditingController(text: existing?.name ?? '');
-    final addressController = TextEditingController(text: existing?.address ?? '');
+  Future<void> _showAddEditDialog({
+    SavedAddress? existing,
+    String? initialLabel,
+    String? initialName,
+  }) async {
+    final nameController =
+        TextEditingController(text: existing?.name ?? initialName ?? '');
+    final addressController =
+        TextEditingController(text: existing?.address ?? '');
     final noteController = TextEditingController(text: existing?.note ?? '');
     double? pickedLat = existing?.latitude;
     double? pickedLng = existing?.longitude;
     String pickedAddress = existing?.address ?? '';
 
-    String selectedLabel = existing?.label ?? 'other';
+    String selectedLabel = existing?.label ?? initialLabel ?? 'other';
 
     final result = await showDialog<bool>(
       context: context,
@@ -95,7 +101,9 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
           builder: (context, setDialogState) {
             return AlertDialog(
               title: Text(
-                existing != null ? AppLocalizations.of(context)!.addrEditTitle : AppLocalizations.of(context)!.addrAddTitle,
+                existing != null
+                    ? AppLocalizations.of(context)!.addrEditTitle
+                    : AppLocalizations.of(context)!.addrAddTitle,
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               content: SingleChildScrollView(
@@ -147,7 +155,8 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                       controller: nameController,
                       decoration: InputDecoration(
                         labelText: AppLocalizations.of(context)!.addrPlaceName,
-                        hintText: AppLocalizations.of(context)!.addrPlaceNameHint,
+                        hintText:
+                            AppLocalizations.of(context)!.addrPlaceNameHint,
                         prefixIcon: Icon(Icons.edit),
                       ),
                     ),
@@ -156,12 +165,14 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                     // Map pin picker button
                     InkWell(
                       onTap: () async {
-                        final mapResult = await Navigator.of(context).push<Map<String, dynamic>>(
+                        final mapResult = await Navigator.of(context)
+                            .push<Map<String, dynamic>>(
                           MaterialPageRoute(
                             builder: (_) => DeliveryMapPickerScreen(
-                              initialPosition: pickedLat != null && pickedLng != null
-                                  ? LatLng(pickedLat!, pickedLng!)
-                                  : null,
+                              initialPosition:
+                                  pickedLat != null && pickedLng != null
+                                      ? LatLng(pickedLat!, pickedLng!)
+                                      : null,
                             ),
                           ),
                         );
@@ -169,7 +180,8 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                           setDialogState(() {
                             pickedLat = mapResult['lat'] as double;
                             pickedLng = mapResult['lng'] as double;
-                            pickedAddress = mapResult['address'] as String? ?? '';
+                            pickedAddress =
+                                mapResult['address'] as String? ?? '';
                             if (addressController.text.isEmpty) {
                               addressController.text = pickedAddress;
                             }
@@ -179,11 +191,14 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                       borderRadius: BorderRadius.circular(10),
                       child: Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 14),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: pickedLat != null ? AppTheme.primaryGreen : Colors.grey.shade300,
+                            color: pickedLat != null
+                                ? AppTheme.primaryGreen
+                                : Colors.grey.shade300,
                             width: pickedLat != null ? 2 : 1,
                           ),
                           color: pickedLat != null
@@ -193,8 +208,12 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                         child: Row(
                           children: [
                             Icon(
-                              pickedLat != null ? Icons.check_circle : Icons.pin_drop,
-                              color: pickedLat != null ? AppTheme.primaryGreen : Colors.grey,
+                              pickedLat != null
+                                  ? Icons.check_circle
+                                  : Icons.pin_drop,
+                              color: pickedLat != null
+                                  ? AppTheme.primaryGreen
+                                  : Colors.grey,
                               size: 22,
                             ),
                             const SizedBox(width: 10),
@@ -203,19 +222,29 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    pickedLat != null ? AppLocalizations.of(context)!.addrPinPlaced : AppLocalizations.of(context)!.addrPinOnMap,
+                                    pickedLat != null
+                                        ? AppLocalizations.of(context)!
+                                            .addrPinPlaced
+                                        : AppLocalizations.of(context)!
+                                            .addrPinOnMap,
                                     style: TextStyle(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 14,
                                       color: pickedLat != null
                                           ? AppTheme.primaryGreen
-                                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant,
                                     ),
                                   ),
                                   if (pickedLat != null)
                                     Text(
-                                      pickedAddress.isNotEmpty ? pickedAddress : '${pickedLat!.toStringAsFixed(5)}, ${pickedLng!.toStringAsFixed(5)}',
-                                      style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                                      pickedAddress.isNotEmpty
+                                          ? pickedAddress
+                                          : '${pickedLat!.toStringAsFixed(5)}, ${pickedLng!.toStringAsFixed(5)}',
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.grey[500]),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -234,7 +263,8 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                       controller: addressController,
                       maxLines: 2,
                       decoration: InputDecoration(
-                        labelText: AppLocalizations.of(context)!.addrAddressLabel,
+                        labelText:
+                            AppLocalizations.of(context)!.addrAddressLabel,
                         hintText: AppLocalizations.of(context)!.addrAddressHint,
                         prefixIcon: Icon(Icons.map),
                       ),
@@ -260,9 +290,13 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                 ),
                 ElevatedButton(
                   onPressed: () async {
-                    if (nameController.text.trim().isEmpty || pickedLat == null || pickedLng == null) {
+                    if (nameController.text.trim().isEmpty ||
+                        pickedLat == null ||
+                        pickedLng == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(AppLocalizations.of(context)!.addrValidation)),
+                        SnackBar(
+                            content: Text(
+                                AppLocalizations.of(context)!.addrValidation)),
                       );
                       return;
                     }
@@ -313,14 +347,14 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
   ) {
     final isSelected = value == selected;
     return ChoiceChip(
-      avatar: Icon(icon, size: 18, color: isSelected ? Colors.white : Colors.grey),
+      avatar:
+          Icon(icon, size: 18, color: isSelected ? Colors.white : Colors.grey),
       label: Text(label),
       selected: isSelected,
       selectedColor: _colorForLabel(value),
       labelStyle: TextStyle(
-        color: isSelected
-            ? Colors.white
-            : Theme.of(context).colorScheme.onSurface,
+        color:
+            isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
       ),
       onSelected: (_) => onSelected(value),
@@ -332,7 +366,8 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(AppLocalizations.of(context)!.addrDeleteTitle),
-        content: Text(AppLocalizations.of(context)!.addrDeleteConfirm(addr.name)),
+        content:
+            Text(AppLocalizations.of(context)!.addrDeleteConfirm(addr.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -359,7 +394,9 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.pickMode ? AppLocalizations.of(context)!.addrPickTitle : AppLocalizations.of(context)!.addrBookTitle),
+        title: Text(widget.pickMode
+            ? AppLocalizations.of(context)!.addrPickTitle
+            : AppLocalizations.of(context)!.addrBookTitle),
         backgroundColor: AppTheme.primaryGreen,
         foregroundColor: Colors.white,
       ),
@@ -411,9 +448,17 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildQuickAddButton('home', AppLocalizations.of(context)!.addrLabelHome, Icons.home_rounded, Colors.blue),
+              _buildQuickAddButton(
+                  'home',
+                  AppLocalizations.of(context)!.addrLabelHome,
+                  Icons.home_rounded,
+                  Colors.blue),
               const SizedBox(width: 16),
-              _buildQuickAddButton('work', AppLocalizations.of(context)!.addrLabelWork, Icons.work_rounded, Colors.orange),
+              _buildQuickAddButton(
+                  'work',
+                  AppLocalizations.of(context)!.addrLabelWork,
+                  Icons.work_rounded,
+                  Colors.orange),
             ],
           ),
         ],
@@ -421,19 +466,12 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
     );
   }
 
-  Widget _buildQuickAddButton(String label, String name, IconData icon, Color color) {
+  Widget _buildQuickAddButton(
+      String label, String name, IconData icon, Color color) {
     return OutlinedButton.icon(
       onPressed: () => _showAddEditDialog(
-        existing: SavedAddress(
-          id: '',
-          userId: '',
-          label: label,
-          name: name,
-          address: '',
-          latitude: 0,
-          longitude: 0,
-          createdAt: DateTime.now(),
-        ),
+        initialLabel: label,
+        initialName: name,
       ),
       icon: Icon(icon, color: color),
       label: Text(AppLocalizations.of(context)!.addrQuickAdd(name)),
@@ -503,7 +541,8 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
                             color: color.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),

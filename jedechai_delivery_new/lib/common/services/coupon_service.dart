@@ -280,7 +280,9 @@ class CouponService {
     }
   }
 
-  /// Record coupon usage after successful booking
+  /// Record coupon usage atomically after successful booking.
+  /// Uses a DB-level lock to prevent race conditions where concurrent
+  /// checkouts could reuse the same coupon beyond its usage limit.
   Future<void> recordUsage({
     required String couponId,
     required String bookingId,
@@ -290,41 +292,32 @@ class CouponService {
     if (userId == null) return;
 
     try {
-      // Insert usage record
-      await _client.from('coupon_usages').insert({
-        'coupon_id': couponId,
-        'user_id': userId,
-        'booking_id': bookingId,
-        'discount_amount': discountAmount,
+      await _client.rpc('apply_coupon_atomic', params: {
+        'p_coupon_id': couponId,
+        'p_user_id': userId,
+        'p_booking_id': bookingId,
+        'p_discount_amount': discountAmount,
       });
-
-      // Increment used_count on coupon
-      await _client.rpc('increment_coupon_usage', params: {
-        'coupon_id_param': couponId,
-      });
-
-      debugLog('✅ Recorded coupon usage: $couponId for booking: $bookingId');
+      debugLog('✅ Recorded coupon usage (atomic): $couponId for booking: $bookingId');
     } catch (e) {
       debugLog('❌ Error recording coupon usage: $e');
-      // Phase 5A fix: Make this CRITICAL — if usage recording fails,
-      // the coupon can be reused beyond its limit.
       rethrow;
     }
   }
 
-  /// Get user's usage count for a specific coupon
+  /// Get user's usage count for a specific coupon.
+  /// Uses server-side count to avoid pulling every row into memory.
   Future<int> _getUserUsageCount(String couponId, String userId) async {
     try {
       final response = await _client
           .from('coupon_usages')
-          .select()
+          .select('id')
           .eq('coupon_id', couponId)
-          .eq('user_id', userId);
+          .eq('user_id', userId)
+          .count();
 
-      return (response as List).length;
+      return response.count;
     } catch (e) {
-      // Phase 5A fix: throw on error instead of returning 0,
-      // which would bypass per-user limit checks
       debugLog('❌ Error fetching coupon usage count: $e');
       throw Exception('ไม่สามารถตรวจสอบการใช้งานโค้ดส่วนลดได้ กรุณาลองใหม่');
     }
@@ -387,6 +380,15 @@ class CouponService {
     required DateTime startDate,
     required DateTime endDate,
   }) async {
+    bool _isValidRate(double r) => r >= 0 && r <= 1;
+    if (!_isValidRate(merchantGpChargeRate) ||
+        !_isValidRate(merchantGpSystemRate) ||
+        !_isValidRate(merchantGpDriverRate)) {
+      throw ArgumentError('GP rates must each be between 0 and 1');
+    }
+    if (merchantGpChargeRate + merchantGpSystemRate + merchantGpDriverRate > 1.0 + 1e-9) {
+      throw ArgumentError('Sum of GP rates must not exceed 1');
+    }
     try {
       final response = await _client
           .from('coupons')

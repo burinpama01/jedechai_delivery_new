@@ -535,8 +535,80 @@
     .footer-inner {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       gap: 16px;
       flex-wrap: wrap;
+    }
+
+    .service-features {
+      margin: 14px 0 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 6px;
+    }
+
+    .service-features li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .service-features li::before {
+      content: "";
+      flex: 0 0 6px;
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--green);
+      margin-top: 6px;
+    }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 32px;
+    }
+
+    .contact-card {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.58);
+    }
+
+    .contact-card-icon {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius);
+      color: #fff;
+      background: var(--green);
+      margin-bottom: 4px;
+    }
+
+    .contact-card strong {
+      font-size: 15px;
+    }
+
+    .contact-card a,
+    .contact-card span {
+      color: var(--muted);
+      font-size: 14px;
+      word-break: break-all;
+    }
+
+    .contact-card a:hover {
+      color: var(--green);
+      text-decoration: underline;
     }
 
     .reveal {
@@ -582,6 +654,10 @@
 
       .download-actions {
         justify-content: flex-start;
+      }
+
+      .contact-grid {
+        grid-template-columns: 1fr;
       }
     }
 
@@ -670,7 +746,7 @@
       </a>
       <nav class="nav-actions" aria-label="เมนูหลัก">
         <a class="text-link" href="#services">บริการ</a>
-        <a class="text-link" href="#partners">พาร์ตเนอร์</a>
+        <a class="text-link" href="#contact">ติดต่อ</a>
         <a class="outline-button" href="reset-password.html">รีเซ็ตรหัสผ่าน</a>
       </nav>
     </div>
@@ -741,6 +817,12 @@
             </div>
             <h3>Food delivery</h3>
             <p>สั่งอาหารและเครื่องดื่มจากร้านในพื้นที่ เลือกเมนู ตรวจยอด และติดตามสถานะคำสั่งซื้อได้ในแอป</p>
+            <ul class="service-features">
+              <li>เลือกร้านและเมนูจากแอปได้เลย</li>
+              <li>ชำระด้วยเครดิตในระบบ</li>
+              <li>ติดตามสถานะออเดอร์แบบเรียลไทม์</li>
+              <li>รองรับร้านค้าในตำบลเจดีย์ชัย</li>
+            </ul>
           </article>
           <article class="service-card reveal delay-2">
             <div class="service-icon" aria-hidden="true">
@@ -748,6 +830,12 @@
             </div>
             <h3>Ride hailing</h3>
             <p>เรียกรถรับส่งผู้โดยสารสำหรับการเดินทางใกล้ตัว เลือกจุดรับ-จุดส่ง และประสานงานกับคนขับได้สะดวก</p>
+            <ul class="service-features">
+              <li>ระบุจุดรับและจุดส่งบนแผนที่</li>
+              <li>ดูราคาค่าโดยสารก่อนยืนยัน</li>
+              <li>ติดต่อคนขับได้ในแอป</li>
+              <li>ชำระด้วยเครดิตในระบบ</li>
+            </ul>
           </article>
           <article class="service-card reveal delay-3">
             <div class="service-icon" aria-hidden="true">
@@ -755,6 +843,12 @@
             </div>
             <h3>Parcel delivery</h3>
             <p>ส่งเอกสาร ของใช้ หรือพัสดุในพื้นที่ พร้อมข้อมูลปลายทางและสถานะงานที่ตรวจสอบย้อนหลังได้</p>
+            <ul class="service-features">
+              <li>ระบุที่อยู่ผู้รับและรายละเอียดพัสดุ</li>
+              <li>คนขับรับงานและยืนยันรับพัสดุในแอป</li>
+              <li>ตรวจสอบสถานะงานย้อนหลังได้</li>
+              <li>รองรับพัสดุขนาดเล็กถึงกลาง</li>
+            </ul>
           </article>
         </div>
       </div>
@@ -796,6 +890,40 @@
       </div>
     </section>
 
+    <section class="section" id="contact">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title reveal">ติดต่อเรา</h2>
+            <p class="section-subtitle reveal delay-1">มีคำถามหรือต้องการความช่วยเหลือ? ติดต่อทีมงาน JDC delivery ได้ทางช่องทางด้านล่าง</p>
+          </div>
+        </div>
+        <div class="contact-grid">
+          <div class="contact-card reveal delay-1">
+            <div class="contact-card-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.24 11.47 11.47 0 0 0 3.59.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C9.61 21 3 14.39 3 6a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1.02l-2.2 2.2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <strong>โทรศัพท์</strong>
+            <span>083-982-5982</span>
+          </div>
+          <div class="contact-card reveal delay-2">
+            <div class="contact-card-icon" style="background:var(--gold);" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="m22 6-10 7L2 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <strong>อีเมล</strong>
+            <span>jdcdelivery2026@gmail.com</span>
+          </div>
+          <div class="contact-card reveal delay-3">
+            <div class="contact-card-icon" style="background:#1877f2;" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796V24C19.612 23.094 24 18.1 24 12.073Z"/></svg>
+            </div>
+            <strong>Facebook Page</strong>
+            <a href="https://facebook.com/JDCDelivery" target="_blank" rel="noopener noreferrer">@JDCDelivery</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="section" id="download">
       <div class="container download-band reveal">
         <div>
@@ -824,9 +952,16 @@
   </main>
 
   <footer class="footer">
-    <div class="container footer-inner">
-      <span>© <span id="year"></span> <span id="footerBrand">JDC delivery</span>. All rights reserved.</span>
-      <span>Jedechai local service platform</span>
+    <div class="container">
+      <div class="footer-inner">
+        <span>© <span id="year"></span> <span id="footerBrand">JDC delivery</span>. All rights reserved.</span>
+        <nav aria-label="ลิงก์ footer" style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;">
+          <a href="https://sites.google.com/view/jdc-delivery-privacy-policy" target="_blank" rel="noopener noreferrer" style="color:var(--muted);font-size:13px;">นโยบายความเป็นส่วนตัว</a>
+          <a href="refund-policy.html" style="color:var(--muted);font-size:13px;">นโยบายการคืนเงิน</a>
+          <a href="#contact" style="color:var(--muted);font-size:13px;">ติดต่อเรา</a>
+          <span style="font-size:13px;">Jedechai local service platform</span>
+        </nav>
+      </div>
     </div>
   </footer>
 

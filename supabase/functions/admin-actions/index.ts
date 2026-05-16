@@ -1210,6 +1210,29 @@ async function handleAssignOrder(supabase, body) {
   return jsonResponse({ success: true });
 }
 
+async function notifyCancelParticipants(supabase, orderId: string, isForce: boolean) {
+  try {
+    const { data: booking } = await supabase
+      .from("bookings")
+      .select("customer_id, driver_id, merchant_id, service_type")
+      .eq("id", orderId)
+      .maybeSingle();
+    if (!booking) return;
+
+    const title = isForce ? "ออเดอร์ถูกยกเลิกโดย Admin" : "ออเดอร์ถูกยกเลิก";
+    const body = "ออเดอร์ #" + orderId.substring(0, 8) + " ถูกยกเลิกแล้ว";
+    const targets = [booking.customer_id, booking.driver_id];
+    if (booking.service_type === "food") targets.push(booking.merchant_id);
+
+    const rows = targets
+      .filter(Boolean)
+      .map((uid) => ({ user_id: uid, title, body, type: "order.cancelled", data: { order_id: orderId } }));
+    await notifyTargets(supabase, rows);
+  } catch (e) {
+    console.warn("Failed to notify cancel participants:", e);
+  }
+}
+
 async function handleCancelOrder(supabase, body) {
   const { order_id, reason } = body;
   if (!order_id) return errorResponse("Missing 'order_id'");
@@ -1218,6 +1241,7 @@ async function handleCancelOrder(supabase, body) {
     .update({ status: "cancelled", cancellation_reason: reason || "", updated_at: new Date().toISOString() })
     .eq("id", order_id);
   if (error) return errorResponse(error.message);
+  await notifyCancelParticipants(supabase, order_id, false);
   return jsonResponse({ success: true });
 }
 
@@ -1267,6 +1291,7 @@ async function handleForceCancelOrder(supabase, body) {
     }
   }
 
+  await notifyCancelParticipants(supabase, order_id, true);
   return jsonResponse({ success: true });
 }
 

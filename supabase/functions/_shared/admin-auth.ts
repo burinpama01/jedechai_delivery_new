@@ -85,7 +85,8 @@ export async function verifyAdmin(
 }
 
 /**
- * Insert notification rows for admin actions.
+ * Insert notification rows for admin actions and trigger FCM push.
+ * DB insert failure only warns — FCM is still attempted independently.
  */
 export async function notifyTargets(
   supabase: SupabaseClient,
@@ -99,8 +100,36 @@ export async function notifyTargets(
 ) {
   const validRows = rows.filter((r) => r.user_id && r.title && r.body);
   if (!validRows.length) return;
-  const { error } = await supabase.from("notifications").insert(validRows);
-  if (error) {
-    console.warn("Admin notification insert failed:", error.message);
+
+  // Insert into DB (in-app notifications)
+  const { error: dbError } = await supabase.from("notifications").insert(validRows);
+  if (dbError) {
+    console.warn("Admin notification insert failed:", dbError.message);
+  }
+
+  // Send FCM push for each notification — use service role key as bearer
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  if (!supabaseUrl || !serviceRoleKey) return;
+
+  for (const row of validRows) {
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/send-fcm-notification`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${serviceRoleKey}`,
+        },
+        body: JSON.stringify({
+          user_ids: [row.user_id],
+          title: row.title,
+          message: row.body,
+          data: row.data as Record<string, string> | undefined,
+          persist_in_app: false,
+        }),
+      });
+    } catch (e) {
+      console.warn(`FCM push failed for user ${row.user_id}:`, e);
+    }
   }
 }

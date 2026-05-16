@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../common/models/booking.dart';
+import '../../../common/models/coupon.dart';
 import '../../../l10n/app_localizations.dart';
 
 /// Job card displayed in the driver dashboard job feed.
@@ -288,9 +289,7 @@ class _FinancialSummary extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
     final normalizedCode = couponCode?.trim().toUpperCase();
-    final hideCouponBreakdown = normalizedCode == 'WELCOME20' ||
-        normalizedCode == 'REFERRER20' ||
-        normalizedCode == 'REFFERER20';
+    final hideCouponBreakdown = Coupon.isSystemCouponCode(normalizedCode);
 
     if (job.serviceType == 'food') {
       final foodPrice = job.price;

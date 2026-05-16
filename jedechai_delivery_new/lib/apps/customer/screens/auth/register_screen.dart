@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../common/services/auth_service.dart';
+import '../../../../common/widgets/language_switcher.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../l10n/app_localizations.dart';
 import 'login_screen.dart';
@@ -291,7 +292,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainer,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const LanguageSwitcher(),
+                ),
+              ),
+              const SizedBox(height: 32),
               
               // Welcome Text
               Text(

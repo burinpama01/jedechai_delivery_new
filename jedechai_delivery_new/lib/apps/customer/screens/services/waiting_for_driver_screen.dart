@@ -1,4 +1,4 @@
-﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
+import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import '../../../../l10n/app_localizations.dart';
@@ -9,6 +9,7 @@ import '../../../../common/services/supabase_service.dart';
 import '../../../../common/services/auth_service.dart';
 import '../../../../common/services/booking_service.dart';
 import '../../../../common/services/chat_service.dart';
+import '../../../../common/services/admin_line_notification_service.dart';
 import '../../../../common/utils/order_code_formatter.dart';
 import '../../../../common/widgets/chat_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -17,7 +18,7 @@ import '../customer_main_screen.dart';
 import 'customer_ride_status_screen.dart';
 
 /// Waiting for Driver/Restaurant Screen - Real-time Updates
-/// 
+///
 /// Shows real-time updates when driver accepts and updates booking status
 /// Also handles food orders waiting for restaurant acceptance
 class WaitingForDriverScreen extends StatefulWidget {
@@ -38,53 +39,62 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
   late final AnimationController _pulseAnimationController;
   late final Animation<double> _radarAnimation;
   late final Animation<double> _pulseAnimation;
-  
+
   StreamSubscription<List<Map<String, dynamic>>>? _bookingStreamSubscription;
   Timer? _retryTimer;
+  Timer? _rideTimeoutTimer;
   bool _isHandlingPriceAdjustment = false;
+  bool _isHandlingRideTimeout = false;
   late double _initialQuotedPrice;
-  
+  static const Duration _rideMatchTimeout = Duration(minutes: 5);
+
   bool _isDriverFound = false;
   bool _isDriverAssigned = false;
   String _driverName = '';
   String _driverPhone = '';
   String _driverVehicle = '';
   int _estimatedTime = 5; // minutes
-  
+
   // Food service specific
   bool get _isFoodService => widget.booking.serviceType == 'food';
   // ignore: unused_element
-  bool get _isWaitingForRestaurant => widget.booking.status == 'pending_merchant';
-  bool get _isRestaurantConfirmed => widget.booking.status == 'confirmed_merchant';
+  bool get _isWaitingForRestaurant =>
+      widget.booking.status == 'pending_merchant';
+  bool get _isRestaurantConfirmed =>
+      widget.booking.status == 'confirmed_merchant';
 
   @override
   void initState() {
     super.initState();
-    
+
     _radarAnimationController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
     );
-    
+
     _pulseAnimationController = AnimationController(
       duration: const Duration(seconds: 1),
       vsync: this,
     );
-    
-    _radarAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _radarAnimationController, curve: Curves.linear)
-    );
-    
+
+    _radarAnimation = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(
+        parent: _radarAnimationController, curve: Curves.linear));
+
     _pulseAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
-      CurvedAnimation(parent: _pulseAnimationController, curve: Curves.easeInOut)
-    );
-    
+        CurvedAnimation(
+            parent: _pulseAnimationController, curve: Curves.easeInOut));
+
     _radarAnimationController.repeat();
     _pulseAnimationController.repeat();
     _initialQuotedPrice = widget.booking.price;
-    
+
     // Listen to real-time booking updates
     _listenToBookingUpdates();
+    if (!_isFoodService &&
+        (widget.booking.status == 'pending' ||
+            widget.booking.status == 'searching')) {
+      _startRideTimeout();
+    }
   }
 
   Future<bool> _confirmAdjustedPriceIfNeeded(Booking booking) async {
@@ -105,7 +115,9 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
           builder: (ctx) => AlertDialog(
             title: Text(AppLocalizations.of(context)!.waitingPriceUpdated),
             content: Text(
-              AppLocalizations.of(context)!.waitingPriceAdjustedBody(_initialQuotedPrice.toStringAsFixed(2), adjustedPrice.toStringAsFixed(2)),
+              AppLocalizations.of(context)!.waitingPriceAdjustedBody(
+                  _initialQuotedPrice.toStringAsFixed(2),
+                  adjustedPrice.toStringAsFixed(2)),
             ),
             actions: [
               TextButton(
@@ -128,13 +140,11 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
     }
 
     try {
-      await SupabaseService.client
-          .from('bookings')
-          .update({
-            'status': 'cancelled',
-            'notes': '${booking.notes ?? ''} | customer_cancelled_after_price_adjustment',
-          })
-          .eq('id', booking.id);
+      await SupabaseService.client.from('bookings').update({
+        'status': 'cancelled',
+        'notes':
+            '${booking.notes ?? ''} | customer_cancelled_after_price_adjustment',
+      }).eq('id', booking.id);
     } catch (e) {
       debugLog('❌ Failed to cancel adjusted booking: $e');
     }
@@ -162,41 +172,42 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
           .stream(primaryKey: ['id'])
           .eq('id', widget.booking.id)
           .listen(
-        (data) {
-          debugLog('📡 ===== STREAM UPDATE RECEIVED =====');
-          debugLog('📡 Stream update received: ${data.length} items');
-          debugLog('📡 Timestamp: ${DateTime.now().toIso8601String()}');
+            (data) {
+              debugLog('📡 ===== STREAM UPDATE RECEIVED =====');
+              debugLog('📡 Stream update received: ${data.length} items');
+              debugLog('📡 Timestamp: ${DateTime.now().toIso8601String()}');
 
-          if (data.isEmpty || !mounted) {
-            debugLog('⚠️ Stream data is empty or widget not mounted');
-            return;
-          }
+              if (data.isEmpty || !mounted) {
+                debugLog('⚠️ Stream data is empty or widget not mounted');
+                return;
+              }
 
-          final bookingData = data.first;
-          _handleBookingUpdate(bookingData);
-        },
-        onError: (error) {
-          debugLog('❌ Stream error: $error');
-          debugLog('❌ Stream error type: ${error.runtimeType}');
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(AppLocalizations.of(context)!.waitingConnectionError),
-                backgroundColor: Colors.orange,
-                duration: const Duration(seconds: 3),
-              ),
-            );
-          }
-          _retryTimer?.cancel();
-          _retryTimer = Timer(const Duration(seconds: 3), () {
-            if (mounted) {
-              debugLog('🔄 Retrying stream connection...');
-              _listenToBookingUpdates();
-            }
-          });
-        },
-        cancelOnError: false,
-      );
+              final bookingData = data.first;
+              _handleBookingUpdate(bookingData);
+            },
+            onError: (error) {
+              debugLog('❌ Stream error: $error');
+              debugLog('❌ Stream error type: ${error.runtimeType}');
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                        AppLocalizations.of(context)!.waitingConnectionError),
+                    backgroundColor: Colors.orange,
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              }
+              _retryTimer?.cancel();
+              _retryTimer = Timer(const Duration(seconds: 3), () {
+                if (mounted) {
+                  debugLog('🔄 Retrying stream connection...');
+                  _listenToBookingUpdates();
+                }
+              });
+            },
+            cancelOnError: false,
+          );
 
       debugLog('✅ Stream subscription created successfully');
     } catch (e) {
@@ -207,7 +218,8 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
           builder: (ctx) => AlertDialog(
             icon: const Icon(Icons.wifi_off, color: Colors.red, size: 48),
             title: Text(AppLocalizations.of(context)!.waitingConnectionFailed),
-            content: Text(AppLocalizations.of(context)!.waitingCannotConnect(e.toString())),
+            content: Text(AppLocalizations.of(context)!
+                .waitingCannotConnect(e.toString())),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
@@ -231,16 +243,26 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
     debugLog('📋 Full booking data: $bookingData');
 
     final hasDriver = driverId != null && driverId.toString().isNotEmpty;
-    
+    final isTerminalStatus = status == 'completed' || status == 'cancelled';
+
     // Food service statuses that should navigate to status screen
-    final foodActiveStatuses = ['preparing', 'matched', 'ready_for_pickup', 'picking_up_order', 'in_transit', 'arrived'];
-    final isFoodActive = _isFoodService && status != null && foodActiveStatuses.contains(status);
-    
+    final foodActiveStatuses = [
+      'preparing',
+      'matched',
+      'ready_for_pickup',
+      'picking_up_order',
+      'in_transit',
+      'arrived'
+    ];
+    final isFoodActive =
+        _isFoodService && status != null && foodActiveStatuses.contains(status);
+
     // Ride service accepted statuses
     final isAcceptedStatus = status == 'accepted' || status == 'matched';
 
     // Navigate to status screen if driver accepted (ride) or food order is active
     if ((isAcceptedStatus && hasDriver) || isFoodActive) {
+      _rideTimeoutTimer?.cancel();
       debugLog('✅ Order active! Status: $status, Driver ID: $driverId');
 
       if (hasDriver) {
@@ -251,18 +273,22 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
             setState(() {
               _isDriverFound = true;
               _isDriverAssigned = true;
-              _driverName = driverInfo['full_name'] ?? AppLocalizations.of(context)!.waitingDriverFallback;
+              _driverName = driverInfo['full_name'] ??
+                  AppLocalizations.of(context)!.waitingDriverFallback;
               _driverPhone = driverInfo['phone'] ?? '';
-              _driverVehicle = driverInfo['vehicle_type'] ?? AppLocalizations.of(context)!.waitingMotorcycleFallback;
+              _driverVehicle = driverInfo['vehicle_type'] ??
+                  AppLocalizations.of(context)!.waitingMotorcycleFallback;
             });
           }
 
           Future.delayed(const Duration(milliseconds: 500), () async {
             if (!mounted) return;
-            final fullBooking = await _fetchFullBooking(bookingData['id'] as String);
+            final fullBooking =
+                await _fetchFullBooking(bookingData['id'] as String);
             if (!mounted || fullBooking == null) return;
 
-            final canContinue = await _confirmAdjustedPriceIfNeeded(fullBooking);
+            final canContinue =
+                await _confirmAdjustedPriceIfNeeded(fullBooking);
             if (!mounted || !canContinue) return;
 
             Navigator.of(context).pushReplacement(
@@ -278,10 +304,12 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
           if (!mounted) return;
           Future.delayed(const Duration(milliseconds: 500), () async {
             if (!mounted) return;
-            final fullBooking = await _fetchFullBooking(bookingData['id'] as String);
+            final fullBooking =
+                await _fetchFullBooking(bookingData['id'] as String);
             if (!mounted || fullBooking == null) return;
 
-            final canContinue = await _confirmAdjustedPriceIfNeeded(fullBooking);
+            final canContinue =
+                await _confirmAdjustedPriceIfNeeded(fullBooking);
             if (!mounted || !canContinue) return;
 
             Navigator.of(context).pushReplacement(
@@ -297,7 +325,8 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
         // Food order active but no driver yet - still navigate to show status
         Future.delayed(const Duration(milliseconds: 500), () async {
           if (!mounted) return;
-          final fullBooking = await _fetchFullBooking(bookingData['id'] as String);
+          final fullBooking =
+              await _fetchFullBooking(bookingData['id'] as String);
           if (!mounted || fullBooking == null) return;
 
           final canContinue = await _confirmAdjustedPriceIfNeeded(fullBooking);
@@ -315,6 +344,10 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
       return;
     }
 
+    if (isTerminalStatus) {
+      _rideTimeoutTimer?.cancel();
+    }
+
     if (status == 'completed') {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => CustomerMainScreen()),
@@ -324,11 +357,13 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
     }
 
     if (status == 'cancelled') {
+      if (_isHandlingRideTimeout) return;
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Column(
             children: [
               Container(
@@ -342,14 +377,18 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
               const SizedBox(height: 16),
               Text(
                 AppLocalizations.of(context)!.waitingMerchantRejected,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.red),
+                style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red),
                 textAlign: TextAlign.center,
               ),
             ],
           ),
           content: Text(
             AppLocalizations.of(context)!.waitingMerchantRejectedBody,
-            style: TextStyle(fontSize: 15, color: colorScheme.onSurface, height: 1.5),
+            style: TextStyle(
+                fontSize: 15, color: colorScheme.onSurface, height: 1.5),
             textAlign: TextAlign.center,
           ),
           actions: [
@@ -359,7 +398,8 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
                 onPressed: () {
                   Navigator.of(ctx).pop();
                   Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => CustomerMainScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => CustomerMainScreen()),
                     (route) => false,
                   );
                 },
@@ -367,15 +407,114 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
                   backgroundColor: Colors.red,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
-                child: Text(AppLocalizations.of(context)!.waitingUnderstood, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                child: Text(AppLocalizations.of(context)!.waitingUnderstood,
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
           ],
         ),
       );
     }
+  }
+
+  void _startRideTimeout() {
+    _rideTimeoutTimer?.cancel();
+    _estimatedTime = _rideMatchTimeout.inMinutes;
+    _rideTimeoutTimer = Timer(_rideMatchTimeout, _handleRideTimeout);
+  }
+
+  Future<void> _handleRideTimeout() async {
+    final latestBooking = await _fetchFullBooking(widget.booking.id);
+    if (latestBooking == null || !mounted) return;
+
+    final stillWaiting = latestBooking.serviceType == 'ride' &&
+        (latestBooking.status == 'pending' ||
+            latestBooking.status == 'searching') &&
+        (latestBooking.driverId == null || latestBooking.driverId!.isEmpty);
+
+    if (!stillWaiting) return;
+
+    _isHandlingRideTimeout = true;
+    var didCancelBooking = false;
+    try {
+      final cancelledRows = await SupabaseService.client
+          .from('bookings')
+          .update({
+            'status': 'cancelled',
+            'notes':
+                '${latestBooking.notes ?? ''} | ride_timeout_no_driver_${DateTime.now().toIso8601String()}',
+          })
+          .eq('id', latestBooking.id)
+          .inFilter('status', ['pending', 'searching'])
+          .filter('driver_id', 'is', null)
+          .select('id');
+      didCancelBooking = cancelledRows.isNotEmpty;
+    } catch (e) {
+      debugLog('❌ Failed to cancel timed out ride: $e');
+    }
+
+    if (!mounted) return;
+    if (!didCancelBooking) {
+      _isHandlingRideTimeout = false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No driver accepted this ride, but cancellation failed. Please try cancelling again.',
+          ),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    try {
+      await AdminLineNotificationService.notify(
+        eventType: 'ride_timeout_no_driver',
+        title: 'JDC: ride timeout no driver',
+        message:
+            'Ride booking ${latestBooking.id} timed out without driver assignment.',
+        data: {
+          'booking_id': latestBooking.id,
+          'customer_id': latestBooking.customerId,
+          'service_type': latestBooking.serviceType,
+        },
+      );
+    } catch (e) {
+      debugLog('❌ Failed to notify admin about ride timeout: $e');
+    }
+
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('No driver accepted this ride'),
+        content: const Text(
+          'We cancelled this request because no nearby driver accepted it in time. Please try again.',
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                _isHandlingRideTimeout = false;
+                Navigator.of(ctx).pop();
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
+                  (route) => false,
+                );
+              },
+              child: const Text('Back to home'),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<Booking?> _fetchFullBooking(String bookingId) async {
@@ -395,10 +534,10 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
   Future<Map<String, dynamic>?> _fetchDriverInfo(String driverId) async {
     try {
       debugLog('🔍 Fetching driver info for ID: $driverId');
-      
+
       final profileService = ProfileService();
       final response = await profileService.getProfileById(driverId);
-      
+
       debugLog('✅ Driver info fetched: $response');
       return response;
     } catch (e) {
@@ -409,11 +548,14 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
 
   @override
   void dispose() {
-    debugLog('🧹 Disposing WaitingForDriverScreen - canceling stream subscription');
+    debugLog(
+        '🧹 Disposing WaitingForDriverScreen - canceling stream subscription');
     _bookingStreamSubscription?.cancel();
     _bookingStreamSubscription = null;
     _retryTimer?.cancel();
     _retryTimer = null;
+    _rideTimeoutTimer?.cancel();
+    _rideTimeoutTimer = null;
     _radarAnimationController.dispose();
     _pulseAnimationController.dispose();
     super.dispose();
@@ -431,62 +573,67 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
         );
       },
       child: Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: _isFoodService ? AppTheme.accentOrange : AppTheme.primaryGreen,
-        foregroundColor: Colors.white,
-        title: Text(_isFoodService ? AppLocalizations.of(context)!.waitingForMerchant : AppLocalizations.of(context)!.waitingSearchingForDriver),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () {
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
-              (route) => false,
-            );
-          },
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            onPressed: _showInfoDialog,
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          backgroundColor:
+              _isFoodService ? AppTheme.accentOrange : AppTheme.primaryGreen,
+          foregroundColor: Colors.white,
+          title: Text(_isFoodService
+              ? AppLocalizations.of(context)!.waitingForMerchant
+              : AppLocalizations.of(context)!.waitingSearchingForDriver),
+          leading: IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
+                (route) => false,
+              );
+            },
           ),
-        ],
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            children: [
-              // Status Section
-              _buildStatusSection(),
-              
-              const SizedBox(height: 32),
-              
-              // Animation Section
-              _buildAnimationSection(),
-              
-              const SizedBox(height: 32),
-              
-              // Driver Info Section
-              if (_isDriverFound) _buildDriverInfoSection(),
-              
-              const Spacer(),
-              
-              // Action Buttons
-              _buildActionButtons(),
-            ],
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.info_outline),
+              onPressed: _showInfoDialog,
+            ),
+          ],
+        ),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                // Status Section
+                _buildStatusSection(),
+
+                const SizedBox(height: 32),
+
+                // Animation Section
+                _buildAnimationSection(),
+
+                const SizedBox(height: 32),
+
+                // Driver Info Section
+                if (_isDriverFound) _buildDriverInfoSection(),
+
+                const Spacer(),
+
+                // Action Buttons
+                _buildActionButtons(),
+              ],
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 
   Widget _buildStatusSection() {
     // final isWaiting = _isFoodService ? _isWaitingForRestaurant : !_isDriverFound;
-    final isCompleted = _isFoodService ? _isRestaurantConfirmed : _isDriverFound;
-    final primaryColor = _isFoodService ? AppTheme.accentOrange : AppTheme.primaryGreen;
-    
+    final isCompleted =
+        _isFoodService ? _isRestaurantConfirmed : _isDriverFound;
+    final primaryColor =
+        _isFoodService ? AppTheme.accentOrange : AppTheme.primaryGreen;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -498,16 +645,23 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
       child: Column(
         children: [
           Icon(
-            isCompleted ? Icons.check_circle : 
-            _isFoodService ? Icons.restaurant : Icons.search,
+            isCompleted
+                ? Icons.check_circle
+                : _isFoodService
+                    ? Icons.restaurant
+                    : Icons.search,
             color: primaryColor,
             size: 48,
           ),
           const SizedBox(height: 16),
           Text(
-            isCompleted 
-                ? (_isFoodService ? AppLocalizations.of(context)!.waitingMerchantConfirmed : AppLocalizations.of(context)!.waitingDriverFound)
-                : (_isFoodService ? AppLocalizations.of(context)!.waitingForMerchantDots : AppLocalizations.of(context)!.waitingSearchingDriverDots),
+            isCompleted
+                ? (_isFoodService
+                    ? AppLocalizations.of(context)!.waitingMerchantConfirmed
+                    : AppLocalizations.of(context)!.waitingDriverFound)
+                : (_isFoodService
+                    ? AppLocalizations.of(context)!.waitingForMerchantDots
+                    : AppLocalizations.of(context)!.waitingSearchingDriverDots),
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -516,9 +670,12 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
           ),
           const SizedBox(height: 8),
           Text(
-            isCompleted 
-                ? (_isFoodService ? AppLocalizations.of(context)!.waitingMerchantPreparing : AppLocalizations.of(context)!.waitingDriverComing)
-                : AppLocalizations.of(context)!.waitingEstimatedTime(_estimatedTime.toString()),
+            isCompleted
+                ? (_isFoodService
+                    ? AppLocalizations.of(context)!.waitingMerchantPreparing
+                    : AppLocalizations.of(context)!.waitingDriverComing)
+                : AppLocalizations.of(context)!
+                    .waitingEstimatedTime(_estimatedTime.toString()),
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey[600],
@@ -536,9 +693,10 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: (_isFoodService ? AppTheme.accentOrange : AppTheme.primaryGreen).withValues(alpha: 0.3), 
-          width: 2
-        ),
+            color:
+                (_isFoodService ? AppTheme.accentOrange : AppTheme.primaryGreen)
+                    .withValues(alpha: 0.3),
+            width: 2),
       ),
       child: Stack(
         alignment: Alignment.center,
@@ -553,11 +711,15 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
                   for (int i = 0; i < 3; i++)
                     Positioned.fill(
                       child: Container(
-                        margin: EdgeInsets.all(20.0 * (_radarAnimation.value + i * 0.3)),
+                        margin: EdgeInsets.all(
+                            20.0 * (_radarAnimation.value + i * 0.3)),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: (_isFoodService ? AppTheme.accentOrange : AppTheme.primaryGreen).withValues(alpha: 0.3 - i * 0.1),
+                            color: (_isFoodService
+                                    ? AppTheme.accentOrange
+                                    : AppTheme.primaryGreen)
+                                .withValues(alpha: 0.3 - i * 0.1),
                             width: 2,
                           ),
                         ),
@@ -567,7 +729,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
               );
             },
           ),
-          
+
           // Center icon
           AnimatedBuilder(
             animation: _pulseAnimation,
@@ -576,7 +738,9 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
                 scale: _pulseAnimation.value,
                 child: Icon(
                   _isFoodService ? Icons.restaurant : Icons.local_taxi,
-                  color: _isFoodService ? AppTheme.accentOrange : AppTheme.primaryGreen,
+                  color: _isFoodService
+                      ? AppTheme.accentOrange
+                      : AppTheme.primaryGreen,
                   size: 40,
                 ),
               );
@@ -628,7 +792,8 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        AppLocalizations.of(context)!.waitingRestaurantPreparing,
+                        AppLocalizations.of(context)!
+                            .waitingRestaurantPreparing,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -651,7 +816,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
         ),
       );
     }
-    
+
     // Original driver info section for ride service
     return Container(
       width: double.infinity,
@@ -703,7 +868,8 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
               ),
               if (_isDriverAssigned)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: Colors.green.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -758,9 +924,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
               ),
             ),
           ),
-        
         const SizedBox(height: 12),
-        
         SizedBox(
           width: double.infinity,
           child: TextButton.icon(
@@ -828,7 +992,9 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.waitingCannotCall(phoneNumber))),
+          SnackBar(
+              content: Text(AppLocalizations.of(context)!
+                  .waitingCannotCall(phoneNumber))),
         );
       }
     }
@@ -861,7 +1027,9 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
       debugLog('❌ Error opening chat: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.waitingCannotOpenChat)),
+          SnackBar(
+              content:
+                  Text(AppLocalizations.of(context)!.waitingCannotOpenChat)),
         );
       }
     }
@@ -881,12 +1049,13 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
           TextButton(
             onPressed: () async {
               Navigator.of(context).pop();
-              
+
               try {
                 final bookingService = BookingService();
-                await bookingService.cancelBooking(widget.booking.id, reason: 'customer_cancelled_while_waiting');
+                await bookingService.cancelBooking(widget.booking.id,
+                    reason: 'customer_cancelled_while_waiting');
                 debugLog('✅ Booking cancelled: ${widget.booking.id}');
-                
+
                 // Navigate back to home
                 if (mounted) {
                   Navigator.of(context).pushReplacement(
@@ -903,13 +1072,17 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
                       showDialog(
                         context: context,
                         builder: (ctx) => AlertDialog(
-                          icon: const Icon(Icons.error_outline, color: Colors.red, size: 48),
-                          title: Text(AppLocalizations.of(context)!.waitingCancelFailed),
-                          content: Text(AppLocalizations.of(context)!.waitingCancelError(e.toString())),
+                          icon: const Icon(Icons.error_outline,
+                              color: Colors.red, size: 48),
+                          title: Text(AppLocalizations.of(context)!
+                              .waitingCancelFailed),
+                          content: Text(AppLocalizations.of(context)!
+                              .waitingCancelError(e.toString())),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.of(ctx).pop(),
-                              child: Text(AppLocalizations.of(context)!.waitingOk),
+                              child:
+                                  Text(AppLocalizations.of(context)!.waitingOk),
                             ),
                           ],
                         ),
@@ -939,14 +1112,19 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              AppLocalizations.of(context)!.waitingOrderCode(OrderCodeFormatter.formatByServiceType(widget.booking.id, serviceType: widget.booking.serviceType)),
+              AppLocalizations.of(context)!.waitingOrderCode(
+                  OrderCodeFormatter.formatByServiceType(widget.booking.id,
+                      serviceType: widget.booking.serviceType)),
             ),
             const SizedBox(height: 8),
-            Text(AppLocalizations.of(context)!.waitingType(widget.booking.serviceType)),
+            Text(AppLocalizations.of(context)!
+                .waitingType(widget.booking.serviceType)),
             const SizedBox(height: 8),
-            Text(AppLocalizations.of(context)!.waitingPrice(widget.booking.price.ceil().toString())),
+            Text(AppLocalizations.of(context)!
+                .waitingPrice(widget.booking.price.ceil().toString())),
             const SizedBox(height: 8),
-            Text(AppLocalizations.of(context)!.waitingStatus(widget.booking.status)),
+            Text(AppLocalizations.of(context)!
+                .waitingStatus(widget.booking.status)),
           ],
         ),
         actions: [

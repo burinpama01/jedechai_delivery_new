@@ -13,6 +13,7 @@ import '../../../common/services/profile_service.dart';
 import '../../../common/services/supabase_service.dart';
 import '../../../common/services/notification_sender.dart';
 import '../../../common/services/booking_service.dart';
+import '../../../common/models/coupon.dart';
 import '../../../common/widgets/location_disclosure_dialog.dart';
 import '../../../common/services/system_config_service.dart';
 import '../../../common/services/chat_service.dart';
@@ -3673,9 +3674,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         ? fallbackSettlement.driverNetIncome
         : savedNetEarnings;
     final normalizedCouponCode = _couponCode?.trim().toUpperCase();
-    final hideCouponBreakdown = normalizedCouponCode == 'WELCOME20' ||
-        normalizedCouponCode == 'REFERRER20' ||
-        normalizedCouponCode == 'REFFERER20';
+    final hideCouponBreakdown = Coupon.isSystemCouponCode(normalizedCouponCode);
 
     showDialog(
       context: context,

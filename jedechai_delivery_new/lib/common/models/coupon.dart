@@ -29,8 +29,8 @@ class Coupon {
   final double merchantGpChargeRate; // default 0.25 for merchant free-delivery coupon
   final double merchantGpSystemRate; // default from system config (commonly 0.10)
   final double merchantGpDriverRate; // default 0.15
-  final DateTime startDate;
-  final DateTime endDate;
+  final DateTime? startDate;
+  final DateTime? endDate;
   final DateTime createdAt;
 
   const Coupon({
@@ -60,8 +60,8 @@ class Coupon {
     this.merchantGpChargeRate = 0.0,
     this.merchantGpSystemRate = 0.0,
     this.merchantGpDriverRate = 0.0,
-    required this.startDate,
-    required this.endDate,
+    this.startDate,
+    this.endDate,
     required this.createdAt,
   });
 
@@ -97,8 +97,8 @@ class Coupon {
       merchantGpChargeRate: (json['merchant_gp_charge_rate'] as num?)?.toDouble() ?? 0.0,
       merchantGpSystemRate: (json['merchant_gp_system_rate'] as num?)?.toDouble() ?? 0.0,
       merchantGpDriverRate: (json['merchant_gp_driver_rate'] as num?)?.toDouble() ?? 0.0,
-      startDate: DateTime.parse(json['start_date'] as String),
-      endDate: DateTime.parse(json['end_date'] as String),
+      startDate: json['start_date'] != null ? DateTime.parse(json['start_date'] as String) : null,
+      endDate: json['end_date'] != null ? DateTime.parse(json['end_date'] as String) : null,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
@@ -131,47 +131,59 @@ class Coupon {
       'merchant_gp_charge_rate': merchantGpChargeRate,
       'merchant_gp_system_rate': merchantGpSystemRate,
       'merchant_gp_driver_rate': merchantGpDriverRate,
-      'start_date': startDate.toIso8601String(),
-      'end_date': endDate.toIso8601String(),
+      'start_date': startDate?.toIso8601String(),
+      'end_date': endDate?.toIso8601String(),
       'created_at': createdAt.toIso8601String(),
     };
   }
 
-  /// Check if coupon is currently valid (active + within date range)
+  static const _systemCouponCodes = {'WELCOME20', 'REFERRER20'};
+
+  static bool isSystemCouponCode(String? code) =>
+      _systemCouponCodes.contains(code?.trim().toUpperCase());
+
+  /// Bangkok time (UTC+7) for server-aligned date validation.
+  static DateTime _bangkokNow() =>
+      DateTime.now().toUtc().add(const Duration(hours: 7));
+
+  /// Check if coupon is currently valid (active + within date range).
+  /// Uses Bangkok time to match server-side schedule.
   bool get isValid {
-    final now = DateTime.now();
+    final now = _bangkokNow();
     return isActive &&
-        now.isAfter(startDate) &&
-        now.isBefore(endDate) &&
+        (startDate == null || now.isAfter(startDate!)) &&
+        (endDate == null || now.isBefore(endDate!)) &&
         (usageLimit == 0 || usedCount < usageLimit);
   }
 
-  /// Check if coupon has expired
-  bool get isExpired => DateTime.now().isAfter(endDate);
+  /// Check if coupon has expired (Bangkok time). Returns false if no end date set.
+  bool get isExpired => endDate != null && _bangkokNow().isAfter(endDate!);
 
   /// Check if coupon has reached its usage limit
   bool get isUsedUp => usageLimit > 0 && usedCount >= usageLimit;
 
-  /// Calculate discount amount for a given order
+  /// Calculate discount amount for a given order.
+  /// Respects [discountBase]: 'delivery_fee' applies percentage/fixed to
+  /// delivery fee instead of order subtotal.
   double calculateDiscount(double orderAmount, {double deliveryFee = 0}) {
     if (!isValid) return 0;
 
     // Check minimum order amount
     if (minOrderAmount != null && orderAmount < minOrderAmount!) return 0;
 
+    final base = discountBase == 'delivery_fee' ? deliveryFee : orderAmount;
+
     double discount;
     switch (discountType) {
       case 'percentage':
-        discount = orderAmount * (discountValue / 100);
-        // Apply max discount cap
+        discount = base * (discountValue / 100);
         if (maxDiscountAmount != null && discount > maxDiscountAmount!) {
           discount = maxDiscountAmount!;
         }
         break;
       case 'fixed':
         discount = discountValue;
-        // Don't exceed order amount
-        if (discount > orderAmount) discount = orderAmount;
+        if (discount > base) discount = base;
         break;
       case 'free_delivery':
         discount = deliveryFee;

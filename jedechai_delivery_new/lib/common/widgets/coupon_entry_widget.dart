@@ -224,8 +224,7 @@ class _CouponEntryWidgetState extends State<CouponEntryWidget> {
   Widget _buildAppliedCoupon() {
     final normalizedCode = _appliedCoupon?.code.trim().toUpperCase();
     final hideBreakdown = normalizedCode == 'WELCOME20' ||
-        normalizedCode == 'REFERRER20' ||
-        normalizedCode == 'REFFERER20';
+        normalizedCode == 'REFERRER20';
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(

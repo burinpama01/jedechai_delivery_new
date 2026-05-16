@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
@@ -18,12 +18,14 @@ class DeliveryMapPickerScreen extends StatefulWidget {
   const DeliveryMapPickerScreen({super.key, this.initialPosition});
 
   @override
-  State<DeliveryMapPickerScreen> createState() => _DeliveryMapPickerScreenState();
+  State<DeliveryMapPickerScreen> createState() =>
+      _DeliveryMapPickerScreenState();
 }
 
 class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
   GoogleMapController? _mapController;
-  LatLng _selectedPosition = const LatLng(13.7563, 100.5018); // Default: Bangkok
+  LatLng _selectedPosition =
+      const LatLng(13.7563, 100.5018); // Default: Bangkok
   String _addressText = '';
   bool _isLoadingAddress = false;
   bool _isLoadingLocation = true;
@@ -55,6 +57,7 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
+      if (!mounted) return;
       setState(() {
         _selectedPosition = LatLng(position.latitude, position.longitude);
         _isLoadingLocation = false;
@@ -63,12 +66,14 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
       _reverseGeocode(_selectedPosition);
     } catch (e) {
       debugLog('❌ Error getting current location: $e');
+      if (!mounted) return;
       setState(() => _isLoadingLocation = false);
       _reverseGeocode(_selectedPosition);
     }
   }
 
   Future<void> _reverseGeocode(LatLng position) async {
+    if (!mounted) return;
     // Skip if position hasn't changed meaningfully (~50m threshold)
     if (_lastGeocodedPosition != null) {
       final dist = Geolocator.distanceBetween(
@@ -91,6 +96,7 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
       );
 
       final response = await http.get(url);
+      if (!mounted) return;
       final data = json.decode(response.body);
 
       if (data['status'] == 'OK' && (data['results'] as List).isNotEmpty) {
@@ -101,16 +107,30 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
         if (address.isNotEmpty) {
           setState(() => _addressText = address);
         } else {
-          if (mounted) setState(() => _addressText = AppLocalizations.of(context)!.mapPickerPosition(position.latitude.toStringAsFixed(5), position.longitude.toStringAsFixed(5)));
+          if (mounted) {
+            setState(() => _addressText = AppLocalizations.of(context)!
+                .mapPickerPosition(position.latitude.toStringAsFixed(5),
+                    position.longitude.toStringAsFixed(5)));
+          }
         }
       } else {
-        if (mounted) setState(() => _addressText = AppLocalizations.of(context)!.mapPickerPosition(position.latitude.toStringAsFixed(5), position.longitude.toStringAsFixed(5)));
+        if (mounted) {
+          setState(() => _addressText = AppLocalizations.of(context)!
+              .mapPickerPosition(position.latitude.toStringAsFixed(5),
+                  position.longitude.toStringAsFixed(5)));
+        }
       }
     } catch (e) {
       debugLog('❌ Reverse geocode error: $e');
-      if (mounted) setState(() => _addressText = AppLocalizations.of(context)!.mapPickerPosition(position.latitude.toStringAsFixed(5), position.longitude.toStringAsFixed(5)));
+      if (mounted) {
+        setState(() => _addressText = AppLocalizations.of(context)!
+            .mapPickerPosition(position.latitude.toStringAsFixed(5),
+                position.longitude.toStringAsFixed(5)));
+      }
     } finally {
-      setState(() => _isLoadingAddress = false);
+      if (mounted) {
+        setState(() => _isLoadingAddress = false);
+      }
     }
   }
 
@@ -143,7 +163,8 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
         elevation: 0,
       ),
       body: _isLoadingLocation
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.accentOrange))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppTheme.accentOrange))
           : Stack(
               children: [
                 // Google Map
@@ -200,10 +221,12 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
                           children: [
                             Row(
                               children: [
-                                Icon(Icons.location_on, color: Colors.red.shade700, size: 20),
+                                Icon(Icons.location_on,
+                                    color: Colors.red.shade700, size: 20),
                                 const SizedBox(width: 8),
                                 Text(
-                                  AppLocalizations.of(context)!.mapPickerDeliveryLocation,
+                                  AppLocalizations.of(context)!
+                                      .mapPickerDeliveryLocation,
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
@@ -226,7 +249,8 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
                                       ),
                                       const SizedBox(width: 8),
                                       Text(
-                                        AppLocalizations.of(context)!.mapPickerSearching,
+                                        AppLocalizations.of(context)!
+                                            .mapPickerSearching,
                                         style: TextStyle(
                                           color: colorScheme.onSurfaceVariant,
                                           fontSize: 13,
@@ -247,14 +271,21 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton.icon(
-                                onPressed: _isLoadingAddress ? null : _confirmLocation,
+                                onPressed:
+                                    _isLoadingAddress ? null : _confirmLocation,
                                 icon: const Icon(Icons.check, size: 20),
-                                label: Text(AppLocalizations.of(context)!.mapPickerConfirm, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                label: Text(
+                                    AppLocalizations.of(context)!
+                                        .mapPickerConfirm,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold)),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppTheme.accentOrange,
                                   foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12)),
                                   elevation: 0,
                                 ),
                               ),

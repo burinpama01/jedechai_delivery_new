@@ -9,6 +9,8 @@ class NotificationTypes {
   static const merchantOrderCreated = 'merchant.order.created';
   static const merchantOrderAdminAction = 'merchant.order.admin_action';
   static const adminOrderCreated = 'admin.order.created';
+  static const newTicket = 'new_ticket';
+  static const ticketUpdated = 'ticket_updated';
 
   static const legacyNewBooking = 'new_booking';
   static const legacyNewRideRequest = 'new_ride_request';
@@ -140,6 +142,10 @@ class NotificationPayloadPolicy {
       case NotificationTypes.customerBookingDriverAssigned:
         return _customerDetailRouteForServiceType(
             _string(data['service_type']));
+      case NotificationTypes.newTicket:
+        return '/admin_tickets';
+      case NotificationTypes.ticketUpdated:
+        return '/my_tickets';
     }
 
     final role = _string(data['recipient_role']) ?? _string(data['role']);

@@ -23,6 +23,7 @@ import '../widgets/order_list.dart';
 import '../widgets/shop_status_card.dart';
 import 'order_detail_screen.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../common/utils/shop_schedule.dart';
 
 /// Merchant Orders Screen
 ///
@@ -220,21 +221,13 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
     }
   }
 
-  bool _isTodayOpenDay() {
-    final weekday = DateTime.now().weekday;
-    final keyByWeekday = {
-      DateTime.monday: 'mon',
-      DateTime.tuesday: 'tue',
-      DateTime.wednesday: 'wed',
-      DateTime.thursday: 'thu',
-      DateTime.friday: 'fri',
-      DateTime.saturday: 'sat',
-      DateTime.sunday: 'sun',
-    };
-    final todayKey = keyByWeekday[weekday];
-    if (todayKey == null) return true;
-    return _shopOpenDays.contains(todayKey);
-  }
+  Map<String, dynamic> _merchantScheduleMap() => {
+        'shop_auto_schedule_enabled': _shopAutoScheduleEnabled,
+        'shop_status': _isShopOpen,
+        'shop_open_time': _shopOpenTime,
+        'shop_close_time': _shopCloseTime,
+        'shop_open_days': _shopOpenDays,
+      };
 
   Future<void> _loadSavedShopStatus() async {
     if (_prefs != null) {
@@ -669,42 +662,10 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
 
   void _checkShopSchedule() {
     if (!_shopAutoScheduleEnabled) return;
-    if (_shopOpenTime == null || _shopCloseTime == null) return;
-
-    final now = TimeOfDay.now();
-    final openParts = _shopOpenTime!.split(':');
-    final closeParts = _shopCloseTime!.split(':');
-    if (openParts.length < 2 || closeParts.length < 2) return;
-
-    final openTime = TimeOfDay(
-      hour: int.tryParse(openParts[0]) ?? 8,
-      minute: int.tryParse(openParts[1]) ?? 0,
-    );
-    final closeTime = TimeOfDay(
-      hour: int.tryParse(closeParts[0]) ?? 22,
-      minute: int.tryParse(closeParts[1]) ?? 0,
-    );
-
-    final nowMinutes = now.hour * 60 + now.minute;
-    final openMinutes = openTime.hour * 60 + openTime.minute;
-    final closeMinutes = closeTime.hour * 60 + closeTime.minute;
-
-    bool shouldBeOpen;
-    if (openMinutes <= closeMinutes) {
-      // ปกติ เช่น 08:00 - 22:00
-      shouldBeOpen = nowMinutes >= openMinutes && nowMinutes < closeMinutes;
-    } else {
-      // ข้ามวัน เช่น 22:00 - 06:00
-      shouldBeOpen = nowMinutes >= openMinutes || nowMinutes < closeMinutes;
-    }
-
-    if (_shopOpenDays.isNotEmpty && !_isTodayOpenDay()) {
-      shouldBeOpen = false;
-    }
-
+    final shouldBeOpen = isShopOpenNow(_merchantScheduleMap());
     if (shouldBeOpen != _isShopOpen) {
       debugLog(
-          '⏰ Auto-toggle shop: ${_isShopOpen ? "เปิด→ปิด" : "ปิด→เปิด"} (now=$nowMinutes, open=$openMinutes, close=$closeMinutes)');
+          '⏰ Auto-toggle shop: ${_isShopOpen ? "เปิด→ปิด" : "ปิด→เปิด"} (Bangkok time)');
       _toggleShopStatus(shouldBeOpen, triggeredBySchedule: true);
     }
   }
@@ -712,13 +673,13 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
   Future<void> _toggleShopStatus(
     bool value, {
     bool triggeredBySchedule = false,
+    bool permanentlyDisableSchedule = false,
   }) async {
     try {
       if (!mounted) return;
 
-      // If merchant manually toggles shop status, disable auto schedule to avoid forced overrides.
       final bool isManualToggle = !triggeredBySchedule;
-      if (isManualToggle && _shopAutoScheduleEnabled) {
+      if (isManualToggle && _shopAutoScheduleEnabled && permanentlyDisableSchedule) {
         setState(() {
           _shopAutoScheduleEnabled = false;
         });
@@ -739,7 +700,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
       final updated = await _merchantOrderService.toggleShopStatus(
         userId,
         value,
-        disableAutoSchedule: !triggeredBySchedule,
+        disableAutoSchedule: !triggeredBySchedule && permanentlyDisableSchedule,
       );
 
       final updatedRaw = updated?['shop_status'];
@@ -1110,7 +1071,35 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           if (!confirmed) return;
         }
 
-        await _toggleShopStatus(value);
+        // When toggling manually while auto-schedule is active, ask if
+        // the override should be permanent or just for today.
+        bool permanentlyDisable = false;
+        if (_shopAutoScheduleEnabled) {
+          final choice = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('ปิด Auto-Schedule?'),
+              content: const Text(
+                'ต้องการปิด auto-schedule แบบใด?',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('Override วันนี้เท่านั้น'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  style: TextButton.styleFrom(foregroundColor: Colors.red),
+                  child: const Text('ปิดถาวร'),
+                ),
+              ],
+            ),
+          );
+          if (choice == null) return; // ยกเลิก
+          permanentlyDisable = choice;
+        }
+
+        await _toggleShopStatus(value, permanentlyDisableSchedule: permanentlyDisable);
       },
     );
   }

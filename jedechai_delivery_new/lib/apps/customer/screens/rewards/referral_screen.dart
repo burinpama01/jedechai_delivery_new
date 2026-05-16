@@ -21,7 +21,6 @@ class _ReferralScreenState extends State<ReferralScreen> {
   final ReferralService _referralService = ReferralService();
   String myReferralCode = '-';
   int totalReferrals = 0;
-  double totalRewards = 0.0;
 
   bool _didCheckReferralRewardDialog = false;
 
@@ -67,7 +66,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
 
     await NotificationService.markAsRead(n.id);
   }
-  
+
   @override
   void dispose() {
     _codeController.dispose();
@@ -118,7 +117,8 @@ class _ReferralScreenState extends State<ReferralScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.referralCodeSuccess)),
+        SnackBar(
+            content: Text(AppLocalizations.of(context)!.referralCodeSuccess)),
       );
       _codeController.clear();
       await _loadReferralData();
@@ -135,11 +135,10 @@ class _ReferralScreenState extends State<ReferralScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.referralTitle, style: const TextStyle(color: Colors.white)),
+        title: Text(AppLocalizations.of(context)!.referralTitle,
+            style: const TextStyle(color: Colors.white)),
         backgroundColor: AppTheme.primaryGreen,
         elevation: 0,
       ),
@@ -224,7 +223,8 @@ class _ReferralScreenState extends State<ReferralScreen> {
               decoration: BoxDecoration(
                 color: AppTheme.primaryGreen.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppTheme.primaryGreen.withOpacity(0.3)),
+                border:
+                    Border.all(color: AppTheme.primaryGreen.withOpacity(0.3)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -305,8 +305,10 @@ class _ReferralScreenState extends State<ReferralScreen> {
                 child: TextField(
                   controller: _codeController,
                   decoration: InputDecoration(
-                    hintText: AppLocalizations.of(context)!.referralCodePlaceholder,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    hintText:
+                        AppLocalizations.of(context)!.referralCodePlaceholder,
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: Colors.grey.shade300),
@@ -323,17 +325,18 @@ class _ReferralScreenState extends State<ReferralScreen> {
                 onPressed: _isLoading ? null : _submitCode,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryGreen,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: _isLoading 
+                child: _isLoading
                     ? const SizedBox(
-                        width: 20, 
-                        height: 20, 
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                      )
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2))
                     : Text(AppLocalizations.of(context)!.referralUseCode),
               ),
             ],
@@ -395,21 +398,12 @@ class _ReferralScreenState extends State<ReferralScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          _buildStepItem(
-            '1', 
-            AppLocalizations.of(context)!.referralStep1Title, 
-            AppLocalizations.of(context)!.referralStep1Desc
-          ),
-          _buildStepItem(
-            '2', 
-            AppLocalizations.of(context)!.referralStep2Title, 
-            AppLocalizations.of(context)!.referralStep2Desc
-          ),
-          _buildStepItem(
-            '3', 
-            AppLocalizations.of(context)!.referralStep3Title, 
-            AppLocalizations.of(context)!.referralStep3Desc
-          ),
+          _buildStepItem('1', AppLocalizations.of(context)!.referralStep1Title,
+              AppLocalizations.of(context)!.referralStep1Desc),
+          _buildStepItem('2', AppLocalizations.of(context)!.referralStep2Title,
+              AppLocalizations.of(context)!.referralStep2Desc),
+          _buildStepItem('3', AppLocalizations.of(context)!.referralStep3Title,
+              AppLocalizations.of(context)!.referralStep3Desc),
         ],
       ),
     );
@@ -431,7 +425,8 @@ class _ReferralScreenState extends State<ReferralScreen> {
             child: Center(
               child: Text(
                 number,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -442,7 +437,8 @@ class _ReferralScreenState extends State<ReferralScreen> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 const SizedBox(height: 4),
                 Text(

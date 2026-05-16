@@ -298,6 +298,22 @@ class _AdminTicketsScreenState extends State<AdminTicketsScreen>
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
+              if (ticket.userFullName != null || ticket.userPhone != null) ...[
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(Icons.person_outline, size: 13, color: Colors.blueGrey),
+                    const SizedBox(width: 4),
+                    Text(
+                      [
+                        if (ticket.userFullName != null) ticket.userFullName!,
+                        if (ticket.userPhone != null) ticket.userPhone!,
+                      ].join(' · '),
+                      style: const TextStyle(fontSize: 12, color: Colors.blueGrey),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 6),
               Row(
                 children: [

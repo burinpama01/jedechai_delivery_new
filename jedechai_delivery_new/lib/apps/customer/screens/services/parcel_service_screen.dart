@@ -12,6 +12,7 @@ import '../../../../common/services/image_picker_service.dart';
 import '../../../../common/services/storage_service.dart';
 import '../../../../common/services/profile_service.dart';
 import '../../../../common/services/system_config_service.dart';
+import '../../../../common/utils/parcel_pricing.dart';
 import '../../../../common/widgets/app_network_image.dart';
 import '../../../../utils/debug_logger.dart';
 import 'waiting_for_driver_screen.dart';
@@ -82,10 +83,34 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
   List<Map<String, dynamic>> _getSizeOptions() {
     final l10n = AppLocalizations.of(context)!;
     return [
-      {'value': 'small', 'label': l10n.parcelSizeSmall, 'desc': l10n.parcelSizeSmallDesc, 'icon': Icons.mail, 'multiplier': 1.0},
-      {'value': 'medium', 'label': l10n.parcelSizeMedium, 'desc': l10n.parcelSizeMediumDesc, 'icon': Icons.inventory_2, 'multiplier': 1.3},
-      {'value': 'large', 'label': l10n.parcelSizeLarge, 'desc': l10n.parcelSizeLargeDesc, 'icon': Icons.widgets, 'multiplier': 1.6},
-      {'value': 'xlarge', 'label': l10n.parcelSizeXLarge, 'desc': l10n.parcelSizeXLargeDesc, 'icon': Icons.local_shipping, 'multiplier': 2.0},
+      {
+        'value': 'small',
+        'label': l10n.parcelSizeSmall,
+        'desc': l10n.parcelSizeSmallDesc,
+        'icon': Icons.mail,
+        'multiplier': 1.0
+      },
+      {
+        'value': 'medium',
+        'label': l10n.parcelSizeMedium,
+        'desc': l10n.parcelSizeMediumDesc,
+        'icon': Icons.inventory_2,
+        'multiplier': 1.3
+      },
+      {
+        'value': 'large',
+        'label': l10n.parcelSizeLarge,
+        'desc': l10n.parcelSizeLargeDesc,
+        'icon': Icons.widgets,
+        'multiplier': 1.6
+      },
+      {
+        'value': 'xlarge',
+        'label': l10n.parcelSizeXLarge,
+        'desc': l10n.parcelSizeXLargeDesc,
+        'icon': Icons.local_shipping,
+        'multiplier': 2.0
+      },
     ];
   }
 
@@ -109,8 +134,10 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
         setState(() {
           _parcelBasePrice = (row['base_price'] as num?)?.toDouble() ?? 20.0;
           _parcelPricePerKm = (row['price_per_km'] as num?)?.toDouble() ?? 5.0;
-          _parcelBaseDistance = (row['base_distance'] as num?)?.toDouble() ?? 2.0;
+          _parcelBaseDistance =
+              (row['base_distance'] as num?)?.toDouble() ?? 2.0;
         });
+        _calculatePrice();
       }
     } catch (_) {
       // Keep fallback values
@@ -184,13 +211,15 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
         _pickupLng = lng;
         _pickupController.text = address.isNotEmpty
             ? address
-            : AppLocalizations.of(context)!.parcelPickupCoord(lat.toStringAsFixed(5), lng.toStringAsFixed(5));
+            : AppLocalizations.of(context)!.parcelPickupCoord(
+                lat.toStringAsFixed(5), lng.toStringAsFixed(5));
       } else {
         _dropoffLat = lat;
         _dropoffLng = lng;
         _dropoffController.text = address.isNotEmpty
             ? address
-            : AppLocalizations.of(context)!.parcelDropoffCoord(lat.toStringAsFixed(5), lng.toStringAsFixed(5));
+            : AppLocalizations.of(context)!.parcelDropoffCoord(
+                lat.toStringAsFixed(5), lng.toStringAsFixed(5));
       }
     });
 
@@ -250,8 +279,9 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
         setState(() {
           _pickupLat = position.latitude;
           _pickupLng = position.longitude;
-          _pickupController.text =
-              AppLocalizations.of(context)!.parcelCurrentLocation(position.latitude.toStringAsFixed(4), position.longitude.toStringAsFixed(4));
+          _pickupController.text = AppLocalizations.of(context)!
+              .parcelCurrentLocation(position.latitude.toStringAsFixed(4),
+                  position.longitude.toStringAsFixed(4));
           _isLoadingLocation = false;
         });
         await _checkNearbyOnlineDrivers();
@@ -267,7 +297,9 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
   Future<void> _calculateRealDistance() async {
     if (_pickupLat == null ||
         _pickupLng == null ||
-        _dropoffController.text.isEmpty) return;
+        _dropoffController.text.isEmpty) {
+      return;
+    }
 
     final destLat = _dropoffLat ?? (_pickupLat! + 0.02);
     final destLng = _dropoffLng ?? (_pickupLng! + 0.02);
@@ -307,17 +339,13 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
         _sizeMultipliers.firstWhere((s) => s['value'] == _selectedSize);
     final multiplier = sizeOption['multiplier'] as double;
 
-    final roundedDist = _estimatedDistance.round();
-    final baseDist = _parcelBaseDistance.round();
-
-    double fee;
-    if (roundedDist <= baseDist) {
-      fee = _parcelBasePrice;
-    } else {
-      fee = _parcelBasePrice + ((roundedDist - baseDist) * _parcelPricePerKm);
-    }
-
-    final finalPrice = (fee * multiplier).roundToDouble();
+    final finalPrice = calculateParcelPrice(
+      distanceKm: _estimatedDistance,
+      sizeMultiplier: multiplier,
+      basePrice: _parcelBasePrice,
+      pricePerKm: _parcelPricePerKm,
+      baseDistance: _parcelBaseDistance,
+    );
     setState(() => _estimatedPrice = finalPrice);
   }
 
@@ -337,8 +365,8 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
 
     await _checkNearbyOnlineDrivers();
     if (_nearbyOnlineDrivers <= 0) {
-      _showErrorDialog(
-          AppLocalizations.of(context)!.parcelErrorNoDrivers(_driverSearchRadiusKm.toStringAsFixed(0)));
+      _showErrorDialog(AppLocalizations.of(context)!
+          .parcelErrorNoDrivers(_driverSearchRadiusKm.toStringAsFixed(0)));
       return;
     }
 
@@ -434,7 +462,8 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
               child: Text(AppLocalizations.of(context)!.parcelOk,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w600)),
             ),
           ),
         ],
@@ -458,8 +487,11 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
       ),
       child: Text(
         hasDriver
-            ? AppLocalizations.of(context)!.parcelDriversFound(_nearbyOnlineDrivers.toString(), _driverSearchRadiusKm.toStringAsFixed(0))
-            : AppLocalizations.of(context)!.parcelNoDriversNearby(_driverSearchRadiusKm.toStringAsFixed(0)),
+            ? AppLocalizations.of(context)!.parcelDriversFound(
+                _nearbyOnlineDrivers.toString(),
+                _driverSearchRadiusKm.toStringAsFixed(0))
+            : AppLocalizations.of(context)!.parcelNoDriversNearby(
+                _driverSearchRadiusKm.toStringAsFixed(0)),
         style: TextStyle(
             fontSize: 12, fontWeight: FontWeight.w600, color: textColor),
       ),
@@ -553,7 +585,8 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                         fontWeight: FontWeight.bold)),
                 const SizedBox(height: 4),
                 Text(AppLocalizations.of(context)!.parcelHeaderSubtitle,
-                    style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                    style:
+                        const TextStyle(color: Colors.white70, fontSize: 14)),
               ],
             ),
           ),
@@ -578,8 +611,8 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                     color: Colors.green[700], size: 22),
                 const SizedBox(width: 8),
                 Text(AppLocalizations.of(context)!.parcelSenderInfo,
-                    style:
-                        const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold)),
               ],
             ),
             const SizedBox(height: 12),
@@ -593,8 +626,9 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 filled: true,
                 fillColor: colorScheme.surfaceContainerHighest,
               ),
-              validator: (v) =>
-                  v == null || v.isEmpty ? AppLocalizations.of(context)!.parcelSenderNameRequired : null,
+              validator: (v) => v == null || v.isEmpty
+                  ? AppLocalizations.of(context)!.parcelSenderNameRequired
+                  : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -608,8 +642,9 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 filled: true,
                 fillColor: colorScheme.surfaceContainerHighest,
               ),
-              validator: (v) =>
-                  v == null || v.isEmpty ? AppLocalizations.of(context)!.parcelSenderPhoneRequired : null,
+              validator: (v) => v == null || v.isEmpty
+                  ? AppLocalizations.of(context)!.parcelSenderPhoneRequired
+                  : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -622,8 +657,9 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 filled: true,
                 fillColor: colorScheme.surfaceContainerHighest,
               ),
-              validator: (v) =>
-                  v == null || v.isEmpty ? AppLocalizations.of(context)!.parcelPickupRequired : null,
+              validator: (v) => v == null || v.isEmpty
+                  ? AppLocalizations.of(context)!.parcelPickupRequired
+                  : null,
             ),
             const SizedBox(height: 10),
             OutlinedButton.icon(
@@ -635,8 +671,11 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
               Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
-                  AppLocalizations.of(context)!.parcelPickupCoords(_pickupLat!.toStringAsFixed(5), _pickupLng!.toStringAsFixed(5)),
-                  style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                  AppLocalizations.of(context)!.parcelPickupCoords(
+                      _pickupLat!.toStringAsFixed(5),
+                      _pickupLng!.toStringAsFixed(5)),
+                  style: TextStyle(
+                      fontSize: 12, color: colorScheme.onSurfaceVariant),
                 ),
               ),
           ],
@@ -660,7 +699,8 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 Icon(Icons.location_on, color: Colors.red[700], size: 22),
                 const SizedBox(width: 8),
                 Expanded(
-                    child: Text(AppLocalizations.of(context)!.parcelRecipientInfo,
+                    child: Text(
+                        AppLocalizations.of(context)!.parcelRecipientInfo,
                         style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold))),
                 GestureDetector(
@@ -708,8 +748,9 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 filled: true,
                 fillColor: colorScheme.surfaceContainerHighest,
               ),
-              validator: (v) =>
-                  v == null || v.isEmpty ? AppLocalizations.of(context)!.parcelRecipientNameRequired : null,
+              validator: (v) => v == null || v.isEmpty
+                  ? AppLocalizations.of(context)!.parcelRecipientNameRequired
+                  : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -723,8 +764,9 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 filled: true,
                 fillColor: colorScheme.surfaceContainerHighest,
               ),
-              validator: (v) =>
-                  v == null || v.isEmpty ? AppLocalizations.of(context)!.parcelRecipientPhoneRequired : null,
+              validator: (v) => v == null || v.isEmpty
+                  ? AppLocalizations.of(context)!.parcelRecipientPhoneRequired
+                  : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -746,8 +788,9 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                       )
                     : null,
               ),
-              validator: (v) =>
-                  v == null || v.isEmpty ? AppLocalizations.of(context)!.parcelDropoffRequired : null,
+              validator: (v) => v == null || v.isEmpty
+                  ? AppLocalizations.of(context)!.parcelDropoffRequired
+                  : null,
               onChanged: (value) {
                 if (value.length > 5) {
                   _dropoffDebounceTimer?.cancel();
@@ -762,16 +805,21 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  AppLocalizations.of(context)!.parcelEstimatedDistance(_estimatedDistance.toStringAsFixed(1)),
-                  style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                  AppLocalizations.of(context)!.parcelEstimatedDistance(
+                      _estimatedDistance.toStringAsFixed(1)),
+                  style: TextStyle(
+                      fontSize: 13, color: colorScheme.onSurfaceVariant),
                 ),
               ),
             if (_dropoffLat != null && _dropoffLng != null)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
-                  AppLocalizations.of(context)!.parcelDropoffCoords(_dropoffLat!.toStringAsFixed(5), _dropoffLng!.toStringAsFixed(5)),
-                  style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                  AppLocalizations.of(context)!.parcelDropoffCoords(
+                      _dropoffLat!.toStringAsFixed(5),
+                      _dropoffLng!.toStringAsFixed(5)),
+                  style: TextStyle(
+                      fontSize: 12, color: colorScheme.onSurfaceVariant),
                 ),
               ),
           ],
@@ -790,7 +838,8 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(AppLocalizations.of(context)!.parcelSizeTitle,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             ..._getSizeOptions().map((option) => RadioListTile<String>(
                   value: option['value'],
@@ -824,7 +873,8 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(AppLocalizations.of(context)!.parcelDetailsTitle,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             TextFormField(
               controller: _descriptionController,
@@ -840,8 +890,9 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 filled: true,
                 fillColor: colorScheme.surfaceContainerHighest,
               ),
-              validator: (v) =>
-                  v == null || v.isEmpty ? AppLocalizations.of(context)!.parcelDescriptionRequired : null,
+              validator: (v) => v == null || v.isEmpty
+                  ? AppLocalizations.of(context)!.parcelDescriptionRequired
+                  : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -874,10 +925,12 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(AppLocalizations.of(context)!.parcelPhotoTitle,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             Text(AppLocalizations.of(context)!.parcelPhotoHint,
-                style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
+                style: TextStyle(
+                    fontSize: 12, color: colorScheme.onSurfaceVariant)),
             const SizedBox(height: 12),
             GestureDetector(
               onTap: _pickParcelPhoto,
@@ -888,7 +941,8 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                   color: colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                      color: colorScheme.outlineVariant, style: BorderStyle.solid),
+                      color: colorScheme.outlineVariant,
+                      style: BorderStyle.solid),
                 ),
                 child: _parcelPhoto != null
                     ? ClipRRect(
@@ -925,7 +979,8 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                           const SizedBox(height: 8),
                           Text(AppLocalizations.of(context)!.parcelPhotoTap,
                               style: TextStyle(
-                                  color: colorScheme.onSurfaceVariant, fontSize: 14)),
+                                  color: colorScheme.onSurfaceVariant,
+                                  fontSize: 14)),
                         ],
                       ),
               ),
@@ -952,11 +1007,14 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(AppLocalizations.of(context)!.parcelEstimatedFee,
-                  style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
+                  style: TextStyle(
+                      fontSize: 14, color: colorScheme.onSurfaceVariant)),
               const SizedBox(height: 2),
               Text(
-                AppLocalizations.of(context)!.parcelDistanceKm(_estimatedDistance.toStringAsFixed(1)),
-                style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                AppLocalizations.of(context)!
+                    .parcelDistanceKm(_estimatedDistance.toStringAsFixed(1)),
+                style: TextStyle(
+                    fontSize: 12, color: colorScheme.onSurfaceVariant),
               ),
             ],
           ),
@@ -995,8 +1053,8 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                   const Icon(Icons.local_shipping, size: 22),
                   const SizedBox(width: 8),
                   Text(AppLocalizations.of(context)!.parcelBookButton,
-                      style:
-                          const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold)),
                 ],
               ),
       ),

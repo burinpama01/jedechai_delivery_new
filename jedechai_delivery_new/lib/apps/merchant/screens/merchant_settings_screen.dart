@@ -14,6 +14,7 @@ import '../../../common/services/profile_service.dart';
 import '../../../common/services/image_picker_service.dart';
 import '../../../common/services/storage_service.dart';
 import '../../../common/services/account_deletion_service.dart';
+import '../../../common/services/merchant_order_service.dart';
 import '../../../common/utils/platform_adaptive.dart';
 import '../../../common/widgets/app_network_image.dart';
 import '../../../common/widgets/language_switcher.dart';
@@ -1190,13 +1191,14 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
         final openStr = formatTime(selectedOpen);
         final closeStr = formatTime(selectedClose);
 
-        await Supabase.instance.client.from('profiles').update({
-          'shop_open_time': openStr,
-          'shop_close_time': closeStr,
-          'shop_open_days': selectedDays.toList(),
-          'order_accept_mode': selectedAcceptMode,
-          'shop_auto_schedule_enabled': autoScheduleEnabled,
-        }).eq('id', userId);
+        await MerchantOrderService().updateShopSchedule(
+          userId,
+          shopOpenTime: openStr,
+          shopCloseTime: closeStr,
+          shopOpenDays: selectedDays.toList(),
+          orderAcceptMode: selectedAcceptMode,
+          shopAutoScheduleEnabled: autoScheduleEnabled,
+        );
 
         await _fetchUserProfile();
 

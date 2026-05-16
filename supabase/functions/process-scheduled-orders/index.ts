@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { notifyTargets } from "../_shared/admin-auth.ts";
 
 type BookingRow = {
   id: string;
@@ -137,7 +138,7 @@ serve(async (req) => {
         type: "scheduled_order_reminder",
       };
 
-      const notifications: Array<Record<string, unknown>> = [
+      const rows: Array<{ user_id: string; title: string; body: string; type: string; data: Record<string, unknown> }> = [
         {
           user_id: booking.customer_id,
           title: "⏰ ใกล้ถึงเวลานัดหมาย",
@@ -148,7 +149,7 @@ serve(async (req) => {
       ];
 
       if (booking.merchant_id) {
-        notifications.push({
+        rows.push({
           user_id: booking.merchant_id,
           title: "⏰ ออเดอร์นัดหมายใกล้ถึงเวลา",
           body: `ออเดอร์ #${booking.id.slice(0, 8)} จะเริ่มเวลา ${timeText}`,
@@ -157,15 +158,8 @@ serve(async (req) => {
         });
       }
 
-      const { error: insertNotificationError } = await supabase
-        .from("notifications")
-        .insert(notifications);
-
-      if (!insertNotificationError) {
-        result.notificationsInserted += notifications.length;
-      } else {
-        console.error("notification insert error (reminder):", insertNotificationError);
-      }
+      await notifyTargets(supabase, rows);
+      result.notificationsInserted += rows.length;
     }
 
     if (reminders.length > 0) {
@@ -206,7 +200,7 @@ serve(async (req) => {
         type: "scheduled_order_released",
       };
 
-      const notifications: Array<Record<string, unknown>> = [
+      const participantRows: Array<{ user_id: string; title: string; body: string; type: string; data: Record<string, unknown> }> = [
         {
           user_id: booking.customer_id,
           title: "🚀 ถึงเวลานัดหมายแล้ว",
@@ -217,7 +211,7 @@ serve(async (req) => {
       ];
 
       if (booking.merchant_id) {
-        notifications.push({
+        participantRows.push({
           user_id: booking.merchant_id,
           title: "🚀 ถึงเวลาออเดอร์นัดหมาย",
           body: `เริ่มดำเนินการออเดอร์ #${booking.id.slice(0, 8)} ได้แล้ว`,
@@ -225,6 +219,9 @@ serve(async (req) => {
           data: baseData,
         });
       }
+
+      await notifyTargets(supabase, participantRows);
+      result.notificationsInserted += participantRows.length;
 
       if (booking.service_type === "ride" || booking.service_type === "parcel") {
         let driverQuery = supabase
@@ -241,29 +238,49 @@ serve(async (req) => {
         const { data: drivers, error: driversError } = await driverQuery;
         if (driversError) {
           console.error("driver query error:", driversError);
-        } else {
-          for (const driver of drivers ?? []) {
-            notifications.push({
-              user_id: driver.id,
-              title: booking.service_type === "ride"
-                ? "🚗 งานนัดหมายเริ่มแล้ว"
-                : "📦 งานพัสดุนัดหมายเริ่มแล้ว",
-              body: `มีงาน #${booking.id.slice(0, 8)} พร้อมรับแล้ว`,
-              type: "scheduled_order_released",
-              data: baseData,
+        } else if ((drivers ?? []).length > 0) {
+          const driverTitle = booking.service_type === "ride"
+            ? "🚗 งานนัดหมายเริ่มแล้ว"
+            : "📦 งานพัสดุนัดหมายเริ่มแล้ว";
+          const driverBody = `มีงาน #${booking.id.slice(0, 8)} พร้อมรับแล้ว`;
+
+          const driverRows = (drivers ?? []).map((d) => ({
+            user_id: d.id,
+            title: driverTitle,
+            body: driverBody,
+            type: "scheduled_order_released",
+            data: baseData,
+          }));
+
+          const { error: driverInsertErr } = await supabase
+            .from("notifications")
+            .insert(driverRows);
+          if (driverInsertErr) {
+            console.error("driver notification insert error:", driverInsertErr);
+          } else {
+            result.notificationsInserted += driverRows.length;
+          }
+
+          const driverIds = (drivers ?? []).map((d) => d.id);
+          try {
+            await fetch(`${supabaseUrl}/functions/v1/send-fcm-notification`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${serviceRoleKey}`,
+              },
+              body: JSON.stringify({
+                user_ids: driverIds,
+                title: driverTitle,
+                message: driverBody,
+                data: baseData as Record<string, string>,
+                persist_in_app: false,
+              }),
             });
+          } catch (e) {
+            console.warn("Driver FCM batch failed:", e);
           }
         }
-      }
-
-      const { error: insertNotificationError } = await supabase
-        .from("notifications")
-        .insert(notifications);
-
-      if (!insertNotificationError) {
-        result.notificationsInserted += notifications.length;
-      } else {
-        console.error("notification insert error (release):", insertNotificationError);
       }
     }
 

@@ -734,11 +734,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       for (final newJob in newJobs) {
         _sendNewJobNotification(newJob);
       }
-
-      // Update previous jobs list
-      _previousJobs = List.from(currentJobs);
-      _seenNotifiedJobIds.addAll(newJobs.map((job) => job.id));
     }
+
+    // Always update state so pruning runs even when no new jobs appear
+    _previousJobs = List.from(currentJobs);
+    final currentIds = currentJobs.map((job) => job.id).toSet();
+    _seenNotifiedJobIds
+      ..addAll(newJobs.map((job) => job.id))
+      ..retainAll(currentIds);
   }
 
   /// Send notification for new job
@@ -2322,9 +2325,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     final couponDiscount = _couponDiscountByBookingId[job.id] ?? 0.0;
     final couponCode = _couponCodeByBookingId[job.id];
     final normalizedCouponCode = couponCode?.trim().toUpperCase();
-    final hideCouponBreakdown = normalizedCouponCode == 'WELCOME20' ||
-        normalizedCouponCode == 'REFERRER20' ||
-        normalizedCouponCode == 'REFFERER20';
+    final hideCouponBreakdown = Coupon.isSystemCouponCode(normalizedCouponCode);
 
     if (job.serviceType == 'food') {
       // Food: แสดง ค่าอาหาร + ค่าส่ง - คูปอง = เก็บลูกค้า

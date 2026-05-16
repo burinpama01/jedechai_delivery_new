@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="นโยบายการคืนเงินและการยกเลิกบริการ JDC delivery" />
+  <meta name="theme-color" content="#f7a51d" />
+  <title>นโยบายการคืนเงินและการยกเลิกบริการ | JDC delivery</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --gold: #f7a51d;
+      --gold-soft: #fff1cf;
+      --green: #1f7a65;
+      --green-deep: #0f4d45;
+      --ink: #1e2119;
+      --muted: #667067;
+      --line: rgba(30, 33, 25, 0.12);
+      --paper: #fffaf0;
+      --white: #ffffff;
+      --shadow: 0 24px 60px rgba(36, 30, 8, 0.14);
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(255, 247, 226, 0.92), rgba(246, 250, 239, 0.96)),
+        radial-gradient(circle at top right, rgba(247, 165, 29, 0.22), transparent 36%),
+        #fbf4de;
+      font-family: "Noto Sans Thai", system-ui, sans-serif;
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+    .container { width: min(760px, calc(100% - 40px)); margin: 0 auto; }
+    .container--wide { width: min(1160px, calc(100% - 40px)); margin: 0 auto; }
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+      background: rgba(255, 250, 240, 0.82);
+      backdrop-filter: blur(18px);
+    }
+    .header-inner {
+      min-height: 74px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-family: "Sora", "Noto Sans Thai", sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+    }
+    .brand-mark {
+      width: 44px;
+      height: 44px;
+      overflow: hidden;
+      border: 1px solid rgba(31, 122, 101, 0.18);
+      border-radius: 14px;
+      background: var(--gold-soft);
+      box-shadow: 0 10px 22px rgba(247, 165, 29, 0.18);
+    }
+    .brand-mark img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .back-link:hover { color: var(--green); }
+    .page-content { padding: 56px 0 80px; }
+    .page-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      padding: 8px 12px;
+      border: 1px solid rgba(31, 122, 101, 0.18);
+      border-radius: var(--radius);
+      color: var(--green-deep);
+      background: rgba(255, 255, 255, 0.56);
+      font-size: 13px;
+      font-weight: 800;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-family: "Sora", "Noto Sans Thai", sans-serif;
+      font-size: clamp(28px, 5vw, 44px);
+      line-height: 1.15;
+    }
+    .page-meta {
+      color: var(--muted);
+      font-size: 14px;
+      margin: 0 0 40px;
+    }
+    .policy-card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.6);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .policy-card-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.4);
+    }
+    .policy-icon {
+      width: 40px;
+      height: 40px;
+      flex: 0 0 40px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius);
+      color: #fff;
+      background: var(--green);
+    }
+    .policy-card-header h2 {
+      margin: 0;
+      font-size: 18px;
+      font-family: "Sora", "Noto Sans Thai", sans-serif;
+    }
+    .policy-card-body { padding: 20px 24px; }
+    .policy-card-body p {
+      margin: 0 0 12px;
+      color: var(--muted);
+      line-height: 1.78;
+    }
+    .policy-card-body p:last-child { margin-bottom: 0; }
+    .policy-list {
+      margin: 8px 0 12px;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 8px;
+    }
+    .policy-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+    .policy-list li::before {
+      content: "";
+      flex: 0 0 7px;
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--green);
+      margin-top: 7px;
+    }
+    .highlight-box {
+      padding: 16px 20px;
+      border-left: 3px solid var(--gold);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      background: rgba(247, 165, 29, 0.08);
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.72;
+      margin-top: 12px;
+    }
+    .contact-inline {
+      margin-top: 40px;
+      padding: 24px;
+      border: 1px solid rgba(31, 122, 101, 0.18);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.58);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 24px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .contact-inline p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+    .contact-inline a {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: var(--radius);
+      color: #fff;
+      background: linear-gradient(135deg, var(--green), var(--green-deep));
+      font-weight: 800;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    .footer {
+      padding: 30px 0 42px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .footer a:hover { color: var(--green); text-decoration: underline; }
+    @media (max-width: 600px) {
+      .policy-card-header { padding: 16px 18px; }
+      .policy-card-body { padding: 16px 18px; }
+      .contact-inline { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container--wide">
+      <div class="header-inner">
+        <a href="index.html" class="brand" aria-label="JDC delivery">
+          <span class="brand-mark">
+            <img src="assets/images/logo.png" alt="JDC delivery logo">
+          </span>
+          <span>JDC delivery</span>
+        </a>
+        <a class="back-link" href="index.html">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M19 12H5m0 0 7 7m-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          กลับหน้าหลัก
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-content">
+    <div class="container">
+      <span class="page-badge">นโยบายบริการ</span>
+      <h1>นโยบายการคืนเงินและการยกเลิกบริการ</h1>
+      <p class="page-meta">อัปเดตล่าสุด: พฤษภาคม 2569 | ใช้กับผู้ใช้บริการ JDC delivery ทุกประเภท</p>
+
+      <div class="policy-card">
+        <div class="policy-card-header">
+          <div class="policy-icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h2>เครดิตในระบบ</h2>
+        </div>
+        <div class="policy-card-body">
+          <p>เครดิตที่เติมเข้าแพลตฟอร์ม JDC delivery ใช้สำหรับชำระค่าบริการภายในระบบเท่านั้น</p>
+          <ul class="policy-list">
+            <li>เครดิตไม่สามารถโอนให้ผู้ใช้งานรายอื่นได้</li>
+            <li>เครดิตไม่สามารถแลกเป็นเงินสดได้ ยกเว้นกรณีที่ทีมงานอนุมัติเป็นรายกรณี</li>
+            <li>หากบัญชีถูกระงับจากการละเมิดข้อกำหนด ทีมงานอาจระงับการใช้เครดิตระหว่างตรวจสอบ</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="policy-card">
+        <div class="policy-card-header">
+          <div class="policy-icon" style="background:var(--gold);" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h2>การขอคืนเงิน</h2>
+        </div>
+        <div class="policy-card-body">
+          <p>ระบบรับพิจารณาการคืนเงินหรือคืนเครดิตในกรณีต่อไปนี้:</p>
+          <ul class="policy-list">
+            <li>เครดิตถูกตัดซ้ำซ้อนโดยไม่ได้รับบริการ</li>
+            <li>บริการไม่สามารถดำเนินการได้จากความผิดพลาดของระบบ</li>
+            <li>ออเดอร์ถูกยกเลิกโดยร้านค้าหรือคนขับ และระบบไม่สามารถจัดหาผู้ให้บริการรายอื่นได้</li>
+          </ul>
+          <div class="highlight-box">
+            ระยะเวลาการตรวจสอบและวิธีคืนเงินขึ้นอยู่กับช่องทางชำระเงิน หลักฐานการทำรายการ และผลการพิจารณาของทีมงาน JDC delivery
+          </div>
+        </div>
+      </div>
+
+      <div class="policy-card">
+        <div class="policy-card-header">
+          <div class="policy-icon" style="background:#375e98;" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 8v4l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </div>
+          <h2>การยกเลิกออเดอร์</h2>
+        </div>
+        <div class="policy-card-body">
+          <p>ผู้ใช้สามารถยกเลิกออเดอร์ได้ตามสถานะของงานและเงื่อนไขของแต่ละบริการ</p>
+          <ul class="policy-list">
+            <li><strong>ยกเลิกก่อนผู้ให้บริการรับงาน:</strong> ระบบสามารถคืนเครดิตได้ตามเงื่อนไขของบริการ</li>
+            <li><strong>ยกเลิกหลังผู้ให้บริการรับงาน:</strong> อาจมีค่าธรรมเนียมตามต้นทุนที่เกิดขึ้นจริง</li>
+            <li><strong>ยกเลิกหลังเริ่มดำเนินบริการ:</strong> ทีมงานจะพิจารณาเป็นรายกรณีจากหลักฐานและสถานะงาน</li>
+          </ul>
+          <p>สำหรับบริการ Food delivery หากร้านค้าเริ่มจัดเตรียมอาหารแล้ว การยกเลิกและการคืนเงินจะขึ้นอยู่กับสถานะอาหารและการพิจารณาของทีมงาน</p>
+        </div>
+      </div>
+
+      <div class="policy-card">
+        <div class="policy-card-header">
+          <div class="policy-icon" style="background:#1e2119;" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </div>
+          <h2>กรณีที่อาจไม่สามารถคืนเงินได้</h2>
+        </div>
+        <div class="policy-card-body">
+          <p>ทีมงานอาจไม่อนุมัติการคืนเงินในกรณีต่อไปนี้:</p>
+          <ul class="policy-list">
+            <li>ผู้ใช้เปลี่ยนใจหลังได้รับบริการแล้ว</li>
+            <li>ผู้ใช้ระบุที่อยู่หรือรายละเอียดออเดอร์ผิดพลาด</li>
+            <li>การยกเลิกเกิดขึ้นหลังผู้ให้บริการดำเนินงานไปแล้ว</li>
+            <li>บัญชีถูกระงับหรือปิดจากการละเมิดข้อกำหนดการใช้งาน</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="policy-card">
+        <div class="policy-card-header">
+          <div class="policy-icon" style="background:var(--green-deep);" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h2>การยกเลิกบัญชีผู้ใช้</h2>
+        </div>
+        <div class="policy-card-body">
+          <p>ผู้ใช้สามารถติดต่อทีมงานเพื่อขอยกเลิกบัญชีได้ โดยทีมงานจะตรวจสอบสถานะงานค้าง เครดิตคงเหลือ และข้อมูลที่จำเป็นตามนโยบายความเป็นส่วนตัว</p>
+          <ul class="policy-list">
+            <li>ต้องไม่มีออเดอร์ที่อยู่ระหว่างดำเนินการ</li>
+            <li>เครดิตคงเหลือจะถูกพิจารณาตามนโยบายการคืนเงินนี้</li>
+            <li>การจัดการข้อมูลส่วนตัวจะเป็นไปตามนโยบายความเป็นส่วนตัวของ JDC delivery</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="contact-inline">
+        <div>
+          <strong style="font-size:15px;display:block;margin-bottom:4px;">มีปัญหาหรือต้องการขอคืนเงิน?</strong>
+          <p>ติดต่อทีมงาน JDC delivery ผ่านช่องทางติดต่อในหน้าแรก พร้อมแนบหลักฐานการทำรายการหรือเลขออเดอร์ที่เกี่ยวข้อง</p>
+        </div>
+        <a href="index.html#contact">ดูข้อมูลติดต่อ</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container--wide">
+      <div class="footer-inner">
+        <span>&copy; <span id="year"></span> JDC delivery. All rights reserved.</span>
+        <nav aria-label="ลิงก์ footer" style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;">
+          <a href="https://sites.google.com/view/jdc-delivery-privacy-policy" target="_blank" rel="noopener noreferrer" style="color:var(--muted);font-size:13px;">นโยบายความเป็นส่วนตัว</a>
+          <a href="index.html" style="color:var(--muted);font-size:13px;">หน้าหลัก</a>
+        </nav>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

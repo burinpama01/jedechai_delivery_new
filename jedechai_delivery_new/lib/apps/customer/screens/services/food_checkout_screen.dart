@@ -1154,18 +1154,14 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       if (booking == null)
         throw Exception(AppLocalizations.of(context)!.foodCheckoutNoResponse);
 
-      // Record coupon usage if applied
+      // Record coupon usage if applied — MUST succeed to prevent unlimited reuse
       if (_appliedCoupon != null && _couponDiscount > 0) {
-        try {
-          final couponService = CouponService();
-          await couponService.recordUsage(
-            couponId: _appliedCoupon!.id,
-            bookingId: booking['id'] as String,
-            discountAmount: _couponDiscount,
-          );
-        } catch (e) {
-          debugLog('⚠️ Failed to record coupon usage: $e');
-        }
+        final couponService = CouponService();
+        await couponService.recordUsage(
+          couponId: _appliedCoupon!.id,
+          bookingId: booking['id'] as String,
+          discountAmount: _couponDiscount,
+        );
       }
 
       // Send notification to merchant about new order

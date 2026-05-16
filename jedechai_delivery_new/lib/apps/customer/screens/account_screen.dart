@@ -21,6 +21,7 @@ import '../../../l10n/app_localizations.dart';
 import 'auth/login_screen.dart';
 import 'rewards/my_coupons_screen.dart';
 import 'rewards/referral_screen.dart';
+import 'services/help_screen.dart';
 
 /// Account Screen — Customer
 class AccountScreen extends StatefulWidget {
@@ -190,7 +191,9 @@ class _AccountScreenState extends State<AccountScreen> {
                         const SizedBox(height: 8),
                         const Text('DB profiles.fcm_token:'),
                         SelectableText(
-                          profileToken?.isNotEmpty == true ? profileToken! : '-',
+                          profileToken?.isNotEmpty == true
+                              ? profileToken!
+                              : '-',
                         ),
                       ],
                     ],
@@ -338,8 +341,11 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Future<void> _editProfileField(String field) async {
     final l10n = AppLocalizations.of(context)!;
-    final label = field == 'full_name' ? l10n.accountEditName : l10n.accountEditPhone;
-    final hint = field == 'full_name' ? l10n.accountEditNameHint : l10n.accountEditPhoneHint;
+    final label =
+        field == 'full_name' ? l10n.accountEditName : l10n.accountEditPhone;
+    final hint = field == 'full_name'
+        ? l10n.accountEditNameHint
+        : l10n.accountEditPhoneHint;
     final controller = TextEditingController(text: _userProfile?[field] ?? '');
     final result = await showDialog<String>(
       context: context,
@@ -466,9 +472,9 @@ class _AccountScreenState extends State<AccountScreen> {
       context: context,
       barrierDismissible: false,
       builder: (_) => const PopScope(
-      canPop: false,
-      child: Center(child: CircularProgressIndicator()),
-    ),
+        canPop: false,
+        child: Center(child: CircularProgressIndicator()),
+      ),
     );
     try {
       await AccountDeletionService.requestDeletion(reason: reason);
@@ -632,7 +638,8 @@ class _AccountScreenState extends State<AccountScreen> {
             const SizedBox(height: 8),
             Text(
               _error!,
-              style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+              style:
+                  TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
@@ -880,8 +887,9 @@ class _AccountScreenState extends State<AccountScreen> {
           ),
           l10n.accountMenuHelp,
           () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(l10n.accountFeatureComingSoon)),
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const HelpScreen()),
             );
           },
         ),
@@ -935,7 +943,8 @@ class _AccountScreenState extends State<AccountScreen> {
             children: [
               Text(
                 l10n.accountVersionLabel,
-                style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                style: TextStyle(
+                    fontSize: 13, color: colorScheme.onSurfaceVariant),
               ),
               const Spacer(),
               GestureDetector(
@@ -973,12 +982,14 @@ class _AccountScreenState extends State<AccountScreen> {
             children: [
               Text(
                 l10n.accountDevelopedByLabel,
-                style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                style: TextStyle(
+                    fontSize: 13, color: colorScheme.onSurfaceVariant),
               ),
               const Spacer(),
               Text(
                 'Jedechai Team',
-                style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                style: TextStyle(
+                    fontSize: 13, color: colorScheme.onSurfaceVariant),
               ),
             ],
           ),

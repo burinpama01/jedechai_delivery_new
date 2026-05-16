@@ -1,5 +1,8 @@
 [functions.admin-actions]
 verify_jwt = false
 
+[functions.auto-shop-schedule]
+verify_jwt = false
+
 [functions.send-admin-line]
 verify_jwt = false

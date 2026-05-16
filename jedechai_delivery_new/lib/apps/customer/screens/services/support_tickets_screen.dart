@@ -45,6 +45,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
     final subjectCtrl = TextEditingController();
     final descCtrl = TextEditingController();
     String category = 'other';
+    var isSubmitting = false;
 
     final l10n = AppLocalizations.of(context)!;
     final categories = [
@@ -154,28 +155,42 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton.icon(
-                        onPressed: () async {
-                          if (subjectCtrl.text.trim().isEmpty ||
-                              descCtrl.text.trim().isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content: Text(l10n.ticketValidation)),
-                            );
-                            return;
-                          }
+                        onPressed: isSubmitting
+                            ? null
+                            : () async {
+                                if (subjectCtrl.text.trim().isEmpty ||
+                                    descCtrl.text.trim().isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(l10n.ticketValidation)),
+                                  );
+                                  return;
+                                }
 
-                          final ticket = await _ticketService.createTicket(
-                            category: category,
-                            subject: subjectCtrl.text.trim(),
-                            description: descCtrl.text.trim(),
-                            bookingId: widget.bookingId,
-                          );
-
-                          if (ticket != null && context.mounted) {
-                            Navigator.pop(context, true);
-                          }
-                        },
-                        icon: const Icon(Icons.send),
+                                setSheetState(() => isSubmitting = true);
+                                try {
+                                  final ticket = await _ticketService.createTicket(
+                                    category: category,
+                                    subject: subjectCtrl.text.trim(),
+                                    description: descCtrl.text.trim(),
+                                    bookingId: widget.bookingId,
+                                  );
+                                  if (ticket != null && context.mounted) {
+                                    Navigator.pop(context, true);
+                                  }
+                                } finally {
+                                  if (context.mounted) {
+                                    setSheetState(() => isSubmitting = false);
+                                  }
+                                }
+                              },
+                        icon: isSubmitting
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white),
+                              )
+                            : const Icon(Icons.send),
                         label: Text(l10n.ticketSubmit,
                             style: const TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.w600)),

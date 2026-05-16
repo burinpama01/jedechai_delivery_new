@@ -1,7 +1,6 @@
-﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
+import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../common/services/services.dart';
 import '../../../../common/models/booking.dart';
@@ -11,6 +10,7 @@ import '../../../../common/services/supabase_service.dart';
 import '../../../../common/services/booking_service.dart';
 import '../../../../common/services/chat_service.dart';
 import '../../../../common/services/auth_service.dart';
+import '../../../../common/utils/address_formatter.dart';
 import '../../../../common/utils/order_code_formatter.dart';
 import '../../../../common/widgets/chat_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -20,7 +20,7 @@ import '../../customer.dart';
 import '../../../../l10n/app_localizations.dart';
 
 /// Customer Order Detail Screen
-/// 
+///
 /// Read-only view of order details for customers
 class CustomerOrderDetailScreen extends StatefulWidget {
   final Booking booking;
@@ -31,7 +31,8 @@ class CustomerOrderDetailScreen extends StatefulWidget {
   });
 
   @override
-  State<CustomerOrderDetailScreen> createState() => _CustomerOrderDetailScreenState();
+  State<CustomerOrderDetailScreen> createState() =>
+      _CustomerOrderDetailScreenState();
 }
 
 class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
@@ -49,7 +50,8 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
     super.initState();
     _currentBooking = widget.booking;
     // If already completed or cancelled, don't show dialogs again
-    if (['completed', 'cancelled'].contains(widget.booking.status.toLowerCase())) {
+    if (['completed', 'cancelled']
+        .contains(widget.booking.status.toLowerCase())) {
       _dialogShown = true;
     }
     _fetchOrderItems();
@@ -135,12 +137,22 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
 
   Future<void> _fetchDriverInfo() async {
     final currentStatus = _currentBooking?.status ?? widget.booking.status;
-    final currentDriverId = _currentBooking?.driverId ?? widget.booking.driverId;
-    
-    debugLog('🔍 _fetchDriverInfo called - Status: $currentStatus, DriverId: $currentDriverId');
-    
+    final currentDriverId =
+        _currentBooking?.driverId ?? widget.booking.driverId;
+
+    debugLog(
+        '🔍 _fetchDriverInfo called - Status: $currentStatus, DriverId: $currentDriverId');
+
     // Only fetch driver info if order has been accepted by driver
-    if (!['accepted', 'driver_accepted', 'arrived', 'arrived_at_merchant', 'ready_for_pickup', 'picking_up_order', 'in_transit'].contains(currentStatus)) {
+    if (![
+      'accepted',
+      'driver_accepted',
+      'arrived',
+      'arrived_at_merchant',
+      'ready_for_pickup',
+      'picking_up_order',
+      'in_transit'
+    ].contains(currentStatus)) {
       debugLog('⚠️ Status not in allowed list for driver info');
       return;
     }
@@ -155,24 +167,21 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
         _isLoadingDriver = true;
       });
 
-      final response = await SupabaseService.client
-          .from('profiles')
-          .select('''
+      final response = await SupabaseService.client.from('profiles').select('''
             id,
             full_name,
             phone_number,
             avatar_url,
             license_plate
-          ''')
-          .eq('id', currentDriverId)
-          .single();
+          ''').eq('id', currentDriverId).single();
 
       if (mounted) {
         setState(() {
           _driverInfo = response;
           _isLoadingDriver = false;
         });
-        debugLog('✅ Driver info fetched successfully: ${response['full_name']}');
+        debugLog(
+            '✅ Driver info fetched successfully: ${response['full_name']}');
       }
     } catch (e) {
       debugLog('❌ Error fetching driver info: $e');
@@ -185,60 +194,74 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
   }
 
   void _setupBookingStatusListener() {
-    debugLog('🔔 Setting up booking status listener for booking: ${widget.booking.id}');
-    
+    debugLog(
+        '🔔 Setting up booking status listener for booking: ${widget.booking.id}');
+
     _bookingStatusSubscription = Supabase.instance.client
         .from('bookings')
         .stream(primaryKey: ['id'])
         .eq('id', widget.booking.id)
         .listen((data) {
-      if (data.isEmpty || !mounted) return;
-      
-      final bookingData = data.first;
-      final newStatus = bookingData['status'] as String? ?? '';
-      final oldStatus = _currentBooking?.status;
-      
-      // Skip rebuild if nothing changed
-      if (newStatus == oldStatus && _currentBooking?.driverId == bookingData['driver_id']) {
-        return;
-      }
-      
-      debugLog('📡 Booking status update: $oldStatus -> $newStatus');
-      
-      // Update current booking
-      setState(() {
-        _currentBooking = Booking.fromJson(bookingData);
-      });
-      
-      // Refresh driver info if driver is assigned
-      if (['accepted', 'driver_accepted', 'arrived', 'arrived_at_merchant', 'ready_for_pickup', 'picking_up_order', 'in_transit'].contains(newStatus)) {
-        _fetchDriverInfo();
-      }
-      
-      // Show completion dialog when order is completed
-      if (newStatus == 'completed' && oldStatus != 'completed' && !_dialogShown) {
-        _dialogShown = true;
-        debugLog('🎉 Order completed - showing completion dialog');
-        
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            _showCompletionDialog();
+          if (data.isEmpty || !mounted) return;
+
+          final bookingData = data.first;
+          final newStatus = bookingData['status'] as String? ?? '';
+          final oldStatus = _currentBooking?.status;
+
+          // Skip rebuild if nothing changed
+          if (newStatus == oldStatus &&
+              _currentBooking?.driverId == bookingData['driver_id']) {
+            return;
+          }
+
+          debugLog('📡 Booking status update: $oldStatus -> $newStatus');
+
+          // Update current booking
+          setState(() {
+            _currentBooking = Booking.fromJson(bookingData);
+          });
+
+          // Refresh driver info if driver is assigned
+          if ([
+            'accepted',
+            'driver_accepted',
+            'arrived',
+            'arrived_at_merchant',
+            'ready_for_pickup',
+            'picking_up_order',
+            'in_transit'
+          ].contains(newStatus)) {
+            _fetchDriverInfo();
+          }
+
+          // Show completion dialog when order is completed
+          if (newStatus == 'completed' &&
+              oldStatus != 'completed' &&
+              !_dialogShown) {
+            _dialogShown = true;
+            debugLog('🎉 Order completed - showing completion dialog');
+
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                _showCompletionDialog();
+              }
+            });
+          }
+
+          // Show cancelled dialog when merchant rejects order
+          if (newStatus == 'cancelled' &&
+              oldStatus != 'cancelled' &&
+              !_dialogShown) {
+            _dialogShown = true;
+            debugLog('❌ Order cancelled - showing cancellation dialog');
+
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                _showCancelledByMerchantDialog();
+              }
+            });
           }
         });
-      }
-      
-      // Show cancelled dialog when merchant rejects order
-      if (newStatus == 'cancelled' && oldStatus != 'cancelled' && !_dialogShown) {
-        _dialogShown = true;
-        debugLog('❌ Order cancelled - showing cancellation dialog');
-        
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            _showCancelledByMerchantDialog();
-          }
-        });
-      }
-    });
   }
 
   @override
@@ -277,10 +300,12 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                   ),
                 ),
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  backgroundColor: colorScheme.errorContainer.withValues(alpha: 0.45),
+                  backgroundColor:
+                      colorScheme.errorContainer.withValues(alpha: 0.45),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -289,10 +314,12 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
             ),
           Builder(
             builder: (context) {
-              final currentStatus = _currentBooking?.status ?? widget.booking.status;
+              final currentStatus =
+                  _currentBooking?.status ?? widget.booking.status;
               return Container(
                 margin: const EdgeInsets.only(right: 16),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: _getStatusColor(currentStatus),
                   borderRadius: BorderRadius.circular(20),
@@ -380,7 +407,8 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                       ),
                     ),
                     Text(
-                      AppLocalizations.of(context)!.orderDetailOrderId(OrderCodeFormatter.format(widget.booking.id)),
+                      AppLocalizations.of(context)!.orderDetailOrderId(
+                          OrderCodeFormatter.format(widget.booking.id)),
                       style: TextStyle(
                         fontSize: 14,
                         color: colorScheme.onSurfaceVariant,
@@ -394,10 +422,12 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
           const SizedBox(height: 16),
           Row(
             children: [
-              Icon(Icons.access_time, size: 16, color: colorScheme.onSurfaceVariant),
+              Icon(Icons.access_time,
+                  size: 16, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: 8),
               Text(
-                AppLocalizations.of(context)!.orderDetailOrderedAt(_formatDateTime(widget.booking.createdAt)),
+                AppLocalizations.of(context)!.orderDetailOrderedAt(
+                    _formatDateTime(widget.booking.createdAt)),
                 style: TextStyle(
                   fontSize: 14,
                   color: colorScheme.onSurfaceVariant,
@@ -437,7 +467,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          
+
           // Pickup location (if available)
           if (widget.booking.pickupAddress != null) ...[
             Row(
@@ -446,7 +476,8 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
+                    color:
+                        colorScheme.secondaryContainer.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -484,7 +515,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
             ),
             const SizedBox(height: 16),
           ],
-          
+
           // Destination
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -535,8 +566,18 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
 
   bool _shouldShowDriverInfo() {
     final currentStatus = _currentBooking?.status ?? widget.booking.status;
-    final shouldShow = ['accepted', 'driver_accepted', 'arrived', 'arrived_at_merchant', 'ready_for_pickup', 'picking_up_order', 'in_transit', 'completed'].contains(currentStatus);
-    debugLog('🔍 _shouldShowDriverInfo - Status: $currentStatus, ShouldShow: $shouldShow, _driverInfo: ${_driverInfo != null}');
+    final shouldShow = [
+      'accepted',
+      'driver_accepted',
+      'arrived',
+      'arrived_at_merchant',
+      'ready_for_pickup',
+      'picking_up_order',
+      'in_transit',
+      'completed'
+    ].contains(currentStatus);
+    debugLog(
+        '🔍 _shouldShowDriverInfo - Status: $currentStatus, ShouldShow: $shouldShow, _driverInfo: ${_driverInfo != null}');
     return shouldShow;
   }
 
@@ -570,7 +611,6 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          
           if (_isLoadingDriver)
             const Center(
               child: Padding(
@@ -596,11 +636,13 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                           ? ClipRRect(
                               borderRadius: BorderRadius.circular(25),
                               child: AppNetworkImage(
-                                imageUrl: _driverInfo!['avatar_url']?.toString(),
+                                imageUrl:
+                                    _driverInfo!['avatar_url']?.toString(),
                                 width: 50,
                                 height: 50,
                                 fit: BoxFit.cover,
-                                backgroundColor: AppTheme.accentBlue.withValues(alpha: 0.1),
+                                backgroundColor:
+                                    AppTheme.accentBlue.withValues(alpha: 0.1),
                               ),
                             )
                           : const Icon(
@@ -610,14 +652,16 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                             ),
                     ),
                     const SizedBox(width: 12),
-                    
+
                     // Driver Info
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _driverInfo!['full_name'] ?? AppLocalizations.of(context)!.orderDetailDriverUnnamed,
+                            _driverInfo!['full_name'] ??
+                                AppLocalizations.of(context)!
+                                    .orderDetailDriverUnnamed,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -630,12 +674,16 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                           if (_driverInfo!['phone_number'] != null) ...[
                             Row(
                               children: [
-                                Icon(Icons.phone, size: 14, color: colorScheme.onSurfaceVariant),
+                                Icon(Icons.phone,
+                                    size: 14,
+                                    color: colorScheme.onSurfaceVariant),
                                 const SizedBox(width: 4),
                                 Flexible(
                                   child: Text(
                                     _driverInfo!['phone_number'],
-                                    style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+                                    style: TextStyle(
+                                        fontSize: 14,
+                                        color: colorScheme.onSurfaceVariant),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
@@ -646,12 +694,16 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                           if (_driverInfo!['license_plate'] != null) ...[
                             Row(
                               children: [
-                                Icon(Icons.directions_car, size: 14, color: colorScheme.onSurfaceVariant),
+                                Icon(Icons.directions_car,
+                                    size: 14,
+                                    color: colorScheme.onSurfaceVariant),
                                 const SizedBox(width: 4),
                                 Flexible(
                                   child: Text(
                                     _driverInfo!['license_plate'],
-                                    style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+                                    style: TextStyle(
+                                        fontSize: 14,
+                                        color: colorScheme.onSurfaceVariant),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
@@ -664,7 +716,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                
+
                 // Bottom row: Action Buttons
                 Row(
                   children: [
@@ -690,9 +742,16 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.location_on, color: Colors.white, size: 18),
+                                const Icon(Icons.location_on,
+                                    color: Colors.white, size: 18),
                                 const SizedBox(width: 6),
-                                Text(AppLocalizations.of(context)!.orderDetailTrack, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                                Text(
+                                    AppLocalizations.of(context)!
+                                        .orderDetailTrack,
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600)),
                               ],
                             ),
                           ),
@@ -714,9 +773,16 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(Icons.chat_bubble, color: Colors.white, size: 18),
+                                  const Icon(Icons.chat_bubble,
+                                      color: Colors.white, size: 18),
                                   const SizedBox(width: 6),
-                                  Text(AppLocalizations.of(context)!.orderDetailChat, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                                  Text(
+                                      AppLocalizations.of(context)!
+                                          .orderDetailChat,
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600)),
                                 ],
                               ),
                             ),
@@ -732,14 +798,18 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                           child: InkWell(
                             borderRadius: BorderRadius.circular(12),
                             onTap: () async {
-                              final phone = _driverInfo!['phone_number'] as String;
+                              final phone =
+                                  _driverInfo!['phone_number'] as String;
                               final uri = Uri.parse('tel:$phone');
                               if (await canLaunchUrl(uri)) {
                                 await launchUrl(uri);
                               } else {
                                 if (mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(AppLocalizations.of(context)!.orderDetailCannotCall(phone))),
+                                    SnackBar(
+                                        content: Text(
+                                            AppLocalizations.of(context)!
+                                                .orderDetailCannotCall(phone))),
                                   );
                                 }
                               }
@@ -749,9 +819,16 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(Icons.phone, color: Colors.white, size: 18),
+                                  const Icon(Icons.phone,
+                                      color: Colors.white, size: 18),
                                   const SizedBox(width: 6),
-                                  Text(AppLocalizations.of(context)!.orderDetailCall, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                                  Text(
+                                      AppLocalizations.of(context)!
+                                          .orderDetailCall,
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600)),
                                 ],
                               ),
                             ),
@@ -795,7 +872,6 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          
           if (_isLoadingItems)
             const Center(
               child: Padding(
@@ -813,213 +889,148 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
             )
           else
             ..._orderItems.map((item) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: AppTheme.accentOrange.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.restaurant,
-                      color: AppTheme.accentOrange,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: AppTheme.accentOrange.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.restaurant,
+                          color: AppTheme.accentOrange,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item['menu_item']?['name'] ??
+                                  item['item_name'] ??
+                                  AppLocalizations.of(context)!
+                                      .orderDetailItemUnnamed,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                            if (item['quantity'] != null) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                AppLocalizations.of(context)!
+                                    .orderDetailQuantity(
+                                        item['quantity'].toString()),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                            // ค้นหาช่วงบรรทัดที่มีการเช็ค if (item['options'] != null ...)
+// แล้วแทนที่ด้วย Block นี้ครับ:
+
+                            if (item['options'] != null &&
+                                item['options'] is List &&
+                                (item['options'] as List).isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.accentOrange
+                                      .withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      AppLocalizations.of(context)!
+                                          .orderDetailOptionsLabel,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: AppTheme.accentOrange,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    ...(item['options'] as List).map((option) {
+                                      // 🛠️ Logic แกะข้อมูล: รองรับทั้งแบบ String และ JSON Map
+                                      String optionName = '';
+
+                                      if (option is Map) {
+                                        // กรณีเป็น Object: {"name": "เส้นเล็ก", "price": 0}
+                                        optionName = option['name'] ??
+                                            option['item_name'] ??
+                                            AppLocalizations.of(context)!
+                                                .orderDetailOptionDefault;
+
+                                        // (เสริม) ถ้าอยากโชว์ราคาเพิ่ม
+                                        // final price = (option['price'] as num?)?.toDouble() ?? 0.0;
+                                        // if (price > 0) optionName += ' (+฿$price)';
+                                      } else {
+                                        // กรณีเป็น String ธรรมดา
+                                        optionName = option.toString();
+                                      }
+
+                                      return Padding(
+                                        padding: const EdgeInsets.only(top: 1),
+                                        child: Text(
+                                          '• $optionName',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: AppTheme.accentOrange
+                                                .withValues(alpha: 0.8),
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      if (item['price'] != null)
                         Text(
-                          item['menu_item']?['name'] ?? item['item_name'] ?? AppLocalizations.of(context)!.orderDetailItemUnnamed,
+                          '฿${item['price']}',
                           style: TextStyle(
                             fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.bold,
                             color: colorScheme.onSurface,
                           ),
                         ),
-                        if (item['quantity'] != null) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            AppLocalizations.of(context)!.orderDetailQuantity(item['quantity'].toString()),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                        // ค้นหาช่วงบรรทัดที่มีการเช็ค if (item['options'] != null ...)
-// แล้วแทนที่ด้วย Block นี้ครับ:
-
-if (item['options'] != null && item['options'] is List && (item['options'] as List).isNotEmpty) ...[
-  const SizedBox(height: 4),
-  Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-    decoration: BoxDecoration(
-      color: AppTheme.accentOrange.withValues(alpha: 0.1),
-      borderRadius: BorderRadius.circular(6),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          AppLocalizations.of(context)!.orderDetailOptionsLabel,
-          style: TextStyle(
-            fontSize: 10,
-            color: AppTheme.accentOrange,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 2),
-        ...(item['options'] as List).map((option) {
-          // 🛠️ Logic แกะข้อมูล: รองรับทั้งแบบ String และ JSON Map
-          String optionName = '';
-          
-          if (option is Map) {
-            // กรณีเป็น Object: {"name": "เส้นเล็ก", "price": 0}
-            optionName = option['name'] ?? option['item_name'] ?? AppLocalizations.of(context)!.orderDetailOptionDefault;
-            
-            // (เสริม) ถ้าอยากโชว์ราคาเพิ่ม
-            // final price = (option['price'] as num?)?.toDouble() ?? 0.0;
-            // if (price > 0) optionName += ' (+฿$price)';
-          } else {
-            // กรณีเป็น String ธรรมดา
-            optionName = option.toString();
-          }
-
-          return Padding(
-            padding: const EdgeInsets.only(top: 1),
-            child: Text(
-              '• $optionName',
-              style: TextStyle(
-                fontSize: 11,
-                color: AppTheme.accentOrange.withValues(alpha: 0.8),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          );
-        }).toList(),
-      ],
-    ),
-  ),
-],
-                      ],
-                    ),
+                    ],
                   ),
-                  if (item['price'] != null)
-                    Text(
-                      '฿${item['price']}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
-                      ),
-                    ),
-                ],
-              ),
-            )),
+                )),
         ],
       ),
     );
   }
 
   String _formatAddress(dynamic address) {
-    if (address == null) {
-      return AppLocalizations.of(context)!.orderDetailAddressUnknown;
-    }
-    
-    // Handle Map/JSON object addresses
-    if (address is Map) {
-      try {
-        final parts = <String>[];
-        
-        // Try different field names for address components
-        if (address['address'] != null && address['address'].toString().isNotEmpty) {
-          parts.add(address['address'].toString());
-        } else if (address['street'] != null && address['street'].toString().isNotEmpty) {
-          parts.add(address['street'].toString());
-        }
-        
-        if (address['subLocality'] != null && address['subLocality'].toString().isNotEmpty) {
-          parts.add(address['subLocality'].toString());
-        }
-        
-        if (address['locality'] != null && address['locality'].toString().isNotEmpty) {
-          parts.add(address['locality'].toString());
-        }
-        
-        if (address['administrativeArea'] != null && address['administrativeArea'].toString().isNotEmpty) {
-          parts.add(address['administrativeArea'].toString());
-        }
-        
-        if (address['country'] != null && address['country'].toString().isNotEmpty) {
-          parts.add(address['country'].toString());
-        }
-        
-        return parts.isNotEmpty ? parts.join(', ') : AppLocalizations.of(context)!.orderDetailAddressUnknown;
-      } catch (e) {
-        debugLog('❌ Error parsing address map: $e');
-      }
-    }
-    
-    // Handle string addresses
-    if (address is String) {
-      try {
-        // Clean up coordinate-only patterns like "ตำแหน่ง: 19.16282, 100.84155"
-        final coordPattern = RegExp(r'ตำแหน่ง:\s*[\d.]+,\s*[\d.]+');
-        if (coordPattern.hasMatch(address)) {
-          final cleaned = address.replaceAll(coordPattern, '').replaceAll(RegExp(r'\s*[—\-]\s*$'), '').trim();
-          if (cleaned.isNotEmpty) return cleaned;
-          return AppLocalizations.of(context)!.orderDetailAddressCurrent;
-        }
-        
-        // Try to parse as JSON if it looks like JSON
-        if (address.trim().startsWith('{') && address.trim().endsWith('}')) {
-          try {
-            final addressMap = jsonDecode(address) as Map<String, dynamic>;
-            final parts = <String>[];
-            if ((addressMap['address'] as String?)?.isNotEmpty == true) {
-              parts.add(addressMap['address'] as String);
-            }
-            if ((addressMap['street'] as String?)?.isNotEmpty == true) {
-              parts.add(addressMap['street'] as String);
-            }
-            return parts.isNotEmpty ? parts.join(', ') : address;
-          } catch (_) {
-            return address;
-          }
-        }
-        
-        // Check if it's an "Instance of" string
-        if (address.contains('Instance of')) {
-          return AppLocalizations.of(context)!.orderDetailAddressUnknown;
-        }
-        
-        // Return regular string
-        return address;
-      } catch (e) {
-        debugLog('❌ Error parsing address string: $e');
-        return address;
-      }
-    }
-    
-    // Handle AddressPlacemark objects
-    if (address.toString().contains('AddressPlacemark')) {
-      return AppLocalizations.of(context)!.orderDetailAddressUnknown;
-    }
-    
-    // Fallback
-    return address.toString();
+    return formatAddressValue(
+      address,
+      unknownLabel: AppLocalizations.of(context)!.orderDetailAddressUnknown,
+      currentLocationLabel:
+          AppLocalizations.of(context)!.orderDetailAddressCurrent,
+    );
   }
 
   double _calculateTotalPrice() {
     final booking = _currentBooking ?? widget.booking;
-    final couponDiscount = (_couponUsage?['discount_amount'] as num?)?.toDouble() ?? 0.0;
-    
+    final couponDiscount =
+        (_couponUsage?['discount_amount'] as num?)?.toDouble() ?? 0.0;
+
     if (booking.serviceType == 'food') {
       // Food: booking.price = ค่าอาหาร (subtotal รวม options แล้ว)
       // booking.deliveryFee = ค่าจัดส่ง
@@ -1028,7 +1039,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
       final total = booking.price + deliveryFee - couponDiscount;
       return total < 0 ? 0 : total;
     }
-    
+
     // Ride / Parcel: ใช้ราคาจาก booking โดยตรง
     final total = booking.price - couponDiscount;
     return total < 0 ? 0 : total;
@@ -1037,10 +1048,12 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
   Widget _buildPricingCard() {
     final colorScheme = Theme.of(context).colorScheme;
     final booking = _currentBooking ?? widget.booking;
-    final couponDiscount = (_couponUsage?['discount_amount'] as num?)?.toDouble() ?? 0.0;
+    final couponDiscount =
+        (_couponUsage?['discount_amount'] as num?)?.toDouble() ?? 0.0;
     final couponCode = _couponUsage?['coupon_code'] as String?;
 
-    final hideCouponBreakdown = (_couponUsage?['is_system_coupon'] as bool?) ?? false;
+    final hideCouponBreakdown =
+        (_couponUsage?['is_system_coupon'] as bool?) ?? false;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1074,8 +1087,11 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                 final itemPrice = (item['price'] as num?)?.toDouble() ?? 0.0;
                 final quantity = (item['quantity'] as num?)?.toInt() ?? 1;
                 final itemTotal = itemPrice * quantity;
-                final itemName = item['name'] ?? item['item_name'] ?? item['menu_item']?['name'] ?? AppLocalizations.of(context)!.orderDetailItemUnnamed;
-                
+                final itemName = item['name'] ??
+                    item['item_name'] ??
+                    item['menu_item']?['name'] ??
+                    AppLocalizations.of(context)!.orderDetailItemUnnamed;
+
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
@@ -1104,7 +1120,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
               }).toList(),
               const Divider(),
             ],
-            
+
             // Food cost summary
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1123,7 +1139,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                 ),
               ],
             ),
-            
+
             // Delivery fee
             if (booking.deliveryFee != null) ...[
               const SizedBox(height: 8),
@@ -1132,7 +1148,8 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                 children: [
                   Text(
                     AppLocalizations.of(context)!.orderDetailDeliveryFee,
-                    style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+                    style:
+                        TextStyle(fontSize: 14, color: colorScheme.onSurface),
                   ),
                   Text(
                     '฿${booking.deliveryFee!.ceil()}',
@@ -1153,10 +1170,13 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                 children: [
                   Text(
                     hideCouponBreakdown
-                        ? AppLocalizations.of(context)!.orderDetailCouponDiscount
+                        ? AppLocalizations.of(context)!
+                            .orderDetailCouponDiscount
                         : (couponCode != null && couponCode.isNotEmpty
-                            ? AppLocalizations.of(context)!.orderDetailCouponDiscountCode(couponCode)
-                            : AppLocalizations.of(context)!.orderDetailCouponDiscount),
+                            ? AppLocalizations.of(context)!
+                                .orderDetailCouponDiscountCode(couponCode)
+                            : AppLocalizations.of(context)!
+                                .orderDetailCouponDiscount),
                     style: TextStyle(
                       fontSize: 14,
                       color: colorScheme.secondary,
@@ -1173,7 +1193,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                 ],
               ),
             ],
-            
+
             // Distance
             const SizedBox(height: 8),
             Row(
@@ -1184,7 +1204,8 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                   style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
                 ),
                 Text(
-                  AppLocalizations.of(context)!.orderDetailDistanceKm(booking.distanceKm.toStringAsFixed(1)),
+                  AppLocalizations.of(context)!.orderDetailDistanceKm(
+                      booking.distanceKm.toStringAsFixed(1)),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -1193,7 +1214,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 8),
             const Divider(),
           ] else if (booking.serviceType != 'food') ...[
@@ -1225,11 +1246,15 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                 children: [
                   Text(
                     hideCouponBreakdown
-                        ? AppLocalizations.of(context)!.orderDetailCouponDiscount
+                        ? AppLocalizations.of(context)!
+                            .orderDetailCouponDiscount
                         : (couponCode != null && couponCode.isNotEmpty
-                            ? AppLocalizations.of(context)!.orderDetailCouponDiscountCode(couponCode)
-                            : AppLocalizations.of(context)!.orderDetailCouponDiscount),
-                    style: TextStyle(fontSize: 14, color: colorScheme.secondary),
+                            ? AppLocalizations.of(context)!
+                                .orderDetailCouponDiscountCode(couponCode)
+                            : AppLocalizations.of(context)!
+                                .orderDetailCouponDiscount),
+                    style:
+                        TextStyle(fontSize: 14, color: colorScheme.secondary),
                   ),
                   Text(
                     '-฿${couponDiscount.ceil()}',
@@ -1245,7 +1270,7 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
             const SizedBox(height: 8),
             const Divider(),
           ],
-          
+
           // Total
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1431,7 +1456,8 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
               ),
               child: Row(
                 children: [
-                  Icon(Icons.receipt_long, color: colorScheme.onSurfaceVariant, size: 20),
+                  Icon(Icons.receipt_long,
+                      color: colorScheme.onSurfaceVariant, size: 20),
                   const SizedBox(width: 8),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1462,7 +1488,8 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
             const SizedBox(height: 12),
             Text(
               AppLocalizations.of(context)!.orderDetailCancelledRetry,
-              style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+              style:
+                  TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
           ],
@@ -1482,9 +1509,12 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                 backgroundColor: Colors.red,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
-              child: Text(AppLocalizations.of(context)!.orderDetailUnderstood, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              child: Text(AppLocalizations.of(context)!.orderDetailUnderstood,
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold)),
             ),
           ),
         ],
@@ -1498,7 +1528,9 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
     if (customerId == null || booking.driverId == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.orderDetailChatError)),
+          SnackBar(
+              content:
+                  Text(AppLocalizations.of(context)!.orderDetailChatError)),
         );
       }
       return;
@@ -1517,7 +1549,8 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
           MaterialPageRoute(
             builder: (context) => ChatScreen(
               chatRoomId: room.id,
-              otherPartyName: _driverInfo?['full_name'] ?? AppLocalizations.of(context)!.orderDetailDriverDefault,
+              otherPartyName: _driverInfo?['full_name'] ??
+                  AppLocalizations.of(context)!.orderDetailDriverDefault,
               bookingId: booking.id,
               roomType: 'booking',
             ),
@@ -1528,7 +1561,9 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
       debugLog('❌ Error opening chat: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.orderDetailChatError)),
+          SnackBar(
+              content:
+                  Text(AppLocalizations.of(context)!.orderDetailChatError)),
         );
       }
     }
@@ -1538,14 +1573,16 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
     final booking = _currentBooking ?? widget.booking;
     final bookingId = booking.id;
     final isFood = booking.serviceType == 'food';
-    final couponDiscount = (_couponUsage?['discount_amount'] as num?)?.toDouble() ?? 0.0;
+    final couponDiscount =
+        (_couponUsage?['discount_amount'] as num?)?.toDouble() ?? 0.0;
     final couponCode = _couponUsage?['coupon_code'] as String?;
     final foodCost = booking.price;
     final deliveryFee = booking.deliveryFee ?? 0.0;
     final grossAmount = isFood ? foodCost + deliveryFee : booking.price;
-    final totalAmount = (grossAmount - couponDiscount) < 0 ? 0 : (grossAmount - couponDiscount);
+    final totalAmount =
+        (grossAmount - couponDiscount) < 0 ? 0 : (grossAmount - couponDiscount);
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -1559,12 +1596,18 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                 color: AppTheme.primaryGreen.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.check_circle, color: AppTheme.primaryGreen, size: 48),
+              child: const Icon(Icons.check_circle,
+                  color: AppTheme.primaryGreen, size: 48),
             ),
             const SizedBox(height: 16),
             Text(
-              isFood ? AppLocalizations.of(context)!.orderDetailCompletedFood : AppLocalizations.of(context)!.orderDetailCompletedRide,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen),
+              isFood
+                  ? AppLocalizations.of(context)!.orderDetailCompletedFood
+                  : AppLocalizations.of(context)!.orderDetailCompletedRide,
+              style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryGreen),
               textAlign: TextAlign.center,
             ),
           ],
@@ -1584,11 +1627,13 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                 decoration: BoxDecoration(
                   color: colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: colorScheme.primary.withValues(alpha: 0.35)),
+                  border: Border.all(
+                      color: colorScheme.primary.withValues(alpha: 0.35)),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.receipt_long, color: colorScheme.onPrimaryContainer, size: 20),
+                    Icon(Icons.receipt_long,
+                        color: colorScheme.onPrimaryContainer, size: 20),
                     const SizedBox(width: 8),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1622,7 +1667,10 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [AppTheme.primaryGreen, AppTheme.primaryGreen.withValues(alpha: 0.8)],
+                    colors: [
+                      AppTheme.primaryGreen,
+                      AppTheme.primaryGreen.withValues(alpha: 0.8)
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -1636,14 +1684,27 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(AppLocalizations.of(context)!.orderDetailTotalAmount, style: const TextStyle(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w500)),
+                            Text(
+                                AppLocalizations.of(context)!
+                                    .orderDetailTotalAmount,
+                                style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.white70,
+                                    fontWeight: FontWeight.w500)),
                             if (isFood)
-                              Text(AppLocalizations.of(context)!.orderDetailIncludingDelivery, style: const TextStyle(fontSize: 12, color: Colors.white60)),
+                              Text(
+                                  AppLocalizations.of(context)!
+                                      .orderDetailIncludingDelivery,
+                                  style: const TextStyle(
+                                      fontSize: 12, color: Colors.white60)),
                           ],
                         ),
                         Text(
                           '฿${totalAmount.ceil()}',
-                          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+                          style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white),
                         ),
                       ],
                     ),
@@ -1660,15 +1721,32 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                           children: [
                             Column(
                               children: [
-                                Text(AppLocalizations.of(context)!.orderDetailFoodCost, style: const TextStyle(fontSize: 11, color: Colors.white70)),
-                                Text('฿${foodCost.ceil()}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+                                Text(
+                                    AppLocalizations.of(context)!
+                                        .orderDetailFoodCost,
+                                    style: const TextStyle(
+                                        fontSize: 11, color: Colors.white70)),
+                                Text('฿${foodCost.ceil()}',
+                                    style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white)),
                               ],
                             ),
-                            Container(width: 1, height: 24, color: Colors.white30),
+                            Container(
+                                width: 1, height: 24, color: Colors.white30),
                             Column(
                               children: [
-                                Text(AppLocalizations.of(context)!.orderDetailDeliveryFee, style: const TextStyle(fontSize: 11, color: Colors.white70)),
-                                Text('฿${deliveryFee.ceil()}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+                                Text(
+                                    AppLocalizations.of(context)!
+                                        .orderDetailDeliveryFee,
+                                    style: const TextStyle(
+                                        fontSize: 11, color: Colors.white70)),
+                                Text('฿${deliveryFee.ceil()}',
+                                    style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white)),
                               ],
                             ),
                           ],
@@ -1679,8 +1757,12 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                       const SizedBox(height: 8),
                       Text(
                         couponCode != null && couponCode.isNotEmpty
-                            ? AppLocalizations.of(context)!.orderDetailCouponUsed(couponCode, couponDiscount.ceil().toString())
-                            : AppLocalizations.of(context)!.orderDetailCouponUsedNoCode(couponDiscount.ceil().toString()),
+                            ? AppLocalizations.of(context)!
+                                .orderDetailCouponUsed(couponCode,
+                                    couponDiscount.ceil().toString())
+                            : AppLocalizations.of(context)!
+                                .orderDetailCouponUsedNoCode(
+                                    couponDiscount.ceil().toString()),
                         style: const TextStyle(
                           fontSize: 12,
                           color: Colors.white,
@@ -1731,14 +1813,14 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
   /// Check if order can be cancelled based on current status
   bool _canCancelOrder() {
     final currentStatus = _currentBooking?.status ?? widget.booking.status;
-    
+
     // Orders that can be cancelled
     final cancellableStatuses = [
-      'pending',           // Waiting for driver
-      'pending_merchant',  // Food order waiting for merchant
-      'confirmed',         // Driver confirmed but not started
+      'pending', // Waiting for driver
+      'pending_merchant', // Food order waiting for merchant
+      'confirmed', // Driver confirmed but not started
     ];
-    
+
     return cancellableStatuses.contains(currentStatus);
   }
 
@@ -1758,10 +1840,11 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
   }
 
   /// Cancel the order
+  // ignore: unused_element
   Future<void> _cancelOrder() async {
     try {
       final bookingService = BookingService();
-      
+
       // Show loading indicator
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1772,7 +1855,8 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.onInverseSurface),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                      Theme.of(context).colorScheme.onInverseSurface),
                 ),
               ),
               SizedBox(width: 12),
@@ -1791,11 +1875,12 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
       if (mounted) {
         // Hide loading snackbar
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        
+
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.orderDetailCancelSuccess),
+            content:
+                Text(AppLocalizations.of(context)!.orderDetailCancelSuccess),
             backgroundColor: Theme.of(context).colorScheme.tertiary,
           ),
         );
@@ -1805,15 +1890,16 @@ if (item['options'] != null && item['options'] is List && (item['options'] as Li
       }
     } catch (e) {
       debugLog('❌ Error cancelling order: $e');
-      
+
       if (mounted) {
         // Hide loading snackbar
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        
+
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.orderDetailCancelError(e.toString())),
+            content: Text(AppLocalizations.of(context)!
+                .orderDetailCancelError(e.toString())),
             backgroundColor: Colors.red,
           ),
         );

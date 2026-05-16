@@ -7,12 +7,14 @@ class MerchantOrderService {
       : _client = client ?? Supabase.instance.client;
 
   Stream<List<Map<String, dynamic>>> watchOrders(String merchantId) {
+    // RLS policy ensures only this merchant's rows are streamed server-side.
+    // The client-side filter is a safety net for latency window edge cases.
     return _client
         .from('bookings')
         .stream(primaryKey: ['id'])
-        .eq('service_type', 'food')
+        .eq('merchant_id', merchantId)
         .map((rows) => rows
-            .where((item) => item['merchant_id']?.toString() == merchantId)
+            .where((item) => item['service_type'] == 'food')
             .map(Map<String, dynamic>.from)
             .toList());
   }
@@ -120,6 +122,24 @@ class MerchantOrderService {
         await _client.from('bookings').select().eq('id', bookingId).single();
 
     return MerchantFoodReadyResult.ready(Map<String, dynamic>.from(booking));
+  }
+
+  Future<void> updateShopSchedule(
+    String merchantId, {
+    required String shopOpenTime,
+    required String shopCloseTime,
+    required List<dynamic> shopOpenDays,
+    required String orderAcceptMode,
+    required bool shopAutoScheduleEnabled,
+  }) async {
+    await _client.from('profiles').update({
+      'shop_open_time': shopOpenTime,
+      'shop_close_time': shopCloseTime,
+      'shop_open_days': shopOpenDays,
+      'order_accept_mode': orderAcceptMode,
+      'shop_auto_schedule_enabled': shopAutoScheduleEnabled,
+      'updated_at': DateTime.now().toIso8601String(),
+    }).eq('id', merchantId);
   }
 
   Future<bool> finishOrder(String bookingId) async {

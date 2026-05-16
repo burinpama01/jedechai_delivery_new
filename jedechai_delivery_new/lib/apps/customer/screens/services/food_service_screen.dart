@@ -1,12 +1,13 @@
-﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
+import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../common/utils/shop_schedule.dart';
 import '../../../../theme/app_theme.dart';
 import 'restaurant_detail_screen.dart';
 
 /// Food Service Screen
-/// 
+///
 /// Displays list of restaurants (merchants) for food ordering
 class FoodServiceScreen extends StatefulWidget {
   const FoodServiceScreen({super.key});
@@ -33,63 +34,6 @@ class _FoodServiceScreenState extends State<FoodServiceScreen> {
         _error = null;
       });
 
-      bool _isShopOpenNow(Map<String, dynamic> merchant) {
-        final autoEnabled = merchant['shop_auto_schedule_enabled'] == true;
-        final rawStatus = merchant['shop_status'];
-        final bool statusOpen = rawStatus == true || rawStatus == 1 || rawStatus == 'true';
-
-        if (!autoEnabled) {
-          return statusOpen;
-        }
-
-        final openStr = (merchant['shop_open_time'] as String?)?.trim();
-        final closeStr = (merchant['shop_close_time'] as String?)?.trim();
-        if (openStr == null || closeStr == null) {
-          return statusOpen;
-        }
-
-        final openParts = openStr.split(':');
-        final closeParts = closeStr.split(':');
-        if (openParts.length < 2 || closeParts.length < 2) {
-          return statusOpen;
-        }
-
-        final openHour = int.tryParse(openParts[0]);
-        final openMinute = int.tryParse(openParts[1]);
-        final closeHour = int.tryParse(closeParts[0]);
-        final closeMinute = int.tryParse(closeParts[1]);
-        if (openHour == null || openMinute == null || closeHour == null || closeMinute == null) {
-          return statusOpen;
-        }
-
-        final now = TimeOfDay.now();
-        final nowMinutes = now.hour * 60 + now.minute;
-        final openMinutes = openHour * 60 + openMinute;
-        final closeMinutes = closeHour * 60 + closeMinute;
-
-        bool withinHours;
-        if (openMinutes <= closeMinutes) {
-          withinHours = nowMinutes >= openMinutes && nowMinutes < closeMinutes;
-        } else {
-          withinHours = nowMinutes >= openMinutes || nowMinutes < closeMinutes;
-        }
-
-        final rawDays = merchant['shop_open_days'];
-        if (rawDays is List && rawDays.isNotEmpty) {
-          const weekdayKeys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-          final todayKey = weekdayKeys[DateTime.now().weekday - 1];
-          final allowedDays = rawDays
-              .map((e) => e.toString().toLowerCase().trim())
-              .where((e) => weekdayKeys.contains(e))
-              .toSet();
-          if (allowedDays.isNotEmpty && !allowedDays.contains(todayKey)) {
-            return false;
-          }
-        }
-
-        return withinHours;
-      }
-
       final response = await Supabase.instance.client
           .from('profiles')
           .select(
@@ -102,7 +46,7 @@ class _FoodServiceScreenState extends State<FoodServiceScreen> {
 
       setState(() {
         _restaurants = List<Map<String, dynamic>>.from(response)
-            .where(_isShopOpenNow)
+            .where(isShopOpenNow)
             .toList();
         _isLoading = false;
       });
@@ -206,7 +150,8 @@ class _FoodServiceScreenState extends State<FoodServiceScreen> {
               MaterialPageRoute(
                 builder: (context) => RestaurantDetailScreen(
                   merchantId: restaurant['id'],
-                  merchantName: restaurant['full_name'] ?? AppLocalizations.of(context)!.foodSvcRestaurantFallback,
+                  merchantName: restaurant['full_name'] ??
+                      AppLocalizations.of(context)!.foodSvcRestaurantFallback,
                 ),
               ),
             );

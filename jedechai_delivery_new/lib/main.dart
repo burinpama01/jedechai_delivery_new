@@ -23,6 +23,8 @@ import 'apps/driver/screens/driver_job_detail_screen.dart';
 import 'apps/merchant/screens/order_detail_screen.dart';
 import 'common/models/models.dart';
 import 'apps/landing/landing_screen.dart';
+import 'apps/admin/screens/admin_tickets_screen.dart';
+import 'apps/customer/screens/services/support_tickets_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -139,6 +141,8 @@ class _MyAppState extends State<MyApp> {
                   const _NotificationBookingRoute(
                     destination: _NotificationBookingDestination.merchantOrder,
                   ),
+              '/admin_tickets': (context) => const AdminTicketsScreen(),
+              '/my_tickets': (context) => const SupportTicketsScreen(),
               '/notifications': (context) {
                 final arguments = ModalRoute.of(context)?.settings.arguments;
                 final role = arguments is Map

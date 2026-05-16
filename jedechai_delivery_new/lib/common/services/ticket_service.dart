@@ -80,10 +80,12 @@ class TicketService {
 
   // ── Admin Methods ──
 
-  /// Get all tickets (admin)
+  /// Get all tickets (admin) with reporter info joined from profiles.
   Future<List<SupportTicket>> getAllTickets({String? statusFilter}) async {
     try {
-      var query = _client.from('support_tickets').select();
+      var query = _client
+          .from('support_tickets')
+          .select('*, profiles!user_id(full_name, phone_number)');
 
       if (statusFilter != null && statusFilter != 'all') {
         query = query.eq('status', statusFilter);
@@ -100,10 +102,31 @@ class TicketService {
     }
   }
 
-  /// Update ticket status (admin)
+  static const _allowedTransitions = <String, List<String>>{
+    'open': ['in_progress', 'closed'],
+    'in_progress': ['resolved', 'open'],
+    'resolved': ['closed'],
+    'closed': [],
+  };
+
+  /// Update ticket status (admin) and notify the ticket owner.
   Future<bool> updateTicketStatus(String ticketId, String newStatus,
       {String? resolution}) async {
     try {
+      final currentRow = await _client
+          .from('support_tickets')
+          .select('status, user_id, subject')
+          .eq('id', ticketId)
+          .maybeSingle();
+      if (currentRow == null) return false;
+
+      final currentStatus = currentRow['status'] as String;
+      final allowed = _allowedTransitions[currentStatus] ?? [];
+      if (!allowed.contains(newStatus)) {
+        debugLog('⚠️ Invalid transition $currentStatus → $newStatus');
+        return false;
+      }
+
       final updateData = <String, dynamic>{
         'status': newStatus,
       };
@@ -125,6 +148,30 @@ class TicketService {
           .update(updateData)
           .eq('id', ticketId);
 
+      // Notify the ticket owner about status change
+      {
+        final userId = currentRow['user_id'] as String;
+        final subject = currentRow['subject'] as String? ?? '';
+        final statusMessages = {
+          'in_progress': 'เจ้าหน้าที่กำลังดำเนินการแก้ไขปัญหาของคุณแล้ว',
+          'resolved': 'ปัญหาของคุณได้รับการแก้ไขแล้ว',
+          'closed': 'เรื่องร้องเรียนของคุณถูกปิดแล้ว',
+        };
+        final body = statusMessages[newStatus];
+        if (body != null) {
+          try {
+            await NotificationSender.sendToUser(
+              userId: userId,
+              title: 'อัปเดตสถานะ: $subject',
+              body: body,
+              data: {'type': 'ticket_updated', 'ticket_id': ticketId, 'status': newStatus},
+            );
+          } catch (e) {
+            debugLog('⚠️ Failed to notify ticket owner: $e');
+          }
+        }
+      }
+
       debugLog('✅ Updated ticket $ticketId to $newStatus');
       return true;
     } catch (e) {
@@ -133,35 +180,26 @@ class TicketService {
     }
   }
 
-  /// Get ticket stats (admin dashboard)
+  /// Get ticket stats (admin dashboard) using server-side counts.
   Future<Map<String, int>> getTicketStats() async {
     try {
-      final response = await _client.from('support_tickets').select('status');
-
-      final stats = <String, int>{
-        'open': 0,
-        'in_progress': 0,
-        'resolved': 0,
-        'closed': 0,
-        'total': 0,
-      };
-
-      for (final row in response) {
-        final status = row['status'] as String;
-        stats[status] = (stats[status] ?? 0) + 1;
-        stats['total'] = (stats['total'] ?? 0) + 1;
-      }
-
+      final statuses = ['open', 'in_progress', 'resolved', 'closed'];
+      final counts = await Future.wait(
+        statuses.map((s) async {
+          final res = await _client
+              .from('support_tickets')
+              .select('id')
+              .eq('status', s)
+              .count();
+          return MapEntry(s, res.count);
+        }),
+      );
+      final stats = Map.fromEntries(counts);
+      stats['total'] = stats.values.fold(0, (a, b) => a + b);
       return stats;
     } catch (e) {
       debugLog('❌ Error fetching ticket stats: $e');
-      return {
-        'open': 0,
-        'in_progress': 0,
-        'resolved': 0,
-        'closed': 0,
-        'total': 0
-      };
+      return {'open': 0, 'in_progress': 0, 'resolved': 0, 'closed': 0, 'total': 0};
     }
   }
 
@@ -178,19 +216,19 @@ class TicketService {
       final admins =
           await _client.from('profiles').select('id').eq('role', 'admin');
 
-      for (final admin in admins) {
-        await NotificationSender.sendNotification(
-          targetUserId: admin['id'] as String,
-          title: '🎫 Ticket ใหม่',
-          body: subject,
-          data: {'type': 'new_ticket'},
-        );
-      }
+      await Future.wait((admins as List).map((admin) =>
+          NotificationSender.sendNotification(
+            targetUserId: admin['id'] as String,
+            title: '🎫 Ticket ใหม่',
+            body: subject,
+            data: {'type': 'new_ticket'},
+          )));
 
       final priorityLabel = const {
         'low': '🟢 ต่ำ',
         'medium': '🟡 กลาง',
         'high': '🔴 สูง',
+        'urgent': '🚨 เร่งด่วน',
       }[priority] ?? priority;
       await AdminLineNotificationService.notify(
         eventType: 'support_ticket_new',
