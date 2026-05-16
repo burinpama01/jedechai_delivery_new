@@ -344,11 +344,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       final userId = AuthService.userId;
       if (userId == null) return;
       try {
-        await SupabaseService.client.from('driver_locations').upsert({
-          'driver_id': userId,
+        await SupabaseService.client.from('driver_locations').update({
           'is_online': true,
           'last_heartbeat_at': DateTime.now().toUtc().toIso8601String(),
-        }, onConflict: 'driver_id');
+        }).eq('driver_id', userId);
       } catch (e) {
         debugLog('⚠️ Heartbeat failed: $e');
       }

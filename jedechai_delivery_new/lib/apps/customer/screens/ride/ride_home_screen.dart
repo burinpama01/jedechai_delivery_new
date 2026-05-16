@@ -235,12 +235,13 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
 
         final lat = (row['location_lat'] as num?)?.toDouble();
         final lng = (row['location_lng'] as num?)?.toDouble();
-        if (_currentLocation != null && lat != null && lng != null) {
+        if (lat == null || lng == null || (lat == 0.0 && lng == 0.0)) continue;
+        if (_currentLocation != null) {
           if (_isWithinDriverSearchRadius(lat, lng, _currentLocation!.latitude,
               _currentLocation!.longitude)) {
             nearbyOnlineDriverIds.add(driverId);
           }
-        } else if (_currentLocation == null) {
+        } else {
           nearbyOnlineDriverIds.add(driverId);
         }
       }
