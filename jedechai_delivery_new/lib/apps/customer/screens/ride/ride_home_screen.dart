@@ -341,7 +341,8 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
       final driverId = row['driver_id'] as String?;
       final lat = (row['location_lat'] as num?)?.toDouble();
       final lng = (row['location_lng'] as num?)?.toDouble();
-      if (driverId == null || driverId.isEmpty || lat == null || lng == null) {
+      if (driverId == null || driverId.isEmpty || lat == null || lng == null ||
+          (lat == 0.0 && lng == 0.0)) {
         continue;
       }
       if (_isWithinDriverSearchRadius(
@@ -811,7 +812,8 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
         final driverId = row['driver_id'] as String?;
         final lat = (row['location_lat'] as num?)?.toDouble();
         final lng = (row['location_lng'] as num?)?.toDouble();
-        if (driverId == null || lat == null || lng == null) continue;
+        if (driverId == null || lat == null || lng == null ||
+            (lat == 0.0 && lng == 0.0)) continue;
 
         if (_isWithinDriverSearchRadius(
             lat, lng, booking.originLat, booking.originLng)) {

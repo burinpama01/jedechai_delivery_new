@@ -478,15 +478,28 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       }).eq('id', userId);
       debugLog('  ✅ profiles.is_online = $isOnline');
 
-      // Upsert driver_locations in a single round trip (ISSUE-043)
-      await SupabaseService.client.from('driver_locations').upsert({
-        'driver_id': userId,
-        'is_online': isOnline,
-        'is_available': isOnline,
-        'location_lat': _driverLat ?? _driverProfile?['latitude'] ?? 0,
-        'location_lng': _driverLng ?? _driverProfile?['longitude'] ?? 0,
-        'last_heartbeat_at': DateTime.now().toUtc().toIso8601String(),
-      }, onConflict: 'driver_id');
+      // Use UPSERT only when real coordinates are available so we never write
+      // a (0,0) ghost row. When coordinates are unknown, UPDATE the existing
+      // row (or no-op if the row doesn't exist yet — GPS sync will create it).
+      final lat = _driverLat ?? (_driverProfile?['latitude'] as num?)?.toDouble();
+      final lng = _driverLng ?? (_driverProfile?['longitude'] as num?)?.toDouble();
+      final hasRealCoords = lat != null && lng != null && !(lat == 0.0 && lng == 0.0);
+      if (hasRealCoords) {
+        await SupabaseService.client.from('driver_locations').upsert({
+          'driver_id': userId,
+          'is_online': isOnline,
+          'is_available': isOnline,
+          'location_lat': lat,
+          'location_lng': lng,
+          'last_heartbeat_at': DateTime.now().toUtc().toIso8601String(),
+        }, onConflict: 'driver_id');
+      } else {
+        await SupabaseService.client.from('driver_locations').update({
+          'is_online': isOnline,
+          'is_available': isOnline,
+          'last_heartbeat_at': DateTime.now().toUtc().toIso8601String(),
+        }).eq('driver_id', userId);
+      }
       debugLog('  ✅ driver_locations.is_online = $isOnline');
     } catch (e) {
       debugLog('❌ Error updating online status: $e');
