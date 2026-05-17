@@ -707,6 +707,12 @@ abstract class AppLocalizations {
   /// **'No restaurants currently open'**
   String get foodHomeEmptyNoneOpen;
 
+  /// No description provided for @foodHomeEmptyNoLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enable location to see nearby restaurants'**
+  String get foodHomeEmptyNoLocation;
+
   /// No description provided for @foodHomeEmptySearchHint.
   ///
   /// In en, this message translates to:
@@ -11081,25 +11087,46 @@ abstract class AppLocalizations {
   /// **'Withdrawal request ฿{amount} to {bankName} {accountNumber}'**
   String topupWithdrawalTransactionDescription(Object amount, Object bankName, Object accountNumber);
 
-  /// Account deletion pending screen title
+  /// No description provided for @pendingDeletionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account Deletion In Progress'**
   String get pendingDeletionTitle;
 
-  /// Account deletion pending screen body text
+  /// No description provided for @pendingDeletionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account deletion request has been sent to admin.\nPlease wait for review and approval.'**
   String get pendingDeletionBody;
 
-  /// Account deletion pending waiting note
+  /// No description provided for @pendingDeletionWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'While waiting for approval,\nthis account cannot be used.'**
   String get pendingDeletionWaiting;
 
-  /// Account deletion pending logout button
+  /// No description provided for @pendingDeletionLogout.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
   String get pendingDeletionLogout;
 
-  /// Account deletion rejected screen title
+  /// No description provided for @rejectedDeletionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account Deletion Rejected'**
   String get rejectedDeletionTitle;
 
-  /// Account deletion rejected screen body text
+  /// No description provided for @rejectedDeletionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account deletion request was not approved.\nYou can log in and use the account normally.'**
   String get rejectedDeletionBody;
 
-  /// Account deletion rejected back to login button
+  /// No description provided for @rejectedDeletionBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to login'**
   String get rejectedDeletionBack;
 }
 

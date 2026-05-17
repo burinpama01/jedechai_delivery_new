@@ -234,7 +234,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
     try {
       final configService = SystemConfigService();
       await configService.fetchSettings();
-      _maxDeliveryRadius = configService.customerToMerchantRadiusKm;
+      _maxDeliveryRadius = configService.maxDeliveryRadius;
       final rate = configService.getServiceRate('food');
       if (rate != null) {
         _baseFare = rate.basePrice.toDouble();
@@ -1113,6 +1113,15 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       if (_merchantLat == null || _merchantLng == null) {
         throw Exception(
             'ไม่พบตำแหน่งร้านค้า กรุณาให้ร้านค้าตั้งค่าตำแหน่งร้านก่อนรับออเดอร์');
+      }
+
+      // Enforce delivery radius as a business rule (not just a warning)
+      if (_distanceKm > _maxDeliveryRadius) {
+        throw Exception(
+            AppLocalizations.of(context)!.foodDistanceWarningTitle +
+            '\n' +
+            AppLocalizations.of(context)!.foodDistanceWarningBody(
+                _distanceKm.toStringAsFixed(1), _maxDeliveryRadius.toStringAsFixed(1)));
       }
 
       final note = _noteController.text.trim();

@@ -52,6 +52,39 @@ class LocationService {
     return await _getRealRoadDistance(startLatitude, startLongitude, endLatitude, endLongitude);
   }
 
+  /// Returns distance with metadata indicating whether this is a real road
+  /// distance (from Directions API) or a straight-line fallback estimate.
+  static Future<DistanceResult> calculateDistanceWithMeta(
+    double startLatitude,
+    double startLongitude,
+    double endLatitude,
+    double endLongitude,
+  ) async {
+    try {
+      final String googleApiKey = EnvConfig.googleMapsApiKey;
+      final url = Uri.parse(
+        'https://maps.googleapis.com/maps/api/directions/json'
+        '?origin=$startLatitude,$startLongitude'
+        '&destination=$endLatitude,$endLongitude'
+        '&mode=driving'
+        '&key=$googleApiKey',
+      );
+      final response = await http.get(url);
+      final data = json.decode(response.body);
+      if (data['status'] == 'OK' && (data['routes'] as List).isNotEmpty) {
+        final leg = (data['routes'][0]['legs'] as List?)?.firstOrNull as Map?;
+        final value = leg?['distance']?['value'] as int?;
+        if (value != null) {
+          return DistanceResult(distanceKm: value / 1000, isStraightLine: false);
+        }
+      }
+    } catch (_) {}
+    final straight = Geolocator.distanceBetween(
+            startLatitude, startLongitude, endLatitude, endLongitude) /
+        1000;
+    return DistanceResult(distanceKm: straight, isStraightLine: true);
+  }
+
   static Future<double> _getRealRoadDistance(
     double startLat,
     double startLng,
@@ -228,6 +261,15 @@ class LocationService {
       return null;
     }
   }
+}
+
+class DistanceResult {
+  final double distanceKm;
+
+  /// True when Directions API was unavailable and straight-line was used instead.
+  final bool isStraightLine;
+
+  const DistanceResult({required this.distanceKm, required this.isStraightLine});
 }
 
 class Location {

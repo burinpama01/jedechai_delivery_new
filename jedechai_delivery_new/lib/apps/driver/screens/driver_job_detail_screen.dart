@@ -198,6 +198,18 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
             points: result.points.map((p) => LatLng(p.latitude, p.longitude)).toList(),
           ));
         });
+      } else if (mounted) {
+        // API returned OK but no points, or non-OK status — draw dashed fallback
+        setState(() {
+          _polylines.clear();
+          _polylines.add(Polyline(
+            polylineId: const PolylineId('route'),
+            color: Colors.grey,
+            width: 3,
+            patterns: [PatternItem.dash(12), PatternItem.gap(6)],
+            points: [LatLng(b.originLat, b.originLng), LatLng(b.destLat, b.destLng)],
+          ));
+        });
       }
     } catch (e) {
       debugLog('⚠️ Route fetch error: $e');

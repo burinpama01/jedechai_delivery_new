@@ -575,20 +575,21 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
   }
 
   void _drawStraightLine(LatLng origin, LatLng destination) {
-    // Fallback: draw straight line if API fails
+    // Fallback: draw dashed grey line so user can distinguish it from a real route
     if (mounted) {
       setState(() {
         _polylines.clear();
         _polylines.add(
           Polyline(
             polylineId: const PolylineId('route'),
-            color: AppTheme.primaryGreen,
-            width: 5,
+            color: Colors.grey,
+            width: 3,
+            patterns: [PatternItem.dash(12), PatternItem.gap(6)],
             points: [origin, destination],
           ),
         );
       });
-      debugLog('⚠️ Drew fallback straight line');
+      debugLog('⚠️ Drew fallback straight-line (dashed grey)');
     }
   }
 

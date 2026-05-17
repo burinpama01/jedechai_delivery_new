@@ -325,6 +325,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get foodHomeEmptyNoneOpen => 'ไม่มีร้านอาหารเปิดให้บริการ';
 
   @override
+  String get foodHomeEmptyNoLocation => 'กรุณาเปิดใช้งานตำแหน่งเพื่อดูร้านอาหารในบริเวณใกล้เคียง';
+
+  @override
   String get foodHomeEmptySearchHint => 'ลองค้นหาด้วยคำอื่น';
 
   @override

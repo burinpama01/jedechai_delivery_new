@@ -44,6 +44,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
   Position? _currentPosition;
   double _restaurantRadiusKm = 30.0;
   bool _isOutOfRestaurantCoverage = false;
+  bool _isLocationUnavailable = false;
   final CustomerFavoriteService _favoriteService =
       const CustomerFavoriteService();
   Set<String> _favoriteMerchantIds = {};
@@ -356,9 +357,11 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
       final allFetched = List<Map<String, dynamic>>.from(response);
       final radiusFiltered = <Map<String, dynamic>>[];
 
+      _isLocationUnavailable = _currentPosition == null;
+
       for (final restaurant in allFetched) {
         if (_currentPosition == null) {
-          radiusFiltered.add(restaurant);
+          // No location — skip rather than show all (enforce radius policy)
           continue;
         }
 
@@ -394,7 +397,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
         _restaurants = openRestaurants;
         _isOutOfRestaurantCoverage = _searchQuery.isEmpty &&
             radiusFiltered.isNotEmpty &&
-            openRestaurants.isEmpty;
+            openRestaurants.isEmpty && !_isLocationUnavailable;
         _applyFilters();
         _isLoading = false;
       });
@@ -1225,9 +1228,11 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
           Text(
             _searchQuery.isNotEmpty
                 ? AppLocalizations.of(context)!.foodHomeEmptySearch
-                : (_isOutOfRestaurantCoverage
-                    ? AppLocalizations.of(context)!.foodHomeEmptyNoArea
-                    : AppLocalizations.of(context)!.foodHomeEmptyNoneOpen),
+                : (_isLocationUnavailable
+                    ? AppLocalizations.of(context)!.foodHomeEmptyNoLocation
+                    : (_isOutOfRestaurantCoverage
+                        ? AppLocalizations.of(context)!.foodHomeEmptyNoArea
+                        : AppLocalizations.of(context)!.foodHomeEmptyNoneOpen)),
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),

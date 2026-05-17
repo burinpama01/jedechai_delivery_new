@@ -325,6 +325,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get foodHomeEmptyNoneOpen => 'No restaurants currently open';
 
   @override
+  String get foodHomeEmptyNoLocation => 'Please enable location to see nearby restaurants';
+
+  @override
   String get foodHomeEmptySearchHint => 'Try another search term';
 
   @override

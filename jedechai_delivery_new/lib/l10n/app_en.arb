@@ -128,6 +128,7 @@
   "foodHomeEmptySearch": "No restaurants found",
   "foodHomeEmptyNoArea": "No restaurants in your area yet",
   "foodHomeEmptyNoneOpen": "No restaurants currently open",
+  "foodHomeEmptyNoLocation": "Please enable location to see nearby restaurants",
   "foodHomeEmptySearchHint": "Try another search term",
   "foodHomeEmptyNoAreaHint": "No open restaurants within {radius} km",
   "@foodHomeEmptyNoAreaHint": { "placeholders": { "radius": {} } },

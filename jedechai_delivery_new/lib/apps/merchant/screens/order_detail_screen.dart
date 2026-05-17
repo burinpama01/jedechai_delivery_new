@@ -54,6 +54,8 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
   double _deliverySystemRate = 0.02;
   String? _driverName;
   String? _driverPhone;
+  String? _customerName;
+  String? _customerPhone;
   final MerchantOrderService _merchantOrderService = MerchantOrderService();
 
   @override
@@ -65,6 +67,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
       _fetchOrderItems();
       _fetchGpRate();
       _fetchDriverInfo();
+      _fetchCustomerInfo();
     }
     if (widget.enableRealtimeListener) {
       _setupOrderStatusListener();
@@ -105,7 +108,12 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
           final oldStatus = _currentOrder?['status'] as String? ?? '';
 
           setState(() {
-            _currentOrder = response;
+            // Preserve enriched customer data across raw booking refreshes
+            _currentOrder = {
+              ...Map<String, dynamic>.from(response),
+              if (_customerName != null) 'customer_name': _customerName,
+              if (_customerPhone != null) 'customer_phone': _customerPhone,
+            };
           });
           debugLog(
               '🔄 Auto-refreshed order status: $newStatus (previous: $oldStatus)');
@@ -157,9 +165,13 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
           debugLog('📊 Order status update: $status');
           debugLog('📊 Current _dialogShown flag: $_dialogShown');
 
-          // Update current order state
+          // Update current order state, preserving enriched customer data
           setState(() {
-            _currentOrder = order;
+            _currentOrder = {
+              ...Map<String, dynamic>.from(order),
+              if (_customerName != null) 'customer_name': _customerName,
+              if (_customerPhone != null) 'customer_phone': _customerPhone,
+            };
           });
 
           // Show completion dialog when driver picks up order
@@ -262,6 +274,26 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
     }
   }
 
+  Future<void> _fetchCustomerInfo() async {
+    final customerId = (_currentOrder ?? widget.order)['customer_id'] as String?;
+    if (customerId == null || customerId.isEmpty) return;
+    try {
+      final profile = await Supabase.instance.client
+          .from('profiles')
+          .select('full_name, phone_number')
+          .eq('id', customerId)
+          .maybeSingle();
+      if (profile != null && mounted) {
+        setState(() {
+          _customerName = profile['full_name'] as String?;
+          _customerPhone = profile['phone_number'] as String?;
+        });
+      }
+    } catch (e) {
+      debugLog('⚠️ Error fetching customer info: $e');
+    }
+  }
+
   Future<void> _callDriver() async {
     if (_driverPhone == null || _driverPhone!.isEmpty) {
       if (mounted) {
@@ -347,9 +379,12 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
       }
 
       if (mounted) {
-        // Update current order state to reflect the change
         setState(() {
-          _currentOrder = result.first;
+          _currentOrder = {
+            ...Map<String, dynamic>.from(result.first),
+            if (_customerName != null) 'customer_name': _customerName,
+            if (_customerPhone != null) 'customer_phone': _customerPhone,
+          };
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -359,7 +394,6 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
             duration: const Duration(seconds: 2),
           ),
         );
-        // Don't pop - stay on this screen to see status updates
       }
     } catch (e) {
       if (mounted) {
@@ -533,10 +567,13 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
       }
 
       if (mounted) {
-        // Update current order state to reflect the change
         setState(() {
           if (result.booking != null) {
-            _currentOrder = result.booking;
+            _currentOrder = {
+              ...Map<String, dynamic>.from(result.booking!),
+              if (_customerName != null) 'customer_name': _customerName,
+              if (_customerPhone != null) 'customer_phone': _customerPhone,
+            };
           }
         });
 
@@ -691,6 +728,60 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
+
+                  // Customer Info Card
+                  if (_customerName != null || _customerPhone != null)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.blue[50],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.blue[200]!),
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundColor: Colors.blue[100],
+                            child: const Icon(Icons.person, color: Colors.blue, size: 22),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (_customerName != null)
+                                  Text(_customerName!,
+                                      style: const TextStyle(
+                                          fontSize: 15, fontWeight: FontWeight.w600)),
+                                if (_customerPhone != null)
+                                  Text(_customerPhone!,
+                                      style: TextStyle(
+                                          fontSize: 13, color: colorScheme.onSurfaceVariant)),
+                              ],
+                            ),
+                          ),
+                          if (_customerPhone != null)
+                            Material(
+                              color: Colors.green,
+                              shape: const CircleBorder(),
+                              child: InkWell(
+                                onTap: () async {
+                                  final uri = Uri.parse('tel:$_customerPhone');
+                                  if (await canLaunchUrl(uri)) await launchUrl(uri);
+                                },
+                                customBorder: const CircleBorder(),
+                                child: const Padding(
+                                  padding: EdgeInsets.all(8),
+                                  child: Icon(Icons.phone, size: 18, color: Colors.white),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
 
                   // Order Info Card
                   Container(
@@ -1532,8 +1623,9 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
   void _showCompletionDialog() {
     final order = _currentOrder ?? widget.order;
     final l10n = AppLocalizations.of(context)!;
-    final customerName =
-        order['customer_name'] as String? ?? l10n.orderDetailCustomerDefault;
+    final customerName = _customerName ??
+        order['customer_name'] as String? ??
+        l10n.orderDetailCustomerDefault;
     final bookingId = order['id'].toString();
     final colorScheme = Theme.of(context).colorScheme;
 

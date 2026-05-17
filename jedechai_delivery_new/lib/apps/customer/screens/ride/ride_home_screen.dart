@@ -540,24 +540,23 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
 
     setState(() {
       polylineCoordinates.clear();
-
-      // Add direct line from current location to destination
       polylineCoordinates
           .add(LatLng(_currentLocation!.latitude, _currentLocation!.longitude));
       polylineCoordinates.add(LatLng(
           _selectedDestination!.latitude, _selectedDestination!.longitude));
 
+      // Dashed grey line to indicate this is an estimate, not a real road route
       _polylines.clear();
       _polylines.add(
         Polyline(
           polylineId: const PolylineId('route'),
-          color: AppTheme.primaryGreen,
-          width: 5,
+          color: Colors.grey,
+          width: 3,
+          patterns: [PatternItem.dash(12), PatternItem.gap(6)],
           points: polylineCoordinates,
         ),
       );
 
-      // Calculate straight-line distance as fallback
       _estimatedDistance = _calculateDistance(
         _currentLocation!.latitude,
         _currentLocation!.longitude,

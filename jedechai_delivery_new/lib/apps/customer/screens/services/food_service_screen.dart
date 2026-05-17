@@ -1,8 +1,10 @@
 import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../common/utils/shop_schedule.dart';
+import '../../../../common/services/system_config_service.dart';
 import '../../../../theme/app_theme.dart';
 import 'restaurant_detail_screen.dart';
 
@@ -20,6 +22,8 @@ class _FoodServiceScreenState extends State<FoodServiceScreen> {
   List<Map<String, dynamic>> _restaurants = [];
   bool _isLoading = true;
   String? _error;
+  Position? _currentPosition;
+  double _radiusKm = 30.0;
 
   @override
   void initState() {
@@ -34,20 +38,34 @@ class _FoodServiceScreenState extends State<FoodServiceScreen> {
         _error = null;
       });
 
+      // Load radius config and customer position in parallel
+      await Future.wait([_loadRadiusConfig(), _loadCurrentPosition()]);
+
       final response = await Supabase.instance.client
           .from('profiles')
           .select(
-              'id, full_name, phone_number, shop_status, shop_open_time, shop_close_time, shop_open_days, shop_auto_schedule_enabled')
+              'id, full_name, phone_number, latitude, longitude, shop_status, shop_open_time, shop_close_time, shop_open_days, shop_auto_schedule_enabled')
           .eq('role', 'merchant')
           .eq('approval_status', 'approved')
           .order('full_name');
 
       debugLog('📊 Debug: Found ${response.length} restaurants');
 
+      final all = List<Map<String, dynamic>>.from(response);
+      final filtered = _currentPosition == null
+          ? all // no location known — show all (degrade gracefully)
+          : all.where((r) {
+              final lat = (r['latitude'] as num?)?.toDouble();
+              final lng = (r['longitude'] as num?)?.toDouble();
+              if (lat == null || lng == null) return true;
+              final km = Geolocator.distanceBetween(
+                      _currentPosition!.latitude, _currentPosition!.longitude, lat, lng) /
+                  1000;
+              return km <= _radiusKm;
+            }).toList();
+
       setState(() {
-        _restaurants = List<Map<String, dynamic>>.from(response)
-            .where(isShopOpenNow)
-            .toList();
+        _restaurants = filtered.where(isShopOpenNow).toList();
         _isLoading = false;
       });
     } catch (e) {
@@ -57,6 +75,27 @@ class _FoodServiceScreenState extends State<FoodServiceScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  Future<void> _loadRadiusConfig() async {
+    try {
+      final configService = SystemConfigService();
+      await configService.fetchSettings();
+      _radiusKm = configService.maxDeliveryRadius;
+    } catch (_) {}
+  }
+
+  Future<void> _loadCurrentPosition() async {
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+      final permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) return;
+      _currentPosition = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.low,
+      );
+    } catch (_) {}
   }
 
   @override

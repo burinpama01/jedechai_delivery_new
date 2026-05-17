@@ -1,11 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../common/models/booking.dart';
+import '../../../../common/config/env_config.dart';
 import '../../../../utils/debug_logger.dart';
 
 /// Tracking Screen
@@ -28,6 +31,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
   String? _trackedDriverId;
   bool _didInitialDriverCamera = false;
   final Set<Marker> _markers = {};
+  final Set<Polyline> _polylines = {};
+  static String get _googleApiKey => EnvConfig.googleMapsApiKey;
 
   @override
   void initState() {
@@ -37,6 +42,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
     if (_booking.driverId != null) {
       _listenToDriverLocation(_booking.driverId!);
     }
+    _fetchRoute();
   }
 
   @override
@@ -59,6 +65,85 @@ class _TrackingScreenState extends State<TrackingScreen> {
       icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
       infoWindow: InfoWindow(title: AppLocalizations.of(context)!.trackDestination, snippet: _booking.destinationAddress ?? ''),
     ));
+  }
+
+  Future<void> _fetchRoute() async {
+    try {
+      final url = Uri.parse(
+        'https://maps.googleapis.com/maps/api/directions/json'
+        '?origin=${_booking.originLat},${_booking.originLng}'
+        '&destination=${_booking.destLat},${_booking.destLng}'
+        '&mode=driving'
+        '&key=$_googleApiKey',
+      );
+      final response = await http.get(url);
+      final data = json.decode(response.body) as Map<String, dynamic>;
+      if (!mounted) return;
+      if (data['status'] == 'OK' && (data['routes'] as List).isNotEmpty) {
+        final encoded = (data['routes'][0] as Map)['overview_polyline']?['points'] as String?;
+        if (encoded != null && encoded.isNotEmpty) {
+          final points = _decodePolyline(encoded);
+          setState(() {
+            _polylines.clear();
+            _polylines.add(Polyline(
+              polylineId: const PolylineId('route'),
+              color: AppTheme.primaryGreen,
+              width: 5,
+              points: points,
+            ));
+          });
+          return;
+        }
+      }
+      // Fallback: dashed straight line
+      _drawFallbackLine();
+    } catch (e) {
+      debugLog('TrackingScreen: route fetch error: $e');
+      _drawFallbackLine();
+    }
+  }
+
+  void _drawFallbackLine() {
+    if (!mounted) return;
+    setState(() {
+      _polylines.clear();
+      _polylines.add(Polyline(
+        polylineId: const PolylineId('route'),
+        color: Colors.grey,
+        width: 3,
+        patterns: [PatternItem.dash(12), PatternItem.gap(6)],
+        points: [
+          LatLng(_booking.originLat, _booking.originLng),
+          LatLng(_booking.destLat, _booking.destLng),
+        ],
+      ));
+    });
+  }
+
+  List<LatLng> _decodePolyline(String encoded) {
+    final result = <LatLng>[];
+    int index = 0, lat = 0, lng = 0;
+    while (index < encoded.length) {
+      int b, shift = 0, result0 = 0;
+      do {
+        b = encoded.codeUnitAt(index++) - 63;
+        result0 |= (b & 0x1F) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      final dlat = (result0 & 1) != 0 ? ~(result0 >> 1) : (result0 >> 1);
+      lat += dlat;
+      shift = 0;
+      result0 = 0;
+      do {
+        b = encoded.codeUnitAt(index++) - 63;
+        result0 |= (b & 0x1F) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      final dlng = (result0 & 1) != 0 ? ~(result0 >> 1) : (result0 >> 1);
+      lng += dlng;
+      result.add(LatLng(lat / 1e5, lng / 1e5));
+    }
+    return result;
   }
 
   void _listenToBookingUpdates() {
@@ -142,6 +227,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
               zoom: 13,
             ),
             markers: _markers,
+            polylines: _polylines,
             myLocationEnabled: true,
             myLocationButtonEnabled: false,
             zoomControlsEnabled: false,

@@ -2105,10 +2105,15 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         targetLng,
       );
 
-      debugLog(
-          '📏 Distance to $locationName: ${distanceInMeters.toStringAsFixed(1)}m (allowed: ${kAllowedRadiusMeters}m)');
+      // Add GPS accuracy as tolerance so poor-signal positions don't block valid actions
+      final accurancyToleranceMeters = currentPosition.accuracy.clamp(0.0, 50.0);
+      final effectiveRadius = kAllowedRadiusMeters + accurancyToleranceMeters;
 
-      if (distanceInMeters <= kAllowedRadiusMeters) {
+      debugLog(
+          '📏 Distance to $locationName: ${distanceInMeters.toStringAsFixed(1)}m '
+          '(allowed: ${kAllowedRadiusMeters}m + ${accurancyToleranceMeters.toStringAsFixed(0)}m accuracy = ${effectiveRadius.toStringAsFixed(0)}m)');
+
+      if (distanceInMeters <= effectiveRadius) {
         debugLog('✅ Driver is within allowed radius');
         return true;
       } else {
