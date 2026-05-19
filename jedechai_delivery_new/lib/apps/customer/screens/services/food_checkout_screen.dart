@@ -974,7 +974,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
             const SizedBox(height: 8),
             _buildPriceRow(
               AppLocalizations.of(context)!.foodCouponDiscount,
-              '-฿${_couponDiscount.ceil()}',
+              '-฿${_couponDiscount.toStringAsFixed(0)}',
               isGreen: true,
             ),
           ],
@@ -1165,14 +1165,31 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       if (booking == null)
         throw Exception(AppLocalizations.of(context)!.foodCheckoutNoResponse);
 
-      // Record coupon usage if applied — MUST succeed to prevent unlimited reuse
+      // Record coupon usage atomically. If this fails, cancel the booking so
+      // the discount cannot be applied without tracking — which would allow reuse.
       if (_appliedCoupon != null && _couponDiscount > 0) {
         final couponService = CouponService();
-        await couponService.recordUsage(
-          couponId: _appliedCoupon!.id,
-          bookingId: booking['id'] as String,
-          discountAmount: _couponDiscount,
-        );
+        try {
+          await couponService.recordUsage(
+            couponId: _appliedCoupon!.id,
+            bookingId: booking['id'] as String,
+            discountAmount: _couponDiscount,
+          );
+        } catch (e) {
+          debugLog('❌ recordUsage failed — auto-cancelling booking: $e');
+          try {
+            await Supabase.instance.client
+                .from('bookings')
+                .update({
+                  'status': 'cancelled',
+                  'notes': 'auto_cancelled: coupon_record_failed',
+                })
+                .eq('id', booking['id'] as String);
+          } catch (cancelErr) {
+            debugLog('⚠️ Could not auto-cancel booking: $cancelErr');
+          }
+          throw Exception('ไม่สามารถใช้คูปองได้ ออเดอร์ถูกยกเลิกอัตโนมัติ กรุณาลองสั่งใหม่');
+        }
       }
 
       // Send notification to merchant about new order

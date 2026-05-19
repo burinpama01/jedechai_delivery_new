@@ -88,6 +88,16 @@ class _CouponEntryWidgetState extends State<CouponEntryWidget> {
   }
 
   @override
+  void didUpdateWidget(CouponEntryWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Re-validate when order amount changes while a coupon is active,
+    // so minOrderAmount and percentage caps stay accurate.
+    if (_appliedCoupon != null && oldWidget.orderAmount != widget.orderAmount) {
+      _validateCoupon();
+    }
+  }
+
+  @override
   void dispose() {
     _codeController.dispose();
     super.dispose();
@@ -222,9 +232,7 @@ class _CouponEntryWidgetState extends State<CouponEntryWidget> {
   }
 
   Widget _buildAppliedCoupon() {
-    final normalizedCode = _appliedCoupon?.code.trim().toUpperCase();
-    final hideBreakdown = normalizedCode == 'WELCOME20' ||
-        normalizedCode == 'REFERRER20';
+    final hideBreakdown = _appliedCoupon?.isSystemCoupon ?? false;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(

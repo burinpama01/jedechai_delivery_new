@@ -177,9 +177,9 @@ class _MerchantCouponManagementScreenState
             usageLimit: usageLimit,
             perUserLimit: perUserLimit,
             createdByRole: 'admin',
-            merchantGpChargeRate: _discountType == 'free_delivery' ? 0.25 : 0,
-            merchantGpSystemRate: _discountType == 'free_delivery' ? 0.10 : 0,
-            merchantGpDriverRate: _discountType == 'free_delivery' ? 0.15 : 0,
+            merchantGpChargeRate: _discountType == 'free_delivery' ? kMerchantGpChargeRate : 0,
+            merchantGpSystemRate: _discountType == 'free_delivery' ? kMerchantGpSystemRate : 0,
+            merchantGpDriverRate: _discountType == 'free_delivery' ? kMerchantGpDriverRate : 0,
             startDate: _startDate,
             endDate: _endDate,
           )

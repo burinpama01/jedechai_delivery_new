@@ -8,6 +8,12 @@ import 'auth_service.dart';
 /// Handles coupon validation, redemption, and management
 /// Tables: coupons, coupon_usages
 
+/// Default GP split rates for merchant free-delivery coupons.
+/// Used in [CouponService.createMerchantCoupon] and the merchant create form.
+const double kMerchantGpChargeRate = 0.25;
+const double kMerchantGpSystemRate = 0.10;
+const double kMerchantGpDriverRate = 0.15;
+
 class WalletCouponGroup {
   final Coupon coupon;
   final int quantity;
@@ -134,18 +140,23 @@ class CouponService {
     }
   }
 
+  /// Bangkok time string for DB date queries — matches [Coupon._bangkokNow].
+  static String _bangkokNowIso() =>
+      DateTime.now().toUtc().add(const Duration(hours: 7)).toIso8601String();
+
   Future<List<Coupon>> getClaimableCoupons({
     String? serviceType,
     String? merchantId,
   }) async {
     try {
+      final now = _bangkokNowIso();
       final response = await _client
           .from('coupons')
           .select()
           .eq('is_active', true)
           .eq('distribution_type', 'claimable')
-          .lte('start_date', DateTime.now().toIso8601String())
-          .gte('end_date', DateTime.now().toIso8601String())
+          .lte('start_date', now)
+          .gte('end_date', now)
           .order('created_at', ascending: false);
 
       final coupons = (response as List)
@@ -329,12 +340,13 @@ class CouponService {
     String? merchantId,
   }) async {
     try {
+      final now = _bangkokNowIso();
       var query = _client
           .from('coupons')
           .select()
           .eq('is_active', true)
-          .lte('start_date', DateTime.now().toIso8601String())
-          .gte('end_date', DateTime.now().toIso8601String());
+          .lte('start_date', now)
+          .gte('end_date', now);
 
       final response = await query.order('created_at', ascending: false);
 
@@ -484,9 +496,9 @@ class CouponService {
     int perUserLimit = 1,
     required DateTime startDate,
     required DateTime endDate,
-    double merchantGpChargeRate = 0.25,
-    double merchantGpSystemRate = 0.10,
-    double merchantGpDriverRate = 0.15,
+    double merchantGpChargeRate = kMerchantGpChargeRate,
+    double merchantGpSystemRate = kMerchantGpSystemRate,
+    double merchantGpDriverRate = kMerchantGpDriverRate,
   }) async {
     return createCoupon(
       code: code,

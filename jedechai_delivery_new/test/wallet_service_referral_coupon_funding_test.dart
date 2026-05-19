@@ -56,7 +56,7 @@ void main() {
         totalDeduction: 13,
         appEarnings: 13,
         driverNetIncome: 17,
-        couponCode: 'REFFERER20',
+        couponCode: 'REFERRER20',
         couponDiscountAmount: 20,
       );
 
