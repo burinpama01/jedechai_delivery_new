@@ -29,18 +29,24 @@ class AccountDeletionService {
         .eq('user_id', userId)
         .eq('status', 'pending')
         .maybeSingle();
-    if (existing != null) throw Exception('มีคำขอลบบัญชีที่รอดำเนินการอยู่แล้ว');
+    if (existing != null) {
+      throw Exception('มีคำขอลบบัญชีที่รอดำเนินการอยู่แล้ว');
+    }
 
     // INSERT คำขอลบ แล้ว UPDATE profiles — ถ้า UPDATE ล้มเหลวให้ rollback INSERT
-    final inserted = await _supabase.from('account_deletion_requests').insert({
-      'user_id': userId,
-      'user_email': user?.email ?? '',
-      'user_role': profile?['role'] ?? 'customer',
-      'user_name': profile?['full_name'] ?? '',
-      'reason': reason ?? '',
-      'status': 'pending',
-      'profile_backup': profile,
-    }).select('id').single();
+    final inserted = await _supabase
+        .from('account_deletion_requests')
+        .insert({
+          'user_id': userId,
+          'user_email': user?.email ?? '',
+          'user_role': profile?['role'] ?? 'customer',
+          'user_name': profile?['full_name'] ?? '',
+          'reason': reason ?? '',
+          'status': 'pending',
+          'profile_backup': profile,
+        })
+        .select('id')
+        .single();
 
     final newRequestId = inserted['id'];
     try {
@@ -86,10 +92,38 @@ class AccountDeletionService {
           .eq('id', userId)
           .maybeSingle();
 
-      return profile?['deletion_status'] as String?;
+      final status = profile?['deletion_status'] as String?;
+      if (status != 'pending') return status;
+
+      final pendingRequest = await _supabase
+          .from('account_deletion_requests')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('status', 'pending')
+          .maybeSingle();
+      if (pendingRequest != null) return status;
+
+      final latestReviewed = await _supabase
+          .from('account_deletion_requests')
+          .select('status')
+          .eq('user_id', userId)
+          .inFilter('status', ['rejected', 'cancelled'])
+          .order('reviewed_at', ascending: false, nullsFirst: false)
+          .limit(1)
+          .maybeSingle();
+
+      if (latestReviewed != null) {
+        await _supabase
+            .from('profiles')
+            .update({'deletion_status': null}).eq('id', userId);
+        debugLog('✅ Cleared stale pending deletion_status for $userId');
+        return null;
+      }
+
+      return status;
     } catch (e) {
       debugLog('⚠️ Error checking deletion status: $e');
-      return null;
+      return 'pending';
     }
   }
 
@@ -118,56 +152,53 @@ class AccountDeletionService {
 
     if (response.status != 200) {
       final body = response.data;
-      final message = (body is Map ? body['error'] : null) ?? 'Approval failed (${response.status})';
+      final message = (body is Map ? body['error'] : null) ??
+          'Approval failed (${response.status})';
       throw Exception(message);
     }
 
-    debugLog('✅ Account deletion approved via Edge Function (request $requestId)');
+    debugLog(
+        '✅ Account deletion approved via Edge Function (request $requestId)');
   }
 
   /// ปฏิเสธคำขอลบบัญชี
   static Future<void> rejectRequest(int requestId, {String? reason}) async {
-    final adminId = AuthService.userId;
-
-    // ดึงข้อมูลคำขอ
-    final request = await _supabase
-        .from('account_deletion_requests')
-        .select('user_id, status')
-        .eq('id', requestId)
-        .single();
-
-    if ((request['status'] as String?) != 'pending') {
-      throw Exception('คำขอนี้ไม่อยู่ในสถานะรอดำเนินการ (${request['status']})');
-    }
-
-    final targetUserId = request['user_id'] as String;
-
-    // อัปเดตสถานะคำขอ
-    await _supabase.from('account_deletion_requests').update({
-      'status': 'rejected',
-      'reviewed_at': DateTime.now().toUtc().toIso8601String(),
-      'reviewed_by': adminId,
-      'rejection_reason': reason ?? '',
-    }).eq('id', requestId);
-
-    // ลบสถานะ deletion ใน profiles (กลับไปใช้งานได้ปกติ)
-    await _supabase
-        .from('profiles')
-        .update({'deletion_status': null}).eq('id', targetUserId);
-
-    // แจ้งเตือน user ว่าคำขอถูกปฏิเสธ
-    await NotificationSender.sendToUser(
-      userId: targetUserId,
-      title: 'คำขอลบบัญชีถูกปฏิเสธ',
-      body: reason != null && reason.isNotEmpty
-          ? 'เหตุผล: $reason'
-          : 'คำขอลบบัญชีของคุณถูกปฏิเสธ คุณสามารถเข้าใช้งานได้ตามปกติ',
-      data: {
-        'type': 'account.deletion.rejected',
+    final response = await _supabase.functions.invoke(
+      'admin-actions',
+      body: {
+        'action': 'reject_account_deletion',
+        'id': requestId,
         'reason': reason ?? '',
       },
     );
 
-    debugLog('❌ Account deletion rejected for $targetUserId by $adminId');
+    if (response.status != 200) {
+      final body = response.data;
+      final message = (body is Map ? body['error'] : null) ??
+          'Rejection failed (${response.status})';
+      throw Exception(message);
+    }
+
+    final targetUserId = response.data is Map
+        ? (response.data as Map)['user_id'] as String?
+        : null;
+
+    // แจ้งเตือน user ว่าคำขอถูกปฏิเสธ
+    if (targetUserId != null) {
+      await NotificationSender.sendToUser(
+        userId: targetUserId,
+        title: 'คำขอลบบัญชีถูกปฏิเสธ',
+        body: reason != null && reason.isNotEmpty
+            ? 'เหตุผล: $reason'
+            : 'คำขอลบบัญชีของคุณถูกปฏิเสธ คุณสามารถเข้าใช้งานได้ตามปกติ',
+        data: {
+          'type': 'account.deletion.rejected',
+          'reason': reason ?? '',
+        },
+      );
+    }
+
+    debugLog(
+        '❌ Account deletion rejected via Edge Function (request $requestId)');
   }
 }

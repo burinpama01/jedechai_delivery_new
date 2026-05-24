@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../common/models/booking.dart';
 import '../../../common/models/coupon.dart';
+import '../../../common/utils/app_time.dart';
 import '../../../l10n/app_localizations.dart';
 
 /// Job card displayed in the driver dashboard job feed.
@@ -89,13 +90,7 @@ class JobCard extends StatelessWidget {
   }
 
   String _formatScheduledDateTime(DateTime dateTime) {
-    final local = dateTime.toLocal();
-    final day = local.day.toString().padLeft(2, '0');
-    final month = local.month.toString().padLeft(2, '0');
-    final year = local.year;
-    final hour = local.hour.toString().padLeft(2, '0');
-    final minute = local.minute.toString().padLeft(2, '0');
-    return '$day/$month/$year $hour:$minute';
+    return AppTime.formatBangkokDateTime(dateTime);
   }
 
   @override
@@ -430,8 +425,7 @@ class _ActionButtons extends StatelessWidget {
   const _ActionButtons({required this.job, required this.isAccepting, this.onAccept, this.onNavigate});
 
   String _formatScheduledDateTime(DateTime dateTime) {
-    final local = dateTime.toLocal();
-    return '${local.day.toString().padLeft(2, '0')}/${local.month.toString().padLeft(2, '0')}/${local.year} ${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
+    return AppTime.formatBangkokDateTime(dateTime);
   }
 
   @override

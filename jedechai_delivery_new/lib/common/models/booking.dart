@@ -1,3 +1,5 @@
+import '../utils/app_time.dart';
+
 /// Booking Model
 class Booking {
   final String id;
@@ -81,22 +83,22 @@ class Booking {
       price: (json['price'] as num?)?.toDouble() ?? 0.0,
       status: json['status'] as String? ?? '',
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'] as String)
+          ? AppTime.parseDbTimestamp(json['created_at'] as String)
           : DateTime.now(),
       updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'] as String)
+          ? AppTime.parseDbTimestamp(json['updated_at'] as String)
           : DateTime.now(),
       assignedAt: json['assigned_at'] != null
-          ? DateTime.parse(json['assigned_at'] as String)
+          ? AppTime.parseDbTimestamp(json['assigned_at'] as String)
           : null,
       scheduledAt: json['scheduled_at'] != null
-          ? DateTime.parse(json['scheduled_at'] as String)
+          ? AppTime.parseDbTimestamp(json['scheduled_at'] as String)
           : null,
       startedAt: json['started_at'] != null
-          ? DateTime.parse(json['started_at'] as String)
+          ? AppTime.parseDbTimestamp(json['started_at'] as String)
           : null,
       completedAt: json['completed_at'] != null
-          ? DateTime.parse(json['completed_at'] as String)
+          ? AppTime.parseDbTimestamp(json['completed_at'] as String)
           : null,
       driverName: json['driver_name'] as String?,
       driverPhone: json['driver_phone'] as String?,
@@ -137,12 +139,14 @@ class Booking {
       'distance_km': distanceKm,
       'price': price,
       'status': status,
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
-      'assigned_at': assignedAt?.toIso8601String(),
-      'scheduled_at': scheduledAt?.toIso8601String(),
-      'started_at': startedAt?.toIso8601String(),
-      'completed_at': completedAt?.toIso8601String(),
+      'created_at': AppTime.toDbIso(createdAt),
+      'updated_at': AppTime.toDbIso(updatedAt),
+      'assigned_at': assignedAt == null ? null : AppTime.toDbIso(assignedAt!),
+      'scheduled_at':
+          scheduledAt == null ? null : AppTime.toDbIso(scheduledAt!),
+      'started_at': startedAt == null ? null : AppTime.toDbIso(startedAt!),
+      'completed_at':
+          completedAt == null ? null : AppTime.toDbIso(completedAt!),
       'driver_name': driverName,
       'driver_phone': driverPhone,
       'driver_vehicle': driverVehicle,

@@ -213,12 +213,12 @@ export async function refreshPendingOrders(ctx) {
         </td>
         <td class="px-3 py-2.5 whitespace-nowrap">
           <div class="flex items-center gap-1">
-            <button onclick="showPendingOrderDetail('${o.id}')" class="px-2 py-1 bg-indigo-100 text-indigo-600 rounded-lg text-[10px] font-medium hover:bg-indigo-200 transition-colors">Coordinate</button>
-            <button onclick="showEditPickupLocationModal('${o.id}')" class="px-2 py-1 bg-blue-100 text-blue-600 rounded-lg text-[10px] font-medium hover:bg-blue-200 transition-colors">พิกัด</button>
-            ${canDispatch ? `<button onclick="pendingDispatch('${o.id}')" class="px-2 py-1 bg-blue-500 text-white rounded-lg text-[10px] font-medium hover:bg-blue-600 transition-colors">โยนงาน</button>` : (o.driver_id ? `<button onclick="pendingDispatch('${o.id}','${o.driver_id}')" class="px-2 py-1 bg-amber-500 text-white rounded-lg text-[10px] font-medium hover:bg-amber-600 transition-colors">ย้าย</button>` : '')}
-            ${canAdminAccept ? `<button onclick="adminMerchantAcceptOrder('${o.id}')" class="px-2 py-1 bg-emerald-500 text-white rounded-lg text-[10px] font-medium hover:bg-emerald-600 transition-colors">รับแทนร้าน</button>` : ''}
-            ${canAdminReady ? `<button onclick="adminMarkFoodReady('${o.id}')" class="px-2 py-1 bg-teal-500 text-white rounded-lg text-[10px] font-medium hover:bg-teal-600 transition-colors">อาหารพร้อม</button>` : ''}
-            <button onclick="pendingCancel('${o.id}')" class="px-2 py-1 bg-red-100 text-red-600 rounded-lg text-[10px] font-medium hover:bg-red-200 transition-colors">ยกเลิก</button>
+            <button onclick="showPendingOrderDetail('${o.id}')" class="min-h-[44px] px-4 py-2 bg-indigo-100 text-indigo-600 rounded-lg text-xs font-medium hover:bg-indigo-200 transition-colors">Coordinate</button>
+            <button onclick="showEditPickupLocationModal('${o.id}')" class="min-h-[44px] px-4 py-2 bg-blue-100 text-blue-600 rounded-lg text-xs font-medium hover:bg-blue-200 transition-colors">พิกัด</button>
+            ${canDispatch ? `<button onclick="pendingDispatch('${o.id}')" class="min-h-[44px] px-4 py-2 bg-blue-500 text-white rounded-lg text-xs font-medium hover:bg-blue-600 transition-colors">โยนงาน</button>` : (o.driver_id ? `<button onclick="pendingDispatch('${o.id}','${o.driver_id}')" class="min-h-[44px] px-4 py-2 bg-amber-500 text-white rounded-lg text-xs font-medium hover:bg-amber-600 transition-colors">ย้าย</button>` : '')}
+            ${canAdminAccept ? `<button onclick="adminMerchantAcceptOrder('${o.id}')" class="min-h-[44px] px-4 py-2 bg-emerald-500 text-white rounded-lg text-xs font-medium hover:bg-emerald-600 transition-colors">รับแทนร้าน</button>` : ''}
+            ${canAdminReady ? `<button onclick="adminMarkFoodReady('${o.id}')" class="min-h-[44px] px-4 py-2 bg-teal-500 text-white rounded-lg text-xs font-medium hover:bg-teal-600 transition-colors">อาหารพร้อม</button>` : ''}
+            <button onclick="pendingCancel('${o.id}')" class="min-h-[44px] px-4 py-2 bg-red-100 text-red-600 rounded-lg text-xs font-medium hover:bg-red-200 transition-colors">ยกเลิก</button>
           </div>
         </td>
       </tr>`;
@@ -487,12 +487,12 @@ export async function showPendingOrderDetail(orderId, ctx) {
         ${itemsHtml}
         ${renderAdminNote(o.admin_note, escapeHtml)}
         <div class="flex gap-2 pt-2 flex-wrap">
-          <button onclick="showEditPickupLocationModal('${orderId}')" class="px-3 py-1.5 bg-blue-100 text-blue-600 rounded-lg text-xs font-semibold">แก้พิกัด Pickup</button>
-          ${canEditItemsInDetail ? `<button onclick=\"showEditOrderItemsModal('${orderId}')\" class=\"px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold\">แก้ไขรายการ</button>` : ''}
-          ${canDispatchInDetail ? `<button onclick=\"pendingDispatch('${orderId}')\" class=\"px-3 py-1.5 bg-blue-500 text-white rounded-lg text-xs font-semibold\">โยนงาน</button>` : ''}
-          ${canAdminAcceptInDetail ? `<button onclick=\"adminMerchantAcceptOrder('${orderId}')\" class=\"px-3 py-1.5 bg-emerald-500 text-white rounded-lg text-xs font-semibold\">รับแทนร้าน</button>` : ''}
-          ${canAdminReadyInDetail ? `<button onclick=\"adminMarkFoodReady('${orderId}')\" class=\"px-3 py-1.5 bg-teal-500 text-white rounded-lg text-xs font-semibold\">อาหารพร้อม</button>` : ''}
-          <button onclick="pendingCancel('${orderId}')" class="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg text-xs font-semibold">ยกเลิก</button>
+          <button onclick="showEditPickupLocationModal('${orderId}')" class="min-h-[44px] px-4 py-2 bg-blue-100 text-blue-600 rounded-lg text-xs font-semibold">แก้พิกัด Pickup</button>
+          ${canEditItemsInDetail ? `<button onclick=\"showEditOrderItemsModal('${orderId}')\" class=\"min-h-[44px] px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold\">แก้ไขรายการ</button>` : ''}
+          ${canDispatchInDetail ? `<button onclick=\"pendingDispatch('${orderId}')\" class=\"min-h-[44px] px-4 py-2 bg-blue-500 text-white rounded-lg text-xs font-semibold\">โยนงาน</button>` : ''}
+          ${canAdminAcceptInDetail ? `<button onclick=\"adminMerchantAcceptOrder('${orderId}')\" class=\"min-h-[44px] px-4 py-2 bg-emerald-500 text-white rounded-lg text-xs font-semibold\">รับแทนร้าน</button>` : ''}
+          ${canAdminReadyInDetail ? `<button onclick=\"adminMarkFoodReady('${orderId}')\" class=\"min-h-[44px] px-4 py-2 bg-teal-500 text-white rounded-lg text-xs font-semibold\">อาหารพร้อม</button>` : ''}
+          <button onclick="pendingCancel('${orderId}')" class="min-h-[44px] px-4 py-2 bg-red-100 text-red-600 rounded-lg text-xs font-semibold">ยกเลิก</button>
         </div>
       </div>
     </div>`;

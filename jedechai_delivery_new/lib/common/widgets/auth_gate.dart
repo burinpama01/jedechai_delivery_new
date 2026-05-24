@@ -1,4 +1,4 @@
-﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
+import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:geolocator/geolocator.dart';
@@ -20,7 +20,7 @@ import '../../apps/merchant/merchant.dart';
 import '../../apps/admin/admin.dart';
 
 /// AuthGate Widget
-/// 
+///
 /// Listens to Supabase auth state changes and navigates accordingly:
 /// - If user is authenticated and role is 'customer': Show CustomerMainScreen
 /// - If user is authenticated and role is 'driver': Show DriverMainScreen
@@ -87,7 +87,7 @@ class _AuthGateState extends State<AuthGate> {
             _isAuthenticated = state.session != null;
             _isLoading = false;
           });
-          
+
           // If user just logged in, fetch their role
           if (state.session != null) {
             _fetchUserRole();
@@ -113,10 +113,10 @@ class _AuthGateState extends State<AuthGate> {
 
       // Check approval/suspension status for all roles
       await _fetchApprovalStatus();
-      
+
       // Save FCM token when user is authenticated
       await FCMNotificationService().saveToken();
-      
+
       // Request location permission early
       await _requestLocationPermission();
     } catch (e) {
@@ -213,7 +213,8 @@ class _AuthGateState extends State<AuthGate> {
           _userProfile = profile;
           _profileCompleted = _checkProfileCompleted(profile);
         });
-        debugLog('🔑 Approval status: $_approvalStatus, profile completed: $_profileCompleted');
+        debugLog(
+            '🔑 Approval status: $_approvalStatus, profile completed: $_profileCompleted');
       }
     } catch (e) {
       debugLog('❌ Error fetching approval status: $e');
@@ -339,7 +340,12 @@ class _AuthGateState extends State<AuthGate> {
 
     // Check if account is pending deletion
     if (_deletionStatus == 'pending') {
-      return const PendingDeletionScreen();
+      return PendingDeletionScreen(
+        onUnlocked: () async {
+          await _checkDeletionStatus();
+          await _fetchApprovalStatus();
+        },
+      );
     }
 
     // Force sign out if deletion was approved (account should no longer have access)
@@ -359,12 +365,16 @@ class _AuthGateState extends State<AuthGate> {
       return PendingApprovalScreen(
         role: _userRole,
         approvalStatus: _approvalStatus,
-        rejectionReason: (_approvalStatus == 'rejected' || _approvalStatus == 'suspended') ? _rejectionReason : null,
+        rejectionReason:
+            (_approvalStatus == 'rejected' || _approvalStatus == 'suspended')
+                ? _rejectionReason
+                : null,
       );
     }
 
     // Check profile completion for driver/merchant
-    if ((_userRole == 'driver' || _userRole == 'merchant') && !_profileCompleted) {
+    if ((_userRole == 'driver' || _userRole == 'merchant') &&
+        !_profileCompleted) {
       return ProfileCompletionScreen(
         role: _userRole,
         existingProfile: _userProfile,

@@ -154,13 +154,13 @@ serve(async (req) => {
         result = await handleApproveAccountDeletion(supabaseAdmin, body);
         break;
       case "reject_account_deletion":
-        result = await handleRejectAccountDeletion(supabaseAdmin, body);
+        result = await handleRejectAccountDeletion(supabaseAdmin, body, adminId);
         break;
       case "approve_deletion":
         result = await handleApproveAccountDeletion(supabaseAdmin, body);
         break;
       case "reject_deletion":
-        result = await handleRejectAccountDeletion(supabaseAdmin, body);
+        result = await handleRejectAccountDeletion(supabaseAdmin, body, adminId);
         break;
 
       // ─── Coupons ───
@@ -944,24 +944,19 @@ async function handleApproveAccountDeletion(supabase, body) {
   if (!id) return errorResponse("Missing 'id'");
 
   // Fetch the request to get user_id
-  const { data: request, error: fetchErr } = await supabase
-    .from("account_deletion_requests")
-    .select("user_id, status")
-    .eq("id", id)
-    .single();
-  if (fetchErr) return errorResponse(fetchErr.message);
-  if (!request) return errorResponse("Request not found", 404);
-  if (request.status !== "pending") return errorResponse("Request is not pending");
-
-  const targetUserId = request.user_id as string;
   const nowIso = new Date().toISOString();
 
-  // Update request status
-  const { error: reqErr } = await supabase
+  // Update request status guarded by expected state, and fetch target user in one round trip.
+  const { data: updatedRows, error: reqErr } = await supabase
     .from("account_deletion_requests")
     .update({ status: "approved", reviewed_at: nowIso })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("status", "pending")
+    .select("user_id");
   if (reqErr) return errorResponse(reqErr.message);
+  if (!updatedRows?.length) return errorResponse("Request is not pending or not found");
+
+  const targetUserId = updatedRows[0].user_id as string;
 
   // Mark profile as approved for deletion
   await supabase
@@ -981,16 +976,18 @@ async function handleApproveAccountDeletion(supabase, body) {
   return jsonResponse({ success: true });
 }
 
-async function handleRejectAccountDeletion(supabase, body) {
+async function handleRejectAccountDeletion(supabase, body, adminId) {
   const { id, reason } = body;
   if (!id) return errorResponse("Missing 'id'");
-  const nowIso = new Date().toISOString();
-  const { error } = await supabase
-    .from("account_deletion_requests")
-    .update({ status: "rejected", rejection_reason: reason || "", reviewed_at: nowIso })
-    .eq("id", id);
+
+  const { data, error } = await supabase.rpc("reject_account_deletion_guarded", {
+    p_request_id: String(id),
+    p_admin_id: adminId,
+    p_reason: reason || "",
+  });
   if (error) return errorResponse(error.message);
-  return jsonResponse({ success: true });
+
+  return jsonResponse(data || { success: true });
 }
 
 // ─── Coupons ──────────────────────────────────────────

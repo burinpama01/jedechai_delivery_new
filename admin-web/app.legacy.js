@@ -665,6 +665,9 @@ const MAP_DISPATCHABLE_STATUSES = ['pending', 'matched'];
 const ADMIN_MERCHANT_ACCEPT_STATUSES = ['pending_merchant', 'pending'];
 const ADMIN_MERCHANT_READY_STATUSES = ['preparing', 'driver_accepted', 'arrived_at_merchant', 'matched', 'accepted', 'arrived'];
 
+globalThis.ADMIN_MERCHANT_ACCEPT_STATUSES = ADMIN_MERCHANT_ACCEPT_STATUSES;
+globalThis.ADMIN_MERCHANT_READY_STATUSES = ADMIN_MERCHANT_READY_STATUSES;
+
 function _truthyFlag(value) {
   return value === true || value === 1 || value === '1' || value === 'true' || value === 't';
 }
@@ -2294,10 +2297,18 @@ async function _refreshAdminOrderViews() {
 }
 
 async function adminMerchantAcceptOrder(orderId) {
+  const bridged = window.__adminWebBridge?.adminMerchantAcceptOrder;
+  if (typeof bridged === 'function') {
+    return await bridged(orderId);
+  }
   await _adminActAsMerchantOrder(orderId, 'accept');
 }
 
 async function adminMarkFoodReady(orderId) {
+  const bridged = window.__adminWebBridge?.adminMarkFoodReady;
+  if (typeof bridged === 'function') {
+    return await bridged(orderId);
+  }
   await _adminActAsMerchantOrder(orderId, 'ready');
 }
 

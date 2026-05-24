@@ -12,8 +12,11 @@ import '../../../../common/services/image_picker_service.dart';
 import '../../../../common/services/storage_service.dart';
 import '../../../../common/services/profile_service.dart';
 import '../../../../common/services/system_config_service.dart';
+import '../../../../common/services/coupon_service.dart';
 import '../../../../common/utils/parcel_pricing.dart';
 import '../../../../common/widgets/app_network_image.dart';
+import '../../../../common/widgets/coupon_entry_widget.dart';
+import '../../../../common/models/coupon.dart';
 import '../../../../utils/debug_logger.dart';
 import 'waiting_for_driver_screen.dart';
 import 'saved_addresses_screen.dart';
@@ -57,6 +60,8 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
   bool _isCalculatingDistance = false;
   double _estimatedPrice = 0;
   double _estimatedDistance = 0;
+  Coupon? _appliedCoupon;
+  double _couponDiscount = 0;
   File? _parcelPhoto;
   String? _parcelPhotoUrl;
   double? _pickupLat;
@@ -250,10 +255,17 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
       if (nearbyDriverIds.isNotEmpty) {
         final profileResponse = await Supabase.instance.client
             .from('profiles')
-            .select('id')
+            .select('id, accepted_service_types, service_type')
             .eq('approval_status', 'approved')
             .inFilter('id', nearbyDriverIds);
-        count = (profileResponse as List).length;
+        count = (profileResponse as List).where((profile) {
+          final serviceType = profile['service_type']?.toString();
+          final acceptedTypes = profile['accepted_service_types'];
+          if (serviceType == 'parcel') return true;
+          if (acceptedTypes is List) return acceptedTypes.contains('parcel');
+          if (acceptedTypes is String) return acceptedTypes.contains('parcel');
+          return false;
+        }).length;
       }
 
       if (mounted) {
@@ -341,6 +353,11 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
     setState(() => _estimatedPrice = finalPrice);
   }
 
+  double get _finalParcelPrice {
+    final discounted = _estimatedPrice - _couponDiscount;
+    return discounted > 0 ? discounted : 0;
+  }
+
   Future<void> _pickParcelPhoto() async {
     final file = await ImagePickerService.showImageSourceDialog(context);
     if (file != null && mounted) {
@@ -382,6 +399,10 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
       // 2. คำนวณระยะทางจริง (ถ้ายังไม่ได้คำนวณ)
       if (_estimatedDistance <= 0) {
         _estimatedDistance = 5.0; // fallback
+        _calculatePrice();
+      }
+      if (_estimatedPrice <= 0) {
+        throw Exception(AppLocalizations.of(context)!.parcelErrorCreateBooking);
       }
 
       // 3. สร้าง parcel booking
@@ -392,7 +413,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
         destLat: _dropoffLat!,
         destLng: _dropoffLng!,
         distanceKm: _estimatedDistance,
-        price: _estimatedPrice,
+        price: _finalParcelPrice,
         pickupAddress: _pickupController.text,
         destinationAddress: _dropoffController.text,
         senderName: _senderNameController.text.trim(),
@@ -405,11 +426,46 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
             ? double.tryParse(_weightController.text)
             : null,
         parcelPhotoUrl: _parcelPhotoUrl,
+        notifyDrivers: false,
       );
 
       if (booking == null) {
         throw Exception(AppLocalizations.of(context)!.parcelErrorCreateBooking);
       }
+
+      if (_appliedCoupon != null && _couponDiscount > 0) {
+        try {
+          await CouponService().recordUsage(
+            couponId: _appliedCoupon!.id,
+            bookingId: booking.id,
+            discountAmount: _couponDiscount,
+          );
+        } catch (e) {
+          debugLog('❌ recordUsage failed — auto-cancelling parcel booking: $e');
+          try {
+            await Supabase.instance.client.from('bookings').update({
+              'status': 'cancelled',
+              'notes': 'auto_cancelled: coupon_record_failed',
+            }).eq('id', booking.id);
+          } catch (cancelErr) {
+            debugLog('⚠️ Could not auto-cancel parcel booking: $cancelErr');
+          }
+          throw Exception(AppLocalizations.of(context)!.parcelErrorBookFailed);
+        }
+      }
+
+      await parcelService.notifyParcelBookingCreated(
+        booking: booking,
+        price: _finalParcelPrice,
+        distanceKm: _estimatedDistance,
+        pickupAddress: _pickupController.text,
+        destinationAddress: _dropoffController.text,
+        senderName: _senderNameController.text.trim(),
+        senderPhone: _senderPhoneController.text.trim(),
+        recipientName: _recipientNameController.text.trim(),
+        recipientPhone: _recipientPhoneController.text.trim(),
+        parcelSize: _selectedSize,
+      );
 
       if (mounted) {
         Navigator.of(context).pushReplacement(
@@ -422,6 +478,10 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
       debugLog('❌ Error booking parcel: $e');
       if (mounted) {
         _showErrorDialog(AppLocalizations.of(context)!.parcelErrorBookFailed);
+      }
+      if (_parcelPhotoUrl != null) {
+        await StorageService.deleteImage(_parcelPhotoUrl!);
+        _parcelPhotoUrl = null;
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -543,6 +603,18 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                     const SizedBox(height: 20),
                     if (_estimatedPrice > 0) ...[
                       _buildPriceCard(),
+                      const SizedBox(height: 12),
+                      CouponEntryWidget(
+                        serviceType: 'parcel',
+                        orderAmount: _estimatedPrice,
+                        deliveryFee: _estimatedPrice,
+                        onCouponApplied: (coupon) {
+                          setState(() => _appliedCoupon = coupon);
+                        },
+                        onDiscountChanged: (discount) {
+                          setState(() => _couponDiscount = discount);
+                        },
+                      ),
                       const SizedBox(height: 20),
                     ],
                     _buildDriverAvailabilityHint(),
@@ -1013,10 +1085,26 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
               ),
             ],
           ),
-          Text(
-            '฿${_estimatedPrice.ceil()}',
-            style: const TextStyle(
-                fontSize: 28, fontWeight: FontWeight.bold, color: Colors.green),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (_couponDiscount > 0)
+                Text(
+                  '฿${_estimatedPrice.ceil()}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: colorScheme.onSurfaceVariant,
+                    decoration: TextDecoration.lineThrough,
+                  ),
+                ),
+              Text(
+                '฿${_finalParcelPrice.ceil()}',
+                style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green),
+              ),
+            ],
           ),
         ],
       ),

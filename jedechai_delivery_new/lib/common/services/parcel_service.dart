@@ -5,6 +5,7 @@ import '../models/booking.dart';
 import 'auth_service.dart';
 import 'admin_line_notification_service.dart';
 import 'booking_service.dart';
+import '../utils/app_time.dart';
 
 /// ParcelService - บริการจัดการพัสดุ
 class ParcelService {
@@ -29,6 +30,7 @@ class ParcelService {
     double? estimatedWeightKg,
     String? parcelPhotoUrl,
     DateTime? scheduledAt,
+    bool notifyDrivers = true,
   }) async {
     final userId = AuthService.userId;
     if (userId == null) {
@@ -50,7 +52,8 @@ class ParcelService {
         'p_pickup_address': pickupAddress,
         'p_destination_address': destinationAddress,
         'p_notes': notes,
-        'p_scheduled_at': scheduledAt?.toUtc().toIso8601String(),
+        'p_scheduled_at':
+            scheduledAt == null ? null : AppTime.toDbIso(scheduledAt),
         'p_sender_name': senderName,
         'p_sender_phone': senderPhone,
         'p_recipient_name': recipientName,
@@ -69,35 +72,65 @@ class ParcelService {
       final booking = Booking.fromJson(response as Map<String, dynamic>);
       debugLog('✅ Parcel booking created atomically: ${booking.id}');
 
-      await AdminLineNotificationService.notify(
-        eventType: 'parcel_order_new',
-        title: 'JDC: มีออเดอร์ส่งพัสดุใหม่',
-        message: 'พัสดุใหม่ ขนาด $parcelSize\n'
-            'ราคา ฿${price.toStringAsFixed(0)} ระยะทาง ${distanceKm.toStringAsFixed(2)} กม.\n'
-            'จาก $senderName → $recipientName',
-        data: {
-          'booking_id': booking.id,
-          'price': price.toStringAsFixed(0),
-          'distance_km': distanceKm.toStringAsFixed(2),
-          'parcel_size': parcelSize,
-          'sender_name': senderName,
-          'sender_phone': senderPhone,
-          'recipient_name': recipientName,
-          'recipient_phone': recipientPhone,
-          'pickup': pickupAddress,
-          'destination': destinationAddress,
-          if (scheduledAt != null) 'scheduled_at': scheduledAt.toIso8601String(),
-        },
-      );
-
-      debugLog('📤 Sending new parcel booking notification to drivers...');
-      await BookingService().notifyDriversAboutNewBooking(booking);
+      if (notifyDrivers) {
+        await notifyParcelBookingCreated(
+          booking: booking,
+          price: price,
+          distanceKm: distanceKm,
+          pickupAddress: pickupAddress,
+          destinationAddress: destinationAddress,
+          senderName: senderName,
+          senderPhone: senderPhone,
+          recipientName: recipientName,
+          recipientPhone: recipientPhone,
+          parcelSize: parcelSize,
+          scheduledAt: scheduledAt,
+        );
+      }
 
       return booking;
     } catch (e) {
       debugLog('❌ Error creating parcel booking: $e');
       return null;
     }
+  }
+
+  Future<void> notifyParcelBookingCreated({
+    required Booking booking,
+    required double price,
+    required double distanceKm,
+    required String pickupAddress,
+    required String destinationAddress,
+    required String senderName,
+    required String senderPhone,
+    required String recipientName,
+    required String recipientPhone,
+    required String parcelSize,
+    DateTime? scheduledAt,
+  }) async {
+    await AdminLineNotificationService.notify(
+      eventType: 'parcel_order_new',
+      title: 'JDC: มีออเดอร์ส่งพัสดุใหม่',
+      message: 'พัสดุใหม่ ขนาด $parcelSize\n'
+          'ราคา ฿${price.toStringAsFixed(0)} ระยะทาง ${distanceKm.toStringAsFixed(2)} กม.\n'
+          'จาก $senderName → $recipientName',
+      data: {
+        'booking_id': booking.id,
+        'price': price.toStringAsFixed(0),
+        'distance_km': distanceKm.toStringAsFixed(2),
+        'parcel_size': parcelSize,
+        'sender_name': senderName,
+        'sender_phone': senderPhone,
+        'recipient_name': recipientName,
+        'recipient_phone': recipientPhone,
+        'pickup': pickupAddress,
+        'destination': destinationAddress,
+        if (scheduledAt != null) 'scheduled_at': AppTime.toDbIso(scheduledAt),
+      },
+    );
+
+    debugLog('📤 Sending new parcel booking notification to drivers...');
+    await BookingService().notifyDriversAboutNewBooking(booking);
   }
 
   /// ดึงรายละเอียดพัสดุจาก booking_id
@@ -123,6 +156,17 @@ class ParcelService {
     required String photoUrl,
   }) async {
     try {
+      final existingAccepted = await _client
+          .from('parcel_details')
+          .select('id')
+          .eq('booking_id', bookingId)
+          .inFilter('parcel_status', ['picked_up', 'in_transit'])
+          .limit(1);
+      if ((existingAccepted as List).isNotEmpty) {
+        debugLog('Pickup photo already accepted for booking: $bookingId');
+        return true;
+      }
+
       final result = await _client
           .from('parcel_details')
           .update({
@@ -149,6 +193,17 @@ class ParcelService {
   /// คนขับ: อัปเดตสถานะเป็น "กำลังส่ง" (picked_up → in_transit)
   Future<bool> updateInTransit(String bookingId) async {
     try {
+      final existingInTransit = await _client
+          .from('parcel_details')
+          .select('id')
+          .eq('booking_id', bookingId)
+          .inFilter('parcel_status', ['in_transit', 'delivered'])
+          .limit(1);
+      if ((existingInTransit as List).isNotEmpty) {
+        debugLog('Parcel already in transit: $bookingId');
+        return true;
+      }
+
       final result = await _client
           .from('parcel_details')
           .update({'parcel_status': 'in_transit'})
@@ -198,6 +253,19 @@ class ParcelService {
           .eq('parcel_status', 'in_transit')
           .select('id');
 
+      final existingDelivered = (result as List).isEmpty
+          ? await _client
+              .from('parcel_details')
+              .select('id')
+              .eq('booking_id', bookingId)
+              .eq('parcel_status', 'delivered')
+              .limit(1)
+          : const [];
+      if (existingDelivered.isNotEmpty) {
+        debugLog('Delivery photos already accepted for booking: $bookingId');
+        return true;
+      }
+
       if ((result as List).isEmpty) {
         debugLog('⚠️ Delivery update skipped: not in in_transit state ($bookingId)');
         return false;
@@ -217,9 +285,17 @@ class ParcelService {
     required String photoUrl,
   }) async {
     try {
-      await _client.from('parcel_details').update({
+      final result = await _client.from('parcel_details').update({
         'parcel_photo_url': photoUrl,
-      }).eq('booking_id', bookingId);
+      })
+          .eq('booking_id', bookingId)
+          .eq('parcel_status', 'created')
+          .select('id');
+
+      if ((result as List).isEmpty) {
+        debugLog('โ ๏ธ Parcel photo update skipped: not in created state ($bookingId)');
+        return false;
+      }
       return true;
     } catch (e) {
       debugLog('❌ Error updating parcel photo: $e');

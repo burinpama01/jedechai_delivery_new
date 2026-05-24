@@ -707,10 +707,10 @@ export function renderMapOrderList() {
             <p class="text-[9px] text-gray-400">${timeDiff}</p>
           </div>
           <div class="flex items-center gap-1 flex-shrink-0 flex-wrap justify-end">
-            ${hasLoc ? `<button onclick=\"zoomToOrder(${o.origin_lat},${o.origin_lng},'${o.id.substring(0,8)}')\" class=\"p-1 text-gray-400 hover:text-blue-500\" title=\"ดูบนแผนที่\"><span class=\"material-icons-round text-sm\">my_location</span></button>` : ''}
-            ${isDispatchable ? `<button onclick=\"showOrderDispatchModal('${o.id}')\" class=\"px-2 py-0.5 bg-blue-500 text-white rounded text-[10px] font-medium hover:bg-blue-600\">โยนงาน</button>` : (o.driver_id ? `<button onclick=\"showReassignDriverModal('${o.id}')\" class=\"px-2 py-0.5 bg-amber-500 text-white rounded text-[10px] font-medium hover:bg-amber-600\" title=\"ย้ายคนขับ\">ย้าย</button>` : '')}
-            ${canAdminAccept ? `<button onclick=\"adminMerchantAcceptOrder('${o.id}')\" class=\"px-2 py-0.5 bg-emerald-500 text-white rounded text-[10px] font-medium hover:bg-emerald-600\">รับแทนร้าน</button>` : ''}
-            ${canAdminReady ? `<button onclick=\"adminMarkFoodReady('${o.id}')\" class=\"px-2 py-0.5 bg-teal-500 text-white rounded text-[10px] font-medium hover:bg-teal-600\">อาหารพร้อม</button>` : ''}
+            ${hasLoc ? `<button onclick=\"zoomToOrder(${o.origin_lat},${o.origin_lng},'${o.id.substring(0,8)}')\" class=\"min-h-[44px] min-w-[44px] p-2 text-gray-400 hover:text-blue-500\" title=\"ดูบนแผนที่\"><span class=\"material-icons-round text-sm\">my_location</span></button>` : ''}
+            ${isDispatchable ? `<button onclick=\"showOrderDispatchModal('${o.id}')\" class=\"min-h-[44px] px-4 py-2 bg-blue-500 text-white rounded text-xs font-medium hover:bg-blue-600\">โยนงาน</button>` : (o.driver_id ? `<button onclick=\"showReassignDriverModal('${o.id}')\" class=\"min-h-[44px] px-4 py-2 bg-amber-500 text-white rounded text-xs font-medium hover:bg-amber-600\" title=\"ย้ายคนขับ\">ย้าย</button>` : '')}
+            ${canAdminAccept ? `<button onclick=\"adminMerchantAcceptOrder('${o.id}')\" class=\"min-h-[44px] px-4 py-2 bg-emerald-500 text-white rounded text-xs font-medium hover:bg-emerald-600\">รับแทนร้าน</button>` : ''}
+            ${canAdminReady ? `<button onclick=\"adminMarkFoodReady('${o.id}')\" class=\"min-h-[44px] px-4 py-2 bg-teal-500 text-white rounded text-xs font-medium hover:bg-teal-600\">อาหารพร้อม</button>` : ''}
           </div>
         </div>
       </div>`;

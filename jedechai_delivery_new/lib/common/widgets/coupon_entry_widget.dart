@@ -71,8 +71,12 @@ class _CouponEntryWidgetState extends State<CouponEntryWidget> {
     } on Exception catch (e) {
       setState(() {
         _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        _appliedCoupon = null;
+        _discount = 0;
         _isValidating = false;
       });
+      widget.onCouponApplied(null);
+      widget.onDiscountChanged(0);
     }
   }
 

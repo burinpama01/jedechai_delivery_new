@@ -196,18 +196,18 @@ export function renderOrderRows(orders) {
     const canEditPickup = o.status !== 'completed' && o.status !== 'cancelled';
     const totalAmount = Number(o.price || 0) + Number(o.delivery_fee || 0);
 
-    let actions = `<button onclick=\"showOrderDetail('${o.id}')\" class=\"px-2 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-200 mr-1\">รายละเอียด</button>`;
+    let actions = `<button onclick=\"showOrderDetail('${o.id}')\" class=\"min-h-[44px] px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-200 mr-1\">รายละเอียด</button>`;
     if (canReassign || canRebroadcast || canAdminAccept || canAdminReady || canEditPickup) {
-      if (canEditPickup) actions += `<button onclick=\"showEditPickupLocationModal('${o.id}')\" class=\"px-2 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-200 mr-1\">แก้พิกัด</button>`;
-      if (canRebroadcast) actions += `<button onclick=\"rebroadcastOrder('${o.id}','${o.service_type}')\" class=\"px-2 py-1 bg-purple-100 text-purple-700 rounded-lg text-xs font-medium hover:bg-purple-200 mr-1\" title=\"โยนออเดอร์ใหม่ให้คนขับทุกคนเห็น\">🔄 โยนใหม่</button>`;
-      if (canReassign) actions += `<button onclick=\"showReassignModal('${o.id}','${(dName).replace(/'/g,'')}')\" class=\"px-2 py-1 bg-orange-100 text-orange-700 rounded-lg text-xs font-medium hover:bg-orange-200 mr-1\">ย้ายคนขับ</button>`;
-      if (canAdminAccept) actions += `<button onclick=\"adminMerchantAcceptOrder('${o.id}')\" class=\"px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-medium hover:bg-emerald-200 mr-1\">รับแทนร้าน</button>`;
-      if (canAdminReady) actions += `<button onclick=\"adminMarkFoodReady('${o.id}')\" class=\"px-2 py-1 bg-teal-100 text-teal-700 rounded-lg text-xs font-medium hover:bg-teal-200 mr-1\">อาหารพร้อม</button>`;
+      if (canEditPickup) actions += `<button onclick=\"showEditPickupLocationModal('${o.id}')\" class=\"min-h-[44px] px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-200 mr-1\">แก้พิกัด</button>`;
+      if (canRebroadcast) actions += `<button onclick=\"rebroadcastOrder('${o.id}','${o.service_type}')\" class=\"min-h-[44px] px-4 py-2 bg-purple-100 text-purple-700 rounded-lg text-xs font-medium hover:bg-purple-200 mr-1\" title=\"โยนออเดอร์ใหม่ให้คนขับทุกคนเห็น\">🔄 โยนใหม่</button>`;
+      if (canReassign) actions += `<button onclick=\"showReassignModal('${o.id}','${(dName).replace(/'/g,'')}')\" class=\"min-h-[44px] px-4 py-2 bg-orange-100 text-orange-700 rounded-lg text-xs font-medium hover:bg-orange-200 mr-1\">ย้ายคนขับ</button>`;
+      if (canAdminAccept) actions += `<button onclick=\"adminMerchantAcceptOrder('${o.id}')\" class=\"min-h-[44px] px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-medium hover:bg-emerald-200 mr-1\">รับแทนร้าน</button>`;
+      if (canAdminReady) actions += `<button onclick=\"adminMarkFoodReady('${o.id}')\" class=\"min-h-[44px] px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-xs font-medium hover:bg-teal-200 mr-1\">อาหารพร้อม</button>`;
       if (o.status !== 'completed' && o.status !== 'cancelled') {
-        actions += `<button onclick=\"forceCancelOrder('${o.id}','${o.customer_id || ''}',${Math.round(o.price || 0)})\" class=\"px-2 py-1 bg-red-100 text-red-700 rounded-lg text-xs font-medium hover:bg-red-200\">ยกเลิก</button>`;
+        actions += `<button onclick=\"forceCancelOrder('${o.id}','${o.customer_id || ''}',${Math.round(o.price || 0)})\" class=\"min-h-[44px] px-4 py-2 bg-red-100 text-red-700 rounded-lg text-xs font-medium hover:bg-red-200\">ยกเลิก</button>`;
       }
     } else if (o.status !== 'completed' && o.status !== 'cancelled') {
-      actions += `<button onclick=\"forceCancelOrder('${o.id}','${o.customer_id || ''}',${Math.round(o.price || 0)})\" class=\"px-2 py-1 bg-red-100 text-red-700 rounded-lg text-xs font-medium hover:bg-red-200\">ยกเลิก</button>`;
+      actions += `<button onclick=\"forceCancelOrder('${o.id}','${o.customer_id || ''}',${Math.round(o.price || 0)})\" class=\"min-h-[44px] px-4 py-2 bg-red-100 text-red-700 rounded-lg text-xs font-medium hover:bg-red-200\">ยกเลิก</button>`;
     }
 
     return `

@@ -66,6 +66,8 @@ globalThis.__adminWebBridge.setInMemorySessionFromSupabaseSession = setInMemoryS
 globalThis.__adminWebBridge.safeSignOut = safeSignOut;
 globalThis.__adminWebBridge.checkExistingAdminSession = checkExistingAdminSession;
 globalThis.__adminWebBridge.callAdminAction = callAdminAction;
+globalThis.ADMIN_MERCHANT_ACCEPT_STATUSES = ['pending_merchant', 'pending'];
+globalThis.ADMIN_MERCHANT_READY_STATUSES = ['preparing', 'driver_accepted', 'arrived_at_merchant', 'matched', 'accepted', 'arrived'];
 
 wireLegacyHelpers({ fmt, fmtDate, exportRowsToCsv, exportRowsToExcel, showToast });
 wireRouterBridge();

@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../models/chat_message.dart';
 import '../services/chat_service.dart';
 import '../services/auth_service.dart';
+import '../utils/app_time.dart';
 import '../utils/order_code_formatter.dart';
 import 'app_network_image.dart';
 import '../../theme/app_theme.dart';
@@ -213,7 +213,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
+    return AppTime.bangkokDateKey(a) == AppTime.bangkokDateKey(b);
   }
 
   Widget _buildDateDivider(DateTime date) {
@@ -225,7 +225,7 @@ class _ChatScreenState extends State<ChatScreen> {
     } else if (_isSameDay(date, now.subtract(const Duration(days: 1)))) {
       label = 'เมื่อวาน';
     } else {
-      label = DateFormat('d MMM yyyy', 'th').format(date);
+      label = AppTime.formatBangkokDate(date, pattern: 'd MMM yyyy', locale: 'th');
     }
 
     return Padding(
@@ -319,7 +319,7 @@ class _ChatScreenState extends State<ChatScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  DateFormat('HH:mm').format(message.createdAt),
+                  AppTime.formatBangkokTime(message.createdAt),
                   style: TextStyle(
                     fontSize: 11,
                     color: isMe

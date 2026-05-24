@@ -1,3 +1,5 @@
+import '../utils/app_time.dart';
+
 /// Chat Message Model
 ///
 /// Represents a single message in a chat room (per booking)
@@ -31,7 +33,7 @@ class ChatMessage {
       message: json['message'] as String,
       imageUrl: json['image_url'] as String?,
       isRead: json['is_read'] as bool? ?? false,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: AppTime.parseDbTimestamp(json['created_at'] as String),
     );
   }
 
@@ -44,7 +46,7 @@ class ChatMessage {
       'message': message,
       'image_url': imageUrl,
       'is_read': isRead,
-      'created_at': createdAt.toIso8601String(),
+      'created_at': AppTime.toDbIso(createdAt),
     };
   }
 
@@ -113,9 +115,9 @@ class ChatRoom {
       merchantId: json['merchant_id'] as String?,
       roomType: json['room_type'] as String? ?? 'booking',
       isActive: json['is_active'] as bool? ?? true,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: AppTime.parseDbTimestamp(json['created_at'] as String),
       closedAt: json['closed_at'] != null
-          ? DateTime.parse(json['closed_at'] as String)
+          ? AppTime.parseDbTimestamp(json['closed_at'] as String)
           : null,
     );
   }
@@ -129,8 +131,8 @@ class ChatRoom {
       'merchant_id': merchantId,
       'room_type': roomType,
       'is_active': isActive,
-      'created_at': createdAt.toIso8601String(),
-      'closed_at': closedAt?.toIso8601String(),
+      'created_at': AppTime.toDbIso(createdAt),
+      'closed_at': closedAt == null ? null : AppTime.toDbIso(closedAt!),
     };
   }
 

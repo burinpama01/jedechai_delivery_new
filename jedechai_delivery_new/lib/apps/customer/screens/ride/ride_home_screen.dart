@@ -18,6 +18,9 @@ import '../../../../common/services/notification_sender.dart';
 import '../../../../common/config/env_config.dart';
 import '../../../../common/utils/notification_payload_policy.dart';
 import '../../../../common/widgets/location_disclosure_dialog.dart';
+import '../../../../common/widgets/coupon_entry_widget.dart';
+import '../../../../common/models/coupon.dart';
+import '../../../../common/services/coupon_service.dart';
 import '../services/waiting_for_driver_screen.dart';
 import '../services/saved_addresses_screen.dart';
 import '../../../../common/models/saved_address.dart';
@@ -46,6 +49,8 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
   String _selectedAddress = '';
   double _estimatedPrice = 0.0;
   double _estimatedDistance = 0.0;
+  Coupon? _appliedCoupon;
+  double _couponDiscount = 0.0;
   int _selectedVehicleIndex = -1;
   String _paymentMethod = 'cash';
 
@@ -600,6 +605,11 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
     return baseFare + (distanceInKm * perKmCharge);
   }
 
+  double get _finalRidePrice {
+    final discounted = _estimatedPrice - _couponDiscount;
+    return discounted > 0 ? discounted : 0;
+  }
+
   void _showPaymentMethodSheet() {
     showModalBottomSheet(
       context: context,
@@ -735,7 +745,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
       debugLog(
           '   └─ Destination: ${_selectedDestination!.latitude}, ${_selectedDestination!.longitude}');
       debugLog('   └─ Distance: $_estimatedDistance km');
-      debugLog('   └─ Price: ฿$_estimatedPrice');
+      debugLog('   └─ Price: ฿$_finalRidePrice');
       debugLog(
           '   └─ Driver→Pickup: ${_estimatedDriverToPickupKm.toStringAsFixed(2)} km');
       debugLog(
@@ -751,6 +761,10 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
               _estimatedPickupSurcharge.toStringAsFixed(2)),
         );
       }
+      if (_appliedCoupon != null && _couponDiscount > 0) {
+        noteLines.add(
+            'coupon=${_appliedCoupon!.code} discount=${_couponDiscount.toStringAsFixed(0)}');
+      }
 
       final booking = await BookingService().createRideBooking(
         originLat: _currentLocation!.latitude,
@@ -763,12 +777,33 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
         notes: noteLines.join(' | '),
         vehicleType: vehicleName,
         paymentMethod: _paymentMethod,
-        priceOverride: _estimatedPrice,
+        priceOverride: _finalRidePrice,
         notifyDrivers: false,
       );
 
       if (booking == null) {
         throw Exception('Failed to create ride booking');
+      }
+
+      if (_appliedCoupon != null && _couponDiscount > 0) {
+        try {
+          await CouponService().recordUsage(
+            couponId: _appliedCoupon!.id,
+            bookingId: booking.id,
+            discountAmount: _couponDiscount,
+          );
+        } catch (e) {
+          debugLog('❌ recordUsage failed — auto-cancelling ride booking: $e');
+          try {
+            await SupabaseService.client.from('bookings').update({
+              'status': 'cancelled',
+              'notes': '${noteLines.join(' | ')} | auto_cancelled: coupon_record_failed',
+            }).eq('id', booking.id);
+          } catch (cancelErr) {
+            debugLog('⚠️ Could not auto-cancel ride booking: $cancelErr');
+          }
+          throw Exception('Cannot apply coupon. Please try booking again.');
+        }
       }
 
       debugLog('Booking created successfully: ${booking.id}');
@@ -1115,6 +1150,8 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                                         _selectedAddress = '';
                                         _estimatedPrice = 0.0;
                                         _estimatedDistance = 0.0;
+                                        _appliedCoupon = null;
+                                        _couponDiscount = 0.0;
                                         _polylines.clear();
                                         _markers.removeWhere((m) =>
                                             m.markerId.value == 'destination');
@@ -1159,22 +1196,26 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
             bottom: 0,
             left: 0,
             right: 0,
-            child: Container(
-              decoration: BoxDecoration(
-                color: colorScheme.surface,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(24)),
-                boxShadow: [
-                  BoxShadow(
-                      color: colorScheme.shadow.withValues(alpha: 0.12),
-                      blurRadius: 16,
-                      offset: const Offset(0, -4)),
-                ],
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.68,
               ),
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-                  child: Column(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(24)),
+                  boxShadow: [
+                    BoxShadow(
+                        color: colorScheme.shadow.withValues(alpha: 0.12),
+                        blurRadius: 16,
+                        offset: const Offset(0, -4)),
+                  ],
+                ),
+                child: SafeArea(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                    child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       // Handle
@@ -1310,13 +1351,41 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                                       fontSize: 14,
                                       color: colorScheme.onSurfaceVariant)),
                               const Spacer(),
-                              Text('฿${_estimatedPrice.ceil()}',
-                                  style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.primaryGreen)),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  if (_couponDiscount > 0)
+                                    Text('฿${_estimatedPrice.ceil()}',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: colorScheme.onSurfaceVariant,
+                                          decoration:
+                                              TextDecoration.lineThrough,
+                                        )),
+                                  Text('฿${_finalRidePrice.ceil()}',
+                                      style: const TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.primaryGreen)),
+                                ],
+                              ),
                             ],
                           ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+
+                      if (_estimatedPrice > 0) ...[
+                        CouponEntryWidget(
+                          serviceType: 'ride',
+                          orderAmount: _estimatedPrice,
+                          deliveryFee: _estimatedPrice,
+                          onCouponApplied: (coupon) {
+                            setState(() => _appliedCoupon = coupon);
+                          },
+                          onDiscountChanged: (discount) {
+                            setState(() => _couponDiscount = discount);
+                          },
                         ),
                         const SizedBox(height: 12),
                       ],
@@ -1397,7 +1466,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                                           ? AppLocalizations.of(context)!
                                               .rideBtnSelectVehicle
                                           : AppLocalizations.of(context)!
-                                              .rideBtnCallRide(_estimatedPrice
+                                              .rideBtnCallRide(_finalRidePrice
                                                   .ceil()
                                                   .toString()),
                                   style: const TextStyle(
@@ -1410,6 +1479,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                   ),
                 ),
               ),
+            ),
             ),
           ),
         ],

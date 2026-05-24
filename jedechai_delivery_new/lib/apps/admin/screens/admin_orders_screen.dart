@@ -170,6 +170,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
               ),
               items: const [
                 DropdownMenuItem(value: 'all', child: Text('ทั้งหมด')),
+                DropdownMenuItem(value: 'pending_merchant', child: Text('รอร้านยืนยัน')),
                 DropdownMenuItem(value: 'pending', child: Text('รอ')),
                 DropdownMenuItem(value: 'in_progress', child: Text('กำลังดำเนินการ')),
                 DropdownMenuItem(value: 'completed', child: Text('เสร็จ')),
@@ -340,6 +341,32 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
               ],
             ),
             const SizedBox(height: 8),
+            if (serviceType == 'food' &&
+                (status == 'pending_merchant' || status == 'pending')) ...[
+              const SizedBox(height: 4),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: isUpdating || orderId.isEmpty
+                      ? null
+                      : () => _handleAcceptOrderOnBehalf(order),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                  ),
+                  icon: isUpdating
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.check_circle_outline, size: 18),
+                  label: Text(isUpdating ? 'กำลังบันทึก...' : 'รับออเดอร์แทนร้าน'),
+                ),
+              ),
+            ],
+            const SizedBox(height: 4),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
@@ -362,6 +389,78 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _handleAcceptOrderOnBehalf(Map<String, dynamic> order) async {
+    final orderId = order['id']?.toString() ?? '';
+    if (orderId.isEmpty) return;
+
+    final serviceType = order['service_type'] as String? ?? '-';
+    if (serviceType != 'food') {
+      _showSnack('รับออเดอร์แทนร้านใช้ได้เฉพาะออเดอร์อาหาร');
+      return;
+    }
+    final price = (order['price'] as num?)?.toDouble() ?? 0;
+    final pickupAddress =
+        order['pickup_address'] ?? order['origin_address'] ?? '-';
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('รับออเดอร์แทนร้าน'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('คุณต้องการรับออเดอร์นี้แทนร้านค้าหรือไม่?',
+                style: TextStyle(fontWeight: FontWeight.w500)),
+            const SizedBox(height: 12),
+            Text('บริการ: $serviceType'),
+            Text('ร้าน: $pickupAddress',
+                maxLines: 2, overflow: TextOverflow.ellipsis),
+            Text('ราคา: ฿${price.toStringAsFixed(0)}'),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.amber[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.amber[300]!),
+              ),
+              child: const Text(
+                'ออเดอร์จะเปลี่ยนสถานะเป็น "กำลังเตรียม" และระบบจะหาคนขับให้',
+                style: TextStyle(fontSize: 12),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('ยกเลิก'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.green),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('ยืนยัน รับออเดอร์'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _updatingOrderIds.add(orderId));
+    try {
+      await _adminService.acceptOrderOnBehalfOfMerchant(bookingId: orderId);
+      _showSnack('รับออเดอร์แทนร้านสำเร็จ');
+      await _loadOrders();
+    } catch (e) {
+      debugLog('❌ Failed to accept order on behalf of merchant: $e');
+      _showSnack('ไม่สำเร็จ: $e');
+    } finally {
+      if (mounted) setState(() => _updatingOrderIds.remove(orderId));
+    }
   }
 
   Future<void> _handleEditStoreLocation(Map<String, dynamic> order) async {

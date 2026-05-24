@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../../../common/config/env_config.dart';
@@ -18,6 +17,7 @@ import '../../../../common/models/coupon.dart';
 import '../../../../common/services/coupon_service.dart';
 import '../../../../common/services/merchant_food_config_service.dart';
 import '../../../../common/services/system_config_service.dart';
+import '../../../../common/utils/app_time.dart';
 import '../../../../common/services/admin_line_notification_service.dart';
 import '../../../../common/utils/platform_adaptive.dart';
 import '../../../../common/utils/notification_payload_policy.dart';
@@ -143,13 +143,13 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
   }
 
   String _formatScheduledDateTime(DateTime dateTime) {
-    return DateFormat('dd/MM/yyyy HH:mm', 'th_TH').format(dateTime.toLocal());
+    return AppTime.formatBangkokDateTime(dateTime);
   }
 
   Future<void> _pickScheduledDateTime() async {
     final now = DateTime.now();
     final initialDate =
-        (_scheduledAt ?? now.add(const Duration(hours: 1))).toLocal();
+        AppTime.toBangkok(_scheduledAt ?? now.add(const Duration(hours: 1)));
     final firstDate = DateTime(now.year, now.month, now.day);
     final lastDate = firstDate.add(const Duration(days: 14));
 
@@ -172,15 +172,15 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
 
     if (pickedTime == null) return;
 
-    final selected = DateTime(
-      pickedDate.year,
-      pickedDate.month,
-      pickedDate.day,
-      pickedTime.hour,
-      pickedTime.minute,
+    final selected = AppTime.bangkokWallClockToUtc(
+      year: pickedDate.year,
+      month: pickedDate.month,
+      day: pickedDate.day,
+      hour: pickedTime.hour,
+      minute: pickedTime.minute,
     );
 
-    if (selected.isBefore(now.add(const Duration(minutes: 20)))) {
+    if (selected.isBefore(DateTime.now().toUtc().add(const Duration(minutes: 20)))) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1299,7 +1299,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
             '   └─ coupon: $couponCode (-฿${couponDiscount.toStringAsFixed(2)})');
       }
       if (scheduledAt != null) {
-        debugLog('   └─ scheduled_at: ${scheduledAt.toIso8601String()}');
+        debugLog('   └─ scheduled_at: ${AppTime.toDbIso(scheduledAt)}');
       }
       debugLog('   └─ status: pending_merchant');
 
@@ -1331,7 +1331,8 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
             'notes': noteWithCoupon,
             'status': 'pending_merchant',
             'payment_method': paymentMethod,
-            'scheduled_at': scheduledAt?.toIso8601String(),
+            'scheduled_at':
+                scheduledAt == null ? null : AppTime.toDbIso(scheduledAt),
           })
           .select()
           .single();
@@ -1380,7 +1381,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
           'distance_km': distanceKm.toStringAsFixed(2),
           'customer_address': customerAddress,
           if (scheduledAt != null)
-            'scheduled_at': scheduledAt.toIso8601String(),
+            'scheduled_at': AppTime.toDbIso(scheduledAt),
         },
       );
 

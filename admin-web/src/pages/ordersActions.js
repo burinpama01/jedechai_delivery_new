@@ -374,7 +374,7 @@ async function _adminActAsMerchantOrder(orderId, action, adminNote = '') {
     ? `ให้แอดมินรับออเดอร์ #${orderId.substring(0, 8)} แทนร้านค้า?`
     : `ให้อัปเดตออเดอร์ #${orderId.substring(0, 8)} เป็น "อาหารพร้อม" แทนร้านค้า?`;
 
-  if (!confirm(confirmText)) return;
+  if (!isAccept && !confirm(confirmText)) return;
 
   try {
     const nowIso = new Date().toISOString();
@@ -944,13 +944,13 @@ export async function showOrderDetail(orderId, ctx) {
         ${itemsHtml}
         ${renderAdminNote(order.admin_note, escapeHtml)}
         <div class="flex gap-2 pt-2 flex-wrap">
-          ${canEditPickup ? `<button onclick="showEditPickupLocationModal('${orderId}')" class="px-3 py-1.5 bg-blue-100 text-blue-600 rounded-lg text-xs font-semibold">Edit pickup</button>` : ''}
-          ${canEditItems ? `<button onclick="showEditOrderItemsModal('${orderId}')" class="px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold">Edit items</button>` : ''}
-          ${canRebroadcast ? `<button onclick="rebroadcastOrder('${orderId}','${order.service_type}')" class="px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-xs font-semibold">Rebroadcast</button>` : ''}
-          ${canReassign ? `<button onclick="showReassignModal('${orderId}','${escapeHtml(String(dName).replace(/'/g, ''))}')" class="px-3 py-1.5 bg-orange-100 text-orange-700 rounded-lg text-xs font-semibold">Reassign</button>` : ''}
-          ${canAdminAccept ? `<button onclick="adminMerchantAcceptOrder('${orderId}')" class="px-3 py-1.5 bg-emerald-500 text-white rounded-lg text-xs font-semibold">Accept as merchant</button>` : ''}
-          ${canAdminReady ? `<button onclick="adminMarkFoodReady('${orderId}')" class="px-3 py-1.5 bg-teal-500 text-white rounded-lg text-xs font-semibold">Mark food ready</button>` : ''}
-          ${canCancel ? `<button onclick="forceCancelOrder('${orderId}','${order.customer_id || ''}',${Math.round(order.price || 0)})" class="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg text-xs font-semibold">Cancel</button>` : ''}
+          ${canEditPickup ? `<button onclick="showEditPickupLocationModal('${orderId}')" class="min-h-[44px] px-4 py-2 bg-blue-100 text-blue-600 rounded-lg text-xs font-semibold">Edit pickup</button>` : ''}
+          ${canEditItems ? `<button onclick="showEditOrderItemsModal('${orderId}')" class="min-h-[44px] px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold">Edit items</button>` : ''}
+          ${canRebroadcast ? `<button onclick="rebroadcastOrder('${orderId}','${order.service_type}')" class="min-h-[44px] px-4 py-2 bg-purple-100 text-purple-700 rounded-lg text-xs font-semibold">Rebroadcast</button>` : ''}
+          ${canReassign ? `<button onclick="showReassignModal('${orderId}','${escapeHtml(String(dName).replace(/'/g, ''))}')" class="min-h-[44px] px-4 py-2 bg-orange-100 text-orange-700 rounded-lg text-xs font-semibold">Reassign</button>` : ''}
+          ${canAdminAccept ? `<button onclick="adminMerchantAcceptOrder('${orderId}')" class="min-h-[44px] px-4 py-2 bg-emerald-500 text-white rounded-lg text-xs font-semibold">Accept as merchant</button>` : ''}
+          ${canAdminReady ? `<button onclick="adminMarkFoodReady('${orderId}')" class="min-h-[44px] px-4 py-2 bg-teal-500 text-white rounded-lg text-xs font-semibold">Mark food ready</button>` : ''}
+          ${canCancel ? `<button onclick="forceCancelOrder('${orderId}','${order.customer_id || ''}',${Math.round(order.price || 0)})" class="min-h-[44px] px-4 py-2 bg-red-100 text-red-600 rounded-lg text-xs font-semibold">Cancel</button>` : ''}
         </div>
       </div>
     </div>`;

@@ -4,19 +4,30 @@
 // วิธี deploy:
 //   supabase functions deploy send-admin-email
 //
-// ต้องตั้ง secret:
-//   supabase secrets set SMTP_HOST=smtp.gmail.com
-//   supabase secrets set SMTP_PORT=587
-//   supabase secrets set SMTP_USER=your-email@gmail.com
-//   supabase secrets set SMTP_PASS=your-app-password
-//   supabase secrets set SMTP_FROM=your-email@gmail.com
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// In-memory rate limiter per authenticated user
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_MAX = 5; // max 5 emails per minute per user
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+
+function isRateLimited(userId: string): boolean {
+  const now = Date.now();
+  let entry = rateLimitMap.get(userId);
+  if (!entry || now > entry.resetAt) {
+    entry = { count: 0, resetAt: now + RATE_LIMIT_WINDOW_MS };
+    rateLimitMap.set(userId, entry);
+  }
+  entry.count++;
+  return entry.count > RATE_LIMIT_MAX;
+}
 
 serve(async (req) => {
   // Handle CORS preflight
@@ -25,6 +36,46 @@ serve(async (req) => {
   }
 
   try {
+    // 1. Authenticate user
+    const authorization = req.headers.get("authorization") ?? req.headers.get("Authorization") ?? "";
+    const token = authorization.toLowerCase().startsWith("bearer ") ? authorization.slice(7).trim() : "";
+
+    if (!token) {
+      return new Response(
+        JSON.stringify({ error: "Missing authorization token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    if (!supabaseUrl || !serviceRoleKey) {
+      return new Response(
+        JSON.stringify({ error: "Server misconfigured (missing env variables)" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseAuth = createClient(supabaseUrl, serviceRoleKey, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    });
+
+    const { data: { user }, error: userError } = await supabaseAuth.auth.getUser(token);
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Invalid or expired token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 2. Check Rate Limiting
+    if (isRateLimited(user.id)) {
+      return new Response(
+        JSON.stringify({ error: "Too many email requests. Please wait a minute." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { to, subject, html } = await req.json();
 
     if (!to || !subject) {
@@ -34,7 +85,7 @@ serve(async (req) => {
       );
     }
 
-    // ส่งอีเมลผ่าน Resend API (แนะนำ — ฟรี 100 email/วัน)
+    // ส่งอีเมลผ่าน Resend API
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (resendApiKey) {
       const res = await fetch("https://api.resend.com/emails", {
@@ -60,7 +111,7 @@ serve(async (req) => {
       );
     }
 
-    // Fallback: บันทึกลง email_queue table (สำหรับดูใน admin web)
+    // Fallback: บันทึกลง email_queue table
     console.log(`📧 Email queued: to=${to}, subject=${subject}`);
     return new Response(
       JSON.stringify({

@@ -1,9 +1,9 @@
 import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../common/models/booking.dart';
+import '../../../common/utils/app_time.dart';
 import '../../../common/utils/order_code_formatter.dart';
 import '../../../common/widgets/status_badge.dart';
 import '../../../theme/app_theme.dart';
@@ -125,7 +125,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
   }
 
   DateTimeRange? _getActiveDateRange() {
-    final now = DateTime.now();
+    final now = AppTime.bangkokNow();
 
     switch (_dateFilter) {
       case _ActivityDateFilter.today:
@@ -153,15 +153,21 @@ class _ActivityScreenState extends State<ActivityScreen> {
   List<Booking> _getFilteredBookings() {
     final range = _getActiveDateRange();
     if (range == null) return List<Booking>.from(_bookings);
+    final startKey = _dateKeyFromWallDate(range.start);
+    final endKey = _dateKeyFromWallDate(range.end);
 
     return _bookings.where((booking) {
-      final createdAt = booking.createdAt.toLocal();
-      return !createdAt.isBefore(range.start) && !createdAt.isAfter(range.end);
+      final createdKey = AppTime.bangkokDateKey(booking.createdAt);
+      return createdKey >= startKey && createdKey <= endKey;
     }).toList();
   }
 
+  int _dateKeyFromWallDate(DateTime value) {
+    return value.year * 10000 + value.month * 100 + value.day;
+  }
+
   Future<void> _selectCustomDateRange() async {
-    final now = DateTime.now();
+    final now = AppTime.bangkokNow();
     final initialRange = _customDateRange ??
         DateTimeRange(
           start: _startOfDay(now.subtract(const Duration(days: 6))),
@@ -202,8 +208,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
         return l10n.activityFilterAll;
       case _ActivityDateFilter.custom:
         if (_customDateRange == null) return l10n.activityFilterDateRange;
-        final formatter = DateFormat('dd/MM/yyyy');
-        return '${formatter.format(_customDateRange!.start)} - ${formatter.format(_customDateRange!.end)}';
+        return '${AppTime.formatBangkokDate(_customDateRange!.start)} - ${AppTime.formatBangkokDate(_customDateRange!.end)}';
     }
   }
 
@@ -1112,13 +1117,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
   }
 
   String _formatScheduledDateTime(DateTime dateTime) {
-    final local = dateTime.toLocal();
-    final day = local.day.toString().padLeft(2, '0');
-    final month = local.month.toString().padLeft(2, '0');
-    final year = local.year;
-    final hour = local.hour.toString().padLeft(2, '0');
-    final minute = local.minute.toString().padLeft(2, '0');
-    return '$day/$month/$year $hour:$minute';
+    return AppTime.formatBangkokDateTime(dateTime);
   }
 
   double _getCouponDiscount(Booking booking) {

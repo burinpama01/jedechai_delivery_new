@@ -8,7 +8,9 @@ import '../../l10n/app_localizations.dart';
 /// แสดงเมื่อผู้ใช้ส่งคำขอลบบัญชีแล้วและรออนุมัติจากแอดมิน
 /// รับ realtime update บน profiles.deletion_status และแสดง UI ตามสถานะจริง
 class PendingDeletionScreen extends StatefulWidget {
-  const PendingDeletionScreen({super.key});
+  final VoidCallback? onUnlocked;
+
+  const PendingDeletionScreen({super.key, this.onUnlocked});
 
   @override
   State<PendingDeletionScreen> createState() => _PendingDeletionScreenState();
@@ -41,6 +43,11 @@ class _PendingDeletionScreenState extends State<PendingDeletionScreen> {
         _deletionStatus = row?['deletion_status'] as String?;
         _initialFetchDone = true;
       });
+      if (_deletionStatus != 'pending') {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          widget.onUnlocked?.call();
+        });
+      }
     } catch (_) {
       if (mounted) setState(() => _initialFetchDone = true);
     }
@@ -61,6 +68,11 @@ class _PendingDeletionScreenState extends State<PendingDeletionScreen> {
           setState(() {
             _deletionStatus = status;
           });
+          if (status != 'pending') {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              widget.onUnlocked?.call();
+            });
+          }
         });
   }
 
@@ -77,7 +89,7 @@ class _PendingDeletionScreenState extends State<PendingDeletionScreen> {
     if (!_initialFetchDone) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    if (_deletionStatus == null) {
+    if (_deletionStatus != 'pending') {
       return _buildRejectedScreen(colorScheme);
     }
     return _buildPendingScreen(colorScheme);
@@ -130,7 +142,8 @@ class _PendingDeletionScreenState extends State<PendingDeletionScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: colorScheme.tertiaryContainer.withValues(alpha: 0.45),
+                    color:
+                        colorScheme.tertiaryContainer.withValues(alpha: 0.45),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: colorScheme.tertiary.withValues(alpha: 0.4),
@@ -168,7 +181,8 @@ class _PendingDeletionScreenState extends State<PendingDeletionScreen> {
                     icon: const Icon(Icons.logout),
                     label: Text(
                       l10n.pendingDeletionLogout,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w600),
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: colorScheme.onSurface,
@@ -241,7 +255,8 @@ class _PendingDeletionScreenState extends State<PendingDeletionScreen> {
                     icon: const Icon(Icons.login),
                     label: Text(
                       l10n.rejectedDeletionBack,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w600),
                     ),
                     style: ElevatedButton.styleFrom(
                       shape: RoundedRectangleBorder(

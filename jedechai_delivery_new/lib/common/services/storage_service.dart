@@ -65,6 +65,21 @@ class StorageService {
     }
   }
 
+  static Future<bool> deleteImage(String publicUrl, {String? bucketName}) async {
+    final String targetBucket = bucketName ?? _bucketName;
+    final marker = '/storage/v1/object/public/$targetBucket/';
+    final markerIndex = publicUrl.indexOf(marker);
+    if (markerIndex == -1) {
+      debugLog('Error deleting image: unsupported public URL');
+      return false;
+    }
+
+    final path = Uri.decodeComponent(
+      publicUrl.substring(markerIndex + marker.length),
+    );
+    return deleteFile(path, bucketName: targetBucket);
+  }
+
   static Future<String?> getPublicUrl(String path, {String? bucketName}) async {
     try {
       final String targetBucket = bucketName ?? _bucketName;
