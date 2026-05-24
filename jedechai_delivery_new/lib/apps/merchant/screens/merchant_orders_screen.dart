@@ -771,8 +771,11 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
         return;
       }
 
-      // Send notification to customer
+      // Notify customer and nearby drivers
       await _notifyCustomerOrderAccepted(result.booking!);
+      unawaited(BookingService().notifyDriversAboutNewBooking(
+        Booking.fromJson(Map<String, dynamic>.from(result.booking!)),
+      ));
 
       if (mounted) {
         if (!triggeredAutomatically) {
