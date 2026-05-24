@@ -249,6 +249,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
     final foodActiveStatuses = [
       'preparing',
       'matched',
+      'driver_accepted',
       'ready_for_pickup',
       'picking_up_order',
       'in_transit',

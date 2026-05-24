@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/debug_logger.dart';
+import '../models/booking.dart';
 import 'auth_service.dart';
+import 'booking_service.dart';
 
 /// AdminService - บริการจัดการระบบ Admin Back-office
 ///
@@ -347,6 +350,53 @@ class AdminService {
     } catch (e) {
       debugLog('❌ Error rejecting merchant: $e');
       return false;
+    }
+  }
+
+  /// รับออเดอร์แทนร้านค้า (สำหรับแอดมิน)
+  Future<bool> acceptOrderOnBehalfOfMerchant({
+    required String bookingId,
+    String? reason,
+  }) async {
+    try {
+      await _ensureAdmin();
+      final adminId = AuthService.userId;
+      if (adminId == null) return false;
+
+      final result = await _client
+          .from('bookings')
+          .update({
+            'status': 'preparing',
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', bookingId)
+          .eq('service_type', 'food')
+          .inFilter('status', ['pending_merchant', 'pending'])
+          .select();
+
+      if ((result as List).isEmpty) {
+        throw Exception('ออเดอร์ไม่อยู่ในสถานะรอการยืนยัน หรือถูกยืนยันไปแล้ว');
+      }
+
+      await _logAction(
+        actionType: 'admin_accept_order',
+        targetEntityId: bookingId,
+        details: {
+          'status': 'preparing',
+          if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
+        },
+      );
+
+      debugLog('✅ Admin accepted order on behalf of merchant: $bookingId');
+
+      unawaited(BookingService().notifyDriversAboutNewBooking(
+        Booking.fromJson(Map<String, dynamic>.from((result as List).first)),
+      ));
+
+      return true;
+    } catch (e) {
+      debugLog('❌ Error accepting order on behalf of merchant: $e');
+      rethrow;
     }
   }
 

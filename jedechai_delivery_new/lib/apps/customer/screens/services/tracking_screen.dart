@@ -536,6 +536,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
       case 'assigned':
         return {'icon': Icons.delivery_dining, 'color': AppTheme.accentBlue, 'title': AppLocalizations.of(context)!.trackStatusAcceptedTitle, 'subtitle': AppLocalizations.of(context)!.trackStatusAcceptedSub};
       case 'picking_up':
+      case 'arrived':
       case 'arrived_at_pickup':
         return {'icon': Icons.store, 'color': AppTheme.accentBlue, 'title': AppLocalizations.of(context)!.trackStatusPickingUpTitle, 'subtitle': AppLocalizations.of(context)!.trackStatusPickingUpSub};
       case 'preparing':
@@ -578,6 +579,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
         case 'matched':
           currentIndex = 1;
         case 'preparing':
+          currentIndex = 1;
+        case 'arrived':
         case 'arrived_at_pickup':
         case 'picking_up_order':
         case 'arrived_at_merchant':

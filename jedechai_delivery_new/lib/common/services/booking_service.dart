@@ -973,16 +973,16 @@ class BookingService {
   }
 
   /// Get pending bookings (for drivers)
-  /// Phase 4D: Fixed filter — drivers should NOT see pending_merchant or
-  /// preparing orders. They should only see:
-  /// - 'pending' (ride/parcel ready for pickup)
-  /// - 'ready_for_pickup' (food orders where merchant finished preparing)
+  /// Drivers see:
+  /// - 'pending' (ride/parcel)
+  /// - 'preparing' (food — merchant accepted, driver can head over early)
+  /// - 'ready_for_pickup' (food — ready to pick up)
   Future<List<Booking>> getPendingBookings() async {
     final response = await _client
         .from('bookings')
         .select()
         .filter('driver_id', 'is', 'null')
-        .or('status.in.(pending,ready_for_pickup)')
+        .or('status.in.(pending,preparing,ready_for_pickup)')
         .order('created_at', ascending: false)
         .limit(50);
 

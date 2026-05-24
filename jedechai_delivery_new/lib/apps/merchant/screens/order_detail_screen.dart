@@ -394,6 +394,10 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
             duration: const Duration(seconds: 2),
           ),
         );
+
+        unawaited(BookingService().notifyDriversAboutNewBooking(
+          Booking.fromJson(Map<String, dynamic>.from(result.first)),
+        ));
       }
     } catch (e) {
       if (mounted) {
