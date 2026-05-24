@@ -133,11 +133,12 @@ class BookingService {
     double driverRate = fallbackDriver;
 
     try {
-      final row = await _client
+      final configRows = await _client
           .from('system_config')
           .select(
               'merchant_gp_system_rate_default, merchant_gp_driver_rate_default')
-          .maybeSingle();
+          .limit(1);
+      final row = configRows.isNotEmpty ? configRows.first : null;
       if (row != null) {
         final columnSystem = row['merchant_gp_system_rate_default'];
         final columnDriver = row['merchant_gp_driver_rate_default'];
@@ -261,9 +262,14 @@ class BookingService {
   /// Get booking by ID
   Future<Booking?> getBookingById(String bookingId) async {
     try {
-      final response =
-          await _client.from('bookings').select().eq('id', bookingId).single();
-      return Booking.fromJson(response);
+      // ใช้ limit(1) แทน .single() เพื่อป้องกัน 406 เมื่อ DB มี duplicate rows
+      final rows = await _client
+          .from('bookings')
+          .select()
+          .eq('id', bookingId)
+          .limit(1);
+      if (rows.isEmpty) return null;
+      return Booking.fromJson(rows.first);
     } catch (e) {
       throw Exception('Failed to fetch booking: $e');
     }

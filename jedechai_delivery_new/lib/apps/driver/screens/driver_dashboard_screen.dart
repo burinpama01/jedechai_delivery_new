@@ -10,6 +10,7 @@ import '../../../common/widgets/location_disclosure_dialog.dart';
 import '../../../common/services/driver_foreground_service.dart';
 import '../../../common/utils/driver_job_visibility_policy.dart';
 import '../../../common/utils/notification_payload_policy.dart';
+import '../../../common/utils/app_time.dart';
 import '../../customer/screens/auth/login_screen.dart';
 import 'driver_navigation_screen.dart';
 import 'driver_service_type_settings.dart';
@@ -511,10 +512,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       final driverId = AuthService.userId;
       if (driverId == null) return;
 
-      // Get today's date range
-      final now = DateTime.now();
-      final todayStart = DateTime(now.year, now.month, now.day);
-      final todayEnd = todayStart.add(const Duration(days: 1));
+      final todayKey = AppTime.bangkokDateKey(DateTime.now());
 
       // Fetch completed bookings for earnings (include service_type for breakdown)
       final response = await SupabaseService.client
@@ -532,11 +530,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       for (final booking in response) {
         final earnings =
             (booking['driver_earnings'] as num?)?.toDouble() ?? 0.0;
-        final createdAt = DateTime.parse(booking['created_at']);
+        final createdAt = AppTime.parseDbTimestamp(booking['created_at']);
 
         totalEarnings += earnings;
 
-        if (createdAt.isAfter(todayStart) && createdAt.isBefore(todayEnd)) {
+        if (AppTime.bangkokDateKey(createdAt) == todayKey) {
           todayEarnings += earnings;
           todayCompleted++;
           final type = booking['service_type'] as String? ?? 'other';
@@ -910,15 +908,18 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
       // Send FCM notifications to customer and merchant
       try {
-        final bookingData = await SupabaseService.client
+        final notifRows = await SupabaseService.client
             .from('bookings')
             .select()
             .eq('id', bookingId)
-            .single();
-        await _notifyCustomerDriverAccepted(bookingData);
-        if (bookingData['service_type'] == 'food' &&
-            bookingData['merchant_id'] != null) {
-          await _notifyMerchantDriverAccepted(bookingData);
+            .limit(1);
+        if (notifRows.isNotEmpty) {
+          final bookingData = notifRows.first;
+          await _notifyCustomerDriverAccepted(bookingData);
+          if (bookingData['service_type'] == 'food' &&
+              bookingData['merchant_id'] != null) {
+            await _notifyMerchantDriverAccepted(bookingData);
+          }
         }
       } catch (e) {
         debugLog('⚠️ Failed to send accept notifications: $e');
@@ -2056,13 +2057,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   }
 
   String _formatScheduledDateTime(DateTime dateTime) {
-    final local = dateTime.toLocal();
-    final day = local.day.toString().padLeft(2, '0');
-    final month = local.month.toString().padLeft(2, '0');
-    final year = local.year;
-    final hour = local.hour.toString().padLeft(2, '0');
-    final minute = local.minute.toString().padLeft(2, '0');
-    return '$day/$month/$year $hour:$minute';
+    return AppTime.formatBangkokDateTime(dateTime);
   }
 
   IconData _getServiceIcon(String serviceType) {
@@ -2627,7 +2622,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
     String scheduledText = '-';
     if (scheduledAt != null) {
-      final local = scheduledAt.toLocal();
+      final local = AppTime.toBangkok(scheduledAt);
       final thaiMonths = [
         '',
         'ม.ค.',

@@ -41,9 +41,11 @@ class SystemConfigService {
           .from('service_rates')
           .select('service_type, base_price, base_distance, price_per_km');
 
-      // โหลด system_config
+      // โหลด system_config — ใช้ limit(1) เพื่อป้องกัน 406 เมื่อ table มีหลาย rows
+      final configRows =
+          await _supabase.from('system_config').select('*').limit(1);
       final systemConfigResponse =
-          await _supabase.from('system_config').select('*').maybeSingle();
+          configRows.isNotEmpty ? configRows.first : null;
 
       // แปลงข้อมูล service_rates เป็น Map
       _serviceRates = {};
@@ -79,7 +81,17 @@ class SystemConfigService {
       debugLog('   └─ Commission: ${_systemConfig!.commissionRate}%');
     } catch (e) {
       debugLog('❌ Error loading system settings: $e');
-      rethrow;
+      // ใช้ค่า default แทนการ rethrow เพื่อไม่ให้ block การทำงานของ driver
+      _serviceRates ??= {};
+      _systemConfig ??= SystemConfig(
+        driverMinWallet: 50,
+        commissionRate: 15.0,
+        platformFeeRate: 0.15,
+        merchantGpRate: 0.10,
+        merchantGpSystemRateDefault: 0.10,
+        merchantGpDriverRateDefault: 0.0,
+        maxDeliveryRadius: 30.0,
+      );
     }
   }
 

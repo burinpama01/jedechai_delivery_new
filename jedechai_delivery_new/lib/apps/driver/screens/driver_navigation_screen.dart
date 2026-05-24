@@ -13,6 +13,7 @@ import '../../../common/services/profile_service.dart';
 import '../../../common/services/supabase_service.dart';
 import '../../../common/services/notification_sender.dart';
 import '../../../common/services/booking_service.dart';
+import '../../../common/services/parcel_service.dart';
 import '../../../common/models/coupon.dart';
 import '../../../common/widgets/location_disclosure_dialog.dart';
 import '../../../common/services/system_config_service.dart';
@@ -28,6 +29,7 @@ import '../../../common/config/env_config.dart';
 import '../../customer/screens/services/support_tickets_screen.dart';
 import 'driver_main_screen.dart';
 import 'driver_job_detail_screen.dart';
+import 'driver_parcel_confirmation_screen.dart';
 import '../../../l10n/app_localizations.dart';
 
 /// Driver Navigation Screen
@@ -47,6 +49,8 @@ class DriverNavigationScreen extends StatefulWidget {
 
 class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     with TickerProviderStateMixin {
+  final ParcelService _parcelService = ParcelService();
+
   // Map controllers
   GoogleMapController? _mapController;
   final Set<Marker> _markers = {};
@@ -352,11 +356,13 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   Future<void> _refreshStatus() async {
     try {
-      final response = await SupabaseService.client
+      final rows = await SupabaseService.client
           .from('bookings')
           .select('status')
           .eq('id', widget.bookingId)
-          .single();
+          .limit(1);
+      if (rows.isEmpty) return;
+      final response = rows.first;
 
       final refreshedStatus = response['status'] as String?;
       if (refreshedStatus != null && refreshedStatus != _lastKnownStatus) {
@@ -508,12 +514,14 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     try {
       debugLog('🔍 Fetching booking details for: ${widget.bookingId}');
 
-      // Fetch booking details
-      final response = await SupabaseService.client
+      // Fetch booking details — ใช้ limit(1) แทน .single() เพื่อป้องกัน 406
+      final bookingRows = await SupabaseService.client
           .from('bookings')
           .select()
           .eq('id', widget.bookingId)
-          .single();
+          .limit(1);
+      if (bookingRows.isEmpty) throw Exception('Booking not found');
+      final response = bookingRows.first;
 
       debugLog('📋 Booking response: $response');
 
@@ -586,13 +594,15 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       debugLog('❌ Error fetching booking: $e');
       debugLog('❌ Error stack trace: ${StackTrace.current}');
 
-      // Try fetching without join as fallback
+      // Try fetching without join as fallback — ใช้ limit(1) แทน .single()
       try {
-        final fallbackResponse = await SupabaseService.client
+        final fallbackRows = await SupabaseService.client
             .from('bookings')
             .select()
             .eq('id', widget.bookingId)
-            .single();
+            .limit(1);
+        if (fallbackRows.isEmpty) throw Exception('Booking not found');
+        final fallbackResponse = fallbackRows.first;
 
         final repairedFallbackResponse =
             await _repairFoodPickupLocationIfNeeded(fallbackResponse);
@@ -1666,8 +1676,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     );
   }
 
-  Future<void> _updateJobStatus(String newStatus) async {
-    if (_isUpdatingStatus || _booking == null) return;
+  Future<bool> _updateJobStatus(String newStatus) async {
+    if (_isUpdatingStatus || _booking == null) return false;
 
     setState(() {
       _isUpdatingStatus = true;
@@ -1700,7 +1710,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
             _showErrorSnackBar(
                 AppLocalizations.of(context)!.driverNavNoDriverData);
           }
-          return;
+          return false;
         }
       }
 
@@ -1795,6 +1805,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
             _showCompletionDialog();
           }
         }
+        return true;
       } else {
         throw Exception('No data returned from update operation');
       }
@@ -1828,6 +1839,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
               .driverNavStatusUpdateError(e.toString()));
         }
       }
+      return false;
     } finally {
       if (mounted) {
         setState(() {
@@ -2027,7 +2039,36 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     }
 
     debugLog('🔄 Updating status from ${_booking!.status} to $newStatus');
-    _updateJobStatus(newStatus);
+    if (serviceType == 'parcel') {
+      final confirmationType = switch (_booking!.status) {
+        'arrived' => 'pickup',
+        'in_transit' => 'delivery',
+        _ => null,
+      };
+
+      if (confirmationType != null) {
+        final confirmed = await Navigator.of(context).push<bool>(
+          MaterialPageRoute(
+            builder: (_) => DriverParcelConfirmationScreen(
+              bookingId: _booking!.id,
+              confirmationType: confirmationType,
+            ),
+          ),
+        );
+
+        if (confirmed != true) return;
+      }
+    }
+
+    final bookingUpdated = await _updateJobStatus(newStatus);
+    if (bookingUpdated && serviceType == 'parcel' && newStatus == 'in_transit') {
+      final parcelUpdated = await _parcelService.updateInTransit(widget.bookingId);
+      if (!parcelUpdated) {
+        _showErrorSnackBar(
+          AppLocalizations.of(context)!.driverNavInvalidStatus(newStatus),
+        );
+      }
+    }
   }
 
   Future<bool> _checkProximity() async {
