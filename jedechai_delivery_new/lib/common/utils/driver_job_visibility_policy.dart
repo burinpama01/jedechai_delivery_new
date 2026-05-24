@@ -126,11 +126,10 @@ class DriverJobVisibilityPolicy {
     if (serviceType == 'food') {
       switch (status) {
         case 'ready_for_pickup':
+        case 'preparing':
           return null;
         case 'pending_merchant':
           return DriverJobHiddenReason.waitingMerchantAccept;
-        case 'preparing':
-          return DriverJobHiddenReason.merchantPreparing;
         case 'matched':
         case 'driver_accepted':
         case 'arrived_at_merchant':
