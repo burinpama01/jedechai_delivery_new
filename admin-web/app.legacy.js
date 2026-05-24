@@ -3914,7 +3914,13 @@ async function renderSettings(el) {
             <label class="block text-xs font-semibold text-gray-500 mt-3 mb-1.5 uppercase tracking-wider">LINE recipient ID</label>
             <input type="text" id="settAdminLineRecipient" value="${config.admin_line_recipient_id || ''}" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all" placeholder="U..., C..., หรือ R...">
             <p class="text-xs text-gray-400 mt-1.5">ใช้ userId, groupId หรือ roomId ที่ LINE Official Account สามารถ push message ได้</p>
-            <p class="text-xs text-gray-400 mt-1.5">อีเมล CC เพิ่มเติม (ถ้ามี)</p>
+            <label class="mt-5 flex items-center gap-2 text-xs font-semibold text-gray-600">
+              <input type="checkbox" id="settAdminTelegramEnabled" ${config.admin_telegram_enabled ? 'checked' : ''} class="w-4 h-4 text-blue-500 rounded border-gray-300">
+              เปิดใช้งาน Telegram แจ้งเตือนแอดมิน
+            </label>
+            <label class="block text-xs font-semibold text-gray-500 mt-3 mb-1.5 uppercase tracking-wider">Telegram Chat ID</label>
+            <input type="text" id="settAdminTelegramChatId" value="${config.admin_telegram_chat_id || ''}" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all" placeholder="-100... หรือ @username">
+            <p class="text-xs text-gray-400 mt-1.5">ใช้ Chat ID ของ group/channel หรือ user ID ที่ bot เป็นสมาชิกอยู่</p>
           </div>
         </div>
         <div class="mt-4 flex gap-3">
@@ -3926,6 +3932,12 @@ async function renderSettings(el) {
           </button>
           <button onclick="testAdminLine()" class="px-5 py-2.5 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-emerald-200" style="background:linear-gradient(135deg,#059669,#10b981);">
             <span class="material-icons-round text-sm align-middle mr-1">send</span> ทดสอบ LINE
+          </button>
+          <button onclick="saveAdminTelegram()" class="px-5 py-2.5 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-blue-200" style="background:linear-gradient(135deg,#2563eb,#3b82f6);">
+            <span class="material-icons-round text-sm align-middle mr-1">save</span> บันทึก Telegram
+          </button>
+          <button onclick="testAdminTelegram()" class="px-5 py-2.5 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-sky-200" style="background:linear-gradient(135deg,#0284c7,#38bdf8);">
+            <span class="material-icons-round text-sm align-middle mr-1">send</span> ทดสอบ Telegram
           </button>
           <button onclick="testAdminEmail()" class="px-5 py-2.5 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-red-200" style="background:linear-gradient(135deg,#ef4444,#f87171);">
             <span class="material-icons-round text-sm align-middle mr-1">send</span> ทดสอบส่งอีเมล
@@ -4832,6 +4844,56 @@ async function testAdminLine() {
   } catch (e) {
     console.error('Test LINE error:', e);
     showToast('ส่ง LINE ไม่สำเร็จ: ' + (e.message || 'ตรวจสอบ Edge Function/LINE token'), 'error');
+  }
+}
+
+// ============================================
+// Save Admin Telegram settings
+// ============================================
+async function saveAdminTelegram() {
+  const enabled = document.getElementById('settAdminTelegramEnabled')?.checked || false;
+  const chatId = document.getElementById('settAdminTelegramChatId')?.value?.trim();
+
+  try {
+    await _upsertSystemConfig({
+      admin_telegram_enabled: enabled,
+      admin_telegram_chat_id: chatId || null,
+    });
+    showToast('บันทึก Telegram แจ้งเตือนแอดมินสำเร็จ', 'success');
+  } catch (e) {
+    console.error('Save Telegram exception:', e);
+    showToast('บันทึก Telegram ไม่สำเร็จ: ' + (e.message || e), 'error');
+  }
+}
+
+// ============================================
+// Test Admin Telegram (via Edge Function)
+// ============================================
+async function testAdminTelegram() {
+  const chatId = document.getElementById('settAdminTelegramChatId')?.value?.trim();
+  if (!chatId) { showToast('กรุณากรอก Telegram Chat ID ก่อน', 'error'); return; }
+
+  showToast('กำลังส่ง Telegram ทดสอบ...', 'info');
+  try {
+    const { data, error } = await supabase.functions.invoke('send-admin-telegram', {
+      body: {
+        test: true,
+        title: 'JDC Admin Test',
+        message: 'ทดสอบระบบแจ้งเตือนแอดมินผ่าน Telegram จาก Jedechai Delivery',
+        event_type: 'admin_telegram_test',
+        chat_id: chatId,
+        data: { source: 'admin_web_legacy' },
+      },
+    });
+    if (error) {
+      const details = await readFunctionError(error);
+      throw new Error(details || error.message || 'edge_function_failed');
+    }
+    if (data?.success === false) throw new Error(data?.result?.error ? JSON.stringify(data.result.error) : 'telegram_send_failed');
+    showToast('ส่ง Telegram ทดสอบสำเร็จ', 'success');
+  } catch (e) {
+    console.error('Test Telegram error:', e);
+    showToast('ส่ง Telegram ไม่สำเร็จ: ' + (e.message || 'ตรวจสอบ Edge Function/Bot token'), 'error');
   }
 }
 
