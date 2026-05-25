@@ -875,34 +875,11 @@ async function handleUpsertSystemConfig(supabase, body) {
   if (!config || typeof config !== "object")
     return errorResponse("Missing 'config_data' object");
 
-  const payload = { ...config, updated_at: new Date().toISOString() };
-
-  // Try id-based upsert first, then fallback to column-model update
-  try {
-    const { data: existing } = await supabase
-      .from("system_config")
-      .select("id")
-      .maybeSingle();
-    const configId = existing?.id ?? 1;
-    const { error } = await supabase
-      .from("system_config")
-      .upsert({ id: configId, ...payload }, { onConflict: "id" });
-    if (!error) return jsonResponse({ success: true });
-  } catch { /* fall through */ }
-
-  // Fallback: update all rows
-  const { data: rows, error: updateErr } = await supabase
+  const { error } = await supabase
     .from("system_config")
-    .update(payload)
-    .select("*");
-  if (updateErr) return errorResponse(updateErr.message);
-  if ((rows || []).length > 0) return jsonResponse({ success: true });
+    .upsert({ id: 1, ...config }, { onConflict: "id" });
 
-  const { error: insertErr } = await supabase
-    .from("system_config")
-    .insert(payload);
-  if (insertErr) return errorResponse(insertErr.message);
-
+  if (error) return errorResponse(error.message);
   return jsonResponse({ success: true });
 }
 
