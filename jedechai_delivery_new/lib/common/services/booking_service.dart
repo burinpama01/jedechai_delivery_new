@@ -489,6 +489,10 @@ class BookingService {
         },
       );
 
+      if (serviceType == 'food') {
+        await _notifyMerchantNewFoodOrder(booking);
+      }
+
       return booking;
     } catch (e) {
       debugLog('Failed to create booking: $e');
@@ -1219,6 +1223,44 @@ class BookingService {
         ...?extraData,
       },
     );
+  }
+
+  Future<void> _notifyMerchantNewFoodOrder(Booking booking) async {
+    final merchantId = booking.merchantId;
+    if (merchantId == null || merchantId.trim().isEmpty) return;
+
+    try {
+      final payload = NotificationPayloadPolicy.buildBookingPayload(
+        type: NotificationTypes.merchantOrderCreated,
+        recipientRole: NotificationRoles.merchant,
+        bookingId: booking.id,
+        serviceType: booking.serviceType,
+        extra: {
+          'legacy_type': NotificationTypes.legacyMerchantNewOrder,
+          'customer_id': booking.customerId,
+          'merchant_id': merchantId,
+          'pickup_address': booking.pickupAddress ?? '',
+          'destination_address': booking.destinationAddress ?? '',
+          'price': booking.price.toString(),
+          'delivery_fee': (booking.deliveryFee ?? 0).toString(),
+          'distance_km': booking.distanceKm.toString(),
+          'payment_method': booking.paymentMethod ?? '',
+        },
+      );
+
+      final success = await NotificationSender.sendNotification(
+        targetUserId: merchantId,
+        title: '🍔 มีออเดอร์อาหารใหม่',
+        body:
+            'ออเดอร์ใหม่ ฿${booking.price.toStringAsFixed(0)} ค่าส่ง ฿${(booking.deliveryFee ?? 0).toStringAsFixed(0)}',
+        data: payload,
+      );
+      debugLog(success
+          ? '✅ Merchant food order push sent: ${booking.id}'
+          : '⚠️ Merchant food order push failed: ${booking.id}');
+    } catch (e) {
+      debugLog('❌ Error notifying merchant about food order: $e');
+    }
   }
 
   /// Public wrapper — notify nearby drivers about any new booking

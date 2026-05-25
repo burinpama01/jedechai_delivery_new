@@ -139,13 +139,6 @@ async function isAllowedTarget(
 ) {
   if (callerRole === "admin" || callerId === targetUserId) return true;
 
-  const { data: targetProfile } = await supabaseAdmin
-    .from("profiles")
-    .select("role")
-    .eq("id", targetUserId)
-    .maybeSingle();
-  if (targetProfile?.role === "admin") return true;
-
   const bookingIdFromData = data?.booking_id;
   if (!notificationId && !bookingIdFromData) return false;
 

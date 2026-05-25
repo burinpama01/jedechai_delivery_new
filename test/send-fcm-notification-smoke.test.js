@@ -25,3 +25,7 @@ test("send-fcm-notification allows persisted driver candidate notifications", ()
   assert.match(source, /\.select\("id, user_id, type, data"\)/);
   assert.match(source, /\.eq\("type",\s*"driver\.job\.available"\)/);
 });
+
+test("send-fcm-notification does not allow ordinary callers to target admins directly", () => {
+  assert.doesNotMatch(source, /if \(targetProfile\?\.role === "admin"\) return true;/);
+});

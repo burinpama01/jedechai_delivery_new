@@ -3942,7 +3942,7 @@ async function renderSettings(el) {
           <button onclick="saveAdminTelegram()" class="px-5 py-2.5 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-blue-200" style="background:linear-gradient(135deg,#2563eb,#3b82f6);">
             <span class="material-icons-round text-sm align-middle mr-1">save</span> บันทึก Telegram
           </button>
-          <button onclick="testAdminTelegram()" class="px-5 py-2.5 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-sky-200" style="background:linear-gradient(135deg,#0284c7,#38bdf8);">
+          <button id="testAdminTelegramButton" data-testid="test-admin-telegram-button" onclick="testAdminTelegram()" class="px-5 py-2.5 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-sky-200" style="background:linear-gradient(135deg,#0284c7,#38bdf8);">
             <span class="material-icons-round text-sm align-middle mr-1">send</span> ทดสอบ Telegram
           </button>
           <button onclick="testAdminEmail()" class="px-5 py-2.5 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-red-200" style="background:linear-gradient(135deg,#ef4444,#f87171);">
@@ -4878,6 +4878,11 @@ async function saveAdminTelegram() {
 // Test Admin Telegram (via Edge Function)
 // ============================================
 async function testAdminTelegram() {
+  try {
+    const bridged = window.__adminWebBridge?.testAdminTelegram;
+    if (typeof bridged === 'function') return await bridged({ supabase, supabaseAuth, currentUser, callAdminAction, showToast, escapeHtml, fmt, fmtDate, refreshCurrentPage });
+  } catch (_) {}
+
   const chatId = document.getElementById('settAdminTelegramChatId')?.value?.trim();
   if (!chatId) { showToast('กรุณากรอก Telegram Chat ID ก่อน', 'error'); return; }
 
