@@ -338,6 +338,69 @@ export async function testAdminLine(ctx) {
   }
 }
 
+export async function saveAdminTelegram(ctx) {
+  _ctx = ctx || _ctx;
+  const { showToast, _upsertSystemConfig } = _deps();
+  await _ensureFns();
+
+  const enabled = document.getElementById('settAdminTelegramEnabled')?.checked || false;
+  const chatId = document.getElementById('settAdminTelegramChatId')?.value?.trim();
+
+  try {
+    await _upsertSystemConfig({
+      admin_telegram_enabled: enabled,
+      admin_telegram_chat_id: chatId || null,
+    });
+    showToast('บันทึก Telegram แจ้งเตือนแอดมินสำเร็จ', 'success');
+  } catch (e) {
+    try {
+      console.error('Save Telegram exception:', e);
+    } catch (_) {}
+    showToast('บันทึก Telegram ไม่สำเร็จ: ' + (e?.message || e), 'error');
+  }
+}
+
+export async function testAdminTelegram(ctx) {
+  _ctx = ctx || _ctx;
+  const { showToast, supabase } = _deps();
+
+  const chatId = document.getElementById('settAdminTelegramChatId')?.value?.trim();
+  if (!chatId) {
+    showToast('กรุณากรอก Telegram Chat ID ก่อน', 'error');
+    return;
+  }
+
+  showToast('กำลังส่ง Telegram ทดสอบ...', 'info');
+  try {
+    const { data, error } = await supabase.functions.invoke('send-admin-telegram', {
+      body: {
+        test: true,
+        title: 'JDC Admin Test',
+        message: 'ทดสอบระบบแจ้งเตือนแอดมินผ่าน Telegram จาก Jedechai Delivery',
+        event_type: 'admin_telegram_test',
+        chat_id: chatId,
+        data: {
+          source: 'admin_web_settings',
+        },
+      },
+    });
+    if (error) {
+      const details = await readFunctionError(error);
+      throw new Error(details || error.message || 'edge_function_failed');
+    }
+    if (data?.success === false) {
+      throw new Error(data?.result?.error ? JSON.stringify(data.result.error) : 'telegram_send_failed');
+    }
+
+    showToast('ส่ง Telegram ทดสอบสำเร็จ', 'success');
+  } catch (e) {
+    try {
+      console.error('Test Telegram error:', e);
+    } catch (_) {}
+    showToast('ส่ง Telegram ไม่สำเร็จ: ' + (e?.message || 'ตรวจสอบ Edge Function/Bot token'), 'error');
+  }
+}
+
 export async function testAdminEmail(ctx) {
   _ctx = ctx || _ctx;
   const { showToast, supabase } = _deps();
@@ -425,4 +488,6 @@ export function wireSettingsActionsBridge() {
   globalThis.__adminWebBridge.saveAdminLine = saveAdminLine;
   globalThis.__adminWebBridge.testAdminEmail = testAdminEmail;
   globalThis.__adminWebBridge.testAdminLine = testAdminLine;
+  globalThis.__adminWebBridge.saveAdminTelegram = saveAdminTelegram;
+  globalThis.__adminWebBridge.testAdminTelegram = testAdminTelegram;
 }
