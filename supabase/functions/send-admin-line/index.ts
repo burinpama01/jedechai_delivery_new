@@ -202,6 +202,7 @@ async function getLineConfig(supabaseAdmin: ReturnType<typeof createClient>): Pr
     const { data, error } = await supabaseAdmin
       .from("system_config")
       .select("admin_line_enabled, admin_line_recipient_id")
+      .eq("id", 1)
       .maybeSingle();
     if (error) throw error;
 

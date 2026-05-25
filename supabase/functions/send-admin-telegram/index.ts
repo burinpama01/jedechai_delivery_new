@@ -198,6 +198,7 @@ async function getTelegramConfig(supabaseAdmin: ReturnType<typeof createClient>)
     const { data, error } = await supabaseAdmin
       .from("system_config")
       .select("admin_telegram_enabled, admin_telegram_chat_id")
+      .eq("id", 1)
       .maybeSingle();
     if (error) throw error;
 
