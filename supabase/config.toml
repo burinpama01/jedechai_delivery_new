@@ -6,3 +6,6 @@ verify_jwt = false
 
 [functions.send-admin-line]
 verify_jwt = false
+
+[functions.send-admin-telegram]
+verify_jwt = false
