@@ -108,6 +108,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
       final config = await SupabaseService.client
           .from('system_config')
           .select('promo_text, promo_enabled')
+          .eq('id', 1)
           .maybeSingle();
       if (mounted && config != null) {
         setState(() {

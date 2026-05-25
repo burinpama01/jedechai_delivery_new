@@ -219,6 +219,7 @@ class FareAdjustmentService {
       final row = await _client
           .from('system_config')
           .select(columns)
+          .eq('id', 1)
           .maybeSingle();
       if (row == null) return map;
 

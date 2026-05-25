@@ -43,7 +43,7 @@ class SystemConfigService {
 
       // โหลด system_config — ใช้ limit(1) เพื่อป้องกัน 406 เมื่อ table มีหลาย rows
       final configRows =
-          await _supabase.from('system_config').select('*').limit(1);
+          await _supabase.from('system_config').select('*').eq('id', 1).limit(1);
       final systemConfigResponse =
           configRows.isNotEmpty ? configRows.first : null;
 

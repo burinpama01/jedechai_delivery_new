@@ -137,6 +137,7 @@ class BookingService {
           .from('system_config')
           .select(
               'merchant_gp_system_rate_default, merchant_gp_driver_rate_default')
+          .eq('id', 1)
           .limit(1);
       final row = configRows.isNotEmpty ? configRows.first : null;
       if (row != null) {

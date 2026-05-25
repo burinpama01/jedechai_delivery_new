@@ -3720,7 +3720,7 @@ async function renderSettings(el) {
   let rates = [];
   let kvConfig = {};
   try {
-    const { data } = await supabase.from('system_config').select('*').single();
+    const { data } = await supabase.from('system_config').select('*').eq('id', 1).single();
     config = data || {};
   } catch(e) { /* might not exist */ }
   try {
@@ -4388,6 +4388,7 @@ async function _getSystemConfigId() {
     const { data: existing, error } = await supabase
       .from('system_config')
       .select('id')
+      .eq('id', 1)
       .maybeSingle();
     if (error) throw error;
     _systemConfigSupportsIdColumn = true;
@@ -4420,6 +4421,7 @@ async function _fetchSystemConfigKeyValues(keys) {
     const { data: row, error } = await supabase
       .from('system_config')
       .select('*')
+      .eq('id', 1)
       .maybeSingle();
     if (error) throw error;
     return row || null;
@@ -4997,7 +4999,7 @@ async function loadRevenue() {
       .gte('created_at', startDate).lte('created_at', endDate).eq('status', 'completed'),
     supabase.from('wallet_transactions').select('amount, type, created_at')
       .gte('created_at', startDate).lte('created_at', endDate).eq('type', 'commission'),
-    supabase.from('system_config').select('platform_fee_rate, merchant_gp_rate, commission_rate').maybeSingle(),
+    supabase.from('system_config').select('platform_fee_rate, merchant_gp_rate, commission_rate').eq('id', 1).maybeSingle(),
   ]);
 
   if (scopedDriverIds.length) {
@@ -6182,7 +6184,7 @@ async function renderTopups(el) {
 
   let currentTopupMode = 'admin_approve';
   try {
-    const { data: cfg } = await supabase.from('system_config').select('topup_mode').maybeSingle();
+    const { data: cfg } = await supabase.from('system_config').select('topup_mode').eq('id', 1).maybeSingle();
     if (cfg?.topup_mode) currentTopupMode = cfg.topup_mode;
   } catch(_) {}
 
@@ -8680,7 +8682,7 @@ async function loadAppAssets() {
   } catch (_) {}
 
   try {
-    const { data: config, error } = await supabase.from('system_config').select('*').maybeSingle();
+    const { data: config, error } = await supabase.from('system_config').select('*').eq('id', 1).maybeSingle();
     if (error || !config) return;
     if (config.logo_url) {
       const logoEl = document.getElementById('currentLogo');
@@ -8808,6 +8810,7 @@ async function uploadLandingAsset(type) {
     const { data: cfgRow } = await supabase
       .from('system_config')
       .select('landing_config')
+      .eq('id', 1)
       .maybeSingle();
     const landingConfig = normalizeLandingConfig(cfgRow?.landing_config);
     landingConfig[configField] = imageUrl;

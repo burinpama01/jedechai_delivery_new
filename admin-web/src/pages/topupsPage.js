@@ -36,7 +36,7 @@ export async function renderTopupsPage(el, ctx) {
 
   let currentTopupMode = 'admin_approve';
   try {
-    const { data: cfg } = await supabase.from('system_config').select('topup_mode').maybeSingle();
+    const { data: cfg } = await supabase.from('system_config').select('topup_mode').eq('id', 1).maybeSingle();
     if (cfg?.topup_mode) currentTopupMode = cfg.topup_mode;
   } catch (_) {}
 

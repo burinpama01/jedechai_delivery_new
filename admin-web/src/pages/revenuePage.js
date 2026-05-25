@@ -110,6 +110,7 @@ export async function loadRevenue(ctx) {
     supabase
       .from('system_config')
       .select('platform_fee_rate, merchant_gp_rate, merchant_gp_system_rate_default, merchant_gp_driver_rate_default, commission_rate')
+      .eq('id', 1)
       .maybeSingle(),
   ]);
 

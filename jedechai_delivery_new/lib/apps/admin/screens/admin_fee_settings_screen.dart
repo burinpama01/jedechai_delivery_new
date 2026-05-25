@@ -110,6 +110,7 @@ class _AdminFeeSettingsScreenState extends State<AdminFeeSettingsScreen> {
         final config = await Supabase.instance.client
             .from('system_config')
             .select('promptpay_number')
+            .eq('id', 1)
             .maybeSingle();
         promptPay = config?['promptpay_number'] as String? ?? '';
       } catch (_) {}

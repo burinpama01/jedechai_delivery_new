@@ -47,7 +47,7 @@ export async function loadAppAssets(ctx) {
   const { supabase, normalizeLandingConfig } = _deps();
 
   try {
-    const { data: config, error } = await supabase.from('system_config').select('*').maybeSingle();
+    const { data: config, error } = await supabase.from('system_config').select('*').eq('id', 1).maybeSingle();
     if (error || !config) return;
 
     if (config.logo_url) {
@@ -143,7 +143,7 @@ export async function uploadLandingAsset(type, ctx) {
     const imageUrl = urlData?.publicUrl;
     if (!imageUrl) throw new Error('ไม่สามารถดึง URL ได้');
 
-    const { data: cfgRow } = await supabase.from('system_config').select('landing_config').maybeSingle();
+    const { data: cfgRow } = await supabase.from('system_config').select('landing_config').eq('id', 1).maybeSingle();
     const landingConfig = typeof normalizeLandingConfig === 'function' ? normalizeLandingConfig(cfgRow?.landing_config) : cfgRow?.landing_config;
 
     if (!landingConfig || typeof landingConfig !== 'object') throw new Error('landing_config_invalid');

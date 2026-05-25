@@ -69,6 +69,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
       final config = await Supabase.instance.client
           .from('system_config')
           .select('topup_mode')
+          .eq('id', 1)
           .maybeSingle();
       if (config != null && config['topup_mode'] != null) {
         final mode = (config['topup_mode'] as String).trim().toLowerCase();
@@ -310,6 +311,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
         final config = await Supabase.instance.client
             .from('system_config')
             .select('promptpay_number')
+            .eq('id', 1)
             .maybeSingle();
         if (config != null && config['promptpay_number'] != null) {
           final num = (config['promptpay_number'] as String).trim();
@@ -472,6 +474,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
         final config = await Supabase.instance.client
             .from('system_config')
             .select('admin_notification_email, admin_notification_email_cc')
+            .eq('id', 1)
             .maybeSingle();
         final primaryEmail = config?['admin_notification_email'] as String?;
         final ccEmail = config?['admin_notification_email_cc'] as String?;
