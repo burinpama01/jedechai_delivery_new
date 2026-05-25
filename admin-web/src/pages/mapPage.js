@@ -239,6 +239,11 @@ export async function renderMapPage(el, ctx) {
 
   setTimeout(async () => {
     if (_mapInstance) { _mapInstance.remove(); _mapInstance = null; }
+    if (typeof L === 'undefined') {
+      const toast = document.getElementById('toast') || document.body;
+      toast.insertAdjacentHTML?.('beforeend', '<div class="fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg z-50">แผนที่โหลดไม่สำเร็จ — กรุณารีเฟรช</div>');
+      return;
+    }
     const initial = await _getInitialMapCenter();
     _mapInstance = L.map('adminMap').setView(initial.center, initial.zoom);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -572,7 +577,7 @@ export function renderMapDriverList() {
     const distLabel = d.nearestDist !== null && d.nearestDist !== undefined ? `📏 ${d.nearestDist.toFixed(1)} กม.` : '';
     const pendingBadge = isPending ? '<span class="text-[9px] bg-amber-100 text-amber-700 px-1 rounded font-semibold">รออนุมัติ</span> ' : '';
     const borderClass = isPending ? 'border-amber-200 bg-amber-50/30' : (d.isOnline ? (d.jobCount > 0 ? 'border-blue-200 bg-blue-50/30' : 'border-green-200 bg-green-50/30') : 'border-gray-100 bg-gray-50/30');
-    const safeName = String(d.name || '').replace(/'/g, '');
+    const safeName = escapeHtml(String(d.name || '')).replace(/'/g, '');
 
     return `
       <div class="map-driver-item flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors border ${borderClass}" data-name="${(d.name || '').toLowerCase()}" data-online="${d.isOnline}" data-jobs="${d.jobCount}">

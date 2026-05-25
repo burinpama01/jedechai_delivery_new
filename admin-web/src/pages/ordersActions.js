@@ -374,7 +374,7 @@ async function _adminActAsMerchantOrder(orderId, action, adminNote = '') {
     ? `ให้แอดมินรับออเดอร์ #${orderId.substring(0, 8)} แทนร้านค้า?`
     : `ให้อัปเดตออเดอร์ #${orderId.substring(0, 8)} เป็น "อาหารพร้อม" แทนร้านค้า?`;
 
-  if (!isAccept && !confirm(confirmText)) return;
+  if (!confirm(confirmText)) return;
 
   try {
     const nowIso = new Date().toISOString();
@@ -547,7 +547,7 @@ export async function showReassignModal(orderId, currentDriverName, ctx) {
       <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
         <div>
           <h3 class="font-bold text-gray-800 text-lg">ย้ายออเดอร์ให้คนขับอื่น</h3>
-          <p class="text-xs text-gray-500 mt-1">ออเดอร์ #${orderId.substring(0,8)} — คนขับปัจจุบัน: ${currentDriverName || 'ยังไม่มี'}</p>
+          <p class="text-xs text-gray-500 mt-1">ออเดอร์ #${orderId.substring(0,8)} — คนขับปัจจุบัน: ${escapeHtml(currentDriverName || 'ยังไม่มี')}</p>
         </div>
         <button onclick="document.getElementById('reassignModal')?.remove()" class="text-gray-400 hover:text-gray-600"><span class="material-icons-round">close</span></button>
       </div>
@@ -555,7 +555,7 @@ export async function showReassignModal(orderId, currentDriverName, ctx) {
         <input type="text" id="reassignSearch" placeholder="ค้นหาคนขับ..." class="w-full border rounded-lg px-3 py-2 text-sm mb-3" oninput="filterReassignDrivers()" />
         <div id="reassignDriverList">
           ${onlineDrivers.map(d => `
-            <div class="reassign-driver-item flex items-center justify-between p-3 rounded-lg hover:bg-blue-50 cursor-pointer border border-gray-100 mb-2 transition-colors" data-name="${(d.full_name||'').toLowerCase()}" onclick="reassignOrder('${orderId}','${d.id}','${(d.full_name||'').replace(/'/g,'')}')">
+            <div class="reassign-driver-item flex items-center justify-between p-3 rounded-lg hover:bg-blue-50 cursor-pointer border border-gray-100 mb-2 transition-colors" data-name="${escapeHtml((d.full_name||'').toLowerCase())}" onclick="reassignOrder('${orderId}','${d.id}','${escapeHtml((d.full_name||'').replace(/'/g,''))}')">
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center"><span class="material-icons-round text-blue-600 text-sm">person</span></div>
                 <div>

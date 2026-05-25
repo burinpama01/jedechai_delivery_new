@@ -684,6 +684,12 @@ function _canAdminMarkFoodReady(order) {
   return !!order && order.service_type === 'food' && ADMIN_MERCHANT_READY_STATUSES.includes(order.status);
 }
 
+globalThis._truthyFlag = _truthyFlag;
+globalThis._explicitlyFalseFlag = _explicitlyFalseFlag;
+globalThis._canAdminMerchantAccept = _canAdminMerchantAccept;
+globalThis._canAdminMarkFoodReady = _canAdminMarkFoodReady;
+globalThis._notifyAdminActionTargets = _notifyAdminActionTargets;
+
 // Email lookup cache
 window._emailMap = {};
 async function fetchUserEmails() {

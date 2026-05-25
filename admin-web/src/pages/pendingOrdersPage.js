@@ -169,6 +169,8 @@ export async function refreshPendingOrders(ctx) {
     return `<button onclick="showDriverNotificationDebug('${o.id}')" class="mt-1 block text-[10px] text-indigo-600 hover:underline">debug</button>`;
   }
 
+  const escapeHtml = _ctx?.escapeHtml || globalThis.escapeHtml || ((v) => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'));
+
   function poRow(o) {
     const mins = Math.floor((Date.now() - new Date(o.created_at).getTime()) / 60000);
     const timeLabel = mins < 60 ? `${mins} นาที` : `${Math.floor(mins / 60)} ชม. ${mins % 60} น.`;
@@ -195,16 +197,16 @@ export async function refreshPendingOrders(ctx) {
         <td class="px-3 py-2.5">${statusBadge(o.status)}</td>
         <td class="px-3 py-2.5 text-xs font-bold text-gray-800">${priceText}</td>
         <td class="px-3 py-2.5 text-xs">
-          ${custInfo ? `<span class="font-medium">${custInfo.name}</span>` : '<span class="text-gray-400">-</span>'}
-          ${custInfo && custInfo.phone ? `<br/><span class="text-gray-400 text-[10px]">📞 ${custInfo.phone}</span>` : ''}
+          ${custInfo ? `<span class="font-medium">${escapeHtml(custInfo.name)}</span>` : '<span class="text-gray-400">-</span>'}
+          ${custInfo && custInfo.phone ? `<br/><span class="text-gray-400 text-[10px]">📞 ${escapeHtml(custInfo.phone)}</span>` : ''}
         </td>
         <td class="px-3 py-2.5 text-[11px] text-gray-600 max-w-[200px]">
-          <div class="truncate" title="${pickup}">📍 ${pickup}</div>
-          <div class="truncate text-green-600" title="${dest}">🏁 ${dest}</div>
+          <div class="truncate" title="${escapeHtml(pickup)}">📍 ${escapeHtml(pickup)}</div>
+          <div class="truncate text-green-600" title="${escapeHtml(dest)}">🏁 ${escapeHtml(dest)}</div>
         </td>
-        <td class="px-3 py-2.5 text-xs">${drvInfo ? `<span class="text-blue-600 font-medium">🏍 ${drvInfo.name}</span>` : '<span class="text-red-500 font-semibold">ไม่มี</span>'}</td>
+        <td class="px-3 py-2.5 text-xs">${drvInfo ? `<span class="text-blue-600 font-medium">🏍 ${escapeHtml(drvInfo.name)}</span>` : '<span class="text-red-500 font-semibold">ไม่มี</span>'}</td>
         <td class="px-3 py-2.5 text-[10px]">${visibilityHint(o)}${visibilityDebugButton(o)}</td>
-        <td class="px-3 py-2.5 text-xs">${merInfo ? `<span class="text-orange-600">🏪 ${merInfo.name}</span>` : '-'}</td>
+        <td class="px-3 py-2.5 text-xs">${merInfo ? `<span class="text-orange-600">🏪 ${escapeHtml(merInfo.name)}</span>` : '-'}</td>
         <td class="px-3 py-2.5">
           <span class="inline-flex items-center gap-1 text-xs font-semibold ${isUrgent ? 'text-red-600' : 'text-gray-500'}">
             ${isUrgent ? '<span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>' : ''}
@@ -422,8 +424,8 @@ export async function showPendingOrderDetail(orderId, ctx) {
   const { supabase, fmt, fmtDate, statusBadge, serviceIcon } = _deps();
   const escapeHtml = _ctx?.escapeHtml || globalThis.escapeHtml;
 
-  const { data: o } = await supabase.from('bookings').select('*').eq('id', orderId).single();
-  if (!o) return alert('ไม่พบออเดอร์');
+  const { data: o, error: orderErr } = await supabase.from('bookings').select('*').eq('id', orderId).maybeSingle();
+  if (orderErr || !o) return alert('ไม่พบออเดอร์');
   const nMap = globalThis._pendingNamesMap || {};
   const cust = nMap[o.customer_id];
   const drv = nMap[o.driver_id];

@@ -50,13 +50,14 @@ export async function loadAppAssets(ctx) {
     const { data: config, error } = await supabase.from('system_config').select('*').eq('id', 1).maybeSingle();
     if (error || !config) return;
 
+    const safeUrl = (url) => (typeof url === 'string' && url.startsWith('https://')) ? url : '';
     if (config.logo_url) {
       const logoEl = document.getElementById('currentLogo');
-      if (logoEl) logoEl.innerHTML = `<img src="${config.logo_url}" class="w-24 h-24 object-contain rounded-xl" />`;
+      if (logoEl) logoEl.innerHTML = `<img src="${safeUrl(config.logo_url)}" class="w-24 h-24 object-contain rounded-xl" />`;
     }
     if (config.splash_url) {
       const splashEl = document.getElementById('currentSplash');
-      if (splashEl) splashEl.innerHTML = `<img src="${config.splash_url}" class="w-24 h-24 object-contain rounded-xl" />`;
+      if (splashEl) splashEl.innerHTML = `<img src="${safeUrl(config.splash_url)}" class="w-24 h-24 object-contain rounded-xl" />`;
     }
 
     if (typeof normalizeLandingConfig === 'function') {
