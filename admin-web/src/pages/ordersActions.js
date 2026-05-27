@@ -374,10 +374,9 @@ async function _adminActAsMerchantOrder(orderId, action, adminNote = '') {
     ? `ให้แอดมินรับออเดอร์ #${orderId.substring(0, 8)} แทนร้านค้า?`
     : `ให้อัปเดตออเดอร์ #${orderId.substring(0, 8)} เป็น "อาหารพร้อม" แทนร้านค้า?`;
 
-  if (!confirm(confirmText)) return;
+  if (!isAccept && !confirm(confirmText)) return;
 
   try {
-    const nowIso = new Date().toISOString();
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
       .select('id, status, service_type, merchant_id, customer_id, driver_id')
@@ -390,24 +389,32 @@ async function _adminActAsMerchantOrder(orderId, action, adminNote = '') {
       throw new Error('ฟีเจอร์นี้ใช้ได้เฉพาะออเดอร์อาหารเท่านั้น');
     }
 
-    const acceptStatuses = globalThis.ADMIN_MERCHANT_ACCEPT_STATUSES;
     let updatedRows = [];
 
     if (isAccept) {
-      let updateQuery = supabase
-        .from('bookings')
-        .update({
-          status: 'preparing',
+      // Route through Edge Function for server-side JWT verify and audit
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) throw new Error('ไม่ได้รับสิทธิ์การใช้งาน (no session)');
+
+      const supabaseUrl = supabase.supabaseUrl || window.__SUPABASE_URL__;
+      const res = await fetch(`${supabaseUrl}/functions/v1/admin-actions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          action: 'accept_order_as_merchant',
+          order_id: orderId,
           admin_note: String(adminNote || '').trim() || null,
-          updated_at: nowIso,
-        })
-        .eq('id', orderId);
-      if (Array.isArray(acceptStatuses) && acceptStatuses.length) {
-        updateQuery = updateQuery.in('status', acceptStatuses);
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok || result.success !== true) {
+        throw new Error(result.error || result.message || 'ไม่สามารถรับออเดอร์แทนร้านได้');
       }
-      const { data, error: updateError } = await updateQuery.select('id, status');
-      if (updateError) throw updateError;
-      updatedRows = data || [];
+      updatedRows = [{ id: orderId, status: 'preparing' }];
     } else {
       const { data: rpcResult, error: rpcError } = await supabase.rpc('mark_food_ready_guarded', {
         p_booking_id: orderId,
@@ -431,35 +438,33 @@ async function _adminActAsMerchantOrder(orderId, action, adminNote = '') {
     const shortId = orderId.substring(0, 8);
     const pendingDriverArrival = !isAccept && updatedRows[0]?.pending_driver_arrival === true;
     const notifyRows = [];
-    if (booking.merchant_id) {
+    // For isAccept, Edge Function already inserted merchant + customer notifications server-side.
+    // Only build client-side rows for non-accept, plus driver (Edge Function doesn't notify driver).
+    if (!isAccept && booking.merchant_id) {
       notifyRows.push({
         user_id: booking.merchant_id,
-        title: isAccept ? '🛠️ แอดมินรับออเดอร์แทนร้าน' : '✅ แอดมินกดอาหารพร้อมแทนร้าน',
-        body: isAccept
-          ? `ออเดอร์ #${shortId} ถูกแอดมินรับแทนร้านค้าแล้ว`
-          : pendingDriverArrival
-            ? `ออเดอร์ #${shortId} ถูกบันทึกว่าอาหารพร้อมแล้ว และรอคนขับถึงร้าน`
-            : `ออเดอร์ #${shortId} ถูกแอดมินอัปเดตเป็นอาหารพร้อมแล้ว`,
-        type: isAccept ? 'admin_accept_order_for_merchant' : 'admin_mark_food_ready_for_merchant',
+        title: '✅ แอดมินกดอาหารพร้อมแทนร้าน',
+        body: pendingDriverArrival
+          ? `ออเดอร์ #${shortId} ถูกบันทึกว่าอาหารพร้อมแล้ว และรอคนขับถึงร้าน`
+          : `ออเดอร์ #${shortId} ถูกแอดมินอัปเดตเป็นอาหารพร้อมแล้ว`,
+        type: 'admin_mark_food_ready_for_merchant',
         data: {
-          type: isAccept ? 'admin_accept_order_for_merchant' : 'admin_mark_food_ready_for_merchant',
+          type: 'admin_mark_food_ready_for_merchant',
           booking_id: orderId,
           merchant_id: booking.merchant_id,
         },
       });
     }
-    if (booking.customer_id) {
+    if (!isAccept && booking.customer_id) {
       notifyRows.push({
         user_id: booking.customer_id,
-        title: isAccept ? '🍳 ร้านค้าเริ่มเตรียมอาหารแล้ว' : '🍱 อาหารพร้อมจัดส่งแล้ว',
-        body: isAccept
-          ? `ออเดอร์ #${shortId} กำลังอยู่ระหว่างการเตรียมอาหาร`
-          : pendingDriverArrival
-            ? `ออเดอร์ #${shortId} เตรียมเสร็จแล้ว กำลังรอคนขับถึงร้าน`
-            : `ออเดอร์ #${shortId} พร้อมให้คนขับไปรับแล้ว`,
-        type: isAccept ? 'admin_customer_order_preparing' : 'admin_customer_food_ready',
+        title: '🍱 อาหารพร้อมจัดส่งแล้ว',
+        body: pendingDriverArrival
+          ? `ออเดอร์ #${shortId} เตรียมเสร็จแล้ว กำลังรอคนขับถึงร้าน`
+          : `ออเดอร์ #${shortId} พร้อมให้คนขับไปรับแล้ว`,
+        type: 'admin_customer_food_ready',
         data: {
-          type: isAccept ? 'admin_customer_order_preparing' : 'admin_customer_food_ready',
+          type: 'admin_customer_food_ready',
           booking_id: orderId,
         },
       });

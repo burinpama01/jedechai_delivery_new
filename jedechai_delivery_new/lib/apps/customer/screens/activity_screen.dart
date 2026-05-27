@@ -403,7 +403,8 @@ class _ActivityScreenState extends State<ActivityScreen> {
     final difference = now.difference(dateTime);
 
     if (difference.inDays > 0) {
-      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+      final bkk = AppTime.toBangkok(dateTime);
+      return '${bkk.day}/${bkk.month}/${bkk.year}';
     } else if (difference.inHours > 0) {
       return AppLocalizations.of(context)!.activityTimeHoursAgo(difference.inHours.toString());
     } else if (difference.inMinutes > 0) {

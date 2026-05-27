@@ -11,6 +11,7 @@ import '../../../../common/services/booking_service.dart';
 import '../../../../common/services/chat_service.dart';
 import '../../../../common/services/auth_service.dart';
 import '../../../../common/utils/address_formatter.dart';
+import '../../../../common/utils/app_time.dart';
 import '../../../../common/utils/order_code_formatter.dart';
 import '../../../../common/widgets/chat_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -1002,7 +1003,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                       ),
                       if (item['price'] != null)
                         Text(
-                          '฿${item['price']}',
+                          '฿${(((item['price'] as num?)?.toDouble() ?? 0.0) * ((item['quantity'] as num?)?.toInt() ?? 1)).toStringAsFixed(0)}',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
@@ -1034,7 +1035,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
     if (booking.serviceType == 'food') {
       // Food: booking.price = ค่าอาหาร (subtotal รวม options แล้ว)
       // booking.deliveryFee = ค่าจัดส่ง
-      // ใช้ booking.price เสมอ เพราะ booking_items เก็บ base price ไม่รวม options
+      // booking_items.price = effective unit price (base + options) — ใช้ booking.price สำหรับ total เพราะแม่นยำกว่า
       final deliveryFee = booking.deliveryFee ?? 0.0;
       final total = booking.price + deliveryFee - couponDiscount;
       return total < 0 ? 0 : total;
@@ -1299,7 +1300,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
   }
 
   String _formatDateTime(DateTime dateTime) {
-    return '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+    return AppTime.formatBangkokDateTime(dateTime);
   }
 
   String _getServiceTypeText(BuildContext context, String serviceType) {
