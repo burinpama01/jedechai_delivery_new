@@ -170,7 +170,6 @@ BEGIN
   ORDER BY e.visible_to_driver DESC, e.radius_distance_km NULLS LAST, e.driver_name NULLS LAST;
 END;
 $$;
-
 GRANT EXECUTE ON FUNCTION public.get_booking_driver_notification_debug(
   uuid,
   double precision

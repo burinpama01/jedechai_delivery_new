@@ -21,6 +21,7 @@ import '../../../l10n/app_localizations.dart';
 import 'auth/login_screen.dart';
 import 'rewards/my_coupons_screen.dart';
 import 'rewards/referral_screen.dart';
+import 'customer_wallet_screen.dart';
 import 'services/help_screen.dart';
 
 /// Account Screen — Customer
@@ -850,6 +851,20 @@ class _AccountScreenState extends State<AccountScreen> {
           ),
           l10n.accountMenuEditProfile,
           _navigateToEditProfile,
+        ),
+        _divider(),
+        _menuItem(
+          PlatformAdaptive.icon(
+            android: Icons.account_balance_wallet_outlined,
+            ios: CupertinoIcons.creditcard,
+          ),
+          'Wallet / เติมเงิน',
+          () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CustomerWalletScreen()),
+            );
+          },
         ),
         _divider(),
         _menuItem(

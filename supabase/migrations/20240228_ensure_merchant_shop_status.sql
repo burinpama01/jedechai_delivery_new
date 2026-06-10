@@ -7,10 +7,8 @@
 -- 1) Column
 ALTER TABLE public.profiles
 ADD COLUMN IF NOT EXISTS shop_status boolean DEFAULT false;
-
 -- 2) Index
 CREATE INDEX IF NOT EXISTS idx_profiles_shop_status ON public.profiles(shop_status);
-
 -- 3) Merchant can update own shop_status (only when role=merchant)
 DO $$
 BEGIN

@@ -6,7 +6,6 @@
 -- handled on the coupons table itself.
 
 ALTER TABLE IF EXISTS public.coupon_usages ENABLE ROW LEVEL SECURITY;
-
 DROP POLICY IF EXISTS coupon_usage_select_own ON public.coupon_usages;
 DROP POLICY IF EXISTS coupon_usage_insert ON public.coupon_usages;
 DROP POLICY IF EXISTS cu_select_own ON public.coupon_usages;
@@ -15,7 +14,6 @@ DROP POLICY IF EXISTS cu_admin_select ON public.coupon_usages;
 DROP POLICY IF EXISTS coupon_usage_select_customer_driver_admin
   ON public.coupon_usages;
 DROP POLICY IF EXISTS coupon_usage_insert_customer_own ON public.coupon_usages;
-
 CREATE POLICY coupon_usage_select_customer_driver_admin
 ON public.coupon_usages
 FOR SELECT
@@ -34,7 +32,6 @@ USING (
       AND p.role = 'admin'
   )
 );
-
 CREATE POLICY coupon_usage_insert_customer_own
 ON public.coupon_usages
 FOR INSERT

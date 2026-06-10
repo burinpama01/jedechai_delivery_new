@@ -30,15 +30,13 @@ function _deps() {
   };
 }
 
+function topupRoleLabel(role) {
+  return role === 'customer' ? 'ลูกค้า' : role === 'driver' ? 'คนขับ' : role || '-';
+}
+
 export async function renderTopupsPage(el, ctx) {
   _ctx = ctx || null;
   const { supabase, fmt, fmtDate, escapeHtml, statusBadge, renderMiniBarChart } = _deps();
-
-  let currentTopupMode = 'admin_approve';
-  try {
-    const { data: cfg } = await supabase.from('system_config').select('topup_mode').eq('id', 1).maybeSingle();
-    if (cfg?.topup_mode) currentTopupMode = cfg.topup_mode;
-  } catch (_) {}
 
   const { data: requests } = await supabase
     .from('topup_requests')
@@ -49,11 +47,9 @@ export async function renderTopupsPage(el, ctx) {
   const userIds = [...new Set((requests || []).map((r) => r.user_id))];
   let userMap = {};
   if (userIds.length) {
-    const { data: profiles } = await supabase.from('profiles').select('id, full_name').in('id', userIds);
+    const { data: profiles } = await supabase.from('profiles').select('id, full_name, role').in('id', userIds);
     (profiles || []).forEach((p) => (userMap[p.id] = p));
   }
-
-  const isOmise = currentTopupMode === 'omise';
   const statusCounts = { pending: 0, completed: 0, rejected: 0 };
   (requests || []).forEach((r) => {
     if (statusCounts[r.status] !== undefined) statusCounts[r.status] += 1;
@@ -66,19 +62,15 @@ export async function renderTopupsPage(el, ctx) {
   const modeBanner = `
     <div class="glass-card p-4 mb-5 flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl flex items-center justify-center ${isOmise ? 'bg-teal-50' : 'bg-indigo-50'}">
-          <span class="material-icons-round ${isOmise ? 'text-teal-500' : 'text-indigo-500'}">${isOmise ? 'bolt' : 'admin_panel_settings'}</span>
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-teal-50">
+          <span class="material-icons-round text-teal-500">verified</span>
         </div>
         <div>
-          <p class="text-sm font-bold text-gray-800">โหมดปัจจุบัน: ${isOmise ? 'Omise (อัตโนมัติ)' : 'แอดมินอนุมัติ'}</p>
-          <p class="text-xs text-gray-400">${isOmise ? 'คนขับจ่ายผ่าน Omise → เติมเงินอัตโนมัติ' : 'คนขับโอน PromptPay → รอแอดมินอนุมัติ'}</p>
+          <p class="text-sm font-bold text-gray-800">โหมดปัจจุบัน: Slip2Go Auto + Manual</p>
+          <p class="text-xs text-gray-400">ผู้ใช้เติม Wallet ผ่าน PromptPay และแนบสลิป ระบบตรวจผ่าน Slip2Go ก่อนเติมเงินอัตโนมัติ ส่วนแอดมินยังอนุมัติ/เติมเงินด้วยมือได้</p>
         </div>
       </div>
       <div class="flex items-center gap-2">
-        <button onclick="quickSwitchTopupMode('${isOmise ? 'admin_approve' : 'omise'}')" class="px-4 py-2 rounded-xl text-xs font-semibold transition-all ${isOmise ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200' : 'bg-teal-100 text-teal-700 hover:bg-teal-200'}">
-          <span class="material-icons-round text-sm align-middle mr-1">${isOmise ? 'admin_panel_settings' : 'bolt'}</span>
-          สลับเป็น${isOmise ? 'แอดมินอนุมัติ' : 'Omise อัตโนมัติ'}
-        </button>
         <a href="#" onclick="navigateTo('settings');return false" class="px-3 py-2 bg-gray-100 text-gray-600 rounded-xl text-xs font-semibold hover:bg-gray-200">
           <span class="material-icons-round text-sm align-middle">settings</span>
         </a>
@@ -116,22 +108,31 @@ export async function renderTopupsPage(el, ctx) {
           <table class="w-full text-sm">
             <thead><tr class="bg-gray-50/80">
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">ผู้ขอ</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">บทบาท</th>
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">จำนวน</th>
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">สถานะ</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">หลักฐาน</th>
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">วันที่</th>
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">จัดการ</th>
             </tr></thead>
             <tbody>
               ${(requests || []).length === 0
-                ? '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">ไม่มีคำขอ</td></tr>'
+                ? '<tr><td colspan="7" class="px-4 py-8 text-center text-gray-400">ไม่มีคำขอ</td></tr>'
                 : (requests || [])
                     .map((r) => {
                       const user = userMap[r.user_id] || {};
+                      const slipEvidence = r.slip_image_path
+                        ? `<button onclick="viewTopupSlip('${escapeHtml(r.slip_image_path)}')" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-200">ดูสลิป</button>`
+                        : r.verification_reason
+                          ? `<span class="text-xs text-amber-600">${escapeHtml(r.verification_reason)}</span>`
+                          : '-';
                       return `
                         <tr class="table-row border-b border-gray-50">
                           <td class="px-4 py-3 font-medium">${escapeHtml(user.full_name) || r.user_id?.substring(0, 8) || '-'}</td>
+                          <td class="px-4 py-3 text-gray-500">${escapeHtml(topupRoleLabel(user.role))}</td>
                           <td class="px-4 py-3 font-semibold text-green-600">฿${fmt(r.amount)}</td>
                           <td class="px-4 py-3">${statusBadge(r.status)}</td>
+                          <td class="px-4 py-3">${slipEvidence}</td>
                           <td class="px-4 py-3 text-gray-500 text-xs">${fmtDate(r.created_at)}</td>
                           <td class="px-4 py-3">
                             ${r.status === 'pending'
@@ -154,6 +155,7 @@ export async function renderTopupsPage(el, ctx) {
 
   globalThis._allTopups = (requests || []).map((r) => ({
     ผู้ขอ: userMap[r.user_id]?.full_name || r.user_id?.substring(0, 8) || '-',
+    บทบาท: topupRoleLabel(userMap[r.user_id]?.role),
     จำนวน: Math.round(r.amount || 0),
     สถานะ: r.status || '-',
     วันที่: fmtDate(r.created_at),
@@ -163,6 +165,7 @@ export async function renderTopupsPage(el, ctx) {
   globalThis.exportTopupsExcel = exportTopupsExcel;
   globalThis.approveTopup = approveTopup;
   globalThis.rejectTopup = rejectTopup;
+  globalThis.viewTopupSlip = viewTopupSlip;
   globalThis.quickSwitchTopupMode = quickSwitchTopupMode;
   globalThis.showManualTopup = showManualTopup;
 }
@@ -171,14 +174,14 @@ export function exportTopupsCsv(ctx) {
   _ctx = ctx || _ctx;
   const { exportRowsToCsv, reportFilename } = _deps();
   const rows = globalThis._allTopups || [];
-  exportRowsToCsv(reportFilename('topups_report', 'csv', '', ''), ['ผู้ขอ', 'จำนวน', 'สถานะ', 'วันที่'], rows);
+  exportRowsToCsv(reportFilename('topups_report', 'csv', '', ''), ['ผู้ขอ', 'บทบาท', 'จำนวน', 'สถานะ', 'วันที่'], rows);
 }
 
 export function exportTopupsExcel(ctx) {
   _ctx = ctx || _ctx;
   const { exportRowsToExcel, reportFilename } = _deps();
   const rows = globalThis._allTopups || [];
-  exportRowsToExcel(reportFilename('topups_report', 'xls', '', ''), ['ผู้ขอ', 'จำนวน', 'สถานะ', 'วันที่'], rows);
+  exportRowsToExcel(reportFilename('topups_report', 'xls', '', ''), ['ผู้ขอ', 'บทบาท', 'จำนวน', 'สถานะ', 'วันที่'], rows);
 }
 
 export async function approveTopup(id, userId, amount, ctx) {
@@ -208,18 +211,50 @@ export async function rejectTopup(id, ctx) {
   }
 }
 
+export async function viewTopupSlip(path, ctx) {
+  _ctx = ctx || _ctx;
+  const { callAdminAction, showToast, escapeHtml } = _deps();
+  try {
+    const result = await callAdminAction({ action: 'get_topup_slip_url', path });
+    if (!result?.signed_url) throw new Error('signed_url_missing');
+    document.getElementById('topupSlipModal')?.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'topupSlipModal';
+    modal.className = 'fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4';
+    modal.innerHTML = `
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] overflow-hidden flex flex-col fade-in">
+        <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
+              <span class="material-icons-round text-blue-600 text-lg">receipt_long</span>
+            </div>
+            <div>
+              <h3 class="font-bold text-gray-800 text-lg">สลิปเติมเงิน</h3>
+              <p class="text-xs text-gray-500">หลักฐานการโอนเงินจากผู้ขอเติมเงิน</p>
+            </div>
+          </div>
+          <button type="button" onclick="document.getElementById('topupSlipModal')?.remove()" class="w-9 h-9 rounded-xl bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center">
+            <span class="material-icons-round text-lg">close</span>
+          </button>
+        </div>
+        <div class="bg-gray-50 p-4 overflow-auto">
+          <img src="${escapeHtml(result.signed_url)}" alt="สลิปเติมเงิน" class="block max-w-full max-h-[74vh] mx-auto rounded-xl border border-gray-200 bg-white object-contain" />
+        </div>
+      </div>`;
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) modal.remove();
+    });
+    document.body.appendChild(modal);
+  } catch (e) {
+    showToast('เปิดสลิปไม่สำเร็จ: ' + escapeHtml(e.message || JSON.stringify(e)), 'error');
+  }
+}
+
 export async function quickSwitchTopupMode(newMode, ctx) {
   _ctx = ctx || _ctx;
-  const { callAdminAction, showToast, escapeHtml, refreshCurrentPage } = _deps();
-  const label = newMode === 'omise' ? 'Omise (อัตโนมัติ)' : 'แอดมินอนุมัติ';
-  if (!confirm(`สลับโหมดเติมเงินเป็น "${label}" ?\n\nแอปคนขับจะเปลี่ยนโหมดอัตโนมัติในครั้งถัดไปที่เปิดหน้าเติมเงิน`)) return;
-  try {
-    await callAdminAction({ action: 'upsert_system_config', config_data: { topup_mode: newMode } });
-    showToast(`เปลี่ยนโหมดเติมเงินเป็น "${label}" สำเร็จ`, 'success');
-    refreshCurrentPage();
-  } catch (e) {
-    showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message || JSON.stringify(e)), 'error');
-  }
+  const { showToast } = _deps();
+  showToast('โหมดเติมเงินใช้ Slip2Go Auto + Manual แล้ว กรุณาตั้งค่าจากหน้า Settings', 'info');
 }
 
 export async function showManualTopup(ctx) {
@@ -236,7 +271,7 @@ export async function showManualTopup(ctx) {
       <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
         <div>
           <h3 class="font-bold text-gray-800 text-lg">เติมเงินด้วยมือ</h3>
-          <p class="text-xs text-gray-500 mt-0.5">เลือกคนขับที่อนุมัติแล้ว</p>
+          <p class="text-xs text-gray-500 mt-0.5">เลือกคนขับหรือลูกค้าเพื่อเติม Wallet</p>
         </div>
         <button onclick="document.getElementById('manualTopupModal')?.remove()" class="text-gray-400 hover:text-gray-600"><span class="material-icons-round">close</span></button>
       </div>
@@ -259,17 +294,17 @@ export async function showManualTopup(ctx) {
   const cancelBtn = modal.querySelector('#manualTopupCancelBtn');
   if (cancelBtn) cancelBtn.addEventListener('click', () => modal.remove());
 
-  let drivers = [];
+  const roleFilter = ['driver', 'customer'];
+  let walletUsers = [];
   try {
     const { data } = await supabase
       .from('profiles')
-      .select('id, full_name, phone_number, approval_status')
-      .eq('role', 'driver')
-      .eq('approval_status', 'approved')
+      .select('id, full_name, phone_number, role, approval_status')
+      .in('role', ['driver', 'customer'])
       .order('full_name');
-    drivers = data || [];
+    walletUsers = (data || []).filter((u) => u.role === 'customer' || u.approval_status === 'approved');
   } catch (e) {
-    drivers = [];
+    walletUsers = [];
   }
 
   const body = modal.querySelector('#manualTopupBody');
@@ -277,17 +312,17 @@ export async function showManualTopup(ctx) {
 
   body.innerHTML = `
     <div>
-      <label class="block text-sm font-medium mb-1">คนขับ</label>
+      <label class="block text-sm font-medium mb-1">ผู้ใช้ Wallet</label>
       <select id="manualTopupDriverSelect" class="w-full border rounded-xl px-3.5 py-2 text-sm bg-gray-50/50">
-        <option value="">-- เลือกคนขับ --</option>
-        ${(drivers || [])
-          .map((d) => {
-            const label = `${escapeHtml(d.full_name) || d.id.substring(0, 8)}${d.phone_number ? ' (' + escapeHtml(d.phone_number) + ')' : ''}`;
-            return `<option value="${d.id}">${label}</option>`;
+        <option value="">-- เลือกผู้ใช้ --</option>
+        ${(walletUsers || [])
+          .map((u) => {
+            const label = `${topupRoleLabel(u.role)} - ${escapeHtml(u.full_name) || u.id.substring(0, 8)}${u.phone_number ? ' (' + escapeHtml(u.phone_number) + ')' : ''}`;
+            return `<option value="${u.id}">${label}</option>`;
           })
           .join('')}
       </select>
-      <p class="text-xs text-gray-400 mt-1">แสดงเฉพาะคนขับที่อนุมัติแล้ว</p>
+      <p class="text-xs text-gray-400 mt-1">แสดงลูกค้า และคนขับที่อนุมัติแล้ว</p>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
@@ -314,7 +349,7 @@ export async function showManualTopup(ctx) {
     const desc = (document.getElementById('manualTopupDesc')?.value || '').trim() || 'Admin เติมเงินด้วยมือ';
 
     if (!userId) {
-      showToast('กรุณาเลือกคนขับ', 'error');
+      showToast('กรุณาเลือกผู้ใช้', 'error');
       return;
     }
     if (!amount || amount <= 0) {
@@ -322,7 +357,7 @@ export async function showManualTopup(ctx) {
       return;
     }
 
-    if (!confirm(`เติมเงินให้คนขับนี้ ฿${fmt(amount)} ?`)) return;
+    if (!confirm(`เติมเงินให้ผู้ใช้นี้ ฿${fmt(amount)} ?`)) return;
 
     try {
       submitBtn.disabled = true;
@@ -347,6 +382,7 @@ export function wireTopupsBridge() {
   globalThis.__adminWebBridge.exportTopupsExcel = exportTopupsExcel;
   globalThis.__adminWebBridge.approveTopup = approveTopup;
   globalThis.__adminWebBridge.rejectTopup = rejectTopup;
+  globalThis.__adminWebBridge.viewTopupSlip = viewTopupSlip;
   globalThis.__adminWebBridge.quickSwitchTopupMode = quickSwitchTopupMode;
   globalThis.__adminWebBridge.showManualTopup = showManualTopup;
 }

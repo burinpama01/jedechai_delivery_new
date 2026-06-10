@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>รายงานการรีวิวโปรเจกต์ (Project Review Report) - Jedechai Delivery</title>
+  <style>
+    :root {
+      --primary-blue: #2563eb;
+      --primary-blue-hover: #1d4ed8;
+      --primary-red: #dc2626;
+      --primary-red-hover: #b91c1c;
+      --bg-dark: #0b0f19;
+      --bg-slate: #111827;
+      --card-bg: rgba(22, 28, 45, 0.6);
+      --card-bg-hover: rgba(30, 41, 59, 0.8);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --text-success: #10b981;
+      --text-warning: #f59e0b;
+      --text-danger: #ef4444;
+      --accent-gradient: linear-gradient(135deg, #2563eb 0%, #dc2626 100%);
+      --blue-glow: rgba(37, 99, 235, 0.25);
+      --red-glow: rgba(220, 38, 38, 0.25);
+      --shadow-premium: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
+      --border-glow: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      scrollbar-width: thin;
+      scrollbar-color: var(--primary-blue) var(--bg-dark);
+    }
+
+    body {
+      font-family: 'Inter', 'Sarabun', sans-serif;
+      background-color: var(--bg-dark);
+      background-image:
+        radial-gradient(at 0% 0%, var(--blue-glow) 0, transparent 40%),
+        radial-gradient(at 100% 100%, var(--red-glow) 0, transparent 40%);
+      color: var(--text-main);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 2rem 1.5rem;
+    }
+
+    header {
+      max-width: 1200px;
+      margin: 0 auto 2.5rem auto;
+      text-align: center;
+      position: relative;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.35rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+      background: var(--accent-gradient);
+      box-shadow: 0 0 15px rgba(37, 99, 235, 0.3);
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(to right, #60a5fa, #f87171);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 2rem;
+    }
+
+    /* Sidebar Navigation */
+    .sidebar {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: var(--border-glow);
+      border-radius: 16px;
+      padding: 1.5rem;
+      height: fit-content;
+      position: sticky;
+      top: 2rem;
+      box-shadow: var(--shadow-premium);
+    }
+
+    .sidebar-title {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .nav-btn {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+    }
+
+    .nav-btn.active {
+      background: var(--accent-gradient);
+      color: white;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+
+    /* Content Area */
+    main {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.4s ease-in-out forwards;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: var(--border-glow);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-premium);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      background-color: var(--card-bg-hover);
+      box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.8), 0 0 20px rgba(37, 99, 235, 0.05);
+    }
+
+    h2 {
+      font-size: 1.6rem;
+      margin-bottom: 1.25rem;
+      color: white;
+      border-left: 4px solid var(--primary-blue);
+      padding-left: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    h3 {
+      font-size: 1.2rem;
+      margin: 1.5rem 0 0.75rem 0;
+      color: #60a5fa;
+    }
+
+    p {
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+
+    strong {
+      color: white;
+    }
+
+    /* Metrics Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .metric-card {
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--primary-blue);
+    }
+
+    .metric-card.red::before {
+      background: var(--primary-red);
+    }
+
+    .metric-card.success::before {
+      background: var(--text-success);
+    }
+
+    .metric-value {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: white;
+      margin: 0.5rem 0;
+    }
+
+    .metric-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Tech Stack Grid */
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+      margin-top: 1.5rem;
+    }
+
+    .tech-item {
+      background: rgba(17, 24, 39, 0.5);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .tech-icon {
+      background: rgba(255, 255, 255, 0.05);
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: var(--primary-blue);
+      flex-shrink: 0;
+    }
+
+    .tech-item.red .tech-icon {
+      color: var(--primary-red);
+    }
+
+    .tech-details h4 {
+      font-size: 1.05rem;
+      margin-bottom: 0.25rem;
+      color: white;
+    }
+
+    .tech-details p {
+      font-size: 0.88rem;
+      margin-bottom: 0;
+    }
+
+    /* Lists */
+    ul, ol {
+      padding-left: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    li {
+      margin-bottom: 0.5rem;
+      color: var(--text-muted);
+    }
+
+    li strong {
+      color: #e2e8f0;
+    }
+
+    /* Code Block styling */
+    pre {
+      background: rgba(0, 0, 0, 0.4);
+      padding: 1.25rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      overflow-x: auto;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 0.9rem;
+      color: #60a5fa;
+      margin-bottom: 1.25rem;
+    }
+
+    code {
+      font-family: 'Consolas', 'Courier New', monospace;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      color: #f87171;
+    }
+
+    /* Alert Boxes */
+    .alert {
+      padding: 1.25rem 1.5rem;
+      border-radius: 12px;
+      border-left: 4px solid transparent;
+      margin-bottom: 1.5rem;
+    }
+
+    .alert-info {
+      background: rgba(37, 99, 235, 0.08);
+      border-left-color: var(--primary-blue);
+      border: 1px solid rgba(37, 99, 235, 0.15);
+      border-left-width: 4px;
+    }
+
+    .alert-warning {
+      background: rgba(245, 158, 11, 0.08);
+      border-left-color: var(--text-warning);
+      border: 1px solid rgba(245, 158, 11, 0.15);
+      border-left-width: 4px;
+    }
+
+    .alert-danger {
+      background: rgba(239, 68, 68, 0.08);
+      border-left-color: var(--text-danger);
+      border: 1px solid rgba(239, 68, 68, 0.15);
+      border-left-width: 4px;
+    }
+
+    .alert-title {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: white;
+    }
+
+    /* Timeline styling */
+    .timeline {
+      position: relative;
+      margin: 2rem 0;
+      padding-left: 2rem;
+      border-left: 2px solid var(--border-color);
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 2rem;
+    }
+
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -2.45rem;
+      top: 0.25rem;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--primary-blue);
+      border: 4px solid var(--bg-dark);
+      box-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
+    }
+
+    .timeline-item.red::before {
+      background: var(--primary-red);
+      box-shadow: 0 0 10px rgba(220, 38, 38, 0.5);
+    }
+
+    .timeline-date {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .timeline-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: white;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+    }
+
+    th, td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+      font-weight: 600;
+      color: white;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    td {
+      color: var(--text-muted);
+    }
+
+    tr:hover td {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.01);
+    }
+
+    /* Status indicator */
+    .status-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 0.5rem;
+    }
+
+    .status-dot.success { background: var(--text-success); }
+    .status-dot.warning { background: var(--text-warning); }
+    .status-dot.danger { background: var(--text-danger); }
+
+    /* Interactive demonstration widget */
+    .demo-widget {
+      background: rgba(17, 24, 39, 0.8);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .demo-selector {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .demo-tab {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.3s ease;
+    }
+
+    .demo-tab.active {
+      background: var(--primary-blue);
+      color: white;
+      border-color: var(--primary-blue);
+    }
+
+    .demo-content {
+      background: var(--bg-dark);
+      padding: 1rem;
+      border-radius: 8px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 0.85rem;
+      min-height: 120px;
+      display: none;
+    }
+
+    .demo-content.active {
+      display: block;
+    }
+
+    /* Responsive */
+    @media (max-width: 968px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        position: static;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="badge">ระบบตรวจสอบประสิทธิภาพ</div>
+    <h1>รายงานการรีวิวสถาปัตยกรรมและการแก้ไขปัญหา</h1>
+    <p>โปรเจกต์ Super App ส่งอาหาร, รับส่งผู้โดยสาร และส่งพัสดุ (Jedechai Delivery)</p>
+  </header>
+
+  <div class="container">
+
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+      <div class="sidebar-title">เมนูนำทาง</div>
+      <div class="nav-list">
+        <button class="nav-btn active" onclick="switchTab('overview')">🔍 1. ภาพรวมระบบ</button>
+        <button class="nav-btn" onclick="switchTab('recent-fixes')">🛠️ 2. การแก้ไขล่าสุด</button>
+        <button class="nav-btn" onclick="switchTab('architecture')">🏗️ 3. สถาปัตยกรรม & RPC</button>
+        <button class="nav-btn" onclick="switchTab('risks')">⚠️ 4. ความเสี่ยง & บล็อกเกอร์</button>
+        <button class="nav-btn" onclick="switchTab('next-steps')">🚀 5. คำแนะนำขั้นถัดไป</button>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+
+      <!-- TAB 1: OVERVIEW -->
+      <section id="overview" class="tab-content active">
+        <div class="card">
+          <h2>1. ภาพรวมของระบบและสแต็กเทคโนโลยี</h2>
+          <p>ระบบ <strong>Jedechai Delivery</strong> ได้รับการพัฒนาให้เป็น Super App สำหรับระบบขนส่งและการจัดส่งสินค้าแบบครบวงจร โดยในส่วนของโมบายล์แอปพลิเคชันถูกรวมสถาปัตยกรรมแบบ Monolithic Repository แต่แบ่งแยกหน้าที่อย่างชัดเจนในโปรเจกต์ Flutter ตัวเดียว</p>
+
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <div class="metric-label">Flutter Version</div>
+              <div class="metric-value">> 3.0</div>
+              <div class="metric-label">pubspec.yaml (1.2.8+68)</div>
+            </div>
+            <div class="metric-card red">
+              <div class="metric-label">Admin Web Tech</div>
+              <div class="metric-value">HTML/JS</div>
+              <div class="metric-label">Tailwind CSS (CDN)</div>
+            </div>
+            <div class="metric-card success">
+              <div class="metric-label">Database & Service</div>
+              <div class="metric-value">Supabase</div>
+              <div class="metric-label">Auth, Storage, Edge Funcs</div>
+            </div>
+          </div>
+
+          <h3>โครงสร้างโมดูลหลัก (Codebase Architecture)</h3>
+          <ul>
+            <li><strong>Customer App (แอปพลิเคชันสำหรับลูกค้า):</strong> ดูแลส่วนการสั่งอาหาร เรียกรถส่งของ/ผู้โดยสาร และการเลือกใช้งานคูปองส่วนลด</li>
+            <li><strong>Driver App (แอปพลิเคชันสำหรับคนขับ):</strong> ดูแลขั้นตอนการสลับรับงานนำทาง การรับพัสดุ ยืนยันการขนส่ง ถอน/เติมเงินในกระเป๋า (Wallet)</li>
+            <li><strong>Merchant App (แอปพลิเคชันสำหรับร้านค้า):</strong> การยอมรับรายการสั่งอาหาร เตรียมวัตถุดิบ คอนฟิกราคาและประวัติของร้าน</li>
+            <li><strong>Admin Web (ระบบหลังบ้านบนเว็บ):</strong> พัฒนาขึ้นด้วยโมเดล Single-page vanilla HTML/JS โดยใช้การเรียกใช้ client-side bridges เชื่อมข้อมูลตรงหาฐานข้อมูล Supabase</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h2>เทคโนโลยีสแต็กและไลบรารีที่เลือกใช้</h2>
+          <div class="tech-grid">
+            <div class="tech-item">
+              <div class="tech-icon">FL</div>
+              <div class="tech-details">
+                <h4>Flutter & Provider</h4>
+                <p>ทำ State management และเป็น UI engine หลักของแอปมือถือทั้งระบบ</p>
+              </div>
+            </div>
+            <div class="tech-item">
+              <div class="tech-icon">SB</div>
+              <div class="tech-details">
+                <h4>Supabase Flutter SDK</h4>
+                <p>ทำระบบ Realtime sync, RLS security และฟังก์ชันการดำเนินการหลังบ้าน</p>
+              </div>
+            </div>
+            <div class="tech-item red">
+              <div class="tech-icon">TW</div>
+              <div class="tech-details">
+                <h4>Tailwind CSS (CDN)</h4>
+                <p>ใช้จัดหน้าจอบริเวณส่วนของ Admin Web Dashboard โดยไม่ต้องผ่านการคอมไพล์</p>
+              </div>
+            </div>
+            <div class="tech-item red">
+              <div class="tech-icon">LF</div>
+              <div class="tech-details">
+                <h4>Leaflet.js</h4>
+                <p>ระบบแผนที่บนเว็บแอดมินทดแทนการพึ่งพา Google Maps API</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: RECENT FIXES -->
+      <section id="recent-fixes" class="tab-content">
+        <div class="card">
+          <h2>2. สรุปรายการแก้ไขและอัปเกรดระบบล่าสุด</h2>
+          <p>ในช่วงการรีวิวที่ผ่านมา ได้มีการแก้ไขข้อผิดพลาดสำคัญในระบบที่เกี่ยวข้องกับประสิทธิภาพและความน่าเชื่อถือของขั้นตอนธุรกิจ โดยแบ่งออกเป็น 4 หมวดหมู่หลัก:</p>
+
+          <div class="timeline">
+
+            <div class="timeline-item">
+              <div class="timeline-date">20 พฤษภาคม 2026</div>
+              <div class="timeline-title">การปรับปรุงเวลาและไทม์โซน (Timezone display/serialization policy)</div>
+              <p>แก้ไขปัญหาการแสดงผลเวลาและข้อมูลนัดหมายคลาดเคลื่อนอันเนื่องมาจากเครื่องผู้ใช้ประมวลผลเวลา UTC ตรงจาก DB ต่างกัน</p>
+              <ul>
+                <li>เพิ่มคลาส <code>AppTime</code> ใน <code>lib/common/utils/app_time.dart</code> ทำหน้าที่แปลงเวลาเป็น Asia/Bangkok เสมอ</li>
+                <li>ใช้ Date Key (<code>yyyy-MM-dd</code>) สำหรับกรองสถิติในระดับธุรกิจเพื่อหลีกเลี่ยงผลต่างชั่วโมงในระดับเครื่องมือถือ</li>
+                <li>แปลงเวลาการจอง (Scheduled Order) เป็น UTC ISO ที่สม่ำเสมอก่อนส่งเข้า API/DB</li>
+              </ul>
+            </div>
+
+            <div class="timeline-item">
+              <div class="timeline-date">20 พฤษภาคม 2026</div>
+              <div class="timeline-title">แก้ไขระบบการขอลบบัญชีถูกปฏิเสธแล้วค้างระบบ (Account Deletion Unlock Flow)</div>
+              <p>แก้ไขปัญหาร้ายแรงที่เกิดจากการขอลบบัญชี (Deletion requests) ที่เมื่อแอดมินกดปฏิเสธ แต่สถานะผู้ใช้ยังถูกล็อกอยู่</p>
+              <ul>
+                <li>สร้าง database migration <code>20260520120000_reject_account_deletion_guarded.sql</code></li>
+                <li>ย้าย logic การปลดล็อกเข้า Database RPC <code>reject_account_deletion_guarded</code> เพื่ออัปเดตแบบ Transaction</li>
+                <li>ให้ Edge Function ทำหน้าที่ดำเนินการผ่าน <code>service_role</code> เพื่อให้มีสิทธิ์แก้ไขข้ามตารางผู้ใช้และหลีกเลี่ยง RLS</li>
+                <li>ทำ Mobile self-heal และดึงสถานะจริงหลังการปฏิเสธ</li>
+              </ul>
+            </div>
+
+            <div class="timeline-item">
+              <div class="timeline-date">20 พฤษภาคม 2026</div>
+              <div class="timeline-title">การเชื่อมต่อคูปองส่วนลดของบริการ Ride / Parcel และระบบ Rollback</div>
+              <p>ขยายความสามารถในการใช้คูปองส่วนลดในฟังก์ชันการเรียกรถ (Ride) และการส่งพัสดุ (Parcel)</p>
+              <ul>
+                <li>เชื่อมต่อ <code>CouponEntryWidget</code> เข้ากับหน้าจอเรียกรถและคีย์รับส่งพัสดุ</li>
+                <li>หักมูลค่าส่วนลดจริงและแสดงราคาขีดฆ่าให้เห็นแบบ Visual</li>
+                <li>เพิ่ม Logic การบันทึกใช้งานคูปองด้วย <code>recordUsage</code> หากล้มเหลวจะทำลายการจองอัตโนมัติ (Booking Cancel Rollback)</li>
+              </ul>
+            </div>
+
+            <div class="timeline-item red">
+              <div class="timeline-date">19 พฤษภาคม 2026</div>
+              <div class="timeline-title">การปรับปรุงความสอดคล้องของเว็บแอดมิน (Admin Web Optimization)</div>
+              <p>แก้ไขปัญหาที่แอดมินกดรับรายการแทนร้านค้าแล้ว optimistic lock ถูกบายพาส</p>
+              <ul>
+                <li>เปิดเผย <code>ADMIN_MERCHANT_ACCEPT_STATUSES</code> ให้กลายเป็น global variable ทั่วทั้งเว็บแอปพลิเคชัน</li>
+                <li>ปรับขนาดปุ่มดำเนินการ (Action button) บนโทรศัพท์มือถือให้มีขนาดไม่ต่ำกว่า 44px ป้องกันการกดพลาด</li>
+                <li>ถอด native confirm popup ที่ซ้ำซ้อนกับ modal ดำเนินการออกไป</li>
+              </ul>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: ARCHITECTURE -->
+      <section id="architecture" class="tab-content">
+        <div class="card">
+          <h2>3. สถาปัตยกรรมระบบและความปลอดภัย</h2>
+          <p>ระบบ Jedechai Delivery มีการควบคุมและส่งต่อข้อมูลที่ยึดหลัก "สิทธิ์แบบปลอดภัยระดับแถวข้อมูล" (Row Level Security - RLS) และการเขียนโปรแกรมควบคุมธุรกรรมแบบ Atomic ผ่าน RPC ใน PostgreSQL</p>
+
+          <div class="alert alert-info">
+            <div class="alert-title">💡 รูปแบบ Transaction Security</div>
+            เนื่องจาก RLS มีนโยบายให้ผู้ใช้ทั่วไป (ลูกค้า/คนขับ) แก้ไขข้อมูลได้เฉพาะแถวของตนเองเท่านั้น การทำงานพิเศษของแอดมินที่ต้องตรวจสอบหรือปรับแต่งข้อมูลผู้ใช้จึงต้องย้ายไปทำงานระดับ <strong>Server-side</strong> (เช่น RPC หรือ Edge Functions) เพื่อหลีกเลี่ยงการถูกปฏิเสธสิทธิ์
+          </div>
+
+          <h3>กรณีตัวอย่าง: ปฏิเสธคำขอลบบัญชีแบบ Atomic</h3>
+          <p>เมื่อแอดมินสั่งปฏิเสธ แถวข้อมูลในตาราง <code>account_deletion_requests</code> และคอลัมน์ <code>deletion_status</code> ในตาราง <code>profiles</code> จะถูกปรับพร้อมกันในฟังก์ชันเดียว:</p>
+
+          <pre><code>CREATE OR REPLACE FUNCTION private.reject_account_deletion_guarded(
+  p_request_id TEXT,
+  p_admin_id UUID,
+  p_reason TEXT
+) RETURNS VOID AS $$
+BEGIN
+  -- 1. อัปเดตตารางคำขอ
+  UPDATE public.account_deletion_requests
+  SET status = 'rejected',
+      reviewed_at = timezone('utc', now()),
+      reviewed_by = p_admin_id,
+      rejection_reason = p_reason
+  WHERE id = p_request_id::BIGINT;
+
+  -- 2. เคลียร์สถานะในโปรไฟล์ผู้ใช้
+  UPDATE public.profiles
+  SET deletion_status = NULL
+  WHERE id = (
+    SELECT user_id FROM public.account_deletion_requests WHERE id = p_request_id::BIGINT
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;</code></pre>
+        </div>
+
+        <div class="card">
+          <h2>สาธิตระบบคูปองและการย้อนกลับ (Coupon Rollback Logic)</h2>
+          <p>เลือกแท็บด้านล่างเพื่อตรวจสอบตัวอย่างโค้ดโครงสร้าง Logic ที่ใช้เพื่อตรวจสอบและยกเลิกออเดอร์เมื่อคูปองถูกใช้ซ้ำโดยมิชอบ:</p>
+
+          <div class="demo-widget">
+            <div class="demo-selector">
+              <button class="demo-tab active" onclick="showDemo('code-food')">Food Checkout Flow</button>
+              <button class="demo-tab" onclick="showDemo('code-rollback')">Rollback Logic</button>
+              <button class="demo-tab" onclick="showDemo('code-time')">AppTime Utility</button>
+            </div>
+
+            <div id="code-food" class="demo-content active">
+// Food Checkout sequence with sequential check
+Booking booking = await BookingService.createFoodBooking(data);
+try {
+  await CouponService.recordUsage(booking.id, couponCode);
+} catch (e) {
+  // If record usage failed, run rollback sequence immediately
+  await BookingService.cancelBookingDirectly(booking.id);
+  throw Exception("การบันทึกคูปองไม่สำเร็จ: " + e.toString());
+}
+            </div>
+
+            <div id="code-rollback" class="demo-content">
+// Rollback implementation via Supabase update
+Future&lt;void&gt; cancelBookingDirectly(String bookingId) async {
+  await _supabase
+      .from('bookings')
+      .update({'status': 'cancelled', 'cancel_reason': 'System Rollback: Coupon recording failure'})
+      .eq('id', bookingId);
+}
+            </div>
+
+            <div id="code-time" class="demo-content">
+// AppTime normalization structure
+class AppTime {
+  static DateTime parseDbTimestamp(String? iso) {
+    if (iso == null) return DateTime.now();
+    return DateTime.parse(iso).toLocal(); // Converts UTC from DB to device time
+  }
+}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: RISKS -->
+      <section id="risks" class="tab-content">
+        <div class="card">
+          <h2>4. ความเสี่ยงทางเทคนิคที่ยังคงเหลืออยู่ (Residual Technical Risks)</h2>
+          <p>จากการรีวิวซอร์สโค้ดและสภาพแวดล้อมระบบ พบประเด็นความเสี่ยงที่ทีมงานจำเป็นต้องให้ความสำคัญก่อนทำการปล่อยสู่ Production:</p>
+
+          <div class="alert alert-danger">
+            <div class="alert-title">🚨 Blocked: Supabase Production Deployment</div>
+            <strong>รายละเอียด:</strong> โค้ด Migration (SQL) และฟังก์ชันแอดมินตัวใหม่ถูกแก้ไขและยืนยันในระดับ Local แล้ว แต่การรันคำสั่ง <code>supabase db push</code> เพื่ออัปโหลดขึ้นเซิร์ฟเวอร์หลักยังคงทำไม่ได้ เนื่องจาก Supabase CLI ใน Sandbox ไม่มี credentials (Access Token/Session) ในการล็อกอิน
+          </div>
+
+          <div class="alert alert-warning">
+            <div class="alert-title">⚠️ Warning: CLI Toolchain Timeout & Direct SDK Workaround</div>
+            <strong>รายละเอียด:</strong> คอมมานด์ไลน์ปกติอย่าง <code>flutter analyze</code> และ <code>flutter test</code> เกิดอาการค้างและหมดเวลา (Timeout) ภายในแซนด์บ็อกซ์
+            <br><strong>วิธีแก้ไขเฉพาะหน้า:</strong> ต้องเรียกใช้ตัวแปลภาษา Dart โดยตรงผ่าน <code>C:\flutter\bin\cache\dart-sdk\bin\dart.exe analyze</code> จึงจะทำงานได้สำเร็จ
+          </div>
+
+          <div class="alert alert-info">
+            <div class="alert-title">📝 ข้อมูลความเสี่ยงและแผนการลดความเสี่ยง</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>ประเด็นความเสี่ยง</th>
+                  <th>ระดับความรุนแรง</th>
+                  <th>แนวทางการจัดการความเสี่ยง (Mitigation Plan)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Database Migrations ยังไม่รันบน DB จริง</td>
+                  <td><span class="status-dot danger"></span> สูงมาก</td>
+                  <td>ขอ Access token จากผู้พัฒนาหรือแอดมิน เพื่อรัน dry-run หรือนำคำสั่ง SQL ในโฟลเดอร์ migration ไปติดตั้งบนแดชบอร์ด Supabase ด้วยตนเอง</td>
+                </tr>
+                <tr>
+                  <td>ความเข้ากันได้ของ Zone เวลาในฝั่งแอปโมบายล์</td>
+                  <td><span class="status-dot warning"></span> ปานกลาง</td>
+                  <td>หลังจากติดตั้งแอปพลิเคชันเวอร์ชันใหม่ ให้ทดสอบเปลี่ยนเขตเวลาเครื่องมือถือเป็นโซนอื่น (เช่น UTC+0 หรือ UTC+9) และทดสอบจองล่วงหน้าเพื่อยืนยันพฤติกรรม</td>
+                </tr>
+                <tr>
+                  <td>สิทธิ์ RLS ของ Edge Functions</td>
+                  <td><span class="status-dot success"></span> ต่ำ</td>
+                  <td>มีการหุ้มสิทธิ์ด้วย schema <code>private</code> และเรียกใช้ service_role ใน backend เรียบร้อยแล้ว ถือว่าผ่านเกณฑ์ความปลอดภัย</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: NEXT STEPS -->
+      <section id="next-steps" class="tab-content">
+        <div class="card">
+          <h2>5. คำแนะนำและแผนงานในอนาคต (Next Recommendations)</h2>
+          <p>เพื่อนำระบบ Jedechai Delivery ขึ้นใช้งานอย่างสมบูรณ์ ขอแนะนำขั้นตอนการดำเนินการดังต่อไปนี้ตามลำดับความสำคัญ:</p>
+
+          <ol>
+            <li>
+              <strong>การปรับปรุงเวอร์ชันและสร้าง Release Candidate (RC):</strong>
+              <p>ขยับเวอร์ชันแอปในไฟล์ <code>pubspec.yaml</code> และ <code>package.json</code> ตามกฎของโปรเจกต์ จากนั้นทำคอมมิตระบุหมายเลขเวอร์ชันให้ชัดเจน</p>
+            </li>
+            <li>
+              <strong>การทำ Database Migration Deployment:</strong>
+              <p>ดำเนินการนำเนื้อหาจาก <code>supabase/migrations/20260520120000_reject_account_deletion_guarded.sql</code> ไปติดตั้งบนฐานข้อมูลหลัก</p>
+            </li>
+            <li>
+              <strong>การรันและดีพลอยแอดมินเว็บพอร์ทัล (Deploy Admin Web):</strong>
+              <p>อัปโหลดหน้าจอแอดมินเว็บไปยัง Vercel หรือ Netlify พร้อมตั้งค่าไฟล์ <code>config.production.js</code> แยกจากตัวซอร์สโค้ดเพื่อความปลอดภัย</p>
+            </li>
+            <li>
+              <strong>การทดสอบระบบปลายทาง (End-to-End Testing):</strong>
+              <p>เน้นย้ำการทดสอบสามสถานการณ์หลัก:
+                <br>• ลูกค้ากดยกเลิกจองเมื่อเกิดข้อผิดพลาดของระบบคูปอง
+                <br>• แอดมินปฏิเสธคำขอลบบัญชี แล้วแอปมือถือลูกค้าต้องแจ้งเตือนปลดล็อกและใช้งานต่อได้ทันที
+                <br>• หน้าจอการเงินของคนขับแสดงรายได้รวมในแต่ละวันสอดคล้องกับเวลาไทย UTC+7
+              </p>
+            </li>
+          </ol>
+        </div>
+      </main>
+
+    </div>
+
+    <script>
+      function switchTab(tabId) {
+        // Remove active class from all buttons and tabs
+        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+
+        // Add active class to selected button and tab
+        event.currentTarget.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+      }
+
+      function showDemo(demoId) {
+        // Get the parent widget
+        const widget = event.currentTarget.closest('.demo-widget');
+
+        // Remove active class from buttons and contents within this widget
+        widget.querySelectorAll('.demo-tab').forEach(tab => tab.classList.remove('active'));
+        widget.querySelectorAll('.demo-content').forEach(content => content.classList.remove('active'));
+
+        // Add active class to selected
+        event.currentTarget.classList.add('active');
+        widget.querySelector('#' + demoId).classList.add('active');
+      }
+    </script>
+</body>
+</html>

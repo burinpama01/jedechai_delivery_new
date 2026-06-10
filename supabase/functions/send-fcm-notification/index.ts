@@ -137,7 +137,17 @@ async function isAllowedTarget(
   notificationId?: string,
   data?: Record<string, string>,
 ) {
-  if (callerRole === "admin" || callerId === targetUserId) return true;
+  if (callerId === targetUserId) return true;
+
+  // Only admin callers may send notifications to admin targets
+  const { data: targetProfile } = await supabaseAdmin
+    .from("profiles")
+    .select("role")
+    .eq("id", targetUserId)
+    .maybeSingle();
+  if (targetProfile?.role === "admin" && callerRole !== "admin") return false;
+
+  if (callerRole === "admin") return true;
 
   const bookingIdFromData = data?.booking_id;
   if (!notificationId && !bookingIdFromData) return false;

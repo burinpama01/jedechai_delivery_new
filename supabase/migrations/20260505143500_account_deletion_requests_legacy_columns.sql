@@ -5,7 +5,6 @@ ALTER TABLE public.account_deletion_requests
   ADD COLUMN IF NOT EXISTS admin_note text,
   ADD COLUMN IF NOT EXISTS created_at timestamptz,
   ADD COLUMN IF NOT EXISTS updated_at timestamptz;
-
 UPDATE public.account_deletion_requests
 SET
   processed_at = COALESCE(processed_at, reviewed_at),
@@ -15,7 +14,6 @@ WHERE
   processed_at IS NULL
   OR created_at IS NULL
   OR updated_at IS NULL;
-
 CREATE OR REPLACE FUNCTION public.sync_account_deletion_legacy_timestamps()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -36,24 +34,18 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 DROP TRIGGER IF EXISTS trigger_sync_account_deletion_legacy_timestamps
   ON public.account_deletion_requests;
-
 CREATE TRIGGER trigger_sync_account_deletion_legacy_timestamps
   BEFORE INSERT OR UPDATE ON public.account_deletion_requests
   FOR EACH ROW
   EXECUTE FUNCTION public.sync_account_deletion_legacy_timestamps();
-
 CREATE OR REPLACE VIEW public.deletion_requests
 WITH (security_invoker = true)
 AS
 SELECT *
 FROM public.account_deletion_requests;
-
 COMMENT ON VIEW public.deletion_requests IS
   'Compatibility view for legacy clients. Canonical table: public.account_deletion_requests.';
-
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.deletion_requests TO authenticated;
-
 NOTIFY pgrst, 'reload schema';

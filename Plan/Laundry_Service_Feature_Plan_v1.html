@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>แผนเพิ่มฟีเจอร์ร้านซักผ้า รับ-ส่งผ้า v1 - Jedechai Delivery</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #111827;
+      --panel-soft: #172033;
+      --line: rgba(255, 255, 255, 0.12);
+      --text: #f8fafc;
+      --muted: #aab7cf;
+      --blue: #2563eb;
+      --cyan: #06b6d4;
+      --green: #22c55e;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --violet: #8b5cf6;
+      --shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Inter", "Sarabun", "Noto Sans Thai", system-ui, sans-serif;
+      background:
+        linear-gradient(135deg, rgba(37, 99, 235, 0.18), transparent 34%),
+        linear-gradient(315deg, rgba(6, 182, 212, 0.14), transparent 30%),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+    }
+
+    header {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 42px 22px 24px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 6px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: #c7d2fe;
+      background: rgba(37, 99, 235, 0.14);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      margin: 18px 0 8px;
+      font-size: clamp(28px, 4vw, 48px);
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      max-width: 900px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .layout {
+      max-width: 1180px;
+      margin: 0 auto 56px;
+      padding: 0 22px;
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 22px;
+    }
+
+    nav {
+      position: sticky;
+      top: 18px;
+      align-self: start;
+      background: rgba(17, 24, 39, 0.84);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    nav a {
+      display: block;
+      color: var(--muted);
+      text-decoration: none;
+      padding: 9px 10px;
+      border-radius: 7px;
+      font-size: 14px;
+    }
+
+    nav a:hover { background: rgba(255, 255, 255, 0.06); color: var(--text); }
+
+    main { display: grid; gap: 18px; }
+
+    section {
+      background: rgba(17, 24, 39, 0.88);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 22px;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 18px 0 8px;
+      color: #dbeafe;
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+
+    p { margin: 0 0 12px; color: var(--muted); }
+    ul, ol { margin: 10px 0 0; padding-left: 22px; color: var(--muted); }
+    li { margin: 7px 0; }
+    strong { color: var(--text); }
+    code {
+      color: #bfdbfe;
+      background: rgba(37, 99, 235, 0.16);
+      border: 1px solid rgba(37, 99, 235, 0.22);
+      border-radius: 5px;
+      padding: 1px 5px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.92em;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      background: var(--panel-soft);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #08111f;
+      background: #bfdbfe;
+      margin-right: 6px;
+      margin-bottom: 8px;
+    }
+
+    .tag.green { background: #bbf7d0; }
+    .tag.amber { background: #fde68a; }
+    .tag.violet { background: #ddd6fe; }
+    .tag.red { background: #fecaca; }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .step {
+      min-height: 104px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #0f172a;
+      padding: 12px;
+    }
+
+    .step b { display: block; margin-bottom: 6px; }
+    .step small { color: var(--muted); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      overflow: hidden;
+      border-radius: 8px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px;
+      text-align: left;
+      vertical-align: top;
+      color: var(--muted);
+    }
+
+    th {
+      color: var(--text);
+      background: #0f172a;
+    }
+
+    .note {
+      border-left: 4px solid var(--amber);
+      background: rgba(245, 158, 11, 0.12);
+      padding: 12px 14px;
+      border-radius: 8px;
+      color: #fde68a;
+      margin-top: 12px;
+    }
+
+    .ok {
+      border-left-color: var(--green);
+      background: rgba(34, 197, 94, 0.12);
+      color: #bbf7d0;
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      nav { position: static; }
+      .grid, .flow { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="eyebrow">Feature Plan v1 · 2026-06-09 · Laundry Pickup & Return</div>
+    <h1>แผนเพิ่มฟีเจอร์ร้านซักผ้า บริการรับ-ส่งผ้า</h1>
+    <p class="lead">
+      เพิ่มบริการ <strong>ซักผ้า</strong> โดยลูกค้าเลือกได้ 2 แบบ: ให้คนขับมารับผ้าไปส่งร้านแล้วลูกค้าไปรับเองที่ร้านในราคาเที่ยวเดียว หรือให้คนขับมารับผ้าและส่งกลับหลังร้านซักเสร็จในราคาไปกลับ โดยขากลับต้องสร้างงานใหม่อัตโนมัติและไม่บังคับใช้คนขับเดิม
+    </p>
+  </header>
+
+  <div class="layout">
+    <nav>
+      <a href="#summary">สรุปภาพรวม</a>
+      <a href="#requirements">Requirement</a>
+      <a href="#approaches">ทางเลือกออกแบบ</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#merchant-flow">ร้านซักผ้าแยก Food</a>
+      <a href="#chat-quote">Chat Quote</a>
+      <a href="#gp-fees">GP & ค่าส่ง</a>
+      <a href="#payment-flow">Payment Flow</a>
+      <a href="#ui-dialogs">UI & Dialogs</a>
+      <a href="#notifications">Notify</a>
+      <a href="#data">Data Model</a>
+      <a href="#flow">User Flow</a>
+      <a href="#tasks">Implementation Tasks</a>
+      <a href="#testing">Verification</a>
+      <a href="#risks">Risks</a>
+      <a href="#rollout">Rollout</a>
+    </nav>
+
+    <main>
+      <section id="summary">
+        <h2>1. สรุปภาพรวม</h2>
+        <div class="grid">
+          <div class="card">
+            <span class="tag green">Recommended</span>
+            <h3>แนวทางหลัก</h3>
+            <p>ใช้ <code>laundry_orders</code> เป็นหัวออเดอร์ซักผ้า และใช้ <code>bookings</code> เป็นงานคนขับแต่ละขา โดยเพิ่ม <code>service_type = laundry</code>, <code>laundry_leg = outbound|return</code>, และ <code>laundry_order_id</code> เพื่อ reuse ระบบคนขับ, wallet, notification, tracking และรายงานเดิมให้มากที่สุด</p>
+          </div>
+          <div class="card">
+            <span class="tag violet">Separate Storefront</span>
+            <h3>ร้านซักผ้าไม่ใช่ร้านอาหาร</h3>
+            <p>แยก flow ร้านซักผ้าออกจาก food merchant: ร้านซักผ้า CRUD <code>laundry_packages</code> เช่น ซักอบพับ, ซักแห้ง, ผ้านวม, รีดผ้า โดย package เป็นรายการบริการสำหรับขอประเมินราคาเท่านั้น ไม่ใช่ราคาจองทันที</p>
+          </div>
+          <div class="card">
+            <span class="tag amber">Core Rule</span>
+            <h3>ขากลับไม่ใช้ไรเดอร์เดิม</h3>
+            <p>เมื่อร้านกด “ซักเสร็จ/พร้อมส่งกลับ” ระบบสร้าง return booking ใหม่โดยตั้ง <code>driver_id = null</code> และ <code>status = pending</code> จากพิกัดร้านไปพิกัดลูกค้า จากนั้นแจ้งคนขับใกล้ร้านผ่าน flow งานใหม่ตามปกติ</p>
+          </div>
+          <div class="card">
+            <span class="tag">Customer Discovery</span>
+            <h3>แสดงร้านใกล้สุดก่อน</h3>
+            <p>หน้า customer laundry ต้องเรียงร้านซักผ้าตามระยะจากจุดรับของลูกค้า และแสดงค่าส่ง estimate ต่อร้านทันที เพื่อให้ลูกค้าเห็น “ร้านใกล้ + ค่าส่งถูก” ก่อนตัดสินใจ</p>
+          </div>
+        </div>
+        <div class="note ok">
+          เหตุผล: โครงสร้างปัจจุบันมี <code>Booking</code>, <code>BookingStatus</code>, <code>DriverJobVisibilityPolicy</code>, <code>get_nearby_bookings</code>, wallet และ notification อยู่แล้ว จึงควรให้ laundry ใช้ quote/order layer แยก แล้วสร้าง booking เฉพาะหลังลูกค้ายืนยัน quote และชำระเงินตาม rule แล้ว
+        </div>
+      </section>
+
+      <section id="requirements">
+        <h2>2. Requirement ที่ล็อกจากโจทย์</h2>
+        <ul>
+          <li>ลูกค้าเลือก <strong>ร้านซักผ้า</strong> และเลือกบริการรับผ้า</li>
+          <li>ร้านซักผ้าต้องมี flow แยกจากร้านอาหาร และไม่ใช้รายการอาหาร/cart/menu option เดิม</li>
+          <li>ร้านซักผ้า CRUD รายการ <code>package</code> ของร้านได้ เช่น ซักอบพับ, ซักแห้ง, ผ้านวม, รีดผ้า, บริการด่วน</li>
+          <li>Package เป็นแม่แบบขอประเมินราคาเท่านั้น ไม่มีราคาเหมาจองทันที และลูกค้าไม่สามารถกดบุ๊คทันทีจากราคาแพ็กเกจ</li>
+          <li>ทุกออเดอร์ต้องเริ่มจาก <strong>ขอราคา / ส่งคำขอให้ร้านประเมิน</strong> เพื่อให้ร้านยืนยันค่าซักจริงก่อนสร้าง booking</li>
+          <li>การขอราคาเป็นรูปแบบ <strong>chat กับร้าน</strong> แต่ต้องแสดงรายละเอียดคำขอครบถ้วนเป็น structured summary</li>
+          <li>Form ขอราคา/ส่งคำขอให้ร้านประเมินต้องแนบหลักฐานภาพ เช่น รูปถุงผ้า, รูปผ้า, รูปคราบ, หรือรูปจำนวนโดยประมาณ</li>
+          <li>ลูกค้าเข้าฟีเจอร์ร้านซักผ้าแล้วระบบต้องแสดงร้านใกล้สุดก่อน พร้อมราคาค่าส่งตามระยะทางของแต่ละร้าน</li>
+          <li>ต้องระบุรูปแบบการคิด GP และค่าส่ง แยกชัดระหว่างค่าซักของร้าน, GP ระบบ, ค่าส่งขาไป, ค่าส่งขากลับ และรายได้คนขับ</li>
+          <li>Driver จ่ายร้านเป็นยอดหลังหัก GP เท่านั้น: <code>merchant_net_amount = laundry_amount - platform_gp_amount</code></li>
+          <li>หลังแอดมินอนุมัติร้านใหม่ ต้องมี flow ให้ร้านเลือกประเภทร้าน เช่น ร้านอาหาร หรือ ร้านซักผ้า เพื่อแยก storefront/schema/workflow ตั้งแต่ onboarding</li>
+          <li>Quote ต้องมีเวลาหมดอายุ ถ้าลูกค้าไม่ตอบรับ/ไม่กดยืนยันภายในเวลา ระบบปิดออเดอร์อัตโนมัติเป็น booking ล้มเหลวฝั่งร้าน-ลูกค้า โดยยังไม่สร้าง outbound booking ไปหาคนขับ</li>
+          <li>ค่าเริ่มต้น <code>quote_expires_at</code> คือ 1 ชั่วโมงหลังร้านส่ง quote และร้านค้าสามารถตั้งค่าเวลาหมดอายุ quote ได้เองใน settings</li>
+          <li>ร้านซักผ้าต้องแยก quote และ outbound booking ชัดเจน: quote เป็นงานระหว่างร้านกับลูกค้า; outbound booking เป็นงานคนขับที่สร้างหลัง quote accepted + payment guard เท่านั้น</li>
+          <li>ต้องมี notification ที่จำเป็นทุกจุด แต่ไม่ spam: notify เมื่อมี action ที่ต้องให้ role ถัดไปตัดสินใจหรือรับทราบสถานะสำคัญ</li>
+          <li>ร้านต้องได้ notify พร้อมเสียงเตือนเมื่อมี quote request ใหม่ เพื่อไม่พลาดคำขอประเมินราคา</li>
+          <li>เมื่อสร้าง outbound booking แล้วไม่มีคนขับกดรับภายในเวลาที่กำหนด แอดมินต้องจัดการโยน/assign งานให้คนขับได้แบบเดียวกับ food</li>
+          <li>ร้านซักผ้าใช้ <strong>บัญชี merchant เดิม</strong> ไม่สร้าง role ใหม่; หลังอัปเดตระบบต้องเช็คก่อนว่า merchant มี <code>merchant_service_types</code> แล้วหรือยัง ถ้ายังไม่มีให้บังคับเปิดหน้าเลือกประเภทร้านก่อนเข้า dashboard</li>
+          <li>MVP บังคับคนขับถ่ายภาพหน้างานเป็นหลักฐานก่อนกด “ยืนยันรับผ้า” ทุกครั้ง</li>
+          <li>Wallet hold/release ใน MVP ให้สรุป contract ของ RPC เดิมก่อน implementation และ reuse RPC/ledger flow เดิมเท่าที่รองรับก่อนเพิ่ม ledger type ใหม่</li>
+          <li>ลูกค้าต้องจ่าย <strong>ค่าซักที่ร้าน quote + ค่าส่งขาไป</strong> ก่อนเริ่มงานขาไป</li>
+          <li>ถ้าลูกค้าอยู่ที่ทำงานแต่ให้รับผ้าที่บ้าน หรือไม่ได้อยู่ที่จุดรับ ระบบต้องบังคับจ่ายด้วย <code>wallet</code> เท่านั้น</li>
+          <li>ถ้าลูกค้าอยู่ที่บ้าน/จุดรับตามหมุด ลูกค้าเลือกจ่ายได้ <code>cash</code> หรือ <code>wallet</code></li>
+          <li>ถ้าจ่ายด้วย <code>wallet</code> เมื่อคนขับกดยืนยันรับผ้าพร้อมหลักฐาน เงินจะเข้า wallet คนขับ แล้วคนขับจ่ายค่าซักให้ร้านเองตอนส่งผ้าถึงร้าน</li>
+          <li>ถ้าเลือกขากลับ ลูกค้าต้องเลือกวิธีชำระค่าส่งขากลับแยกเป็น <code>cash</code> หรือ <code>wallet</code>; คนขับขากลับเก็บเฉพาะ <strong>ค่าส่งขากลับ</strong> ไม่เก็บค่าซักซ้ำ</li>
+          <li>ขากลับแบบ <code>cash</code> ใช้ flow ปกติ คนขับเก็บเงินลูกค้าที่จุดหมายเมื่อส่งผ้าเสร็จ</li>
+          <li>ขากลับแบบ <code>wallet</code> ต้องหัก/hold wallet ลูกค้าตั้งแต่เลือกส่งกลับถึงบ้าน โดยลูกค้าต้องมียอดเงินเพียงพอก่อนจึงเลือกได้ และ release เข้า wallet คนขับขากลับเมื่อส่งงานเสร็จพร้อมแจ้งเตือนให้ตรวจสอบ</li>
+          <li>ตัวเลือก A: <strong>คนขับมารับผ้าแล้วลูกค้าไปรับเองที่ร้าน</strong> คิดราคาเที่ยวเดียว</li>
+          <li>ตัวเลือก B: <strong>คนขับมารับผ้าและส่งกลับหลังซักเสร็จ</strong> คิดราคาไปกลับ</li>
+          <li>เมื่อร้านรับออเดอร์ซักเสร็จและกดพร้อมส่งกลับ ระบบต้องสร้างงานขากลับใหม่อัตโนมัติ</li>
+          <li>ขากลับไม่จำเป็นต้องใช้ไรเดอร์เดิม คนขับคนใดก็ได้ที่เข้าเงื่อนไขรับงานได้</li>
+          <li>ต้องรักษา semantics เงินเดิม: non-food ใช้ <code>bookings.price</code> เป็นค่าขนส่งของงานนั้น ไม่เอายอดรวมหลายขาไปปนใน booking เดียว</li>
+        </ul>
+      </section>
+
+      <section id="approaches">
+        <h2>3. ทางเลือกออกแบบ</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>ทางเลือก</th>
+              <th>แนวคิด</th>
+              <th>ข้อดี</th>
+              <th>ข้อเสีย</th>
+              <th>ผลตัดสิน</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>A. Booking เดียวทั้งงาน</td>
+              <td>ใช้ booking เดิม แล้ว reset <code>driver_id</code> สำหรับขากลับ</td>
+              <td>แก้น้อยตอนแรก</td>
+              <td>เสี่ยงพัง history, earnings, assigned_at, completed_at, notification และ audit trail</td>
+              <td>ไม่แนะนำ</td>
+            </tr>
+            <tr>
+              <td>B. ระบบซักผ้าแยกบางส่วน</td>
+              <td>แยก laundry quote/catalog/chat/order ออกจาก food แต่ reuse <code>bookings</code>, wallet, notification, driver dispatch และ admin reporting เฉพาะส่วนที่เหมาะสม</td>
+              <td>แยก domain ซักผ้าชัดเจน, ไม่ปน food menu/cart, quote ผ่าน chat ได้, reuse infrastructure เดิม, ขากลับเป็นงานใหม่จริง</td>
+              <td>ต้องเพิ่ม migration/RLS/RPC ใหม่ และต้องออกแบบ contract ระหว่าง laundry order กับ booking legs ให้แน่น</td>
+              <td><strong>แนะนำ</strong></td>
+            </tr>
+            <tr>
+              <td>C. ระบบซักผ้าแยกทั้งหมด</td>
+              <td>สร้าง dispatch/payment/status ใหม่สำหรับ laundry</td>
+              <td>ยืดหยุ่นที่สุดระยะยาว</td>
+              <td>ซ้ำกับระบบเดิมมาก, ใช้เวลานาน, regression risk สูง</td>
+              <td>เก็บไว้ Phase 2+</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="architecture">
+        <h2>4. Architecture ที่เสนอ</h2>
+        <div class="flow">
+          <div class="step">
+            <b>Customer</b>
+            <small>เลือกบริการซักผ้า, ร้าน, จุดรับ, mode รับเอง/ส่งกลับ</small>
+          </div>
+          <div class="step">
+            <b>Laundry Order</b>
+            <small>เก็บสถานะงานซัก, mode, quote, booking ids</small>
+          </div>
+          <div class="step">
+            <b>Outbound Booking</b>
+            <small><code>laundry/outbound</code> ลูกค้า → ร้าน</small>
+          </div>
+          <div class="step">
+            <b>Merchant Ready</b>
+            <small>ร้านกดซักเสร็จ; self-pickup จบที่ notify, return mode สร้างงานใหม่</small>
+          </div>
+          <div class="step">
+            <b>Return Booking</b>
+            <small><code>laundry/return</code> ร้าน → ลูกค้า, <code>driver_id = null</code></small>
+          </div>
+        </div>
+
+        <h3>Boundaries</h3>
+        <ul>
+          <li><code>laundry_orders</code>: source of truth ของธุรกิจซักผ้า เช่น mode, สถานะซัก, quote รวม, booking ขาไป/กลับ</li>
+          <li><code>bookings</code>: source of truth ของงานคนขับแต่ละเที่ยว เช่น status, driver, distance, price, earnings</li>
+          <li><code>mark_laundry_ready_guarded</code>: RPC atomic สำหรับร้านกดพร้อมรับเองหรือพร้อมส่งกลับ และป้องกันการสร้าง return booking ซ้ำ</li>
+          <li><code>confirm_laundry_quote_guarded</code>: RPC atomic สำหรับลูกค้ายืนยัน quote, ตรวจ payment rule และสร้าง outbound booking หลังจ่าย/เลือกวิธีจ่ายถูกต้องแล้ว</li>
+          <li><code>confirm_laundry_pickup_guarded</code>: RPC atomic สำหรับคนขับยืนยันรับผ้าพร้อมหลักฐาน และ release wallet ให้คนขับเมื่อ flow เป็น wallet</li>
+          <li><code>DriverJobVisibilityPolicy</code> และ <code>get_nearby_bookings</code>: เพิ่มกฎให้ <code>laundry</code> มองเห็นเหมือน <code>parcel</code> เมื่อ status เป็น <code>pending</code></li>
+        </ul>
+      </section>
+
+      <section id="merchant-flow">
+        <h2>4.1 Flow ร้านซักผ้าแยกจาก Food</h2>
+        <div class="grid">
+          <div class="card">
+            <span class="tag red">Not Food</span>
+            <h3>สิ่งที่ห้าม reuse ตรง ๆ</h3>
+            <ul>
+              <li>ไม่ใช้ <code>menu_items</code>, <code>booking_items</code> แบบอาหาร, cart provider ของอาหาร หรือ option group อาหารเป็น UI หลัก</li>
+              <li>ไม่ใช้คำว่าอาหาร เช่น “เตรียมอาหาร”, “อาหารพร้อมรับ”, “ค่าอาหาร” ใน laundry status/detail</li>
+              <li>ไม่รวม laundry order เข้า tab food order โดยไม่มี filter แยก เพราะ merchant workflow คนละแบบ</li>
+            </ul>
+          </div>
+          <div class="card">
+            <span class="tag green">Laundry Catalog</span>
+            <h3>รายการร้านซักผ้า</h3>
+            <ul>
+              <li><code>laundry_packages</code>: รายการบริการของร้าน เช่น ซักอบพับ, ซักแห้งสูท, ผ้านวม 6 ฟุต</li>
+              <li>Package ใช้เป็นแม่แบบให้ลูกค้าส่งคำขอประเมินราคา ไม่ใช่ราคาเหมาจองทันที</li>
+              <li>รองรับราคาอ้างอิง/ช่วงราคา, หน่วยประเมิน, ระยะเวลาทำงาน, service tag และสถานะเปิด/ปิดรายการ</li>
+            </ul>
+          </div>
+          <div class="card">
+            <span class="tag amber">Merchant Console</span>
+            <h3>หน้าร้านซักผ้า</h3>
+            <ul>
+              <li>เพิ่ม console หรือ tab แยกชื่อ “Laundry” ใน merchant app</li>
+              <li>CRUD package, เวลาให้บริการ, pickup capacity และ order status เฉพาะซักผ้า</li>
+              <li>รับคำขอประเมิน, ตรวจรายการ/รูป/จำนวน, ส่ง quote, ยืนยันรับผ้า, ยืนยันรับเงินจากคนขับ, เริ่มซัก, ซักเสร็จ, ส่งกลับ/รอลูกค้ามารับ</li>
+            </ul>
+          </div>
+          <div class="card">
+            <span class="tag">Customer Discovery</span>
+            <h3>ค้นหาร้านใกล้สุด</h3>
+            <ul>
+              <li>ใช้พิกัดจุดรับของลูกค้าเป็น origin สำหรับ query ร้านซักผ้า</li>
+              <li>เรียงตามระยะทางน้อยไปมาก และคำนวณ outbound delivery fee ต่อร้าน</li>
+              <li>ถ้าเลือกส่งกลับ ให้คำนวณ return delivery fee จากร้านกลับปลายทางลูกค้าและแสดงราคารวมไปกลับ</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="chat-quote">
+        <h2>4.2 Chat Quote และ Form ขอราคา</h2>
+        <div class="grid">
+          <div class="card">
+            <span class="tag green">Structured Chat</span>
+            <h3>ขอราคาเป็น chat กับร้าน</h3>
+            <ul>
+              <li>ลูกค้าส่งคำขอจาก form แล้วระบบเปิด thread chat ระหว่างลูกค้าและร้าน</li>
+              <li>บนหัว chat ต้องมี structured summary: package, จุดรับ, return mode, pickup presence, รูปแนบ, note, ค่าส่ง estimate</li>
+              <li>ร้านตอบ/ถามเพิ่มใน chat ได้ แต่การส่ง quote ต้องใช้ action <code>ส่งใบเสนอราคา</code> ที่เก็บเป็น structured data</li>
+            </ul>
+          </div>
+          <div class="card">
+            <span class="tag amber">Evidence Required</span>
+            <h3>Form ต้องแนบรูป</h3>
+            <ul>
+              <li>บังคับแนบอย่างน้อย 1 รูปก่อนส่งคำขอ เช่น รูปถุงผ้า/รูปกองผ้า/รูปคราบ/รูปป้ายดูแลผ้า</li>
+              <li>รองรับหลายรูป พร้อมคำอธิบายสั้น ๆ ต่อรูปถ้ามี</li>
+              <li>รูปแนบต้องผูกกับ <code>laundry_quote_requests</code> และแสดงให้ร้าน/แอดมินเห็นใน audit</li>
+            </ul>
+          </div>
+          <div class="card">
+            <span class="tag violet">Merchant Quote</span>
+            <h3>ร้านส่ง quote จาก chat</h3>
+            <ul>
+              <li>ร้านกรอกค่าซักจริง, note, เวลาประมาณเสร็จ, เงื่อนไขพิเศษ และวันหมดอายุ quote</li>
+              <li>ระบบคำนวณค่าส่งจากพิกัด ไม่ให้ร้านแก้เอง ยกเว้น admin override</li>
+              <li>เมื่อส่ง quote ต้อง notify ลูกค้าให้ยืนยันและเลือก payment rule</li>
+            </ul>
+          </div>
+          <div class="card">
+            <span class="tag">No Booking Yet</span>
+            <h3>ยังไม่สร้าง booking</h3>
+            <ul>
+              <li>Chat/quote request อยู่ใน laundry domain เท่านั้น</li>
+              <li>Outbound booking สร้างหลังลูกค้ายืนยัน quote และผ่าน payment guard แล้ว</li>
+              <li>ถ้าลูกค้าปฏิเสธหรือ quote หมดอายุ ออเดอร์จบโดยไม่มี driver job</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="gp-fees">
+        <h2>4.3 รูปแบบการคิด GP และค่าส่ง</h2>
+        <table>
+          <thead>
+            <tr><th>ยอดเงิน</th><th>ใครเป็นเจ้าของ</th><th>วิธีคิด</th><th>หมายเหตุ</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>laundry_amount</code></td>
+              <td>ร้านซักผ้า</td>
+              <td>ร้านส่ง quote จาก chat หลังตรวจรูป/รายละเอียด</td>
+              <td>เป็นฐานคิด GP ระบบของร้าน</td>
+            </tr>
+            <tr>
+              <td><code>platform_gp_amount</code></td>
+              <td>ระบบ</td>
+              <td><code>laundry_amount * laundry_gp_rate</code> หรือ rate เฉพาะร้าน ถ้ามี custom config</td>
+              <td>หักจากรายได้ร้าน ไม่หักจาก driver</td>
+            </tr>
+            <tr>
+              <td><code>merchant_net_amount</code></td>
+              <td>ร้านซักผ้า</td>
+              <td><code>laundry_amount - platform_gp_amount</code></td>
+              <td>Driver จ่ายร้านยอดนี้เท่านั้น เพื่อให้ GP ระบบถูกหักก่อนถึงร้าน</td>
+            </tr>
+            <tr>
+              <td><code>outbound_delivery_fee</code></td>
+              <td>คนขับขาไป</td>
+              <td>สูตร service rate ของ <code>laundry</code>: base + per km จากจุดรับลูกค้าไป ร้าน</td>
+              <td>ลูกค้าจ่ายพร้อมค่าซักก่อนสร้าง booking ขาไป</td>
+            </tr>
+            <tr>
+              <td><code>return_delivery_fee</code></td>
+              <td>คนขับขากลับ</td>
+              <td>สูตร service rate ของ <code>laundry</code>: base + per km จากร้านไปปลายทางลูกค้า</td>
+              <td>เก็บเมื่อมี return booking เท่านั้น และไม่รวมค่าซักซ้ำ</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="note">
+          Decision ล็อกแล้ว: ถ้า wallet flow ให้ driver จ่ายร้านเป็นยอด <code>merchant_net_amount</code> หลังหัก GP แล้วเท่านั้น ระบบต้องทำ ledger แยก <code>platform_gp_amount</code> เพื่อ audit ได้
+        </div>
+      </section>
+
+      <section id="payment-flow">
+        <h2>4.4 Payment Flow ที่ QA แล้ว</h2>
+        <div class="grid">
+          <div class="card">
+            <span class="tag amber">Quote Only</span>
+            <h3>ไม่มีราคาเหมาจองทันที</h3>
+            <ul>
+              <li>ลูกค้าเลือก package เพื่อส่งคำขอให้ร้านประเมินเท่านั้น</li>
+              <li>ร้านต้องส่ง quote ที่ประกอบด้วย <code>laundry_amount</code> + <code>outbound_delivery_fee</code></li>
+              <li>Quote มีเวลาหมดอายุ ถ้าลูกค้าไม่ยืนยันภายในเวลา ให้ auto-close เป็น <code>quote_expired</code>/<code>failed</code> โดยไม่สร้าง outbound booking</li>
+              <li>ระบบสร้าง outbound booking หลังลูกค้ายืนยัน quote และผ่าน payment rule แล้วเท่านั้น</li>
+            </ul>
+          </div>
+          <div class="card">
+            <span class="tag green">Pickup Payment</span>
+            <h3>จ่ายก่อนเริ่มขาไป</h3>
+            <ul>
+              <li>ยอดที่ต้องจ่ายก่อนเริ่มงาน = ค่าซักตาม quote + ค่าส่งขาไป</li>
+              <li>ลูกค้าอยู่จุดรับตามหมุด: เลือก <code>cash</code> หรือ <code>wallet</code></li>
+              <li>ลูกค้าไม่ได้อยู่จุดรับ เช่น อยู่ที่ทำงานแต่ให้รับที่บ้าน: ใช้ <code>wallet</code> เท่านั้น</li>
+            </ul>
+          </div>
+          <div class="card">
+            <span class="tag violet">Wallet Handoff</span>
+            <h3>Wallet เข้า driver ก่อนจ่ายร้าน</h3>
+            <ul>
+              <li>เมื่อจ่าย wallet ระบบ hold/authorize ยอดไว้หลังลูกค้ายืนยัน quote โดย MVP ต้องสรุปและ reuse RPC เดิมก่อนเพิ่ม ledger type ใหม่</li>
+              <li>เมื่อคนขับกด “ยืนยันรับผ้าแล้ว” พร้อมภาพถ่ายหน้างาน ระบบโอนยอดค่าซัก + ค่าส่งขาไปเข้า wallet คนขับ</li>
+              <li>คนขับจ่ายค่าซักให้ร้านเองตอนส่งผ้าถึงร้าน และร้านต้องกดยืนยันรับเงินก่อนเริ่มซัก</li>
+            </ul>
+          </div>
+          <div class="card">
+            <span class="tag">Return Leg</span>
+            <h3>ขากลับเก็บเฉพาะค่าส่ง</h3>
+            <ul>
+              <li>ถ้าลูกค้าเลือกส่งกลับ ร้านกดซักเสร็จแล้วระบบสร้าง return booking ใหม่</li>
+              <li>ตอนเลือก <code>return_delivery</code> ลูกค้าต้องเลือกวิธีชำระค่าส่งขากลับ: <code>cash</code> หรือ <code>wallet</code></li>
+              <li>ถ้าเลือก <code>cash</code> คนขับขากลับเก็บเงินลูกค้าที่จุดหมายตาม flow ปกติ</li>
+              <li>ถ้าเลือก <code>wallet</code> ระบบต้องตรวจยอด wallet ให้เพียงพอและ hold ค่าส่งขากลับตั้งแต่ตอนเลือก mode ส่งกลับถึงบ้าน</li>
+              <li>เมื่อคนขับขากลับส่งงานเสร็จ ระบบ release ยอด hold เข้า wallet คนขับขากลับ และแจ้งเตือนลูกค้า/คนขับให้ตรวจสอบ</li>
+              <li>ห้ามเก็บค่าซักซ้ำในขากลับ และห้ามรวมรายได้ขาไป/ขากลับเป็น booking เดียว</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="ui-dialogs">
+        <h2>4.5 UI และ Dialog ที่ต้องมีทุกจุด</h2>
+        <table>
+          <thead>
+            <tr><th>Role</th><th>จุดที่ต้องแสดง</th><th>ข้อความ/ข้อมูลที่ต้องชัดเจน</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>ลูกค้า</td>
+              <td>ก่อนส่งคำขอประเมิน</td>
+              <td>Package นี้เป็นการขอราคา ร้านต้องตรวจและส่ง quote ก่อน ยังไม่ใช่การบุ๊คงาน</td>
+            </tr>
+            <tr>
+              <td>ลูกค้า</td>
+              <td>ก่อนยืนยัน quote</td>
+              <td>ค่าซัก, ค่าส่งขาไป, วิธีจ่าย, จุดรับ, ลูกค้าอยู่จุดรับหรือไม่, เงื่อนไขขากลับถ้าเลือกส่งกลับ</td>
+            </tr>
+            <tr>
+              <td>ลูกค้า</td>
+              <td>เลือกจุดรับที่ลูกค้าไม่ได้อยู่</td>
+              <td>ระบบรับเฉพาะ wallet เพราะลูกค้าไม่ได้อยู่ที่จุดรับเพื่อจ่ายเงินสด</td>
+            </tr>
+            <tr>
+              <td>ลูกค้า</td>
+              <td>เลือกส่งกลับถึงบ้าน</td>
+              <td>ต้องเลือกชำระค่าส่งขากลับเป็น cash หรือ wallet; ถ้า wallet ต้องแจ้งยอดที่จะ hold และ block เมื่อ wallet ไม่เพียงพอ</td>
+            </tr>
+            <tr>
+              <td>ลูกค้า</td>
+              <td>หลังส่งกลับสำเร็จแบบ wallet</td>
+              <td>แจ้งว่าค่าส่งขากลับที่ hold ถูกจ่ายให้คนขับแล้ว พร้อมยอดและเลขงานขากลับ</td>
+            </tr>
+            <tr>
+              <td>คนขับ</td>
+              <td>ก่อนรับงาน</td>
+              <td>งานนี้ต้องรับผ้าที่ไหน, จ่ายแบบ cash/wallet, ต้องนำเงินค่าซักไปจ่ายร้านเท่าไร</td>
+            </tr>
+            <tr>
+              <td>คนขับ</td>
+              <td>ก่อนกดยืนยันรับผ้า</td>
+              <td>ต้องถ่ายภาพหน้างานก่อนยืนยันรับผ้า และถ้าเป็น wallet เงินจะเข้า wallet คนขับเพื่อให้จ่ายร้าน</td>
+            </tr>
+            <tr>
+              <td>คนขับ</td>
+              <td>หลังส่งงานขากลับแบบ wallet สำเร็จ</td>
+              <td>แจ้งว่ายอดค่าส่งขากลับถูกเติมเข้า wallet คนขับแล้ว และให้ตรวจสอบยอดใน wallet</td>
+            </tr>
+            <tr>
+              <td>ร้านค้า</td>
+              <td>ตอนส่ง quote</td>
+              <td>ค่าซักจริง, รายการ/จำนวนที่ประเมิน, เวลาทำงาน, ยอดที่คนขับต้องนำมาจ่ายร้าน</td>
+            </tr>
+            <tr>
+              <td>ร้านค้า</td>
+              <td>ก่อนเริ่มซัก</td>
+              <td>ยืนยันรับผ้าและรับเงินค่าซักจากคนขับแล้ว</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="note">
+          Dialog/notification ต้องยิงทุก transition สำคัญ: quote requested, quote sent, quote accepted, payment selected, return payment selected, wallet hold failed/succeeded, driver accepted, pickup confirmed with photo, wallet released, merchant received cloth/payment, washing started, laundry ready, return booking created, return completed wallet released, completed/cancelled
+        </div>
+      </section>
+
+      <section id="notifications">
+        <h2>4.6 Notify ที่จำเป็น</h2>
+        <table>
+          <thead>
+            <tr><th>Event</th><th>Notify ใคร</th><th>เหตุผล</th><th>Payload หลัก</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>quote_requested</code></td>
+              <td>ร้าน</td>
+              <td>มีคำขอใหม่ต้องประเมิน ต้องแจ้งพร้อมเสียงเตือน</td>
+              <td><code>laundry_order_id</code>, package, pickup area, image count, sound=<code>merchant_laundry_quote_new</code></td>
+            </tr>
+            <tr>
+              <td><code>chat_message_created</code></td>
+              <td>คู่สนทนา</td>
+              <td>มีข้อความใหม่ใน chat quote</td>
+              <td><code>thread_id</code>, sender role, preview</td>
+            </tr>
+            <tr>
+              <td><code>quote_submitted</code></td>
+              <td>ลูกค้า</td>
+              <td>ลูกค้าต้องยืนยัน quote และจ่ายเงิน</td>
+              <td>ค่าซัก, ค่าส่งขาไป, return estimate, expires_at</td>
+            </tr>
+            <tr>
+              <td><code>quote_expiring_soon</code></td>
+              <td>ลูกค้า</td>
+              <td>เตือนก่อน quote หมดอายุ เพื่อป้องกัน quote ค้างร้าน</td>
+              <td>laundry_order_id, expires_at, remaining_minutes</td>
+            </tr>
+            <tr>
+              <td><code>outbound_driver_unassigned</code></td>
+              <td>แอดมิน</td>
+              <td>มี outbound booking ที่ลูกค้าจ่ายแล้วแต่ยังไม่มีคนขับรับ ต้องให้ admin โยนงานได้</td>
+              <td>booking_id, laundry_order_id, pickup area, merchant id, waiting_minutes</td>
+            </tr>
+            <tr>
+              <td><code>quote_expired_failed</code></td>
+              <td>ลูกค้า, ร้าน</td>
+              <td>ปิดออเดอร์ quote ที่ไม่ตอบรับ และยืนยันว่าไม่มี driver booking เกิดขึ้น</td>
+              <td>laundry_order_id, expired_at, failure_reason</td>
+            </tr>
+            <tr>
+              <td><code>quote_accepted_paid</code></td>
+              <td>ร้าน, คนขับที่เข้าเงื่อนไข</td>
+              <td>ร้านรู้ว่าออเดอร์เริ่มจริง; driver เห็นงานขาไป</td>
+              <td>pickup booking id, payment method, pickup presence, return payment method ถ้ามี</td>
+            </tr>
+            <tr>
+              <td><code>return_wallet_hold_succeeded</code></td>
+              <td>ลูกค้า</td>
+              <td>ยืนยันว่าค่าส่งขากลับถูก hold แล้วหลังเลือกส่งกลับถึงบ้านแบบ wallet</td>
+              <td>laundry_order_id, return_delivery_fee, hold transaction id, balance_after</td>
+            </tr>
+            <tr>
+              <td><code>return_wallet_hold_failed</code></td>
+              <td>ลูกค้า</td>
+              <td>wallet ไม่เพียงพอ จึงเลือกส่งกลับแบบ wallet ไม่ได้</td>
+              <td>laundry_order_id, required_amount, current_balance</td>
+            </tr>
+            <tr>
+              <td><code>driver_accepted_pickup</code></td>
+              <td>ลูกค้า, ร้าน</td>
+              <td>รู้ว่ามีคนขับรับงานแล้ว</td>
+              <td>driver id, ETA, pickup booking id</td>
+            </tr>
+            <tr>
+              <td><code>pickup_confirmed</code></td>
+              <td>ลูกค้า, ร้าน</td>
+              <td>ผ้าถูกรับแล้วและกำลังไปส่งร้าน</td>
+              <td>evidence photo id, wallet release status, driver id</td>
+            </tr>
+            <tr>
+              <td><code>merchant_received_cloth_payment</code></td>
+              <td>ลูกค้า, คนขับ</td>
+              <td>ร้านยืนยันรับผ้า/รับเงินและเริ่มซักได้</td>
+              <td>received_at, merchant id, payment confirmation</td>
+            </tr>
+            <tr>
+              <td><code>laundry_ready</code></td>
+              <td>ลูกค้า หรือ driver candidates</td>
+              <td>ลูกค้ารับเองหรือระบบสร้างงานขากลับ</td>
+              <td>return mode, return booking id ถ้ามี</td>
+            </tr>
+            <tr>
+              <td><code>return_completed</code></td>
+              <td>ลูกค้า, ร้าน, คนขับขากลับ</td>
+              <td>งานขากลับจบและออเดอร์ซักผ้าปิด; ถ้าเป็น wallet ให้ release ค่าส่งขากลับเข้า wallet คนขับ</td>
+              <td>return booking id, completed_at, return payment method, return wallet release status</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="data">
+        <h2>5. Data Model / Migration</h2>
+        <h3>5.1 ตารางใหม่: <code>laundry_orders</code></h3>
+        <table>
+          <thead>
+            <tr><th>Column</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>id uuid primary key</code></td><td>รหัสหัวออเดอร์ซักผ้า</td></tr>
+            <tr><td><code>customer_id uuid</code></td><td>เจ้าของออเดอร์</td></tr>
+            <tr><td><code>merchant_id uuid</code></td><td>ร้านซักผ้า</td></tr>
+            <tr><td><code>return_mode text</code></td><td><code>self_pickup</code> หรือ <code>return_delivery</code></td></tr>
+            <tr><td><code>status text</code></td><td><code>quote_requested</code>, <code>quote_sent</code>, <code>quote_accepted</code>, <code>awaiting_pickup_payment</code>, <code>pickup_booking_created</code>, <code>at_shop_waiting_payment_confirm</code>, <code>washing</code>, <code>ready_for_self_pickup</code>, <code>return_booking_pending</code>, <code>return_in_progress</code>, <code>completed</code>, <code>cancelled</code>, <code>quote_expired</code>, <code>failed</code></td></tr>
+            <tr><td><code>pickup_booking_id uuid</code></td><td>booking ขาไป</td></tr>
+            <tr><td><code>return_booking_id uuid null</code></td><td>booking ขากลับ สร้างเมื่อร้านกดพร้อมส่งกลับ</td></tr>
+            <tr><td><code>outbound_delivery_fee numeric</code></td><td>ค่าคนขับขาไป</td></tr>
+            <tr><td><code>return_delivery_fee numeric</code></td><td>ค่าคนขับขากลับ; เป็น 0 เมื่อรับเอง</td></tr>
+            <tr><td><code>delivery_fee_total numeric</code></td><td>ยอด quote logistics ที่ลูกค้าเห็นตอนสั่ง</td></tr>
+            <tr><td><code>laundry_amount numeric null</code></td><td>ค่าซักจริงจาก quote ร้าน</td></tr>
+            <tr><td><code>platform_gp_amount numeric null</code></td><td>ยอด GP ระบบจากค่าซัก</td></tr>
+            <tr><td><code>merchant_net_amount numeric null</code></td><td>ยอดสุทธิร้านหลังหัก GP</td></tr>
+            <tr><td><code>quote_thread_id uuid null</code></td><td>chat thread ระหว่างลูกค้าและร้านสำหรับ quote</td></tr>
+            <tr><td><code>quote_expires_at timestamptz null</code></td><td>เวลาหมดอายุหลังร้านส่ง quote ให้ลูกค้ากดยืนยัน; ค่าเริ่มต้น 1 ชั่วโมง แต่ร้านตั้งค่าได้</td></tr>
+            <tr><td><code>failed_reason text null</code></td><td>เหตุผลที่ออเดอร์ quote ล้มเหลว เช่น <code>quote_expired_no_customer_acceptance</code></td></tr>
+            <tr><td><code>pickup_payment_method text null</code></td><td><code>cash</code> หรือ <code>wallet</code>; remote pickup ต้องเป็น <code>wallet</code></td></tr>
+            <tr><td><code>pickup_presence text</code></td><td><code>customer_at_pickup</code> หรือ <code>remote_pickup</code></td></tr>
+            <tr><td><code>driver_wallet_release_status text</code></td><td><code>not_required</code>, <code>held</code>, <code>released_to_driver</code>, <code>refunded</code></td></tr>
+            <tr><td><code>pickup_evidence_photo_id uuid null</code></td><td>ภาพถ่ายหน้างานที่คนขับต้องแนบก่อนยืนยันรับผ้าใน MVP</td></tr>
+            <tr><td><code>return_payment_method text null</code></td><td><code>cash</code> หรือ <code>wallet</code>; required เมื่อ <code>return_mode = return_delivery</code></td></tr>
+            <tr><td><code>return_wallet_hold_status text</code></td><td><code>not_required</code>, <code>held</code>, <code>released_to_driver</code>, <code>refunded</code>; ใช้เมื่อขากลับจ่าย wallet</td></tr>
+            <tr><td><code>return_wallet_hold_transaction_id uuid null</code></td><td>อ้างอิง ledger/RPC เดิมสำหรับ hold ค่าส่งขากลับจนกว่าคนขับส่งงานเสร็จ</td></tr>
+            <tr><td><code>merchant_payment_confirmed_at timestamptz null</code></td><td>ร้านยืนยันว่ารับค่าซักจากคนขับแล้ว</td></tr>
+            <tr><td><code>notes text null</code></td><td>รายละเอียดผ้า/คำสั่งพิเศษ</td></tr>
+            <tr><td><code>ready_at timestamptz null</code></td><td>เวลาร้านกดซักเสร็จ</td></tr>
+          </tbody>
+        </table>
+
+        <h3>5.2 เพิ่มคอลัมน์ใน <code>bookings</code></h3>
+        <ul>
+          <li><code>laundry_order_id uuid null references laundry_orders(id)</code></li>
+          <li><code>laundry_leg text null check in ('outbound', 'return')</code></li>
+          <li><code>parent_booking_id uuid null references bookings(id)</code> สำหรับ link return booking ไปยัง outbound booking</li>
+          <li><code>pickup_evidence_photo_id uuid null</code> หรือ reference ไปตาราง evidence/storage สำหรับงานขาไป</li>
+          <li><code>return_payment_method text null</code> สำหรับ booking ขากลับ เพื่อแสดงให้คนขับรู้ว่าต้องเก็บ cash หรือรอ wallet release</li>
+        </ul>
+
+        <h3>5.3 ตารางรายการร้านซักผ้า</h3>
+        <table>
+          <thead>
+            <tr><th>Table</th><th>Purpose</th><th>Key fields</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>laundry_packages</code></td>
+              <td>รายการบริการ/แม่แบบประเมินราคา ไม่ใช่ราคาเหมาจองทันที</td>
+              <td><code>merchant_id</code>, <code>name</code>, <code>description</code>, <code>price_hint</code>, <code>pricing_unit</code>, <code>turnaround_hours</code>, <code>is_available</code></td>
+            </tr>
+            <tr>
+              <td><code>laundry_quotes</code></td>
+              <td>quote ที่ร้านส่งกลับให้ลูกค้ายืนยันก่อนสร้าง booking</td>
+              <td><code>laundry_order_id</code>, <code>laundry_amount</code>, <code>platform_gp_amount</code>, <code>merchant_net_amount</code>, <code>outbound_delivery_fee</code>, <code>return_delivery_fee_estimate</code>, <code>expires_at</code>, <code>accepted_at</code>, <code>expired_at</code>, <code>status</code>, <code>merchant_note</code></td>
+            </tr>
+            <tr>
+              <td><code>laundry_quote_threads</code></td>
+              <td>chat thread สำหรับคำขอประเมินราคาของ laundry order</td>
+              <td><code>laundry_order_id</code>, <code>customer_id</code>, <code>merchant_id</code>, <code>last_message_at</code>, <code>status</code></td>
+            </tr>
+            <tr>
+              <td><code>laundry_quote_messages</code></td>
+              <td>ข้อความ chat ระหว่างลูกค้าและร้าน</td>
+              <td><code>thread_id</code>, <code>sender_id</code>, <code>sender_role</code>, <code>message_type</code>, <code>body</code>, <code>created_at</code></td>
+            </tr>
+            <tr>
+              <td><code>laundry_quote_attachments</code></td>
+              <td>หลักฐานภาพจาก form และ chat</td>
+              <td><code>laundry_order_id</code>, <code>message_id</code>, <code>storage_path</code>, <code>caption</code>, <code>uploaded_by</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>5.4 Merchant/service config</h3>
+        <ul>
+          <li>เพิ่ม service type <code>laundry</code> ใน <code>service_rates</code> หรือ seed config เดิม เพื่อใช้สูตร base + per km</li>
+          <li>เพิ่ม field ระบุประเภทร้าน เช่น <code>profiles.merchant_service_types text[]</code>; ร้านที่เลือกแล้วจะเป็น <code>{food}</code>, <code>{laundry}</code> หรือหลายประเภทตามที่ admin อนุญาต ส่วน merchant เดิมที่ยังไม่มีค่าต้องเข้า type selection gate ก่อนใช้งาน</li>
+          <li>เพิ่ม profile/display field สำหรับร้านซักผ้า เช่น <code>laundry_min_order_amount</code>, <code>laundry_turnaround_hours</code>, <code>laundry_accepts_return_delivery</code></li>
+          <li>เพิ่ม setting <code>laundry_quote_expiry_minutes</code> ระดับร้าน โดยค่าเริ่มต้น = 60 นาที</li>
+          <li>เพิ่ม setting เสียงแจ้งเตือนร้าน เช่น <code>laundry_quote_sound_enabled</code> และ sound key <code>merchant_laundry_quote_new</code></li>
+          <li>เพิ่ม config GP เช่น <code>laundry_gp_rate</code> ระดับระบบ และ override ระดับร้านถ้าต้องรองรับรายร้าน</li>
+          <li>เพิ่ม accepted service type ให้ driver เลือกเปิด/ปิด <code>laundry</code> ได้ในหน้าตั้งค่า</li>
+        </ul>
+
+        <h3>5.5 Merchant onboarding หลัง admin approve</h3>
+        <ul>
+          <li>ใช้บัญชี <code>merchant</code> เดิม ไม่สร้าง role/subtype ใหม่สำหรับซักผ้าใน MVP</li>
+          <li>หลังแอดมินอนุมัติ merchant account แล้ว ร้านต้องเข้า flow เลือกประเภทร้านก่อนเปิดใช้งานจริง</li>
+          <li>หลังอัปเดตแอป/เว็บหรือ login ใหม่ ต้องเช็ค <code>profiles.merchant_service_types</code>; ถ้ายังเป็น null/empty ให้บังคับเปิดหน้าเลือกประเภทร้านและห้ามเข้า dashboard จนเลือกเสร็จ</li>
+          <li>ตัวเลือกเริ่มต้น: <code>food</code> = ร้านอาหาร, <code>laundry</code> = ร้านซักผ้า</li>
+          <li>การเลือกประเภทร้านต้องกำหนด <code>profiles.merchant_service_types</code>, route หน้า dashboard, catalog schema และ setup checklist ของร้าน</li>
+          <li>ร้านอาหารไป flow menu/food order เดิม; ร้านซักผ้าไป flow package/quote/chat/laundry order</li>
+          <li>ถ้าต้องเปลี่ยนประเภทร้านภายหลัง ให้ผ่าน admin action พร้อม audit log เท่านั้น</li>
+        </ul>
+      </section>
+
+      <section id="flow">
+        <h2>6. User Flow</h2>
+        <div class="grid">
+          <div class="card">
+            <span class="tag">Customer</span>
+            <h3>สร้างออเดอร์</h3>
+            <ol>
+              <li>เปิดหน้า “ซักผ้า” จาก customer home</li>
+              <li>เลือกจุดรับผ้าเพื่อใช้ค้นหาร้านซักผ้าใกล้ที่สุด</li>
+              <li>ระบบแสดงร้านซักผ้าเรียงจากใกล้สุด พร้อม outbound delivery fee estimate และราคาอ้างอิงของ package</li>
+              <li>เลือกร้านซักผ้า แล้วเลือก package ของร้านนั้น ไม่ใช้เมนูอาหาร</li>
+              <li>ส่งคำขอประเมินราคา พร้อมรายละเอียด/รูป/จำนวนโดยประมาณ และยังไม่สร้าง booking</li>
+              <li>ร้านส่ง quote กลับมาเป็นค่าซักจริง + ค่าส่งขาไป พร้อมเวลาหมดอายุค่าเริ่มต้น 1 ชั่วโมง หรือตามค่าที่ร้านตั้งไว้</li>
+              <li>ระบุที่อยู่ปลายทางสำหรับส่งกลับเมื่อเลือก mode ส่งกลับถึงบ้าน</li>
+              <li>เลือก mode: รับเองที่ร้าน หรือ ส่งกลับถึงบ้าน; ถ้าเลือกส่งกลับต้องเลือกวิธีจ่ายค่าส่งขากลับเป็น cash/wallet</li>
+              <li>ถ้าเลือกขากลับแบบ wallet ระบบต้องตรวจยอดเงินและ hold ค่าส่งขากลับทันที ถ้า wallet ไม่เพียงพอให้เลือกไม่ได้</li>
+              <li>เลือกว่าลูกค้าอยู่ที่จุดรับหรือเป็น remote pickup; remote pickup ต้องจ่าย wallet เท่านั้น</li>
+              <li>ยืนยัน quote และจ่ายค่าซัก + ค่าส่งขาไปก่อนหมดอายุ ระบบจึงสร้าง outbound booking</li>
+              <li>ถ้าลูกค้าไม่ยืนยันก่อนหมดอายุ ระบบปิดเป็น booking ล้มเหลวฝั่งร้าน-ลูกค้า และไม่แจ้งงานให้คนขับ</li>
+            </ol>
+          </div>
+          <div class="card">
+            <span class="tag violet">Driver</span>
+            <h3>งานขาไป/ขากลับ</h3>
+            <ol>
+              <li>เห็นงาน <code>laundry</code> เมื่อ online, อยู่ใน radius, และรับ service type นี้</li>
+              <li>รับงานขาไปจากลูกค้า/จุดรับไปส่งร้าน</li>
+              <li>ก่อนรับงานเห็นชัดว่าจ่าย <code>cash</code> หรือ <code>wallet</code> และต้องจ่ายร้านเท่าไร</li>
+              <li>เมื่อรับผ้าต้องถ่ายภาพหน้างานก่อนกดยืนยัน; ถ้า wallet เงินค่าซัก + ค่าส่งขาไปเข้า wallet คนขับ</li>
+              <li>เมื่อส่งถึงร้าน คนขับจ่ายค่าซักให้ร้าน แล้วร้านกดยืนยันรับเงิน/รับผ้า</li>
+              <li>งานขากลับเป็น booking ใหม่ คนขับเดิมหรือคนอื่นก็รับได้; ถ้า return wallet ให้เติมเข้า wallet คนขับขากลับหลังส่งงานเสร็จ</li>
+            </ol>
+          </div>
+          <div class="card">
+            <span class="tag amber">Merchant</span>
+            <h3>ร้านซักผ้า</h3>
+            <ol>
+              <li>เห็นออเดอร์ซักผ้าใน merchant dashboard/console แยกจาก food</li>
+              <li>CRUD package ของร้านซักผ้า โดยไม่ใช้เมนูอาหาร</li>
+              <li>รับคำขอประเมินราคาและส่ง quote กลับให้ลูกค้าก่อนสร้าง booking</li>
+              <li>เมื่อมี quote request ใหม่ ระบบต้องแจ้งเตือนพร้อมเสียงใน merchant app</li>
+              <li>กดยืนยันรับผ้าและรับเงินจากคนขับก่อนเริ่มซัก</li>
+              <li>กด “ซักเสร็จ”</li>
+              <li>ถ้า <code>self_pickup</code>: แจ้งลูกค้าให้ไปรับเอง</li>
+              <li>ถ้า <code>return_delivery</code>: เรียก RPC สร้าง return booking อัตโนมัติตามวิธีจ่ายขากลับที่ลูกค้าเลือกไว้</li>
+            </ol>
+          </div>
+          <div class="card">
+            <span class="tag green">Admin</span>
+            <h3>ตรวจสอบ</h3>
+            <ol>
+              <li>เห็น laundry order และ booking ทั้งสองขา</li>
+              <li>กรองรายงานตาม <code>service_type = laundry</code></li>
+              <li>ตรวจ driver earnings แยกขา ไม่รวมผิดเป็นงานเดียว</li>
+              <li>มี action แก้สถานะ/assign driver เฉพาะเมื่อจำเป็น</li>
+              <li>ถ้า outbound booking ไม่มีคนขับรับ ต้องโยน/assign งานให้คนขับได้แบบเดียวกับ food</li>
+              <li>ตรวจ audit wallet hold/release ทั้งขาไปและขากลับ รวมถึงภาพหลักฐานรับผ้าหน้างาน</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <section id="tasks">
+        <h2>7. Implementation Tasks</h2>
+        <h3>Task 1: Database migration และ RLS</h3>
+        <ul>
+          <li>สร้าง migration <code>supabase/migrations/YYYYMMDDHHMMSS_laundry_orders.sql</code></li>
+          <li>สร้างตาราง <code>laundry_orders</code>, indexes, constraints และ trigger/update timestamp ถ้า repo มี pattern เดิม</li>
+          <li>สร้างตาราง <code>laundry_packages</code> แยกจาก food menu schema และกำหนดให้เป็น quote template เท่านั้น</li>
+          <li>สร้างตาราง <code>laundry_quotes</code> สำหรับ quote ที่ร้านส่งให้ลูกค้าอนุมัติก่อนสร้าง booking</li>
+          <li>เพิ่มคอลัมน์ quote expiry และ failed status เพื่อปิด quote ค้างโดยไม่สร้าง outbound booking</li>
+          <li>เพิ่มค่าเริ่มต้น quote expiry = 60 นาที และ field/config ให้ร้านตั้งค่าได้</li>
+          <li>เพิ่มคอลัมน์ link ใน <code>bookings</code></li>
+          <li>เพิ่ม field <code>return_payment_method</code>, <code>return_wallet_hold_status</code>, <code>return_wallet_hold_transaction_id</code> และ <code>pickup_evidence_photo_id</code></li>
+          <li>เพิ่ม RLS: customer อ่านของตัวเอง, merchant อ่าน/อัปเดตของร้านตัวเอง, driver อ่านผ่าน booking ที่ assign/visible, admin ผ่าน service role</li>
+          <li>เพิ่มตาราง chat/attachment: <code>laundry_quote_threads</code>, <code>laundry_quote_messages</code>, <code>laundry_quote_attachments</code></li>
+          <li>เพิ่ม storage bucket/path policy สำหรับรูปหลักฐานคำขอประเมินราคาและภาพถ่ายหน้างาน จำกัดสิทธิ์เฉพาะลูกค้าเจ้าของออเดอร์, ร้าน, driver ที่เกี่ยวข้อง, admin</li>
+          <li>เพิ่ม seed/config สำหรับ <code>service_type = laundry</code></li>
+          <li>เพิ่ม merchant onboarding state/field สำหรับเลือก <code>merchant_service_types</code> หลัง admin approve</li>
+          <li>เพิ่ม migration/backfill ให้ merchant เดิมที่ยังไม่มี <code>merchant_service_types</code> เข้า type selection gate แทนการเดาเป็น food เงียบ ๆ</li>
+        </ul>
+
+        <h3>Task 2: RPC atomic สำหรับสร้างออเดอร์และสร้างขากลับ</h3>
+        <ul>
+          <li>สร้าง RPC หรือ query function สำหรับค้นหาร้านซักผ้าใกล้จุดรับ เรียงตาม distance และคืน delivery fee estimate ต่อร้าน</li>
+          <li>สร้าง <code>create_laundry_quote_request_guarded</code> เพื่อ insert หัวออเดอร์สถานะ <code>quote_requested</code> โดยยังไม่สร้าง booking</li>
+          <li>สร้าง <code>submit_laundry_quote_guarded</code> ให้ร้านส่งค่าซักจริง + ค่าส่งขาไปกลับให้ลูกค้าตรวจ พร้อมคำนวณ <code>platform_gp_amount</code> และ <code>merchant_net_amount</code></li>
+          <li>ก่อนออกแบบ hold/release ใหม่ ต้องสรุป existing wallet RPC contract ที่มีอยู่ เช่น payment, refund, ledger-only guard และข้อจำกัด แล้ว reuse path เดิมใน MVP เท่าที่รองรับ</li>
+          <li>สร้าง <code>confirm_laundry_quote_guarded</code> เพื่อ validate payment method, hold/debit wallet เมื่อจำเป็น, validate return payment method, hold ค่าส่งขากลับเมื่อ return wallet และสร้าง outbound booking หลังลูกค้ายืนยัน quote</li>
+          <li>สร้าง <code>expire_laundry_quotes_guarded</code> หรือ scheduled function สำหรับปิด quote หมดอายุเป็น <code>quote_expired</code>/<code>failed</code> โดยไม่สร้าง outbound booking</li>
+          <li>สร้าง scheduled/monitor rule สำหรับ outbound booking ที่ยังไม่มี driver หลังลูกค้าจ่ายแล้ว เพื่อ notify admin ให้จัดการ assign</li>
+          <li>สร้าง <code>send_laundry_quote_message_guarded</code> สำหรับ chat message และ notification คู่สนทนา</li>
+          <li>สร้าง <code>add_laundry_quote_attachment_guarded</code> หรือ upload contract สำหรับแนบรูปหลักฐานกับ quote request/chat</li>
+          <li>สร้าง <code>confirm_laundry_pickup_guarded</code> เพื่อยืนยันรับผ้าพร้อมภาพถ่ายหน้างาน และ release wallet เข้า driver เมื่อเป็น wallet flow</li>
+          <li>สร้าง <code>mark_laundry_ready_guarded</code> เพื่อ update ready state และสร้าง return booking แบบ idempotent</li>
+          <li>ใน return mode ต้อง insert return booking ด้วย <code>driver_id = null</code>, <code>status = pending</code>, <code>laundry_leg = return</code>, <code>parent_booking_id = pickup_booking_id</code> และ <code>return_payment_method</code> ตามที่ลูกค้าเลือก</li>
+          <li>เมื่อ return booking สำเร็จแบบ wallet ต้อง release ค่าส่งขากลับที่ hold ไว้เข้า wallet คนขับขากลับครั้งเดียว และ notify ให้ตรวจสอบ</li>
+          <li>หลังสร้าง return booking ให้เรียก/ต่อกับ <code>notify_driver_visible_job</code> หรือ notification path เดิม</li>
+        </ul>
+
+        <h3>Task 3: Flutter common models/services</h3>
+        <ul>
+          <li>เพิ่ม <code>LaundryOrder</code>, <code>LaundryReturnMode</code>, <code>LaundryStatus</code></li>
+          <li>เพิ่ม <code>LaundryQuote</code>, <code>LaundryPickupPaymentMethod</code>, <code>LaundryPickupPresence</code>, <code>LaundryReturnPaymentMethod</code></li>
+          <li>เพิ่ม <code>LaundryQuoteThread</code>, <code>LaundryQuoteMessage</code>, <code>LaundryQuoteAttachment</code></li>
+          <li>เพิ่ม field laundry ใน <code>Booking</code> model</li>
+          <li>เพิ่ม <code>LaundryPricingService</code> สำหรับคำนวณค่าส่ง estimate, GP, merchant net และ validate quote/payment breakdown</li>
+          <li>เพิ่ม <code>LaundryQuoteChatService</code> สำหรับโหลด thread, ส่งข้อความ, upload รูป และ mark read</li>
+          <li>เพิ่ม <code>LaundryOrderService</code> สำหรับเรียก RPC และ stream/fetch ออเดอร์</li>
+        </ul>
+
+        <h3>Task 4: Customer app</h3>
+        <ul>
+          <li>เพิ่ม entry “ซักผ้า” ใน customer home</li>
+          <li>เพิ่มหน้าจอ <code>laundry_service_screen.dart</code> สำหรับเลือกจุดรับและแสดงร้านซักผ้าใกล้สุดก่อน</li>
+          <li>เพิ่มหน้ารายละเอียดร้านซักผ้าที่แสดง package ของร้าน ไม่ใช้ food cart UI</li>
+          <li>เพิ่ม form ขอราคาแบบ structured: package, note, จำนวนโดยประมาณ, pickup address, return mode, pickup presence, รูปแนบอย่างน้อย 1 รูป</li>
+          <li>เพิ่ม chat quote screen ที่แสดง structured summary เหนือข้อความ chat และมีปุ่มยืนยัน quote เมื่อร้านส่งใบเสนอราคา</li>
+          <li>แสดงค่าส่ง estimate ต่อร้านตามระยะทาง และ update เมื่อจุดรับหรือปลายทางส่งกลับเปลี่ยน</li>
+          <li>เพิ่ม flow ส่งคำขอประเมินราคา, รอร้านส่ง quote, ยืนยัน quote และเลือก payment method ตาม pickup presence</li>
+          <li>ถ้าเลือกส่งกลับถึงบ้าน ให้เพิ่มตัวเลือกจ่ายขากลับ <code>cash</code>/<code>wallet</code>; wallet ต้องตรวจยอดเงินเพียงพอและแสดง dialog hold ก่อนยืนยัน</li>
+          <li>แสดงราคาแบบชัดเจน: <strong>ค่าซักจาก quote</strong>, <strong>ค่าส่งขาไป</strong>, และถ้าเลือกส่งกลับให้แสดง <strong>ค่าส่งขากลับ + วิธีชำระขากลับ</strong></li>
+          <li>เพิ่ม tracking/detail ให้เห็น outbound และ return booking แยกกัน</li>
+          <li>เพิ่ม notification routing สำหรับ <code>laundry_ready_for_self_pickup</code> และ <code>laundry_return_driver_assigned</code></li>
+        </ul>
+
+        <h3>Task 5: Merchant app</h3>
+        <ul>
+          <li>เพิ่ม laundry console แยกจาก food order list ใน merchant app</li>
+          <li>เพิ่มหน้าจัดการ CRUD <code>laundry_packages</code> โดยใช้ copy/field ของร้านซักผ้า</li>
+          <li>เพิ่ม inbox คำขอประเมินราคาแบบ chat พร้อมรูปแนบและ structured summary</li>
+          <li>เพิ่ม action ส่ง quote ให้ลูกค้า โดยแสดงค่าซัก, GP, merchant net, ค่าส่งขาไป และ estimate ขากลับ</li>
+          <li>แสดง countdown/expiry ของ quote ที่ส่งแล้ว และ auto-hide/ย้ายไป failed เมื่อหมดเวลา</li>
+          <li>เพิ่ม setting ให้ร้านกำหนด quote expiry minutes ได้ โดยค่าเริ่มต้น 60 นาที</li>
+          <li>เพิ่มเสียงแจ้งเตือนเมื่อมี quote request ใหม่ และต้องเคารพ setting เปิด/ปิดเสียงของร้าน</li>
+          <li>ทุกครั้งที่ merchant login หรือเปิดแอปหลังอัปเดต ต้องเช็ค <code>merchant_service_types</code>; ถ้าไม่มีให้ redirect ไปหน้าเลือกประเภทร้านก่อน dashboard</li>
+          <li>เพิ่ม action “ยืนยันรับผ้าและรับเงินจากคนขับ”, “เริ่มซัก”, “ซักเสร็จ”, “ส่งกลับแล้ว/ลูกค้ารับแล้ว” ตาม mode</li>
+          <li>เมื่อกด “ซักเสร็จ” ต้องเรียก <code>mark_laundry_ready_guarded</code> เท่านั้น ห้าม client insert return booking เอง</li>
+          <li>แสดงสถานะว่าขากลับสร้างแล้วหรือกำลังรอคนขับ</li>
+        </ul>
+
+        <h3>Task 6: Driver app</h3>
+        <ul>
+          <li>เพิ่ม <code>laundry</code> ในหน้าตั้งค่า accepted service types</li>
+          <li>ปรับ <code>DriverJobVisibilityPolicy</code> ให้ <code>laundry</code> visible เมื่อ status <code>pending</code></li>
+          <li>ปรับ label/icon/job card/navigation: outbound = “รับผ้าไปส่งร้าน”, return = “รับผ้าที่ร้านไปส่งลูกค้า”</li>
+          <li>เพิ่ม pickup confirmation ที่บังคับถ่ายภาพหน้างานก่อนกดยืนยันรับผ้า และ wallet release state สำหรับ flow ที่ลูกค้าจ่าย wallet</li>
+          <li>แสดง dialog ชัดเจนว่าคนขับต้องจ่ายร้านเท่าไร และเงินมาจาก cash หรือ wallet</li>
+          <li>สำหรับงานขากลับ แสดงชัดว่าต้องเก็บ cash ที่ปลายทาง หรือเป็น wallet ที่จะ release เข้า wallet คนขับหลังส่งงานเสร็จ</li>
+          <li>ตรวจ earnings ให้ booking แต่ละขาจ่ายแยก ไม่เอาราคาไปกลับทั้งก้อนไปเป็นรายได้ของขาเดียว</li>
+        </ul>
+
+        <h3>Task 7: Admin web และรายงาน</h3>
+        <ul>
+          <li>เพิ่ม filter/display <code>laundry</code> ใน orders/dashboard/pending/reports</li>
+          <li>เพิ่มหน้า/section จัดการร้านซักผ้าและ package แยกจาก menu อาหาร</li>
+          <li>แสดง link ระหว่าง laundry order, pickup booking และ return booking</li>
+          <li>เพิ่ม audit view สำหรับ quote, payment method, wallet release, pickup evidence และ merchant payment confirmation</li>
+          <li>เพิ่ม merchant onboarding UI/action ให้ร้านที่อนุมัติแล้วเลือกประเภทร้าน และ admin ดู/แก้ประเภทได้พร้อม audit</li>
+          <li>เพิ่ม audit view สำหรับ merchant ที่ยังไม่มี type หลังอัปเดต เพื่อเห็นว่าถูก block ที่ type selection gate</li>
+          <li>เพิ่ม admin action เฉพาะกรณีจำเป็น เช่น assign/reassign outbound booking, reassign return booking หรือ cancel laundry order</li>
+          <li>reuse pattern food สำหรับงานไม่มีคนขับ: แสดงคิวงาน, ระยะเวลารอ, ปุ่มโยนงาน/assign driver, และ audit log</li>
+          <li>อัปเดต CSV/export ให้ไม่รวมเงินผิดจาก booking legs</li>
+        </ul>
+
+        <h3>Task 8: Localization และ Notification</h3>
+        <ul>
+          <li>เพิ่มคำแปล TH/EN สำหรับ service type, status, CTA และ notification payload</li>
+          <li>เพิ่ม payload types: <code>laundry.order.created</code>, <code>laundry.ready.self_pickup</code>, <code>laundry.return.created</code>, <code>driver.job.available</code> สำหรับ laundry</li>
+          <li>เพิ่ม payload types สำหรับ quote/chat: <code>laundry.quote.requested</code>, <code>laundry.quote.message</code>, <code>laundry.quote.submitted</code>, <code>laundry.quote.accepted_paid</code></li>
+          <li>เพิ่ม payload/sound สำหรับร้าน: <code>laundry.quote.requested</code> + sound <code>merchant_laundry_quote_new</code></li>
+          <li>เพิ่ม payload สำหรับ return wallet: <code>laundry.return.wallet_hold_succeeded</code>, <code>laundry.return.wallet_hold_failed</code>, <code>laundry.return.wallet_released_to_driver</code></li>
+          <li>เพิ่ม payload สำหรับแอดมิน: <code>laundry.outbound.unassigned</code></li>
+          <li>เพิ่ม dialog copy สำหรับลูกค้า/คนขับ/ร้านค้าทุก transition สำคัญ</li>
+          <li>ตรวจ <code>send-fcm-notification</code> auth rule ไม่ให้ target ผิด role</li>
+        </ul>
+      </section>
+
+      <section id="testing">
+        <h2>8. Verification Plan</h2>
+        <table>
+          <thead>
+            <tr><th>Layer</th><th>Test</th><th>Expected</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>SQL/RPC</td>
+              <td>ค้นหาร้านซักผ้าจากจุดรับลูกค้า</td>
+              <td>คืนเฉพาะร้านที่เปิด <code>laundry</code>, เรียงใกล้สุดก่อน, มี delivery fee estimate</td>
+            </tr>
+            <tr>
+              <td>SQL/RPC</td>
+              <td>ส่งคำขอ quote แล้วตรวจว่ายังไม่สร้าง booking</td>
+              <td>มี laundry order สถานะ <code>quote_requested</code>, มี chat thread, มี attachment อย่างน้อย 1 รูป และ <code>pickup_booking_id</code> ยังเป็น null</td>
+            </tr>
+            <tr>
+              <td>SQL/RPC</td>
+              <td>ร้านส่ง quote พร้อม GP</td>
+              <td>บันทึก <code>laundry_amount</code>, <code>platform_gp_amount</code>, <code>merchant_net_amount</code>, <code>outbound_delivery_fee</code> ถูกต้องตาม config</td>
+            </tr>
+            <tr>
+              <td>Notification</td>
+              <td>quote/chat lifecycle</td>
+              <td>notify เฉพาะ role ที่ต้อง action: ร้านเมื่อมี request พร้อมเสียง, ลูกค้าเมื่อ quote submitted, คู่สนทนาเมื่อมี chat message</td>
+            </tr>
+            <tr>
+              <td>Merchant Settings</td>
+              <td>quote expiry config</td>
+              <td>ค่าเริ่มต้นเป็น 60 นาที; ร้านตั้งค่าใหม่แล้ว quote ใหม่ใช้ค่าใหม่; quote เก่ายึด expires_at ที่บันทึกไว้</td>
+            </tr>
+            <tr>
+              <td>SQL/RPC</td>
+              <td>ลูกค้ายืนยัน quote และ payment method</td>
+              <td>remote pickup รับเฉพาะ wallet; customer at pickup รับ cash/wallet; outbound booking ถูกสร้างหลังผ่าน rule เท่านั้น</td>
+            </tr>
+            <tr>
+              <td>SQL/Scheduled</td>
+              <td>quote หมดอายุโดยลูกค้าไม่ยืนยัน</td>
+              <td>laundry order เป็น <code>quote_expired</code>/<code>failed</code>, <code>pickup_booking_id</code> ยังเป็น null, ไม่มี driver notification</td>
+            </tr>
+            <tr>
+              <td>Admin/Merchant</td>
+              <td>ร้านใหม่หลังอนุมัติเลือกประเภทร้าน</td>
+              <td>food merchant เห็น food dashboard; laundry merchant เห็น laundry package/quote dashboard; เปลี่ยนประเภทภายหลังต้องมี audit</td>
+            </tr>
+            <tr>
+              <td>Merchant Auth</td>
+              <td>merchant เดิม login หลังอัปเดตแต่ยังไม่มี <code>merchant_service_types</code></td>
+              <td>ถูก redirect ไปหน้าเลือกประเภทร้านและไม่สามารถเข้า dashboard food/laundry ได้จนเลือก type เสร็จ</td>
+            </tr>
+            <tr>
+              <td>Admin Web</td>
+              <td>outbound booking ไม่มีคนขับรับ</td>
+              <td>admin เห็นคิวงาน laundry outbound ที่รอนาน และ assign/reassign คนขับได้เหมือน food พร้อม audit</td>
+            </tr>
+            <tr>
+              <td>SQL/RPC</td>
+              <td>driver ยืนยันรับผ้าใน wallet flow</td>
+              <td>ยอดค่าซัก + ค่าส่งขาไป release เข้า wallet คนขับครั้งเดียวและมี pickup evidence</td>
+            </tr>
+            <tr>
+              <td>Driver App</td>
+              <td>driver กดยืนยันรับผ้าโดยไม่ถ่ายภาพหน้างาน</td>
+              <td>ระบบ block action และแสดง dialog ให้ถ่ายภาพก่อน จึงจะเรียก <code>confirm_laundry_pickup_guarded</code> ได้</td>
+            </tr>
+            <tr>
+              <td>Wallet/RPC</td>
+              <td>ลูกค้าเลือกส่งกลับแบบ wallet แต่ยอด wallet ไม่พอ</td>
+              <td>เลือกไม่ได้, ไม่ hold เงิน, ไม่สร้าง outbound booking และแสดง dialog wallet ไม่เพียงพอ</td>
+            </tr>
+            <tr>
+              <td>Wallet/RPC</td>
+              <td>ลูกค้าเลือกส่งกลับแบบ wallet และคนขับขากลับส่งงานเสร็จ</td>
+              <td>ค่าส่งขากลับที่ hold ไว้ release เข้า wallet คนขับขากลับครั้งเดียว พร้อม notify ลูกค้า/คนขับ</td>
+            </tr>
+            <tr>
+              <td>Manual QA</td>
+              <td>ลูกค้าเลือกส่งกลับแบบ cash</td>
+              <td>ไม่มี wallet hold สำหรับขากลับ และ job card คนขับขากลับแสดงว่าต้องเก็บเงินสดที่จุดหมาย</td>
+            </tr>
+            <tr>
+              <td>SQL/RPC</td>
+              <td>เรียก <code>mark_laundry_ready_guarded</code> ซ้ำ</td>
+              <td>ไม่สร้าง return booking ซ้ำ และคืน booking เดิม</td>
+            </tr>
+            <tr>
+              <td>Dart unit</td>
+              <td><code>laundry_pricing_test.dart</code></td>
+              <td>quote breakdown = laundry amount + outbound fare; return fare แสดงเป็นยอดขากลับแยก</td>
+            </tr>
+            <tr>
+              <td>Dart unit</td>
+              <td><code>driver_job_visibility_policy_test.dart</code></td>
+              <td><code>laundry/pending</code> visible; assigned to other driver hidden; terminal hidden</td>
+            </tr>
+            <tr>
+              <td>Flutter analyze/test</td>
+              <td><code>flutter test</code> scoped + <code>dart analyze</code> scoped</td>
+              <td>ผ่าน หรือระบุ baseline warning ที่ไม่เกี่ยวข้อง</td>
+            </tr>
+            <tr>
+              <td>Admin web</td>
+              <td><code>node --check</code> และ unit tests ที่เกี่ยวข้อง</td>
+              <td>ไม่มี syntax error และ formatter/export ไม่พัง</td>
+            </tr>
+            <tr>
+              <td>Manual QA</td>
+              <td>ครบ 2 flows: รับเองที่ร้าน, ส่งกลับถึงบ้าน</td>
+              <td>สถานะและ notification ถูกทุก role, ขากลับรับโดยคนขับใหม่ได้</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="risks">
+        <h2>9. Risks / Guardrails</h2>
+        <ul>
+          <li><strong>เงินซ้ำหรือรายได้คนขับผิด:</strong> อย่าเก็บราคาไปกลับทั้งก้อนใน booking ขาไป; ให้ booking แต่ละขาเก็บ fare ของขานั้น</li>
+          <li><strong>book ก่อน quote:</strong> ระบบต้องไม่สร้าง booking จนกว่าร้านส่ง quote และลูกค้ายืนยัน quote/payment แล้ว</li>
+          <li><strong>quote ค้างร้าน:</strong> quote ต้องหมดอายุอัตโนมัติและย้ายเป็น failed ถ้าลูกค้าไม่ยืนยันภายในเวลา</li>
+          <li><strong>quote expiry config drift:</strong> quote ใหม่ใช้ setting ร้านล่าสุด แต่ quote ที่ส่งแล้วต้องยึด <code>quote_expires_at</code> ที่บันทึกไว้</li>
+          <li><strong>ร้านพลาด quote ใหม่:</strong> merchant app ต้องมี notify พร้อมเสียง แต่ต้องกันเสียงซ้ำจาก realtime reconnect</li>
+          <li><strong>สับสน booking สองแบบ:</strong> UI/admin ต้องแยก `laundry quote/order` ออกจาก `outbound booking` ชัดเจน เพราะ quote ยังไม่ใช่งานคนขับ</li>
+          <li><strong>outbound ไม่มี driver:</strong> ถ้าลูกค้าจ่ายแล้วแต่ไม่มีคนขับรับ ต้อง escalate เข้า admin queue เพื่อโยนงานเหมือน food</li>
+          <li><strong>merchant type ผิด:</strong> ร้านซักผ้าห้ามเข้าหน้า food menu/order โดยค่าเริ่มต้น และร้านอาหารห้ามเห็น laundry package/quote flow เว้นแต่ admin เพิ่ม service type</li>
+          <li><strong>merchant เดิมไม่มี type หลังอัปเดต:</strong> ต้อง block ที่หน้าเลือกประเภทร้าน ไม่ default เป็น food เงียบ ๆ เพราะอาจซ่อน flow laundry หรือเปิด flow ผิดร้าน</li>
+          <li><strong>form ไม่มีรูป:</strong> ต้อง block การส่งคำขอถ้าไม่มีรูปหลักฐานอย่างน้อย 1 รูป</li>
+          <li><strong>chat ขาด structured data:</strong> chat ใช้คุยได้ แต่ quote/payment ต้องมาจาก action structured เท่านั้น</li>
+          <li><strong>GP drift:</strong> ต้องคำนวณ GP ฝั่ง server จาก quote/config ไม่เชื่อค่าจาก client</li>
+          <li><strong>notify spam:</strong> notify เฉพาะ event ที่ต้อง action หรือเปลี่ยนสถานะสำคัญ ไม่ยิงซ้ำทุก polling/realtime update</li>
+          <li><strong>remote pickup ใช้ cash:</strong> ถ้าลูกค้าไม่ได้อยู่จุดรับ ห้ามเลือก cash ต้อง wallet เท่านั้น</li>
+          <li><strong>wallet release เท็จ:</strong> MVP ต้องบังคับภาพถ่ายหน้างานก่อนยืนยันรับผ้าและก่อนเงินเข้า wallet คนขับ</li>
+          <li><strong>เพิ่ม ledger type ใหม่เร็วเกินไป:</strong> ต้องสรุป RPC/ledger เดิมก่อน ถ้า RPC เดิมรองรับได้ให้ reuse ก่อนเพื่อลด regression wallet</li>
+          <li><strong>return wallet เงินไม่พอ:</strong> ต้อง block การเลือกส่งกลับแบบ wallet ตั้งแต่ตอนเลือก mode ไม่รอไป fail ตอนสร้าง return booking</li>
+          <li><strong>return wallet release ซ้ำ:</strong> ต้องมี idempotency จาก hold transaction/status เพื่อ release ค่าส่งขากลับเข้า wallet คนขับครั้งเดียว</li>
+          <li><strong>return cash/wallet สับสน:</strong> job card ขากลับต้องแสดงชัดว่าเก็บเงินสดที่ปลายทางหรือรอ wallet release หลังส่งงานเสร็จ</li>
+          <li><strong>ร้านยังไม่ได้รับเงิน:</strong> ร้านต้องกดยืนยันรับเงินจากคนขับก่อนเปลี่ยนเป็นเริ่มซัก</li>
+          <li><strong>สร้างขากลับซ้ำ:</strong> RPC ต้อง lock row และเช็ค <code>return_booking_id</code> ก่อน insert</li>
+          <li><strong>RLS leak:</strong> ร้านซักผ้าต้องเห็นเฉพาะ order ของตัวเอง; driver เห็นเฉพาะงาน visible/assigned</li>
+          <li><strong>status drift:</strong> อย่า reuse food status text ตรง ๆ จน UX สับสน เช่น “อาหารพร้อมรับ” ต้องเป็น “ผ้าพร้อมรับ”</li>
+          <li><strong>food schema ปน laundry:</strong> อย่า reuse menu/cart อาหารเป็น data model หลักของร้านซักผ้า เพราะ package quote และ workflow ต่างกัน</li>
+          <li><strong>คนขับเดิมถูกบังคับโดยไม่ตั้งใจ:</strong> return booking ต้องไม่ copy <code>driver_id</code> จาก outbound booking</li>
+          <li><strong>ร้านหลายประเภท:</strong> ต้องมี field service type ของ merchant เพื่อไม่ให้ร้านอาหารเดิมโผล่ในหน้าเลือกซักผ้าโดยไม่ตั้งใจ</li>
+        </ul>
+      </section>
+
+      <section id="rollout">
+        <h2>10. Rollout / Done Criteria</h2>
+        <ol>
+          <li>เพิ่ม feature flag เช่น <code>system_config.laundry_service_enabled</code> เพื่อซ่อนเมนูจนพร้อม</li>
+          <li>ทำ migration ใน dev/staging ก่อน production และเตรียม rollback SQL สำหรับตาราง/คอลัมน์ใหม่</li>
+          <li>ก่อน build ต้อง bump version ใน <code>jedechai_delivery_new/pubspec.yaml</code> ตามกฎ repo</li>
+          <li>หลัง implementation ต้องเรียก <code>code_reviewer</code> ตรวจ diff เพราะกระทบ DB, payment/earnings, RLS, notification และ runtime flow</li>
+          <li>ห้าม deploy production จนกว่าจะยืนยัน Supabase project, backup, migration result, และ secrets ที่เกี่ยวข้อง</li>
+        </ol>
+        <div class="note">
+          Scope ที่ล็อกแล้วก่อนลง implementation: ร้านซักผ้าใช้บัญชี merchant เดิมและบังคับเลือก <code>merchant_service_types</code> เมื่อยังไม่มี type; MVP บังคับถ่ายภาพหน้างานก่อนยืนยันรับผ้า; wallet hold/release ต้องสรุปและ reuse RPC เดิมก่อนเพิ่ม ledger type ใหม่; ขากลับให้ลูกค้าเลือก <code>cash</code>/<code>wallet</code> โดย cash เก็บที่ปลายทาง ส่วน wallet ต้อง hold ตั้งแต่เลือกส่งกลับถึงบ้านและ release เข้า wallet คนขับขากลับเมื่อส่งงานเสร็จ
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

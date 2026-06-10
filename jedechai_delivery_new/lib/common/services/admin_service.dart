@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/debug_logger.dart';
 import '../models/booking.dart';
+import '../utils/role_amount_calculator.dart';
 import 'auth_service.dart';
 import 'booking_service.dart';
 
@@ -35,7 +36,8 @@ class AdminService {
     try {
       // จำนวนออเดอร์วันนี้
       final today = DateTime.now();
-      final startOfDay = DateTime(today.year, today.month, today.day).toIso8601String();
+      final startOfDay =
+          DateTime(today.year, today.month, today.day).toIso8601String();
 
       final todayBookings = await _client
           .from('bookings')
@@ -52,13 +54,20 @@ class AdminService {
       // รายได้วันนี้
       final revenueToday = await _client
           .from('bookings')
-          .select('price')
+          .select('id, price, delivery_fee, service_type')
           .gte('created_at', startOfDay)
           .eq('status', 'completed');
 
+      final revenueCouponDiscounts = await _loadCouponDiscounts(revenueToday);
       double totalRevenue = 0;
       for (final row in revenueToday) {
-        totalRevenue += (row['price'] as num?)?.toDouble() ?? 0;
+        totalRevenue += RoleAmountCalculator.netDisplayTotalForService(
+          serviceType: row['service_type'] as String? ?? '',
+          price: (row['price'] as num?)?.toDouble() ?? 0,
+          deliveryFee: (row['delivery_fee'] as num?)?.toDouble() ?? 0,
+          couponDiscountAmount:
+              revenueCouponDiscounts[row['id']?.toString()] ?? 0,
+        );
       }
 
       // คนขับรอการอนุมัติ
@@ -94,7 +103,8 @@ class AdminService {
       final totalUsers = await _client.from('profiles').select('id');
 
       // จำนวนผู้ใช้/ออนไลน์ตามประเภท
-      final profileRows = await _client.from('profiles').select('role, is_online');
+      final profileRows =
+          await _client.from('profiles').select('role, is_online');
       final profiles = (profileRows as List).cast<Map<String, dynamic>>();
 
       bool isOnline(dynamic val) {
@@ -102,7 +112,9 @@ class AdminService {
         if (val is String) return val.toLowerCase() == 'true';
         return false;
       }
-      int countByRole(String role) => profiles.where((p) => p['role'] == role).length;
+
+      int countByRole(String role) =>
+          profiles.where((p) => p['role'] == role).length;
       int countOnlineByRole(String role) => profiles
           .where((p) => p['role'] == role && isOnline(p['is_online']))
           .length;
@@ -149,15 +161,21 @@ class AdminService {
 
         final bookings = await _client
             .from('bookings')
-            .select('price')
+            .select('id, price, delivery_fee, service_type')
             .gte('created_at', date.toIso8601String())
             .lt('created_at', nextDate.toIso8601String())
             .eq('status', 'completed');
 
+        final couponDiscounts = await _loadCouponDiscounts(bookings);
         double dayRevenue = 0;
         int dayOrders = 0;
         for (final row in bookings) {
-          dayRevenue += (row['price'] as num?)?.toDouble() ?? 0;
+          dayRevenue += RoleAmountCalculator.netDisplayTotalForService(
+            serviceType: row['service_type'] as String? ?? '',
+            price: (row['price'] as num?)?.toDouble() ?? 0,
+            deliveryFee: (row['delivery_fee'] as num?)?.toDouble() ?? 0,
+            couponDiscountAmount: couponDiscounts[row['id']?.toString()] ?? 0,
+          );
           dayOrders++;
         }
 
@@ -172,6 +190,33 @@ class AdminService {
     } catch (e) {
       debugLog('❌ Error fetching revenue chart: $e');
       return [];
+    }
+  }
+
+  Future<Map<String, double>> _loadCouponDiscounts(List rows) async {
+    final ids = rows
+        .map((row) => row['id']?.toString())
+        .whereType<String>()
+        .where((id) => id.isNotEmpty)
+        .toList();
+    if (ids.isEmpty) return {};
+
+    try {
+      final usageRows = await _client
+          .from('coupon_usages')
+          .select('booking_id, discount_amount')
+          .inFilter('booking_id', ids);
+      final discounts = <String, double>{};
+      for (final row in usageRows) {
+        final bookingId = row['booking_id']?.toString();
+        if (bookingId == null || bookingId.isEmpty) continue;
+        discounts[bookingId] =
+            (row['discount_amount'] as num?)?.toDouble() ?? 0.0;
+      }
+      return discounts;
+    } catch (e) {
+      debugLog('⚠️ Error loading admin coupon discounts: $e');
+      return {};
     }
   }
 
@@ -383,7 +428,8 @@ class AdminService {
         targetEntityId: bookingId,
         details: {
           'status': 'preparing',
-          if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
+          if (reason != null && reason.trim().isNotEmpty)
+            'reason': reason.trim(),
         },
       );
 
@@ -434,7 +480,8 @@ class AdminService {
         },
       );
 
-      debugLog('✅ Merchant location updated: $merchantId ($latitude,$longitude)');
+      debugLog(
+          '✅ Merchant location updated: $merchantId ($latitude,$longitude)');
       return true;
     } catch (e) {
       debugLog('❌ Error updating merchant location: $e');
@@ -471,7 +518,8 @@ class AdminService {
         },
       );
 
-      debugLog('✅ Merchant shop hours updated: $merchantId ($shopOpenTime-$shopCloseTime)');
+      debugLog(
+          '✅ Merchant shop hours updated: $merchantId ($shopOpenTime-$shopCloseTime)');
       return true;
     } catch (e) {
       debugLog('❌ Error updating merchant shop hours: $e');
@@ -600,8 +648,7 @@ class AdminService {
       final newBalance = (wallet['balance'] as num).toDouble() + amount;
       await _client
           .from('wallets')
-          .update({'balance': newBalance})
-          .eq('id', wallet['id']);
+          .update({'balance': newBalance}).eq('id', wallet['id']);
 
       // อัปเดตสถานะ
       await _client.from('withdrawal_requests').update({
@@ -657,53 +704,32 @@ class AdminService {
       final adminId = AuthService.userId;
       if (adminId == null) return false;
 
-      // ดึงข้อมูลคำขอ
-      final request = await _client
-          .from('topup_requests')
-          .select('user_id, amount')
-          .eq('id', requestId)
-          .single();
-
-      final userId = request['user_id'] as String;
-      final amount = (request['amount'] as num).toDouble();
-
-      // เติมเงินเข้า wallet
-      final walletRes = await _client
-          .from('wallets')
-          .select('id, balance')
-          .eq('user_id', userId)
-          .maybeSingle();
-
-      if (walletRes != null) {
-        final newBalance = (walletRes['balance'] as num).toDouble() + amount;
-        await _client
-            .from('wallets')
-            .update({'balance': newBalance})
-            .eq('id', walletRes['id']);
-
-        // บันทึก transaction
-        await _client.from('wallet_transactions').insert({
-          'wallet_id': walletRes['id'],
-          'amount': amount,
-          'type': 'topup',
-          'description': 'เติมเงิน ฿${amount.toStringAsFixed(0)} (อนุมัติโดย Admin)',
-        });
+      final response = await _client.functions.invoke(
+        'admin-actions',
+        body: {
+          'action': 'approve_topup',
+          'id': requestId,
+        },
+      );
+      final data = response.data;
+      final result =
+          data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{};
+      if (result['success'] != true) {
+        debugLog('❌ approveTopUp failed: $result');
+        return false;
       }
-
-      // อัปเดตสถานะ
-      await _client.from('topup_requests').update({
-        'status': 'completed',
-        'processed_at': DateTime.now().toIso8601String(),
-      }).eq('id', requestId);
 
       await _logAction(
         actionType: 'approve_topup',
-        targetUserId: userId,
         targetEntityId: requestId,
-        details: {'status': 'completed', 'amount': amount},
+        details: {
+          'status': 'completed',
+          'source': 'admin-actions',
+          'wallet': result['wallet'],
+        },
       );
 
-      debugLog('✅ TopUp approved: $requestId (฿$amount → $userId)');
+      debugLog('✅ TopUp approved: $requestId');
       return true;
     } catch (e) {
       debugLog('❌ Error approving topup: $e');

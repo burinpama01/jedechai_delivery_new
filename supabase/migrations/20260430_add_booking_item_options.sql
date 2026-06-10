@@ -3,7 +3,5 @@
 
 ALTER TABLE IF EXISTS public.booking_items
   ADD COLUMN IF NOT EXISTS selected_options JSONB NOT NULL DEFAULT '[]'::jsonb;
-
 ALTER TABLE IF EXISTS public.booking_items
   ADD COLUMN IF NOT EXISTS options JSONB NOT NULL DEFAULT '[]'::jsonb;
-

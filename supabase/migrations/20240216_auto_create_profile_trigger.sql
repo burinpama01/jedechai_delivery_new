@@ -73,14 +73,12 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 -- 2. สร้าง trigger บน auth.users
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_new_user();
-
 -- 3. เพิ่ม RLS policy ให้ users สามารถ upsert profile ตัวเอง (สำหรับ fallback จาก app)
 -- ถ้ายังไม่มี policy สำหรับ INSERT
 DO $$

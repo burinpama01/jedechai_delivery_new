@@ -1,6 +1,5 @@
 ALTER TABLE public.bookings
 ADD COLUMN IF NOT EXISTS merchant_food_ready_at timestamptz;
-
 CREATE OR REPLACE FUNCTION public.mark_food_ready_guarded(
   p_booking_id uuid,
   p_merchant_id uuid
@@ -68,7 +67,6 @@ BEGIN
   );
 END;
 $$;
-
 CREATE OR REPLACE FUNCTION public.driver_arrived_at_merchant_guarded(
   p_booking_id uuid,
   p_driver_id uuid
@@ -129,7 +127,6 @@ BEGIN
   );
 END;
 $$;
-
 GRANT EXECUTE ON FUNCTION public.mark_food_ready_guarded(uuid, uuid)
   TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.driver_arrived_at_merchant_guarded(uuid, uuid)

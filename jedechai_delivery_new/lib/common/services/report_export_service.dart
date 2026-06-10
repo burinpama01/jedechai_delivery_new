@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import '../../utils/debug_logger.dart';
 import 'auth_service.dart';
+import '../utils/role_amount_calculator.dart';
 
 /// Report Export Service
 ///
@@ -72,10 +73,8 @@ class ReportExportService {
     if (merchantId == null) return;
 
     try {
-      var query = _client
-          .from('bookings')
-          .select()
-          .eq('merchant_id', merchantId);
+      var query =
+          _client.from('bookings').select().eq('merchant_id', merchantId);
 
       if (startDate != null) {
         query = query.gte('created_at', startDate.toIso8601String());
@@ -143,7 +142,9 @@ class ReportExportService {
         return;
       }
 
-      final csv = _buildDriverEarningsCSV(rows);
+      final couponDiscounts = await _loadCouponDiscounts(rows);
+      final csv = _buildDriverEarningsCSV(rows, couponDiscounts);
+      if (!context.mounted) return;
       await _shareCSV(context, csv, 'driver_earnings');
     } catch (e) {
       debugLog('❌ Error exporting driver CSV: $e');
@@ -213,7 +214,8 @@ class ReportExportService {
     return buf.toString();
   }
 
-  String _buildDriverEarningsCSV(List rows) {
+  String _buildDriverEarningsCSV(
+      List rows, Map<String, double> couponDiscounts) {
     final buf = StringBuffer();
     buf.write('\uFEFF');
     buf.writeln(
@@ -226,7 +228,13 @@ class ReportExportService {
       final driverEarnings = row['driver_earnings'];
       final appEarnings = row['app_earnings'];
       final isFood = row['service_type'] == 'food';
-      final totalCollect = isFood ? price + deliveryFee : price;
+      final couponDiscount = couponDiscounts[row['id']?.toString()] ?? 0;
+      final totalCollect = RoleAmountCalculator.netDisplayTotalForService(
+        serviceType: row['service_type'] as String? ?? '',
+        price: price,
+        deliveryFee: deliveryFee,
+        couponDiscountAmount: couponDiscount,
+      );
 
       buf.writeln([
         _esc(row['id']),
@@ -245,6 +253,32 @@ class ReportExportService {
   }
 
   // ── Helpers ──
+
+  Future<Map<String, double>> _loadCouponDiscounts(List rows) async {
+    final ids = rows
+        .map((row) => row['id']?.toString())
+        .whereType<String>()
+        .where((id) => id.isNotEmpty)
+        .toList();
+    if (ids.isEmpty) return {};
+
+    try {
+      final usageRows = await _client
+          .from('coupon_usages')
+          .select('booking_id, discount_amount')
+          .inFilter('booking_id', ids);
+      final map = <String, double>{};
+      for (final row in usageRows) {
+        final bookingId = row['booking_id']?.toString();
+        if (bookingId == null || bookingId.isEmpty) continue;
+        map[bookingId] = (row['discount_amount'] as num?)?.toDouble() ?? 0.0;
+      }
+      return map;
+    } catch (e) {
+      debugLog('⚠️ Error loading coupon discounts for export: $e');
+      return {};
+    }
+  }
 
   /// Escape CSV field (handle commas, quotes, newlines)
   String _esc(dynamic value) {
@@ -268,7 +302,8 @@ class ReportExportService {
   }
 
   /// Write CSV to temp file and share
-  Future<void> _shareCSV(BuildContext context, String csv, String prefix) async {
+  Future<void> _shareCSV(
+      BuildContext context, String csv, String prefix) async {
     try {
       final dir = await getTemporaryDirectory();
       final dateStr = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());

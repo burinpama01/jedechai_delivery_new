@@ -6,11 +6,9 @@
 -- 1. Add column to profiles (backward compatible: NULL = accept all types)
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS accepted_service_types text[] DEFAULT NULL;
-
 -- 2. Update get_nearby_drivers to support service_type filtering
 --    Drop old 4-param version first (different signature = different overload)
 DROP FUNCTION IF EXISTS public.get_nearby_drivers(double precision, double precision, double precision, integer);
-
 CREATE OR REPLACE FUNCTION public.get_nearby_drivers(
   p_lat double precision,
   p_lng double precision,
@@ -72,7 +70,6 @@ AS $$
   ORDER BY distance_km ASC
   LIMIT p_limit;
 $$;
-
 -- 3. RLS: drivers can update their own accepted_service_types
 --    (only if update policy doesn't already exist)
 DO $$
@@ -91,6 +88,5 @@ BEGIN
   END IF;
 END;
 $$;
-
 -- 4. Grant
 GRANT EXECUTE ON FUNCTION public.get_nearby_drivers TO authenticated, service_role;

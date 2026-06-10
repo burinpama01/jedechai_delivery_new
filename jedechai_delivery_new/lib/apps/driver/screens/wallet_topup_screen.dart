@@ -1,26 +1,26 @@
-import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../common/services/wallet_service.dart';
 import '../../../common/services/auth_service.dart';
-import '../../../common/config/env_config.dart';
-import '../../../common/services/omise_service.dart';
 import '../../../common/services/promptpay_service.dart';
 import '../../../common/services/notification_sender.dart';
 import '../../../common/services/admin_line_notification_service.dart';
+import '../../../common/services/image_picker_service.dart';
 import '../../../common/widgets/app_network_image.dart';
 import '../../../theme/app_theme.dart';
 import '../../../utils/debug_logger.dart';
 import '../../../l10n/app_localizations.dart';
 
-/// Wallet TopUp Screen — PromptPay QR + Admin Confirmation
+/// Wallet TopUp Screen — PromptPay QR + Slip2Go auto verification
 ///
 /// หน้าเติมเงินเข้ากระเป๋า:
 /// - เลือกจำนวนเงิน (preset หรือกรอกเอง)
 /// - สร้าง PromptPay QR สำหรับโอนเงิน
-/// - บันทึกคำขอเติมเงินรอ Admin ยืนยัน
-/// - เติมเงินเข้า wallet เมื่อ Admin ยืนยัน
+/// - เลือกรูปสลิปโอนเงิน
+/// - ตรวจสลิปผ่าน Edge Function + Slip2Go แล้วเติมเงินอัตโนมัติ
 class WalletTopUpScreen extends StatefulWidget {
   const WalletTopUpScreen({super.key});
 
@@ -41,12 +41,11 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
   // QR state
   String? _qrImageUrl;
   bool _requestSent = false;
+  bool _autoTopupCompleted = false;
 
-  // Omise state
-  bool _useOmise = false;
-  String? _omiseChargeId;
-  Timer? _omisePollTimer;
-  bool _omisePaymentSuccess = false;
+  // Slip verification state
+  File? _selectedSlipFile;
+  String? _selectedSlipFileName;
 
   // จำนวนเงินที่เลือกได้
   final List<double> _presetAmounts = [50, 100, 200, 500, 1000, 2000];
@@ -54,48 +53,13 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
   @override
   void initState() {
     super.initState();
-    _useOmise = EnvConfig.isOmiseConfigured;
-    debugLog('💳 Omise configured (env): $_useOmise');
-    _fetchTopupMode();
     _loadBalance();
     _loadHistory();
-  }
-
-  /// Fetch topup_mode from system_config to allow admin runtime switching.
-  /// Values: 'omise' → use Omise, 'admin_approve' → local PromptPay + admin.
-  /// Falls back to EnvConfig.isOmiseConfigured if column doesn't exist.
-  Future<void> _fetchTopupMode() async {
-    try {
-      final config = await Supabase.instance.client
-          .from('system_config')
-          .select('topup_mode')
-          .eq('id', 1)
-          .maybeSingle();
-      if (config != null && config['topup_mode'] != null) {
-        final mode = (config['topup_mode'] as String).trim().toLowerCase();
-        if (mode == 'omise') {
-          // Only enable Omise if keys are actually configured
-          _useOmise = EnvConfig.isOmiseConfigured;
-          if (!_useOmise) {
-            debugLog(
-                '⚠️ topup_mode=omise but Omise keys not configured — falling back to admin_approve');
-          }
-        } else {
-          _useOmise = false;
-        }
-        debugLog(
-            '💳 topup_mode from system_config: $mode → _useOmise=$_useOmise');
-        if (mounted) setState(() {});
-      }
-    } catch (e) {
-      debugLog('⚠️ Could not fetch topup_mode: $e (using env default)');
-    }
   }
 
   @override
   void dispose() {
     _amountController.dispose();
-    _omisePollTimer?.cancel();
     super.dispose();
   }
 
@@ -118,15 +82,15 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
   }
 
   void _selectAmount(double amount) {
-    _omisePollTimer?.cancel();
     setState(() {
       _selectedAmount = amount;
       _amountController.text = amount.toStringAsFixed(0);
       // reset QR state เมื่อเลือกจำนวนเงินใหม่
       _qrImageUrl = null;
       _requestSent = false;
-      _omiseChargeId = null;
-      _omisePaymentSuccess = false;
+      _autoTopupCompleted = false;
+      _selectedSlipFile = null;
+      _selectedSlipFileName = null;
     });
   }
 
@@ -148,155 +112,17 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
       return;
     }
 
-    _omisePollTimer?.cancel();
     setState(() {
       _isGenerating = true;
       _selectedAmount = amount;
       _qrImageUrl = null;
       _requestSent = false;
-      _omiseChargeId = null;
-      _omisePaymentSuccess = false;
+      _autoTopupCompleted = false;
+      _selectedSlipFile = null;
+      _selectedSlipFileName = null;
     });
 
-    if (_useOmise) {
-      await _generateOmiseQR(amount);
-    } else {
-      await _generateLocalQR(amount);
-    }
-  }
-
-  // ══════════════════════════════════════════
-  // Omise PromptPay Flow
-  // ══════════════════════════════════════════
-
-  Future<void> _generateOmiseQR(double amount) async {
-    try {
-      final amountSatang = (amount * 100).toInt();
-
-      debugLog(
-          '📤 Omise: สร้าง PromptPay Source — ฿$amount ($amountSatang สตางค์)');
-
-      // Step 1: สร้าง PromptPay Source
-      final source = await OmiseService.createPromptPaySource(amountSatang);
-      if (source == null) {
-        if (mounted) {
-          _showErrorDialog(AppLocalizations.of(context)!.topupOmiseSourceError);
-        }
-        return;
-      }
-
-      final sourceId = source['id'] as String;
-      debugLog('✅ Omise Source: $sourceId');
-
-      // Step 2: สร้าง Charge จาก Source
-      final charge = await OmiseService.createCharge(sourceId, amountSatang);
-      if (charge == null) {
-        if (mounted) {
-          _showErrorDialog(AppLocalizations.of(context)!.topupOmiseChargeError);
-        }
-        return;
-      }
-
-      final chargeId = charge['id'] as String;
-      final qrUrl = OmiseService.extractQrUrl(charge);
-      debugLog('✅ Omise Charge: $chargeId');
-      debugLog('📷 QR URL: $qrUrl');
-
-      if (qrUrl == null) {
-        if (mounted) {
-          _showErrorDialog(AppLocalizations.of(context)!.topupOmiseQRError);
-        }
-        return;
-      }
-
-      if (mounted) {
-        setState(() {
-          _qrImageUrl = qrUrl;
-          _omiseChargeId = chargeId;
-        });
-
-        // Step 3: เริ่ม poll สถานะทุก 5 วินาที
-        _startOmisePolling(chargeId);
-      }
-
-      debugLog('✅ Omise QR สร้างสำเร็จ — กำลัง poll สถานะ...');
-    } catch (e) {
-      debugLog('❌ Error Omise QR: $e');
-      if (mounted) {
-        _showErrorDialog(
-            AppLocalizations.of(context)!.topupOmiseError(e.toString()));
-      }
-    } finally {
-      if (mounted) setState(() => _isGenerating = false);
-    }
-  }
-
-  void _startOmisePolling(String chargeId) {
-    _omisePollTimer?.cancel();
-    _omisePollTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
-      if (!mounted || _omisePaymentSuccess) {
-        _omisePollTimer?.cancel();
-        return;
-      }
-
-      debugLog('🔍 Omise: ตรวจสอบสถานะ Charge $chargeId...');
-      final status = await OmiseService.checkChargeStatus(chargeId);
-      debugLog('📋 Omise status: $status');
-
-      if (!mounted) return;
-
-      if (status == 'successful') {
-        _omisePollTimer?.cancel();
-        setState(() {
-          _omisePaymentSuccess = true;
-        });
-        // เติมเงินเข้า wallet อัตโนมัติ
-        await _omiseAutoCredit();
-      } else if (status == 'failed' || status == 'expired') {
-        _omisePollTimer?.cancel();
-        _showErrorDialog(status == 'expired'
-            ? AppLocalizations.of(context)!.topupQRExpired
-            : AppLocalizations.of(context)!.topupPaymentFailed);
-      }
-    });
-  }
-
-  Future<void> _omiseAutoCredit() async {
-    final userId = AuthService.userId;
-    if (userId == null) return;
-
-    try {
-      final success = await _walletService.topUpWallet(
-        driverId: userId,
-        amount: _selectedAmount,
-        description:
-            AppLocalizations.of(context)!.topupOmiseTransactionDescription(
-          _selectedAmount.toStringAsFixed(0),
-          _omiseChargeId?.substring(0, 12) ?? '',
-        ),
-      );
-
-      // บันทึกลง topup_requests ด้วย (ถ้าตารางมี)
-      try {
-        await Supabase.instance.client.from('topup_requests').insert({
-          'user_id': userId,
-          'amount': _selectedAmount,
-          'status': 'completed',
-          'processed_at': DateTime.now().toIso8601String(),
-        });
-      } catch (_) {}
-
-      if (success && mounted) {
-        _showSuccessDialog();
-      } else if (mounted) {
-        _showErrorDialog(AppLocalizations.of(context)!.topupCreditError);
-      }
-    } catch (e) {
-      debugLog('❌ Error auto-credit: $e');
-      if (mounted) {
-        _showErrorDialog(AppLocalizations.of(context)!.topupCreditGenericError);
-      }
-    }
+    await _generateLocalQR(amount);
   }
 
   // ══════════════════════════════════════════
@@ -364,64 +190,179 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
 
   // ── ส่งคำขอเติมเงินรอ Admin ยืนยัน (Local flow only) ──
 
+  Future<void> _pickSlipImage() async {
+    final file = await ImagePickerService.showImageSourceDialog(context);
+    if (file == null) return;
+
+    setState(() {
+      _selectedSlipFile = file;
+      _selectedSlipFileName = file.path.split(RegExp(r'[\\/]')).last;
+      _requestSent = false;
+      _autoTopupCompleted = false;
+    });
+  }
+
+  String _slipContentType(File file) {
+    final path = file.path.toLowerCase();
+    if (path.endsWith('.png')) return 'image/png';
+    if (path.endsWith('.webp')) return 'image/webp';
+    return 'image/jpeg';
+  }
+
   Future<void> _submitTopUpRequest() async {
     final userId = AuthService.userId;
     if (userId == null) return;
+    final slipFile = _selectedSlipFile;
+    if (slipFile == null) {
+      _showErrorDialog('กรุณาแนบรูปสลิปก่อนยืนยันเติมเงิน');
+      return;
+    }
 
     setState(() => _isCheckingStatus = true);
 
     try {
-      await Supabase.instance.client.from('topup_requests').insert({
-        'user_id': userId,
-        'amount': _selectedAmount,
-        'status': 'pending',
-      });
+      final bytes = await slipFile.readAsBytes();
+      final response = await Supabase.instance.client.functions.invoke(
+        'verify-topup-slip',
+        body: {
+          'amount': _selectedAmount,
+          'slipImageBase64': base64Encode(bytes),
+          'slipImageContentType': _slipContentType(slipFile),
+          'fileName': _selectedSlipFileName,
+        },
+      );
+      final data = response.data;
+      final result =
+          data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{};
+      final status = result['status']?.toString();
+      final ok = result['ok'] == true && status == 'completed';
 
-      // แจ้งเตือน Admin ทุกคนผ่าน push notification
-      await _notifyAdminsTopUpRequest(userId, _selectedAmount);
-
-      if (mounted) {
+      if (ok && mounted) {
         setState(() {
-          _requestSent = true;
+          _requestSent = false;
+          _autoTopupCompleted = true;
           _isCheckingStatus = false;
         });
-        _showSuccessRequestDialog();
+        await _loadBalance();
+        await _loadHistory();
+        _showSuccessDialog();
+        return;
       }
-    } catch (e) {
-      debugLog('❌ Error submitting topup request: $e');
+
+      if (status == 'pending' && mounted) {
+        await _handlePendingTopupVerificationResult(userId);
+        return;
+      }
+
+      final message = _formatTopupVerificationResult(result);
       if (mounted) {
         setState(() => _isCheckingStatus = false);
-        // Fallback: top up directly if table doesn't exist
-        await _directTopUp();
+        _showErrorDialog(message);
+      }
+    } catch (e) {
+      debugLog('❌ Error verifying topup slip: $e');
+      final pendingResult = _pendingTopupVerificationResultFromError(e);
+      if (pendingResult != null && mounted) {
+        await _handlePendingTopupVerificationResult(userId);
+        return;
+      }
+
+      if (mounted) {
+        setState(() => _isCheckingStatus = false);
+        _showErrorDialog(_formatTopupVerificationError(e));
       }
     }
   }
 
-  /// Direct top-up fallback (เติมตรงเข้า wallet)
-  Future<void> _directTopUp() async {
-    final userId = AuthService.userId;
-    if (userId == null) return;
+  Map<String, dynamic>? _pendingTopupVerificationResultFromError(Object error) {
+    if (error is! FunctionException) return null;
+    final details = error.details;
+    if (details is! Map) return null;
 
-    try {
-      final success = await _walletService.topUpWallet(
-        driverId: userId,
-        amount: _selectedAmount,
-        description: AppLocalizations.of(context)!
-            .topupPromptPayTransactionDescription(
-                _selectedAmount.toStringAsFixed(0)),
-      );
+    final result = Map<String, dynamic>.from(details);
+    return result['status']?.toString() == 'pending' ? result : null;
+  }
 
-      if (success && mounted) {
-        _showSuccessDialog();
-      } else if (mounted) {
-        _showErrorDialog(AppLocalizations.of(context)!.topupDirectError);
+  Future<void> _handlePendingTopupVerificationResult(String userId) async {
+    await _notifyAdminsTopUpRequest(userId, _selectedAmount);
+    if (!mounted) return;
+
+    setState(() {
+      _requestSent = true;
+      _autoTopupCompleted = false;
+      _isCheckingStatus = false;
+    });
+    _showSuccessRequestDialog();
+  }
+
+  String _formatTopupVerificationError(Object error) {
+    if (error is FunctionException) {
+      final details = error.details;
+      if (details is Map) {
+        return _formatTopupVerificationResult(
+          Map<String, dynamic>.from(details),
+        );
       }
-    } catch (e) {
-      debugLog('❌ Error direct topup: $e');
-      if (mounted) {
-        _showErrorDialog(AppLocalizations.of(context)!.topupDirectGenericError);
-      }
+
+      final message = _humanizeSlipVerificationMessage(details?.toString());
+      if (message != null) return message;
     }
+
+    final message = _humanizeSlipVerificationMessage(error.toString());
+    return message ??
+        'ตรวจสลิปไม่สำเร็จ กรุณาเลือกสลิปใหม่ หรือติดต่อแอดมินหากโอนเงินแล้ว';
+  }
+
+  String _formatTopupVerificationResult(Map<String, dynamic> result) {
+    final reason = result['reason']?.toString();
+    final message = result['message']?.toString();
+
+    switch (reason) {
+      case 'slip2go_failed':
+        return 'สลิปนี้ไม่ผ่านการตรวจสอบอัตโนมัติ กรุณาเลือกสลิปโอนเงินจริงจากธนาคารแล้วลองใหม่';
+      case 'amountMismatch':
+        return 'ยอดเงินในสลิปไม่ตรงกับยอดเติมเงิน กรุณาตรวจสอบยอดเงินแล้วลองใหม่';
+      case 'receiverMismatch':
+        return 'บัญชีผู้รับในสลิปไม่ตรงกับบัญชีปลายทางของระบบ กรุณาตรวจสอบบัญชีปลายทาง';
+      case 'duplicateSlip':
+        return 'สลิปนี้ถูกใช้เติมเงินแล้ว กรุณาใช้สลิปใหม่';
+      case 'rateLimited':
+        return 'ตรวจสลิปหลายครั้งเกินไป กรุณารอสักครู่แล้วลองใหม่';
+      case 'invalidAmount':
+        return 'จำนวนเงินเติมไม่ถูกต้อง กรุณาสร้าง QR ใหม่';
+      case 'invalidImage':
+        return 'ไฟล์สลิปไม่ถูกต้อง กรุณาเลือกไฟล์รูปภาพใหม่';
+    }
+
+    return _humanizeSlipVerificationMessage(message) ??
+        'ตรวจสลิปไม่ผ่าน กรุณาตรวจสอบสลิปแล้วลองใหม่';
+  }
+
+  String? _humanizeSlipVerificationMessage(String? rawMessage) {
+    final normalized = rawMessage?.trim();
+    if (normalized == null || normalized.isEmpty) return null;
+
+    final lower = normalized.toLowerCase();
+    if (lower.contains('functionexception')) {
+      if (lower.contains('fraud') || lower.contains('unprocessable entity')) {
+        return 'สลิปนี้ไม่ผ่านการตรวจสอบ กรุณาใช้สลิปโอนเงินจริงจากธนาคาร และตรวจสอบว่ายอดเงินกับบัญชีปลายทางถูกต้อง';
+      }
+      return null;
+    }
+    if (lower.contains('fraud') || lower.contains('unprocessable entity')) {
+      return 'สลิปนี้ไม่ผ่านการตรวจสอบ กรุณาใช้สลิปโอนเงินจริงจากธนาคาร และตรวจสอบว่ายอดเงินกับบัญชีปลายทางถูกต้อง';
+    }
+    if (lower.contains('duplicate')) {
+      return 'สลิปนี้ถูกใช้เติมเงินแล้ว กรุณาใช้สลิปใหม่';
+    }
+    if (lower.contains('amount')) {
+      return 'ยอดเงินในสลิปไม่ตรงกับยอดเติมเงิน กรุณาตรวจสอบยอดเงินแล้วลองใหม่';
+    }
+    if (lower.contains('receiver') || lower.contains('account')) {
+      return 'บัญชีผู้รับในสลิปไม่ตรงกับบัญชีปลายทางของระบบ กรุณาตรวจสอบบัญชีปลายทาง';
+    }
+
+    return normalized;
   }
 
   /// แจ้งเตือน Admin ทุกคนเมื่อมีคำขอเติมเงิน
@@ -865,8 +806,10 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bool hasQR =
-        _qrImageUrl != null && _qrImageUrl!.isNotEmpty && !_requestSent;
+    final bool hasQR = _qrImageUrl != null &&
+        _qrImageUrl!.isNotEmpty &&
+        !_requestSent &&
+        !_autoTopupCompleted;
 
     return Scaffold(
       appBar: AppBar(
@@ -885,17 +828,16 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                   const SizedBox(height: 20),
                   _buildAmountSection(),
                   const SizedBox(height: 20),
-                  if (_omisePaymentSuccess) ...[
-                    _buildOmiseSuccessCard(),
+                  if (_autoTopupCompleted) ...[
+                    _buildAutoTopupCompletedCard(),
                   ] else if (_requestSent) ...[
                     _buildRequestSentCard(),
                   ] else if (hasQR) ...[
                     _buildQRSection(),
                     const SizedBox(height: 16),
-                    if (_useOmise && _omiseChargeId != null)
-                      _buildOmiseStatusSection()
-                    else
-                      _buildConfirmTransferButton(),
+                    _buildSlipUploadSection(),
+                    const SizedBox(height: 16),
+                    _buildConfirmTransferButton(),
                   ] else ...[
                     _buildGenerateQRButton(),
                   ],
@@ -1021,15 +963,15 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                 fillColor: Colors.grey[50],
               ),
               onChanged: (value) {
-                _omisePollTimer?.cancel();
                 final amount = double.tryParse(value) ?? 0;
                 setState(() {
                   _selectedAmount = amount;
                   // reset QR เมื่อเปลี่ยนจำนวนเงิน
                   _qrImageUrl = null;
                   _requestSent = false;
-                  _omiseChargeId = null;
-                  _omisePaymentSuccess = false;
+                  _autoTopupCompleted = false;
+                  _selectedSlipFile = null;
+                  _selectedSlipFileName = null;
                 });
               },
             ),
@@ -1052,27 +994,9 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                     const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             Text(
-              _useOmise
-                  ? AppLocalizations.of(context)!.topupOmiseScanDesc
-                  : AppLocalizations.of(context)!.topupManualScanDesc,
+              AppLocalizations.of(context)!.topupManualScanDesc,
               style: TextStyle(fontSize: 13, color: Colors.grey[600]),
             ),
-            if (_useOmise)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.verified, color: Colors.blue[600], size: 14),
-                    const SizedBox(width: 4),
-                    Text('Powered by Omise',
-                        style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.blue[600],
-                            fontWeight: FontWeight.w500)),
-                  ],
-                ),
-              ),
             const SizedBox(height: 16),
             Container(
               width: 260,
@@ -1103,9 +1027,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
             const SizedBox(height: 6),
             const SizedBox(height: 8),
             Text(
-              _useOmise
-                  ? AppLocalizations.of(context)!.topupOmiseAutoDesc
-                  : AppLocalizations.of(context)!.topupManualConfirmDesc,
+              'โอนเงินตาม QR แล้วแนบรูปสลิป ระบบจะตรวจสลิปและเติมเงินให้อัตโนมัติ',
               style: TextStyle(fontSize: 12, color: Colors.grey[500]),
               textAlign: TextAlign.center,
             ),
@@ -1141,63 +1063,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
     );
   }
 
-  Widget _buildOmiseStatusSection() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    color: Colors.blue[600],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  AppLocalizations.of(context)!.topupCheckingPayment,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.blue[700],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              AppLocalizations.of(context)!.topupAutoCheckDesc,
-              textAlign: TextAlign.center,
-              style:
-                  TextStyle(fontSize: 12, color: Colors.grey[500], height: 1.5),
-            ),
-            const SizedBox(height: 16),
-            TextButton.icon(
-              onPressed: () {
-                _omisePollTimer?.cancel();
-                setState(() {
-                  _qrImageUrl = null;
-                  _omiseChargeId = null;
-                });
-              },
-              icon: const Icon(Icons.replay, size: 18),
-              label: Text(AppLocalizations.of(context)!.topupCancelNewQR),
-              style: TextButton.styleFrom(foregroundColor: Colors.grey[600]),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOmiseSuccessCard() {
+  Widget _buildAutoTopupCompletedCard() {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -1208,22 +1074,146 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
             const Icon(Icons.check_circle,
                 color: AppTheme.accentBlue, size: 56),
             const SizedBox(height: 12),
-            Text(AppLocalizations.of(context)!.topupOmiseSuccessTitle,
-                style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.accentBlue)),
+            Text(
+              AppLocalizations.of(context)!.topupSuccessTitle,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.accentBlue,
+              ),
+            ),
             const SizedBox(height: 8),
             Text(
               AppLocalizations.of(context)!
-                  .topupOmiseSuccessBody(_selectedAmount.toStringAsFixed(0)),
+                  .topupSuccessBody(_selectedAmount.toStringAsFixed(0)),
               style: TextStyle(fontSize: 15, color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 4),
             Text(
-              AppLocalizations.of(context)!.topupOmiseAutoVerified,
+              'ตรวจสลิปและเติมเงินเข้ากระเป๋าแล้ว',
               style: TextStyle(fontSize: 12, color: Colors.blue[400]),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _qrImageUrl = null;
+                  _requestSent = false;
+                  _autoTopupCompleted = false;
+                  _selectedSlipFile = null;
+                  _selectedSlipFileName = null;
+                });
+              },
+              icon: const Icon(Icons.add_circle_outline, size: 18),
+              label: const Text('เติมเงินอีกครั้ง'),
+              style: TextButton.styleFrom(foregroundColor: Colors.grey[600]),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSlipUploadSection() {
+    final hasSlip = _selectedSlipFile != null;
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: hasSlip ? Colors.green[50] : Colors.blue[50],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    hasSlip ? Icons.check_circle : Icons.receipt_long,
+                    color: hasSlip ? Colors.green[600] : Colors.blue[600],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        hasSlip ? 'เลือกสลิปแล้ว' : 'แนบสลิปโอนเงิน',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        hasSlip
+                            ? (_selectedSlipFileName ?? 'พร้อมตรวจสอบสลิป')
+                            : 'ถ่ายรูปหรือเลือกรูปสลิปหลังโอนตาม QR',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'ระบบจะตรวจยอดและป้องกันสลิปซ้ำก่อนเติมเงินเข้ากระเป๋า',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[500],
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _isCheckingStatus ? null : _pickSlipImage,
+                    icon:
+                        Icon(hasSlip ? Icons.sync : Icons.add_photo_alternate),
+                    label: Text(hasSlip ? 'เปลี่ยนสลิป' : 'เลือกรูปสลิป'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.accentBlue,
+                      side: const BorderSide(color: AppTheme.accentBlue),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+                if (hasSlip) ...[
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: _isCheckingStatus
+                        ? null
+                        : () {
+                            setState(() {
+                              _selectedSlipFile = null;
+                              _selectedSlipFileName = null;
+                            });
+                          },
+                    icon: const Icon(Icons.close),
+                    color: Colors.grey[600],
+                    tooltip: 'ลบสลิป',
+                  ),
+                ],
+              ],
             ),
           ],
         ),
@@ -1268,19 +1258,20 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
           width: double.infinity,
           height: 54,
           child: ElevatedButton.icon(
-            onPressed: _isCheckingStatus ? null : _submitTopUpRequest,
+            onPressed: _isCheckingStatus || _selectedSlipFile == null
+                ? null
+                : _submitTopUpRequest,
             icon: _isCheckingStatus
                 ? const SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Colors.white))
-                : const Icon(Icons.send),
+                : const Icon(Icons.receipt_long),
             label: Text(
               _isCheckingStatus
-                  ? AppLocalizations.of(context)!.topupSending
-                  : AppLocalizations.of(context)!
-                      .topupConfirmTransfer(_selectedAmount.toStringAsFixed(0)),
+                  ? 'กำลังตรวจสลิป...'
+                  : 'ตรวจสลิปและเติมเงิน ฿${_selectedAmount.toStringAsFixed(0)}',
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             style: ElevatedButton.styleFrom(
@@ -1298,6 +1289,9 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
             setState(() {
               _qrImageUrl = null;
               _requestSent = false;
+              _autoTopupCompleted = false;
+              _selectedSlipFile = null;
+              _selectedSlipFileName = null;
             });
           },
           icon: const Icon(Icons.replay, size: 18),

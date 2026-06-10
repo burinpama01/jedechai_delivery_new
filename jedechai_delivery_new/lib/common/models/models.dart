@@ -13,3 +13,4 @@ export 'saved_address.dart';
 export 'chat_message.dart';
 export 'coupon.dart';
 export 'support_ticket.dart';
+export 'app_update_policy.dart';

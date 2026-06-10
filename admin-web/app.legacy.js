@@ -404,6 +404,7 @@ function navigateTo(page) {
       dashboard: ['แดชบอร์ด','ภาพรวมระบบทั้งหมด'], orders: ['ออเดอร์ทั้งหมด','รายการสั่งซื้อทุกประเภท'], drivers: ['จัดการคนขับ','อนุมัติและจัดการคนขับ'],
       merchants: ['จัดการร้านค้า','อนุมัติและจัดการร้านค้า'], users: ['ผู้ใช้ทั้งหมด','ข้อมูลผู้ใช้งานในระบบ'], withdrawals: ['คำขอถอนเงิน','อนุมัติคำขอถอนเงิน'],
       revenue: ['รายได้','สรุปรายได้และยอดขาย'], menus: ['จัดการเมนูร้านค้า','เพิ่ม/แก้ไขเมนูอาหาร'], topups: ['คำขอเติมเงิน','อนุมัติคำขอเติมเงิน'],
+      customer_wallets: ['Customer Wallet','จัดการยอดเงินและ transaction ของลูกค้า'],
       map: ['แผนที่ Realtime','ติดตามตำแหน่งคนขับแบบเรียลไทม์'], pending_orders: ['ออเดอร์รอจัดการ','ออเดอร์ที่ต้องการความช่วยเหลือจากแอดมิน'],
       complaints: ['ร้องเรียน','จัดการเรื่องร้องเรียน'], promos: ['โค้ดส่วนลด','จัดการโปรโมชั่น'],
       notification_deliveries: ['Delivery Log แจ้งเตือน','ติดตามผลส่ง FCM ต่อผู้รับ'],
@@ -487,6 +488,11 @@ async function loadPage(page) {
       case 'merchants': await renderMerchants(container); break;
       case 'users': await renderUsers(container); break;
       case 'withdrawals': await renderWithdrawals(container); break;
+      case 'customer_wallets':
+        if (window.__adminWebBridge?.renderCustomerWalletsPage) {
+          await window.__adminWebBridge.renderCustomerWalletsPage(container, { supabase, supabaseAuth, currentUser, callAdminAction, showToast, escapeHtml, fmt, fmtDate, refreshCurrentPage, fetchUserEmails });
+        }
+        break;
       case 'revenue': await renderRevenue(container); break;
       case 'menus': await renderMenus(container); break;
       case 'topups': await renderTopups(container); break;
@@ -3690,6 +3696,36 @@ function normalizeLandingConfig(rawLandingConfig) {
   return { ...DEFAULT_LANDING_CONFIG, ...rawLandingConfig };
 }
 
+const DEFAULT_APP_UPDATE_POLICY = Object.freeze({
+  enabled: false,
+  mode: 'optional',
+  latest_version: '',
+  latest_build: '',
+  min_supported_version: '',
+  min_supported_build: '',
+  title_th: 'มีเวอร์ชันใหม่',
+  message_th: 'กรุณาอัปเดตแอปเพื่อใช้งานฟีเจอร์ล่าสุด',
+  android_url: '',
+  ios_url: '',
+  target_roles: [],
+  starts_at: '',
+  ends_at: '',
+});
+
+function normalizeAppUpdatePolicy(rawPolicy) {
+  if (!rawPolicy || typeof rawPolicy !== 'object' || Array.isArray(rawPolicy)) {
+    return { ...DEFAULT_APP_UPDATE_POLICY };
+  }
+  return {
+    ...DEFAULT_APP_UPDATE_POLICY,
+    ...rawPolicy,
+    mode: rawPolicy.mode === 'force' ? 'force' : 'optional',
+  target_roles: Array.isArray(rawPolicy.target_roles)
+      ? rawPolicy.target_roles
+      : DEFAULT_APP_UPDATE_POLICY.target_roles,
+  };
+}
+
 const DEFAULT_DETECTION_RADIUS_CONFIG = Object.freeze({
   driver_to_customer_km: 20,
   customer_to_driver_km: 30,
@@ -3754,6 +3790,7 @@ async function renderSettings(el) {
   const vehicleIcon = { ride_motorcycle:'🏍️', ride_car:'🚗', ride_van:'🚐', ride:'🚕' };
   const vehicleLabel = { ride_motorcycle:'มอเตอร์ไซค์', ride_car:'รถยนต์', ride_van:'รถตู้', ride:'เรียกรถ (ทั่วไป)' };
   const landingConfig = normalizeLandingConfig(config.landing_config);
+  const appUpdatePolicy = normalizeAppUpdatePolicy(config.app_update_policy);
   const detectionRadiusConfig = normalizeDetectionRadiusConfig(config.detection_radius_config);
   const merchantGpPercent = config.merchant_gp_rate ? (config.merchant_gp_rate * 100) : 10;
   const merchantGpSystemDefault = kvConfig.merchant_gp_system_rate_default != null
@@ -3857,40 +3894,42 @@ async function renderSettings(el) {
           <div class="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center"><span class="material-icons-round text-teal-500">account_balance_wallet</span></div>
           <div>
             <h3 class="font-bold text-gray-800">โหมดเติมเงิน Wallet คนขับ</h3>
-            <p class="text-xs text-gray-400">สลับระหว่างเติมเงินผ่าน Omise (อัตโนมัติ) หรือแอดมินอนุมัติด้วยมือ</p>
+            <p class="text-xs text-gray-400">PromptPay + ตรวจสลิปอัตโนมัติผ่าน Slip2Go และยังคงรองรับแอดมินจัดการด้วยมือ</p>
           </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <label class="cursor-pointer p-4 rounded-xl border-2 transition-all ${(config.topup_mode || 'admin_approve') === 'omise' ? 'border-teal-400 bg-teal-50' : 'border-gray-200 bg-white hover:bg-gray-50'}" onclick="document.getElementById('settTopupModeOmise').checked=true; document.querySelectorAll('.topup-mode-card').forEach(c=>c.className=c.dataset.off); this.className=this.dataset.on;">
-            <input type="radio" name="settTopupMode" id="settTopupModeOmise" value="omise" class="hidden" ${(config.topup_mode || 'admin_approve') === 'omise' ? 'checked' : ''}>
-            <div class="topup-mode-card" data-on="cursor-pointer p-4 rounded-xl border-2 transition-all border-teal-400 bg-teal-50" data-off="cursor-pointer p-4 rounded-xl border-2 transition-all border-gray-200 bg-white hover:bg-gray-50">
-              <div class="flex items-center gap-3 mb-2">
-                <span class="material-icons-round text-teal-500 text-xl">bolt</span>
-                <span class="font-bold text-gray-800">Omise (อัตโนมัติ)</span>
-              </div>
-              <p class="text-xs text-gray-500 leading-relaxed">คนขับสแกน QR จ่ายเงินผ่าน Omise PromptPay → ระบบเติมเงินเข้า Wallet อัตโนมัติทันที ไม่ต้องรอแอดมินอนุมัติ</p>
-              <p class="text-[11px] text-orange-500 mt-2 font-semibold">⚠️ ต้องตั้งค่า Omise API Key ใน .env ก่อน</p>
+        <div class="rounded-xl border-2 border-teal-200 bg-teal-50/70 p-4">
+          <div class="flex items-start gap-3">
+            <span class="material-icons-round text-teal-500 text-2xl">verified</span>
+            <div>
+              <p class="font-bold text-gray-800">Slip2Go Auto + Manual</p>
+              <p class="text-xs text-gray-500 leading-relaxed mt-1">คนขับสแกน QR PromptPay → แนบรูปสลิป → ระบบตรวจยอด/สลิปซ้ำผ่าน Slip2Go แล้วเติมเงินอัตโนมัติ ถ้าระบบตรวจไม่ผ่าน แอดมินยังจัดการคำขอเติมเงินและเติมเงินด้วยมือได้จากหน้านี้</p>
             </div>
+          </div>
+        </div>
+        <div class="mt-5">
+          <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">บัญชีปลายทางสำหรับตรวจสลิป</label>
+          <input type="text" id="settSlip2goReceiverAccount" value="${config.slip2go_receiver_account || ''}" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all" placeholder="เช่น เลขบัญชีหรือ PromptPay ID ที่ต้องตรงกับสลิป">
+          <p class="text-xs text-gray-400 mt-1.5">ถ้ากรอกค่า ระบบจะเทียบ receiver account จาก Slip2Go ก่อนเติมเงินอัตโนมัติ</p>
+        </div>
+        <div class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <label class="flex items-start gap-3 cursor-pointer">
+            <input type="checkbox" id="settSlip2goAllowMaskedReceiver" ${config.slip2go_allow_masked_receiver_account === true ? 'checked' : ''} class="mt-1 h-4 w-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500">
+            <span>
+              <span class="block text-sm font-semibold text-amber-800">ยอมรับบัญชี masked ชั่วคราว</span>
+              <span class="block text-xs text-amber-700 mt-1">ใช้เฉพาะกรณี Slip2Go ส่งปลายทางเป็น xxx-xxx-9045 ระหว่างรอข้อมูลบัญชีเต็ม</span>
+            </span>
           </label>
-          <label class="cursor-pointer p-4 rounded-xl border-2 transition-all ${(config.topup_mode || 'admin_approve') === 'admin_approve' ? 'border-teal-400 bg-teal-50' : 'border-gray-200 bg-white hover:bg-gray-50'}" onclick="document.getElementById('settTopupModeAdmin').checked=true; document.querySelectorAll('.topup-mode-card').forEach(c=>c.className=c.dataset.off); this.className=this.dataset.on;">
-            <input type="radio" name="settTopupMode" id="settTopupModeAdmin" value="admin_approve" class="hidden" ${(config.topup_mode || 'admin_approve') === 'admin_approve' ? 'checked' : ''}>
-            <div class="topup-mode-card" data-on="cursor-pointer p-4 rounded-xl border-2 transition-all border-teal-400 bg-teal-50" data-off="cursor-pointer p-4 rounded-xl border-2 transition-all border-gray-200 bg-white hover:bg-gray-50">
-              <div class="flex items-center gap-3 mb-2">
-                <span class="material-icons-round text-indigo-500 text-xl">admin_panel_settings</span>
-                <span class="font-bold text-gray-800">แอดมินอนุมัติ</span>
-              </div>
-              <p class="text-xs text-gray-500 leading-relaxed">คนขับสแกน QR โอนเงินผ่าน PromptPay ของระบบ → ส่งคำขอเติมเงินรอแอดมินตรวจสอบและอนุมัติ</p>
-              <p class="text-[11px] text-blue-500 mt-2 font-semibold">💡 ใช้เมื่อ Omise มีปัญหาหรือยังไม่ได้ตั้งค่า</p>
-            </div>
-          </label>
+          <button type="button" onclick="acceptMaskedSlip2goReceiverAccount()" class="mt-3 px-3 py-2 rounded-lg border border-amber-300 bg-white text-amber-700 text-xs font-semibold hover:bg-amber-100 transition-colors">
+            ใช้ xxx-xxx-9045 ชั่วคราว
+          </button>
         </div>
         <div class="mt-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-700">
           <span class="material-icons-round text-sm align-middle mr-1">info</span>
-          <strong>หมายเหตุ:</strong> เมื่อเปลี่ยนโหมด แอปคนขับจะอัปเดตอัตโนมัติในครั้งถัดไปที่เปิดหน้าเติมเงิน (ไม่ต้อง build APK ใหม่)
+          <strong>หมายเหตุ:</strong> ต้องตั้งค่า secret <code>SLIP2GO_API_KEY</code> ให้ Supabase Edge Function และรัน migration ก่อนใช้งานจริง
         </div>
         <div class="mt-5 flex justify-end">
           <button onclick="saveTopupModeSettings()" class="px-5 py-2.5 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-teal-200" style="background:linear-gradient(135deg,#0d9488,#14b8a6);">
-            <span class="material-icons-round text-sm align-middle mr-1">save</span> บันทึกโหมดเติมเงิน
+            <span class="material-icons-round text-sm align-middle mr-1">save</span> บันทึกการตรวจสลิป
           </button>
         </div>
       </div>
@@ -4275,6 +4314,72 @@ async function renderSettings(el) {
         </div>
       </div>
 
+      <!-- ========= App Update Policy ========= -->
+      <div class="glass-card p-6">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center"><span class="material-icons-round text-blue-600">system_update_alt</span></div>
+          <div>
+            <h3 class="font-bold text-gray-800">แจ้งอัปเดตแอป</h3>
+            <p class="text-xs text-gray-400">ตั้งค่า optional/force update จาก system_config.app_update_policy</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <label class="flex items-center gap-3 p-4 rounded-xl bg-blue-50/60 border border-blue-100">
+            <input id="settAppUpdateEnabled" type="checkbox" class="w-5 h-5" ${appUpdatePolicy.enabled ? 'checked' : ''}>
+            <span>
+              <span class="block text-sm font-semibold text-gray-700">เปิดแจ้งเตือนอัปเดต</span>
+              <span class="block text-xs text-gray-500">ค่าเริ่มต้นควรปิดไว้จนกว่าจะพร้อม release</span>
+            </span>
+          </label>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">โหมด</label>
+            <select id="settAppUpdateMode" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all">
+              <option value="optional" ${appUpdatePolicy.mode !== 'force' ? 'selected' : ''}>Optional - ผู้ใช้กดไว้ภายหลังได้</option>
+              <option value="force" ${appUpdatePolicy.mode === 'force' ? 'selected' : ''}>Force - ต้องอัปเดตก่อนเข้าแอป</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Latest Version</label>
+            <input id="settAppUpdateLatestVersion" value="${escapeForInput(appUpdatePolicy.latest_version || '')}" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all" placeholder="1.5.2">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Latest Build</label>
+            <input id="settAppUpdateLatestBuild" type="number" min="0" value="${escapeForInput(appUpdatePolicy.latest_build ?? '')}" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all" placeholder="92">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Minimum Supported Version</label>
+            <input id="settAppUpdateMinSupportedVersion" value="${escapeForInput(appUpdatePolicy.min_supported_version || '')}" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all" placeholder="1.5.0">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Minimum Supported Build</label>
+            <input id="settAppUpdateMinSupportedBuild" type="number" min="0" value="${escapeForInput(appUpdatePolicy.min_supported_build ?? '')}" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all" placeholder="90">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">หัวข้อภาษาไทย</label>
+            <input id="settAppUpdateTitleTh" value="${escapeForInput(appUpdatePolicy.title_th || DEFAULT_APP_UPDATE_POLICY.title_th)}" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">ข้อความแจ้งเตือน</label>
+            <input id="settAppUpdateMessageTh" value="${escapeForInput(appUpdatePolicy.message_th || DEFAULT_APP_UPDATE_POLICY.message_th)}" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Android Store URL</label>
+            <input id="settAppUpdateAndroidUrl" type="url" value="${escapeForInput(appUpdatePolicy.android_url || '')}" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all" placeholder="https://play.google.com/store/apps/details?id=...">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">iOS Store URL</label>
+            <input id="settAppUpdateIosUrl" type="url" value="${escapeForInput(appUpdatePolicy.ios_url || '')}" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all" placeholder="https://apps.apple.com/...">
+          </div>
+        </div>
+
+        <div class="mt-5 flex justify-end">
+          <button onclick="saveAppUpdatePolicySettings()" data-testid="save-app-update-policy-button" class="px-5 py-2.5 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-blue-200" style="background:linear-gradient(135deg,#2563eb,#1d4ed8);">
+            <span class="material-icons-round text-sm align-middle mr-1">save</span> บันทึกนโยบายอัปเดตแอป
+          </button>
+        </div>
+      </div>
+
       <!-- Banners Management -->
       <div class="glass-card p-6">
         <div class="flex items-center gap-3 mb-5">
@@ -4408,6 +4513,72 @@ async function _getSystemConfigId() {
 
 async function _upsertSystemConfig(patch) {
   await callAdminAction({ action: 'upsert_system_config', config_data: patch });
+}
+
+function _readNullableInt(id) {
+  const value = document.getElementById(id)?.value?.trim();
+  if (!value) return null;
+  const parsed = parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function _isValidHttpUrl(value) {
+  try {
+    const url = new URL(value || '');
+    return url.protocol === 'https:' || url.protocol === 'http:';
+  } catch (_) {
+    return false;
+  }
+}
+
+function _hasBlockingUpdate(policy) {
+  return (
+    policy.enabled === true &&
+    (policy.mode === 'force' ||
+      policy.min_supported_build != null ||
+      Boolean(policy.min_supported_version))
+  );
+}
+
+async function saveAppUpdatePolicySettings() {
+  try {
+    const bridged = window.__adminWebBridge?.saveAppUpdatePolicySettings;
+    if (typeof bridged === 'function') {
+      return await bridged({ supabase, supabaseAuth, currentUser, callAdminAction, showToast, escapeHtml, fmt, fmtDate, refreshCurrentPage });
+    }
+  } catch (_) {}
+
+  try {
+    const app_update_policy = {
+      enabled: document.getElementById('settAppUpdateEnabled')?.checked === true,
+      mode: document.getElementById('settAppUpdateMode')?.value === 'force' ? 'force' : 'optional',
+      latest_version: document.getElementById('settAppUpdateLatestVersion')?.value?.trim() || null,
+      latest_build: _readNullableInt('settAppUpdateLatestBuild'),
+      min_supported_version: document.getElementById('settAppUpdateMinSupportedVersion')?.value?.trim() || null,
+      min_supported_build: _readNullableInt('settAppUpdateMinSupportedBuild'),
+      title_th: document.getElementById('settAppUpdateTitleTh')?.value?.trim() || DEFAULT_APP_UPDATE_POLICY.title_th,
+      message_th: document.getElementById('settAppUpdateMessageTh')?.value?.trim() || DEFAULT_APP_UPDATE_POLICY.message_th,
+      android_url: document.getElementById('settAppUpdateAndroidUrl')?.value?.trim() || '',
+      ios_url: document.getElementById('settAppUpdateIosUrl')?.value?.trim() || '',
+      target_roles: [],
+      starts_at: null,
+      ends_at: null,
+    };
+
+    if (
+      _hasBlockingUpdate(app_update_policy) &&
+      !_isValidHttpUrl(app_update_policy.android_url) &&
+      !_isValidHttpUrl(app_update_policy.ios_url)
+    ) {
+      showToast('force update ต้องมี Store URL ที่ถูกต้องอย่างน้อย 1 รายการ', 'error');
+      return;
+    }
+
+    await _upsertSystemConfig({ app_update_policy });
+    showToast('บันทึกนโยบายอัปเดตแอปสำเร็จ', 'success');
+  } catch (e) {
+    showToast('บันทึกนโยบายอัปเดตแอปไม่สำเร็จ: ' + (e?.message || JSON.stringify(e)), 'error');
+  }
 }
 
 function _isMissingSystemConfigKeyColumnError(error) {
@@ -4561,6 +4732,15 @@ async function saveDetectionRadiusSettings() {
   }
 }
 
+async function acceptMaskedSlip2goReceiverAccount() {
+  const receiverInput = document.getElementById('settSlip2goReceiverAccount');
+  const allowMasked = document.getElementById('settSlip2goAllowMaskedReceiver');
+  if (receiverInput) receiverInput.value = 'xxx-xxx-9045';
+  if (allowMasked) allowMasked.checked = true;
+  showToast('กำลังบันทึกให้ยอมรับ xxx-xxx-9045 ชั่วคราว...', 'info');
+  await saveTopupModeSettings();
+}
+
 async function saveTopupModeSettings() {
   try {
     const bridged = window.__adminWebBridge?.saveTopupModeSettings;
@@ -4569,12 +4749,18 @@ async function saveTopupModeSettings() {
 
   try {
     await _upsertSystemConfig({
-      topup_mode: document.querySelector('input[name="settTopupMode"]:checked')?.value || 'admin_approve',
+      topup_mode: 'admin_approve',
+      slip2go_receiver_account: document.getElementById('settSlip2goReceiverAccount')?.value?.trim() || null,
+      slip2go_allow_masked_receiver_account: document.getElementById('settSlip2goAllowMaskedReceiver')?.checked === true,
     });
-    showToast('บันทึกโหมดเติมเงินสำเร็จ', 'success');
+    showToast('บันทึกการตรวจสลิปสำเร็จ', 'success');
   } catch (e) {
     console.error('saveTopupModeSettings error:', e);
-    showToast('บันทึกโหมดเติมเงินไม่สำเร็จ: ' + (e.message || JSON.stringify(e)), 'error');
+    if (String(e.message || '').toLowerCase().includes('slip2go_receiver_account')) {
+      showToast('ยังไม่สามารถบันทึกค่า Slip2Go ได้ กรุณารัน migration 20260609000100_topup_slip2go_auto_manual.sql', 'error');
+      return;
+    }
+    showToast('บันทึกการตรวจสลิปไม่สำเร็จ: ' + (e.message || JSON.stringify(e)), 'error');
   }
 }
 
@@ -6193,22 +6379,17 @@ async function renderTopups(el) {
     }
   } catch (_) {}
 
-  let currentTopupMode = 'admin_approve';
-  try {
-    const { data: cfg } = await supabase.from('system_config').select('topup_mode').eq('id', 1).maybeSingle();
-    if (cfg?.topup_mode) currentTopupMode = cfg.topup_mode;
-  } catch(_) {}
-
   const { data: requests } = await supabase.from('topup_requests').select('*').order('created_at', { ascending: false }).limit(100);
 
   const userIds = [...new Set((requests||[]).map(r => r.user_id))];
   let userMap = {};
   if (userIds.length) {
-    const { data: profiles } = await supabase.from('profiles').select('id, full_name').in('id', userIds);
+    const roleFilter = ['driver', 'customer'];
+    const { data: profiles } = await supabase.from('profiles').select('id, full_name, role').in('id', userIds).in('role', ['driver', 'customer']);
     (profiles || []).forEach(p => userMap[p.id] = p);
   }
+  const roleLabel = (role) => (role === 'customer' ? 'ลูกค้า' : role === 'driver' ? 'คนขับ' : role || '-');
 
-  const isOmise = currentTopupMode === 'omise';
   const statusCounts = { pending: 0, completed: 0, rejected: 0 };
   (requests || []).forEach((r) => {
     if (statusCounts[r.status] !== undefined) statusCounts[r.status] += 1;
@@ -6216,19 +6397,15 @@ async function renderTopups(el) {
   const modeBanner = `
     <div class="glass-card p-4 mb-5 flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl flex items-center justify-center ${isOmise ? 'bg-teal-50' : 'bg-indigo-50'}">
-          <span class="material-icons-round ${isOmise ? 'text-teal-500' : 'text-indigo-500'}">${isOmise ? 'bolt' : 'admin_panel_settings'}</span>
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-teal-50">
+          <span class="material-icons-round text-teal-500">verified</span>
         </div>
         <div>
-          <p class="text-sm font-bold text-gray-800">โหมดปัจจุบัน: ${isOmise ? 'Omise (อัตโนมัติ)' : 'แอดมินอนุมัติ'}</p>
-          <p class="text-xs text-gray-400">${isOmise ? 'คนขับจ่ายผ่าน Omise → เติมเงินอัตโนมัติ' : 'คนขับโอน PromptPay → รอแอดมินอนุมัติ'}</p>
+          <p class="text-sm font-bold text-gray-800">โหมดปัจจุบัน: Slip2Go Auto + Manual</p>
+          <p class="text-xs text-gray-400">ผู้ใช้เติม Wallet ผ่าน PromptPay และแนบสลิป ระบบตรวจผ่าน Slip2Go ก่อนเติมเงินอัตโนมัติ ส่วนแอดมินยังอนุมัติ/เติมเงินด้วยมือได้</p>
         </div>
       </div>
       <div class="flex items-center gap-2">
-        <button onclick="quickSwitchTopupMode('${isOmise ? 'admin_approve' : 'omise'}')" class="px-4 py-2 rounded-xl text-xs font-semibold transition-all ${isOmise ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200' : 'bg-teal-100 text-teal-700 hover:bg-teal-200'}">
-          <span class="material-icons-round text-sm align-middle mr-1">${isOmise ? 'admin_panel_settings' : 'bolt'}</span>
-          สลับเป็น${isOmise ? 'แอดมินอนุมัติ' : 'Omise อัตโนมัติ'}
-        </button>
         <a href="#" onclick="navigateTo('settings');return false" class="px-3 py-2 bg-gray-100 text-gray-600 rounded-xl text-xs font-semibold hover:bg-gray-200">
           <span class="material-icons-round text-sm align-middle">settings</span>
         </a>
@@ -6266,20 +6443,29 @@ async function renderTopups(el) {
           <table class="w-full text-sm">
             <thead><tr class="bg-gray-50/80">
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">ผู้ขอ</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">บทบาท</th>
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">จำนวน</th>
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">สถานะ</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">หลักฐาน</th>
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">วันที่</th>
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">จัดการ</th>
             </tr></thead>
             <tbody>
-              ${(requests||[]).length === 0 ? '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">ไม่มีคำขอ</td></tr>' :
+              ${(requests||[]).length === 0 ? '<tr><td colspan="7" class="px-4 py-8 text-center text-gray-400">ไม่มีคำขอ</td></tr>' :
               (requests||[]).map(r => {
                 const user = userMap[r.user_id] || {};
+                const slipEvidence = r.slip_image_path
+                  ? `<button onclick="viewTopupSlip('${escapeHtml(r.slip_image_path)}')" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-200">ดูสลิป</button>`
+                  : r.verification_reason
+                    ? `<span class="text-xs text-amber-600">${escapeHtml(r.verification_reason)}</span>`
+                    : '-';
                 return `
                   <tr class="table-row border-b border-gray-50">
                     <td class="px-4 py-3 font-medium">${escapeHtml(user.full_name) || r.user_id?.substring(0,8) || '-'}</td>
+                    <td class="px-4 py-3 text-gray-500">${escapeHtml(roleLabel(user.role))}</td>
                     <td class="px-4 py-3 font-semibold text-green-600">฿${fmt(r.amount)}</td>
                     <td class="px-4 py-3">${statusBadge(r.status)}</td>
+                    <td class="px-4 py-3">${slipEvidence}</td>
                     <td class="px-4 py-3 text-gray-500 text-xs">${fmtDate(r.created_at)}</td>
                     <td class="px-4 py-3">
                       ${r.status === 'pending' ? `
@@ -6298,6 +6484,7 @@ async function renderTopups(el) {
   `;
   window._allTopups = (requests || []).map((r) => ({
     ผู้ขอ: userMap[r.user_id]?.full_name || r.user_id?.substring(0, 8) || '-',
+    บทบาท: roleLabel(userMap[r.user_id]?.role),
     จำนวน: Math.round(r.amount || 0),
     สถานะ: r.status || '-',
     วันที่: fmtDate(r.created_at),
@@ -6311,7 +6498,7 @@ function exportTopupsCsv() {
   } catch (_) {}
 
   const rows = window._allTopups || [];
-  exportRowsToCsv(reportFilename('topups_report', 'csv', '', ''), ['ผู้ขอ', 'จำนวน', 'สถานะ', 'วันที่'], rows);
+  exportRowsToCsv(reportFilename('topups_report', 'csv', '', ''), ['ผู้ขอ', 'บทบาท', 'จำนวน', 'สถานะ', 'วันที่'], rows);
 }
 
 function exportTopupsExcel() {
@@ -6321,7 +6508,7 @@ function exportTopupsExcel() {
   } catch (_) {}
 
   const rows = window._allTopups || [];
-  exportRowsToExcel(reportFilename('topups_report', 'xls', '', ''), ['ผู้ขอ', 'จำนวน', 'สถานะ', 'วันที่'], rows);
+  exportRowsToExcel(reportFilename('topups_report', 'xls', '', ''), ['ผู้ขอ', 'บทบาท', 'จำนวน', 'สถานะ', 'วันที่'], rows);
 }
 
 async function approveTopup(id, userId, amount) {
@@ -6357,6 +6544,49 @@ async function rejectTopup(id) {
   } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error'); }
 }
 
+async function viewTopupSlip(path) {
+  try {
+    const bridged = window.__adminWebBridge?.viewTopupSlip;
+    if (typeof bridged === 'function') {
+      return await bridged(path, { supabase, supabaseAuth, currentUser, callAdminAction, showToast, escapeHtml, fmt, fmtDate, refreshCurrentPage });
+    }
+  } catch (_) {}
+
+  try {
+    const result = await callAdminAction({ action: 'get_topup_slip_url', path });
+    if (!result?.signed_url) throw new Error('signed_url_missing');
+    document.getElementById('topupSlipModal')?.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'topupSlipModal';
+    modal.className = 'fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4';
+    modal.innerHTML = `
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] overflow-hidden flex flex-col fade-in">
+        <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
+              <span class="material-icons-round text-blue-600 text-lg">receipt_long</span>
+            </div>
+            <div>
+              <h3 class="font-bold text-gray-800 text-lg">สลิปเติมเงิน</h3>
+              <p class="text-xs text-gray-500">หลักฐานการโอนเงินจากผู้ขอเติมเงิน</p>
+            </div>
+          </div>
+          <button type="button" onclick="document.getElementById('topupSlipModal')?.remove()" class="w-9 h-9 rounded-xl bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center">
+            <span class="material-icons-round text-lg">close</span>
+          </button>
+        </div>
+        <div class="bg-gray-50 p-4 overflow-auto">
+          <img src="${escapeHtml(result.signed_url)}" alt="สลิปเติมเงิน" class="block max-w-full max-h-[74vh] mx-auto rounded-xl border border-gray-200 bg-white object-contain" />
+        </div>
+      </div>`;
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) modal.remove();
+    });
+    document.body.appendChild(modal);
+  } catch(e) { showToast('เปิดสลิปไม่สำเร็จ: ' + escapeHtml(e.message || JSON.stringify(e)), 'error'); }
+}
+
 async function quickSwitchTopupMode(newMode) {
   try {
     const bridged = window.__adminWebBridge?.quickSwitchTopupMode;
@@ -6365,13 +6595,7 @@ async function quickSwitchTopupMode(newMode) {
     }
   } catch (_) {}
 
-  const label = newMode === 'omise' ? 'Omise (อัตโนมัติ)' : 'แอดมินอนุมัติ';
-  if (!confirm(`สลับโหมดเติมเงินเป็น "${label}" ?\n\nแอปคนขับจะเปลี่ยนโหมดอัตโนมัติในครั้งถัดไปที่เปิดหน้าเติมเงิน`)) return;
-  try {
-    await callAdminAction({ action: 'upsert_system_config', config_data: { topup_mode: newMode } });
-    showToast(`เปลี่ยนโหมดเติมเงินเป็น "${label}" สำเร็จ`, 'success');
-    refreshCurrentPage();
-  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message || JSON.stringify(e)), 'error'); }
+  showToast('โหมดเติมเงินใช้ Slip2Go Auto + Manual แล้ว กรุณาตั้งค่าจากหน้า Settings', 'info');
 }
 
 // ============================================

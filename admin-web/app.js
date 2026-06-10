@@ -1,9 +1,16 @@
 ﻿;(function () {
+  var ASSET_VERSION = '20260527-amount-fixes';
+
+  function versioned(src) {
+    var sep = src.indexOf('?') === -1 ? '?' : '&';
+    return src + sep + 'v=' + encodeURIComponent(ASSET_VERSION);
+  }
+
   function loadScript(src, opts) {
     return new Promise(function (resolve, reject) {
       try {
         var s = document.createElement('script');
-        s.src = src;
+        s.src = versioned(src);
         if (opts && opts.type) s.type = opts.type;
         s.onload = function () { resolve(true); };
         s.onerror = function (e) { reject(e); };

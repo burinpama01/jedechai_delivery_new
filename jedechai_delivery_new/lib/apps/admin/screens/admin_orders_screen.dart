@@ -192,6 +192,9 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
     final serviceType = order['service_type'] ?? '-';
     final status = order['status'] ?? '-';
     final price = (order['price'] as num?)?.toDouble() ?? 0;
+    final deliveryFee = (order['delivery_fee'] as num?)?.toDouble() ?? 0;
+    // For food orders, price = food subtotal; admin needs total = price + delivery_fee
+    final displayAmount = serviceType == 'food' ? price + deliveryFee : price;
     final distanceKm = (order['distance_km'] as num?)?.toDouble() ?? 0;
     final pickupAddress = order['pickup_address'] ?? order['origin_address'] ?? '-';
     final destAddress =
@@ -293,7 +296,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  '฿${price.toStringAsFixed(0)}',
+                  '฿${displayAmount.toStringAsFixed(0)}',
                   style: const TextStyle(
                       fontSize: 16, fontWeight: FontWeight.bold),
                 ),
@@ -401,6 +404,8 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
       return;
     }
     final price = (order['price'] as num?)?.toDouble() ?? 0;
+    final deliveryFeeDialog = (order['delivery_fee'] as num?)?.toDouble() ?? 0;
+    final totalDialog = price + deliveryFeeDialog;
     final pickupAddress =
         order['pickup_address'] ?? order['origin_address'] ?? '-';
 
@@ -418,7 +423,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
             Text('บริการ: $serviceType'),
             Text('ร้าน: $pickupAddress',
                 maxLines: 2, overflow: TextOverflow.ellipsis),
-            Text('ราคา: ฿${price.toStringAsFixed(0)}'),
+            Text('ยอดรวม: ฿${totalDialog.toStringAsFixed(0)} (อาหาร ฿${price.toStringAsFixed(0)} + ส่ง ฿${deliveryFeeDialog.toStringAsFixed(0)})'),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(10),

@@ -125,6 +125,50 @@ class PaymentService {
     }
   }
 
+  static Future<bool> payBookingWithWallet({
+    required String userId,
+    required String bookingId,
+    required double amount,
+    String? description,
+  }) async {
+    try {
+      final result = await Supabase.instance.client.rpc('customer_wallet_pay_booking',
+        params: {
+          'p_user_id': userId,
+          'p_booking_id': bookingId,
+          'p_amount': amount,
+          'p_description': description,
+        },
+      );
+
+      final resultMap = result is Map<String, dynamic>
+          ? result
+          : Map<String, dynamic>.from(result as Map);
+      if (resultMap['success'] != true) {
+        throw Exception(resultMap['error'] ?? 'wallet_payment_failed');
+      }
+
+      final payment = await createPayment(
+        bookingId: bookingId,
+        amount: amount,
+        method: 'wallet',
+        transactionId: resultMap['transaction_id']?.toString(),
+      );
+      if (payment != null) {
+        await updatePaymentStatus(
+          payment.id,
+          'completed',
+          transactionId: resultMap['transaction_id']?.toString(),
+        );
+      }
+
+      return true;
+    } catch (e) {
+      debugLog('Error paying booking with wallet: $e');
+      rethrow;
+    }
+  }
+
   static Future<bool> refundPayment(String paymentId) async {
     try {
       // Simulate refund processing
@@ -196,6 +240,8 @@ class PaymentService {
         return 'บัตรเดบิต';
       case 'mobile_banking':
         return 'ธนาคารมือถือ';
+      case 'wallet':
+        return 'Wallet';
       case 'ewallet':
         return 'อีวอลเล็ต';
       default:

@@ -4,16 +4,13 @@
 ALTER TABLE IF EXISTS public.profiles
   ADD COLUMN IF NOT EXISTS merchant_gp_system_rate numeric,
   ADD COLUMN IF NOT EXISTS merchant_gp_driver_rate numeric;
-
 ALTER TABLE IF EXISTS public.system_config
   ADD COLUMN IF NOT EXISTS merchant_gp_system_rate_default numeric,
   ADD COLUMN IF NOT EXISTS merchant_gp_driver_rate_default numeric;
-
 COMMENT ON COLUMN public.profiles.merchant_gp_system_rate IS 'Per-merchant GP split to system (0..1). NULL = use default split.';
 COMMENT ON COLUMN public.profiles.merchant_gp_driver_rate IS 'Per-merchant GP split to driver (0..1). NULL = use default split.';
 COMMENT ON COLUMN public.system_config.merchant_gp_system_rate_default IS 'Default merchant GP split to system (0..1).';
 COMMENT ON COLUMN public.system_config.merchant_gp_driver_rate_default IS 'Default merchant GP split to driver (0..1).';
-
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -84,7 +81,6 @@ BEGIN
       );
   END IF;
 END $$;
-
 -- Backfill profile split from existing gp_rate when split is still empty.
 UPDATE public.profiles
 SET
@@ -93,7 +89,6 @@ SET
 WHERE gp_rate IS NOT NULL
   AND merchant_gp_system_rate IS NULL
   AND merchant_gp_driver_rate IS NULL;
-
 -- Backfill system defaults if not set.
 UPDATE public.system_config
 SET
@@ -101,7 +96,6 @@ SET
   merchant_gp_driver_rate_default = COALESCE(merchant_gp_driver_rate_default, 0)
 WHERE merchant_gp_system_rate_default IS NULL
    OR merchant_gp_driver_rate_default IS NULL;
-
 -- Backfill from key/value schema when available.
 DO $$
 DECLARE

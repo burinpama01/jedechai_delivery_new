@@ -32,6 +32,30 @@ function _escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
+async function _loadCouponDiscountMap(supabase, bookingIds) {
+  const ids = [...new Set((bookingIds || []).filter(Boolean))];
+  if (!ids.length) return {};
+  const { data, error } = await supabase
+    .from('coupon_usages')
+    .select('booking_id, discount_amount')
+    .in('booking_id', ids);
+  if (error) {
+    console.warn('orders coupon_usages load failed', error);
+    return {};
+  }
+  return (data || []).reduce((acc, row) => {
+    if (row.booking_id) acc[row.booking_id] = Number(row.discount_amount || 0);
+    return acc;
+  }, {});
+}
+
+function _displayAmount(o) {
+  const gross = Number(o?.price || 0) +
+    (o?.service_type === 'food' ? Number(o?.delivery_fee || 0) : 0);
+  const discount = Number(globalThis._orderCouponDiscountMap?.[o?.id] || 0);
+  return Math.max(0, gross - discount);
+}
+
 export async function renderOrdersPage(el, ctx) {
   _ctx = ctx || null;
   globalThis.__adminWebContext = {
@@ -110,6 +134,7 @@ export async function loadOrders() {
   globalThis._orderCustomerMap = {};
   globalThis._orderMerchantMap = {};
   globalThis._orderItemCountMap = {};
+  globalThis._orderCouponDiscountMap = {};
   if (driverIds.length) {
     const { data: dProfiles } = await supabase.from('profiles').select('id, full_name').in('id', driverIds);
     (dProfiles || []).forEach(p => { globalThis._orderDriverMap[p.id] = p.full_name || p.id.substring(0, 8); });
@@ -133,6 +158,8 @@ export async function loadOrders() {
     });
   }
   const foodOrderIds = (orders || []).filter(o => o.service_type === 'food').map(o => o.id);
+  const orderIds = (orders || []).map(o => o.id).filter(Boolean);
+  globalThis._orderCouponDiscountMap = await _loadCouponDiscountMap(supabase, orderIds);
   if (foodOrderIds.length) {
     const { data: itemRows } = await supabase.from('booking_items').select('booking_id').in('booking_id', foodOrderIds);
     (itemRows || []).forEach(row => {
@@ -194,7 +221,8 @@ export function renderOrderRows(orders) {
     const canAdminAccept = typeof canAdminMerchantAccept === 'function' ? canAdminMerchantAccept(o) : false;
     const canAdminReady = typeof canAdminMarkFoodReady === 'function' ? canAdminMarkFoodReady(o) : false;
     const canEditPickup = o.status !== 'completed' && o.status !== 'cancelled';
-    const totalAmount = Number(o.price || 0) + Number(o.delivery_fee || 0);
+    const couponDiscount = Number(globalThis._orderCouponDiscountMap?.[o.id] || 0);
+    const totalAmount = _displayAmount(o);
 
     let actions = `<button onclick=\"showOrderDetail('${o.id}')\" class=\"min-h-[44px] px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-200 mr-1\">รายละเอียด</button>`;
     if (canReassign || canRebroadcast || canAdminAccept || canAdminReady || canEditPickup) {
@@ -225,7 +253,7 @@ export function renderOrderRows(orders) {
       <td class="px-4 py-3 text-xs">${dName}</td>
       <td class="px-4 py-3 text-gray-600 max-w-[120px] truncate">${o.pickup_address || '-'}</td>
       <td class="px-4 py-3 text-gray-600 max-w-[120px] truncate">${o.destination_address || '-'}</td>
-      <td class="px-4 py-3 font-semibold">฿${fmt(Math.round(totalAmount))}${o.service_type === 'food' ? `<div class="text-[10px] text-gray-400">อาหาร ฿${fmt(Math.round(o.price || 0))} + ส่ง ฿${fmt(Math.round(o.delivery_fee || 0))}</div>` : ''}</td>
+      <td class="px-4 py-3 font-semibold">฿${fmt(Math.round(totalAmount))}${o.service_type === 'food' ? `<div class="text-[10px] text-gray-400">อาหาร ฿${fmt(Math.round(o.price || 0))} + ส่ง ฿${fmt(Math.round(o.delivery_fee || 0))}${couponDiscount > 0 ? ` - คูปอง ฿${fmt(Math.round(couponDiscount))}` : ''}</div>` : ''}</td>
       <td class="px-4 py-3">${typeof statusBadge === 'function' ? statusBadge(o.status) : o.status}</td>
       <td class="px-4 py-3 text-gray-500 text-xs">${fmtDate(o.created_at)}</td>
       <td class="px-4 py-3 whitespace-nowrap">${actions}</td>
@@ -258,7 +286,7 @@ export function exportOrdersCsv() {
     คนขับ: globalThis._orderDriverMap?.[o.driver_id] || (o.driver_id ? o.driver_id.substring(0, 8) : '-'),
     จุดรับ: o.pickup_address || '-',
     จุดส่ง: o.destination_address || '-',
-    ยอดรวม: Math.round(Number(o.price || 0) + Number(o.delivery_fee || 0)),
+    ยอดรวม: Math.round(_displayAmount(o)),
     ค่าอาหาร: o.service_type === 'food' ? Math.round(o.price || 0) : '',
     ค่าส่ง: o.service_type === 'food' ? Math.round(o.delivery_fee || 0) : '',
     สถานะ: o.status || '-',
@@ -281,7 +309,7 @@ export function exportOrdersExcel() {
     คนขับ: globalThis._orderDriverMap?.[o.driver_id] || (o.driver_id ? o.driver_id.substring(0, 8) : '-'),
     จุดรับ: o.pickup_address || '-',
     จุดส่ง: o.destination_address || '-',
-    ยอดรวม: Math.round(Number(o.price || 0) + Number(o.delivery_fee || 0)),
+    ยอดรวม: Math.round(_displayAmount(o)),
     ค่าอาหาร: o.service_type === 'food' ? Math.round(o.price || 0) : '',
     ค่าส่ง: o.service_type === 'food' ? Math.round(o.delivery_fee || 0) : '',
     สถานะ: o.status || '-',

@@ -4,6 +4,7 @@ import '../../../../theme/app_theme.dart';
 import '../../../../common/models/booking.dart';
 import '../../../../common/services/payment_service.dart';
 import '../../../../utils/debug_logger.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Payment Screen
 /// 
@@ -45,6 +46,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
         'icon': Icons.account_balance,
         'color': AppTheme.accentBlue,
       },
+      {
+        'id': 'wallet',
+        'label': 'Wallet',
+        'subtitle': 'ชำระจากยอดเงินใน Wallet',
+        'icon': Icons.account_balance_wallet,
+        'color': AppTheme.accentOrange,
+      },
     ];
   }
 
@@ -52,6 +60,25 @@ class _PaymentScreenState extends State<PaymentScreen> {
     setState(() => _isProcessing = true);
 
     try {
+      if (_selectedMethod == 'wallet') {
+        final userId = Supabase.instance.client.auth.currentUser?.id ??
+            widget.booking.customerId;
+        if (userId.isEmpty) {
+          throw Exception('ไม่พบข้อมูลผู้ใช้สำหรับชำระผ่าน Wallet');
+        }
+        await PaymentService.payBookingWithWallet(
+          userId: userId,
+          bookingId: widget.booking.id,
+          amount: widget.booking.totalAmount,
+          description: 'ชำระค่า${widget.booking.serviceType}ด้วย Wallet',
+        );
+
+        if (mounted) {
+          _showSuccessDialog();
+        }
+        return;
+      }
+
       final payment = await PaymentService.createPayment(
         bookingId: widget.booking.id,
         amount: widget.booking.totalAmount,

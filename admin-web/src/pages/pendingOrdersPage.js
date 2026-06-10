@@ -22,6 +22,30 @@ function _deps() {
   };
 }
 
+async function _loadCouponDiscountMap(supabase, bookingIds) {
+  const ids = [...new Set((bookingIds || []).filter(Boolean))];
+  if (!ids.length) return {};
+  const { data, error } = await supabase
+    .from('coupon_usages')
+    .select('booking_id, discount_amount')
+    .in('booking_id', ids);
+  if (error) {
+    console.warn('pending orders coupon_usages load failed', error);
+    return {};
+  }
+  return (data || []).reduce((acc, row) => {
+    if (row.booking_id) acc[row.booking_id] = Number(row.discount_amount || 0);
+    return acc;
+  }, {});
+}
+
+function _displayAmount(o) {
+  const gross = Number(o?.price || 0) +
+    (o?.service_type === 'food' ? Number(o?.delivery_fee || 0) : 0);
+  const discount = Number(globalThis._pendingCouponDiscountMap?.[o?.id] || 0);
+  return Math.max(0, gross - discount);
+}
+
 export async function disposePendingOrdersPage(ctx) {
   _ctx = ctx || _ctx;
   const { supabase } = _deps();
@@ -114,6 +138,11 @@ export async function refreshPendingOrders(ctx) {
   const totalPending = (pendingOrders || []).length + stuckLong.length;
 
   globalThis._pendingNamesMap = namesMap;
+  const orderIds = allPendingForFilter.map((o) => o.id).filter(Boolean);
+  globalThis._pendingCouponDiscountMap = await _loadCouponDiscountMap(
+    supabase,
+    orderIds,
+  );
 
   const statsEl = document.getElementById('poStats');
   if (statsEl) {
@@ -178,8 +207,9 @@ export async function refreshPendingOrders(ctx) {
     const custInfo = namesMap[o.customer_id];
     const drvInfo = namesMap[o.driver_id];
     const merInfo = namesMap[o.merchant_id];
+    const couponDiscount = Number(globalThis._pendingCouponDiscountMap?.[o.id] || 0);
     const priceText = o.service_type === 'food'
-      ? `฿${fmt(Math.round(o.price || 0))} <span class="text-blue-500 text-[9px]">+ ค่าส่ง ฿${fmt(Math.round(o.delivery_fee || 0))}</span>`
+      ? `฿${fmt(Math.round(_displayAmount(o)))} <span class="text-blue-500 text-[9px]">อาหาร ฿${fmt(Math.round(o.price || 0))} + ส่ง ฿${fmt(Math.round(o.delivery_fee || 0))}${couponDiscount > 0 ? ` - คูปอง ฿${fmt(Math.round(couponDiscount))}` : ''}</span>`
       : `฿${fmt(Math.round(o.price || 0))}`;
     const pickup = o.pickup_address || '-';
     const dest = o.destination_address || '-';
@@ -449,6 +479,14 @@ export async function showPendingOrderDetail(orderId, ctx) {
   const canAdminAcceptInDetail = typeof globalThis._canAdminMerchantAccept === 'function' ? globalThis._canAdminMerchantAccept(o) : false;
   const canAdminReadyInDetail = typeof globalThis._canAdminMarkFoodReady === 'function' ? globalThis._canAdminMarkFoodReady(o) : false;
   const canEditItemsInDetail = o.service_type === 'food' && ['pending_merchant', 'accepted', 'preparing'].includes(o.status);
+  if (o.service_type === 'food' && !globalThis._pendingCouponDiscountMap?.[o.id]) {
+    globalThis._pendingCouponDiscountMap = {
+      ...(globalThis._pendingCouponDiscountMap || {}),
+      ...(await _loadCouponDiscountMap(supabase, [o.id])),
+    };
+  }
+  const couponDiscount = Number(globalThis._pendingCouponDiscountMap?.[o.id] || 0);
+  const displayAmount = _displayAmount(o);
 
   const modal = document.createElement('div');
   modal.id = 'poDetailModal';
@@ -466,8 +504,8 @@ export async function showPendingOrderDetail(orderId, ctx) {
         <div class="flex items-center gap-3">
           ${serviceIcon(o.service_type)}
           ${statusBadge(o.status)}
-          <span class="text-lg font-bold text-gray-800">฿${fmt(Math.round(o.price||0))}</span>
-          ${o.delivery_fee ? `<span class=\"text-xs text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full\">ค่าส่ง ฿${fmt(Math.round(o.delivery_fee))}</span>` : ''}
+          <span class="text-lg font-bold text-gray-800">฿${fmt(Math.round(displayAmount))}</span>
+          ${o.service_type === 'food' ? `<span class=\"text-xs text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full\">อาหาร ฿${fmt(Math.round(o.price || 0))} + ส่ง ฿${fmt(Math.round(o.delivery_fee || 0))}${couponDiscount > 0 ? ` - คูปอง ฿${fmt(Math.round(couponDiscount))}` : ''}</span>` : ''}
         </div>
         <div class="grid grid-cols-2 gap-3 text-xs">
           <div class="p-3 rounded-xl bg-gray-50">

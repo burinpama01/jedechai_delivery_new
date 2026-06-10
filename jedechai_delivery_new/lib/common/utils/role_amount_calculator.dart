@@ -13,10 +13,39 @@ class RoleAmountCalculator {
     required double deliveryFee,
     required double couponDiscountAmount,
   }) {
-    final gross = customerGrossTotal(foodPrice: foodPrice, deliveryFee: deliveryFee);
+    final gross =
+        customerGrossTotal(foodPrice: foodPrice, deliveryFee: deliveryFee);
     final discount = couponDiscountAmount < 0 ? 0 : couponDiscountAmount;
     final payable = gross - discount;
     return payable < 0 ? 0 : payable;
+  }
+
+  static double displayTotalForService({
+    required String serviceType,
+    required double price,
+    double? deliveryFee,
+  }) {
+    final safePrice = clampNonNegative(price);
+    if (serviceType == 'food') {
+      return safePrice + clampNonNegative(deliveryFee ?? 0);
+    }
+    return safePrice;
+  }
+
+  static double netDisplayTotalForService({
+    required String serviceType,
+    required double price,
+    double? deliveryFee,
+    required double couponDiscountAmount,
+  }) {
+    final gross = displayTotalForService(
+      serviceType: serviceType,
+      price: price,
+      deliveryFee: deliveryFee,
+    );
+    final discount = couponDiscountAmount < 0 ? 0 : couponDiscountAmount;
+    final net = gross - discount;
+    return net < 0 ? 0 : net;
   }
 
   static double driverCashToCollect({

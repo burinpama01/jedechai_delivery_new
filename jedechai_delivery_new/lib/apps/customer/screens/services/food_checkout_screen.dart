@@ -16,6 +16,7 @@ import '../../../../common/widgets/coupon_entry_widget.dart';
 import '../../../../common/models/coupon.dart';
 import '../../../../common/services/coupon_service.dart';
 import '../../../../common/services/merchant_food_config_service.dart';
+import '../../../../common/services/payment_service.dart';
 import '../../../../common/services/system_config_service.dart';
 import '../../../../common/utils/app_time.dart';
 import '../../../../common/services/admin_line_notification_service.dart';
@@ -729,6 +730,10 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                                 AppLocalizations.of(context)!
                                     .foodCheckoutPayTransfer,
                                 Icons.account_balance),
+                            _buildPaymentOption(
+                                'wallet',
+                                'Wallet',
+                                Icons.account_balance_wallet),
                           ],
                         ),
                       ),
@@ -1155,7 +1160,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         scheduledAt: scheduledAt,
         couponCode: _appliedCoupon?.code,
         couponDiscount: _couponDiscount,
-        hideSystemCouponBreakdown: _appliedCoupon?.isSystemCoupon ?? false,
+        hideSystemCouponBreakdown: _hideCouponBreakdown,
         defaultNoteText: AppLocalizations.of(context)!
             .foodDefaultNote(cart.merchantName ?? ''),
         couponNoteFormatter: (code, amount) =>
@@ -1189,6 +1194,31 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
             debugLog('⚠️ Could not auto-cancel booking: $cancelErr');
           }
           throw Exception('ไม่สามารถใช้คูปองได้ ออเดอร์ถูกยกเลิกอัตโนมัติ กรุณาลองสั่งใหม่');
+        }
+      }
+
+      if (_paymentMethod == 'wallet' && finalTotal > 0) {
+        try {
+          await PaymentService.payBookingWithWallet(
+            userId: userId,
+            bookingId: booking['id'] as String,
+            amount: finalTotal,
+            description: 'ชำระค่าอาหารด้วย Wallet',
+          );
+        } catch (e) {
+          debugLog('❌ wallet payment failed — auto-cancelling booking: $e');
+          try {
+            await Supabase.instance.client
+                .from('bookings')
+                .update({
+                  'status': 'cancelled',
+                  'notes': 'auto_cancelled: wallet_payment_failed',
+                })
+                .eq('id', booking['id'] as String);
+          } catch (cancelErr) {
+            debugLog('⚠️ Could not auto-cancel wallet failed booking: $cancelErr');
+          }
+          throw Exception('ชำระผ่าน Wallet ไม่สำเร็จ ออเดอร์ถูกยกเลิกอัตโนมัติ กรุณาลองใหม่');
         }
       }
 
@@ -1309,7 +1339,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       final noteWithCoupon = (couponCode != null &&
               couponDiscount > 0 &&
               !hideSystemCouponBreakdown)
-          ? '$mergedNote\n${couponNoteFormatter != null ? couponNoteFormatter(couponCode!, couponDiscount.toStringAsFixed(2)) : "[Coupon: $couponCode | Discount: \u0e3f${couponDiscount.toStringAsFixed(2)}]"}'
+          ? '$mergedNote\n${couponNoteFormatter != null ? couponNoteFormatter(couponCode, couponDiscount.toStringAsFixed(2)) : "[Coupon: $couponCode | Discount: \u0e3f${couponDiscount.toStringAsFixed(2)}]"}'
           : mergedNote;
 
       // Create booking with status 'pending_merchant'
@@ -1341,15 +1371,19 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       debugLog('✅ Booking created: $bookingId');
 
       // Insert booking items (DB columns: booking_id, menu_item_id, quantity, price, name)
+      // item['price'] = (basePrice + optionsPrice) * quantity (totalPrice from CartItem)
+      // item['base_price'] = base unit price only
+      // Effective unit price = item['price'] / quantity to include options price
       final items = cartItems.map((item) {
-        final qty = item['quantity'] ?? 1;
-        final basePrice = (item['base_price'] ?? item['price']) as num;
+        final qty = ((item['quantity'] as num?) ?? 1).toInt();
+        final lineTotal = (item['price'] as num?)?.toDouble() ?? 0.0;
+        final effectiveUnitPrice = qty > 0 ? lineTotal / qty : lineTotal;
         final selectedOptions = item['selected_options'];
         return {
           'booking_id': bookingId,
           'menu_item_id': item['id'],
           'name': item['name'] ?? '',
-          'price': basePrice,
+          'price': effectiveUnitPrice,
           'quantity': qty,
           'selected_options':
               selectedOptions is List ? selectedOptions : <String>[],

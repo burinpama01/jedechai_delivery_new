@@ -8,7 +8,6 @@ SET
   admin_level = 10,
   updated_at = now()
 WHERE role = 'admin';
-
 -- Verify the update
 SELECT 
   u.email,

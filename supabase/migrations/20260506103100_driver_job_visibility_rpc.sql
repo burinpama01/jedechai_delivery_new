@@ -5,7 +5,6 @@ DROP FUNCTION IF EXISTS public.get_driver_job_visibility_debug(
   double precision,
   text[]
 );
-
 CREATE OR REPLACE FUNCTION public.get_driver_job_visibility_debug(
   p_driver_id uuid,
   p_driver_lat double precision DEFAULT NULL,
@@ -129,7 +128,6 @@ AS $$
   FROM candidate c
   ORDER BY c.booking_id DESC;
 $$;
-
 GRANT EXECUTE ON FUNCTION public.get_driver_job_visibility_debug(
   uuid,
   double precision,

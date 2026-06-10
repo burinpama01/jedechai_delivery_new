@@ -34,7 +34,19 @@ class AdminLineNotificationService {
 
   static Future<void> _sendLine(Map<String, dynamic> body, String eventType) async {
     try {
-      await Supabase.instance.client.functions.invoke('send-admin-line', body: body);
+      final response = await Supabase.instance.client.functions.invoke('send-admin-line', body: body);
+
+      if (response.status >= 400) {
+        debugLog('LINE admin notification failed: HTTP ${response.status}');
+        return;
+      }
+
+      final responseData = response.data;
+      if (responseData is Map && responseData['success'] == false) {
+        debugLog('LINE admin notification failed: ${responseData['error']}');
+        return;
+      }
+
       debugLog('LINE admin notification sent: $eventType');
     } catch (e) {
       debugLog('LINE admin notification failed: $e');

@@ -61,7 +61,6 @@ BEGIN
     RETURN jsonb_build_object('success', true, 'user_coupon_id', v_new_user_coupon_id);
 END;
 $$;
-
 -- 2. process_referral
 -- Atomically links a new user (referee) to a referrer using their code.
 CREATE OR REPLACE FUNCTION public.process_referral(p_referee_id UUID, p_referral_code TEXT)
@@ -98,7 +97,6 @@ BEGIN
     RETURN jsonb_build_object('success', true, 'referral_id', v_referral_id);
 END;
 $$;
-
 -- 3. consume_coupon (skeleton for locking and marking a user_coupon as used)
 -- Note: Real financial logic and stacking rules will likely be processed in Edge Functions, 
 -- but this RPC provides a safe atomic way to mark the coupon as consumed.

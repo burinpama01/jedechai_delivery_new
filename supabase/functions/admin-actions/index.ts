@@ -131,6 +131,9 @@ serve(async (req) => {
       case "reject_topup":
         result = await handleRejectTopup(supabaseAdmin, body);
         break;
+      case "get_topup_slip_url":
+        result = await handleGetTopupSlipUrl(supabaseAdmin, body);
+        break;
 
       // ─── Order Reassignment ───
       case "reassign_order":
@@ -221,6 +224,9 @@ serve(async (req) => {
         break;
 
       // ─── Order Management ───
+      case "accept_order_as_merchant":
+        result = await handleAcceptOrderAsMerchant(supabaseAdmin, body, adminId);
+        break;
       case "assign_order":
         result = await handleAssignOrder(supabaseAdmin, body);
         break;
@@ -686,61 +692,37 @@ async function handleApproveTopup(supabase, body) {
   const { id, user_id, amount } = body;
   if (!id) return errorResponse("Missing 'id'");
 
-  // Fetch request to verify
-  const { data: req, error: reqErr } = await supabase
-    .from("topup_requests")
-    .select("id, user_id, amount, status")
-    .eq("id", id)
-    .single();
-  if (reqErr) return errorResponse(reqErr.message);
-  if (req.status !== "pending") {
-    return jsonResponse({ success: false, already_processed: true });
+  const { data: result, error: rpcErr } = await supabase.rpc(
+    "complete_topup_request",
+    {
+      p_request_id: id,
+      p_description: null,
+      p_admin_note: "Admin approved topup",
+    },
+  );
+  if (rpcErr) return errorResponse(rpcErr.message);
+  if (result?.success !== true) {
+    if (result?.error === "already_processed") {
+      return jsonResponse({
+        success: false,
+        already_processed: true,
+        current_status: result.current_status,
+      });
+    }
+    return errorResponse(result?.error ?? "approve_topup_failed");
   }
 
-  const topupUserId = req.user_id || user_id;
-  const topupAmount = req.amount || amount;
+  const topupUserId = result.user_id || user_id;
+  const topupAmount = Number(result.amount || amount || 0);
 
-  // Get or create wallet
-  let { data: wallet } = await supabase
-    .from("wallets")
-    .select("id, balance")
-    .eq("user_id", topupUserId)
-    .maybeSingle();
-  if (!wallet) {
-    const { data: newW } = await supabase
-      .from("wallets")
-      .insert({ user_id: topupUserId, balance: 0 })
-      .select()
-      .single();
-    wallet = newW;
+  if (!topupUserId) {
+    return errorResponse("approve_topup returned no user_id");
+  }
+  if (!Number.isFinite(topupAmount) || topupAmount <= 0) {
+    return errorResponse("approve_topup returned invalid amount");
   }
 
-  if (wallet) {
-    await supabase
-      .from("wallets")
-      .update({ balance: (wallet.balance || 0) + topupAmount })
-      .eq("id", wallet.id);
-    await supabase.from("wallet_transactions").insert({
-      wallet_id: wallet.id,
-      amount: topupAmount,
-      type: "topup",
-      description: `เติมเงินผ่าน Admin (฿${topupAmount})`,
-    });
-  }
-
-  // Update request with expected-state guard
-  const { data: updated, error: updateErr } = await supabase
-    .from("topup_requests")
-    .update({
-      status: "completed",
-      processed_at: new Date().toISOString(),
-    })
-    .eq("id", id)
-    .eq("status", "pending")
-    .select("id")
-    .maybeSingle();
-  if (updateErr) return errorResponse(updateErr.message);
-  if (!updated) {
+  if (result?.already_processed) {
     return jsonResponse({ success: false, already_processed: true });
   }
 
@@ -758,7 +740,7 @@ async function handleApproveTopup(supabase, body) {
     },
   ]);
 
-  return jsonResponse({ success: true });
+  return jsonResponse({ success: true, wallet: result.wallet });
 }
 
 async function handleRejectTopup(supabase, body) {
@@ -782,6 +764,27 @@ async function handleRejectTopup(supabase, body) {
   }
 
   return jsonResponse({ success: true });
+}
+
+async function handleGetTopupSlipUrl(supabase, body) {
+  const { path } = body;
+  if (!path || typeof path !== "string") {
+    return errorResponse("Missing 'path'");
+  }
+  if (!path.startsWith("topup-slips/")) {
+    return errorResponse("Invalid topup slip path", 400);
+  }
+
+  const { data, error } = await supabase.storage
+    .from("topup-slips")
+    .createSignedUrl(path, 300);
+  if (error) return errorResponse(error.message, 500);
+
+  return jsonResponse({
+    success: true,
+    signed_url: data?.signedUrl ?? null,
+    expires_in: 300,
+  });
 }
 
 async function handleReassignOrder(supabase, body) {
@@ -1220,53 +1223,83 @@ async function handleCancelOrder(supabase, body) {
 }
 
 async function handleForceCancelOrder(supabase, body) {
-  const { order_id, customer_id, price, reason, do_refund } = body;
+  const { order_id, reason, do_refund } = body;
   if (!order_id) return errorResponse("Missing 'order_id'");
 
-  const { error: cancelErr } = await supabase
-    .from("bookings")
-    .update({
-      status: "cancelled",
-      cancellation_reason: "admin_force_cancel: " + (reason || ""),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", order_id);
-  if (cancelErr) return errorResponse(cancelErr.message);
+  const { data: result, error } = await supabase.rpc("admin_force_cancel_booking_with_wallet_refund", {
+    p_booking_id: order_id,
+    p_reason: reason || "",
+    p_do_refund: Boolean(do_refund),
+  });
+  if (error) return errorResponse(error.message);
 
-  if (do_refund && customer_id && price > 0) {
-    try {
-      let { data: wallet } = await supabase
-        .from("wallets")
-        .select("id, balance")
-        .eq("user_id", customer_id)
-        .maybeSingle();
-      if (!wallet) {
-        const { data: newW } = await supabase
-          .from("wallets")
-          .insert({ user_id: customer_id, balance: 0 })
-          .select()
-          .single();
-        wallet = newW;
-      }
-      if (wallet) {
-        await supabase
-          .from("wallets")
-          .update({ balance: (wallet.balance || 0) + price })
-          .eq("id", wallet.id);
-        await supabase.from("wallet_transactions").insert({
-          wallet_id: wallet.id,
-          amount: price,
-          type: "refund",
-          description: `คืนเงินจากยกเลิกออเดอร์ #${(order_id || "").substring(0, 8)} (Admin)`,
-        });
-      }
-    } catch (e) {
-      console.error("Refund error:", e);
-    }
+  const payload = Array.isArray(result) ? result[0] : result;
+  if (payload?.success !== true) {
+    return errorResponse(payload?.message || payload?.error || "force_cancel_order_failed");
   }
 
   await notifyCancelParticipants(supabase, order_id, true);
-  return jsonResponse({ success: true });
+  return jsonResponse(payload);
+}
+
+async function handleAcceptOrderAsMerchant(supabase, body, adminId: string) {
+  const { order_id, admin_note } = body;
+  if (!order_id) return errorResponse("Missing 'order_id'");
+
+  const { data: booking, error: bookingErr } = await supabase
+    .from("bookings")
+    .select("id, status, service_type, merchant_id, customer_id, driver_id")
+    .eq("id", order_id)
+    .maybeSingle();
+  if (bookingErr) return errorResponse(bookingErr.message);
+  if (!booking) return errorResponse("Booking not found", 404);
+  if (booking.service_type !== "food") return errorResponse("Only food orders can be accepted on behalf of merchant");
+
+  const allowedStatuses = ["pending_merchant", "pending"];
+  if (!allowedStatuses.includes(booking.status)) {
+    return errorResponse(`Cannot accept order with status '${booking.status}'. Expected: ${allowedStatuses.join(", ")}`);
+  }
+
+  const { data: updatedRows, error: updateErr } = await supabase
+    .from("bookings")
+    .update({
+      status: "preparing",
+      admin_note: String(admin_note || "").trim() || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", order_id)
+    .in("status", allowedStatuses)
+    .select("id, status");
+  if (updateErr) return errorResponse(updateErr.message);
+  if (!updatedRows || updatedRows.length === 0) {
+    return errorResponse("Order status changed before accept. Please refresh.");
+  }
+
+  const notifications = [];
+  if (booking.merchant_id) {
+    notifications.push({
+      user_id: booking.merchant_id,
+      title: "🛠️ แอดมินรับออเดอร์แทนร้าน",
+      body: `ออเดอร์ #${String(order_id).substring(0, 8)} ถูกแอดมินรับแทน`,
+      type: "admin_accept_as_merchant",
+      data: { type: "admin_accept_as_merchant", booking_id: order_id },
+    });
+  }
+  if (booking.customer_id) {
+    notifications.push({
+      user_id: booking.customer_id,
+      title: "✅ ออเดอร์กำลังถูกเตรียม",
+      body: `ออเดอร์ #${String(order_id).substring(0, 8)} ได้รับการยืนยันแล้ว`,
+      type: "order_accepted_by_admin",
+      data: { type: "order_accepted_by_admin", booking_id: order_id },
+    });
+  }
+  if (notifications.length) {
+    const { error: notifyErr } = await supabase.from("notifications").insert(notifications);
+    if (notifyErr) console.error("accept_order_as_merchant notification error:", notifyErr);
+  }
+
+  return jsonResponse({ success: true, status: "preparing", booking_id: order_id });
 }
 
 async function handleRebroadcastOrder(supabase, body) {

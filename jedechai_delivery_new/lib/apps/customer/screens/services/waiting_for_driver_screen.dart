@@ -11,6 +11,7 @@ import '../../../../common/services/booking_service.dart';
 import '../../../../common/services/chat_service.dart';
 import '../../../../common/services/admin_line_notification_service.dart';
 import '../../../../common/utils/order_code_formatter.dart';
+import '../../../../common/utils/role_amount_calculator.dart';
 import '../../../../common/widgets/chat_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../customer_home_screen.dart';
@@ -46,6 +47,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
   bool _isHandlingPriceAdjustment = false;
   bool _isHandlingRideTimeout = false;
   late double _initialQuotedPrice;
+  double _couponDiscount = 0;
   static const Duration _rideMatchTimeout = Duration(minutes: 5);
 
   bool _isDriverFound = false;
@@ -90,12 +92,37 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
 
     // Listen to real-time booking updates
     _listenToBookingUpdates();
+    _fetchCouponDiscount();
     if (!_isFoodService &&
         (widget.booking.status == 'pending' ||
             widget.booking.status == 'searching')) {
       _startRideTimeout();
     }
   }
+
+  Future<void> _fetchCouponDiscount() async {
+    try {
+      final usage = await SupabaseService.client
+          .from('coupon_usages')
+          .select('discount_amount')
+          .eq('booking_id', widget.booking.id)
+          .maybeSingle();
+      if (!mounted) return;
+      setState(() {
+        _couponDiscount =
+            (usage?['discount_amount'] as num?)?.toDouble() ?? 0.0;
+      });
+    } catch (e) {
+      debugLog('⚠️ Error fetching waiting coupon discount: $e');
+    }
+  }
+
+  double get _displayAmount => RoleAmountCalculator.netDisplayTotalForService(
+        serviceType: widget.booking.serviceType,
+        price: widget.booking.price,
+        deliveryFee: widget.booking.deliveryFee,
+        couponDiscountAmount: _couponDiscount,
+      );
 
   Future<bool> _confirmAdjustedPriceIfNeeded(Booking booking) async {
     if (booking.serviceType != 'ride') return true;
@@ -1122,7 +1149,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
                 .waitingType(widget.booking.serviceType)),
             const SizedBox(height: 8),
             Text(AppLocalizations.of(context)!
-                .waitingPrice(widget.booking.price.ceil().toString())),
+                .waitingPrice(_displayAmount.ceil().toString())),
             const SizedBox(height: 8),
             Text(AppLocalizations.of(context)!
                 .waitingStatus(widget.booking.status)),

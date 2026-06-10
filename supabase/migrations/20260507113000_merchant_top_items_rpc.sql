@@ -30,5 +30,4 @@ as $$
   order by order_count desc, revenue desc
   limit 10;
 $$;
-
 grant execute on function public.get_merchant_top_items(uuid, timestamptz, timestamptz) to authenticated;

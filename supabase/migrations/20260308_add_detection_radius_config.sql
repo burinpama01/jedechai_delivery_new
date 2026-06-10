@@ -3,7 +3,6 @@
 
 ALTER TABLE IF EXISTS public.system_config
   ADD COLUMN IF NOT EXISTS detection_radius_config jsonb;
-
 UPDATE public.system_config
 SET detection_radius_config = COALESCE(
   detection_radius_config,
@@ -15,7 +14,6 @@ SET detection_radius_config = COALESCE(
     'parcel_driver_to_pickup_km', 30
   )
 );
-
 ALTER TABLE IF EXISTS public.system_config
   ALTER COLUMN detection_radius_config SET DEFAULT jsonb_build_object(
     'driver_to_customer_km', 20,
@@ -24,7 +22,6 @@ ALTER TABLE IF EXISTS public.system_config
     'driver_to_order_km', 20,
     'parcel_driver_to_pickup_km', 30
   );
-
 -- Optional shape check (must be JSON object when provided)
 DO $$
 BEGIN

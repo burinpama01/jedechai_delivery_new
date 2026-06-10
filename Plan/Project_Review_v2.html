@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>รายงานการรีวิวและประเมินความสอดคล้องระบบ (v2) - Jedechai Delivery</title>
+  <style>
+    :root {
+      --primary-blue: #0f172a; /* Deep Slate Blue */
+      --brand-blue: #1e40af; /* Royal Blue */
+      --brand-red: #dc2626; /* Crimson Red */
+      --brand-red-hover: #b91c1c;
+      --brand-blue-hover: #1d4ed8;
+      --bg-dark: #090d16;
+      --bg-slate: #0f172a;
+      --card-bg: rgba(15, 23, 42, 0.6);
+      --card-bg-hover: rgba(30, 41, 59, 0.8);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-success: #10b981;
+      --text-warning: #f59e0b;
+      --text-danger: #ef4444;
+      --accent-gradient: linear-gradient(135deg, #1e40af 0%, #dc2626 100%);
+      --blue-glow: rgba(30, 64, 175, 0.2);
+      --red-glow: rgba(220, 38, 38, 0.2);
+      --shadow-premium: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
+      --border-glow: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      scrollbar-width: thin;
+      scrollbar-color: var(--brand-blue) var(--bg-dark);
+    }
+
+    body {
+      font-family: 'Inter', 'Sarabun', sans-serif;
+      background-color: var(--bg-dark);
+      background-image:
+        radial-gradient(at 0% 0%, var(--blue-glow) 0, transparent 40%),
+        radial-gradient(at 100% 100%, var(--red-glow) 0, transparent 40%);
+      color: var(--text-main);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 2rem 1.5rem;
+    }
+
+    header {
+      max-width: 1200px;
+      margin: 0 auto 2.5rem auto;
+      text-align: center;
+      position: relative;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.35rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+      background: var(--accent-gradient);
+      box-shadow: 0 0 15px rgba(30, 64, 175, 0.3);
+    }
+
+    h1 {
+      font-size: 2.3rem;
+      font-weight: 700;
+      background: linear-gradient(to right, #93c5fd, #fca5a5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 2rem;
+    }
+
+    /* Sidebar Navigation */
+    .sidebar {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: var(--border-glow);
+      border-radius: 16px;
+      padding: 1.5rem;
+      height: fit-content;
+      position: sticky;
+      top: 2rem;
+      box-shadow: var(--shadow-premium);
+    }
+
+    .sidebar-title {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .nav-btn {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+    }
+
+    .nav-btn.active {
+      background: var(--accent-gradient);
+      color: white;
+      box-shadow: 0 4px 12px rgba(30, 64, 175, 0.25);
+    }
+
+    /* Content Area */
+    main {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.4s ease-in-out forwards;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: var(--border-glow);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-premium);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      background-color: var(--card-bg-hover);
+      box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.8), 0 0 20px rgba(30, 64, 175, 0.05);
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      margin-bottom: 1.25rem;
+      color: white;
+      border-left: 4px solid var(--brand-blue);
+      padding-left: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    h2.red-border {
+      border-left-color: var(--brand-red);
+    }
+
+    h3 {
+      font-size: 1.2rem;
+      margin: 1.5rem 0 0.75rem 0;
+      color: #93c5fd;
+    }
+
+    p {
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+
+    strong {
+      color: white;
+    }
+
+    /* Metrics Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .metric-card {
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--brand-blue);
+    }
+
+    .metric-card.red::before {
+      background: var(--brand-red);
+    }
+
+    .metric-card.success::before {
+      background: var(--text-success);
+    }
+
+    .metric-value {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: white;
+      margin: 0.5rem 0;
+    }
+
+    .metric-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Compliance Table */
+    .comp-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.95rem;
+    }
+
+    .comp-table th, .comp-table td {
+      padding: 0.85rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .comp-table th {
+      background: rgba(30, 41, 59, 0.3);
+      color: white;
+      font-weight: 600;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .status-badge.pass {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--text-success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .status-badge.fail {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--text-danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .status-badge.warning {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--text-warning);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    /* Lists */
+    ul, ol {
+      padding-left: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    li {
+      margin-bottom: 0.5rem;
+      color: var(--text-muted);
+    }
+
+    li strong {
+      color: #e2e8f0;
+    }
+
+    /* Code Block styling */
+    pre {
+      background: rgba(0, 0, 0, 0.4);
+      padding: 1.25rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      overflow-x: auto;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 0.9rem;
+      color: #93c5fd;
+      margin-bottom: 1.25rem;
+    }
+
+    code {
+      font-family: 'Consolas', 'Courier New', monospace;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      color: #fca5a5;
+    }
+
+    /* Alert Boxes */
+    .alert {
+      padding: 1.25rem 1.5rem;
+      border-radius: 12px;
+      border-left: 4px solid transparent;
+      margin-bottom: 1.5rem;
+    }
+
+    .alert-info {
+      background: rgba(30, 64, 175, 0.08);
+      border-left-color: var(--brand-blue);
+      border: 1px solid rgba(30, 64, 175, 0.15);
+      border-left-width: 4px;
+    }
+
+    .alert-warning {
+      background: rgba(245, 158, 11, 0.08);
+      border-left-color: var(--text-warning);
+      border: 1px solid rgba(245, 158, 11, 0.15);
+      border-left-width: 4px;
+    }
+
+    .alert-danger {
+      background: rgba(239, 68, 68, 0.08);
+      border-left-color: var(--text-danger);
+      border: 1px solid rgba(239, 68, 68, 0.15);
+      border-left-width: 4px;
+    }
+
+    .alert-title {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: white;
+    }
+
+    /* Responsive */
+    @media (max-width: 968px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        position: static;
+        width: 100%;
+      }
+    }
+  </style>
+  <script>
+    function switchTab(tabId) {
+      // Hide all tabs
+      const contents = document.querySelectorAll('.tab-content');
+      contents.forEach(el => el.classList.remove('active'));
+
+      // Deactivate all buttons
+      const buttons = document.querySelectorAll('.nav-btn');
+      buttons.forEach(el => el.classList.remove('active'));
+
+      // Show active tab & button
+      document.getElementById(tabId).classList.add('active');
+      event.currentTarget.classList.add('active');
+    }
+  </script>
+</head>
+<body>
+
+  <header>
+    <div class="badge" style="background: linear-gradient(135deg, #1e40af 0%, #dc2626 100%);">SC Concrete PUA Compliance Audit</div>
+    <h1>รายงานการรีวิวและประเมินความสอดคล้องระบบ (v2)</h1>
+    <p>วิเคราะห์ Codebase เปรียบเทียบกับข้อตกลงและกฎทางธุรกิจของโครงการ SC Concrete PUA</p>
+  </header>
+
+  <div class="container">
+
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+      <div class="sidebar-title">เมนูนำทาง</div>
+      <div class="nav-list">
+        <button class="nav-btn active" onclick="switchTab('system-overview')">📊 1. ภาพรวมระบบ</button>
+        <button class="nav-btn" onclick="switchTab('compliance')">🔍 2. ตารางประเมินกฎ</button>
+        <button class="nav-btn" onclick="switchTab('gaps')">⚠️ 3. ช่องว่างที่ต้องแก้ไข</button>
+        <button class="nav-btn" onclick="switchTab('roadmap')">🚀 4. แผนปฏิบัติงาน (Roadmap)</button>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+
+      <!-- TAB 1: SYSTEM OVERVIEW -->
+      <section id="system-overview" class="tab-content active">
+        <div class="card">
+          <h2>1. ภาพรวมสถาปัตยกรรมและผลรีวิว</h2>
+          <p>จากการตรวจสอบ Codebase ล่าสุดของโครงการ <strong>Jedechai Delivery</strong> เพื่อประเมินความสอดคล้องกับข้อกำหนดและระบบของ <strong>SC Concrete PUA</strong> ทางทีมตรวจสอบได้วิเคราะห์โครงสร้างแอปพลิเคชันมือถือ (Flutter), เว็บแอปพลิเคชันแอดมิน (Admin Web) และการเชื่อมต่อ Supabase Backend</p>
+
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <div class="metric-label">Branding Colors</div>
+              <div class="metric-value">น้ำเงิน-แดง</div>
+              <div class="metric-label">ตรงตามข้อกำหนดลูกค้า</div>
+            </div>
+            <div class="metric-card red">
+              <div class="metric-label">Non-compliant Items</div>
+              <div class="metric-value">4 จุด</div>
+              <div class="metric-label">ต้องปรับปรุงในเฟสถัดไป</div>
+            </div>
+            <div class="metric-card success">
+              <div class="metric-label">Local Build Status</div>
+              <div class="metric-value">ผ่าน (Pass)</div>
+              <div class="metric-label">Dart SDK & Node tests OK</div>
+            </div>
+          </div>
+
+          <h3>สรุปโครงสร้างสำคัญของโปรเจกต์:</h3>
+          <ul>
+            <li><strong>Branding:</strong> มีการจัดตั้ง CSS และโทนสีหลักเป็น <strong>สีน้ำเงิน-แดง</strong> เรียบร้อยแล้วใน visual document และ admin-web บางส่วน</li>
+            <li><strong>Timezone Normalization:</strong> ใช้คลาสศูนย์กลาง <code>AppTime</code> ในการประมวลผลเวลาทั้งหมดให้เป็น Asia/Bangkok ป้องกันปัญหาเวลาคลาดเคลื่อนของเวลาจองล่วงหน้า</li>
+            <li><strong>Account Deletion Reject:</strong> นำระบบ Database RPC <code>private.reject_account_deletion_guarded</code> และ Edge Function มาปรับใช้แบบ transaction-level เพื่อความปลอดภัย</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- TAB 2: COMPLIANCE CHECKLIST -->
+      <section id="compliance" class="tab-content">
+        <div class="card">
+          <h2>2. ตารางประเมินความสอดคล้อง (SC Concrete PUA Rules Compliance)</h2>
+          <p>ด้านล่างนี้คือผลการเปรียบเทียบระหว่างกฎเหล็ก 9 ข้อของ SC Concrete PUA กับสถานะการพัฒนาใน Codebase ปัจจุบัน:</p>
+
+          <table class="comp-table">
+            <thead>
+              <tr>
+                <th style="width: 30%;">กฎข้อกำหนด (Rule)</th>
+                <th style="width: 20%;">สถานะ (Status)</th>
+                <th style="width: 50%;">รายละเอียดข้อวิเคราะห์ / คำแนะนำ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>1. โทนสีหลัก (น้ำเงิน-แดง)</strong></td>
+                <td><span class="status-badge pass">ผ่าน (Pass)</span></td>
+                <td>มีการผูกโทนสีหลักของระบบตามที่ลูกค้ากำหนด ทั้งในการออกแบบ UI/UX และ Dashboard ของแอดมิน</td>
+              </tr>
+              <tr>
+                <td><strong>2. Responsive & Mobile-PWA</strong></td>
+                <td><span class="status-badge warning">กึ่งผ่าน (Partial)</span></td>
+                <td>หน้าจอเว็บแอปปรับเข้าหา Mobile-responsive แต่ตัว PWA ของ Driver App ยังคงรันเป็นแอป Flutter ธรรมดา ไม่ได้คอมไพล์เป็น PWA เว็บแท้</td>
+              </tr>
+              <tr>
+                <td><strong>3. การอนุมัติออเดอร์โดยผู้จัดการ</strong></td>
+                <td><span class="status-badge fail">ไม่พบโค้ด (Missing)</span></td>
+                <td>ระบบยังไม่มีการจำกัดหรือตรวจสอบปริมาณออเดอร์ (น้อย/มาก) และการแบ่งสิทธิ์ให้ <strong>ผู้จัดการ (Manager)</strong> อนุมัติออเดอร์ขนาดใหญ่แยกต่างหาก</td>
+              </tr>
+              <tr>
+                <td><strong>4. Credit Limit ลูกค้า (0 - 100k)</strong></td>
+                <td><span class="status-badge fail">ไม่พบโค้ด (Missing)</span></td>
+                <td>ยังไม่มีการจำกัดวงเงิน Credit Limit ของลูกค้าในฐานข้อมูล และสิทธิ์การอนุมัติวงเงินเครดิตยังไม่ได้ถูกมอบให้เฉพาะ <strong>ผู้จัดการ (Manager)</strong></td>
+              </tr>
+              <tr>
+                <td><strong>5. โครงสร้างราคาแบบ Multi-tier</strong></td>
+                <td><span class="status-badge fail">ไม่พบโค้ด (Missing)</span></td>
+                <td>ระบบคำนวณราคาปัจจุบันยังไม่รองรับ Multi-tier ตามระยะทาง ตามจำนวน และราคาพิเศษเฉพาะรายลูกค้า (Customer-specific pricing)</td>
+              </tr>
+              <tr>
+                <td><strong>6. Stock Alert แจ้งเตือนขั้นต่ำ</strong></td>
+                <td><span class="status-badge fail">ไม่พบโค้ด (Missing)</span></td>
+                <td>ไม่พบตารางจัดการคลังสินค้า (Inventory) หรือระบบแจ้งเตือนเมือสต็อกสินค้าลดลงต่ำกว่าระดับความปลอดภัยขั้นต่ำ</td>
+              </tr>
+              <tr>
+                <td><strong>7. LINE Notification แทน Email</strong></td>
+                <td><span class="status-badge warning">กึ่งผ่าน (Partial)</span></td>
+                <td>มีระบบ <code>AdminLineNotificationService</code> ส่งข้อความเข้า LINE แต่ยังมีโค้ดหลายจุดเรียกใช้ <code>send-admin-email</code> (เช่น ตอนเติมเงิน และปุ่มแอดมิน) ซึ่งขัดกับกฎห้ามใช้อีเมล</td>
+              </tr>
+              <tr>
+                <td><strong>8. Payroll Slip ห้ามผ่าน LINE</strong></td>
+                <td><span class="status-badge pass">ผ่าน (Pass)</span></td>
+                <td>ระบบสลิปโอนเงิน (Transfer Slip) ทำงานผ่านการอัปโหลดไฟล์ในระบบตรง ไม่มีการส่งสลิปเงินเดือนหรือข้อมูลส่วนตัวผ่าน LINE</td>
+              </tr>
+              <tr>
+                <td><strong>9. แจ้งเตือนธุรกิจที่สำคัญ</strong></td>
+                <td><span class="status-badge warning">กึ่งผ่าน (Partial)</span></td>
+                <td>มีการผูกเรื่องออเดอร์เข้าใหม่ และการขอลบเข้า LINE notification แต่ยังขาดการแจ้งเตือนเครดิตเกิน, สินค้าใกล้หมด และลูกหนี้เกินกำหนด</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TAB 3: GAPS & ISSUES -->
+      <section id="gaps" class="tab-content">
+        <div class="card">
+          <h2>3. ประเด็นความเสี่ยงและช่องว่างระบบที่สำคัญ (Gaps & Issues)</h2>
+          <p>จากการ Audit ด้านความปลอดภัยและกฎระเบียบธุรกิจ พบประเด็นความปลอดภัย 3 จุดหลักที่ต้องปรับปรุงก่อนปล่อยระบบจริง:</p>
+
+          <div class="alert alert-danger">
+            <div class="alert-title">🚨 อีเมลรั่วไหลและขัดกับนโยบาย LINE (Non-compliant Email Notifications)</div>
+            <strong>รายละเอียด:</strong> โค้ดใน <code>wallet_topup_screen.dart:511</code> และ <code>settingsActionsBridge.js:353</code> มีการเรียกใช้ Edge Function <code>send-admin-email</code> เมื่อคนขับทำรายการเติมเงินและเมื่อตั้งค่าระบบ ซึ่งขัดกับความต้องการของลูกค้าที่ <strong>"ไม่ใช้อีเมล และใช้เฉพาะ LINE เท่านั้น"</strong>
+            <br><strong>แนวทางแก้ไข:</strong> ปรับปรุงโค้ดเหล่านี้ให้หันมาเรียกใช้ <code>AdminLineNotificationService.notify</code> ร่วมกับ Edge Function <code>send-admin-line</code> แทนทั้งหมด
+          </div>
+
+          <div class="alert alert-warning">
+            <div class="alert-title">⚠️ สิทธิ์แอดมินรั่วไหล (Lack of Role Separation - Manager vs Staff)</div>
+            <strong>รายละเอียด:</strong> ในระบบปัจจุบัน (โดยเฉพาะใน Web Admin และ RPC ในฐานข้อมูล) ฟังก์ชันการทำงานที่วิกฤต เช่น การจัดการเงินกระเป๋า (Wallet Top-up/Withdrawal) และการอนุมัติจัดการบัญชี ยังคงเปิดสิทธิ์ให้บัญชีที่มี <code>role = 'admin'</code> ทำได้ทุกคน โดยยังไม่มีการแยกย่อยสิทธิ์พิเศษสำหรับ <strong>ผู้จัดการ (Manager)</strong> เพื่อดูแลเรื่องวงเงินเครดิตและอนุมัติใบสั่งซื้อขนาดใหญ่ตามข้อกำหนด SC Concrete
+            <br><strong>แนวทางแก้ไข:</strong> เพิ่มฟิลด์ <code>is_manager</code> หรือเพิ่มบทบาท <code>manager</code> ในตารางสิทธิ์ และสร้าง Policy ตรวจสอบในการเข้าถึงข้อมูลสำคัญ
+          </div>
+
+          <div class="alert alert-info">
+            <div class="alert-title">💡 บล็อกเกอร์ทางเทคนิค (CLI Deployment Lock)</div>
+            <strong>รายละเอียด:</strong> โค้ด Schema การปฏิเสธขอลบบัญชีแบบ Atomic ( migrations sql ) ยังไม่ได้ถูกดันขึ้น Production จริง เนื่องจาก Supabase CLI ใน Sandbox ไม่มี Access Token
+            <br><strong>แนวทางแก้ไข:</strong> ผู้พัฒนาหลักต้องล็อกอิน Supabase CLI เพื่อสั่ง <code>supabase db push</code> หรือติดตั้ง SQL ผ่านแดชบอร์ดโดยตรง
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: ROADMAP -->
+      <section id="roadmap" class="tab-content">
+        <div class="card">
+          <h2>4. แผนปฏิบัติงานเสนอแนะ (Proposed Roadmap to Compliance)</h2>
+          <p>เพื่อนำระบบ Jedechai Delivery ให้บรรลุข้อกำหนดและกติกาธุรกิจของ SC Concrete PUA ทางเราขอเสนอแผนการพัฒนา 3 ระยะหลักดังนี้:</p>
+
+          <h3>ระยะที่ 1: กำจัดระบบอีเมล และเปลี่ยนผ่านเข้าสู่ LINE Notification ทั้งระบบ</h3>
+          <ul>
+            <li><strong>งานที่ 1:</strong> ปรับเปลี่ยนการเติมเงินใน <code>wallet_topup_screen.dart</code> จาก <code>send-admin-email</code> เป็น <code>send-admin-line</code></li>
+            <li><strong>งานที่ 2:</strong> ลบหรือระงับการทำงานของ Edge Function <code>send-admin-email</code> เพื่อความปลอดภัย</li>
+            <li><strong>งานที่ 3:</strong> ผูกการแจ้งเตือนเพิ่มเติม เช่น สถานะสินค้าใกล้หมด และเตือนเครดิตลูกหนี้เกินกำหนดเข้ากลุ่ม LINE</li>
+          </ul>
+
+          <h3>ระยะที่ 2: ปรับปรุงโครงสร้างตารางข้อมูลเพื่อรองรับสิทธิ์ผู้จัดการ (Manager) และ Credit Limit</h3>
+          <ul>
+            <li><strong>งานที่ 1:</strong> สร้าง SQL Migration อัปเกรดตาราง <code>profiles</code> ให้รองรับบทบาท <code>manager</code> หรือเพิ่มสิทธิ์ผู้จัดการ</li>
+            <li><strong>งานที่ 2:</strong> เพิ่มฟิลด์ <code>credit_limit</code> และ <code>current_credit_usage</code> ในตารางลูกค้า</li>
+            <li><strong>งานที่ 3:</strong> เขียน Database RLS Policy ป้องกันไม่ให้พนักงานทั่วไป (Staff) แก้ไขหรืออนุมัติ Credit Limit ได้นอกจาก Manager</li>
+          </ul>
+
+          <h3>ระยะที่ 3: ระบบคำนวณราคาพิเศษ คลังสินค้าขั้นต่ำ และจัดทำ PWA</h3>
+          <ul>
+            <li><strong>งานที่ 1:</strong> เพิ่มระบบตรวจสอบสต็อกสินค้าและยิงแจ้งเตือน LINE ทันทีเมือต่ำกว่าขั้นต่ำ (Stock Alert)</li>
+            <li><strong>งานที่ 2:</strong> พัฒนาระบบคำนวณราคาขนส่งแบบ Multi-tier ตามสเปกของ SC Concrete</li>
+            <li><strong>งานที่ 3:</strong> ปรับแต่ง Driver App ให้รองรับการทำงานในรูปแบบ PWA อย่างสมบูรณ์แบบ</li>
+          </ul>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+</body>
+</html>

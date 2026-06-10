@@ -1,4 +1,4 @@
-﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
+import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'system_config_service.dart';
 import '../models/coupon.dart';
@@ -6,7 +6,7 @@ import '../utils/driver_amount_calculator.dart';
 import '../utils/order_code_formatter.dart';
 
 /// WalletService - Service สำหรับจัดการกระเป๋าเงินคนขับ
-/// 
+///
 /// ฟีเจอร์หลัก:
 /// - ตรวจสอบยอดเงินคงเหลือ
 /// - หักเงินค่าบริการระบบ
@@ -22,7 +22,7 @@ class WalletService {
 
   // ── Food Delivery Fee Settings ──
   static const double minimumDeductionThreshold = 50.0; // THB
-  
+
   // Dynamic rates from SystemConfigService
   double get platformFeeRate => _configService.platformFeeRate;
   double get merchantGpRate => _configService.merchantGpRate;
@@ -72,7 +72,7 @@ class WalletService {
   Future<bool> canAcceptJob(String driverId) async {
     try {
       final wallet = await getDriverWallet(driverId);
-      
+
       if (wallet == null) {
         debugLog('❌ ไม่พบกระเป๋าเงิน - ไม่สามารถรับงานได้');
         return false;
@@ -82,9 +82,11 @@ class WalletService {
       final canAccept = wallet.balance >= minWallet;
 
       if (canAccept) {
-        debugLog('✅ ยอดเงินเพียงพอ: ${wallet.balance} บาท (ขั้นต่ำ: $minWallet บาท)');
+        debugLog(
+            '✅ ยอดเงินเพียงพอ: ${wallet.balance} บาท (ขั้นต่ำ: $minWallet บาท)');
       } else {
-        debugLog('❌ ยอดเงินไม่เพียงพอ: ${wallet.balance} บาท (ต้องการอย่างน้อย: $minWallet บาท)');
+        debugLog(
+            '❌ ยอดเงินไม่เพียงพอ: ${wallet.balance} บาท (ต้องการอย่างน้อย: $minWallet บาท)');
       }
 
       return canAccept;
@@ -147,16 +149,16 @@ class WalletService {
 
       final deliveryRate =
           deliverySystemRateOverride ?? _configService.platformFeeRate;
-      final merchantSystemRate =
-          merchantGpSystemRateOverride ??
+      final merchantSystemRate = merchantGpSystemRateOverride ??
           _configService.merchantGpSystemRateDefault;
-      
+
       final estimatedDeduction = estimateFoodDeduction(
-        deliveryFee: deliveryFee,
-        foodPrice: foodPrice,
-        deliverySystemRate: deliveryRate,
-        merchantGpSystemRate: merchantSystemRate,
-      ) + extraEstimatedDeduction;
+            deliveryFee: deliveryFee,
+            foodPrice: foodPrice,
+            deliverySystemRate: deliveryRate,
+            merchantGpSystemRate: merchantSystemRate,
+          ) +
+          extraEstimatedDeduction;
       final requiredBalance = estimatedDeduction < minimumDeductionThreshold
           ? minimumDeductionThreshold
           : estimatedDeduction;
@@ -165,8 +167,10 @@ class WalletService {
 
       debugLog('💰 Food job wallet check:');
       debugLog('   └─ Delivery Fee: $deliveryFee, Food Price: $foodPrice');
-      debugLog('   └─ Delivery System Rate (${(deliveryRate * 100).toStringAsFixed(0)}%): ${(deliveryFee * deliveryRate).toStringAsFixed(2)}');
-      debugLog('   └─ Merchant GP System (${(merchantSystemRate * 100).toStringAsFixed(0)}%): ${(foodPrice * merchantSystemRate).toStringAsFixed(2)}');
+      debugLog(
+          '   └─ Delivery System Rate (${(deliveryRate * 100).toStringAsFixed(0)}%): ${(deliveryFee * deliveryRate).toStringAsFixed(2)}');
+      debugLog(
+          '   └─ Merchant GP System (${(merchantSystemRate * 100).toStringAsFixed(0)}%): ${(foodPrice * merchantSystemRate).toStringAsFixed(2)}');
       debugLog('   └─ Estimated Deduction: $estimatedDeduction');
       debugLog('   └─ Required Balance: $requiredBalance');
       debugLog('   └─ Current Balance: ${wallet.balance}');
@@ -187,7 +191,8 @@ class WalletService {
     required double couponDiscountAmount,
   }) {
     final normalizedCouponCode = couponCode?.trim().toUpperCase();
-    final isReferralTwoSidedCoupon = Coupon.isSystemCouponCode(normalizedCouponCode);
+    final isReferralTwoSidedCoupon =
+        Coupon.isSystemCouponCode(normalizedCouponCode);
 
     var updatedTotalDeduction = totalDeduction;
     var updatedAppEarnings = appEarnings;
@@ -267,11 +272,9 @@ class WalletService {
 
       final deliverySystemRate =
           deliverySystemRateOverride ?? _configService.platformFeeRate;
-      final merchantGpSystemRate =
-          merchantGpSystemRateOverride ??
+      final merchantGpSystemRate = merchantGpSystemRateOverride ??
           _configService.merchantGpSystemRateDefault;
-      final merchantGpDriverRate =
-          merchantGpDriverRateOverride ??
+      final merchantGpDriverRate = merchantGpDriverRateOverride ??
           _configService.merchantGpDriverRateDefault;
 
       // คำนวณค่าธรรมเนียมจากค่าที่ตั้งค่าในระบบ/ร้านค้า
@@ -335,8 +338,10 @@ class WalletService {
         '   └─ Merchant GP Driver (${(merchantGpDriverRate * 100).toStringAsFixed(0)}% of $foodPrice): $merchantDriverGP',
       );
       if (applyMerchantFreeDeliveryAdjustment) {
-        debugLog('   └─ Extra Coupon GP System (${(merchantFreeDeliverySystemRate * 100).toStringAsFixed(0)}%): $extraSystemCharge');
-        debugLog('   └─ Extra Coupon GP Driver (${(merchantFreeDeliveryDriverRate * 100).toStringAsFixed(0)}%): $extraDriverSupport');
+        debugLog(
+            '   └─ Extra Coupon GP System (${(merchantFreeDeliverySystemRate * 100).toStringAsFixed(0)}%): $extraSystemCharge');
+        debugLog(
+            '   └─ Extra Coupon GP Driver (${(merchantFreeDeliveryDriverRate * 100).toStringAsFixed(0)}%): $extraDriverSupport');
       }
       debugLog('   └─ Total Deduction: $totalDeduction');
       debugLog('   └─ Driver Net Income: $driverNetIncome');
@@ -385,11 +390,11 @@ class WalletService {
   }
 
   /// หักเงินค่าบริการระบบจากกระเป๋าคนขับ
-  /// 
+  ///
   /// [driverId] - ID ของคนขับ
   /// [jobPrice] - ราคางาน (บาท)
   /// [bookingId] - ID ของการจอง
-  /// 
+  ///
   /// Returns: true ถ้าหักเงินสำเร็จ
   Future<bool> deductCommission({
     required String driverId,
@@ -446,34 +451,10 @@ class WalletService {
     required double amount,
     String? description,
   }) async {
-    try {
-      debugLog('💵 กำลังเติมเงิน...');
-      debugLog('   └─ คนขับ: $driverId');
-      debugLog('   └─ จำนวน: $amount บาท');
-
-      // ดึงข้อมูล wallet
-      final wallet = await getDriverWallet(driverId);
-      if (wallet == null) {
-        throw Exception('ไม่พบกระเป๋าเงินของคนขับ');
-      }
-
-      // Atomic top-up via RPC (Phase 2)
-      final rpcResult = await _supabase.rpc('wallet_topup', params: {
-        'p_user_id': driverId,
-        'p_amount': amount,
-        'p_description': description ?? 'เติมเงินเข้ากระเป๋า',
-      });
-      final newBalance = (rpcResult is Map) ? rpcResult['new_balance'] ?? (wallet.balance + amount) : wallet.balance + amount;
-      if (rpcResult is Map && rpcResult['success'] != true) {
-        throw Exception(rpcResult['error'] ?? 'wallet_topup failed');
-      }
-
-      debugLog('✅ เติมเงินสำเร็จ: ยอดเงินใหม่ $newBalance บาท');
-      return true;
-    } catch (e) {
-      debugLog('❌ Error topping up wallet: $e');
-      return false;
-    }
+    debugLog(
+      '❌ WalletService.topUpWallet ถูกปิด: เติมเงินต้องผ่าน admin-actions/complete_topup_request เท่านั้น',
+    );
+    return false;
   }
 
   /// ดึงยอดเงินคงเหลือปัจจุบัน
@@ -488,6 +469,11 @@ class WalletService {
   }
 
   /// ดึงประวัติการทำรายการ (แบบ Map สำหรับ UI)
+  bool _isDisplayableWalletTransaction(Map<String, dynamic> transaction) {
+    final type = transaction['type']?.toString();
+    return type != 'invalid_refund' && type != 'invalid_refund_reversal';
+  }
+
   Future<List<Map<String, dynamic>>> getTransactions(String userId) async {
     try {
       // ดึงข้อมูล wallet
@@ -499,12 +485,16 @@ class WalletService {
       // ดึงประวัติการทำรายการ
       final response = await _supabase
           .from('wallet_transactions')
-          .select('id, amount, type, description, related_booking_id, created_at')
+          .select(
+              'id, amount, type, description, related_booking_id, created_at')
           .eq('wallet_id', wallet.id)
           .order('created_at', ascending: false)
           .limit(50);
 
-      return (response as List).cast<Map<String, dynamic>>();
+      return (response as List)
+          .cast<Map<String, dynamic>>()
+          .where(_isDisplayableWalletTransaction)
+          .toList();
     } catch (e) {
       debugLog('❌ Error fetching transactions: $e');
       return [];
@@ -526,12 +516,15 @@ class WalletService {
       // ดึงประวัติการทำรายการ
       final response = await _supabase
           .from('wallet_transactions')
-          .select('id, wallet_id, amount, type, description, related_booking_id, created_at')
+          .select(
+              'id, wallet_id, amount, type, description, related_booking_id, created_at')
           .eq('wallet_id', wallet.id)
           .order('created_at', ascending: false)
           .limit(limit);
 
       return (response as List)
+          .cast<Map<String, dynamic>>()
+          .where(_isDisplayableWalletTransaction)
           .map((json) => WalletTransaction.fromJson(json))
           .toList();
     } catch (e) {
@@ -625,7 +618,9 @@ class WalletTransaction {
 
   /// แสดงผลเป็นข้อความ
   String get displayText {
-    final amountText = amount >= 0 ? '+${amount.toStringAsFixed(2)}' : amount.toStringAsFixed(2);
+    final amountText = amount >= 0
+        ? '+${amount.toStringAsFixed(2)}'
+        : amount.toStringAsFixed(2);
     final typeText = _getTypeText();
     return '$typeText: $amountText บาท';
   }

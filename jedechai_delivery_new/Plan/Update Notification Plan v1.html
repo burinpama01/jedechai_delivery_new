@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>แผนแจ้งผู้ใช้งานให้อัปเดตแอปเป็นเวอร์ชันล่าสุด</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --surface: #ffffff;
+      --ink: #18202a;
+      --muted: #5f6b7a;
+      --line: #d8dde5;
+      --brand: #146c5c;
+      --brand-soft: #e4f4ef;
+      --warn: #9a5b00;
+      --warn-soft: #fff4dc;
+      --danger: #a83232;
+      --danger-soft: #fde8e8;
+      --ok: #276749;
+      --ok-soft: #e6f4ea;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      line-height: 1.65;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      padding: 32px 24px 24px;
+    }
+
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    h1, h2, h3 {
+      line-height: 1.25;
+      margin: 0 0 12px;
+    }
+
+    h1 {
+      font-size: 30px;
+    }
+
+    h2 {
+      font-size: 22px;
+      margin-top: 4px;
+    }
+
+    h3 {
+      font-size: 17px;
+    }
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    .wrap {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .meta div,
+    section {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .meta div {
+      padding: 12px;
+    }
+
+    .meta strong {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    section {
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .box {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fbfcfd;
+    }
+
+    .badge {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--brand);
+      background: var(--brand-soft);
+      margin-bottom: 8px;
+    }
+
+    .warn {
+      color: var(--warn);
+      background: var(--warn-soft);
+      border-color: #f2cf8f;
+    }
+
+    .danger {
+      color: var(--danger);
+      background: var(--danger-soft);
+      border-color: #f1b8b8;
+    }
+
+    .ok {
+      color: var(--ok);
+      background: var(--ok-soft);
+      border-color: #b8dfc5;
+    }
+
+    ul, ol {
+      padding-left: 24px;
+      margin: 8px 0 0;
+    }
+
+    li {
+      margin: 6px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #edf1f5;
+      font-weight: 700;
+    }
+
+    code {
+      background: #edf1f5;
+      border-radius: 4px;
+      padding: 2px 5px;
+      font-family: Consolas, monospace;
+      font-size: 0.95em;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .timeline .item {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 12px;
+      align-items: start;
+      border-left: 4px solid var(--brand);
+      background: #fbfcfd;
+      border-radius: 6px;
+      padding: 12px;
+    }
+
+    .copy {
+      background: #f8fafc;
+      border: 1px dashed #b8c2cf;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 8px;
+      white-space: pre-wrap;
+    }
+
+    @media (max-width: 820px) {
+      .meta,
+      .grid,
+      .two {
+        grid-template-columns: 1fr;
+      }
+
+      .timeline .item {
+        grid-template-columns: 1fr;
+      }
+
+      header,
+      main {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>แผนแจ้งผู้ใช้งานให้อัปเดตแอปเป็นเวอร์ชันล่าสุด</h1>
+      <p>สำหรับโปรเจกต์ <code>jedechai_delivery_new</code> ครอบคลุม Customer, Driver, Merchant และ Admin mobile users</p>
+      <div class="meta">
+        <div><strong>สถานะ</strong>Draft v1</div>
+        <div><strong>วันที่</strong>2026-05-25</div>
+        <div><strong>เป้าหมาย</strong>เพิ่ม adoption ของเวอร์ชันล่าสุด</div>
+        <div><strong>ข้อจำกัด</strong>ไม่ใช้ข้อมูลส่วนตัวหรือ secret</div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <h2>1. เป้าหมายและ Success Criteria</h2>
+      <div class="grid">
+        <div class="box">
+          <span class="badge">Primary Goal</span>
+          <h3>ให้ผู้ใช้ย้ายไปเวอร์ชันล่าสุดเร็วขึ้น</h3>
+          <p>ลดจำนวนผู้ใช้ที่ยังเปิดแอปเวอร์ชันเก่า โดยสื่อสารให้ชัดว่าเวอร์ชันใหม่มีความเสถียร ปลอดภัย และจำเป็นต่อการใช้งานต่อเนื่อง</p>
+        </div>
+        <div class="box">
+          <span class="badge ok">Success Criteria</span>
+          <ul>
+            <li>ผู้ใช้ active อย่างน้อย 80% อยู่บนเวอร์ชันล่าสุดภายใน 7 วันหลังประกาศ</li>
+            <li>ลด ticket/support เรื่องปัญหาที่แก้แล้วในเวอร์ชันใหม่</li>
+            <li>ไม่มี spike ของ complaint จากข้อความแจ้งเตือนถี่เกินไป</li>
+          </ul>
+        </div>
+        <div class="box">
+          <span class="badge warn">Release Risk</span>
+          <p>ถ้าใช้ artifact ที่มี build number เดิม อาจชนกับ store release เดิมได้ ก่อนประกาศ public update ควรใช้ build number ใหม่ที่ store ยอมรับแล้ว</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>2. กลุ่มผู้ใช้และระดับความเร่งด่วน</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>กลุ่ม</th>
+            <th>ข้อความหลัก</th>
+            <th>ความเร่งด่วน</th>
+            <th>ช่องทางแนะนำ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Customer</td>
+            <td>อัปเดตเพื่อใช้งานสั่งอาหาร ส่งพัสดุ และเรียกรถได้เสถียรขึ้น</td>
+            <td>Medium</td>
+            <td>In-app banner, push notification, LINE OA</td>
+          </tr>
+          <tr>
+            <td>Driver</td>
+            <td>อัปเดตเพื่อรับงาน แจ้งเตือน และนำทางได้ถูกต้องขึ้น</td>
+            <td>High</td>
+            <td>In-app modal, push notification, กลุ่ม LINE คนขับ</td>
+          </tr>
+          <tr>
+            <td>Merchant</td>
+            <td>อัปเดตเพื่อรับออเดอร์และแจ้งเตือนร้านค้าได้ครบถ้วน</td>
+            <td>High</td>
+            <td>In-app modal, merchant LINE, direct admin call สำหรับร้านสำคัญ</td>
+          </tr>
+          <tr>
+            <td>Admin</td>
+            <td>อัปเดตเพื่อใช้ flow ล่าสุดและลด mismatch กับ backend</td>
+            <td>High</td>
+            <td>Internal chat, checklist ก่อนปฏิบัติงาน</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>3. กลยุทธ์การแจ้งเตือนแบบ 3 ระดับ</h2>
+      <div class="grid">
+        <div class="box">
+          <span class="badge ok">Level 1: Soft Notice</span>
+          <h3>แจ้งแบบไม่บังคับ</h3>
+          <ul>
+            <li>แสดง banner ในหน้าแรก</li>
+            <li>ปุ่มหลัก: “อัปเดตตอนนี้”</li>
+            <li>ปุ่มรอง: “ภายหลัง”</li>
+            <li>เหมาะกับ release ปกติหรือปรับปรุง UX</li>
+          </ul>
+        </div>
+        <div class="box">
+          <span class="badge warn">Level 2: Strong Reminder</span>
+          <h3>แจ้งแบบเด่นชัด</h3>
+          <ul>
+            <li>แสดง modal เมื่อเปิดแอป</li>
+            <li>ให้เลื่อนการอัปเดตได้ไม่เกิน 24 ชั่วโมง</li>
+            <li>เหมาะกับ bugfix สำคัญ เช่น notification, payment, order status</li>
+          </ul>
+        </div>
+        <div class="box">
+          <span class="badge danger">Level 3: Force Update</span>
+          <h3>บังคับอัปเดต</h3>
+          <ul>
+            <li>ล็อก flow หลักจนกว่าจะอัปเดต</li>
+            <li>ใช้เฉพาะกรณี critical เช่น security, data loss, payment, incompatible API</li>
+            <li>ต้องมี min supported version จาก remote config/backend</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>4. Timeline การสื่อสาร</h2>
+      <div class="timeline">
+        <div class="item">
+          <strong>T-1 วัน</strong>
+          <div>
+            <h3>เตรียมประกาศและ support script</h3>
+            <ul>
+              <li>ยืนยัน version ล่าสุดบน Play Store/App Store หรือ distribution channel</li>
+              <li>เตรียมข้อความสั้น, ข้อความยาว, FAQ และคำตอบสำหรับ support</li>
+              <li>เช็ก deep link ไปหน้า store ให้ถูกต้อง</li>
+            </ul>
+          </div>
+        </div>
+        <div class="item">
+          <strong>วันปล่อย</strong>
+          <div>
+            <h3>เริ่ม soft notice และประกาศช่องทางหลัก</h3>
+            <ul>
+              <li>เปิด in-app banner สำหรับทุก role</li>
+              <li>ส่ง LINE OA หรือประกาศในกลุ่มคนขับ/ร้านค้า</li>
+              <li>ส่ง push รอบแรกเฉพาะผู้ใช้ที่ยังไม่ใช่เวอร์ชันล่าสุด ถ้ามี version tracking</li>
+            </ul>
+          </div>
+        </div>
+        <div class="item">
+          <strong>+24 ชั่วโมง</strong>
+          <div>
+            <h3>ยกระดับสำหรับกลุ่มสำคัญ</h3>
+            <ul>
+              <li>แสดง modal สำหรับ Driver และ Merchant ที่ยังไม่อัปเดต</li>
+              <li>Admin ติดตามร้าน/คนขับ active สูงที่ยังไม่อัปเดต</li>
+              <li>ดู metric crash, complaint, notification delivery</li>
+            </ul>
+          </div>
+        </div>
+        <div class="item">
+          <strong>+72 ชั่วโมง</strong>
+          <div>
+            <h3>พิจารณา force update เฉพาะกรณีจำเป็น</h3>
+            <ul>
+              <li>ถ้าเวอร์ชันเก่ากระทบ order/payment/notification ให้ตั้ง min supported version</li>
+              <li>ถ้าเป็น release ปกติ ให้คง reminder แบบไม่บังคับและลดความถี่</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>5. ข้อความที่ใช้สื่อสาร</h2>
+      <div class="grid two">
+        <div class="box">
+          <span class="badge">In-app Banner</span>
+          <div class="copy">มีแอปเวอร์ชันใหม่แล้ว
+อัปเดตเพื่อให้การรับแจ้งเตือน ออเดอร์ และการใช้งานต่าง ๆ เสถียรขึ้น
+
+[อัปเดตตอนนี้] [ภายหลัง]</div>
+        </div>
+        <div class="box">
+          <span class="badge warn">Push Notification</span>
+          <div class="copy">อัปเดตแอปเจ๊ได๋ชัยเป็นเวอร์ชันล่าสุด
+เพื่อให้รับออเดอร์และการแจ้งเตือนได้ครบถ้วน แตะเพื่ออัปเดตตอนนี้</div>
+        </div>
+        <div class="box">
+          <span class="badge">LINE OA / Broadcast</span>
+          <div class="copy">เรียนผู้ใช้งานเจ๊ได๋ชัย
+
+ขณะนี้มีแอปเวอร์ชันล่าสุดพร้อมใช้งานแล้ว กรุณาอัปเดตแอปเพื่อให้การสั่งซื้อ รับงาน แจ้งเตือน และติดตามสถานะทำงานได้เสถียรขึ้น
+
+หากยังไม่อัปเดต บางฟีเจอร์อาจทำงานไม่สมบูรณ์ในอนาคต</div>
+        </div>
+        <div class="box">
+          <span class="badge danger">Force Update Modal</span>
+          <div class="copy">จำเป็นต้องอัปเดตแอป
+
+เวอร์ชันที่คุณใช้อยู่ไม่รองรับการทำงานล่าสุดแล้ว กรุณาอัปเดตเพื่อใช้งานต่อ
+
+[อัปเดตแอป]</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>6. Implementation Plan เชิงระบบ</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>งาน</th>
+            <th>รายละเอียด</th>
+            <th>Validation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>เพิ่ม version tracking</td>
+            <td>เก็บ app version/build number จาก `package_info_plus` ตอนเปิดแอป และ sync ไป backend profile/session ถ้ามีนโยบาย privacy รองรับ</td>
+            <td>เห็นจำนวนผู้ใช้แยกตาม role/version ได้</td>
+          </tr>
+          <tr>
+            <td>เพิ่ม remote config</td>
+            <td>กำหนด `latestVersion`, `minSupportedVersion`, `updateUrlAndroid`, `updateUrlIos`, `messageLevel` จาก backend หรือ Supabase table</td>
+            <td>เปลี่ยนระดับ notice ได้โดยไม่ต้องปล่อยแอปใหม่</td>
+          </tr>
+          <tr>
+            <td>เพิ่ม update gate UI</td>
+            <td>สร้าง component กลางสำหรับ banner/modal/force screen และใช้ร่วมทุก role</td>
+            <td>Customer, Driver, Merchant, Admin เห็นข้อความถูกตาม role</td>
+          </tr>
+          <tr>
+            <td>เพิ่ม analytics</td>
+            <td>บันทึก event เช่น `update_notice_seen`, `update_clicked`, `update_dismissed`, `force_update_shown`</td>
+            <td>วัด conversion จาก notice เป็น update ได้</td>
+          </tr>
+          <tr>
+            <td>เตรียม support workflow</td>
+            <td>ทำ FAQ และ script ให้ admin/support ตอบผู้ใช้ที่อัปเดตไม่ได้</td>
+            <td>Support ตอบเป็นมาตรฐานเดียวกัน</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>7. Guardrails ก่อนประกาศจริง</h2>
+      <ul>
+        <li>ยืนยันว่า APK/AAB ที่จะปล่อยมี version/build number ไม่ชนกับ release เดิมบน store</li>
+        <li>ยืนยันว่า store listing เปิดให้ผู้ใช้กลุ่มเป้าหมายเห็น update แล้ว</li>
+        <li>ห้ามส่งข้อความที่บอกว่า “จำเป็นต้องอัปเดต” ถ้ายังไม่ได้ตั้ง force update จริง</li>
+        <li>ถ้าเกี่ยวกับ payment/auth/customer data ต้อง review security และ rollback path ก่อน</li>
+        <li>ต้องมีวิธียกเลิก force update จาก remote config หากพบ regression หลังปล่อย</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>8. Checklist สำหรับทีม</h2>
+      <div class="grid two">
+        <div class="box">
+          <h3>ก่อนส่งประกาศ</h3>
+          <ol>
+            <li>ยืนยัน release artifact และ version ล่าสุด</li>
+            <li>ยืนยันลิงก์ store หรือ download URL</li>
+            <li>เลือก notice level ตามความเสี่ยง</li>
+            <li>ตรวจข้อความไทยให้ชัดและไม่ทำให้ผู้ใช้ตื่นตระหนก</li>
+            <li>เตรียม FAQ/support response</li>
+          </ol>
+        </div>
+        <div class="box">
+          <h3>หลังส่งประกาศ</h3>
+          <ol>
+            <li>ติดตาม adoption ตาม role/version</li>
+            <li>ดู crash/error/support ticket</li>
+            <li>ส่ง reminder เฉพาะกลุ่มที่ยังไม่อัปเดต</li>
+            <li>ตัดสินใจว่าจะ force update หรือไม่หลัง 72 ชั่วโมง</li>
+            <li>บันทึกผลลัพธ์และบทเรียนลง Obsidian</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -28,6 +28,30 @@ function _deps() {
   };
 }
 
+async function _loadCouponDiscountMap(supabase, bookingIds) {
+  const ids = [...new Set((bookingIds || []).filter(Boolean))];
+  if (!ids.length) return {};
+  const { data, error } = await supabase
+    .from('coupon_usages')
+    .select('booking_id, discount_amount')
+    .in('booking_id', ids);
+  if (error) {
+    console.warn('dashboard coupon_usages load failed', error);
+    return {};
+  }
+  return (data || []).reduce((acc, row) => {
+    if (row.booking_id) acc[row.booking_id] = Number(row.discount_amount || 0);
+    return acc;
+  }, {});
+}
+
+function _displayAmount(order, couponDiscountMap = {}) {
+  const gross = Number(order?.price || 0) +
+    (order?.service_type === 'food' ? Number(order?.delivery_fee || 0) : 0);
+  const discount = Number(couponDiscountMap[order?.id] || 0);
+  return Math.max(0, gross - discount);
+}
+
 export async function renderDashboardPage(el, ctx) {
   _ctx = ctx || null;
 
@@ -76,7 +100,7 @@ export async function dashboardFilter() {
   const [periodOrders, completedPeriod, revenueData, pendingDrivers, pendingMerchants, pendingWithdrawals, totalUsers, profilesByRole, recentOrders] = await Promise.all([
     supabase.from('bookings').select('id', { count: 'exact', head: true }).gte('created_at', startDate).lte('created_at', endDate),
     supabase.from('bookings').select('id', { count: 'exact', head: true }).gte('created_at', startDate).lte('created_at', endDate).eq('status', 'completed'),
-    supabase.from('bookings').select('price, delivery_fee, service_type').gte('created_at', startDate).lte('created_at', endDate).eq('status', 'completed'),
+    supabase.from('bookings').select('id, price, delivery_fee, service_type').gte('created_at', startDate).lte('created_at', endDate).eq('status', 'completed'),
     supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'driver').eq('approval_status', 'pending'),
     supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'merchant').eq('approval_status', 'pending'),
     supabase.from('withdrawal_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
@@ -85,10 +109,12 @@ export async function dashboardFilter() {
     supabase.from('bookings').select('*').gte('created_at', startDate).lte('created_at', endDate).order('created_at', { ascending: false }).limit(10),
   ]);
 
-  const revenue = (revenueData.data || []).reduce(
-    (s, r) => s + Number(r.price || 0) + Number(r.delivery_fee || 0),
-    0,
-  );
+  const couponDiscountMap = await _loadCouponDiscountMap(supabase, [
+    ...(revenueData.data || []).map((o) => o.id),
+    ...(recentOrders.data || []).map((o) => o.id),
+  ]);
+
+  const revenue = (revenueData.data || []).reduce((s, r) => s + _displayAmount(r, couponDiscountMap), 0);
   const serviceCounts = { food: 0, ride: 0, parcel: 0 };
   (revenueData.data || []).forEach((r) => {
     if (serviceCounts[r.service_type] !== undefined) serviceCounts[r.service_type] += 1;
@@ -111,7 +137,7 @@ export async function dashboardFilter() {
   const recentRows = (recentOrders.data || []).map((o) => ({
     เลขออเดอร์: `#${(o.id || '').substring(0, 8)}`,
     ประเภท: o.service_type || '-',
-    ราคา: Math.round(o.price || 0),
+    ราคา: Math.round(_displayAmount(o, couponDiscountMap)),
     สถานะ: o.status || '-',
     เวลา: fmtDate(o.created_at),
   }));
@@ -199,7 +225,7 @@ export async function dashboardFilter() {
                 <tr class="table-row">
                   <td class="px-5 py-3.5 font-mono text-xs text-gray-400">#${o.id.substring(0,8)}</td>
                   <td class="px-5 py-3.5"><span class="flex items-center gap-2">${serviceIcon(o.service_type)} <span class="text-gray-600 font-medium">${o.service_type}</span></span></td>
-                  <td class="px-5 py-3.5 font-bold text-gray-800">฿${fmt(Math.round(o.price))}</td>
+                  <td class="px-5 py-3.5 font-bold text-gray-800">฿${fmt(Math.round(_displayAmount(o, couponDiscountMap)))}</td>
                   <td class="px-5 py-3.5">${statusBadge(o.status)}</td>
                   <td class="px-5 py-3.5 text-gray-400 text-xs">${fmtDate(o.created_at)}</td>
                 </tr>

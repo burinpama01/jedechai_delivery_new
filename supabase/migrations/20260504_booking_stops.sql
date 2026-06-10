@@ -12,12 +12,9 @@ CREATE TABLE IF NOT EXISTS booking_stops (
   completed_at timestamptz,
   created_at   timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS idx_booking_stops_booking_id ON booking_stops(booking_id);
 CREATE INDEX IF NOT EXISTS idx_booking_stops_status     ON booking_stops(booking_id, status);
-
 ALTER TABLE booking_stops ENABLE ROW LEVEL SECURITY;
-
 -- Customer can read stops for their own bookings
 CREATE POLICY "customer_read_own_booking_stops" ON booking_stops
   FOR SELECT TO authenticated
@@ -26,7 +23,6 @@ CREATE POLICY "customer_read_own_booking_stops" ON booking_stops
       SELECT id FROM bookings WHERE customer_id = auth.uid()
     )
   );
-
 -- Driver can read stops for bookings assigned to them
 CREATE POLICY "driver_read_own_booking_stops" ON booking_stops
   FOR SELECT TO authenticated
@@ -35,7 +31,6 @@ CREATE POLICY "driver_read_own_booking_stops" ON booking_stops
       SELECT id FROM bookings WHERE driver_id = auth.uid()
     )
   );
-
 -- Driver can update stop status for their assigned bookings
 CREATE POLICY "driver_update_own_booking_stops" ON booking_stops
   FOR UPDATE TO authenticated
@@ -49,7 +44,6 @@ CREATE POLICY "driver_update_own_booking_stops" ON booking_stops
       SELECT id FROM bookings WHERE driver_id = auth.uid()
     )
   );
-
 -- Admin has full access
 CREATE POLICY "admin_all_booking_stops" ON booking_stops
   FOR ALL TO authenticated

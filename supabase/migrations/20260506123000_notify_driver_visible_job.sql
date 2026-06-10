@@ -9,11 +9,9 @@ WHERE n.type = 'driver.job.available'
     n.created_at < newer.created_at
     OR (n.created_at = newer.created_at AND n.id::text < newer.id::text)
   );
-
 CREATE UNIQUE INDEX IF NOT EXISTS idx_notifications_driver_job_available_once
 ON public.notifications (user_id, type, ((data->>'booking_id')))
 WHERE type = 'driver.job.available';
-
 CREATE OR REPLACE FUNCTION public.notify_driver_visible_job(
   p_booking_id uuid,
   p_title text DEFAULT NULL,
@@ -174,7 +172,6 @@ BEGIN
   ORDER BY i.user_id;
 END;
 $$;
-
 GRANT EXECUTE ON FUNCTION public.notify_driver_visible_job(
   uuid,
   text,

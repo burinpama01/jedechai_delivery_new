@@ -910,26 +910,16 @@ class BookingService {
     final currentUserId = AuthService.userId;
     if (currentUserId == null) throw Exception('Not authenticated');
 
-    final booking = await getBookingById(bookingId);
-    if (booking == null) throw Exception('Booking not found');
-
-    // Check ownership
-    final isOwner = booking.customerId == currentUserId;
-    final isAdmin = AuthService.currentUserRole == 'admin';
-    if (!isOwner && !isAdmin) {
-      throw Exception('ไม่มีสิทธิ์ยกเลิกออเดอร์นี้');
+    final result = await _client.rpc('cancel_wallet_booking_with_refund', params: {
+      'p_booking_id': bookingId,
+      'p_reason': reason,
+    });
+    final resultMap = result is Map<String, dynamic>
+        ? result
+        : Map<String, dynamic>.from(result as Map);
+    if (resultMap['success'] != true) {
+      throw Exception(resultMap['error'] ?? 'cancel_booking_failed');
     }
-
-    // Check cancellable status
-    const cancellableStatuses = ['pending', 'pending_merchant', 'preparing'];
-    if (!cancellableStatuses.contains(booking.status) && !isAdmin) {
-      throw Exception('ไม่สามารถยกเลิกออเดอร์ที่สถานะ ${booking.status} ได้');
-    }
-
-    await _client.from('bookings').update({
-      'status': 'cancelled',
-      'notes': reason,
-    }).eq('id', bookingId);
   }
 
   /// Admin override: update store location in a booking.

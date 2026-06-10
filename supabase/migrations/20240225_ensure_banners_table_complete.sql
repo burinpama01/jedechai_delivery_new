@@ -11,21 +11,16 @@ CREATE TABLE IF NOT EXISTS public.banners (
   created_at timestamp with time zone DEFAULT now() NOT NULL,
   updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
-
 -- 2) Add page column (might already exist)
 ALTER TABLE public.banners ADD COLUMN IF NOT EXISTS page text DEFAULT 'home';
-
 -- 3) Add coupon_code column (might already exist)
 ALTER TABLE public.banners ADD COLUMN IF NOT EXISTS coupon_code text DEFAULT NULL;
-
 -- 4) Indexes
 CREATE INDEX IF NOT EXISTS idx_banners_sort ON public.banners(sort_order ASC, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_banners_active ON public.banners(is_active) WHERE is_active = true;
 CREATE INDEX IF NOT EXISTS idx_banners_page ON public.banners(page);
-
 -- 5) RLS
 ALTER TABLE public.banners ENABLE ROW LEVEL SECURITY;
-
 -- Allow anon/authenticated to read active banners
 DO $$
 BEGIN
@@ -37,7 +32,6 @@ BEGIN
           FOR SELECT USING (is_active = true);
     END IF;
 END $$;
-
 -- Admin full CRUD
 DO $$
 BEGIN
@@ -54,7 +48,6 @@ BEGIN
           );
     END IF;
 END $$;
-
 -- Service role bypass (for admin-web using service_role key)
 DO $$
 BEGIN
@@ -66,7 +59,6 @@ BEGIN
           FOR ALL USING (true) WITH CHECK (true);
     END IF;
 END $$;
-
 -- 6) Updated_at trigger
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -75,7 +67,6 @@ BEGIN
   RETURN NEW;
 END;
 $$ language 'plpgsql';
-
 DO $$
 BEGIN
     IF NOT EXISTS (

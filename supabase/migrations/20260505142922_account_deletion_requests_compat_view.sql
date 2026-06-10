@@ -7,10 +7,7 @@ WITH (security_invoker = true)
 AS
 SELECT *
 FROM public.account_deletion_requests;
-
 COMMENT ON VIEW public.deletion_requests IS
   'Compatibility view for legacy clients. Canonical table: public.account_deletion_requests.';
-
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.deletion_requests TO authenticated;
-
 NOTIFY pgrst, 'reload schema';

@@ -5,7 +5,8 @@ void main() {
   group('RoleAmountCalculator - customer', () {
     test('customerGrossTotal = foodPrice + deliveryFee', () {
       expect(
-        RoleAmountCalculator.customerGrossTotal(foodPrice: 100, deliveryFee: 20),
+        RoleAmountCalculator.customerGrossTotal(
+            foodPrice: 100, deliveryFee: 20),
         120,
       );
     });
@@ -60,8 +61,54 @@ void main() {
     });
   });
 
+  group('RoleAmountCalculator - display totals', () {
+    test('displayTotalForService includes delivery fee only for food', () {
+      expect(
+        RoleAmountCalculator.displayTotalForService(
+          serviceType: 'food',
+          price: 150,
+          deliveryFee: 30,
+        ),
+        180,
+      );
+
+      expect(
+        RoleAmountCalculator.displayTotalForService(
+          serviceType: 'parcel',
+          price: 150,
+          deliveryFee: 30,
+        ),
+        150,
+      );
+    });
+
+    test('netDisplayTotalForService subtracts coupon and clamps at zero', () {
+      expect(
+        RoleAmountCalculator.netDisplayTotalForService(
+          serviceType: 'food',
+          price: 150,
+          deliveryFee: 30,
+          couponDiscountAmount: 20,
+        ),
+        160,
+      );
+
+      expect(
+        RoleAmountCalculator.netDisplayTotalForService(
+          serviceType: 'food',
+          price: 150,
+          deliveryFee: 30,
+          couponDiscountAmount: 999,
+        ),
+        0,
+      );
+    });
+  });
+
   group('RoleAmountCalculator - merchant', () {
-    test('merchantGrossSales ignores delivery fee (merchant should not see delivery fee)', () {
+    test(
+        'merchantGrossSales ignores delivery fee (merchant should not see delivery fee)',
+        () {
       // Delivery fee is intentionally not part of merchant gross sales.
       expect(
         RoleAmountCalculator.merchantGrossSales(
@@ -73,7 +120,9 @@ void main() {
       );
     });
 
-    test('merchantGrossSales applies discount only when coupon is merchant-created', () {
+    test(
+        'merchantGrossSales applies discount only when coupon is merchant-created',
+        () {
       // Not merchant-created discount: merchant sees full food price
       expect(
         RoleAmountCalculator.merchantGrossSales(
@@ -95,7 +144,8 @@ void main() {
       );
     });
 
-    test('merchantReceives deducts GP from merchant net sales and clamps at 0', () {
+    test('merchantReceives deducts GP from merchant net sales and clamps at 0',
+        () {
       // foodPrice 100, merchant discount 20 => netSales 80
       // GP rate 10% => GP 8
       // receives = 72

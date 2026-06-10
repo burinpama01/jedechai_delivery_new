@@ -11,6 +11,7 @@ import '../../../common/services/driver_foreground_service.dart';
 import '../../../common/utils/driver_job_visibility_policy.dart';
 import '../../../common/utils/notification_payload_policy.dart';
 import '../../../common/utils/app_time.dart';
+import '../../../common/utils/role_amount_calculator.dart';
 import '../../customer/screens/auth/login_screen.dart';
 import 'driver_navigation_screen.dart';
 import 'driver_service_type_settings.dart';
@@ -378,12 +379,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       // Compute real availability: online AND no active assigned booking (ISSUE-041)
       final currentDriverId = AuthService.userId;
       final activeStatuses = const {
-        'driver_accepted', 'arrived_at_merchant', 'picking_up_order',
-        'in_transit', 'arrived',
+        'driver_accepted',
+        'arrived_at_merchant',
+        'picking_up_order',
+        'in_transit',
+        'arrived',
       };
       final hasActiveBooking = _availableJobs.any((j) =>
-          j.driverId == currentDriverId &&
-          activeStatuses.contains(j.status));
+          j.driverId == currentDriverId && activeStatuses.contains(j.status));
       final isAvailable = _isOnline && !hasActiveBooking;
 
       // Update profiles — no device updated_at (ISSUE-046)
@@ -482,9 +485,12 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       // Use UPSERT only when real coordinates are available so we never write
       // a (0,0) ghost row. When coordinates are unknown, UPDATE the existing
       // row (or no-op if the row doesn't exist yet — GPS sync will create it).
-      final lat = _driverLat ?? (_driverProfile?['latitude'] as num?)?.toDouble();
-      final lng = _driverLng ?? (_driverProfile?['longitude'] as num?)?.toDouble();
-      final hasRealCoords = lat != null && lng != null && !(lat == 0.0 && lng == 0.0);
+      final lat =
+          _driverLat ?? (_driverProfile?['latitude'] as num?)?.toDouble();
+      final lng =
+          _driverLng ?? (_driverProfile?['longitude'] as num?)?.toDouble();
+      final hasRealCoords =
+          lat != null && lng != null && !(lat == 0.0 && lng == 0.0);
       if (hasRealCoords) {
         await SupabaseService.client.from('driver_locations').upsert({
           'driver_id': userId,
@@ -565,7 +571,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     _jobStreamSubscription = null;
 
     debugLog('🔄 Setting up real-time job stream...');
-    if (mounted) setState(() { _jobStreamConnecting = true; _jobStreamError = null; });
+    if (mounted)
+      setState(() {
+        _jobStreamConnecting = true;
+        _jobStreamError = null;
+      });
 
     final stream = SupabaseService.client
         .from('bookings')
@@ -636,7 +646,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       },
       onError: (Object error) {
         debugLog('❌ Stream error: $error');
-        if (mounted) setState(() { _jobStreamConnecting = false; _jobStreamError = error; });
+        if (mounted)
+          setState(() {
+            _jobStreamConnecting = false;
+            _jobStreamError = error;
+          });
       },
     );
 
@@ -679,6 +693,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
       if (mounted) {
         setState(() => _availableJobs = merged);
+        _loadCouponDiscountsForJobs(merged);
         _checkForNewJobs(merged);
       }
 
@@ -1497,97 +1512,96 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     debugLog('📊 Jobs count in UI: ${jobs.length}');
 
     if (jobs.isEmpty) {
-          final isOfflineEmpty = !_isOnline;
-          return Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainer,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withValues(alpha: 0.1),
-                  blurRadius: 4,
-                  spreadRadius: 1,
-                ),
-              ],
+      final isOfflineEmpty = !_isOnline;
+      return Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withValues(alpha: 0.1),
+              blurRadius: 4,
+              spreadRadius: 1,
             ),
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: isOfflineEmpty
-                        ? const Color(0xFFF3F4F6)
-                        : const Color(0xFFEFF6FF),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    isOfflineEmpty ? Icons.wifi_off : Icons.search_off_rounded,
-                    size: 64,
-                    color: isOfflineEmpty ? Colors.grey : Colors.grey.shade400,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  isOfflineEmpty
-                      ? AppLocalizations.of(context)!.driverDashOfflineTitle
-                      : AppLocalizations.of(context)!.driverDashNoJobs,
-                  style: TextStyle(
-                    fontSize: 20,
-                    color: colorScheme.onSurface,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  isOfflineEmpty
-                      ? AppLocalizations.of(context)!.driverDashOfflineHint
-                      : 'ไม่มีงานในรัศมี ${_driverOrderDetectionRadiusKm.toStringAsFixed(0)} กม.',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                if (!isOfflineEmpty && !_isRefreshing) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    'ดึงหน้าจอลงเพื่อรีเฟรช',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey.shade400,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 20),
-                ElevatedButton.icon(
-                  onPressed: _isRefreshing ? null : _manualRefresh,
-                  icon: _isRefreshing
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : const Icon(Icons.refresh),
-                  label: Text(AppLocalizations.of(context)!.driverDashRefresh),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3B82F6), // Blue
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ],
+          ],
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: isOfflineEmpty
+                    ? const Color(0xFFF3F4F6)
+                    : const Color(0xFFEFF6FF),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isOfflineEmpty ? Icons.wifi_off : Icons.search_off_rounded,
+                size: 64,
+                color: isOfflineEmpty ? Colors.grey : Colors.grey.shade400,
+              ),
             ),
-          );
-        }
+            const SizedBox(height: 10),
+            Text(
+              isOfflineEmpty
+                  ? AppLocalizations.of(context)!.driverDashOfflineTitle
+                  : AppLocalizations.of(context)!.driverDashNoJobs,
+              style: TextStyle(
+                fontSize: 20,
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              isOfflineEmpty
+                  ? AppLocalizations.of(context)!.driverDashOfflineHint
+                  : 'ไม่มีงานในรัศมี ${_driverOrderDetectionRadiusKm.toStringAsFixed(0)} กม.',
+              style: TextStyle(
+                fontSize: 14,
+                color: colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (!isOfflineEmpty && !_isRefreshing) ...[
+              const SizedBox(height: 6),
+              Text(
+                'ดึงหน้าจอลงเพื่อรีเฟรช',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey.shade400,
+                ),
+              ),
+            ],
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: _isRefreshing ? null : _manualRefresh,
+              icon: _isRefreshing
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Icon(Icons.refresh),
+              label: Text(AppLocalizations.of(context)!.driverDashRefresh),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF3B82F6), // Blue
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Column(
       children: jobs.map((job) => _buildJobCard(job)).toList(),
@@ -2288,8 +2302,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
       if (mounted) {
         setState(() {
-          _couponDiscountByBookingId = map;
-          _couponCodeByBookingId = codeMap;
+          _couponDiscountByBookingId = {
+            ..._couponDiscountByBookingId,
+            ...map,
+          };
+          _couponCodeByBookingId = {
+            ..._couponCodeByBookingId,
+            ...codeMap,
+          };
         });
       }
     } catch (e) {
@@ -2536,6 +2556,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           _scheduledJobsLoading = false;
         });
       }
+      await _loadCouponDiscountsForJobs(jobs);
       debugLog('📅 Scheduled jobs loaded: ${jobs.length}');
     } catch (e) {
       debugLog('❌ Error loading scheduled jobs: $e');
@@ -2619,6 +2640,13 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     final serviceIcon = _getServiceIcon(job.serviceType);
     final serviceColor = _getServiceColor(job.serviceType);
     final scheduledAt = job.scheduledAt;
+    final couponDiscount = _couponDiscountByBookingId[job.id] ?? 0.0;
+    final displayAmount = RoleAmountCalculator.netDisplayTotalForService(
+      serviceType: job.serviceType,
+      price: job.price,
+      deliveryFee: job.deliveryFee,
+      couponDiscountAmount: couponDiscount,
+    );
 
     String scheduledText = '-';
     if (scheduledAt != null) {
@@ -2699,7 +2727,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                 ),
               ),
               Text(
-                '฿${job.price.toStringAsFixed(0)}',
+                '฿${displayAmount.toStringAsFixed(0)}',
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

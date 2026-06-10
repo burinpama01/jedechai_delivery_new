@@ -3,11 +3,13 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../common/models/booking.dart';
 import '../../../../common/services/booking_service.dart';
+import '../../../../common/services/supabase_service.dart';
 import '../../../../common/utils/order_code_formatter.dart';
+import '../../../../common/utils/role_amount_calculator.dart';
 import '../../../../utils/debug_logger.dart';
 
 /// Cancellation Screen
-/// 
+///
 /// Shows cancellation confirmation and reason selection
 class CancellationScreen extends StatefulWidget {
   final Booking booking;
@@ -22,6 +24,13 @@ class _CancellationScreenState extends State<CancellationScreen> {
   int? _selectedReasonIndex;
   final TextEditingController _otherReasonController = TextEditingController();
   bool _isCancelling = false;
+  double _couponDiscount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCouponDiscount();
+  }
 
   List<Map<String, dynamic>> _getReasons(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -34,6 +43,30 @@ class _CancellationScreenState extends State<CancellationScreen> {
       {'icon': Icons.edit_note, 'text': l10n.cancelReasonOther},
     ];
   }
+
+  Future<void> _fetchCouponDiscount() async {
+    try {
+      final usage = await SupabaseService.client
+          .from('coupon_usages')
+          .select('discount_amount')
+          .eq('booking_id', widget.booking.id)
+          .maybeSingle();
+      if (!mounted) return;
+      setState(() {
+        _couponDiscount =
+            (usage?['discount_amount'] as num?)?.toDouble() ?? 0.0;
+      });
+    } catch (e) {
+      debugLog('⚠️ Error fetching cancellation coupon discount: $e');
+    }
+  }
+
+  double get _displayAmount => RoleAmountCalculator.netDisplayTotalForService(
+        serviceType: widget.booking.serviceType,
+        price: widget.booking.price,
+        deliveryFee: widget.booking.deliveryFee,
+        couponDiscountAmount: _couponDiscount,
+      );
 
   @override
   void dispose() {
@@ -55,7 +88,9 @@ class _CancellationScreenState extends State<CancellationScreen> {
   Future<void> _confirmCancellation() async {
     if (_selectedReasonIndex == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.cancelSelectReason), backgroundColor: Colors.red),
+        SnackBar(
+            content: Text(AppLocalizations.of(context)!.cancelSelectReason),
+            backgroundColor: Colors.red),
       );
       return;
     }
@@ -66,7 +101,8 @@ class _CancellationScreenState extends State<CancellationScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
+            const Icon(Icons.warning_amber_rounded,
+                color: Colors.red, size: 28),
             const SizedBox(width: 8),
             Text(AppLocalizations.of(context)!.cancelConfirmTitle),
           ],
@@ -85,12 +121,15 @@ class _CancellationScreenState extends State<CancellationScreen> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: Colors.red.shade700, size: 18),
+                  Icon(Icons.info_outline,
+                      color: Colors.red.shade700, size: 18),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      AppLocalizations.of(context)!.cancelReasonLabel(_getSelectedReasonText(context)),
-                      style: TextStyle(fontSize: 13, color: Colors.red.shade700),
+                      AppLocalizations.of(context)!
+                          .cancelReasonLabel(_getSelectedReasonText(context)),
+                      style:
+                          TextStyle(fontSize: 13, color: Colors.red.shade700),
                     ),
                   ),
                 ],
@@ -101,14 +140,16 @@ class _CancellationScreenState extends State<CancellationScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(AppLocalizations.of(context)!.cancelKeep, style: const TextStyle(color: Colors.grey)),
+            child: Text(AppLocalizations.of(context)!.cancelKeep,
+                style: const TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
             child: Text(AppLocalizations.of(context)!.cancelConfirmBtn),
           ),
@@ -141,7 +182,10 @@ class _CancellationScreenState extends State<CancellationScreen> {
       setState(() => _isCancelling = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.cancelError(e.toString())), backgroundColor: Colors.red),
+          SnackBar(
+              content:
+                  Text(AppLocalizations.of(context)!.cancelError(e.toString())),
+              backgroundColor: Colors.red),
         );
       }
     }
@@ -152,10 +196,11 @@ class _CancellationScreenState extends State<CancellationScreen> {
     final l10n = AppLocalizations.of(context)!;
     final reasons = _getReasons(context);
     final serviceLabel = {
-      'food': l10n.cancelServiceFood,
-      'ride': l10n.cancelServiceRide,
-      'parcel': l10n.cancelServiceParcel,
-    }[widget.booking.serviceType] ?? l10n.cancelServiceDefault;
+          'food': l10n.cancelServiceFood,
+          'ride': l10n.cancelServiceRide,
+          'parcel': l10n.cancelServiceParcel,
+        }[widget.booking.serviceType] ??
+        l10n.cancelServiceDefault;
 
     return Scaffold(
       appBar: AppBar(
@@ -177,7 +222,11 @@ class _CancellationScreenState extends State<CancellationScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(14),
-                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8)],
+                      boxShadow: [
+                        BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 8)
+                      ],
                     ),
                     child: Row(
                       children: [
@@ -187,7 +236,8 @@ class _CancellationScreenState extends State<CancellationScreen> {
                             color: Colors.red.shade50,
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Icon(Icons.cancel_outlined, color: Colors.red.shade600, size: 28),
+                          child: Icon(Icons.cancel_outlined,
+                              color: Colors.red.shade600, size: 28),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
@@ -195,26 +245,31 @@ class _CancellationScreenState extends State<CancellationScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(serviceLabel,
-                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold)),
                               const SizedBox(height: 4),
                               Text(
                                   OrderCodeFormatter.formatByServiceType(
                                     widget.booking.id,
                                     serviceType: widget.booking.serviceType,
                                   ),
-                                  style: const TextStyle(fontSize: 13, color: Colors.grey)),
+                                  style: const TextStyle(
+                                      fontSize: 13, color: Colors.grey)),
                             ],
                           ),
                         ),
-                        Text('฿${widget.booking.totalAmount.ceil()}',
-                            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                        Text('฿${_displayAmount.ceil()}',
+                            style: const TextStyle(
+                                fontSize: 17, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
 
                   const SizedBox(height: 24),
                   Text(l10n.cancelReasonsTitle,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
                   Text(l10n.cancelReasonsSubtitle,
                       style: const TextStyle(fontSize: 14, color: Colors.grey)),
@@ -230,33 +285,46 @@ class _CancellationScreenState extends State<CancellationScreen> {
                         onTap: () => setState(() => _selectedReasonIndex = i),
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 14),
                           decoration: BoxDecoration(
-                            color: isSelected ? Colors.red.shade50 : Colors.white,
+                            color:
+                                isSelected ? Colors.red.shade50 : Colors.white,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: isSelected ? Colors.red : Colors.grey.shade200,
+                              color: isSelected
+                                  ? Colors.red
+                                  : Colors.grey.shade200,
                               width: isSelected ? 1.5 : 1,
                             ),
                           ),
                           child: Row(
                             children: [
                               Icon(reason['icon'] as IconData,
-                                  color: isSelected ? Colors.red : Colors.grey, size: 22),
+                                  color: isSelected ? Colors.red : Colors.grey,
+                                  size: 22),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(reason['text'] as String,
                                     style: TextStyle(
                                       fontSize: 15,
-                                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                      fontWeight: isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.normal,
                                       color: isSelected
                                           ? Colors.red.shade700
-                                          : Theme.of(context).colorScheme.onSurface,
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
                                     )),
                               ),
                               Icon(
-                                isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-                                color: isSelected ? Colors.red : Colors.grey.shade400,
+                                isSelected
+                                    ? Icons.radio_button_checked
+                                    : Icons.radio_button_off,
+                                color: isSelected
+                                    ? Colors.red
+                                    : Colors.grey.shade400,
                                 size: 22,
                               ),
                             ],
@@ -276,10 +344,12 @@ class _CancellationScreenState extends State<CancellationScreen> {
                       decoration: InputDecoration(
                         hintText: l10n.cancelOtherHint,
                         hintStyle: TextStyle(color: Colors.grey.shade400),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Colors.red, width: 1.5),
+                          borderSide:
+                              const BorderSide(color: Colors.red, width: 1.5),
                         ),
                         filled: true,
                         fillColor: Colors.grey.shade50,
@@ -297,7 +367,12 @@ class _CancellationScreenState extends State<CancellationScreen> {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: Colors.white,
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, -2))],
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, -2))
+              ],
             ),
             child: SafeArea(
               child: SizedBox(
@@ -308,14 +383,19 @@ class _CancellationScreenState extends State<CancellationScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
                   ),
                   child: _isCancelling
                       ? const SizedBox(
-                          width: 24, height: 24,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2.5),
                         )
-                      : Text(l10n.cancelButton, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      : Text(l10n.cancelButton,
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
               ),
             ),

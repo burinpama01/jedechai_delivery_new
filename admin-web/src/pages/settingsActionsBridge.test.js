@@ -30,3 +30,22 @@ test("legacy Telegram test button delegates to the settings action bridge when a
   assert.match(legacySettingsSource, /const bridged = window\.__adminWebBridge\?\.testAdminTelegram/);
   assert.match(legacySettingsSource, /return await bridged\(\{ supabase, supabaseAuth, currentUser, callAdminAction, showToast, escapeHtml, fmt, fmtDate, refreshCurrentPage \}\)/);
 });
+
+test("settings page exposes app update policy controls", () => {
+  assert.match(legacySettingsSource, /id="settAppUpdateEnabled"/);
+  assert.match(legacySettingsSource, /id="settAppUpdateMode"/);
+  assert.match(legacySettingsSource, /id="settAppUpdateLatestBuild"/);
+  assert.match(legacySettingsSource, /id="settAppUpdateMinSupportedBuild"/);
+  assert.match(legacySettingsSource, /onclick="saveAppUpdatePolicySettings\(\)"/);
+  assert.match(legacySettingsSource, /data-testid="save-app-update-policy-button"/);
+});
+
+test("app update policy settings save through system_config app_update_policy", () => {
+  assert.match(actionsSource, /export async function saveAppUpdatePolicySettings/);
+  assert.match(actionsSource, /app_update_policy/);
+  assert.match(actionsSource, /latest_build/);
+  assert.match(actionsSource, /min_supported_build/);
+  assert.match(actionsSource, /force update ต้องมี Store URL/);
+  assert.match(actionsSource, /target_roles:\s*\[\]/);
+  assert.match(actionsSource, /globalThis\.__adminWebBridge\.saveAppUpdatePolicySettings = saveAppUpdatePolicySettings/);
+});

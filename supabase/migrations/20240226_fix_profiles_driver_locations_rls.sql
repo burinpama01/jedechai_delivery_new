@@ -18,7 +18,6 @@ BEGIN
       WITH CHECK (auth.uid() = id);
   END IF;
 END $$;
-
 -- 2) Allow users to SELECT their own profile
 DO $$
 BEGIN
@@ -31,7 +30,6 @@ BEGIN
       FOR SELECT USING (auth.uid() = id);
   END IF;
 END $$;
-
 -- 3) Allow any authenticated user to read driver/merchant profiles (for customer app)
 DO $$
 BEGIN
@@ -44,14 +42,12 @@ BEGIN
       FOR SELECT USING (true);
   END IF;
 END $$;
-
 -- ============================================
 -- driver_locations RLS policies
 -- ============================================
 
 -- Enable RLS if not already
 ALTER TABLE IF EXISTS public.driver_locations ENABLE ROW LEVEL SECURITY;
-
 -- 4) Drivers can INSERT their own location
 DO $$
 BEGIN
@@ -64,7 +60,6 @@ BEGIN
       FOR INSERT WITH CHECK (auth.uid() = driver_id);
   END IF;
 END $$;
-
 -- 5) Drivers can UPDATE their own location
 DO $$
 BEGIN
@@ -78,7 +73,6 @@ BEGIN
       WITH CHECK (auth.uid() = driver_id);
   END IF;
 END $$;
-
 -- 6) Anyone can read driver_locations (for admin map + customer tracking)
 DO $$
 BEGIN

@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>แผนเพิ่มฟีเจอร์ Wallet ลูกค้า v1 - Jedechai Delivery</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17212b;
+      --muted: #5b6773;
+      --line: #d9e2ea;
+      --soft: #f4f7fb;
+      --brand: #0f8b8d;
+      --brand-dark: #0a5f63;
+      --accent: #f2b84b;
+      --danger: #c74836;
+      --ok: #2f8f5b;
+      --panel: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, "Noto Sans Thai", sans-serif;
+      background: #eef3f7;
+      color: var(--ink);
+      line-height: 1.65;
+    }
+
+    header {
+      background: linear-gradient(135deg, #0f8b8d 0%, #176b78 56%, #27364a 100%);
+      color: #fff;
+      padding: 40px 24px 32px;
+    }
+
+    .wrap {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(30px, 4vw, 48px);
+      line-height: 1.12;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0 0 18px;
+      font-size: 24px;
+      color: var(--brand-dark);
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 18px 0 8px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    p { margin: 0 0 12px; }
+
+    code {
+      background: #e9f1f5;
+      border: 1px solid #d7e2e9;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.92em;
+    }
+
+    nav {
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    nav .wrap {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 10px 0;
+    }
+
+    nav a {
+      color: var(--brand-dark);
+      text-decoration: none;
+      white-space: nowrap;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-size: 13px;
+      background: #fff;
+    }
+
+    main { padding: 24px 0 48px; }
+
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 24px;
+      margin: 0 0 18px;
+      box-shadow: 0 1px 2px rgba(25, 40, 55, 0.05);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.55fr) minmax(280px, 0.9fr);
+      gap: 24px;
+      align-items: end;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .meta div,
+    .pill,
+    .note {
+      border: 1px solid rgba(255, 255, 255, 0.26);
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+
+    .hero-card {
+      background: rgba(255, 255, 255, 0.11);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 8px;
+      padding: 18px;
+    }
+
+    .hero-card strong { color: #fff; }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .box {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fbfdff;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #e5f4f4;
+      color: var(--brand-dark);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .tag.warn { background: #fff2d6; color: #8a5a08; }
+    .tag.danger { background: #fde7e2; color: var(--danger); }
+    .tag.ok { background: #e4f5eb; color: var(--ok); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 4px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #eef6f7;
+      color: var(--brand-dark);
+    }
+
+    ul, ol { padding-left: 22px; margin: 8px 0 0; }
+    li { margin: 5px 0; }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(130px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .step {
+      border: 1px solid var(--line);
+      border-top: 4px solid var(--brand);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      min-height: 120px;
+    }
+
+    .phase {
+      border-left: 4px solid var(--brand);
+      padding-left: 14px;
+      margin: 14px 0;
+    }
+
+    .risk {
+      border-left: 4px solid var(--danger);
+      background: #fff8f6;
+    }
+
+    .decision {
+      border-left: 4px solid var(--accent);
+      background: #fffaf0;
+    }
+
+    .small { color: var(--muted); font-size: 13px; }
+
+    @media (max-width: 900px) {
+      .hero-grid, .grid-2, .grid-3, .flow { grid-template-columns: 1fr; }
+      section { padding: 18px; }
+      .meta { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap hero-grid">
+      <div>
+        <div class="tag">Planning Artifact v1</div>
+        <h1>แผนเพิ่มฟีเจอร์ Wallet ให้ลูกค้า</h1>
+        <p>เพิ่มกระเป๋าเงินสำหรับลูกค้าเพื่อเติมเงิน, จ่ายค่าออเดอร์, รับ refund และดูประวัติธุรกรรม โดยใช้โครงสร้าง wallet เดิมของ Supabase เป็นฐาน แต่เพิ่ม guardrail สำหรับยอดเงินจริงให้ครบก่อน implementation.</p>
+        <div class="meta">
+          <div><strong>Project:</strong><br>jedechai_delivery_new</div>
+          <div><strong>Date:</strong><br>2026-06-09</div>
+          <div><strong>Scope:</strong><br>Customer app + Supabase + Admin Web</div>
+          <div><strong>Status:</strong><br>Plan only, not implemented</div>
+        </div>
+      </div>
+      <div class="hero-card">
+        <strong>Recommendation</strong>
+        <p>ทำแบบ Hybrid Ledger: ใช้ตาราง <code>wallets</code>, <code>wallet_transactions</code>, <code>topup_requests</code> ที่มีอยู่แล้ว และเพิ่ม RPC เฉพาะ customer payment/refund เพื่อให้ booking + wallet debit/credit เป็น atomic มากที่สุด.</p>
+        <p class="small">เหตุผล: ลด schema ใหม่, ใช้ admin approval/topup flow เดิมได้, แต่ยังปิด race condition และยอด drift จาก payment/coupon ได้.</p>
+      </div>
+    </div>
+  </header>
+
+  <nav>
+    <div class="wrap">
+      <a href="#summary">Summary</a>
+      <a href="#requirements">Requirements</a>
+      <a href="#approaches">Approaches</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#data">Data Model</a>
+      <a href="#flow">Flow</a>
+      <a href="#tasks">Tasks</a>
+      <a href="#testing">Testing</a>
+      <a href="#risks">Risks</a>
+      <a href="#rollout">Rollout</a>
+    </div>
+  </nav>
+
+  <main class="wrap">
+    <section id="summary">
+      <h2>1. Executive Summary</h2>
+      <div class="grid-3">
+        <div class="box">
+          <span class="tag ok">Build</span>
+          <h3>ลูกค้าเติมเงิน</h3>
+          <p>เพิ่มหน้า customer wallet, เติมเงินผ่าน PromptPay/manual request ก่อน และ reuse admin approval flow ของ <code>topup_requests</code>.</p>
+        </div>
+        <div class="box">
+          <span class="tag ok">Build</span>
+          <h3>จ่ายด้วย Wallet</h3>
+          <p>เพิ่ม <code>payment_method = wallet</code> ให้ checkout หลัก โดย deduct หลังคำนวณยอดสุทธิและก่อนยืนยัน booking สำเร็จ.</p>
+        </div>
+        <div class="box">
+          <span class="tag warn">Guardrail</span>
+          <h3>Refund / Cancel</h3>
+          <p>คืนเงินเข้ากระเป๋าด้วย transaction type ชัดเจน เมื่อออเดอร์ถูกยกเลิกในช่วงที่เข้าเงื่อนไข refund.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="requirements">
+      <h2>2. Requirements</h2>
+      <div class="grid-2">
+        <div class="box">
+          <h3>Functional</h3>
+          <ul>
+            <li>ลูกค้าดูยอดคงเหลือ wallet ได้จากหน้า profile/account และ checkout.</li>
+            <li>ลูกค้าสร้างคำขอเติมเงินได้ โดยมี min/max amount และประวัติคำขอ.</li>
+            <li>แอดมินอนุมัติ/ปฏิเสธ top-up ผ่านระบบเดิมได้ โดยต้องรองรับ role <code>customer</code> ไม่ใช่เฉพาะ driver.</li>
+            <li>ลูกค้าเลือกจ่ายด้วย wallet ใน food, ride, parcel และ service ที่ใช้ booking ได้.</li>
+            <li>ระบบบันทึก transaction ทุกครั้ง: topup, payment, refund, adjustment.</li>
+            <li>ลูกค้าเห็น transaction history ของตัวเองเท่านั้น.</li>
+          </ul>
+        </div>
+        <div class="box">
+          <h3>Non-functional</h3>
+          <ul>
+            <li>ยอดเงินต้องไม่ติดลบสำหรับ customer wallet.</li>
+            <li>หักเงินต้อง atomic และ idempotent ต่อ booking หนึ่งรายการ.</li>
+            <li>คำนวณยอดที่ต้องหักจาก source of truth เดียวกับ checkout: food = subtotal + delivery fee - coupon discount.</li>
+            <li>ห้ามให้ client update <code>wallets.balance</code> ตรงสำหรับ payment/refund.</li>
+            <li>RLS ต้องกันลูกค้าเห็น wallet/transaction ของคนอื่น.</li>
+            <li>ใช้ timezone policy เดิมผ่าน <code>AppTime</code> เมื่อแสดงเวลาในแอป.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="approaches">
+      <h2>3. Architecture Options</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Option</th>
+            <th>แนวทาง</th>
+            <th>ข้อดี</th>
+            <th>ข้อเสีย</th>
+            <th>Decision</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>A</td>
+            <td>Reuse wallet เดิมทั้งหมด และให้ client insert/update โดยตรงตาม pattern เดิม</td>
+            <td>เร็วที่สุด</td>
+            <td>เสี่ยง race condition, ยอดติดลบ, duplicate deduct, security review หนัก</td>
+            <td><span class="tag danger">Reject</span></td>
+          </tr>
+          <tr>
+            <td>B</td>
+            <td>สร้าง customer wallet schema แยกใหม่ทั้งหมด</td>
+            <td>แยก domain ชัด</td>
+            <td>ซ้ำกับ wallet เดิม, admin ต้องทำสองระบบ, migration เยอะ</td>
+            <td><span class="tag warn">Phase 2 only</span></td>
+          </tr>
+          <tr>
+            <td>C</td>
+            <td>Hybrid Ledger: reuse wallet schema + เพิ่ม customer RPC/guards</td>
+            <td>บาลานซ์ระหว่างเร็วและปลอดภัย, ใช้ admin topup เดิม, ลด data drift</td>
+            <td>ต้อง harden RPC และ refactor service naming จาก driver-only</td>
+            <td><span class="tag ok">Recommended</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="architecture">
+      <h2>4. Proposed Architecture</h2>
+      <div class="grid-2">
+        <div class="box decision">
+          <h3>Backend Boundary</h3>
+          <p>เพิ่ม RPC ฝั่ง Supabase สำหรับ customer wallet โดยไม่ให้ Flutter update balance ตรง:</p>
+          <ul>
+            <li><code>customer_wallet_pay_booking(p_booking_id uuid, p_expected_amount numeric)</code></li>
+            <li><code>customer_wallet_refund_booking(p_booking_id uuid, p_reason text)</code></li>
+            <li><code>ensure_wallet_for_user(p_user_id uuid)</code> หรือปรับ <code>wallet_topup</code> ให้ create wallet เมื่อไม่มี</li>
+          </ul>
+        </div>
+        <div class="box decision">
+          <h3>Flutter Boundary</h3>
+          <p>แยก service ใช้งานทั่วไปออกจาก driver-only wording:</p>
+          <ul>
+            <li>คง <code>WalletService</code> แต่เพิ่ม method generic: <code>getWallet</code>, <code>getTransactions</code>, <code>requestTopup</code>, <code>payBookingWithWallet</code>.</li>
+            <li>สร้างหน้า customer wallet ใหม่ใน <code>lib/apps/customer/screens/</code>.</li>
+            <li>เพิ่ม wallet payment option ใน checkout/service screens โดยใช้ยอด final total ที่คำนวณแล้ว.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="flow">
+        <div class="step"><strong>1. Customer</strong><br>เปิดหน้า wallet หรือ checkout</div>
+        <div class="step"><strong>2. App</strong><br>โหลด wallet + transactions ผ่าน RLS own-row</div>
+        <div class="step"><strong>3. Top-up</strong><br>สร้าง <code>topup_requests</code> status pending</div>
+        <div class="step"><strong>4. Admin</strong><br>approve ผ่าน <code>admin-actions</code> แล้ว RPC credit</div>
+        <div class="step"><strong>5. Booking</strong><br>จ่าย wallet ผ่าน RPC debit + ledger</div>
+      </div>
+    </section>
+
+    <section id="data">
+      <h2>5. Data Model / Migration</h2>
+      <h3>Reuse Existing Tables</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Table</th>
+            <th>ใช้ทำอะไร</th>
+            <th>Change ที่ต้องตรวจ/เพิ่ม</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>wallets</code></td>
+            <td>เก็บยอดคงเหลือต่อ user</td>
+            <td>ยืนยัน unique constraint <code>user_id</code>, เพิ่ม index ถ้ายังไม่มี, policy ให้ user select own wallet</td>
+          </tr>
+          <tr>
+            <td><code>wallet_transactions</code></td>
+            <td>ledger ธุรกรรม topup/payment/refund</td>
+            <td>เพิ่ม/ยืนยัน <code>related_booking_id</code>, <code>type</code>, <code>description</code>, created_at, RLS select own ผ่าน wallet</td>
+          </tr>
+          <tr>
+            <td><code>topup_requests</code></td>
+            <td>คำขอเติมเงินที่รอแอดมินอนุมัติ</td>
+            <td>เพิ่ม <code>role_snapshot</code> หรือรองรับ customer ใน query/admin UI, เพิ่มหลักฐานสลิปถ้าต้องใช้</td>
+          </tr>
+          <tr>
+            <td><code>bookings</code></td>
+            <td>ออเดอร์หลักของระบบ</td>
+            <td>ยืนยัน/เพิ่ม <code>payment_method</code>, <code>payment_status</code>, <code>wallet_transaction_id</code>, <code>paid_at</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Recommended Migration</h3>
+      <div class="box">
+        <p>สร้าง migration ใหม่ <code>supabase/migrations/YYYYMMDDHHMMSS_customer_wallet_payment.sql</code> เพื่อทำเฉพาะส่วนที่ยังขาด:</p>
+        <ul>
+          <li>constraint กัน wallet ซ้ำต่อ user: <code>unique(user_id)</code>.</li>
+          <li>function สำหรับจ่าย booking ด้วย wallet แบบ atomic.</li>
+          <li>function สำหรับ refund booking แบบ idempotent.</li>
+          <li>policy/RLS เพิ่มเติมถ้า policy เดิมยัง driver-centric.</li>
+          <li>index: <code>wallet_transactions(wallet_id, created_at desc)</code>, <code>wallet_transactions(related_booking_id)</code>.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="flow">
+      <h2>6. User Flow</h2>
+      <div class="grid-2">
+        <div class="box">
+          <h3>Top-up Flow</h3>
+          <ol>
+            <li>ลูกค้าเปิดหน้า Wallet.</li>
+            <li>ระบบแสดง balance, pending topups, recent transactions.</li>
+            <li>ลูกค้าเลือกจำนวนเงินหรือกรอกเองตาม min/max.</li>
+            <li>ระบบสร้าง <code>topup_requests</code> พร้อม status <code>pending</code>.</li>
+            <li>แอดมินอนุมัติใน admin-web/admin app.</li>
+            <li>Edge Function เรียก <code>wallet_topup</code> และบันทึก transaction type <code>topup</code>.</li>
+          </ol>
+        </div>
+        <div class="box">
+          <h3>Payment Flow</h3>
+          <ol>
+            <li>ลูกค้าเลือก wallet ใน checkout.</li>
+            <li>UI เช็ก balance เทียบ final total เฉพาะเพื่อ UX เท่านั้น.</li>
+            <li>เมื่อกดยืนยัน ระบบสร้าง booking เป็น pending payment หรือใช้ RPC create+pay ถ้าปรับเพิ่มได้.</li>
+            <li>RPC หัก wallet ด้วย <code>FOR UPDATE</code>, ตรวจยอดไม่ติดลบ, บันทึก transaction.</li>
+            <li>booking ถูก mark เป็น <code>paid</code> พร้อม <code>wallet_transaction_id</code>.</li>
+            <li>ถ้า coupon usage fail ต้อง rollback/cancel booking และ refund wallet ทันที.</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <section id="tasks">
+      <h2>7. Implementation Tasks</h2>
+      <div class="phase">
+        <h3>Task 1: Database audit + migration</h3>
+        <ul>
+          <li>ตรวจ schema จริงของ <code>wallets</code>, <code>wallet_transactions</code>, <code>topup_requests</code>, <code>bookings</code>.</li>
+          <li>เพิ่ม migration เฉพาะ customer wallet payment/refund.</li>
+          <li>เพิ่ม SQL tests หรือ smoke SQL สำหรับ insufficient balance, duplicate payment, refund duplicate.</li>
+        </ul>
+      </div>
+      <div class="phase">
+        <h3>Task 2: Edge Function / Admin top-up</h3>
+        <ul>
+          <li>ปรับ <code>supabase/functions/admin-actions/index.ts</code> ให้ approve topup รองรับ customer wallet.</li>
+          <li>เปลี่ยน read-then-write wallet update เป็น RPC ถ้ายังพบใน approve/reject path.</li>
+          <li>เพิ่ม admin notification payload type แยก customer top-up.</li>
+        </ul>
+      </div>
+      <div class="phase">
+        <h3>Task 3: Flutter common wallet service</h3>
+        <ul>
+          <li>ปรับ <code>WalletService</code> ให้ generic ไม่ผูกชื่อ <code>DriverWallet</code> ใน API ใหม่.</li>
+          <li>เพิ่ม model <code>Wallet</code> / <code>WalletTransaction</code> ถ้ายังไม่มี generic model.</li>
+          <li>เพิ่ม method <code>payBookingWithWallet</code>, <code>refundBookingToWallet</code>, <code>getTransactions</code>.</li>
+        </ul>
+      </div>
+      <div class="phase">
+        <h3>Task 4: Customer wallet UI</h3>
+        <ul>
+          <li>สร้างหน้า <code>customer_wallet_screen.dart</code> แสดง balance, top-up CTA, pending request, transaction history.</li>
+          <li>เพิ่ม navigation จาก profile/account tab.</li>
+          <li>reuse validation amount จาก driver top-up แต่ตัด fallback เติมเงินตรงออก.</li>
+        </ul>
+      </div>
+      <div class="phase">
+        <h3>Task 5: Checkout integration</h3>
+        <ul>
+          <li>เพิ่ม wallet payment option ใน food checkout ก่อน แล้วค่อยขยาย ride/parcel.</li>
+          <li>ใช้ final total หลัง coupon เป็นยอดหัก wallet.</li>
+          <li>ถ้า balance ไม่พอ ให้ disable confirm และเสนอปุ่มเติมเงิน.</li>
+          <li>หลัง booking สำเร็จต้อง refresh balance และ transaction history.</li>
+        </ul>
+      </div>
+      <div class="phase">
+        <h3>Task 6: Admin Web audit</h3>
+        <ul>
+          <li>เพิ่ม filter role/customer ใน topup requests panel.</li>
+          <li>แสดง wallet transaction related booking และ customer name.</li>
+          <li>เพิ่ม admin adjustment reason required สำหรับ customer wallet.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="testing">
+      <h2>8. Verification Plan</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Area</th>
+            <th>Command / วิธีตรวจ</th>
+            <th>Expected</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>SQL/RPC</td>
+            <td>Supabase local SQL smoke หรือ migration dry-run</td>
+            <td>payment success, insufficient balance fail, duplicate pay no double debit, refund idempotent</td>
+          </tr>
+          <tr>
+            <td>Flutter unit</td>
+            <td><code>flutter test</code> scoped wallet/payment tests</td>
+            <td>final total calculation, insufficient balance state, RPC error mapping ผ่าน</td>
+          </tr>
+          <tr>
+            <td>Flutter analyze</td>
+            <td><code>dart analyze</code> หรือ scoped analyzer ตามสภาพเครื่อง</td>
+            <td>ไม่มี error ใหม่ใน wallet/customer checkout files</td>
+          </tr>
+          <tr>
+            <td>Admin Web</td>
+            <td><code>node --check admin-web/app.legacy.js</code> + existing JS tests ถ้ามี</td>
+            <td>ไม่มี syntax error, topup action payload ถูกต้อง</td>
+          </tr>
+          <tr>
+            <td>Manual QA</td>
+            <td>เติมเงิน pending → approve → จ่าย food → cancel/refund</td>
+            <td>balance และ ledger ตรงทุก step</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="risks">
+      <h2>9. Risks / Guardrails</h2>
+      <div class="grid-2">
+        <div class="box risk">
+          <h3>ยอดเงิน drift จาก coupon</h3>
+          <p>ต้องใช้ยอด final total เดียวกับ checkout และบันทึก <code>coupon_usages.discount_amount</code> หลัง booking ตาม decision เดิม. ถ้า coupon usage fail ต้อง refund wallet.</p>
+        </div>
+        <div class="box risk">
+          <h3>Race condition / double tap</h3>
+          <p>ห้ามหักเงินใน client. RPC ต้อง lock wallet row และกัน duplicate ด้วย <code>booking_id</code> หรือ <code>wallet_transaction_id</code>.</p>
+        </div>
+        <div class="box risk">
+          <h3>Top-up proof/payment gateway</h3>
+          <p>PromptPay/manual approval เป็น Phase 1. ถ้าจะต่อ Omise/Stripe/QR auto verify ต้องทำแผน payment gateway แยก และห้ามเดา credential.</p>
+        </div>
+        <div class="box risk">
+          <h3>Existing driver wallet wording</h3>
+          <p><code>WalletService</code> ปัจจุบันมี driver-specific behavior. ต้องแยก generic customer path โดยไม่ทำให้ driver wallet/commission regression.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="rollout">
+      <h2>10. Rollout Plan</h2>
+      <ol>
+        <li><strong>Phase 0:</strong> Review plan กับผู้ใช้และยืนยัน policy: min/max top-up, refund rules, service types ที่เปิดใช้.</li>
+        <li><strong>Phase 1:</strong> Database/RPC + customer wallet screen + manual top-up approval.</li>
+        <li><strong>Phase 2:</strong> เปิด wallet payment เฉพาะ food checkout พร้อม test ครบ.</li>
+        <li><strong>Phase 3:</strong> ขยาย ride/parcel/laundry หลังยอด food flow stable.</li>
+        <li><strong>Phase 4:</strong> เพิ่ม payment gateway auto verification ถ้ามี credential/provider พร้อม.</li>
+      </ol>
+      <div class="box">
+        <h3>Stop Conditions</h3>
+        <ul>
+          <li>ถ้าไม่พบ schema จริงของ <code>wallets</code> หรือ RPC ปัจจุบันไม่ตรง migration history ต้องหยุดเพื่อ audit database ก่อน.</li>
+          <li>ถ้า Supabase credential/local DB ไม่พร้อม ให้ทำได้แค่ static plan/code และรายงาน blocker.</li>
+          <li>ก่อน build หรือ commit ต้อง bump version ตาม AGENTS.md.</li>
+          <li>หลัง code/config change ต้องเรียก <code>code_reviewer</code> ก่อนสรุปว่าเสร็จสมบูรณ์.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

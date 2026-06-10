@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>รายงานการตรวจสอบข้อบกพร่องและประเด็นปัญหาใน Codebase (v1) - Jedechai Delivery</title>
+  <style>
+    :root {
+      --primary-blue: #0f172a; /* Deep Slate Blue */
+      --brand-blue: #1e40af; /* Royal Blue */
+      --brand-red: #dc2626; /* Crimson Red */
+      --brand-red-hover: #b91c1c;
+      --brand-blue-hover: #1d4ed8;
+      --bg-dark: #090d16;
+      --bg-slate: #0f172a;
+      --card-bg: rgba(15, 23, 42, 0.6);
+      --card-bg-hover: rgba(30, 41, 59, 0.8);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-success: #10b981;
+      --text-warning: #f59e0b;
+      --text-danger: #ef4444;
+      --accent-gradient: linear-gradient(135deg, #1e40af 0%, #dc2626 100%);
+      --blue-glow: rgba(30, 64, 175, 0.2);
+      --red-glow: rgba(220, 38, 38, 0.2);
+      --shadow-premium: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
+      --border-glow: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      scrollbar-width: thin;
+      scrollbar-color: var(--brand-blue) var(--bg-dark);
+    }
+
+    body {
+      font-family: 'Inter', 'Sarabun', sans-serif;
+      background-color: var(--bg-dark);
+      background-image:
+        radial-gradient(at 0% 0%, var(--blue-glow) 0, transparent 40%),
+        radial-gradient(at 100% 100%, var(--red-glow) 0, transparent 40%);
+      color: var(--text-main);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 2rem 1.5rem;
+    }
+
+    header {
+      max-width: 1200px;
+      margin: 0 auto 2.5rem auto;
+      text-align: center;
+      position: relative;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.35rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+      background: var(--accent-gradient);
+      box-shadow: 0 0 15px rgba(30, 64, 175, 0.3);
+    }
+
+    h1 {
+      font-size: 2.3rem;
+      font-weight: 700;
+      background: linear-gradient(to right, #93c5fd, #fca5a5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 2rem;
+    }
+
+    /* Sidebar Navigation */
+    .sidebar {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: var(--border-glow);
+      border-radius: 16px;
+      padding: 1.5rem;
+      height: fit-content;
+      position: sticky;
+      top: 2rem;
+      box-shadow: var(--shadow-premium);
+    }
+
+    .sidebar-title {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .nav-btn {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+    }
+
+    .nav-btn.active {
+      background: var(--accent-gradient);
+      color: white;
+      box-shadow: 0 4px 12px rgba(30, 64, 175, 0.25);
+    }
+
+    /* Content Area */
+    main {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.4s ease-in-out forwards;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: var(--border-glow);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-premium);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      background-color: var(--card-bg-hover);
+      box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.8), 0 0 20px rgba(30, 64, 175, 0.05);
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      margin-bottom: 1.25rem;
+      color: white;
+      border-left: 4px solid var(--brand-blue);
+      padding-left: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    h2.red-border {
+      border-left-color: var(--brand-red);
+    }
+
+    h3 {
+      font-size: 1.2rem;
+      margin: 1.5rem 0 0.75rem 0;
+      color: #93c5fd;
+    }
+
+    p {
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+
+    strong {
+      color: white;
+    }
+
+    /* Metrics Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .metric-card {
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--brand-blue);
+    }
+
+    .metric-card.red::before {
+      background: var(--brand-red);
+    }
+
+    .metric-card.success::before {
+      background: var(--text-success);
+    }
+
+    .metric-card.warning::before {
+      background: var(--text-warning);
+    }
+
+    .metric-value {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: white;
+      margin: 0.5rem 0;
+    }
+
+    .metric-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Compliance Table */
+    .comp-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.95rem;
+    }
+
+    .comp-table th, .comp-table td {
+      padding: 0.85rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .comp-table th {
+      background: rgba(30, 41, 59, 0.3);
+      color: white;
+      font-weight: 600;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .status-badge.critical {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+
+    .status-badge.high {
+      background: rgba(249, 115, 22, 0.2);
+      color: #fb923c;
+      border: 1px solid rgba(249, 115, 22, 0.4);
+    }
+
+    .status-badge.medium {
+      background: rgba(234, 179, 8, 0.2);
+      color: #fde047;
+      border: 1px solid rgba(234, 179, 8, 0.4);
+    }
+
+    .status-badge.low {
+      background: rgba(59, 130, 246, 0.2);
+      color: #93c5fd;
+      border: 1px solid rgba(59, 130, 246, 0.4);
+    }
+
+    /* Lists */
+    ul, ol {
+      padding-left: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    li {
+      margin-bottom: 0.5rem;
+      color: var(--text-muted);
+    }
+
+    li strong {
+      color: #e2e8f0;
+    }
+
+    /* Code Block styling */
+    pre {
+      background: rgba(0, 0, 0, 0.4);
+      padding: 1.25rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      overflow-x: auto;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 0.9rem;
+      color: #93c5fd;
+      margin: 0.75rem 0 1.25rem 0;
+    }
+
+    code {
+      font-family: 'Consolas', 'Courier New', monospace;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      color: #fca5a5;
+    }
+
+    /* Alert Boxes */
+    .alert {
+      padding: 1.5rem;
+      border-radius: 12px;
+      border-left: 4px solid transparent;
+      margin-bottom: 1.5rem;
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid var(--border-color);
+    }
+
+    .alert-critical {
+      border-left-color: var(--brand-red);
+      border-left-width: 4px;
+      background: rgba(220, 38, 38, 0.05);
+    }
+
+    .alert-high {
+      border-left-color: #f97316;
+      border-left-width: 4px;
+      background: rgba(249, 115, 22, 0.05);
+    }
+
+    .alert-medium {
+      border-left-color: var(--text-warning);
+      border-left-width: 4px;
+      background: rgba(245, 158, 11, 0.05);
+    }
+
+    .alert-low {
+      border-left-color: var(--brand-blue);
+      border-left-width: 4px;
+      background: rgba(30, 64, 175, 0.05);
+    }
+
+    .alert-title {
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 0.75rem;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .alert-meta {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 968px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        position: static;
+        width: 100%;
+      }
+    }
+  </style>
+  <script>
+    function switchTab(tabId) {
+      const contents = document.querySelectorAll('.tab-content');
+      contents.forEach(el => el.classList.remove('active'));
+
+      const buttons = document.querySelectorAll('.nav-btn');
+      buttons.forEach(el => el.classList.remove('active'));
+
+      document.getElementById(tabId).classList.add('active');
+      event.currentTarget.classList.add('active');
+    }
+  </script>
+</head>
+<body>
+
+  <header>
+    <div class="badge">Codebase Issue Audit</div>
+    <h1>รายงานการรีวิวข้อบกพร่องและประเด็นปัญหาในระบบ</h1>
+    <p>วิเคราะห์โครงสร้างโค้ด สถาปัตยกรรม และช่องโหว่ความปลอดภัยของระบบ Jedechai Delivery</p>
+  </header>
+
+  <div class="container">
+
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+      <div class="sidebar-title">เมนูนำทาง</div>
+      <div class="nav-list">
+        <button class="nav-btn active" onclick="switchTab('overview')">📊 1. ภาพรวมปัญหา</button>
+        <button class="nav-btn" onclick="switchTab('critical-issues')">🚨 2. ปัญหาวิกฤต (Critical)</button>
+        <button class="nav-btn" onclick="switchTab('high-issues')">⚠️ 3. ปัญหารุนแรงสูง (High)</button>
+        <button class="nav-btn" onclick="switchTab('medium-issues')">🟡 4. ปัญหาปานกลาง (Medium)</button>
+        <button class="nav-btn" onclick="switchTab('low-issues')">🔵 5. ปัญหาทั่วไป (Low)</button>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+
+      <!-- TAB 1: OVERVIEW -->
+      <section id="overview" class="tab-content active">
+        <div class="card">
+          <h2>1. สรุปผลการตรวจสอบ (Audit Executive Summary)</h2>
+          <p>จากการรีวิวและสแกน Source Code ของระบบ <strong>Jedechai Delivery</strong> (Flutter App, Admin Web, และ Supabase Edge Functions/Database) เพื่อตรวจสอบข้อบกพร่อง ทางทีมพัฒนาได้ระบุประเด็นปัญหาหลักที่ต้องดำเนินการแก้ไขจำนวนทั้งสิ้น <strong>11 ประเด็น</strong> โดยมีรายละเอียดภาพรวมดังนี้:</p>
+
+          <div class="metrics-grid">
+            <div class="metric-card red">
+              <div class="metric-label">Critical Issues</div>
+              <div class="metric-value">3 จุด</div>
+              <div class="metric-label">ความเสี่ยงระดับวิกฤต (ต้องแก้ทันที)</div>
+            </div>
+            <div class="metric-card warning">
+              <div class="metric-label">High Issues</div>
+              <div class="metric-value">2 จุด</div>
+              <div class="metric-label">ส่งผลต่อฟังก์ชันหลักและข้อมูล</div>
+            </div>
+            <div class="metric-card" style="position:relative;">
+              <div class="metric-label" style="color:var(--text-warning)">Medium Issues</div>
+              <div class="metric-value">4 จุด</div>
+              <div class="metric-label">ข้อบกพร่องการแสดงผล / UX</div>
+            </div>
+            <div class="metric-card success">
+              <div class="metric-label">Low Issues</div>
+              <div class="metric-value">2 จุด</div>
+              <div class="metric-label">โค้ดที่ไม่ได้ใช้ / คลีนนิ่งโค้ด</div>
+            </div>
+          </div>
+
+          <h3>สรุปสถาปัตยกรรมปัญหาแยกตามโมดูล:</h3>
+          <ul>
+            <li><strong>ฟีเจอร์การส่งพัสดุ (Parcel Delivery):</strong> พบปัญหามากที่สุด เนื่องจากกระบวนการตั้งแต่การจองฝั่งลูกค้า (Customer UI), การคำนวณราคา, ระบบติดตาม (Tracking UI) ไปจนถึงการรับงานของคนขับ (Driver Navigation) ขาดความต่อเนื่องของสถานะและมี Dead Code ที่สำคัญ</li>
+            <li><strong>แผงควบคุมแอดมิน (Admin Web):</strong> มีช่องโหว่การข้ามขั้นตอนการอนุมัติ (Optimistic Lock bypass) เนื่องจากความแตกต่างของวิธีการสโคปตัวแปรของ JavaScript แบบ Classic Script บนเว็บเบราว์เซอร์</li>
+            <li><strong>การแจ้งเตือนและการจัดการทรัพยากร:</strong> มีการเรียกใช้งานฟังก์ชันส่งอีเมลโดยไม่มีระบบควบคุมปริมาณ (Rate Limiting) และขาดการกำจัดทรัพยากรขยะใน Storage</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- TAB 2: CRITICAL ISSUES -->
+      <section id="critical-issues" class="tab-content">
+        <div class="card">
+          <h2>2. ประเด็นปัญหาระดับวิกฤต (Critical Issues)</h2>
+          <p>ประเด็นปัญหาที่ส่งผลให้ระบบงานหลักไม่ทำงานตามข้อกำหนด หรือมีช่องโหว่ความปลอดภัยระดับร้ายแรง:</p>
+
+          <!-- ISSUE 1 -->
+          <div class="alert alert-critical">
+            <div class="alert-title">
+              <span>ISSUE-1: โค้ดยืนยันการส่งพัสดุไม่ทำงาน (Driver Confirmation Dead Code)</span>
+              <span class="status-badge critical">Critical</span>
+            </div>
+            <div class="alert-meta">
+              <strong>ไฟล์ที่เกี่ยวข้อง:</strong>
+              <a href="file:///C:/Users/burin/jedechai_delivery_new/jedechai_delivery_new/lib/apps/driver/screens/driver_parcel_confirmation_screen.dart" style="color:#93c5fd;">driver_parcel_confirmation_screen.dart</a> |
+              <a href="file:///C:/Users/burin/jedechai_delivery_new/jedechai_delivery_new/lib/apps/driver/screens/driver_navigation_screen.dart" style="color:#93c5fd;">driver_navigation_screen.dart</a>
+            </div>
+            <p><strong>อาการ:</strong> ลูกค้าจะไม่สามารถรับความคืบหน้าของพัสดุได้จริง เนื่องจากหน้าจอยืนยัน <code>DriverParcelConfirmationScreen</code> ถูกเขียนไว้แต่ไม่มีการนำทาง (Navigate) จากหน้าจอนำทางของคนขับเลย และฟังก์ชันอัปเดตสถานะขนส่ง <code>updateInTransit()</code> ก็ไม่ถูกเรียกจากจุดใดในระบบ ส่งผลให้สถานะพัสดุค้างอยู่ที่ <code>created</code> เสมอ ไม่มีการบันทึกภาพถ่ายการรับของ ส่งของ หรือลายเซ็นผู้รับ</p>
+            <p><strong>สาเหตุ:</strong> ในหน้าจอ <code>driver_navigation_screen.dart</code> มีการข้ามขั้นตอนและใช้ <code>BookingStatusPolicy.driverNextStatus()</code> อัปเดตสถานะตรงๆ โดยไม่มีการดักกรอง (Intercept) เพื่อเปิดหน้าจอยืนยันพัสดุเสียก่อน</p>
+            <p><strong>แนวทางแก้ไข:</strong> เพิ่มเงื่อนไข Interceptor ใน <code>_handleActionPress()</code> สำหรับออเดอร์ประเภทพัสดุ เมื่อสถานะเป็น <code>arrived</code> หรือ <code>in_transit</code> ให้บังคับเปิดหน้าจอยืนยันและอัปโหลดรูปภาพก่อนอัปเดตสถานะ</p>
+          </div>
+
+          <!-- ISSUE 2 -->
+          <div class="alert alert-critical">
+            <div class="alert-title">
+              <span>ISSUE-2: ระบบล็อคการรับออเดอร์แทนร้านค้าถูกข้าม (Optimistic Lock Bypass in Admin Web)</span>
+              <span class="status-badge critical">Critical</span>
+            </div>
+            <div class="alert-meta">
+              <strong>ไฟล์ที่เกี่ยวข้อง:</strong>
+              <a href="file:///C:/Users/burin/jedechai_delivery_new/admin-web/src/pages/ordersActions.js" style="color:#93c5fd;">ordersActions.js</a> |
+              <a href="file:///C:/Users/burin/jedechai_delivery_new/admin-web/app.legacy.js" style="color:#93c5fd;">app.legacy.js</a>
+            </div>
+            <p><strong>อาการ:</strong> แอดมินสามารถกดยืนยันหรือแทรกแซงออเดอร์ของร้านค้าที่สถานะใดก็ได้โดยไม่มีการป้องกันการกดซ้ำซ้อน ส่งผลให้เกิดปัญหาข้อมูลชนกัน (Race Condition)</p>
+            <p><strong>สาเหตุ:</strong> โค้ดใน <code>ordersActions.js</code> ดึงค่า <code>globalThis.ADMIN_MERCHANT_ACCEPT_STATUSES</code> ไปใช้งาน แต่เนื่องจากตัวแปรนี้ถูกกำหนดด้วยคำสั่ง <code>const</code> ในสคริปต์แบบ Classic (Non-module) ในไฟล์ <code>app.legacy.js</code> ทำให้มันมีขอบเขตภายใน (Lexical Scope) และไม่ได้ถูก Expose ไปยัง <code>globalThis/window</code> ผลลัพธ์คือตัวแปรมีค่าเป็น <code>undefined</code> และระบบยกเลิกการใช้ฟิลเตอร์ป้องกันการอัปเดตทับซ้อนไปโดยปริยาย</p>
+            <p><strong>แนวทางแก้ไข:</strong> ประกาศผูกตัวแปรเข้ากับ <code>globalThis</code> หรือ <code>window</code> ตรงๆ ในจุดเริ่มต้นของระบบ เช่น <code>globalThis.ADMIN_MERCHANT_ACCEPT_STATUSES = [...]</code></p>
+          </div>
+
+          <!-- ISSUE 3 -->
+          <div class="alert alert-critical">
+            <div class="alert-title">
+              <span>ISSUE-3: ความเสี่ยงการถูกยิงระเบิดอีเมล (Send Email Notification Rate-Limit Missing)</span>
+              <span class="status-badge critical">Critical</span>
+            </div>
+            <div class="alert-meta">
+              <strong>ไฟล์ที่เกี่ยวข้อง:</strong>
+              <a href="file:///C:/Users/burin/jedechai_delivery_new/supabase/functions/send-admin-email/index.ts" style="color:#93c5fd;">send-admin-email/index.ts</a>
+            </div>
+            <p><strong>อาการ:</strong> หากมีผู้ใช้งานประสงค์ร้ายหรือเขียนสคริปต์สแปมยิง API การเติมเงิน ตัวระบบ Supabase Edge Function <code>send-admin-email</code> จะทำงานส่งอีเมลออกไปหาแอดมินทันทีไม่จำกัดจำนวนครั้ง ส่งผลให้อาจโดนระงับบัญชีอีเมล (เช่น Resend/Sendgrid) หรือมีค่าบริการส่วนเกินที่สูงมาก</p>
+            <p><strong>สาเหตุ:</strong> ในระบบ Edge Function ไม่มีการควบคุมความถี่ในการเรียกใช้งาน (Rate Limiting) และไม่มีการตรวจสอบสิทธิ์ความปลอดภัยในระดับผู้ส่งที่รัดกุมพอ</p>
+            <p><strong>แนวทางแก้ไข:</strong> เพิ่มระบบจำกัดความถี่ในการเรียกส่งข้อความด้วย Redis/Supabase Custom Cache หรือใช้การตรวจสอบ token ฝั่ง Client ร่วมกับสิทธิ์การส่ง</p>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- TAB 3: HIGH ISSUES -->
+      <section id="high-issues" class="tab-content">
+        <div class="card">
+          <h2>3. ประเด็นปัญหาระดับรุนแรงสูง (High Issues)</h2>
+          <p>ประเด็นที่สร้างความสับสนแก่ผู้ใช้ หรือมีโอกาสทำให้ระบบการคิดคำนวณทำงานผิดพลาดได้บ่อยครั้ง:</p>
+
+          <!-- ISSUE 4 -->
+          <div class="alert alert-high">
+            <div class="alert-title">
+              <span>ISSUE-4: การคำนวณจำนวนคนขับในพื้นที่ผิดพลาด (Driver Area Query Misleading)</span>
+              <span class="status-badge high">High</span>
+            </div>
+            <div class="alert-meta">
+              <strong>ไฟล์ที่เกี่ยวข้อง:</strong>
+              <a href="file:///C:/Users/burin/jedechai_delivery_new/jedechai_delivery_new/lib/apps/customer/screens/services/parcel_service_screen.dart" style="color:#93c5fd;">parcel_service_screen.dart</a> (ไลน์ 224-264)
+            </div>
+            <p><strong>อาการ:</strong> หน้าจอการจองรถส่งพัสดุของลูกค้าอาจแสดงจำนวนคนขับว่าง เช่น "พบคนขับว่าง 5 คนในบริเวณใกล้เคียง" แต่เมื่อกดส่งสินค้ากลับไม่มีคนขับคนใดรับงานได้เลย สร้างความสับสนและลดความพึงพอใจของลูกค้า</p>
+            <p><strong>สาเหตุ:</strong> ฟังก์ชัน <code>_checkNearbyOnlineDrivers</code> ดึงรายชื่อคนขับออนไลน์ทุกคนมานับรวมโดยไม่ได้คัดกรองประเภทการให้บริการ (Service Type) ทำให้คนขับที่ให้บริการเฉพาะรับส่งอาหาร (Food) หรือรับส่งคน (Ride) ถูกนำมารวมเป็นคนขับส่งพัสดุด้วย</p>
+            <p><strong>แนวทางแก้ไข:</strong> เพิ่มเงื่อนไขกรองประเภทการให้บริการในการสืบค้น เช่น กรองเฉพาะคนขับที่มีฟิลด์รองรับงานขนส่งพัสดุ <code>service_type = 'parcel'</code> เท่านั้น</p>
+          </div>
+
+          <!-- ISSUE 5 -->
+          <div class="alert alert-high">
+            <div class="alert-title">
+              <span>ISSUE-5: การตั้งค่าล็อกอิน Supabase CLI ใน Sandbox ขัดข้อง (Supabase Deployment Blocked)</span>
+              <span class="status-badge high">High</span>
+            </div>
+            <div class="alert-meta">
+              <strong>ไฟล์ที่เกี่ยวข้อง:</strong>
+              <a href="file:///C:/Users/burin/jedechai_delivery_new/supabase/" style="color:#93c5fd;">supabase/</a>
+            </div>
+            <p><strong>อาการ:</strong> สคริปต์สำหรับการจัดการบัญชีและการกู้คืนระบบ (เช่น RPC migration ตัวล่าสุด) ไม่สามารถอัปโหลดหรือรันในสภาพแวดล้อม Production ได้จริง ทำงานได้เพียงระดับจำลองใน Local เท่านั้น</p>
+            <p><strong>สาเหตุ:</strong> Supabase CLI ใน Sandbox ขาด Access Token หรือข้อมูลประจำตัวสำหรับการยืนยันสิทธิ์กับบริการคลาวด์</p>
+            <p><strong>แนวทางแก้ไข:</strong> จำเป็นต้องรันคำสั่ง <code>supabase login</code> หรือระบุ <code>SUPABASE_ACCESS_TOKEN</code> ใน Environment Variables เพื่อปลดล็อกกระบวนการจัดส่งฐานข้อมูล</p>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- TAB 4: MEDIUM ISSUES -->
+      <section id="medium-issues" class="tab-content">
+        <div class="card">
+          <h2>4. ประเด็นปัญหาปานกลาง (Medium Issues)</h2>
+          <p>ประเด็นที่ส่งผลกระทบต่อความลื่นไหลของการใช้งาน (UX) หรืออาจก่อให้เกิดข้อมูลขยะตกค้างในระบบคลาวด์:</p>
+
+          <!-- ISSUE 6 -->
+          <div class="alert alert-medium">
+            <div class="alert-title">
+              <span>ISSUE-6: บันทึกใบจองพัสดุราคา ฿0 เมื่อการหาระยะทางขัดข้อง (Zero Price Booking Creation)</span>
+              <span class="status-badge medium">Medium</span>
+            </div>
+            <div class="alert-meta">
+              <strong>ไฟล์ที่เกี่ยวข้อง:</strong>
+              <a href="file:///C:/Users/burin/jedechai_delivery_new/jedechai_delivery_new/lib/apps/customer/screens/services/parcel_service_screen.dart" style="color:#93c5fd;">parcel_service_screen.dart</a> (ไลน์ 382-386)
+            </div>
+            <p><strong>อาการ:</strong> มีการสร้างออเดอร์ส่งพัสดุราคา ฿0 บันทึกลงระบบฐานข้อมูล ซึ่งทำให้ระบบและคนขับขาดทุนในการให้บริการ</p>
+            <p><strong>สาเหตุ:</strong> เมื่อเกิดความล้มเหลวในการคำนวณระยะทางจากพิกัด (เช่น พิกัดไม่มีในแผนที่) ระบบตั้งระยะทางทดแทนที่ 5.0 กิโลเมตร แต่กลับลืมเรียกฟังก์ชันคำนวณราคา <code>_calculatePrice()</code> ซ้ำ ส่งผลให้ตัวแปรราคายังเป็น 0.0 และถูกบันทึกเข้าระบบทันที</p>
+            <p><strong>แนวทางแก้ไข:</strong> บังคับเรียกใช้งาน <code>_calculatePrice()</code> หลังการทำระยะทางทดแทน (Fallback) ทุกครั้ง และเพิ่มเงื่อนไขปฏิเสธการจองหากราคาคำนวณได้เป็น 0.0 หรือน้อยกว่า</p>
+          </div>
+
+          <!-- ISSUE 7 -->
+          <div class="alert alert-medium">
+            <div class="alert-title">
+              <span>ISSUE-7: ระบบติดตามสถานะแสดง "Unknown status" (Tracking Step Mismatch)</span>
+              <span class="status-badge medium">Medium</span>
+            </div>
+            <div class="alert-meta">
+              <strong>ไฟล์ที่เกี่ยวข้อง:</strong>
+              <a href="file:///C:/Users/burin/jedechai_delivery_new/jedechai_delivery_new/lib/apps/customer/screens/services/tracking_screen.dart" style="color:#93c5fd;">tracking_screen.dart</a> (ไลน์ 531-574)
+            </div>
+            <p><strong>อาการ:</strong> ลูกค้าจะเห็นหน้าจออัปเดตความคืบหน้าขึ้นสถานะ "Unknown status" เป็นระยะๆ สร้างความกังวลว่าระบบเกิดข้อผิดพลาด</p>
+            <p><strong>สาเหตุ:</strong> เมื่อคนขับเดินทางมาถึงจุดรับพัสดุ สถานะงานจะถูกตั้งเป็น <code>arrived</code> แต่ในหน้าจอติดตามสถานะฝั่งลูกค้าไม่มีการระบุข้อความเพื่อรองรับสถานะนี้ในคำสั่ง switch-case</p>
+            <p><strong>แนวทางแก้ไข:</strong> เพิ่มกรณี <code>case 'arrived':</code> ในฟังก์ชัน <code>_getStatusInfo()</code> และ <code>_getTimelineSteps()</code> เพื่อให้แสดงข้อความที่เหมาะสม เช่น "คนขับรถเดินทางมาถึงจุดรับพัสดุเรียบร้อยแล้ว"</p>
+          </div>
+
+          <!-- ISSUE 8 -->
+          <div class="alert alert-medium">
+            <div class="alert-title">
+              <span>ISSUE-8: ไฟล์ภาพถ่ายพัสดุค้างในระบบจัดเก็บข้อมูล (Orphaned Storage Photos)</span>
+              <span class="status-badge medium">Medium</span>
+            </div>
+            <div class="alert-meta">
+              <strong>ไฟล์ที่เกี่ยวข้อง:</strong>
+              <a href="file:///C:/Users/burin/jedechai_delivery_new/jedechai_delivery_new/lib/apps/customer/screens/services/parcel_service_screen.dart" style="color:#93c5fd;">parcel_service_screen.dart</a> (ไลน์ 373-408)
+            </div>
+            <p><strong>อาการ:</strong> มีไฟล์ภาพอัปโหลดค้างอยู่ใน Supabase Storage เป็นจำนวนมากโดยไม่มีข้อมูลออเดอร์เชื่อมโยง ทำให้สิ้นเปลืองพื้นที่จัดเก็บ</p>
+            <p><strong>สาเหตุ:</strong> ระบบทำการอัปโหลดไฟล์ภาพพัสดุก่อนสร้างคำสั่งซื้อ หากการเชื่อมต่อสร้างคำสั่งซื้อในขั้นตอนต่อมาล้มเหลว ระบบจะข้ามการทำงานไปโดยไม่ได้ลบภาพที่อัปโหลดไปแล้วออก</p>
+            <p><strong>แนวทางแก้ไข:</strong> เพิ่มคำสั่งลบรูปภาพใน Catch Block ของการทำงานส่งข้อมูล เพื่อให้ทำการ Rollback ลบไฟล์ภาพออกจากคลาวด์จัดเก็บทันทีหากการสร้างออเดอร์ล้มเหลว</p>
+          </div>
+
+          <!-- ISSUE 9 -->
+          <div class="alert alert-medium">
+            <div class="alert-title">
+              <span>ISSUE-9: หน้าจอแอดมินแจ้งเตือนซ้ำซ้อน 2 ชั้น (Double Confirmation Dialog in Admin)</span>
+              <span class="status-badge medium">Medium</span>
+            </div>
+            <div class="alert-meta">
+              <strong>ไฟล์ที่เกี่ยวข้อง:</strong>
+              <a href="file:///C:/Users/burin/jedechai_delivery_new/admin-web/src/pages/ordersActions.js" style="color:#93c5fd;">ordersActions.js</a> (ไลน์ 377)
+            </div>
+            <p><strong>อาการ:</strong> แอดมินต้องกดยืนยันการทำงานซ้ำซ้อน 2 ครั้ง และหน้าต่างยืนยันเบราว์เซอร์ (Native Dialog) ส่งผลให้เลย์เอาต์หน้าจอแอดมินค้างหากทำการกดยกเลิก</p>
+            <p><strong>สาเหตุ:</strong> มีการเรียกใช้งานฟังก์ชันยืนยันดั้งเดิม <code>confirm()</code> ซ้ำซ้อนกับกล่องข้อความยืนยันที่เป็น HTML Modal สวยงามที่เพิ่งถูกปรับแต่งใหม่</p>
+            <p><strong>แนวทางแก้ไข:</strong> ลบคำสั่ง <code>confirm(confirmText)</code> ของเบราว์เซอร์ดั้งเดิมออก และพึ่งพาเฉพาะการกดยืนยันผ่านระบบหน้าต่างลอยตัว (HTML Modal) เท่านั้น</p>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- TAB 5: LOW ISSUES -->
+      <section id="low-issues" class="tab-content">
+        <div class="card">
+          <h2>5. ประเด็นปัญหาทั่วไป (Low Issues)</h2>
+          <p>ข้อควรปรับปรุงเพื่อสุขอนามัยที่ดีของโค้ดเบส (Code Hygiene) และความสะดวกสบายในการใช้งาน:</p>
+
+          <!-- ISSUE 10 -->
+          <div class="alert alert-low">
+            <div class="alert-title">
+              <span>ISSUE-10: โค้ดฟังก์ชันการอัปเดตรูปที่ไม่ได้ถูกเรียกใช้งาน (Dead Code in ParcelService)</span>
+              <span class="status-badge low">Low</span>
+            </div>
+            <div class="alert-meta">
+              <strong>ไฟล์ที่เกี่ยวข้อง:</strong>
+              <a href="file:///C:/Users/burin/jedechai_delivery_new/jedechai_delivery_new/lib/common/services/parcel_service.dart" style="color:#93c5fd;">parcel_service.dart</a> (ไลน์ 215)
+            </div>
+            <p><strong>อาการ:</strong> ฟังก์ชัน <code>updateParcelPhoto()</code> ถูกกำหนดไว้ในคลาสบริการแต่ไม่มีส่วนการทำงานใดเรียกใช้ ซึ่งหากมีผู้นำไปใช้ในอนาคต อาจเกิดช่องโหว่ให้สามารถเขียนทับภาพพัสดุหลังจากจัดส่งเสร็จสิ้นแล้วได้ เนื่องจากขาดการจำกัดสิทธิ์ในส่วนสถานะ</p>
+            <p><strong>สาเหตุ:</strong> เขียนฟังก์ชันเตรียมไว้แต่ไม่ได้นำมาประกอบกับฝั่ง Client UI</p>
+            <p><strong>แนวทางแก้ไข:</strong> ลบฟังก์ชันนี้ออกเพื่อความคลีน หรือเพิ่มเงื่อนไขความปลอดภัย <code>parcel_status = 'created'</code> กรองก่อนอัปเดต</p>
+          </div>
+
+          <!-- ISSUE 11 -->
+          <div class="alert alert-low">
+            <div class="alert-title">
+              <span>ISSUE-11: ขนาดปุ่มกดปฏิกิริยาบนแผงแอดมินเล็กเกินไป (Touch Target Too Small)</span>
+              <span class="status-badge low">Low</span>
+            </div>
+            <div class="alert-meta">
+              <strong>ไฟล์ที่เกี่ยวข้อง:</strong>
+              <a href="file:///C:/Users/burin/jedechai_delivery_new/admin-web/src/pages/ordersActions.js" style="color:#93c5fd;">ordersActions.js</a>
+            </div>
+            <p><strong>อาการ:</strong> แอดมินที่กดผ่านสมาร์ทโฟนหรือแท็บเล็ตมักจะกดยากหรือกดผิดไปโดนปุ่มข้างเคียง เนื่องจากพื้นที่ของปุ่มมีขนาดไม่ถึงเกณฑ์ขั้นต่ำ 44px (ตามหลักสากล UX/UI)</p>
+            <p><strong>สาเหตุ:</strong> ขาดการกำหนดค่า CSS Padding และความสูงขั้นต่ำสำหรับหน้าจอมือถือโดยเฉพาะ</p>
+            <p><strong>แนวทางแก้ไข:</strong> เพิ่มคลาส CSS ปรับความสูงขั้นต่ำและระยะขอบของปุ่มสำหรับ breakpoint ขนาดหน้าจอขนาดเล็ก</p>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+</body>
+</html>

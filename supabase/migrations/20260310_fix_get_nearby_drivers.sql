@@ -47,5 +47,4 @@ AS $$
   ORDER BY distance_km ASC
   LIMIT p_limit;
 $$;
-
 GRANT EXECUTE ON FUNCTION public.get_nearby_drivers(double precision, double precision, double precision, integer) TO authenticated, service_role;

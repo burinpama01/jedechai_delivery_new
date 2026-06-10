@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Update Notification Plan v2 - JDC</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #667085;
+      --line: #d9e2ef;
+      --paper: #f6f8fb;
+      --panel: #ffffff;
+      --primary: #1565c0;
+      --primary-soft: #e8f1fb;
+      --warn: #b54708;
+      --warn-soft: #fff4e5;
+      --danger: #b42318;
+      --danger-soft: #fee4e2;
+      --ok: #027a48;
+      --ok-soft: #dcfae6;
+      --violet: #6941c6;
+      --violet-soft: #f4ebff;
+      --shadow: 0 18px 45px rgba(23, 32, 51, 0.09);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Segoe UI", "Noto Sans Thai", Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 32px 20px 56px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.6fr);
+      gap: 24px;
+      align-items: stretch;
+      margin-bottom: 24px;
+    }
+
+    .hero,
+    .panel,
+    .mock-phone,
+    .task-board {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero { padding: 28px; }
+
+    .eyebrow {
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    h1, h2, h3 {
+      line-height: 1.25;
+      margin: 0;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: clamp(30px, 5vw, 52px);
+      max-width: 820px;
+    }
+
+    h2 {
+      font-size: 24px;
+      margin-bottom: 14px;
+    }
+
+    h3 {
+      font-size: 17px;
+      margin-bottom: 8px;
+    }
+
+    p { margin: 8px 0 0; }
+
+    .subhead {
+      color: var(--muted);
+      font-size: 16px;
+      margin-top: 14px;
+      max-width: 860px;
+    }
+
+    .meta-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: #f8fafc;
+      border: 1px solid #e4e7ec;
+      font-size: 14px;
+    }
+
+    .meta strong { color: #344054; }
+
+    .status-card {
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .badge {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .badge.plan { background: var(--primary-soft); color: var(--primary); }
+    .badge.warn { background: var(--warn-soft); color: var(--warn); }
+    .badge.danger { background: var(--danger-soft); color: var(--danger); }
+    .badge.ok { background: var(--ok-soft); color: var(--ok); }
+    .badge.violet { background: var(--violet-soft); color: var(--violet); }
+
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .stat {
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #e4e7ec;
+      background: #fbfcfe;
+    }
+
+    .stat b {
+      display: block;
+      font-size: 22px;
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .section {
+      margin-top: 22px;
+    }
+
+    .panel {
+      padding: 22px;
+      margin-top: 14px;
+    }
+
+    .grid-2,
+    .grid-3 {
+      display: grid;
+      gap: 14px;
+    }
+
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+    .mini-card {
+      border: 1px solid #e4e7ec;
+      background: #fbfcfe;
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .mini-card p,
+    li {
+      color: #46546a;
+      font-size: 14px;
+    }
+
+    ul {
+      padding-left: 20px;
+      margin: 8px 0 0;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .flow-step {
+      min-height: 116px;
+      border-radius: 8px;
+      border: 1px solid #d0d5dd;
+      background: linear-gradient(180deg, #ffffff, #f8fafc);
+      padding: 14px;
+      position: relative;
+    }
+
+    .flow-step::after {
+      content: ">";
+      position: absolute;
+      right: -9px;
+      top: 42%;
+      color: #98a2b3;
+      font-weight: 700;
+    }
+
+    .flow-step:last-child::after { content: ""; }
+
+    .flow-step b {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    .flow-step span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .mockups {
+      display: grid;
+      grid-template-columns: minmax(260px, 0.78fr) minmax(0, 1.22fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .mock-phone {
+      padding: 14px;
+      max-width: 360px;
+      margin: 0 auto;
+      background: #101828;
+    }
+
+    .phone-screen {
+      min-height: 600px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f3f6fa;
+      border: 1px solid #344054;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .phone-top {
+      background: #1565c0;
+      color: white;
+      padding: 18px 16px;
+      font-weight: 700;
+    }
+
+    .phone-content {
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .app-card {
+      border-radius: 8px;
+      background: white;
+      border: 1px solid #d0d5dd;
+      padding: 16px;
+    }
+
+    .modal {
+      margin-top: 26px;
+      border-radius: 8px;
+      border: 1px solid #fecdca;
+      background: #fffafa;
+      padding: 18px;
+      box-shadow: 0 16px 35px rgba(180, 35, 24, 0.12);
+    }
+
+    .modal.optional {
+      border-color: #b9d6f4;
+      background: #f8fbff;
+      box-shadow: 0 16px 35px rgba(21, 101, 192, 0.12);
+    }
+
+    .button-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-weight: 700;
+      font-size: 13px;
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn.secondary {
+      background: #edf2f7;
+      color: #344054;
+    }
+
+    .schema {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 13px;
+    }
+
+    .schema div {
+      padding: 9px 10px;
+      border-radius: 8px;
+      background: #101828;
+      color: #e4e7ec;
+      overflow-wrap: anywhere;
+    }
+
+    .task-board {
+      padding: 18px;
+      margin-top: 14px;
+    }
+
+    .task {
+      display: grid;
+      grid-template-columns: 30px 1fr auto;
+      gap: 10px;
+      align-items: start;
+      padding: 12px 0;
+      border-bottom: 1px solid #e4e7ec;
+    }
+
+    .task:last-child { border-bottom: 0; }
+
+    .task input {
+      width: 18px;
+      height: 18px;
+      margin-top: 3px;
+    }
+
+    .task small {
+      color: var(--muted);
+      display: block;
+      margin-top: 3px;
+    }
+
+    .tag {
+      white-space: nowrap;
+      font-size: 12px;
+      color: #344054;
+      background: #f2f4f7;
+      border: 1px solid #e4e7ec;
+      padding: 4px 8px;
+      border-radius: 999px;
+    }
+
+    .risk-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      overflow: hidden;
+      border-radius: 8px;
+      border: 1px solid #e4e7ec;
+    }
+
+    .risk-table th,
+    .risk-table td {
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid #e4e7ec;
+      padding: 12px;
+      font-size: 14px;
+    }
+
+    .risk-table th {
+      background: #f8fafc;
+      color: #344054;
+    }
+
+    .risk-table tr:last-child td { border-bottom: 0; }
+
+    .note {
+      border-left: 4px solid var(--primary);
+      background: #f8fbff;
+      padding: 12px 14px;
+      border-radius: 8px;
+      color: #344054;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 900px) {
+      header,
+      .grid-2,
+      .grid-3,
+      .mockups,
+      .flow {
+        grid-template-columns: 1fr;
+      }
+
+      .flow-step::after { content: ""; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <section class="hero">
+        <div class="eyebrow">Jedechai Delivery New / Release Communication</div>
+        <h1>Update Notification Implementation Plan</h1>
+        <p class="subhead">แผนสร้างระบบแจ้งผู้ใช้งานให้อัปเดตแอปเมื่อมีเวอร์ชันใหม่ พร้อมโหมดแจ้งเตือนแบบ optional และบังคับอัปเดตเมื่อเวอร์ชันต่ำกว่า minimum supported version</p>
+        <div class="meta-grid">
+          <div class="meta"><strong>ไฟล์</strong><span>Plan/Update_Notification_Plan_v2.html</span></div>
+          <div class="meta"><strong>สถานะ</strong><span>Draft plan / ยังไม่ implement runtime</span></div>
+          <div class="meta"><strong>วันที่</strong><span>2026-06-10</span></div>
+          <div class="meta"><strong>Owner</strong><span>Mobile + Admin Web + Supabase</span></div>
+        </div>
+      </section>
+
+      <aside class="status-card">
+        <span class="badge plan">PLAN v2</span>
+        <h2>Agent Handoff</h2>
+        <p><strong>REQUIRED SUB-SKILL:</strong> ใช้ <code>superpowers:subagent-driven-development</code> หรือ <code>superpowers:executing-plans</code> เมื่อเริ่ม implement task-by-task</p>
+        <div class="quick-stats">
+          <div class="stat"><b>3</b><span>surface ที่ต้องแก้</span></div>
+          <div class="stat"><b>2</b><span>update modes</span></div>
+          <div class="stat"><b>0</b><span>runtime change ตอนนี้</span></div>
+          <div class="stat"><b>1</b><span>release policy source</span></div>
+        </div>
+      </aside>
+    </header>
+
+    <section class="section">
+      <div class="panel">
+        <h2>Goal / Architecture / Tech Stack</h2>
+        <div class="grid-3">
+          <article class="mini-card">
+            <span class="badge ok">Goal</span>
+            <p>ให้แอปตรวจเวอร์ชันปัจจุบันกับ policy จาก Supabase แล้วแสดง alert เมื่อมีเวอร์ชันใหม่ โดย admin สามารถปรับข้อความและระดับการบังคับอัปเดตได้จาก admin-web</p>
+          </article>
+          <article class="mini-card">
+            <span class="badge violet">Architecture</span>
+            <p>ใช้ Supabase `system_config.app_update_policy` เป็นแหล่งกลาง, Flutter อ่าน policy ด้วย service เฉพาะ, และใช้ guard widget ครอบ `AuthGate` เพื่อควบคุม dialog ก่อนเข้าหน้าหลัก</p>
+          </article>
+          <article class="mini-card">
+            <span class="badge plan">Tech Stack</span>
+            <p>Flutter, Supabase, `package_info_plus`, `url_launcher`, `shared_preferences`, admin-web settings bridge, Node smoke tests, Flutter widget/unit tests</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="panel">
+        <h2>Current Evidence</h2>
+        <div class="grid-2">
+          <article class="mini-card">
+            <h3>สิ่งที่มีแล้ว</h3>
+            <ul>
+              <li>Flutter app อยู่ที่ `jedechai_delivery_new/lib/main.dart` และเข้า `AuthGate` จาก `MaterialApp.home`</li>
+              <li>`pubspec.yaml` มี `package_info_plus`, `url_launcher`, `shared_preferences`, `supabase_flutter` แล้ว</li>
+              <li>admin-web มี pattern บันทึกค่า `system_config` ผ่าน settings bridge อยู่แล้ว</li>
+              <li>มีระบบ `notifications` และ FCM สำหรับ release announcement เสริมได้ภายหลัง</li>
+            </ul>
+          </article>
+          <article class="mini-card">
+            <h3>ช่องว่างตอนนี้</h3>
+            <ul>
+              <li>ยังไม่มี `version_check_service.dart` หรือ `app_update_policy_service.dart` ใน main checkout</li>
+              <li>ยังไม่มี field/policy ที่ระบุ `latest_version` และ `min_supported_version`</li>
+              <li>ยังไม่มี UI admin-web สำหรับตั้งค่า update alert</li>
+              <li>ยังไม่มี test สำหรับ version compare และ force update behavior</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="panel">
+        <h2>Release Policy Flow</h2>
+        <div class="flow">
+          <div class="flow-step"><b>1. Admin ตั้งค่า</b><span>กำหนด latest/min version, mode, message, store URL ใน admin-web</span></div>
+          <div class="flow-step"><b>2. Save policy</b><span>บันทึกลง `system_config.app_update_policy` ผ่าน Supabase</span></div>
+          <div class="flow-step"><b>3. App startup</b><span>Flutter อ่าน policy หลัง Supabase init และก่อนเข้า `AuthGate`</span></div>
+          <div class="flow-step"><b>4. Compare</b><span>เทียบ build number ก่อน แล้ว fallback semver ถ้าจำเป็น</span></div>
+          <div class="flow-step"><b>5. Alert</b><span>แสดง optional dialog หรือ force update blocker ตาม policy</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="panel">
+        <h2>Policy Schema</h2>
+        <p>ใช้ JSONB field เดียวเพื่อลด migration surface และให้ admin-web ปรับข้อความได้โดยไม่ต้อง release แอปใหม่</p>
+        <div class="schema">
+          <div>"enabled": true</div>
+          <div>"latest_version": "1.5.2", "latest_build": 92</div>
+          <div>"min_supported_version": "1.5.0", "min_supported_build": 90</div>
+          <div>"mode": "optional" | "force"</div>
+          <div>"title_th": "มีเวอร์ชันใหม่", "message_th": "กรุณาอัปเดตเพื่อใช้งานฟีเจอร์ล่าสุด"</div>
+          <div>"android_url": "https://play.google.com/store/apps/details?id=...", "ios_url": "https://apps.apple.com/app/..."</div>
+          <div>"target_roles": ["customer", "driver", "merchant", "admin"], "starts_at": null, "ends_at": null</div>
+        </div>
+        <div class="note">Decision: ใช้ build number เป็นตัวตัดสินหลัก เพราะลดปัญหา semver suffix และสอดคล้องกับ version bump rule ของ Flutter (`x.y.z+build`).</div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="panel">
+        <h2>UX Mockup</h2>
+        <div class="mockups">
+          <div class="mock-phone">
+            <div class="phone-screen">
+              <div class="phone-top">JDC Delivery</div>
+              <div class="phone-content">
+                <div class="app-card">
+                  <strong>กำลังตรวจสอบเวอร์ชัน</strong>
+                  <p>ระบบเช็ก policy จาก Supabase แบบ non-blocking พร้อม timeout</p>
+                </div>
+                <div class="modal optional">
+                  <span class="badge plan">Optional update</span>
+                  <h3>มีเวอร์ชันใหม่</h3>
+                  <p>อัปเดตแอปเพื่อใช้งานฟีเจอร์ล่าสุดและปรับปรุงความเสถียร</p>
+                  <div class="button-row">
+                    <button class="btn">อัปเดตตอนนี้</button>
+                    <button class="btn secondary">ไว้ภายหลัง</button>
+                  </div>
+                </div>
+                <div class="modal">
+                  <span class="badge danger">Force update</span>
+                  <h3>ต้องอัปเดตแอป</h3>
+                  <p>เวอร์ชันนี้ไม่รองรับการใช้งานต่อแล้ว กรุณาอัปเดตก่อนเข้าแอป</p>
+                  <div class="button-row">
+                    <button class="btn">เปิด Store</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="grid-2">
+              <article class="mini-card">
+                <h3>Optional Update</h3>
+                <ul>
+                  <li>แสดงเมื่อ `current_build < latest_build`</li>
+                  <li>ผู้ใช้กด “ไว้ภายหลัง” ได้</li>
+                  <li>จำ dismiss ต่อ target version ด้วย `shared_preferences`</li>
+                  <li>ไม่ block emergency workflow เช่น driver งานค้าง</li>
+                </ul>
+              </article>
+              <article class="mini-card">
+                <h3>Force Update</h3>
+                <ul>
+                  <li>แสดงเมื่อ `current_build < min_supported_build` หรือ `mode=force`</li>
+                  <li>dialog ปิดไม่ได้และ back ไม่ออก</li>
+                  <li>มีปุ่มเปิด Play Store/App Store เท่านั้น</li>
+                  <li>ถ้าเปิด store fail ให้แสดง URL แบบ copy ได้</li>
+                </ul>
+              </article>
+              <article class="mini-card">
+                <h3>Failure Behavior</h3>
+                <ul>
+                  <li>ถ้า network/config fail ให้เข้าแอปได้ตามปกติ</li>
+                  <li>cache policy ล่าสุดไว้ แต่ไม่ใช้ cache เพื่อ force หากหมดอายุ</li>
+                  <li>log debug เฉพาะ non-secret info</li>
+                </ul>
+              </article>
+              <article class="mini-card">
+                <h3>Admin Web</h3>
+                <ul>
+                  <li>เพิ่ม card “App Update Policy” ใน settings</li>
+                  <li>มี preview ข้อความ optional/force</li>
+                  <li>มีปุ่ม save, test parse, และ copy current policy</li>
+                </ul>
+              </article>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="panel">
+        <h2>Implementation Tasks</h2>
+        <div class="task-board">
+          <div class="task">
+            <input type="checkbox">
+            <div><strong>1. Supabase migration</strong><small>เพิ่ม `system_config.app_update_policy jsonb` พร้อม default disabled และ RLS/select compatibility สำหรับ mobile</small></div>
+            <span class="tag">Database</span>
+          </div>
+          <div class="task">
+            <input type="checkbox">
+            <div><strong>2. Flutter model + parser</strong><small>สร้าง `AppUpdatePolicy`, version/build compare, validation, default disabled policy</small></div>
+            <span class="tag">Mobile</span>
+          </div>
+          <div class="task">
+            <input type="checkbox">
+            <div><strong>3. Flutter service</strong><small>สร้าง `app_update_policy_service.dart` อ่าน Supabase `system_config`, timeout สั้น, cache optional dismiss, ไม่ block ถ้า fetch fail</small></div>
+            <span class="tag">Mobile</span>
+          </div>
+          <div class="task">
+            <input type="checkbox">
+            <div><strong>4. App update guard widget</strong><small>ครอบ `AuthGate` ใน `main.dart`, แสดง dialog หลัง first frame, รองรับ lifecycle resume check</small></div>
+            <span class="tag">Mobile UI</span>
+          </div>
+          <div class="task">
+            <input type="checkbox">
+            <div><strong>5. Store launcher</strong><small>เปิด `android_url` หรือ `ios_url` ด้วย `url_launcher`; fallback แสดง URL หาก launch ไม่ได้</small></div>
+            <span class="tag">Mobile UX</span>
+          </div>
+          <div class="task">
+            <input type="checkbox">
+            <div><strong>6. Admin settings UI</strong><small>เพิ่ม form ใน `admin-web` สำหรับ enabled, mode, latest/min version, build, message, store URL และ preview</small></div>
+            <span class="tag">Admin Web</span>
+          </div>
+          <div class="task">
+            <input type="checkbox">
+            <div><strong>7. Optional release announcement</strong><small>เพิ่มปุ่มส่ง announcement ผ่าน notification system เดิม แยกจาก force gate และต้องยืนยันก่อนส่งจริง</small></div>
+            <span class="tag">Notification</span>
+          </div>
+          <div class="task">
+            <input type="checkbox">
+            <div><strong>8. Tests</strong><small>unit test compare/parser, widget test optional/force dialog, admin-web smoke test save policy, migration dry-run</small></div>
+            <span class="tag">QA</span>
+          </div>
+          <div class="task">
+            <input type="checkbox">
+            <div><strong>9. Review + version bump + build</strong><small>หลัง implement ต้อง bump `pubspec.yaml`, run tests/build, แล้วส่ง `code_reviewer` ตาม AGENTS.md</small></div>
+            <span class="tag">Release Gate</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="panel">
+        <h2>Files To Create / Modify</h2>
+        <div class="grid-2">
+          <article class="mini-card">
+            <h3>Mobile</h3>
+            <ul>
+              <li>`jedechai_delivery_new/lib/common/models/app_update_policy.dart`</li>
+              <li>`jedechai_delivery_new/lib/common/services/app_update_policy_service.dart`</li>
+              <li>`jedechai_delivery_new/lib/common/widgets/app_update_guard.dart`</li>
+              <li>`jedechai_delivery_new/lib/main.dart`</li>
+              <li>`jedechai_delivery_new/pubspec.yaml` สำหรับ version bump ตอน build</li>
+            </ul>
+          </article>
+          <article class="mini-card">
+            <h3>Backend / Admin / Tests</h3>
+            <ul>
+              <li>`supabase/migrations/*_add_app_update_policy.sql`</li>
+              <li>`admin-web/src/pages/settingsActionsBridge.js` หรือ module settings ที่ใช้อยู่</li>
+              <li>`admin-web/src/pages/settingsPage.js` หรือ legacy settings renderer</li>
+              <li>`jedechai_delivery_new/test/app_update_policy_test.dart`</li>
+              <li>`admin-web/test` หรือ smoke test pattern เดิมสำหรับ settings bridge</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="panel">
+        <h2>Verification Plan</h2>
+        <div class="grid-3">
+          <article class="mini-card">
+            <h3>Local</h3>
+            <ul>
+              <li>`flutter test test/app_update_policy_test.dart`</li>
+              <li>widget test: optional dialog dismiss ได้</li>
+              <li>widget test: force dialog dismiss ไม่ได้</li>
+            </ul>
+          </article>
+          <article class="mini-card">
+            <h3>Admin Web</h3>
+            <ul>
+              <li>Node smoke test save/load policy</li>
+              <li>ตรวจ HTML ไม่ overflow บน desktop/mobile</li>
+              <li>console ไม่มี error หลังเปิด Settings</li>
+            </ul>
+          </article>
+          <article class="mini-card">
+            <h3>Release</h3>
+            <ul>
+              <li>migration dry-run ก่อน deploy</li>
+              <li>debug APK ติดตั้งบน emulator แล้วเห็น dialog ตาม policy</li>
+              <li>code_reviewer ผ่านก่อนสรุปเสร็จ</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="panel">
+        <h2>Rollout Strategy</h2>
+        <div class="grid-3">
+          <article class="mini-card">
+            <span class="badge ok">Stage 1</span>
+            <h3>Disabled deploy</h3>
+            <p>deploy schema + code โดย `enabled=false` เพื่อยืนยันว่า app เดิมเข้าได้และไม่มี alert แปลก</p>
+          </article>
+          <article class="mini-card">
+            <span class="badge plan">Stage 2</span>
+            <h3>Optional update</h3>
+            <p>เปิด optional alert สำหรับเวอร์ชันใหม่ 24-72 ชั่วโมง ติดตาม feedback และ crash/runtime report</p>
+          </article>
+          <article class="mini-card">
+            <span class="badge danger">Stage 3</span>
+            <h3>Force update</h3>
+            <p>ใช้เฉพาะเมื่อ backend contract เปลี่ยน, security issue, payment/wallet risk, หรือเวอร์ชันเก่าทำข้อมูลเสียหาย</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="panel">
+        <h2>Risks / Guardrails</h2>
+        <table class="risk-table">
+          <thead>
+            <tr>
+              <th>Risk</th>
+              <th>Impact</th>
+              <th>Mitigation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>ตั้ง force update ผิด</td>
+              <td>ผู้ใช้เข้าแอปไม่ได้</td>
+              <td>admin-web ต้องมี preview + confirm, และ policy default เป็น disabled</td>
+            </tr>
+            <tr>
+              <td>network fetch fail ตอนเปิดแอป</td>
+              <td>เกิด false block</td>
+              <td>fetch fail ต้อง fail-open ยกเว้นมี fresh force policy ที่ valid และยังไม่หมดอายุ</td>
+            </tr>
+            <tr>
+              <td>version compare ผิดจาก semver</td>
+              <td>alert ไม่ขึ้นหรือขึ้นผิด</td>
+              <td>ใช้ build number เป็น primary, เพิ่ม unit tests สำหรับ edge cases</td>
+            </tr>
+            <tr>
+              <td>Store URL ไม่ถูก</td>
+              <td>ผู้ใช้อัปเดตไม่ได้</td>
+              <td>validate URL ใน admin-web และ fallback แสดง URL แบบ copy ได้</td>
+            </tr>
+            <tr>
+              <td>บังคับ update ระหว่าง driver มีงานค้าง</td>
+              <td>กระทบ delivery operation</td>
+              <td>ใช้ optional ก่อน, force เฉพาะ critical; พิจารณา grace period ตาม role ใน policy</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="panel">
+        <h2>Definition Of Done</h2>
+        <ul>
+          <li>มี policy field ใน Supabase และ admin-web save/load ได้</li>
+          <li>Flutter แสดง optional alert เมื่อมี `latest_build` สูงกว่า current build</li>
+          <li>Flutter แสดง force alert เมื่อ current build ต่ำกว่า `min_supported_build`</li>
+          <li>optional dismiss ถูกจำต่อ target version และไม่ซ้ำเกินควร</li>
+          <li>force dialog ปิดไม่ได้และเปิด store ได้</li>
+          <li>fetch policy fail แล้ว app ยังเข้าได้</li>
+          <li>unit/widget/admin smoke tests ผ่าน</li>
+          <li>bump version ก่อน build และผ่าน `code_reviewer` ก่อนสรุป complete</li>
+          <li>บันทึก Obsidian log/current/issue ตามผล implementation</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

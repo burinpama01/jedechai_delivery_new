@@ -9,6 +9,7 @@ import '../../../common/services/profile_service.dart';
 import '../../../common/services/notification_service.dart';
 import '../../../common/models/booking.dart';
 import '../../../common/services/supabase_service.dart';
+import '../../../common/services/wallet_service.dart';
 import '../../../common/utils/order_code_formatter.dart';
 import '../../../common/widgets/app_network_image.dart';
 import 'ride/ride_home_screen.dart';
@@ -19,6 +20,7 @@ import 'services/tracking_screen.dart';
 import 'activity_screen.dart';
 import 'services/saved_addresses_screen.dart';
 import 'services/help_screen.dart';
+import 'customer_wallet_screen.dart';
 import '../../../common/screens/notification_center_screen.dart';
 
 /// Customer Home Screen
@@ -34,11 +36,14 @@ class CustomerHomeScreen extends StatefulWidget {
 class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   final currentUser = AuthService.currentUser;
   final ProfileService _profileService = ProfileService();
+  final WalletService _walletService = WalletService();
   Map<String, dynamic>? _userProfile;
   // ignore: unused_field - set during loading but UI checks _userProfile != null instead
   bool _isLoadingProfile = true;
   List<Booking> _activeBookings = [];
   bool _isLoadingBookings = true;
+  bool _isLoadingWallet = true;
+  double _walletBalance = 0;
   Map<String, Map<String, dynamic>> _couponUsageByBookingId = {};
   StreamSubscription? _bookingsStreamSubscription;
   List<Map<String, dynamic>> _banners = [];
@@ -105,6 +110,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   void initState() {
     super.initState();
     _loadUserProfile();
+    _loadWalletSummary();
     _loadActiveBookings();
     _setupBookingsStream();
     _loadBanners();
@@ -197,6 +203,30 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         setState(() {
           _isLoadingProfile = false;
         });
+      }
+    }
+  }
+
+  Future<void> _loadWalletSummary() async {
+    try {
+      final userId = AuthService.userId;
+      if (userId == null) {
+        if (mounted) {
+          setState(() => _isLoadingWallet = false);
+        }
+        return;
+      }
+      final balance = await _walletService.getBalance(userId);
+      if (mounted) {
+        setState(() {
+          _walletBalance = balance;
+          _isLoadingWallet = false;
+        });
+      }
+    } catch (e) {
+      debugLog('❌ Error loading customer wallet summary: $e');
+      if (mounted) {
+        setState(() => _isLoadingWallet = false);
       }
     }
   }
@@ -305,6 +335,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeroHeader(displayName),
+              const SizedBox(height: 18),
+              _buildWalletSummaryCard(),
               const SizedBox(height: 18),
               _buildActiveOrdersPanel(),
               const SizedBox(height: 22),
@@ -436,6 +468,90 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           color: Colors.white,
           fontSize: 12,
           fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  String _formatWalletMoney(num amount) {
+    return '฿${amount.toStringAsFixed(0)}';
+  }
+
+  Widget _buildWalletSummaryCard() {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () async {
+          await Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const CustomerWalletScreen()),
+          );
+          if (mounted) await _loadWalletSummary();
+        },
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryGreen.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.account_balance_wallet_outlined,
+                  color: AppTheme.primaryGreen,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'ยอดเงินใน Wallet',
+                      style: TextStyle(
+                        color: colorScheme.onSurfaceVariant,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _isLoadingWallet ? 'กำลังโหลด...' : _formatWalletMoney(_walletBalance),
+                      style: TextStyle(
+                        color: colorScheme.onSurface,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const Icon(Icons.chevron_right, color: AppTheme.primaryGreen),
+                  const SizedBox(height: 4),
+                  Text(
+                    'เติม / ถอน',
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -15,6 +15,7 @@ import 'common/services/mock_auth_service.dart';
 import 'utils/auth_helper.dart';
 import 'theme/app_theme.dart';
 import 'common/widgets/auth_gate.dart';
+import 'common/widgets/app_update_guard.dart';
 import 'common/screens/notification_center_screen.dart';
 import 'apps/customer/customer.dart';
 import 'apps/driver/driver.dart';
@@ -113,7 +114,7 @@ class _MyAppState extends State<MyApp> {
             locale: languageProvider.localeOverride,
             supportedLocales: AppLocalizations.supportedLocales,
             localizationsDelegates: AppLocalizations.localizationsDelegates,
-            home: const AuthGate(),
+            home: const AppUpdateGuard(child: AuthGate()),
             routes: {
               '/landing': (context) => const PublicLandingScreen(),
               '/login': (context) => const LoginScreen(),

@@ -7,7 +7,6 @@ import '../services/auth_service.dart';
 import '../services/fcm_notification_service.dart';
 import '../services/system_config_service.dart';
 import '../services/account_deletion_service.dart';
-import '../services/version_check_service.dart';
 import 'account_suspended_screen.dart';
 import 'pending_approval_screen.dart';
 import 'pending_deletion_screen.dart';
@@ -66,10 +65,6 @@ class _AuthGateState extends State<AuthGate> {
     // If authenticated, fetch user role
     if (isAuth) {
       await _fetchUserRole();
-    }
-
-    if (mounted) {
-      unawaited(VersionCheckService.checkVersion(context));
     }
 
     if (mounted) {

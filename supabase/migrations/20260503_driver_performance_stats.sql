@@ -5,7 +5,6 @@ ALTER TABLE profiles ADD COLUMN IF NOT EXISTS total_completed_jobs integer DEFAU
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS acceptance_rate decimal(5,2);
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS completion_rate decimal(5,2);
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS average_rating decimal(3,2);
-
 -- ────────────────────────────────────────────────────────────────────────────
 -- Function: recompute stats for one driver from bookings + reviews
 -- ────────────────────────────────────────────────────────────────────────────
@@ -62,7 +61,6 @@ BEGIN
    WHERE id = p_driver_id;
 END;
 $$;
-
 -- ────────────────────────────────────────────────────────────────────────────
 -- Trigger: fire after a booking reaches 'completed'
 -- ────────────────────────────────────────────────────────────────────────────
@@ -78,9 +76,7 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 DROP TRIGGER IF EXISTS trg_driver_performance_stats ON bookings;
-
 CREATE TRIGGER trg_driver_performance_stats
   AFTER UPDATE OF status ON bookings
   FOR EACH ROW

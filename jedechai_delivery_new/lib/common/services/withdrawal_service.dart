@@ -43,32 +43,16 @@ class WithdrawalService {
     }
 
     try {
-      // 1. ตรวจสอบยอดเงินคงเหลือ
-      final balance = await _walletService.getBalance(userId);
-      if (balance < amount) {
-        debugLog('❌ ยอดเงินไม่เพียงพอ: $balance < $amount');
-        return false;
-      }
-
-      // 2. สร้างคำขอถอนเงินก่อน (ถ้า insert ล้มเหลว เงินจะไม่หาย)
-      await _client.from('withdrawal_requests').insert({
-        'user_id': userId,
-        'amount': amount,
-        'bank_name': bankName,
-        'account_number': bankAccountNumber,
-        'status': 'pending',
-      });
-
-      // 3. Phase 2: Atomic wallet deduction via RPC
-      final rpcResult = await _client.rpc('wallet_deduct', params: {
+      final rpcResult =
+          await _client.rpc('create_wallet_withdrawal_request', params: {
         'p_user_id': userId,
         'p_amount': amount,
-        'p_description':
-            'แจ้งถอนเงิน ฿${amount.ceil()} ไปยัง $bankName $bankAccountNumber',
-        'p_type': 'withdrawal',
+        'p_bank_name': bankName,
+        'p_bank_account_number': bankAccountNumber,
+        'p_bank_account_name': bankAccountName,
       });
       if (rpcResult is Map && rpcResult['success'] != true) {
-        debugLog('❌ Wallet deduction failed: ${rpcResult['error']}');
+        debugLog('❌ Withdrawal request failed: ${rpcResult['error']}');
         return false;
       }
 

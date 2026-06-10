@@ -91,14 +91,21 @@ export async function saveTopupModeSettings(ctx) {
 
   try {
     await _upsertSystemConfig({
-      topup_mode: document.querySelector('input[name="settTopupMode"]:checked')?.value || 'admin_approve',
+      topup_mode: 'admin_approve',
+      slip2go_receiver_account: document.getElementById('settSlip2goReceiverAccount')?.value?.trim() || null,
+      slip2go_allow_masked_receiver_account:
+        document.getElementById('settSlip2goAllowMaskedReceiver')?.checked === true,
     });
-    showToast('บันทึกโหมดเติมเงินสำเร็จ', 'success');
+    showToast('บันทึกการตรวจสลิปสำเร็จ', 'success');
   } catch (e) {
     try {
       console.error('saveTopupModeSettings error:', e);
     } catch (_) {}
-    showToast('บันทึกโหมดเติมเงินไม่สำเร็จ: ' + (e?.message || JSON.stringify(e)), 'error');
+    if (String(e?.message || '').toLowerCase().includes('slip2go_receiver_account')) {
+      showToast('ยังไม่สามารถบันทึกค่า Slip2Go ได้ กรุณารัน migration 20260609000100_topup_slip2go_auto_manual.sql', 'error');
+      return;
+    }
+    showToast('บันทึกการตรวจสลิปไม่สำเร็จ: ' + (e?.message || JSON.stringify(e)), 'error');
   }
 }
 
@@ -248,6 +255,78 @@ export async function saveLandingSettings(ctx) {
       return;
     }
     showToast('บันทึก Landing Page ไม่สำเร็จ: ' + (e?.message || JSON.stringify(e)), 'error');
+  }
+}
+
+function _readNullableInt(id) {
+  const value = document.getElementById(id)?.value?.trim();
+  if (!value) return null;
+  const parsed = parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function _isValidHttpUrl(value) {
+  try {
+    const url = new URL(value || '');
+    return url.protocol === 'https:' || url.protocol === 'http:';
+  } catch (_) {
+    return false;
+  }
+}
+
+function _hasBlockingUpdate(policy) {
+  return (
+    policy.enabled === true &&
+    (policy.mode === 'force' ||
+      policy.min_supported_build != null ||
+      Boolean(policy.min_supported_version))
+  );
+}
+
+export async function saveAppUpdatePolicySettings(ctx) {
+  _ctx = ctx || _ctx;
+  const { showToast, _upsertSystemConfig } = _deps();
+  await _ensureFns();
+
+  try {
+    const appUpdatePolicy = {
+      enabled: document.getElementById('settAppUpdateEnabled')?.checked === true,
+      mode: document.getElementById('settAppUpdateMode')?.value === 'force' ? 'force' : 'optional',
+      latest_version: document.getElementById('settAppUpdateLatestVersion')?.value?.trim() || null,
+      latest_build: _readNullableInt('settAppUpdateLatestBuild'),
+      min_supported_version: document.getElementById('settAppUpdateMinSupportedVersion')?.value?.trim() || null,
+      min_supported_build: _readNullableInt('settAppUpdateMinSupportedBuild'),
+      title_th: document.getElementById('settAppUpdateTitleTh')?.value?.trim() || 'มีเวอร์ชันใหม่',
+      message_th:
+        document.getElementById('settAppUpdateMessageTh')?.value?.trim() ||
+        'กรุณาอัปเดตแอปเพื่อใช้งานฟีเจอร์ล่าสุด',
+      android_url: document.getElementById('settAppUpdateAndroidUrl')?.value?.trim() || '',
+      ios_url: document.getElementById('settAppUpdateIosUrl')?.value?.trim() || '',
+      target_roles: [],
+      starts_at: null,
+      ends_at: null,
+    };
+
+    if (
+      _hasBlockingUpdate(appUpdatePolicy) &&
+      !_isValidHttpUrl(appUpdatePolicy.android_url) &&
+      !_isValidHttpUrl(appUpdatePolicy.ios_url)
+    ) {
+      showToast('force update ต้องมี Store URL ที่ถูกต้องอย่างน้อย 1 รายการ', 'error');
+      return;
+    }
+
+    await _upsertSystemConfig({ app_update_policy: appUpdatePolicy });
+    showToast('บันทึกนโยบายอัปเดตแอปสำเร็จ', 'success');
+  } catch (e) {
+    try {
+      console.error('saveAppUpdatePolicySettings error:', e);
+    } catch (_) {}
+    if (String(e?.message || '').toLowerCase().includes('app_update_policy')) {
+      showToast('ยังไม่สามารถบันทึกนโยบายอัปเดตแอปได้ กรุณารัน migration 20260610185000_add_app_update_policy.sql', 'error');
+      return;
+    }
+    showToast('บันทึกนโยบายอัปเดตแอปไม่สำเร็จ: ' + (e?.message || JSON.stringify(e)), 'error');
   }
 }
 
@@ -484,6 +563,7 @@ export function wireSettingsActionsBridge() {
   globalThis.__adminWebBridge.saveServiceRatesSettings = saveServiceRatesSettings;
   globalThis.__adminWebBridge.savePromoSettings = savePromoSettings;
   globalThis.__adminWebBridge.saveLandingSettings = saveLandingSettings;
+  globalThis.__adminWebBridge.saveAppUpdatePolicySettings = saveAppUpdatePolicySettings;
   globalThis.__adminWebBridge.saveAdminEmail = saveAdminEmail;
   globalThis.__adminWebBridge.saveAdminLine = saveAdminLine;
   globalThis.__adminWebBridge.testAdminEmail = testAdminEmail;

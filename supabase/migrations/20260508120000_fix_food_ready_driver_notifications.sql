@@ -82,7 +82,6 @@ BEGIN
   );
 END;
 $$;
-
 CREATE OR REPLACE FUNCTION public.notify_driver_visible_job(
   p_booking_id uuid,
   p_title text DEFAULT NULL,
@@ -244,10 +243,8 @@ BEGIN
   ORDER BY i.user_id;
 END;
 $$;
-
 GRANT EXECUTE ON FUNCTION public.mark_food_ready_guarded(uuid, uuid)
   TO authenticated, service_role;
-
 GRANT EXECUTE ON FUNCTION public.notify_driver_visible_job(
   uuid,
   text,
