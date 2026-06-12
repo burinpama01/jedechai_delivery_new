@@ -792,6 +792,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         return l10n.driverDashJobRide;
       case 'parcel':
         return l10n.driverDashJobParcel;
+      case 'laundry':
+        return 'ซักผ้า';
       default:
         return l10n.driverDashJobGeneral;
     }
@@ -1869,8 +1871,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
     switch (job.status) {
       case 'pending':
-        // Show for ride and parcel requests
-        if (job.serviceType != 'ride' && job.serviceType != 'parcel') {
+        // Show for ride, parcel, and laundry delivery legs.
+        if (job.serviceType != 'ride' &&
+            job.serviceType != 'parcel' &&
+            job.serviceType != 'laundry') {
           return const SizedBox.shrink();
         }
         return SizedBox(

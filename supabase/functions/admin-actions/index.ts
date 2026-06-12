@@ -215,6 +215,17 @@ serve(async (req) => {
         result = await handleUnlinkOptionGroup(supabaseAdmin, body);
         break;
 
+      // ─── Laundry Packages ───
+      case "list_laundry_packages":
+        result = await handleListLaundryPackages(supabaseAdmin, body);
+        break;
+      case "manage_laundry_package":
+        result = await handleManageLaundryPackage(supabaseAdmin, body);
+        break;
+      case "delete_laundry_package":
+        result = await handleDeleteLaundryPackage(supabaseAdmin, body);
+        break;
+
       // ─── Support Tickets ───
       case "update_ticket_status":
         result = await handleUpdateTicketStatus(supabaseAdmin, body);
@@ -460,22 +471,46 @@ async function handleSetOnlineStatus(supabase, body) {
   return jsonResponse({ success: true });
 }
 
+function normalizeNullableRateField(updateData: Record<string, unknown>, field: string): string | null {
+  if (updateData[field] === undefined) return null;
+  const rawRate = updateData[field];
+  if (rawRate === null || rawRate === "") {
+    updateData[field] = null;
+    return null;
+  }
+  const rate = Number(rawRate);
+  if (!Number.isFinite(rate) || rate < 0 || rate > 1) {
+    return `${field} must be between 0 and 1`;
+  }
+  updateData[field] = rate;
+  return null;
+}
+
+function normalizeMerchantServiceTypesField(updateData: Record<string, unknown>, defaultToFood = false): string | null {
+  if (updateData.merchant_service_types === undefined) {
+    if (defaultToFood) updateData.merchant_service_types = ["food"];
+    return null;
+  }
+  const serviceTypes = updateData.merchant_service_types;
+  const allowed = new Set(["food", "laundry"]);
+  if (
+    !Array.isArray(serviceTypes) ||
+    serviceTypes.length !== 1 ||
+    typeof serviceTypes[0] !== "string" ||
+    !allowed.has(serviceTypes[0])
+  ) {
+    return "merchant_service_types must contain exactly one of food or laundry";
+  }
+  updateData.merchant_service_types = [serviceTypes[0]];
+  return null;
+}
+
 async function handleEditProfile(supabase, body) {
   const { id, update_data } = body;
   if (!id || !update_data) return errorResponse("Missing 'id' or 'update_data'");
 
-  if (update_data.driver_delivery_system_rate !== undefined) {
-    const rawRate = update_data.driver_delivery_system_rate;
-    if (rawRate === null || rawRate === "") {
-      update_data.driver_delivery_system_rate = null;
-    } else {
-      const rate = Number(rawRate);
-      if (!Number.isFinite(rate) || rate < 0 || rate > 1) {
-        return errorResponse("driver_delivery_system_rate must be between 0 and 1");
-      }
-      update_data.driver_delivery_system_rate = rate;
-    }
-  }
+  const rateError = normalizeNullableRateField(update_data, "driver_delivery_system_rate");
+  if (rateError) return errorResponse(rateError);
 
   const { error } = await supabase
     .from("profiles")
@@ -489,6 +524,21 @@ async function handleEditProfile(supabase, body) {
 async function handleEditMerchant(supabase, body) {
   const { id, update_data, system_config_updates } = body;
   if (!id || !update_data) return errorResponse("Missing 'id' or 'update_data'");
+
+  const serviceTypeError = normalizeMerchantServiceTypesField(update_data);
+  if (serviceTypeError) return errorResponse(serviceTypeError);
+
+  for (const field of [
+    "gp_rate",
+    "merchant_gp_system_rate",
+    "merchant_gp_driver_rate",
+    "laundry_merchant_gp_rate",
+    "laundry_delivery_gp_rate",
+    "laundry_gp_driver_rate",
+  ]) {
+    const rateError = normalizeNullableRateField(update_data, field);
+    if (rateError) return errorResponse(rateError);
+  }
 
   // Sync is_online with shop_status if shop_status is provided
   if (update_data.shop_status !== undefined) {
@@ -538,6 +588,12 @@ async function handleAddUser(supabase, body, role: string) {
   const { email, password, profile_data } = body;
   if (!email || !password) return errorResponse("Missing 'email' or 'password'");
 
+  const normalizedProfileData: Record<string, unknown> = { ...(profile_data || {}) };
+  if (role === "merchant") {
+    const serviceTypeError = normalizeMerchantServiceTypesField(normalizedProfileData, true);
+    if (serviceTypeError) return errorResponse(serviceTypeError);
+  }
+
   const { data, error } = await supabase.auth.admin.createUser({
     email,
     password,
@@ -553,7 +609,7 @@ async function handleAddUser(supabase, body, role: string) {
       approval_status: "approved",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      ...(profile_data || {}),
+      ...normalizedProfileData,
     };
     await supabase.from("profiles").upsert(profilePayload);
 
@@ -1148,6 +1204,73 @@ async function handleUnlinkOptionGroup(supabase, body) {
   return jsonResponse({ success: true });
 }
 
+// ─── Laundry Packages ─────────────────────────────────
+
+async function handleListLaundryPackages(supabase, body) {
+  const merchantIds = Array.isArray(body.merchant_ids)
+    ? [...new Set(body.merchant_ids.map((id) => String(id || "").trim()).filter(Boolean))]
+    : [];
+
+  let query = supabase
+    .from("laundry_packages")
+    .select("id, merchant_id, name, description, base_price, unit, is_active, sort_order, updated_at")
+    .order("sort_order", { ascending: true })
+    .order("name", { ascending: true });
+
+  if (merchantIds.length) {
+    query = query.in("merchant_id", merchantIds);
+  }
+
+  const { data, error } = await query;
+  if (error) return errorResponse(error.message);
+  return jsonResponse({ success: true, packages: data || [] });
+}
+
+async function handleManageLaundryPackage(supabase, body) {
+  const packageId = String(body.package_id || body.id || "").trim();
+  const merchantId = String(body.merchant_id || "").trim();
+  const name = String(body.name || "").trim();
+  const description = String(body.description || "").trim();
+  const price = Number(body.base_price);
+  const unit = String(body.unit || "piece").trim() || "piece";
+  const sortOrder = Number.isFinite(Number(body.sort_order))
+    ? Math.trunc(Number(body.sort_order))
+    : 0;
+
+  if (!merchantId || !name) return errorResponse("Missing 'merchant_id' or 'name'");
+  if (!Number.isFinite(price) || price < 0) return errorResponse("Invalid 'base_price'");
+
+  const payload = {
+    merchant_id: merchantId,
+    name,
+    description: description || null,
+    base_price: price,
+    unit,
+    sort_order: sortOrder,
+    is_active: body.is_active !== false,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (packageId) {
+    const { data, error } = await supabase.from("laundry_packages").update(payload).eq("id", packageId).select("*").single();
+    if (error) return errorResponse(error.message);
+    return jsonResponse({ success: true, package: data });
+  }
+
+  const { data, error } = await supabase.from("laundry_packages").insert(payload).select("*").single();
+  if (error) return errorResponse(error.message);
+  return jsonResponse({ success: true, package: data });
+}
+
+async function handleDeleteLaundryPackage(supabase, body) {
+  const packageId = String(body.package_id || body.id || "").trim();
+  if (!packageId) return errorResponse("Missing 'package_id'");
+
+  const { error } = await supabase.from("laundry_packages").update({ is_active: false, updated_at: new Date().toISOString() }).eq("id", packageId);
+  if (error) return errorResponse(error.message);
+  return jsonResponse({ success: true });
+}
+
 // ─── Support Tickets ──────────────────────────────────
 
 async function handleUpdateTicketStatus(supabase, body) {
@@ -1179,11 +1302,37 @@ async function handleAssignOrder(supabase, body) {
   const { order_id, driver_id } = body;
   if (!order_id || !driver_id) return errorResponse("Missing 'order_id' or 'driver_id'");
   const nowIso = new Date().toISOString();
+  const { data: booking, error: bookingError } = await supabase
+    .from("bookings")
+    .select("id, service_type, laundry_order_id, laundry_leg")
+    .eq("id", order_id)
+    .maybeSingle();
+  if (bookingError) return errorResponse(bookingError.message);
+  if (!booking) return errorResponse("Booking not found", 404);
+
   const { error } = await supabase
     .from("bookings")
     .update({ driver_id, status: "driver_accepted", assigned_at: nowIso, updated_at: nowIso })
     .eq("id", order_id);
   if (error) return errorResponse(error.message);
+
+  if (booking.service_type === "laundry" && booking.laundry_order_id) {
+    const nextLaundryStatus =
+      booking.laundry_leg === "outbound"
+        ? "outbound_assigned"
+        : booking.laundry_leg === "return"
+          ? "return_assigned"
+          : null;
+
+    if (nextLaundryStatus) {
+      const { error: laundryError } = await supabase
+        .from("laundry_orders")
+        .update({ status: nextLaundryStatus, updated_at: nowIso })
+        .eq("id", booking.laundry_order_id);
+      if (laundryError) return errorResponse(laundryError.message);
+    }
+  }
+
   return jsonResponse({ success: true });
 }
 

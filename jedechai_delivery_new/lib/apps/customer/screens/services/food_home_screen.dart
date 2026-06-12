@@ -327,6 +327,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
               'id, full_name, phone_number, shop_status, shop_address, shop_photo_url, latitude, longitude, shop_open_time, shop_close_time, shop_open_days, shop_auto_schedule_enabled')
           .eq('role', 'merchant')
           .eq('approval_status', 'approved')
+          .contains('merchant_service_types', ['food'])
           .order('full_name');
 
       debugLog('📊 พบ ${response.length} ร้านอาหาร');

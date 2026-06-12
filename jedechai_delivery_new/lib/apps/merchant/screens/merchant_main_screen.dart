@@ -6,6 +6,7 @@ import '../../../common/screens/notification_center_screen.dart';
 import '../../../common/widgets/notification_badge_icon.dart';
 import 'merchant_dashboard_screen.dart';
 import 'merchant_orders_screen.dart';
+import 'merchant_laundry_screen.dart';
 import 'menu_management_screen.dart';
 import 'merchant_settings_screen.dart';
 
@@ -29,6 +30,7 @@ class _MerchantMainScreenState extends State<MerchantMainScreen> {
 
   final List<Widget> _screens = const [
     MerchantOrdersScreen(),
+    MerchantLaundryScreen(),
     MenuManagementScreen(),
     MerchantDashboardScreen(),
     NotificationCenterScreen(role: 'merchant'),
@@ -96,6 +98,11 @@ class _MerchantMainScreenState extends State<MerchantMainScreen> {
                   icon: const Icon(Icons.receipt_long_outlined),
                   activeIcon: const Icon(Icons.receipt_long),
                   label: AppLocalizations.of(context)!.merchantNavOrders,
+                ),
+                const BottomNavigationBarItem(
+                  icon: Icon(Icons.local_laundry_service_outlined),
+                  activeIcon: Icon(Icons.local_laundry_service),
+                  label: 'ซักผ้า',
                 ),
                 BottomNavigationBarItem(
                   icon: const Icon(Icons.restaurant_menu_outlined),

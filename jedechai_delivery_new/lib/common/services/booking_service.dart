@@ -789,6 +789,23 @@ class BookingService {
       throw Exception('ไม่มีสิทธิ์จบงานนี้');
     }
 
+    if (booking.serviceType == 'laundry') {
+      final result = await _client.rpc('complete_laundry_booking', params: {
+        'p_booking_id': bookingId,
+        'p_driver_id': currentUserId,
+      });
+      final resultMap = result is Map<String, dynamic>
+          ? result
+          : Map<String, dynamic>.from(result as Map);
+      if (resultMap['success'] != true) {
+        throw Exception(
+          'ไม่สามารถจบงานซักผ้าได้: ${resultMap['error'] ?? 'unknown'}',
+        );
+      }
+      debugLog('✅ completeLaundryBooking RPC สำเร็จ: $bookingId');
+      return;
+    }
+
     double commissionAmount = 0;
     double driverEarnings = 0;
     double appEarnings = 0;

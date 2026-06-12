@@ -462,7 +462,7 @@ async function loadPage(page) {
     const render = window.__adminWebBridge?.renderRegisteredPage;
     const has = window.__adminWebBridge?.hasRegisteredPage;
 
-    const ctx = { supabase, supabaseAuth, currentUser };
+    const ctx = { supabase, supabaseAuth, currentUser, callAdminAction, showToast, escapeHtml, fmt, fmtDate, refreshCurrentPage, fetchUserEmails };
     const activeName = typeof getActive === 'function' ? getActive() : null;
 
     if (activeName && activeName !== page && typeof dispose === 'function') {
@@ -3774,6 +3774,9 @@ async function renderSettings(el) {
       'food_far_pickup_rate_per_km_default',
       'merchant_gp_system_rate_default',
       'merchant_gp_driver_rate_default',
+      'laundry_merchant_gp_rate_default',
+      'laundry_gp_driver_rate_default',
+      'laundry_delivery_gp_rate_default',
     ]);
   } catch(e) { /* key-value rows may not exist yet */ }
   try {
@@ -3798,6 +3801,15 @@ async function renderSettings(el) {
     : merchantGpPercent;
   const merchantGpDriverDefault = kvConfig.merchant_gp_driver_rate_default != null
     ? parseFloat(kvConfig.merchant_gp_driver_rate_default) * 100
+    : 0;
+  const laundryMerchantGpDefault = kvConfig.laundry_merchant_gp_rate_default != null
+    ? parseFloat(kvConfig.laundry_merchant_gp_rate_default) * 100
+    : 10;
+  const laundryGpDriverDefault = kvConfig.laundry_gp_driver_rate_default != null
+    ? parseFloat(kvConfig.laundry_gp_driver_rate_default) * 100
+    : 0;
+  const laundryDeliveryGpDefault = kvConfig.laundry_delivery_gp_rate_default != null
+    ? parseFloat(kvConfig.laundry_delivery_gp_rate_default) * 100
     : 0;
 
   function rateInputs(r) {
@@ -4044,6 +4056,21 @@ async function renderSettings(el) {
               <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Merchant GP ให้คนขับ (%)</label>
               <input type="number" id="settMerchantGpDriverRate" value="${merchantGpDriverDefault.toFixed(1)}" class="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm bg-white transition-all" step="0.1" min="0" max="100">
               <p class="text-xs text-gray-400 mt-1.5">เพิ่มรายได้คนขับ แต่ไม่หัก wallet</p>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Laundry GP - หักร้าน (%)</label>
+              <input type="number" id="settLaundryMerchantGpRate" value="${laundryMerchantGpDefault.toFixed(1)}" class="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm bg-white transition-all" step="0.1" min="0" max="100">
+              <p class="text-xs text-gray-400 mt-1.5">ค่า default สำหรับยอดซักผ้า ร้านแต่ละราย override ได้</p>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Laundry GP ให้คนขับ (%)</label>
+              <input type="number" id="settLaundryGpDriverRate" value="${laundryGpDriverDefault.toFixed(1)}" class="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm bg-white transition-all" step="0.1" min="0" max="100">
+              <p class="text-xs text-gray-400 mt-1.5">เพิ่มรายได้คนขับจาก GP ยอดซักผ้า</p>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Laundry GP - หักค่าส่ง (%)</label>
+              <input type="number" id="settLaundryDeliveryGpRate" value="${laundryDeliveryGpDefault.toFixed(1)}" class="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm bg-white transition-all" step="0.1" min="0" max="100">
+              <p class="text-xs text-gray-400 mt-1.5">ค่า default สำหรับค่าส่งซักผ้าขาไป/ขากลับ</p>
             </div>
           </div>
           <p class="text-xs text-orange-600 mt-2">Merchant GP รวม ต้องเท่ากับ (เข้าระบบ + ให้คนขับ) เช่น 20% = ระบบ 10% + คนขับ 10%</p>
@@ -4771,12 +4798,24 @@ async function saveServiceRatesSettings() {
   } catch (_) {}
 
   try {
-    const merchantGp = (parseFloat(document.getElementById('settMerchantGP')?.value) || 10) / 100;
-    const merchantGpSystem = (parseFloat(document.getElementById('settMerchantGpSystemRate')?.value) || 0) / 100;
-    const merchantGpDriver = (parseFloat(document.getElementById('settMerchantGpDriverRate')?.value) || 0) / 100;
+    const percentInputValue = (id, fallbackPercent) => {
+      const raw = document.getElementById(id)?.value;
+      if (raw == null || String(raw).trim() === '') return fallbackPercent / 100;
+      const parsed = parseFloat(raw);
+      return Number.isFinite(parsed) ? parsed / 100 : fallbackPercent / 100;
+    };
+    const merchantGp = percentInputValue('settMerchantGP', 10);
+    const merchantGpSystem = percentInputValue('settMerchantGpSystemRate', 0);
+    const merchantGpDriver = percentInputValue('settMerchantGpDriverRate', 0);
+    const laundryMerchantGp = percentInputValue('settLaundryMerchantGpRate', 10);
+    const laundryDeliveryGp = percentInputValue('settLaundryDeliveryGpRate', 0);
+    const laundryGpDriver = percentInputValue('settLaundryGpDriverRate', 0);
     const splitTotal = merchantGpSystem + merchantGpDriver;
     if (splitTotal - merchantGp > 0.0001) {
       throw new Error(`Merchant GP split รวมต้องไม่เกิน Merchant GP (รวม ${(merchantGp * 100).toFixed(1)}%, split ${(splitTotal * 100).toFixed(1)}%)`);
+    }
+    if (laundryGpDriver - laundryMerchantGp > 0.0001) {
+      throw new Error(`Laundry GP ให้คนขับต้องไม่เกิน Laundry GP หักร้าน (GP ${(laundryMerchantGp * 100).toFixed(1)}%, ให้คนขับ ${(laundryGpDriver * 100).toFixed(1)}%)`);
     }
 
     await _upsertSystemConfig({
@@ -4792,6 +4831,18 @@ async function saveServiceRatesSettings() {
       {
         key: 'merchant_gp_driver_rate_default',
         value: merchantGpDriver.toFixed(4),
+      },
+      {
+        key: 'laundry_merchant_gp_rate_default',
+        value: laundryMerchantGp.toFixed(4),
+      },
+      {
+        key: 'laundry_gp_driver_rate_default',
+        value: laundryGpDriver.toFixed(4),
+      },
+      {
+        key: 'laundry_delivery_gp_rate_default',
+        value: laundryDeliveryGp.toFixed(4),
       },
       {
         key: 'ride_far_pickup_threshold_km',
@@ -4818,13 +4869,19 @@ async function saveServiceRatesSettings() {
     const verifyDefaults = await _fetchSystemConfigKeyValues([
       'merchant_gp_system_rate_default',
       'merchant_gp_driver_rate_default',
+      'laundry_merchant_gp_rate_default',
+      'laundry_gp_driver_rate_default',
+      'laundry_delivery_gp_rate_default',
     ]);
     if (
       String(verifyDefaults.merchant_gp_system_rate_default ?? '') !== merchantGpSystem.toFixed(4) ||
-      String(verifyDefaults.merchant_gp_driver_rate_default ?? '') !== merchantGpDriver.toFixed(4)
+      String(verifyDefaults.merchant_gp_driver_rate_default ?? '') !== merchantGpDriver.toFixed(4) ||
+      String(verifyDefaults.laundry_merchant_gp_rate_default ?? '') !== laundryMerchantGp.toFixed(4) ||
+      String(verifyDefaults.laundry_gp_driver_rate_default ?? '') !== laundryGpDriver.toFixed(4) ||
+      String(verifyDefaults.laundry_delivery_gp_rate_default ?? '') !== laundryDeliveryGp.toFixed(4)
     ) {
       throw new Error(
-        'บันทึกค่า Merchant GP split default ไม่สำเร็จใน schema ปัจจุบัน',
+        'บันทึกค่า GP split default ไม่สำเร็จใน schema ปัจจุบัน',
       );
     }
 

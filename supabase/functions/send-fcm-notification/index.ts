@@ -91,7 +91,12 @@ function isUnregisteredTokenError(error: unknown) {
 
 function androidChannelFor(data?: Record<string, string>) {
   const type = data?.type ?? data?.notification_type ?? data?.legacy_type;
-  if (type === "merchant.order.created" || type === "merchant_new_order") {
+  if (
+    type === "merchant.order.created" ||
+    type === "merchant_new_order" ||
+    type === "laundry.quote_requested" ||
+    data?.sound_key === "merchant_laundry_quote_new"
+  ) {
     return "merchant_new_order_channel_v1";
   }
   if (type === "driver.job.available" || type === "driver_job_available" || type === "new_booking" || type === "new_ride_request") {
@@ -129,6 +134,31 @@ async function isAllowedDriverCandidateNotification(
     requestType === "new_ride_request";
 }
 
+async function isAllowedLaundryQuoteParticipantNotification(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  callerId: string,
+  targetUserId: string,
+  data?: Record<string, string>,
+) {
+  const requestType = data?.type ?? data?.notification_type ?? data?.legacy_type;
+  const laundryOrderId = data?.laundry_order_id;
+  if (requestType !== "laundry.quote_requested" || !laundryOrderId) return false;
+
+  const { data: order } = await supabaseAdmin
+    .from("laundry_orders")
+    .select("customer_id, merchant_id")
+    .eq("id", laundryOrderId)
+    .maybeSingle();
+  if (!order) return false;
+
+  const callerIsParticipant = order.customer_id === callerId ||
+    order.merchant_id === callerId;
+  const targetIsParticipant = order.customer_id === targetUserId ||
+    order.merchant_id === targetUserId;
+
+  return callerIsParticipant && targetIsParticipant;
+}
+
 async function isAllowedTarget(
   supabaseAdmin: ReturnType<typeof createClient>,
   callerId: string,
@@ -148,6 +178,17 @@ async function isAllowedTarget(
   if (targetProfile?.role === "admin" && callerRole !== "admin") return false;
 
   if (callerRole === "admin") return true;
+
+  if (
+    await isAllowedLaundryQuoteParticipantNotification(
+      supabaseAdmin,
+      callerId,
+      targetUserId,
+      data,
+    )
+  ) {
+    return true;
+  }
 
   const bookingIdFromData = data?.booking_id;
   if (!notificationId && !bookingIdFromData) return false;

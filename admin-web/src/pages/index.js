@@ -11,6 +11,7 @@ import { registerPromosPage } from "./promos.js";
 import { registerWithdrawalsPage } from "./withdrawals.js";
 import { registerTopupsPage } from "./topups.js";
 import { registerCustomerWalletsPage } from "./customer_wallets.js";
+import { registerLaundryPage } from "./laundry.js";
 import { registerMenusPage } from "./menus.js";
 import { registerRevenuePage } from "./revenue.js";
 import { registerComplaintsPage } from "./complaints.js";
@@ -31,6 +32,7 @@ export function registerInitialPages(reg) {
   registerWithdrawalsPage(reg);
   registerTopupsPage(reg);
   registerCustomerWalletsPage(reg);
+  registerLaundryPage(reg);
   registerMenusPage(reg);
   registerRevenuePage(reg);
   registerComplaintsPage(reg);

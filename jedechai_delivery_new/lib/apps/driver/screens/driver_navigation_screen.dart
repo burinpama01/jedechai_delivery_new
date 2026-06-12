@@ -8,11 +8,14 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:async';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../common/services/auth_service.dart';
 import '../../../common/services/profile_service.dart';
 import '../../../common/services/supabase_service.dart';
 import '../../../common/services/notification_sender.dart';
 import '../../../common/services/booking_service.dart';
+import '../../../common/services/laundry_service.dart';
 import '../../../common/services/parcel_service.dart';
 import '../../../common/models/coupon.dart';
 import '../../../common/widgets/location_disclosure_dialog.dart';
@@ -50,6 +53,8 @@ class DriverNavigationScreen extends StatefulWidget {
 class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     with TickerProviderStateMixin {
   final ParcelService _parcelService = ParcelService();
+  final LaundryService _laundryService = LaundryService();
+  final ImagePicker _imagePicker = ImagePicker();
 
   // Map controllers
   GoogleMapController? _mapController;
@@ -183,10 +188,6 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     } catch (e) {
       debugLog('❌ Error loading coupon usage in driver navigation: $e');
     }
-  }
-
-  double _grossCollectAmount(Booking booking) {
-    return DriverAmountCalculator.grossCollect(booking);
   }
 
   double _netCollectAmount(Booking booking) {
@@ -1935,6 +1936,18 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         default:
           return l10n.driverNavUpdateStatus;
       }
+    } else if (serviceType == 'laundry') {
+      switch (status) {
+        case 'accepted':
+        case 'driver_accepted':
+          return 'ถึงจุดรับผ้า';
+        case 'arrived':
+          return 'ถ่ายรูปและรับผ้า';
+        case 'in_transit':
+          return 'ส่งงานซักผ้าให้เสร็จ';
+        default:
+          return l10n.driverNavUpdateStatus;
+      }
     } else if (serviceType == 'parcel') {
       switch (status) {
         case 'accepted':
@@ -2039,6 +2052,14 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     }
 
     debugLog('🔄 Updating status from ${_booking!.status} to $newStatus');
+
+    if (serviceType == 'laundry' &&
+        _booking!.status == 'arrived' &&
+        newStatus == 'in_transit') {
+      await _confirmLaundryPickupWithEvidence();
+      return;
+    }
+
     if (serviceType == 'parcel') {
       final confirmationType = switch (_booking!.status) {
         'arrived' => 'pickup',
@@ -2068,6 +2089,72 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           AppLocalizations.of(context)!.driverNavInvalidStatus(newStatus),
         );
       }
+    }
+  }
+
+  Future<void> _confirmLaundryPickupWithEvidence() async {
+    final booking = _booking;
+    final driverId = AuthService.userId;
+    if (booking == null || driverId == null) return;
+
+    try {
+      final image = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 75,
+        maxWidth: 1600,
+      );
+      if (image == null) return;
+
+      setState(() => _isUpdatingStatus = true);
+      final bytes = await image.readAsBytes();
+      final extension = image.name.split('.').last.toLowerCase();
+      final normalizedExtension =
+          ['jpg', 'jpeg', 'png', 'webp'].contains(extension) ? extension : 'jpg';
+      final contentType = switch (normalizedExtension) {
+        'png' => 'image/png',
+        'webp' => 'image/webp',
+        _ => 'image/jpeg',
+      };
+      final objectPath =
+          '$driverId/${booking.id}/${DateTime.now().millisecondsSinceEpoch}.$normalizedExtension';
+
+      await SupabaseService.client.storage.from('laundry-evidence').uploadBinary(
+            objectPath,
+            bytes,
+            fileOptions: FileOptions(contentType: contentType, upsert: false),
+          );
+      final evidenceUrl = SupabaseService.client.storage
+          .from('laundry-evidence')
+          .getPublicUrl(objectPath);
+
+      final result = await _laundryService.confirmPickupWithEvidence(
+        bookingId: booking.id,
+        evidenceUrl: evidenceUrl,
+      );
+      if (result['success'] != true) {
+        _showErrorSnackBar(
+          'ยืนยันรับผ้าไม่สำเร็จ: ${result['error'] ?? 'unknown'}',
+        );
+        return;
+      }
+
+      final rows = await SupabaseService.client
+          .from('bookings')
+          .select()
+          .eq('id', booking.id)
+          .limit(1);
+      if (rows.isNotEmpty && mounted) {
+        setState(() => _booking = Booking.fromJson(rows.first));
+        await _notifyCustomerStatusUpdate(rows.first, 'in_transit');
+      }
+
+      _showSuccessSnackBar('บันทึกหลักฐานรับผ้าแล้ว');
+      _launchGoogleMapsNavigation();
+    } catch (e) {
+      debugLog('❌ Laundry pickup evidence error: $e');
+      _showErrorSnackBar('ยืนยันรับผ้าไม่สำเร็จ: $e');
+    } finally {
+      if (mounted) setState(() => _isUpdatingStatus = false);
     }
   }
 
@@ -2133,6 +2220,17 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         locationName = l10n.driverNavProxParcelPickup;
         debugLog(
             '📍 Target: Parcel pickup for delivery (${targetLat}, ${targetLng})');
+      } else if (serviceType == 'laundry' &&
+          (status == 'accepted' || status == 'driver_accepted')) {
+        targetLat = _booking!.originLat;
+        targetLng = _booking!.originLng;
+        locationName = 'จุดรับผ้า';
+        debugLog('📍 Target: Laundry pickup (${targetLat}, ${targetLng})');
+      } else if (serviceType == 'laundry' && status == 'arrived') {
+        targetLat = _booking!.originLat;
+        targetLng = _booking!.originLng;
+        locationName = 'จุดรับผ้า';
+        debugLog('📍 Target: Laundry pickup evidence (${targetLat}, ${targetLng})');
       } else {
         debugLog('⚠️ Unexpected service type or status for proximity check');
         return true; // Allow if not a case we're checking

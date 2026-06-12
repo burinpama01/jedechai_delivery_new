@@ -47,6 +47,7 @@ class _FoodServiceScreenState extends State<FoodServiceScreen> {
               'id, full_name, phone_number, latitude, longitude, shop_status, shop_open_time, shop_close_time, shop_open_days, shop_auto_schedule_enabled')
           .eq('role', 'merchant')
           .eq('approval_status', 'approved')
+          .contains('merchant_service_types', ['food'])
           .order('full_name');
 
       debugLog('📊 Debug: Found ${response.length} restaurants');

@@ -10,6 +10,15 @@
 graphify-out/
 **/graphify-out/
 
+# Local agent/deploy artifacts
+.codex-tmp/
+.antigravitycli/
+admin-web/.netlify/
+admin-web/.npm-cache/
+deploy-*.zip
+laundry-*.png
+**/dart_appdata/
+
 # Dart / Flutter tooling
 **/.dart_tool/
 **/.flutter-plugins

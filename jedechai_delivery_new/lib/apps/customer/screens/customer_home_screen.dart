@@ -14,6 +14,7 @@ import '../../../common/utils/order_code_formatter.dart';
 import '../../../common/widgets/app_network_image.dart';
 import 'ride/ride_home_screen.dart';
 import 'services/food_home_screen.dart';
+import 'services/laundry_service_screen.dart';
 import 'services/parcel_service_screen.dart';
 import 'services/customer_order_detail_screen.dart';
 import 'services/tracking_screen.dart';
@@ -701,19 +702,41 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        _buildServiceCard(
-          icon: Icons.local_shipping,
-          title: AppLocalizations.of(context)!.customerHomeSendParcel,
-          subtitle: AppLocalizations.of(context)!.customerHomeSendParcelSubtitle,
-          color: AppTheme.primaryGreen,
-          isFullWidth: true,
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => ParcelServiceScreen(),
+        Row(
+          children: [
+            Expanded(
+              child: _buildServiceCard(
+                icon: Icons.local_shipping,
+                title: AppLocalizations.of(context)!.customerHomeSendParcel,
+                subtitle:
+                    AppLocalizations.of(context)!.customerHomeSendParcelSubtitle,
+                color: AppTheme.primaryGreen,
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => ParcelServiceScreen(),
+                    ),
+                  );
+                },
               ),
-            );
-          },
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildServiceCard(
+                icon: Icons.local_laundry_service_rounded,
+                title: 'ซักผ้า',
+                subtitle: 'ส่งคำขอประเมินราคา',
+                color: Colors.purple,
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const LaundryServiceScreen(),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -1414,6 +1437,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         return Icons.restaurant;
       case 'parcel':
         return Icons.local_shipping;
+      case 'laundry':
+        return Icons.local_laundry_service_rounded;
       default:
         return Icons.receipt;
     }
@@ -1427,6 +1452,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         return AppLocalizations.of(context)!.customerHomeOrderFood;
       case 'parcel':
         return AppLocalizations.of(context)!.customerHomeSendParcel;
+      case 'laundry':
+        return 'ซักผ้า';
       default:
         return serviceType;
     }
@@ -1440,6 +1467,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         return AppTheme.accentOrange;
       case 'parcel':
         return AppTheme.primaryGreen;
+      case 'laundry':
+        return Colors.purple;
       default:
         return Colors.grey;
     }

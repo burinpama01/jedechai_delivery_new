@@ -8,6 +8,7 @@ class NotificationTypes {
   static const driverJobAssigned = 'driver.job.assigned';
   static const merchantOrderCreated = 'merchant.order.created';
   static const merchantOrderAdminAction = 'merchant.order.admin_action';
+  static const laundryQuoteRequested = 'laundry.quote_requested';
   static const adminOrderCreated = 'admin.order.created';
   static const newTicket = 'new_ticket';
   static const ticketUpdated = 'ticket_updated';
@@ -52,6 +53,7 @@ class NotificationPayloadPolicy {
   static bool isMerchantNewOrder(Map<String, dynamic> data) {
     final type = _type(data);
     return type == NotificationTypes.merchantOrderCreated ||
+        type == NotificationTypes.laundryQuoteRequested ||
         type == NotificationTypes.legacyMerchantNewOrder;
   }
 

@@ -22,16 +22,18 @@ class _DriverServiceTypeSettingsState
   late Set<String> _selected;
   bool _isSaving = false;
 
-  static const _serviceTypes = ['food', 'ride', 'parcel'];
+  static const _serviceTypes = ['food', 'ride', 'parcel', 'laundry'];
   static const _labels = {
     'food': 'อาหาร (Food)',
     'ride': 'เรียกรถ (Ride)',
     'parcel': 'พัสดุ (Parcel)',
+    'laundry': 'ซักผ้า (Laundry)',
   };
   static const _icons = {
     'food': Icons.restaurant_rounded,
     'ride': Icons.directions_car_rounded,
     'parcel': Icons.inventory_2_rounded,
+    'laundry': Icons.local_laundry_service_rounded,
   };
 
   @override

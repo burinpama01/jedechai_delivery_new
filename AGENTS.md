@@ -195,7 +195,7 @@ Diff/Changes: [สรุปสิ่งที่เปลี่ยนไป]
 ให้ใช้ workflow นี้เป็นค่าเริ่มต้นสำหรับงาน software ทุกงาน เว้นแต่งานเล็กมาก เช่น typo, copy text, note-only หรือ status-only:
 
 ```text
-Scope → Route → Implement → Review → Fix → Verify → Document
+Scope → Route → Implement → Review → Fix → Verify → Document → Close Agents
 ```
 
 ### 1. Scope
@@ -235,6 +235,11 @@ Scope → Route → Implement → Review → Fix → Verify → Document
 - เมื่อจบงานต้องบันทึก `Projects/<ชื่อโปรเจค>/log.md` ใน Obsidian
 - log ต้องมี actions taken, decision/reasoning, ideas, issues/blockers, verification, review result และ next steps ถ้ามี
 - ถ้ามี plan/spec/checklist ที่ใช้ทำงาน ต้องอัปเดตสถานะหลัง log เสร็จ
+
+### 8. Close Agents
+- หลัง agent ส่งผลลัพธ์ครบและ main session ดึงข้อมูลที่จำเป็นแล้ว ต้องปิด/terminate agent session ทันทีเพื่อป้องกันการค้างและติด limit
+- ถ้า agent ยังทำงานไม่เสร็จ ห้ามปิดเงียบ ๆ ต้องระบุสถานะ เช่น running, blocked, failed หรือรอข้อมูลผู้ใช้ก่อน
+- ถ้าปิด agent ไม่ได้เพราะ tool, dashboard, permission หรือ runtime มีปัญหา ต้องบันทึกใน `Projects/<ชื่อโปรเจค>/log.md` และแจ้งผู้ใช้ชัดเจน
 
 ---
 
@@ -441,6 +446,7 @@ Next update:
 - ระบุสิ่งที่ห้ามทำและ scope แล้ว
 - ระบุ Obsidian log/issue/plan path แล้ว
 - ถ้าส่งหลาย agent พร้อมกัน งานต้อง independent และไม่เขียนไฟล์ทับกัน
+- ระบุวิธีปิด/cleanup agent หลังรับผลเสร็จแล้ว เพื่อไม่ให้ session ค้างหรือติด limit
 
 ---
 
@@ -451,6 +457,7 @@ Next update:
 - ถ้ามี shared contract เช่น API schema ให้ `tech_lead` หรือ main session กำหนด contract ก่อน
 - agent ทุกตัวต้องรู้ว่าไม่ได้อยู่คนเดียวใน codebase และห้าม revert งานของคนอื่น
 - main session ต้องเป็นคนรวมผล, resolve conflict, verify และบันทึก Obsidian
+- main session ต้องปิด agent ทุกตัวหลังรวมผลเสร็จ โดยเฉพาะงาน parallel เพื่อคืน resource และลดความเสี่ยงติด limit
 
 ---
 

@@ -93,6 +93,7 @@ export async function renderMerchantsPage(el, ctx) {
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">เบอร์โทร</th>
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">ที่อยู่ร้าน</th>
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">สถานะ</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">บริการ</th>
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">ออนไลน์</th>
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">สมัครเมื่อ</th>
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">จัดการ</th>
@@ -121,15 +122,49 @@ export async function renderMerchantsPage(el, ctx) {
   globalThis.submitAddMerchant = submitAddMerchant;
   globalThis.editMerchantProfile = editMerchantProfile;
   globalThis.submitEditMerchant = submitEditMerchant;
+  globalThis.syncMerchantServiceTypeFields = syncMerchantServiceTypeFields;
   globalThis.uploadMerchantImage = uploadMerchantImage;
   globalThis.toggleMerchantShopStatus = toggleMerchantShopStatus;
+}
+
+function merchantServiceTypes(m) {
+  return Array.isArray(m?.merchant_service_types) ? m.merchant_service_types : [];
+}
+
+function merchantPrimaryServiceType(m) {
+  return merchantServiceTypes(m).includes('laundry') ? 'laundry' : 'food';
+}
+
+export function syncMerchantServiceTypeFields() {
+  const serviceType = document.getElementById('editMrcServiceType')?.value === 'laundry' ? 'laundry' : 'food';
+  document.querySelectorAll('[data-merchant-service-panel]').forEach((panel) => {
+    panel.hidden = panel.dataset.merchantServicePanel !== serviceType;
+  });
+}
+
+function renderMerchantServiceBadges(m, escapeHtml) {
+  const serviceTypes = merchantServiceTypes(m);
+  if (!serviceTypes.length) {
+    return '<span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-500">Food</span>';
+  }
+
+  return serviceTypes
+    .map((serviceType) => {
+      const isLaundry = serviceType === 'laundry';
+      const label = isLaundry ? 'Laundry' : 'Food';
+      const cls = isLaundry
+        ? 'bg-amber-100 text-amber-700'
+        : 'bg-slate-100 text-slate-600';
+      return `<span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold ${cls} mr-1 mb-1">${escapeHtml(label)}</span>`;
+    })
+    .join('');
 }
 
 export function renderMerchantRows(merchants, ctx) {
   _ctx = ctx || _ctx;
   const { escapeHtml, statusBadge, onlineBadge, fmtDate, truthyFlag } = _deps();
 
-  if (!merchants.length) return '<tr><td colspan="8" class="px-4 py-8 text-center text-gray-400">ไม่มีข้อมูล</td></tr>';
+  if (!merchants.length) return '<tr><td colspan="9" class="px-4 py-8 text-center text-gray-400">ไม่มีข้อมูล</td></tr>';
   return merchants
     .map((m) => {
       const isOnline = typeof truthyFlag === 'function' ? truthyFlag(m.is_online) : !!m.is_online;
@@ -147,6 +182,7 @@ export function renderMerchantRows(merchants, ctx) {
               ? '<span class="ml-1 inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700">ร้านเปิด</span>'
               : '<span class="ml-1 inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-200 text-slate-700">ร้านปิด</span>'}
           </td>
+          <td class="px-4 py-3">${renderMerchantServiceBadges(m, escapeHtml)}</td>
           <td class="px-4 py-3">${onlineBadge(isOnline)}</td>
           <td class="px-4 py-3 text-gray-500 text-xs">${fmtDate(m.created_at)}</td>
           <td class="px-4 py-3">
@@ -272,6 +308,12 @@ export function showAddMerchantForm(ctx) {
         <div><label class="block text-sm font-medium mb-1">อีเมล</label><input id="addMrcEmail" type="email" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
         <div><label class="block text-sm font-medium mb-1">เบอร์โทร</label><input id="addMrcPhone" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
         <div><label class="block text-sm font-medium mb-1">ที่อยู่ร้าน</label><input id="addMrcAddr" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
+        <div><label class="block text-sm font-medium mb-1">ประเภทร้าน</label>
+          <select id="addMrcServiceType" class="w-full border rounded-lg px-3 py-2 text-sm">
+            <option value="food">Food</option>
+            <option value="laundry">Laundry</option>
+          </select>
+        </div>
         <div><label class="block text-sm font-medium mb-1">ชื่อเจ้าของ</label><input id="addMrcName" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
         <div><label class="block text-sm font-medium mb-1">รหัสผ่าน</label><input id="addMrcPass" type="password" class="w-full border rounded-lg px-3 py-2 text-sm" value="123456" /></div>
       </div>
@@ -297,6 +339,9 @@ export async function submitAddMerchant(ctx) {
         full_name: document.getElementById('addMrcName')?.value || document.getElementById('addMrcShop')?.value,
         phone_number: document.getElementById('addMrcPhone')?.value,
         shop_address: document.getElementById('addMrcAddr')?.value,
+        merchant_service_types: [
+          document.getElementById('addMrcServiceType')?.value === 'laundry' ? 'laundry' : 'food',
+        ],
       },
     });
     showToast('เพิ่มร้านค้าสำเร็จ!', 'success');
@@ -317,20 +362,45 @@ export async function editMerchantProfile(id, ctx) {
     m.merchant_gp_system_rate != null ? (parseFloat(m.merchant_gp_system_rate) * 100).toFixed(1) : '';
   let merchantDriverSplitPct =
     m.merchant_gp_driver_rate != null ? (parseFloat(m.merchant_gp_driver_rate) * 100).toFixed(1) : '';
+  let laundryMerchantDefaultPct = '10.0';
+  let laundryDeliveryDefaultPct = '0.0';
+  let laundryGpDriverDefaultPct = '0.0';
+  const currentServiceType = merchantPrimaryServiceType(m);
+  const laundryMerchantGpPct =
+    m.laundry_merchant_gp_rate != null ? (parseFloat(m.laundry_merchant_gp_rate) * 100).toFixed(1) : '';
+  const laundryDeliveryGpPct =
+    m.laundry_delivery_gp_rate != null ? (parseFloat(m.laundry_delivery_gp_rate) * 100).toFixed(1) : '';
+  const laundryGpDriverPct =
+    m.laundry_gp_driver_rate != null ? (parseFloat(m.laundry_gp_driver_rate) * 100).toFixed(1) : '';
 
   try {
     if (typeof fetchSystemConfigKeyValues === 'function') {
       const splitMap = await fetchSystemConfigKeyValues([
         `merchant_gp_system_rate_${id}`,
         `merchant_gp_driver_rate_${id}`,
+        'laundry_merchant_gp_rate_default',
+        'laundry_delivery_gp_rate_default',
+        'laundry_gp_driver_rate_default',
       ]);
       const splitSystemRaw = splitMap[`merchant_gp_system_rate_${id}`];
       const splitDriverRaw = splitMap[`merchant_gp_driver_rate_${id}`];
+      const laundryMerchantDefaultRaw = splitMap.laundry_merchant_gp_rate_default;
+      const laundryDeliveryDefaultRaw = splitMap.laundry_delivery_gp_rate_default;
+      const laundryGpDriverDefaultRaw = splitMap.laundry_gp_driver_rate_default;
       if (splitSystemRaw != null && splitSystemRaw !== '') {
         merchantSystemSplitPct = (parseFloat(splitSystemRaw) * 100).toFixed(1);
       }
       if (splitDriverRaw != null && splitDriverRaw !== '') {
         merchantDriverSplitPct = (parseFloat(splitDriverRaw) * 100).toFixed(1);
+      }
+      if (laundryMerchantDefaultRaw != null && laundryMerchantDefaultRaw !== '') {
+        laundryMerchantDefaultPct = (parseFloat(laundryMerchantDefaultRaw) * 100).toFixed(1);
+      }
+      if (laundryDeliveryDefaultRaw != null && laundryDeliveryDefaultRaw !== '') {
+        laundryDeliveryDefaultPct = (parseFloat(laundryDeliveryDefaultRaw) * 100).toFixed(1);
+      }
+      if (laundryGpDriverDefaultRaw != null && laundryGpDriverDefaultRaw !== '') {
+        laundryGpDriverDefaultPct = (parseFloat(laundryGpDriverDefaultRaw) * 100).toFixed(1);
       }
     }
   } catch (_) {
@@ -355,6 +425,13 @@ export async function editMerchantProfile(id, ctx) {
               <option value="open" ${m.shop_status !== false ? 'selected' : ''}>เปิด</option>
               <option value="closed" ${m.shop_status === false ? 'selected' : ''}>ปิดร้าน</option>
             </select>
+          </div>
+          <div><label class="block text-sm font-medium mb-1">ประเภทร้าน</label>
+            <select id="editMrcServiceType" class="w-full border rounded-lg px-3 py-2 text-sm" onchange="syncMerchantServiceTypeFields()">
+              <option value="food" ${currentServiceType === 'food' ? 'selected' : ''}>Food</option>
+              <option value="laundry" ${currentServiceType === 'laundry' ? 'selected' : ''}>Laundry</option>
+            </select>
+            <p class="text-xs text-gray-400 mt-1">ร้านหนึ่งร้านใช้ประเภทหลักเดียวเพื่อแยก flow และค่าบริการ</p>
           </div>
         </div>
       </div>
@@ -425,22 +502,37 @@ export async function editMerchantProfile(id, ctx) {
       <div class="mb-5">
         <p class="text-sm font-semibold text-gray-600 mb-2 border-b pb-1">💰 ค่าธรรมเนียมเฉพาะร้าน <span class="text-xs text-gray-400 font-normal">(ว่าง = ใช้ค่าเริ่มต้นระบบ)</span></p>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div>
+          <div data-merchant-service-panel="food">
             <label class="block text-sm font-medium mb-1">GP Share (%)</label>
             <input id="editMrcGP" type="number" value="${m.gp_rate != null ? (m.gp_rate * 100).toFixed(0) : ''}" class="w-full border rounded-lg px-3 py-2 text-sm" min="0" max="50" step="1" placeholder="ค่าเริ่มต้นระบบ">
             <p class="text-xs text-gray-400 mt-0.5">หักจากยอดอาหาร</p>
+          </div>
+          <div data-merchant-service-panel="laundry">
+            <label class="block text-sm font-medium mb-1">Laundry GP หักร้าน (%)</label>
+            <input id="editMrcLaundryMerchantGpRate" type="number" value="${laundryMerchantGpPct}" class="w-full border rounded-lg px-3 py-2 text-sm" min="0" max="100" step="0.1" placeholder="default ${laundryMerchantDefaultPct}%">
+            <p class="text-xs text-gray-400 mt-0.5">หักจากยอดซักผ้า ไม่รวมหักค่าส่ง</p>
+          </div>
+          <div data-merchant-service-panel="laundry">
+            <label class="block text-sm font-medium mb-1">Laundry GP ให้คนขับ (%)</label>
+            <input id="editMrcLaundryGpDriverRate" type="number" value="${laundryGpDriverPct}" class="w-full border rounded-lg px-3 py-2 text-sm" min="0" max="100" step="0.1" placeholder="default ${laundryGpDriverDefaultPct}%">
+            <p class="text-xs text-gray-400 mt-0.5">เพิ่มรายได้คนขับจาก GP ยอดซักผ้า</p>
+          </div>
+          <div data-merchant-service-panel="laundry">
+            <label class="block text-sm font-medium mb-1">Laundry GP หักค่าส่ง (%)</label>
+            <input id="editMrcLaundryDeliveryGpRate" type="number" value="${laundryDeliveryGpPct}" class="w-full border rounded-lg px-3 py-2 text-sm" min="0" max="100" step="0.1" placeholder="default ${laundryDeliveryDefaultPct}%">
+            <p class="text-xs text-gray-400 mt-0.5">หักจากค่าส่งขาไป/ขากลับของงานซักผ้า</p>
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">ค่าส่งเริ่มต้น (฿)</label>
             <input id="editMrcBaseFare" type="number" value="${m.custom_base_fare != null ? m.custom_base_fare : ''}" class="w-full border rounded-lg px-3 py-2 text-sm" min="0" step="1" placeholder="ค่าเริ่มต้นระบบ">
             <p class="text-xs text-gray-400 mt-0.5">ค่าส่งเริ่มต้นของร้าน</p>
           </div>
-          <div>
+          <div data-merchant-service-panel="food">
             <label class="block text-sm font-medium mb-1">GP เข้าระบบ (%)</label>
             <input id="editMrcGpSystemRate" type="number" value="${merchantSystemSplitPct}" class="w-full border rounded-lg px-3 py-2 text-sm" min="0" max="100" step="0.1" placeholder="ใช้ค่า default ระบบ">
             <p class="text-xs text-gray-400 mt-0.5">หัก wallet คนขับเข้าระบบ</p>
           </div>
-          <div>
+          <div data-merchant-service-panel="food">
             <label class="block text-sm font-medium mb-1">GP ให้คนขับ (%)</label>
             <input id="editMrcGpDriverRate" type="number" value="${merchantDriverSplitPct}" class="w-full border rounded-lg px-3 py-2 text-sm" min="0" max="100" step="0.1" placeholder="ใช้ค่า default ระบบ">
             <p class="text-xs text-gray-400 mt-0.5">เพิ่มรายได้คนขับ (ไม่หัก wallet)</p>
@@ -473,6 +565,7 @@ export async function editMerchantProfile(id, ctx) {
         <button onclick="document.getElementById('merchantFormContainer').innerHTML=''" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200">ยกเลิก</button>
       </div>
     </div>`;
+  syncMerchantServiceTypeFields();
 }
 
 export async function submitEditMerchant(id, ctx) {
@@ -490,6 +583,10 @@ export async function submitEditMerchant(id, ctx) {
     const gpRaw = document.getElementById('editMrcGP')?.value;
     const gpSystemRaw = document.getElementById('editMrcGpSystemRate')?.value;
     const gpDriverRaw = document.getElementById('editMrcGpDriverRate')?.value;
+    const serviceType = document.getElementById('editMrcServiceType')?.value === 'laundry' ? 'laundry' : 'food';
+    const laundryMerchantGpRaw = document.getElementById('editMrcLaundryMerchantGpRate')?.value;
+    const laundryDeliveryGpRaw = document.getElementById('editMrcLaundryDeliveryGpRate')?.value;
+    const laundryGpDriverRaw = document.getElementById('editMrcLaundryGpDriverRate')?.value;
     const baseFareVal = document.getElementById('editMrcBaseFare')?.value;
     const baseDistVal = document.getElementById('editMrcBaseDist')?.value;
     const perKmVal = document.getElementById('editMrcPerKm')?.value;
@@ -503,6 +600,16 @@ export async function submitEditMerchant(id, ctx) {
       gp_rate: gpRaw !== '' && gpRaw != null ? parseFloat(gpRaw) / 100 : null,
       merchant_gp_system_rate: gpSystemRaw !== '' && gpSystemRaw != null ? parseFloat(gpSystemRaw) / 100 : null,
       merchant_gp_driver_rate: gpDriverRaw !== '' && gpDriverRaw != null ? parseFloat(gpDriverRaw) / 100 : null,
+      merchant_service_types: [serviceType],
+      laundry_merchant_gp_rate: laundryMerchantGpRaw !== '' && laundryMerchantGpRaw != null
+        ? parseFloat(laundryMerchantGpRaw) / 100
+        : null,
+      laundry_delivery_gp_rate: laundryDeliveryGpRaw !== '' && laundryDeliveryGpRaw != null
+        ? parseFloat(laundryDeliveryGpRaw) / 100
+        : null,
+      laundry_gp_driver_rate: laundryGpDriverRaw !== '' && laundryGpDriverRaw != null
+        ? parseFloat(laundryGpDriverRaw) / 100
+        : null,
       custom_base_fare: baseFareVal !== '' ? parseFloat(baseFareVal) : null,
       custom_base_distance: baseDistVal !== '' ? parseFloat(baseDistVal) : null,
       custom_per_km: perKmVal !== '' ? parseFloat(perKmVal) : null,
@@ -520,11 +627,24 @@ export async function submitEditMerchant(id, ctx) {
     const gpTotal = gpRaw !== '' && gpRaw != null ? parseFloat(gpRaw) / 100 : null;
     const gpSystem = gpSystemRaw !== '' && gpSystemRaw != null ? parseFloat(gpSystemRaw) / 100 : null;
     const gpDriver = gpDriverRaw !== '' && gpDriverRaw != null ? parseFloat(gpDriverRaw) / 100 : null;
-    if (gpTotal != null && gpSystem != null && gpDriver != null) {
+    if (serviceType === 'food' && gpTotal != null && gpSystem != null && gpDriver != null) {
       const splitTotal = gpSystem + gpDriver;
       if (splitTotal - gpTotal > 0.0001) {
         throw new Error(
           `GP Share รวมต้องไม่เกิน GP ที่ตั้งไว้ (GP ${(gpTotal * 100).toFixed(1)}%, split ${(splitTotal * 100).toFixed(1)}%)`,
+        );
+      }
+    }
+    const laundryGpTotal = laundryMerchantGpRaw !== '' && laundryMerchantGpRaw != null
+      ? parseFloat(laundryMerchantGpRaw) / 100
+      : null;
+    const laundryGpDriver = laundryGpDriverRaw !== '' && laundryGpDriverRaw != null
+      ? parseFloat(laundryGpDriverRaw) / 100
+      : null;
+    if (serviceType === 'laundry' && laundryGpTotal != null && laundryGpDriver != null) {
+      if (laundryGpDriver - laundryGpTotal > 0.0001) {
+        throw new Error(
+          `Laundry GP ให้คนขับต้องไม่เกิน Laundry GP หักร้าน (GP ${(laundryGpTotal * 100).toFixed(1)}%, ให้คนขับ ${(laundryGpDriver * 100).toFixed(1)}%)`,
         );
       }
     }
@@ -595,6 +715,7 @@ export function wireMerchantsBridge() {
   globalThis.__adminWebBridge.submitAddMerchant = submitAddMerchant;
   globalThis.__adminWebBridge.editMerchantProfile = editMerchantProfile;
   globalThis.__adminWebBridge.submitEditMerchant = submitEditMerchant;
+  globalThis.__adminWebBridge.syncMerchantServiceTypeFields = syncMerchantServiceTypeFields;
   globalThis.__adminWebBridge.uploadMerchantImage = uploadMerchantImage;
   globalThis.__adminWebBridge.toggleMerchantShopStatus = toggleMerchantShopStatus;
 }
