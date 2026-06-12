@@ -7,6 +7,7 @@ import '../services/auth_service.dart';
 import '../services/fcm_notification_service.dart';
 import '../services/system_config_service.dart';
 import '../services/account_deletion_service.dart';
+import '../utils/profile_completion_policy.dart';
 import 'account_suspended_screen.dart';
 import 'pending_approval_screen.dart';
 import 'pending_deletion_screen.dart';
@@ -217,21 +218,7 @@ class _AuthGateState extends State<AuthGate> {
   }
 
   bool _checkProfileCompleted(Map<String, dynamic> profile) {
-    final role = profile['role'] as String? ?? '';
-    final fullName = (profile['full_name'] as String? ?? '').trim();
-    final phone = (profile['phone_number'] as String? ?? '').trim();
-
-    if (fullName.isEmpty || phone.isEmpty) return false;
-
-    if (role == 'driver') {
-      final licensePlate = (profile['license_plate'] as String? ?? '').trim();
-      if (licensePlate.isEmpty) return false;
-    }
-    if (role == 'merchant') {
-      final shopAddress = (profile['shop_address'] as String? ?? '').trim();
-      if (shopAddress.isEmpty) return false;
-    }
-    return true;
+    return isProfileCompleteForRole(profile);
   }
 
   void _onProfileCompleted() {

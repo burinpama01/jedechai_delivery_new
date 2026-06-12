@@ -5,6 +5,7 @@ import '../../utils/debug_logger.dart';
 import '../services/auth_service.dart';
 import '../services/image_picker_service.dart';
 import '../services/storage_service.dart';
+import '../utils/profile_completion_policy.dart';
 import '../../l10n/app_localizations.dart';
 import 'app_network_image.dart';
 import '../../theme/app_theme.dart';
@@ -25,7 +26,8 @@ class ProfileCompletionScreen extends StatefulWidget {
   });
 
   @override
-  State<ProfileCompletionScreen> createState() => _ProfileCompletionScreenState();
+  State<ProfileCompletionScreen> createState() =>
+      _ProfileCompletionScreenState();
 }
 
 class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
@@ -50,6 +52,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
   final _bankAccountNameController = TextEditingController();
 
   String _selectedVehicleType = 'motorcycle';
+  String? _selectedMerchantServiceType;
 
   // Driver document uploads
   File? _idCardFile;
@@ -74,6 +77,8 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
     _bankNameController.text = p['bank_name'] ?? '';
     _bankAccountNumberController.text = p['bank_account_number'] ?? '';
     _bankAccountNameController.text = p['bank_account_name'] ?? '';
+    _selectedMerchantServiceType =
+        normalizeMerchantServiceType(p['merchant_service_types']);
     if (p['vehicle_type'] != null && p['vehicle_type'].toString().isNotEmpty) {
       _selectedVehicleType = _normalizeVehicleTypeLabel(p['vehicle_type']);
     }
@@ -120,22 +125,33 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
     if (file == null) return;
     setState(() {
       switch (type) {
-        case 'id_card': _idCardFile = file; break;
-        case 'license': _driverLicenseFile = file; break;
-        case 'vehicle': _vehiclePhotoFile = file; break;
-        case 'plate': _licensePlatePhotoFile = file; break;
+        case 'id_card':
+          _idCardFile = file;
+          break;
+        case 'license':
+          _driverLicenseFile = file;
+          break;
+        case 'vehicle':
+          _vehiclePhotoFile = file;
+          break;
+        case 'plate':
+          _licensePlatePhotoFile = file;
+          break;
       }
     });
   }
 
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
+    if (!_isDriver && !_ensureMerchantServiceTypeSelected()) return;
 
     setState(() => _isSaving = true);
 
     try {
       final userId = AuthService.userId;
-      if (userId == null) throw Exception(AppLocalizations.of(context)!.menuMgmtUserNotFound);
+      if (userId == null) {
+        throw Exception(AppLocalizations.of(context)!.menuMgmtUserNotFound);
+      }
 
       final updateData = <String, dynamic>{
         'full_name': _fullNameController.text.trim(),
@@ -151,23 +167,31 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
         updateData['license_plate'] = _licensePlateController.text.trim();
         // Upload documents if selected
         if (_idCardFile != null) {
-          final url = await StorageService.uploadImage(imageFile: _idCardFile!, folder: 'driver_docs/$userId/id_card');
+          final url = await StorageService.uploadImage(
+              imageFile: _idCardFile!, folder: 'driver_docs/$userId/id_card');
           if (url != null) updateData['id_card_url'] = url;
         }
         if (_driverLicenseFile != null) {
-          final url = await StorageService.uploadImage(imageFile: _driverLicenseFile!, folder: 'driver_docs/$userId/license');
+          final url = await StorageService.uploadImage(
+              imageFile: _driverLicenseFile!,
+              folder: 'driver_docs/$userId/license');
           if (url != null) updateData['driver_license_url'] = url;
         }
         if (_vehiclePhotoFile != null) {
-          final url = await StorageService.uploadImage(imageFile: _vehiclePhotoFile!, folder: 'driver_docs/$userId/vehicle');
+          final url = await StorageService.uploadImage(
+              imageFile: _vehiclePhotoFile!,
+              folder: 'driver_docs/$userId/vehicle');
           if (url != null) updateData['vehicle_registration_url'] = url;
         }
         if (_licensePlatePhotoFile != null) {
-          final url = await StorageService.uploadImage(imageFile: _licensePlatePhotoFile!, folder: 'driver_docs/$userId/plate');
+          final url = await StorageService.uploadImage(
+              imageFile: _licensePlatePhotoFile!,
+              folder: 'driver_docs/$userId/plate');
           if (url != null) updateData['vehicle_plate'] = url;
         }
       } else {
         updateData['shop_address'] = _shopAddressController.text.trim();
+        updateData['merchant_service_types'] = [_selectedMerchantServiceType!];
       }
 
       await Supabase.instance.client
@@ -180,7 +204,8 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.profileCompleteSaveSuccess),
+            content:
+                Text(AppLocalizations.of(context)!.profileCompleteSaveSuccess),
           ),
         );
         widget.onCompleted();
@@ -190,7 +215,8 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.profileCompleteError(e.toString())),
+            content: Text(AppLocalizations.of(context)!
+                .profileCompleteError(e.toString())),
           ),
         );
       }
@@ -203,7 +229,9 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
-    final roleText = _isDriver ? l10n.profileCompleteRoleDriver : l10n.profileCompleteRoleMerchant;
+    final roleText = _isDriver
+        ? l10n.profileCompleteRoleDriver
+        : l10n.profileCompleteRoleMerchant;
     final steps = _isDriver
         ? [
             l10n.profileCompleteStepPersonalTitle,
@@ -300,7 +328,9 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                                     color: isActive
                                         ? AppTheme.primaryGreen
                                         : colorScheme.onSurfaceVariant,
-                                    fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                                    fontWeight: isActive
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
                                   )),
                             ],
                           ),
@@ -353,7 +383,8 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                         onPressed: () => setState(() => _currentStep--),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                         child: Text(l10n.profileCompleteBack),
                       ),
@@ -367,7 +398,8 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                         backgroundColor: AppTheme.primaryGreen,
                         foregroundColor: colorScheme.onPrimary,
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                       child: _isSaving
                           ? SizedBox(
@@ -382,7 +414,8 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                               _currentStep < steps.length - 1
                                   ? l10n.profileCompleteNext
                                   : l10n.profileCompleteSaveStart,
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
                             ),
                     ),
                   ),
@@ -397,32 +430,54 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
 
   void _onNext() {
     final steps = _isDriver ? 4 : 2;
-    
+    if (!_isDriver &&
+        _currentStep == 0 &&
+        !_ensureMerchantServiceTypeSelected()) {
+      return;
+    }
+
     // Validate document uploads on step 2 for drivers
     if (_isDriver && _currentStep == 2) {
       final missing = <String>[];
       final l10n = AppLocalizations.of(context)!;
-      if (_idCardFile == null) missing.add(l10n.profileCompleteDocIdCard);
-      if (_driverLicenseFile == null) missing.add(l10n.profileCompleteDocDriverLicense);
-      if (_vehiclePhotoFile == null) missing.add(l10n.profileCompleteDocVehiclePhoto);
-      if (_licensePlatePhotoFile == null) missing.add(l10n.profileCompleteDocPlatePhoto);
-      
+      if (_idCardFile == null) {
+        missing.add(l10n.profileCompleteDocIdCard);
+      }
+      if (_driverLicenseFile == null) {
+        missing.add(l10n.profileCompleteDocDriverLicense);
+      }
+      if (_vehiclePhotoFile == null) {
+        missing.add(l10n.profileCompleteDocVehiclePhoto);
+      }
+      if (_licensePlatePhotoFile == null) {
+        missing.add(l10n.profileCompleteDocPlatePhoto);
+      }
+
       if (missing.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.profileCompleteUploadMissing(missing.join(", "))),
+            content: Text(AppLocalizations.of(context)!
+                .profileCompleteUploadMissing(missing.join(", "))),
             duration: const Duration(seconds: 3),
           ),
         );
         return;
       }
     }
-    
+
     if (_currentStep < steps - 1) {
       setState(() => _currentStep++);
     } else {
       _saveProfile();
     }
+  }
+
+  bool _ensureMerchantServiceTypeSelected() {
+    if (_selectedMerchantServiceType != null) return true;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('กรุณาเลือกประเภทร้าน')),
+    );
+    return false;
   }
 
   Widget _buildStepContent() {
@@ -453,7 +508,8 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
       key: key,
       icon: Icons.person,
       title: AppLocalizations.of(context)!.profileCompleteStepPersonalTitle,
-      subtitle: AppLocalizations.of(context)!.profileCompleteStepPersonalSubtitle,
+      subtitle:
+          AppLocalizations.of(context)!.profileCompleteStepPersonalSubtitle,
       children: [
         _buildField(
           controller: _fullNameController,
@@ -482,7 +538,8 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
       key: key,
       icon: Icons.directions_car,
       title: AppLocalizations.of(context)!.profileCompleteStepVehicleTitle,
-      subtitle: AppLocalizations.of(context)!.profileCompleteStepVehicleSubtitle,
+      subtitle:
+          AppLocalizations.of(context)!.profileCompleteStepVehicleSubtitle,
       children: [
         Text(
           AppLocalizations.of(context)!.profileCompleteVehicleTypeLabel,
@@ -591,7 +648,9 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
           children: [
             Icon(
               icon,
-              color: hasFile ? AppTheme.primaryGreen : colorScheme.onSurfaceVariant,
+              color: hasFile
+                  ? AppTheme.primaryGreen
+                  : colorScheme.onSurfaceVariant,
               size: 28,
             ),
             const SizedBox(width: 14),
@@ -599,15 +658,20 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: hasFile ? AppTheme.primaryGreen : colorScheme.onSurface,
-                  )),
+                  Text(label,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: hasFile
+                            ? AppTheme.primaryGreen
+                            : colorScheme.onSurface,
+                      )),
                   const SizedBox(height: 2),
                   Text(
                     hasFile
-                        ? AppLocalizations.of(context)!.profileCompleteDocSelected
-                        : AppLocalizations.of(context)!.profileCompleteDocTapToPick,
+                        ? AppLocalizations.of(context)!
+                            .profileCompleteDocSelected
+                        : AppLocalizations.of(context)!
+                            .profileCompleteDocTapToPick,
                     style: TextStyle(
                       fontSize: 12,
                       color: hasFile
@@ -663,7 +727,8 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
       key: key,
       icon: Icons.store,
       title: AppLocalizations.of(context)!.profileCompleteStepMerchantTitle,
-      subtitle: AppLocalizations.of(context)!.profileCompleteStepMerchantSubtitle,
+      subtitle:
+          AppLocalizations.of(context)!.profileCompleteStepMerchantSubtitle,
       children: [
         _buildField(
           controller: _fullNameController,
@@ -693,7 +758,52 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
               ? AppLocalizations.of(context)!.profileCompleteAddressRequired
               : null,
         ),
+        const SizedBox(height: 16),
+        Text(
+          'ประเภทร้าน',
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 10,
+          runSpacing: 8,
+          children: [
+            _merchantServiceTypeChip('food', 'Food', Icons.restaurant),
+            _merchantServiceTypeChip(
+              'laundry',
+              'Laundry',
+              Icons.local_laundry_service,
+            ),
+          ],
+        ),
       ],
+    );
+  }
+
+  Widget _merchantServiceTypeChip(String value, String label, IconData icon) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isSelected = _selectedMerchantServiceType == value;
+    return ChoiceChip(
+      label: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 18,
+            color: isSelected
+                ? colorScheme.onPrimary
+                : colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 6),
+          Text(label),
+        ],
+      ),
+      selected: isSelected,
+      selectedColor: AppTheme.primaryGreen,
+      labelStyle: TextStyle(
+        color: isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
+      ),
+      onSelected: (_) => setState(() => _selectedMerchantServiceType = value),
     );
   }
 
@@ -713,14 +823,16 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
         const SizedBox(height: 16),
         _buildField(
           controller: _bankAccountNumberController,
-          label: AppLocalizations.of(context)!.profileCompleteBankAccountNumberLabel,
+          label: AppLocalizations.of(context)!
+              .profileCompleteBankAccountNumberLabel,
           icon: Icons.numbers,
           keyboardType: TextInputType.number,
         ),
         const SizedBox(height: 16),
         _buildField(
           controller: _bankAccountNameController,
-          label: AppLocalizations.of(context)!.profileCompleteBankAccountNameLabel,
+          label:
+              AppLocalizations.of(context)!.profileCompleteBankAccountNameLabel,
           icon: Icons.person_outline,
         ),
       ],
@@ -746,7 +858,8 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
         hintText: hint,
         prefixIcon: Icon(icon, size: 20),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
     );
   }
@@ -796,7 +909,9 @@ class _StepCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      Text(title,
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 2),
                       Text(
                         subtitle,
