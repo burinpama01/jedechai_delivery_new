@@ -12,3 +12,6 @@ verify_jwt = false
 
 [functions.send-admin-telegram]
 verify_jwt = false
+
+[functions.notify-laundry-quote-request]
+verify_jwt = false

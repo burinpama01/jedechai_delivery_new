@@ -427,6 +427,76 @@ test("laundry quote request sends merchant FCM on the audible order channel", ()
   assert.match(customerScreen, /merchant_laundry_quote_new/);
 });
 
+test("customer laundry quote request invokes a scoped admin external notification function", () => {
+  const customerScreen = readFileSync(
+    new URL(
+      "../jedechai_delivery_new/lib/apps/customer/screens/services/laundry_service_screen.dart",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+
+  const submitStart = customerScreen.indexOf("Future<void> _submitQuoteRequest()");
+  const notifyMerchantStart = customerScreen.indexOf(
+    "Future<void> _notifyMerchantQuoteRequested",
+    submitStart,
+  );
+  const submitBody = customerScreen.slice(submitStart, notifyMerchantStart);
+
+  assert.notEqual(submitStart, -1, "_submitQuoteRequest not found");
+  assert.notEqual(notifyMerchantStart, -1, "_notifyMerchantQuoteRequested not found");
+  assert.doesNotMatch(customerScreen, /AdminLineNotificationService/);
+  assert.match(customerScreen, /_notifyAdminsQuoteRequested/);
+  assert.match(customerScreen, /notify-laundry-quote-request/);
+  assert.match(customerScreen, /'laundry_order_id':\s*laundryOrderId/);
+  assert.doesNotMatch(customerScreen, /'merchant_id':\s*merchantId/);
+  assert.doesNotMatch(customerScreen, /'pickup':\s*pickupAddress/);
+  assert.match(submitBody, /_notifyMerchantQuoteRequested/);
+  assert.match(submitBody, /_notifyAdminsQuoteRequested/);
+});
+
+test("laundry admin external notification function validates owner and derives payload server-side", () => {
+  const functionPath = new URL(
+    "../supabase/functions/notify-laundry-quote-request/index.ts",
+    import.meta.url,
+  );
+  const migration = readLatestMigration(
+    /laundry.*quote.*admin.*notifications.*\.sql$/,
+    "laundry quote admin notification migration not found",
+  );
+
+  assert.ok(existsSync(functionPath), "notify-laundry-quote-request function missing");
+  const source = readFileSync(functionPath, "utf8");
+
+  assert.match(migration, /admin_external_notified_at timestamptz/);
+  assert.match(source, /laundry_order_id/);
+  assert.match(source, /auth\.getUser\(token\)/);
+  assert.match(source, /\.from\("laundry_orders"\)/);
+  assert.match(source, /\.eq\("id", laundryOrderId\)/);
+  assert.match(source, /order\.customer_id !== user\.id/);
+  assert.match(source, /order_owner_required/);
+  assert.match(source, /\.from\("profiles"\)/);
+  assert.match(source, /merchantName/);
+  assert.match(source, /laundryItemCount/);
+  assert.match(source, /pickupAddressSummary/);
+  assert.match(source, /sendAdminLineNotification/);
+  assert.match(source, /sendAdminTelegramNotification/);
+  assert.match(source, /Promise\.allSettled/);
+  assert.match(source, /AbortSignal\.timeout\(ADMIN_NOTIFICATION_TIMEOUT_MS\)/);
+  assert.match(source, /admin_external_notification_claimed_at/);
+  assert.match(source, /admin_external_notified_at/);
+  assert.match(source, /\.is\("admin_external_notification_claimed_at", null\)/);
+  assert.match(source, /already_claimed/);
+  assert.match(source, /no_channels_enabled/);
+  assert.doesNotMatch(source, /customer_note/);
+
+  const claimStart = source.indexOf("const { data: claim");
+  const sendStart = source.indexOf("const results = await Promise.allSettled");
+  assert.notEqual(claimStart, -1, "atomic notification claim not found");
+  assert.notEqual(sendStart, -1, "notification send block not found");
+  assert.ok(claimStart < sendStart, "idempotency claim must happen before sending");
+});
+
 test("laundry completion migration releases wallet payouts without generic commission", () => {
   const completionMigration = readFileSync(
     new URL(

@@ -57,6 +57,29 @@ void main() {
       expect(grouped[DateTime(2026, 5, 7)]?.map((n) => n.id), ['1', '2']);
       expect(grouped[DateTime(2026, 5, 8)]?.map((n) => n.id), ['3']);
     });
+
+    test('uses Thai labels for laundry quote notification types', () {
+      expect(
+        NotificationCenterUtils.typeLabel('laundry.quote_requested'),
+        'คำขอซักผ้า',
+      );
+      expect(
+        NotificationCenterUtils.typeLabel('laundry.quote_message'),
+        'แชทซักผ้า',
+      );
+      expect(
+        NotificationCenterUtils.typeLabel('laundry.quote_accepted'),
+        'Quote ซักผ้า',
+      );
+      expect(
+        NotificationCenterUtils.typeLabel('laundry.quote_expired'),
+        'Quote หมดอายุ',
+      );
+      expect(
+        NotificationCenterUtils.typeLabel('laundry.quote_sent'),
+        'ราคาซักผ้า',
+      );
+    });
   });
 }
 

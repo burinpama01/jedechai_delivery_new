@@ -184,20 +184,7 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
   }
 
   String _typeLabel(String? type) {
-    switch (type) {
-      case 'driver.job.available':
-        return 'งานใหม่';
-      case 'merchant.order.created':
-        return 'ออเดอร์ใหม่';
-      case 'customer.booking.status_changed':
-        return 'สถานะงาน';
-      case 'customer.booking.driver_assigned':
-        return 'คนขับรับงาน';
-      case 'chat':
-        return 'แชท';
-      default:
-        return type == null || type.isEmpty ? 'ทั่วไป' : type;
-    }
+    return NotificationCenterUtils.typeLabel(type);
   }
 }
 

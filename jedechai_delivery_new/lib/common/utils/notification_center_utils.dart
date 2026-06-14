@@ -43,4 +43,35 @@ class NotificationCenterUtils {
         return 'แจ้งเตือน';
     }
   }
+
+  static String typeLabel(String? type) {
+    switch (type) {
+      case 'driver.job.available':
+        return 'งานใหม่';
+      case 'merchant.order.created':
+        return 'ออเดอร์ใหม่';
+      case 'customer.booking.status_changed':
+        return 'สถานะงาน';
+      case 'customer.booking.driver_assigned':
+        return 'คนขับรับงาน';
+      case 'chat':
+        return 'แชท';
+      case 'laundry.quote_requested':
+        return 'คำขอซักผ้า';
+      case 'laundry.quote_ready':
+        return 'ราคาซักผ้า';
+      case 'laundry.quote_sent':
+        return 'ราคาซักผ้า';
+      case 'laundry.quote_message':
+        return 'แชทซักผ้า';
+      case 'laundry.quote_accepted':
+        return 'Quote ซักผ้า';
+      case 'laundry.quote_expired':
+        return 'Quote หมดอายุ';
+      case 'laundry.return_booking_created':
+        return 'ส่งผ้ากลับ';
+      default:
+        return type == null || type.isEmpty ? 'ทั่วไป' : type;
+    }
+  }
 }

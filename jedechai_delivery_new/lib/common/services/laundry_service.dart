@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../utils/laundry_order_customer_mapper.dart';
+
 class LaundryService {
   LaundryService({SupabaseClient? client})
       : _client = client ?? Supabase.instance.client;
@@ -292,12 +294,27 @@ class LaundryService {
   Future<List<Map<String, dynamic>>> fetchMerchantLaundryOrders() async {
     final response = await _client
         .from('laundry_orders')
-        .select('*, customer:customer_id(id, full_name, phone_number)')
+        .select()
         .order('created_at', ascending: false);
 
-    final orders = (response as List)
+    var orders = (response as List)
         .map((row) => Map<String, dynamic>.from(row as Map))
         .toList();
+    final customerIds = laundryOrderCustomerIds(orders);
+    if (customerIds.isNotEmpty) {
+      final customersResponse = await _client
+          .from('profiles')
+          .select('id, full_name, phone_number')
+          .inFilter('id', customerIds);
+      final customers = (customersResponse as List)
+          .map((row) => Map<String, dynamic>.from(row as Map))
+          .toList();
+      orders = attachLaundryOrderCustomers(
+        orders: orders,
+        customers: customers,
+      );
+    }
+
     for (final order in orders) {
       order['_attachment_signed_urls'] =
           await _signedQuoteAttachmentUrls(order['attachment_urls']);

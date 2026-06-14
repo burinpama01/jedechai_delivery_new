@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
@@ -7,6 +9,7 @@ import '../../../../common/services/laundry_service.dart';
 import '../../../../common/services/notification_sender.dart';
 import '../../../../common/services/supabase_service.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../../utils/debug_logger.dart';
 
 class LaundryServiceScreen extends StatefulWidget {
   const LaundryServiceScreen({super.key});
@@ -200,6 +203,11 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
             merchantId: merchantId,
             laundryOrderId: laundryOrderId,
           );
+          unawaited(
+            _notifyAdminsQuoteRequested(
+              laundryOrderId: laundryOrderId,
+            ),
+          );
         }
         _showMessage('ส่งคำขอประเมินราคาแล้ว รอร้านตอบกลับ');
         _itemsController.clear();
@@ -248,6 +256,26 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
         'route': 'merchant_laundry',
       },
     );
+  }
+
+  Future<void> _notifyAdminsQuoteRequested({
+    required String laundryOrderId,
+  }) async {
+    try {
+      final response = await SupabaseService.client.functions.invoke(
+        'notify-laundry-quote-request',
+        body: {
+          'laundry_order_id': laundryOrderId,
+        },
+      );
+      if (response.status >= 400) {
+        debugLog(
+          'Laundry admin external notification failed: HTTP ${response.status}',
+        );
+      }
+    } catch (e) {
+      debugLog('Laundry admin external notification failed: $e');
+    }
   }
 
   Future<void> _addAttachmentFromCamera() async {
