@@ -26,6 +26,36 @@ class AdminService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> _attachProfilesByUserId({
+    required List<Map<String, dynamic>> rows,
+    String idField = 'user_id',
+  }) async {
+    final ids = rows
+        .map((row) => row[idField])
+        .whereType<String>()
+        .where((id) => id.isNotEmpty)
+        .toSet()
+        .toList();
+    if (ids.isEmpty) return rows;
+
+    final profileRows = await _client
+        .from('profiles')
+        .select('id, full_name, role, phone_number')
+        .inFilter('id', ids);
+    final profilesById = {
+      for (final profile in (profileRows as List).cast<Map<String, dynamic>>())
+        profile['id'] as String: profile,
+    };
+
+    return rows.map((row) {
+      final copy = Map<String, dynamic>.from(row);
+      final id = copy[idField] as String?;
+      final profile = id == null ? null : profilesById[id];
+      if (profile != null) copy['profiles'] = profile;
+      return copy;
+    }).toList();
+  }
+
   // ========================================
   // Dashboard / Overview
   // ========================================
@@ -571,16 +601,16 @@ class AdminService {
     String? status,
   }) async {
     try {
-      var query = _client
-          .from('withdrawal_requests')
-          .select('*, profiles!inner(full_name, role, phone_number)');
+      var query = _client.from('withdrawal_requests').select('*');
 
       if (status != null) {
         query = query.eq('status', status);
       }
 
       final response = await query.order('created_at', ascending: false);
-      return (response as List).cast<Map<String, dynamic>>();
+      return _attachProfilesByUserId(
+        rows: (response as List).cast<Map<String, dynamic>>(),
+      );
     } catch (e) {
       debugLog('❌ Error fetching withdrawal requests: $e');
       return [];
@@ -682,16 +712,16 @@ class AdminService {
     String? status,
   }) async {
     try {
-      var query = _client
-          .from('topup_requests')
-          .select('*, profiles!inner(full_name, role, phone_number)');
+      var query = _client.from('topup_requests').select('*');
 
       if (status != null) {
         query = query.eq('status', status);
       }
 
       final response = await query.order('created_at', ascending: false);
-      return (response as List).cast<Map<String, dynamic>>();
+      return _attachProfilesByUserId(
+        rows: (response as List).cast<Map<String, dynamic>>(),
+      );
     } catch (e) {
       debugLog('❌ Error fetching topup requests: $e');
       return [];

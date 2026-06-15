@@ -961,3 +961,22 @@ test("merchant can explicitly start washing before creating laundry return booki
   assert.match(screen, /status == 'at_merchant'/);
   assert.match(screen, /เริ่มซัก/);
 });
+
+test("runtime profile lookups avoid PostgREST relationship embeds that can PGRST200", () => {
+  const riskyFiles = [
+    "../jedechai_delivery_new/lib/common/services/admin_service.dart",
+    "../jedechai_delivery_new/lib/common/services/realtime_service.dart",
+    "../jedechai_delivery_new/lib/common/services/ticket_service.dart",
+  ];
+  const riskyRelationshipPattern =
+    /profiles!(inner|user_id|driver_id)|\b(customer_id|merchant_id|driver_id)\s*\(/;
+
+  for (const file of riskyFiles) {
+    const source = readFileSync(new URL(file, import.meta.url), "utf8");
+    assert.doesNotMatch(
+      source,
+      riskyRelationshipPattern,
+      `${file} must not rely on PostgREST relationship embeds for profile ids`,
+    );
+  }
+});

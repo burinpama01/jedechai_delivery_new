@@ -83,17 +83,35 @@ class TicketService {
   /// Get all tickets (admin) with reporter info joined from profiles.
   Future<List<SupportTicket>> getAllTickets({String? statusFilter}) async {
     try {
-      var query = _client
-          .from('support_tickets')
-          .select('*, profiles!user_id(full_name, phone_number)');
+      var query = _client.from('support_tickets').select('*');
 
       if (statusFilter != null && statusFilter != 'all') {
         query = query.eq('status', statusFilter);
       }
 
       final response = await query.order('created_at', ascending: false);
+      final rows = (response as List).cast<Map<String, dynamic>>();
+      final userIds = rows
+          .map((row) => row['user_id'])
+          .whereType<String>()
+          .where((id) => id.isNotEmpty)
+          .toSet()
+          .toList();
+      final profilesById = <String, Map<String, dynamic>>{};
+      if (userIds.isNotEmpty) {
+        final profileRows = await _client
+            .from('profiles')
+            .select('id, full_name, phone_number')
+            .inFilter('id', userIds);
+        for (final profile
+            in (profileRows as List).cast<Map<String, dynamic>>()) {
+          profilesById[profile['id'] as String] = profile;
+        }
+      }
 
-      return (response as List)
+      return rows
+          .map((json) => Map<String, dynamic>.from(json)
+            ..['profiles'] = profilesById[json['user_id']])
           .map((json) => SupportTicket.fromJson(json))
           .toList();
     } catch (e) {
@@ -164,7 +182,11 @@ class TicketService {
               userId: userId,
               title: 'อัปเดตสถานะ: $subject',
               body: body,
-              data: {'type': 'ticket_updated', 'ticket_id': ticketId, 'status': newStatus},
+              data: {
+                'type': 'ticket_updated',
+                'ticket_id': ticketId,
+                'status': newStatus
+              },
             );
           } catch (e) {
             debugLog('⚠️ Failed to notify ticket owner: $e');
@@ -199,7 +221,13 @@ class TicketService {
       return stats;
     } catch (e) {
       debugLog('❌ Error fetching ticket stats: $e');
-      return {'open': 0, 'in_progress': 0, 'resolved': 0, 'closed': 0, 'total': 0};
+      return {
+        'open': 0,
+        'in_progress': 0,
+        'resolved': 0,
+        'closed': 0,
+        'total': 0
+      };
     }
   }
 
@@ -216,30 +244,33 @@ class TicketService {
       final admins =
           await _client.from('profiles').select('id').eq('role', 'admin');
 
-      await Future.wait((admins as List).map((admin) =>
-          NotificationSender.sendNotification(
-            targetUserId: admin['id'] as String,
-            title: '🎫 Ticket ใหม่',
-            body: subject,
-            data: {'type': 'new_ticket'},
-          )));
+      await Future.wait(
+          (admins as List).map((admin) => NotificationSender.sendNotification(
+                targetUserId: admin['id'] as String,
+                title: '🎫 Ticket ใหม่',
+                body: subject,
+                data: {'type': 'new_ticket'},
+              )));
 
       final priorityLabel = const {
-        'low': '🟢 ต่ำ',
-        'medium': '🟡 กลาง',
-        'high': '🔴 สูง',
-        'urgent': '🚨 เร่งด่วน',
-      }[priority] ?? priority;
+            'low': '🟢 ต่ำ',
+            'medium': '🟡 กลาง',
+            'high': '🔴 สูง',
+            'urgent': '🚨 เร่งด่วน',
+          }[priority] ??
+          priority;
       await AdminLineNotificationService.notify(
         eventType: 'support_ticket_new',
         title: 'JDC: มี Ticket ใหม่',
-        message: 'หัวข้อ: $subject\nหมวด: $category | ความสำคัญ: $priorityLabel',
+        message:
+            'หัวข้อ: $subject\nหมวด: $category | ความสำคัญ: $priorityLabel',
         data: {
           'ticket_id': ticketId,
           'subject': subject,
           'category': category,
           'priority': priorityLabel,
-          if (bookingId != null && bookingId.isNotEmpty) 'booking_id': bookingId,
+          if (bookingId != null && bookingId.isNotEmpty)
+            'booking_id': bookingId,
         },
       );
     } catch (e) {

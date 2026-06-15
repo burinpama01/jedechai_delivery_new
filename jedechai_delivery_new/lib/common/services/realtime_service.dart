@@ -1,4 +1,4 @@
-﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
+import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
@@ -6,7 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_service.dart';
 
 /// Realtime Service
-/// 
+///
 /// Handles real-time subscriptions for driver locations and bookings
 class RealtimeService {
   final _client = SupabaseService.client;
@@ -56,9 +56,10 @@ class RealtimeService {
     _lastDriverId = driverId;
     _driverLocationChannel?.unsubscribe();
     _driverLocationController?.close();
-    
-    _driverLocationController = StreamController<Map<String, dynamic>?>.broadcast();
-    
+
+    _driverLocationController =
+        StreamController<Map<String, dynamic>?>.broadcast();
+
     _driverLocationChannel = _client
         .channel('driver_location_$driverId')
         .onPostgresChanges(
@@ -75,29 +76,30 @@ class RealtimeService {
           },
         )
         .subscribe((status, [error]) {
-          debugPrint('Driver location channel status: $status');
-          if (error != null) {
-            debugPrint('Driver location channel error: $error');
-            if (_isJwtExpiredError(error)) {
-              debugPrint('🔑 JWT Token expired in realtime subscription');
-              unawaited(_refreshSessionAndResubscribe());
-            }
-          }
-        });
+      debugPrint('Driver location channel status: $status');
+      if (error != null) {
+        debugPrint('Driver location channel error: $error');
+        if (_isJwtExpiredError(error)) {
+          debugPrint('🔑 JWT Token expired in realtime subscription');
+          unawaited(_refreshSessionAndResubscribe());
+        }
+      }
+    });
 
     return _driverLocationController!.stream;
   }
 
   /// Subscribe to booking updates
   Stream<Map<String, dynamic>?> subscribeToBooking(String bookingId) {
-    debugLog('🔍 RealtimeService: Setting up subscription for booking: $bookingId');
+    debugLog(
+        '🔍 RealtimeService: Setting up subscription for booking: $bookingId');
     _lastBookingId = bookingId;
-    
+
     _bookingChannel?.unsubscribe();
     _bookingController?.close();
-    
+
     _bookingController = StreamController<Map<String, dynamic>?>.broadcast();
-    
+
     _bookingChannel = _client
         .channel('booking_$bookingId')
         .onPostgresChanges(
@@ -114,31 +116,34 @@ class RealtimeService {
             debugLog('📡 RealtimeService: Event type: ${payload.eventType}');
             debugLog('📡 RealtimeService: New record: ${payload.newRecord}');
             debugLog('📡 RealtimeService: Old record: ${payload.oldRecord}');
-            
+
             // For UPDATE and INSERT events, use newRecord
             // For DELETE events, use oldRecord (if available) or null
             // ignore: unnecessary_null_comparison
             if (payload.newRecord != null) {
-              debugLog('📡 RealtimeService: Sending newRecord to stream: ${payload.newRecord}');
+              debugLog(
+                  '📡 RealtimeService: Sending newRecord to stream: ${payload.newRecord}');
               _bookingController?.add(payload.newRecord);
             } else {
-              debugLog('📡 RealtimeService: Sending null to stream (DELETE event)');
+              debugLog(
+                  '📡 RealtimeService: Sending null to stream (DELETE event)');
               _bookingController?.add(null);
             }
           },
         )
         .subscribe((status, [error]) {
-          debugPrint('Booking channel status: $status');
-          if (error != null) {
-            debugPrint('Booking channel error: $error');
-            if (_isJwtExpiredError(error)) {
-              debugPrint('🔑 JWT Token expired in realtime subscription');
-              unawaited(_refreshSessionAndResubscribe());
-            }
-          }
-        });
+      debugPrint('Booking channel status: $status');
+      if (error != null) {
+        debugPrint('Booking channel error: $error');
+        if (_isJwtExpiredError(error)) {
+          debugPrint('🔑 JWT Token expired in realtime subscription');
+          unawaited(_refreshSessionAndResubscribe());
+        }
+      }
+    });
 
-    debugLog('✅ RealtimeService: Subscription setup complete for booking: $bookingId');
+    debugLog(
+        '✅ RealtimeService: Subscription setup complete for booking: $bookingId');
     return _bookingController!.stream;
   }
 
@@ -203,7 +208,7 @@ class RealtimeService {
 
     final response = await _client
         .from('driver_locations')
-        .select('*, profiles!driver_id(approval_status)')
+        .select('*')
         .eq('is_online', true)
         .eq('is_available', true)
         .gte('location_lat', lat - latDelta)
@@ -212,17 +217,34 @@ class RealtimeService {
         .lte('location_lng', lng + lngDelta);
 
     final drivers = (response as List).cast<Map<String, dynamic>>();
+    final driverIds = drivers
+        .map((driver) => driver['driver_id'])
+        .whereType<String>()
+        .where((id) => id.isNotEmpty)
+        .toSet()
+        .toList();
+    final profilesById = <String, Map<String, dynamic>>{};
+    if (driverIds.isNotEmpty) {
+      final profileRows = await _client
+          .from('profiles')
+          .select('id, approval_status')
+          .inFilter('id', driverIds);
+      for (final profile
+          in (profileRows as List).cast<Map<String, dynamic>>()) {
+        profilesById[profile['id'] as String] = profile;
+      }
+    }
 
     return drivers.where((driver) {
-      // Verify approval status from joined profile
-      final profile = driver['profiles'] as Map<String, dynamic>?;
+      final profile = profilesById[driver['driver_id']];
       if (profile?['approval_status'] != 'approved') return false;
 
       final driverLat = (driver['location_lat'] as num?)?.toDouble();
       final driverLng = (driver['location_lng'] as num?)?.toDouble();
       if (driverLat == null || driverLng == null) return false;
 
-      return _calculateHaversineDistance(lat, lng, driverLat, driverLng) <= radiusKm;
+      return _calculateHaversineDistance(lat, lng, driverLat, driverLng) <=
+          radiusKm;
     }).toList();
   }
 
