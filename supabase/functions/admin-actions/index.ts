@@ -238,6 +238,9 @@ serve(async (req) => {
       case "accept_order_as_merchant":
         result = await handleAcceptOrderAsMerchant(supabaseAdmin, body, adminId);
         break;
+      case "mark_food_ready_as_merchant":
+        result = await handleMarkFoodReadyAsMerchant(supabaseAdmin, body, adminId);
+        break;
       case "assign_order":
         result = await handleAssignOrder(supabaseAdmin, body);
         break;
@@ -1449,6 +1452,62 @@ async function handleAcceptOrderAsMerchant(supabase, body, adminId: string) {
   }
 
   return jsonResponse({ success: true, status: "preparing", booking_id: order_id });
+}
+
+async function handleMarkFoodReadyAsMerchant(supabase, body, adminId: string) {
+  const { order_id } = body;
+  if (!order_id) return errorResponse("Missing 'order_id'");
+
+  const { data: booking, error: bookingErr } = await supabase
+    .from("bookings")
+    .select("id, status, service_type, merchant_id, customer_id, driver_id")
+    .eq("id", order_id)
+    .maybeSingle();
+  if (bookingErr) return errorResponse(bookingErr.message);
+  if (!booking) return errorResponse("Booking not found", 404);
+  if (booking.service_type !== "food") {
+    return errorResponse("Only food orders can be marked ready on behalf of merchant");
+  }
+  if (!booking.merchant_id) {
+    return errorResponse("Food order has no merchant");
+  }
+
+  const { data: rpcResult, error: rpcErr } = await supabase.rpc("mark_food_ready_guarded", {
+    p_booking_id: order_id,
+    p_merchant_id: booking.merchant_id,
+  });
+  if (rpcErr) return errorResponse(rpcErr.message);
+  if (rpcResult?.success !== true) {
+    return errorResponse(rpcResult?.error || "Cannot mark food ready in current status");
+  }
+
+  let driverCandidateNotificationCount = 0;
+  if (rpcResult.status === "ready_for_pickup" && !booking.driver_id) {
+    const { data: driverNotifications, error: driverNotifyErr } = await supabase.rpc("notify_driver_visible_job", {
+      p_booking_id: order_id,
+    });
+    if (driverNotifyErr) {
+      console.error("mark_food_ready_as_merchant driver notification error:", driverNotifyErr);
+    } else {
+      driverCandidateNotificationCount = Array.isArray(driverNotifications) ? driverNotifications.length : 0;
+    }
+  }
+
+  console.log("mark_food_ready_as_merchant", {
+    admin_id: adminId,
+    booking_id: order_id,
+    merchant_id: booking.merchant_id,
+    status: rpcResult.status,
+    driver_candidate_notifications: driverCandidateNotificationCount,
+  });
+
+  return jsonResponse({
+    success: true,
+    booking_id: order_id,
+    status: rpcResult.status,
+    pending_driver_arrival: rpcResult.pending_driver_arrival === true,
+    driver_candidate_notification_count: driverCandidateNotificationCount,
+  });
 }
 
 async function handleRebroadcastOrder(supabase, body) {

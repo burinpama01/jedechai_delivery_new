@@ -4,6 +4,7 @@ import {
   buildOrderItemsPayload,
   getOrderItemsPriceChange,
   renderAdminNote,
+  renderCancellationReason,
   renderOrderItemRows,
   renderSelectedOptions,
   validateOrderItemsPayload,
@@ -48,6 +49,26 @@ test('renderAdminNote renders existing note safely', () => {
 
   assert.match(html, /Admin note/);
   assert.match(html, /&lt;call merchant&gt;/);
+});
+
+test('renderCancellationReason renders cancelled order reason safely', () => {
+  const html = renderCancellationReason({
+    status: 'cancelled',
+    cancellation_reason: 'admin_force_cancel: <driver unavailable>',
+  }, escapeHtml);
+
+  assert.match(html, /เหตุผลการยกเลิก/);
+  assert.match(html, /&lt;driver unavailable&gt;/);
+  assert.doesNotMatch(html, /admin_force_cancel:/);
+});
+
+test('renderCancellationReason falls back to legacy cancel_reason field', () => {
+  const html = renderCancellationReason({
+    status: 'cancelled',
+    cancel_reason: 'customer requested',
+  }, escapeHtml);
+
+  assert.match(html, /customer requested/);
 });
 
 test('getOrderItemsPriceChange calculates increase and cash guidance', () => {

@@ -117,6 +117,32 @@ export function renderAdminNote(note, escapeHtml) {
     </div>`;
 }
 
+function normalizeCancellationReason(order) {
+  const rawReason = order?.cancellation_reason
+    ?? order?.cancel_reason
+    ?? order?.cancellationReason
+    ?? order?.cancelReason
+    ?? '';
+
+  return String(rawReason)
+    .trim()
+    .replace(/^admin_force_cancel:\s*/i, '')
+    .trim();
+}
+
+export function renderCancellationReason(order, escapeHtml) {
+  const status = String(order?.status || '').toLowerCase();
+  const text = normalizeCancellationReason(order);
+
+  if (status !== 'cancelled' && !text) return '';
+
+  return `
+    <div class="p-3 rounded-xl bg-red-50 border border-red-100 text-xs">
+      <p class="font-semibold text-red-700 mb-1">เหตุผลการยกเลิก</p>
+      <p class="text-red-800 whitespace-pre-wrap">${esc(text || '-', escapeHtml)}</p>
+    </div>`;
+}
+
 export function getOrderItemsPriceChange({ originalTotal, items, paymentMethod } = {}) {
   const newTotal = Math.round((items || []).reduce((sum, item) => {
     const qty = Number(item.quantity || 1);

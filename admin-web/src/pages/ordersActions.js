@@ -2,6 +2,7 @@ import {
   buildOrderItemsPayload,
   getOrderItemsPriceChange,
   renderAdminNote,
+  renderCancellationReason,
   renderContactCard,
   renderOrderItemRows,
   validateOrderItemsPayload,
@@ -367,7 +368,7 @@ export async function submitPickupLocation(orderId, ctx) {
 }
 
 async function _adminActAsMerchantOrder(orderId, action, adminNote = '') {
-  const { supabase, showToast } = _deps();
+  const { supabase, callAdminAction, showToast } = _deps();
 
   const isAccept = action === 'accept';
   const confirmText = isAccept
@@ -416,11 +417,13 @@ async function _adminActAsMerchantOrder(orderId, action, adminNote = '') {
       }
       updatedRows = [{ id: orderId, status: 'preparing' }];
     } else {
-      const { data: rpcResult, error: rpcError } = await supabase.rpc('mark_food_ready_guarded', {
-        p_booking_id: orderId,
-        p_merchant_id: booking.merchant_id,
+      if (typeof callAdminAction !== 'function') {
+        throw new Error('admin_actions_unavailable');
+      }
+      const rpcResult = await callAdminAction({
+        action: 'mark_food_ready_as_merchant',
+        order_id: orderId,
       });
-      if (rpcError) throw rpcError;
       if (rpcResult?.success !== true) {
         throw new Error(rpcResult?.error || 'ไม่สามารถอัปเดตเป็นอาหารพร้อมได้ในสถานะปัจจุบัน');
       }
@@ -438,8 +441,8 @@ async function _adminActAsMerchantOrder(orderId, action, adminNote = '') {
     const shortId = orderId.substring(0, 8);
     const pendingDriverArrival = !isAccept && updatedRows[0]?.pending_driver_arrival === true;
     const notifyRows = [];
-    // For isAccept, Edge Function already inserted merchant + customer notifications server-side.
-    // Only build client-side rows for non-accept, plus driver (Edge Function doesn't notify driver).
+    // Accept notifications are server-side. Ready candidate-driver notifications are server-side;
+    // client rows below cover merchant/customer and assigned-driver detail updates.
     if (!isAccept && booking.merchant_id) {
       notifyRows.push({
         user_id: booking.merchant_id,
@@ -948,6 +951,7 @@ export async function showOrderDetail(orderId, ctx) {
         </div>
         ${itemsHtml}
         ${renderAdminNote(order.admin_note, escapeHtml)}
+        ${renderCancellationReason(order, escapeHtml)}
         <div class="flex gap-2 pt-2 flex-wrap">
           ${canEditPickup ? `<button onclick="showEditPickupLocationModal('${orderId}')" class="min-h-[44px] px-4 py-2 bg-blue-100 text-blue-600 rounded-lg text-xs font-semibold">Edit pickup</button>` : ''}
           ${canEditItems ? `<button onclick="showEditOrderItemsModal('${orderId}')" class="min-h-[44px] px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold">Edit items</button>` : ''}

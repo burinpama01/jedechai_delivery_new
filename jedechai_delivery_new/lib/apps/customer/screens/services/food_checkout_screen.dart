@@ -19,6 +19,7 @@ import '../../../../common/services/merchant_food_config_service.dart';
 import '../../../../common/services/payment_service.dart';
 import '../../../../common/services/system_config_service.dart';
 import '../../../../common/utils/app_time.dart';
+import '../../../../common/utils/food_delivery_distance_policy.dart';
 import '../../../../common/services/admin_line_notification_service.dart';
 import '../../../../common/utils/platform_adaptive.dart';
 import '../../../../common/utils/notification_payload_policy.dart';
@@ -81,6 +82,11 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
     final total = subtotal + deliveryFee - _couponDiscount;
     return total < 0 ? 0 : total;
   }
+
+  bool get _shouldShowDistanceWarning => FoodDeliveryDistancePolicy.shouldWarn(
+        distanceKm: _distanceKm,
+        maxDeliveryRadiusKm: _maxDeliveryRadius,
+      );
 
   @override
   void initState() {
@@ -181,7 +187,8 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       minute: pickedTime.minute,
     );
 
-    if (selected.isBefore(DateTime.now().toUtc().add(const Duration(minutes: 20)))) {
+    if (selected
+        .isBefore(DateTime.now().toUtc().add(const Duration(minutes: 20)))) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -224,7 +231,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
     if (mounted) setState(() => _isCalculatingFee = false);
 
     // 4. ตรวจสอบระยะทางเกินรัศมีที่กำหนด
-    if (mounted && _distanceKm > _maxDeliveryRadius && !_distanceWarningShown) {
+    if (mounted && _shouldShowDistanceWarning && !_distanceWarningShown) {
       _distanceWarningShown = true;
       _showDistanceWarningDialog();
     }
@@ -521,7 +528,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       if (mounted) setState(() => _isCalculatingFee = false);
 
       // ตรวจสอบระยะทางเกินรัศมี
-      if (mounted && _distanceKm > _maxDeliveryRadius) {
+      if (mounted && _shouldShowDistanceWarning) {
         _showDistanceWarningDialog();
       }
     }
@@ -540,7 +547,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
     if (mounted) setState(() => _isCalculatingFee = false);
 
     // ตรวจสอบระยะทางเกินรัศมี
-    if (mounted && _distanceKm > _maxDeliveryRadius) {
+    if (mounted && _shouldShowDistanceWarning) {
       _showDistanceWarningDialog();
     }
   }
@@ -566,7 +573,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       if (mounted) setState(() => _isCalculatingFee = false);
 
       // ตรวจสอบระยะทางเกินรัศมี
-      if (mounted && _distanceKm > _maxDeliveryRadius) {
+      if (mounted && _shouldShowDistanceWarning) {
         _showDistanceWarningDialog();
       }
     }
@@ -730,9 +737,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                                 AppLocalizations.of(context)!
                                     .foodCheckoutPayTransfer,
                                 Icons.account_balance),
-                            _buildPaymentOption(
-                                'wallet',
-                                'Wallet',
+                            _buildPaymentOption('wallet', 'Wallet',
                                 Icons.account_balance_wallet),
                           ],
                         ),
@@ -1017,7 +1022,8 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              AppLocalizations.of(context)!.foodPrepTimeEstimate(maxPrepTime.toString()),
+              AppLocalizations.of(context)!
+                  .foodPrepTimeEstimate(maxPrepTime.toString()),
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
@@ -1120,15 +1126,6 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
             'ไม่พบตำแหน่งร้านค้า กรุณาให้ร้านค้าตั้งค่าตำแหน่งร้านก่อนรับออเดอร์');
       }
 
-      // Enforce delivery radius as a business rule (not just a warning)
-      if (_distanceKm > _maxDeliveryRadius) {
-        throw Exception(
-            AppLocalizations.of(context)!.foodDistanceWarningTitle +
-            '\n' +
-            AppLocalizations.of(context)!.foodDistanceWarningBody(
-                _distanceKm.toStringAsFixed(1), _maxDeliveryRadius.toStringAsFixed(1)));
-      }
-
       final note = _noteController.text.trim();
       if (note.isNotEmpty) {
         cart.setNote(note);
@@ -1183,17 +1180,15 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         } catch (e) {
           debugLog('❌ recordUsage failed — auto-cancelling booking: $e');
           try {
-            await Supabase.instance.client
-                .from('bookings')
-                .update({
-                  'status': 'cancelled',
-                  'notes': 'auto_cancelled: coupon_record_failed',
-                })
-                .eq('id', booking['id'] as String);
+            await Supabase.instance.client.from('bookings').update({
+              'status': 'cancelled',
+              'notes': 'auto_cancelled: coupon_record_failed',
+            }).eq('id', booking['id'] as String);
           } catch (cancelErr) {
             debugLog('⚠️ Could not auto-cancel booking: $cancelErr');
           }
-          throw Exception('ไม่สามารถใช้คูปองได้ ออเดอร์ถูกยกเลิกอัตโนมัติ กรุณาลองสั่งใหม่');
+          throw Exception(
+              'ไม่สามารถใช้คูปองได้ ออเดอร์ถูกยกเลิกอัตโนมัติ กรุณาลองสั่งใหม่');
         }
       }
 
@@ -1208,17 +1203,16 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         } catch (e) {
           debugLog('❌ wallet payment failed — auto-cancelling booking: $e');
           try {
-            await Supabase.instance.client
-                .from('bookings')
-                .update({
-                  'status': 'cancelled',
-                  'notes': 'auto_cancelled: wallet_payment_failed',
-                })
-                .eq('id', booking['id'] as String);
+            await Supabase.instance.client.from('bookings').update({
+              'status': 'cancelled',
+              'notes': 'auto_cancelled: wallet_payment_failed',
+            }).eq('id', booking['id'] as String);
           } catch (cancelErr) {
-            debugLog('⚠️ Could not auto-cancel wallet failed booking: $cancelErr');
+            debugLog(
+                '⚠️ Could not auto-cancel wallet failed booking: $cancelErr');
           }
-          throw Exception('ชำระผ่าน Wallet ไม่สำเร็จ ออเดอร์ถูกยกเลิกอัตโนมัติ กรุณาลองใหม่');
+          throw Exception(
+              'ชำระผ่าน Wallet ไม่สำเร็จ ออเดอร์ถูกยกเลิกอัตโนมัติ กรุณาลองใหม่');
         }
       }
 
@@ -1414,8 +1408,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
           'payment_method': paymentMethod,
           'distance_km': distanceKm.toStringAsFixed(2),
           'customer_address': customerAddress,
-          if (scheduledAt != null)
-            'scheduled_at': AppTime.toDbIso(scheduledAt),
+          if (scheduledAt != null) 'scheduled_at': AppTime.toDbIso(scheduledAt),
         },
       );
 
