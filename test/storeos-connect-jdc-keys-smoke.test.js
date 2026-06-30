@@ -43,6 +43,36 @@ const adminSettingsActionsSource = readFileSync(
   new URL("../admin-web/src/pages/settingsActionsBridge.js", import.meta.url),
   "utf8",
 );
+const adminMerchantsPageSource = readFileSync(
+  new URL("../admin-web/src/pages/merchantsPage.js", import.meta.url),
+  "utf8",
+);
+const adminIndexSource = readFileSync(
+  new URL("../admin-web/index.html", import.meta.url),
+  "utf8",
+);
+const adminAppSource = readFileSync(
+  new URL("../admin-web/app.js", import.meta.url),
+  "utf8",
+);
+const adminNetlifyIgnoreSource = readFileSync(
+  new URL("../admin-web/.netlifyignore", import.meta.url),
+  "utf8",
+);
+const adminProductionConfigPreflightUrl = new URL(
+  "../scripts/verify-admin-web-production-config.mjs",
+  import.meta.url,
+);
+const adminProductionConfigPreflightSource = existsSync(adminProductionConfigPreflightUrl)
+  ? readFileSync(adminProductionConfigPreflightUrl, "utf8")
+  : "";
+const adminDeployPrepUrl = new URL(
+  "../scripts/prepare-admin-web-netlify-deploy.mjs",
+  import.meta.url,
+);
+const adminDeployPrepSource = existsSync(adminDeployPrepUrl)
+  ? readFileSync(adminDeployPrepUrl, "utf8")
+  : "";
 const storeOsGuideSource = readFileSync(
   new URL("../jedechai_delivery_new/Plan/StoreOS-Connect-JDC-Side-Guide-v3.html", import.meta.url),
   "utf8",
@@ -335,4 +365,40 @@ test("Admin web settings provisions StoreOS JDC key and webhook secret", () => {
   assert.match(adminSettingsActionsSource, /webhook_secret/);
   assert.match(adminSettingsActionsSource, /secret_returned/);
   assert.doesNotMatch(adminSettingsActionsSource, /service_role|SUPABASE_SERVICE_ROLE/i);
+});
+
+test("Admin web merchant list exposes merchant_id for StoreOS shop mapping", () => {
+  assert.match(adminIndexSource, /<script src="app\.js/);
+  assert.match(adminAppSource, /loadScript\(["']app\.legacy\.js["']\)/);
+  assert.match(adminMerchantsPageSource, /StoreOS merchant_id/);
+  assert.match(adminMerchantsPageSource, /data-merchant-id/);
+  assert.match(adminMerchantsPageSource, /copyMerchantIdForStoreOs/);
+  assert.match(adminMerchantsPageSource, /escapeJsStringForInlineHandler/);
+  assert.match(adminMerchantsPageSource, /navigator\.clipboard\.writeText\(value\)/);
+  assert.match(adminMerchantsPageSource, /คัดลอก merchant_id แล้ว/);
+  assert.doesNotMatch(adminMerchantsPageSource, /copyMerchantIdForStoreOs\('\$\{m\.id\}'\)/);
+  assert.match(adminLegacySource, /StoreOS merchant_id/);
+  assert.match(adminLegacySource, /copyMerchantIdForStoreOs/);
+  assert.match(adminLegacySource, /escapeJsStringForInlineHandler/);
+  assert.doesNotMatch(adminLegacySource, /copyMerchantIdForStoreOs\('\$\{m\.id\}'\)/);
+});
+
+test("Admin web deploy keeps production config script available for login", () => {
+  assert.match(adminIndexSource, /<script src="config\.production\.js"/);
+  assert.match(
+    adminNetlifyIgnoreSource,
+    /^config\.production\.js$/m,
+    "source deploy ignore must protect the raw local production config from direct upload",
+  );
+  assert.ok(adminProductionConfigPreflightSource, "missing admin-web production config deploy preflight script");
+  assert.match(adminProductionConfigPreflightSource, /config\.production\.js/);
+  assert.match(adminProductionConfigPreflightSource, /your-project/);
+  assert.match(adminProductionConfigPreflightSource, /placeholder Supabase host/);
+  assert.match(adminProductionConfigPreflightSource, /JEDECHAI_CONFIG|SUPABASE_URL|SUPABASE_ANON_KEY/);
+  assert.match(adminProductionConfigPreflightSource, /process\.exitCode\s*=\s*1/);
+  assert.ok(adminDeployPrepSource, "missing admin-web Netlify deploy staging script");
+  assert.match(adminDeployPrepSource, /SUPABASE_URL/);
+  assert.match(adminDeployPrepSource, /SUPABASE_ANON_KEY/);
+  assert.match(adminDeployPrepSource, /config\.production\.js/);
+  assert.match(adminDeployPrepSource, /\.netlifyignore/);
 });

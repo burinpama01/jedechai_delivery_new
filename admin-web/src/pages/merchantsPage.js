@@ -160,6 +160,32 @@ function renderMerchantServiceBadges(m, escapeHtml) {
     .join('');
 }
 
+export function escapeJsStringForInlineHandler(value) {
+  return String(value ?? '')
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\r/g, '\\r')
+    .replace(/\n/g, '\\n')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+}
+
+export async function copyMerchantIdForStoreOs(merchantId, ctx) {
+  _ctx = ctx || _ctx;
+  const { showToast } = _deps();
+  const value = typeof merchantId === 'string' ? merchantId.trim() : '';
+  if (!value) {
+    showToast('ไม่พบ merchant_id', 'error');
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(value);
+    showToast('คัดลอก merchant_id แล้ว', 'success');
+  } catch (_) {
+    showToast('คัดลอกไม่สำเร็จ กรุณาเลือก merchant_id แล้วคัดลอกเอง', 'error');
+  }
+}
+
 export function renderMerchantRows(merchants, ctx) {
   _ctx = ctx || _ctx;
   const { escapeHtml, statusBadge, onlineBadge, fmtDate, truthyFlag } = _deps();
@@ -170,9 +196,20 @@ export function renderMerchantRows(merchants, ctx) {
       const isOnline = typeof truthyFlag === 'function' ? truthyFlag(m.is_online) : !!m.is_online;
       const isShopOpen = typeof truthyFlag === 'function' ? truthyFlag(m.shop_status) : !!m.shop_status;
       const safeName = escapeHtml((m.full_name || '').replace(/'/g, ''));
+      const merchantIdHtml = escapeHtml(m.id);
+      const merchantIdJsArg = escapeHtml(escapeJsStringForInlineHandler(m.id));
       return `
         <tr class="table-row border-b border-gray-50">
-          <td class="px-4 py-3 font-medium">${escapeHtml(m.full_name) || '-'}</td>
+          <td class="px-4 py-3 font-medium">
+            <div>${escapeHtml(m.full_name) || '-'}</div>
+            <div class="mt-1 flex items-center gap-1 text-[11px] text-gray-400">
+              <span class="font-semibold text-gray-500">StoreOS merchant_id</span>
+              <code data-merchant-id="${merchantIdHtml}" class="font-mono text-[10px] bg-gray-50 border border-gray-100 rounded px-1.5 py-0.5 text-gray-500 break-all">${merchantIdHtml}</code>
+              <button type="button" onclick="copyMerchantIdForStoreOs('${merchantIdJsArg}')" class="inline-flex items-center justify-center w-6 h-6 rounded-md border border-gray-200 text-gray-500 hover:bg-gray-50" title="Copy merchant_id">
+                <span class="material-icons-round text-[13px]">content_copy</span>
+              </button>
+            </div>
+          </td>
           <td class="px-4 py-3 text-xs text-gray-500">${escapeHtml(globalThis._emailMap?.[m.id]) || '-'}</td>
           <td class="px-4 py-3">${escapeHtml(m.phone_number) || '-'}</td>
           <td class="px-4 py-3 text-gray-600 max-w-[200px] truncate">${escapeHtml(m.shop_address) || '-'}</td>
@@ -409,6 +446,8 @@ export async function editMerchantProfile(id, ctx) {
 
   const c = document.getElementById('merchantFormContainer');
   if (!c) return;
+  const merchantIdHtml = escapeHtml(m.id);
+  const merchantIdJsArg = escapeHtml(escapeJsStringForInlineHandler(m.id));
   c.innerHTML = `
     <div class="glass-card p-6">
       <h4 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
@@ -417,6 +456,19 @@ export async function editMerchantProfile(id, ctx) {
       <div class="mb-5">
         <p class="text-sm font-semibold text-gray-600 mb-2 border-b pb-1">📋 ข้อมูลร้าน</p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="md:col-span-2 rounded-lg border border-violet-100 bg-violet-50/60 p-3">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="text-xs font-semibold uppercase tracking-wider text-violet-700">StoreOS merchant_id</p>
+                <p data-merchant-id="${merchantIdHtml}" class="mt-1 font-mono text-xs text-violet-700 break-all">${merchantIdHtml}</p>
+              </div>
+              <button type="button" onclick="copyMerchantIdForStoreOs('${merchantIdJsArg}')" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-violet-200 bg-white text-xs font-semibold text-violet-700 hover:bg-violet-50">
+                <span class="material-icons-round text-[14px]">content_copy</span>
+                Copy
+              </button>
+            </div>
+            <p class="mt-2 text-xs text-violet-600">ใช้ค่านี้ให้ StoreOS map ร้านกับ JDC ระดับระบบ</p>
+          </div>
           <div><label class="block text-sm font-medium mb-1">ชื่อร้าน / เจ้าของ</label><input id="editMrcName" value="${escapeHtml(m.full_name)}" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
           <div><label class="block text-sm font-medium mb-1">เบอร์โทร</label><input id="editMrcPhone" value="${escapeHtml(m.phone_number)}" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
           <div class="md:col-span-2"><label class="block text-sm font-medium mb-1">ที่อยู่ร้าน</label><input id="editMrcAddr" value="${escapeHtml(m.shop_address)}" class="w-full border rounded-lg px-3 py-2 text-sm" /></div>
@@ -718,4 +770,7 @@ export function wireMerchantsBridge() {
   globalThis.__adminWebBridge.syncMerchantServiceTypeFields = syncMerchantServiceTypeFields;
   globalThis.__adminWebBridge.uploadMerchantImage = uploadMerchantImage;
   globalThis.__adminWebBridge.toggleMerchantShopStatus = toggleMerchantShopStatus;
+  globalThis.__adminWebBridge.copyMerchantIdForStoreOs = copyMerchantIdForStoreOs;
+
+  globalThis.copyMerchantIdForStoreOs = copyMerchantIdForStoreOs;
 }
