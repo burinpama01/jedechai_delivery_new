@@ -4095,6 +4095,9 @@ async function renderSettings(el) {
           </label>
         </div>
         <div class="mt-5 flex flex-wrap gap-3">
+          <button onclick="saveStoreOsConnectionSettings()" class="px-5 py-2.5 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-emerald-200" style="background:linear-gradient(135deg,#059669,#34d399);">
+            <span class="material-icons-round text-sm align-middle mr-1">save</span> บันทึกค่า
+          </button>
           <button onclick="provisionStoreOsConnection()" class="px-5 py-2.5 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-violet-200" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);">
             <span class="material-icons-round text-sm align-middle mr-1">vpn_key</span> สร้าง/โหลด JDC key
           </button>
@@ -5270,6 +5273,16 @@ async function testAdminTelegram() {
   } catch (e) {
     console.error('Test Telegram error:', e);
     showToast('ส่ง Telegram ไม่สำเร็จ: ' + (e.message || 'ตรวจสอบ Edge Function/Bot token'), 'error');
+  }
+}
+
+async function saveStoreOsConnectionSettings() {
+  try {
+    const bridged = window.__adminWebBridge?.saveStoreOsConnectionSettings;
+    if (typeof bridged === 'function') return await bridged({ supabase, supabaseAuth, currentUser, callAdminAction, showToast, escapeHtml, fmt, fmtDate, refreshCurrentPage });
+  } catch (e) {
+    console.error('saveStoreOsConnectionSettings bridge error:', e);
+    showToast('บันทึกค่า StoreOS Connect ไม่สำเร็จ: ' + (e.message || e), 'error');
   }
 }
 

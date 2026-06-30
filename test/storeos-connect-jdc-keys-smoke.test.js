@@ -348,6 +348,8 @@ test("Admin web settings provisions StoreOS JDC key and webhook secret", () => {
   assert.match(adminLegacySource, /System connection/);
   assert.doesNotMatch(adminLegacySource, /settStoreOsMerchantId/);
   assert.doesNotMatch(adminLegacySource, /settStoreOsShopId/);
+  assert.match(adminLegacySource, /saveStoreOsConnectionSettings\(\)/);
+  assert.match(adminLegacySource, /บันทึกค่า/);
   assert.match(adminLegacySource, /provisionStoreOsConnection\(\)/);
   assert.match(adminLegacySource, /copyStoreOsCredential\(["']settStoreOsJdcKey["']\)/);
   assert.match(adminLegacySource, /copyStoreOsCredential\(["']settStoreOsWebhookSecret["']\)/);
@@ -360,6 +362,10 @@ test("Admin web settings provisions StoreOS JDC key and webhook secret", () => {
   assert.match(adminSettingsActionsSource, /storeos_webhook_url:\s*storeosWebhookUrl/);
   assert.doesNotMatch(adminSettingsActionsSource, /merchant_id:\s*merchantId/);
   assert.doesNotMatch(adminSettingsActionsSource, /storeos_shop_id:\s*storeosShopId/);
+  assert.match(adminSettingsActionsSource, /export async function saveStoreOsConnectionSettings/);
+  assert.match(adminSettingsActionsSource, /saveOnly:\s*true/);
+  assert.match(adminSettingsActionsSource, /rotateSecret:\s*false/);
+  assert.match(adminSettingsActionsSource, /globalThis\.__adminWebBridge\.saveStoreOsConnectionSettings/);
   assert.match(adminSettingsActionsSource, /rotate_secret:\s*rotateSecret/);
   assert.match(adminSettingsActionsSource, /connection\.jdc_connection_key/);
   assert.match(adminSettingsActionsSource, /webhook_secret/);

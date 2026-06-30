@@ -574,8 +574,12 @@ export async function provisionStoreOsConnection(ctx, options = {}) {
   const { showToast, supabase } = _deps();
 
   const storeosWebhookUrl = storeOsInputValue('settStoreOsWebhookUrl');
-  const rotateSecret = options.rotateSecret === true ||
-    document.getElementById('settStoreOsRotateSecret')?.checked === true;
+  const saveOnly = options.saveOnly === true;
+  const rotateSecret = options.rotateSecret === true
+    ? true
+    : saveOnly
+      ? false
+      : document.getElementById('settStoreOsRotateSecret')?.checked === true;
   const menuManagedByPos =
     document.getElementById('settStoreOsMenuManagedByPos')?.checked !== false;
 
@@ -589,7 +593,10 @@ export async function provisionStoreOsConnection(ctx, options = {}) {
     return;
   }
 
-  showToast('กำลังออก JDC key สำหรับ StoreOS...', 'info');
+  showToast(
+    saveOnly ? 'กำลังบันทึกค่า StoreOS Connect...' : 'กำลังออก JDC key สำหรับ StoreOS...',
+    'info',
+  );
 
   try {
     const { data, error } = await supabase.functions.invoke('connect-provision-merchant', {
@@ -617,18 +624,33 @@ export async function provisionStoreOsConnection(ctx, options = {}) {
     setStoreOsText('settStoreOsSecretPreview', connection.secret_preview || '-');
     setStoreOsText(
       'settStoreOsResult',
-      data?.secret_returned
+      saveOnly
+        ? data?.secret_returned
+          ? 'บันทึกค่าและสร้าง connection แล้ว: copy JDC key และ webhook secret ไปใส่ StoreOS ได้ทันที'
+          : 'บันทึกค่า StoreOS Connect แล้ว'
+        : data?.secret_returned
         ? 'สร้างข้อมูลเชื่อมต่อแล้ว: copy JDC key และ webhook secret ไปใส่ StoreOS ได้ทันที'
         : 'โหลดข้อมูลเชื่อมต่อแล้ว: webhook secret เดิมไม่ถูกแสดงซ้ำ หากต้องใช้ secret ใหม่ให้กด Rotate webhook secret',
     );
 
-    showToast('ออกข้อมูลเชื่อมต่อ StoreOS สำเร็จ', 'success');
+    showToast(
+      saveOnly ? 'บันทึกค่า StoreOS Connect สำเร็จ' : 'ออกข้อมูลเชื่อมต่อ StoreOS สำเร็จ',
+      'success',
+    );
   } catch (e) {
     try {
       console.error('provisionStoreOsConnection error:', e);
     } catch (_) {}
-    showToast('ออกข้อมูลเชื่อมต่อ StoreOS ไม่สำเร็จ: ' + (e?.message || JSON.stringify(e)), 'error');
+    showToast(
+      (saveOnly ? 'บันทึกค่า StoreOS Connect ไม่สำเร็จ: ' : 'ออกข้อมูลเชื่อมต่อ StoreOS ไม่สำเร็จ: ') +
+        (e?.message || JSON.stringify(e)),
+      'error',
+    );
   }
+}
+
+export async function saveStoreOsConnectionSettings(ctx) {
+  return await provisionStoreOsConnection(ctx, { saveOnly: true, rotateSecret: false });
 }
 
 export async function rotateStoreOsWebhookSecret(ctx) {
@@ -695,6 +717,7 @@ export function wireSettingsActionsBridge() {
   globalThis.__adminWebBridge.testAdminLine = testAdminLine;
   globalThis.__adminWebBridge.saveAdminTelegram = saveAdminTelegram;
   globalThis.__adminWebBridge.testAdminTelegram = testAdminTelegram;
+  globalThis.__adminWebBridge.saveStoreOsConnectionSettings = saveStoreOsConnectionSettings;
   globalThis.__adminWebBridge.provisionStoreOsConnection = provisionStoreOsConnection;
   globalThis.__adminWebBridge.rotateStoreOsWebhookSecret = rotateStoreOsWebhookSecret;
   globalThis.__adminWebBridge.copyStoreOsCredential = copyStoreOsCredential;
