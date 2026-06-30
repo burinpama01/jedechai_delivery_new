@@ -555,6 +555,116 @@ export async function testAdminEmail(ctx) {
   }
 }
 
+function storeOsInputValue(id) {
+  return document.getElementById(id)?.value?.trim() || '';
+}
+
+function setStoreOsInputValue(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.value = value || '';
+}
+
+function setStoreOsText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value || '';
+}
+
+export async function provisionStoreOsConnection(ctx, options = {}) {
+  _ctx = ctx || _ctx;
+  const { showToast, supabase } = _deps();
+
+  const merchantId = storeOsInputValue('settStoreOsMerchantId');
+  const storeosWebhookUrl = storeOsInputValue('settStoreOsWebhookUrl');
+  const storeosShopId = storeOsInputValue('settStoreOsShopId');
+  const rotateSecret = options.rotateSecret === true ||
+    document.getElementById('settStoreOsRotateSecret')?.checked === true;
+  const menuManagedByPos =
+    document.getElementById('settStoreOsMenuManagedByPos')?.checked !== false;
+
+  if (!merchantId) {
+    showToast('กรุณากรอก merchant_id ก่อน', 'error');
+    return;
+  }
+
+  if (storeosWebhookUrl && !/^https:\/\//i.test(storeosWebhookUrl)) {
+    showToast('StoreOS webhook URL ต้องขึ้นต้นด้วย https://', 'error');
+    return;
+  }
+
+  if (!supabase?.functions?.invoke) {
+    showToast('ยังไม่พบ Supabase client สำหรับเรียก Edge Function', 'error');
+    return;
+  }
+
+  showToast('กำลังออก JDC key สำหรับ StoreOS...', 'info');
+
+  try {
+    const { data, error } = await supabase.functions.invoke('connect-provision-merchant', {
+      body: {
+        merchant_id: merchantId,
+        storeos_webhook_url: storeosWebhookUrl || null,
+        storeos_shop_id: storeosShopId || null,
+        rotate_secret: rotateSecret,
+        menu_managed_by_pos: menuManagedByPos,
+      },
+    });
+
+    if (error) {
+      const details = await readFunctionError(error);
+      throw new Error(details || error.message || 'edge_function_failed');
+    }
+
+    if (data?.success === false) {
+      throw new Error(data?.error || 'storeos_connect_provision_failed');
+    }
+
+    const connection = data?.connection || {};
+    const webhookSecret = data?.webhook_secret || '';
+
+    setStoreOsInputValue('settStoreOsJdcKey', connection.jdc_connection_key || '');
+    setStoreOsInputValue('settStoreOsWebhookSecret', webhookSecret);
+    setStoreOsText('settStoreOsSecretPreview', connection.secret_preview || '-');
+    setStoreOsText(
+      'settStoreOsResult',
+      data?.secret_returned
+        ? 'สร้างข้อมูลเชื่อมต่อแล้ว: copy JDC key และ webhook secret ไปใส่ StoreOS ได้ทันที'
+        : 'โหลดข้อมูลเชื่อมต่อแล้ว: webhook secret เดิมไม่ถูกแสดงซ้ำ หากต้องใช้ secret ใหม่ให้กด Rotate webhook secret',
+    );
+
+    showToast('ออกข้อมูลเชื่อมต่อ StoreOS สำเร็จ', 'success');
+  } catch (e) {
+    try {
+      console.error('provisionStoreOsConnection error:', e);
+    } catch (_) {}
+    showToast('ออกข้อมูลเชื่อมต่อ StoreOS ไม่สำเร็จ: ' + (e?.message || JSON.stringify(e)), 'error');
+  }
+}
+
+export async function rotateStoreOsWebhookSecret(ctx) {
+  return await provisionStoreOsConnection(ctx, { rotateSecret: true });
+}
+
+export async function copyStoreOsCredential(fieldId, ctx) {
+  _ctx = ctx || _ctx;
+  const { showToast } = _deps();
+  const value = storeOsInputValue(fieldId);
+
+  if (!value) {
+    showToast('ยังไม่มีค่าให้คัดลอก', 'error');
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(value);
+    showToast('คัดลอกข้อมูลเชื่อมต่อแล้ว', 'success');
+  } catch (e) {
+    try {
+      console.error('copyStoreOsCredential error:', e);
+    } catch (_) {}
+    showToast('คัดลอกไม่สำเร็จ กรุณาเลือกข้อความแล้วคัดลอกเอง', 'error');
+  }
+}
+
 async function readFunctionError(error) {
   const response = error?.context;
   if (!response || typeof response.text !== 'function') return '';
@@ -594,4 +704,7 @@ export function wireSettingsActionsBridge() {
   globalThis.__adminWebBridge.testAdminLine = testAdminLine;
   globalThis.__adminWebBridge.saveAdminTelegram = saveAdminTelegram;
   globalThis.__adminWebBridge.testAdminTelegram = testAdminTelegram;
+  globalThis.__adminWebBridge.provisionStoreOsConnection = provisionStoreOsConnection;
+  globalThis.__adminWebBridge.rotateStoreOsWebhookSecret = rotateStoreOsWebhookSecret;
+  globalThis.__adminWebBridge.copyStoreOsCredential = copyStoreOsCredential;
 }

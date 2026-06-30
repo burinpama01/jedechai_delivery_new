@@ -15,3 +15,15 @@ verify_jwt = false
 
 [functions.notify-laundry-quote-request]
 verify_jwt = false
+
+[functions.connect-provision-merchant]
+verify_jwt = false
+
+[functions.connect_upsert_menu]
+verify_jwt = false
+
+[functions.connect_set_shop_status]
+verify_jwt = false
+
+[functions.connect_update_order_status]
+verify_jwt = false

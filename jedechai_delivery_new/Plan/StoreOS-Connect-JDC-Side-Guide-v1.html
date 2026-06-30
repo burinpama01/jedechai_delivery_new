@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StoreOS Connect — คู่มือแก้ฝั่ง JDC v1</title>
+<style>
+  :root{
+    --bg:#0f1216;--panel:#161b22;--panel2:#1c2230;--line:#2a3240;--ink:#e6edf3;--muted:#9aa7b4;
+    --brand:#4f8cff;--jdc:#ff7043;--connect:#22c55e;--warn:#fbbf24;--danger:#ef4444;
+    --mono:ui-monospace,Menlo,Consolas,monospace;--sans:'Segoe UI',Tahoma,'Sarabun',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.65;font-size:15px}
+  .wrap{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+  nav{position:sticky;top:0;height:100vh;overflow:auto;background:var(--panel);border-right:1px solid var(--line);padding:20px 14px}
+  nav h1{font-size:15px;margin:0 0 2px;color:var(--jdc)}
+  nav .ver{font-size:11px;color:var(--muted);margin-bottom:14px}
+  nav a{display:block;color:var(--muted);text-decoration:none;font-size:13px;padding:6px 10px;border-radius:8px;margin:2px 0}
+  nav a:hover{background:var(--panel2);color:var(--ink)}
+  nav .grp{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#5b6675;margin:14px 6px 4px}
+  main{padding:38px 52px;max-width:1080px}
+  section{margin-bottom:50px;scroll-margin-top:20px}
+  h2{font-size:25px;margin:0 0 6px;border-bottom:2px solid var(--line);padding-bottom:10px}
+  h3{font-size:18px;margin:26px 0 8px;color:#cdd9e5}
+  h4{font-size:14.5px;margin:16px 0 6px;color:var(--jdc)}
+  p{color:#cdd6df}
+  code{font-family:var(--mono);background:var(--panel2);padding:2px 6px;border-radius:6px;font-size:13px;color:#ffd9a8}
+  pre{background:#0b0e12;border:1px solid var(--line);border-radius:10px;padding:16px;overflow:auto;font-family:var(--mono);font-size:12.5px;color:#cfe3ff}
+  .lead{font-size:17px;color:var(--muted)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 22px;margin:14px 0}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;background:var(--panel2)}
+  .pill{display:inline-block;font-size:11px;padding:3px 10px;border-radius:999px;font-weight:600}
+  .p-jdc{background:rgba(255,112,67,.15);color:#ffb59a;border:1px solid #a8542f}
+  .p-storeos{background:rgba(79,140,255,.15);color:#9cc0ff;border:1px solid #3a5a9a}
+  .p-new{background:rgba(34,197,94,.15);color:#86efac;border:1px solid #2e7d4f}
+  .arrow{color:var(--connect);font-weight:700}
+  ul{padding-left:20px}li{margin:4px 0}
+  .note{border-left:3px solid var(--brand);background:rgba(79,140,255,.07);padding:10px 16px;border-radius:0 8px 8px 0;margin:12px 0}
+  .note.warn{border-color:var(--warn);background:rgba(251,191,36,.07)}
+  .note.ok{border-color:var(--connect);background:rgba(34,197,94,.07)}
+  .note.danger{border-color:var(--danger);background:rgba(239,68,68,.07)}
+  .tag{font-size:11px;color:var(--muted);font-family:var(--mono)}
+  .chk{list-style:none;padding-left:0}
+  .chk li{padding:6px 0 6px 28px;position:relative;border-bottom:1px solid var(--line)}
+  .chk li::before{content:'☐';position:absolute;left:4px;color:var(--jdc);font-size:16px}
+  .badge{font-size:11px;padding:2px 8px;border-radius:6px;font-weight:600}
+  .b-db{background:#1e2a4a;color:#9cc0ff}.b-fn{background:#0f2a1c;color:#86efac}.b-ui{background:#3a2419;color:#ffb59a}.b-sec{background:#3a1e2a;color:#ff9ab5}
+  .step{display:flex;gap:12px;margin:8px 0}.step .n{flex:0 0 26px;height:26px;border-radius:50%;background:var(--jdc);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+  footer{color:#5b6675;font-size:12px;border-top:1px solid var(--line);padding-top:18px;margin-top:30px}
+  @media(max-width:900px){.wrap{grid-template-columns:1fr}nav{display:none}main{padding:24px}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h1>JDC Side Guide</h1>
+  <div class="ver">StoreOS Connect · v1 · 2026-06-30</div>
+  <div class="grp">ภาพรวม</div>
+  <a href="#role">1. บทบาท JDC</a>
+  <a href="#money">2. โมเดลเงิน</a>
+  <a href="#surface">3. ใครคุมสถานะ</a>
+  <a href="#overview">4. สรุปสิ่งที่ต้องแก้</a>
+  <div class="grp">รายละเอียด</div>
+  <a href="#db">5. DB Migrations</a>
+  <a href="#fn">6. Edge Functions</a>
+  <a href="#outbound">7. ส่งออเดอร์ออก (Webhook)</a>
+  <a href="#flutter">8. แก้ Flutter UI</a>
+  <a href="#price">9. ราคา &amp; เมนู read-only</a>
+  <a href="#link">10. การผูกร้าน</a>
+  <div class="grp">ส่งมอบ</div>
+  <a href="#checklist">11. Checklist + ลำดับทำ</a>
+  <a href="#contract">12. สัญญา (อ้างอิง)</a>
+</nav>
+<main>
+
+<div style="background:#3a1e2a;border:1px solid #a8542f;color:#ffb59a;padding:12px 18px;border-radius:10px;margin-bottom:24px;font-size:14px">
+  ⚠️ <b>SUPERSEDED — แทนที่ด้วย v2</b> · เก็บไว้เป็นประวัติ. v2: สถานะ <b>สองทาง</b> (กดได้ทั้ง JDC และ StoreOS) → Edge Fn <code>connect_update_order_status</code> กลายเป็น<b>จำเป็น</b> + เพิ่มกลไกกัน loop (<code>status_origin</code>). ดู <code>StoreOS-Connect-JDC-Side-Guide-v2.html</code>
+</div>
+
+<section id="role">
+  <h2>1. บทบาทของ JDC ในระบบเชื่อม</h2>
+  <p class="lead">JDC = ฝั่ง LINE MAN (marketplace + คนขับ) · StoreOS = ฝั่ง Wongnai POS (จัดการเมนู + ครัว) · เชื่อมผ่าน <b>StoreOS Connect</b> (โมดูลใน StoreOS) ด้วย <b>Contract API + Webhook</b></p>
+  <div class="card">
+    <p>JDC ต้องทำ 4 อย่างเพื่อรับ-ส่งกับ StoreOS:</p>
+    <ul>
+      <li><b>รับเมนู</b> ที่ StoreOS ดันมา → upsert ลง <code>menu_items</code> (Edge Fn)</li>
+      <li><b>ส่งออเดอร์ใหม่</b> ออกไปหา StoreOS เมื่อมี booking อาหาร (DB trigger → webhook)</li>
+      <li><b>ส่งสถานะ</b> เมื่อร้านกดรับ/อาหารพร้อม → ให้ StoreOS เห็น (auto จาก trigger เดียวกัน)</li>
+      <li><b>รับคำสั่งเปิด/ปิดร้าน</b> จาก StoreOS → เซ็ต <code>profiles.shop_status</code> (Edge Fn)</li>
+    </ul>
+  </div>
+  <div class="note ok">ข่าวดี: business logic หลักของ JDC (จับคู่คนขับ, จ่ายเงินร้าน, RPC <code>create_food_order</code>, <code>mark_food_ready_guarded</code>) <b>ไม่ต้องแก้</b> — งานคือ "เปิดประตู" รับ-ส่งกับ StoreOS เท่านั้น</div>
+</section>
+
+<section id="money">
+  <h2>2. โมเดลเงิน (ยืนยันแล้ว) — ไม่กระทบ JDC</h2>
+  <div class="card">
+    <p><b>เงินไม่ไหลผ่าน StoreOS เลย</b> — JDC จ่ายเงินให้ร้านเองตาม flow เดิม:</p>
+    <p style="font-size:16px;text-align:center;color:#ffcdb8;margin:14px 0">
+      ร้านกดรับออเดอร์ <span class="arrow">→</span> กดอาหารพร้อม <span class="arrow">→</span> ไรเดอร์กดรับอาหาร <span class="arrow">→</span> <b>JDC จ่ายเงินร้าน</b> <span class="arrow">→</span> จบ flow ฝั่งร้าน
+    </p>
+    <ul>
+      <li>JDC: settlement / จ่ายเงินร้าน / ค่า GP <b>คงเดิมทั้งหมด</b> ไม่ต้องแก้</li>
+      <li>StoreOS: แค่ <b>บันทึกออเดอร์เป็น "ชำระโดย JDC"</b> เพื่อให้ยอดขาย/ครัวครบ ไม่มีการรับเงินจริงใน StoreOS</li>
+    </ul>
+  </div>
+</section>
+
+<section id="surface">
+  <h2>3. ใครเป็นคนคุมสถานะออเดอร์ (สำคัญ)</h2>
+  <p>จาก flow ที่คุณอธิบาย ร้านกดปุ่ม <b>ในแอป JDC</b> (รับออเดอร์/อาหารพร้อม) → ดังนั้น MVP ใช้แนวนี้:</p>
+  <div class="grid2">
+    <div class="card" style="border-color:var(--connect)">
+      <h4>✓ แนะนำ MVP: JDC เป็น control surface หลัก</h4>
+      <ul>
+        <li>ร้านกดรับ/พร้อมในแอป JDC ตามเดิม</li>
+        <li>ทุกครั้งที่ <code>bookings.status</code> เปลี่ยน → trigger ส่งสถานะไป StoreOS อัตโนมัติ (<b>JDC → StoreOS</b>)</li>
+        <li>StoreOS POS/KDS แสดงสถานะ live + พิมพ์ตั๋วครัว + ปิดออเดอร์เมื่อ completed</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>ทางเลือก (Phase 1c+): StoreOS ก็กดได้</h4>
+      <ul>
+        <li>ถ้าอยากให้พนักงานกดรับ/พร้อมจาก StoreOS POS ด้วย → เพิ่ม Edge Fn <code>connect_update_order_status</code> (StoreOS → JDC)</li>
+        <li>ต้องกันชนกัน (กดสองที่) ด้วย optimistic concurrency เดิม (<code>.eq('status', current)</code>)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="note warn"><b>ต้องยืนยัน 1 ข้อ:</b> MVP ให้กดที่ JDC อย่างเดียวก่อน (StoreOS แค่ดู) ใช่ไหม? ถ้าใช่ จะ<u>ตัด Edge Fn update_status ออกจาก MVP</u> ลดงานฝั่ง JDC ลงอีก — นี่ต่างจากแผน StoreOS v1 ที่ระบุ status เป็น StoreOS→JDC (จะปรับเป็น v2)</div>
+</section>
+
+<section id="overview">
+  <h2>4. สรุปสิ่งที่ต้องแก้ฝั่ง JDC</h2>
+  <table>
+    <tr><th>กลุ่ม</th><th>ไฟล์/ที่อยู่</th><th>งาน</th><th>จำเป็น MVP</th></tr>
+    <tr><td><span class="badge b-db">DB</span></td><td><code>supabase/migrations/</code></td><td>เพิ่ม <code>external_ref</code>+<code>source</code> ใน <code>menu_items</code>; ตารางใหม่ <code>pos_connections</code>; (option) <code>pos_order_id</code> ใน bookings</td><td>✓</td></tr>
+    <tr><td><span class="badge b-fn">FN</span></td><td><code>supabase/functions/</code> (ยังไม่มี — สร้างใหม่)</td><td><code>connect_upsert_menu</code>, <code>connect_set_shop_status</code> (+option <code>connect_update_order_status</code>)</td><td>✓</td></tr>
+    <tr><td><span class="badge b-db">DB</span></td><td>trigger + <code>pg_net</code></td><td>AFTER INSERT/UPDATE บน <code>bookings</code>(food) → ยิง webhook ออเดอร์/สถานะไป StoreOS</td><td>✓</td></tr>
+    <tr><td><span class="badge b-ui">UI</span></td><td><code>menu_management_screen.dart</code></td><td>ถ้าร้าน "เชื่อม POS" → เมนู read-only (จัดการจาก StoreOS) เหลือแค่ toggle ของหมด</td><td>✓</td></tr>
+    <tr><td><span class="badge b-ui">UI</span></td><td><code>merchant_settings_screen.dart</code></td><td>โชว์ <code>merchant_id</code> + สถานะเชื่อมต่อ + ช่องกรอก secret/URL (ผูกด้วยมือ)</td><td>✓</td></tr>
+    <tr><td><span class="badge b-sec">SEC</span></td><td>Edge Fn env / <code>pos_connections</code></td><td>เก็บ webhook secret ต่อร้าน + verify/sign HMAC</td><td>✓</td></tr>
+    <tr><td><span class="badge b-ui">UI</span></td><td><code>merchant_orders_screen.dart</code></td><td><b>ไม่ต้องแก้</b> — accept/ready/finish เดิม trigger จะ sync ให้เอง</td><td>—</td></tr>
+  </table>
+</section>
+
+<section id="db">
+  <h2>5. DB Migrations (Supabase project B)</h2>
+  <h4>5.1 เพิ่ม external ref ให้ menu_items (รองรับ upsert จาก StoreOS)</h4>
+<pre>alter table menu_items add column if not exists external_ref text;   -- = products.id ฝั่ง StoreOS
+alter table menu_items add column if not exists source text not null default 'jdc'; -- 'jdc' | 'storeos'
+-- กัน upsert ซ้ำ: 1 สินค้า StoreOS = 1 เมนูต่อร้าน
+create unique index if not exists uq_menu_items_merchant_extref
+  on menu_items(merchant_id, external_ref) where external_ref is not null;</pre>
+  <div class="note">ราคาในเมนู (<code>menu_items.price</code>) = <b>ราคาเดลิเวอรี</b> ที่ StoreOS ส่งมา (อาจต่างจากราคาหน้าร้าน) — JDC เก็บตามที่ได้รับ ไม่ต้องคำนวณเอง</div>
+
+  <h4>5.2 ตารางผูกร้านฝั่ง JDC (เก็บ secret + ปลายทาง StoreOS)</h4>
+<pre>create table if not exists pos_connections (
+  id              uuid primary key default gen_random_uuid(),
+  merchant_id     uuid not null references profiles(id) on delete cascade,
+  provider        text not null default 'storeos',
+  store_external_id text,                 -- store_id ฝั่ง StoreOS (ไว้อ้างอิง)
+  webhook_secret  text not null,          -- shared secret (HMAC) — ตรงกับฝั่ง StoreOS
+  storeos_webhook_url text not null,      -- ปลายทางรับออเดอร์ฝั่ง StoreOS
+  menu_managed_by_pos boolean not null default true, -- true = เมนู read-only ในแอป
+  status          text not null default 'active',
+  created_at      timestamptz not null default now(),
+  unique (merchant_id, provider)
+);
+alter table pos_connections enable row level security;
+create policy "merchant reads own pos connection" on pos_connections
+  for select using (auth.uid() = merchant_id);
+-- เขียน/แก้ secret ทำผ่าน service role / admin เท่านั้น (ไม่เปิดให้ client เขียน secret)</pre>
+
+  <h4>5.3 (option) ผูกออเดอร์กับ POS</h4>
+<pre>alter table bookings add column if not exists pos_order_id text;  -- order id ฝั่ง StoreOS เผื่อ debug/ลิงก์</pre>
+  <h4>5.4 เปิด extension ที่ต้องใช้</h4>
+<pre>create extension if not exists pg_net;     -- ยิง http จาก trigger
+create extension if not exists pgcrypto;   -- คำนวณ hmac() สำหรับเซ็น webhook</pre>
+</section>
+
+<section id="fn">
+  <h2>6. Edge Functions (สร้างโฟลเดอร์ <code>supabase/functions/</code> ใหม่)</h2>
+  <p>แต่ละฟังก์ชันต้อง <b>verify HMAC</b> จาก header ก่อนทำงาน (secret ดึงจาก <code>pos_connections</code> ตาม merchant)</p>
+
+  <h4>6.1 <code>connect_upsert_menu</code> <span class="pill p-storeos">StoreOS เรียก</span></h4>
+<pre>// POST /functions/v1/connect_upsert_menu
+// body: { merchant_id, items:[{ external_ref, name, description, price,
+//          image_url, is_available, category, preparation_time }], full_sync:false }
+// 1) verify X-Connect-Signature (hmac sha256 ของ body ด้วย pos_connections.webhook_secret)
+// 2) upsert ทีละรายการ onConflict (merchant_id, external_ref), source='storeos'
+// 3) ถ้า full_sync=true: set is_available=false ให้เมนู source='storeos' ที่ไม่ได้อยู่ใน payload
+// → 200 { upserted: n }</pre>
+
+  <h4>6.2 <code>connect_set_shop_status</code> <span class="pill p-storeos">StoreOS เรียก</span></h4>
+<pre>// POST /functions/v1/connect_set_shop_status
+// body: { merchant_id, is_open }
+// verify HMAC → update profiles set shop_status=is_open, is_online=is_open
+// (ใช้ field เดียวกับ toggleShopStatus เดิม) → 200 { ok:true }</pre>
+
+  <h4>6.3 <code>connect_update_order_status</code> <span class="pill p-storeos">StoreOS เรียก</span> <span class="badge b-ui">option</span></h4>
+<pre>// ทำเฉพาะถ้าต้องการให้กดสถานะจาก StoreOS POS ได้ด้วย
+// body: { booking_id, status }  // status = preparing | ready_for_pickup | cancelled
+// verify HMAC → update bookings ด้วย optimistic guard (กันชนกับการกดในแอป)
+// ควร reuse logic เดียวกับ mark_food_ready_guarded เพื่อความสอดคล้อง</pre>
+  <div class="note warn">ถ้ายืนยันว่า MVP กดที่ JDC อย่างเดียว → <b>ข้าม 6.3</b> ไปก่อน</div>
+</section>
+
+<section id="outbound">
+  <h2>7. ส่งออเดอร์ + สถานะออกไป StoreOS (Webhook ขาออก)</h2>
+  <p>ใช้ DB trigger บน <code>bookings</code> (เฉพาะ <code>service_type='food'</code> และร้านที่มี <code>pos_connections</code>) → คำนวณ HMAC ด้วย <code>pgcrypto</code> → ยิง async ด้วย <code>pg_net</code></p>
+  <div class="step"><div class="n">1</div><div>INSERT booking อาหาร → topic <code>order.created</code> (ส่งทั้งรายการ items + ลูกค้า + ยอด + paid:true)</div></div>
+  <div class="step"><div class="n">2</div><div>UPDATE สถานะ (preparing/ready_for_pickup/completed/cancelled) → topic <code>order.status</code></div></div>
+<pre>create or replace function notify_storeos_order() returns trigger
+language plpgsql security definer as $$
+declare
+  v_conn pos_connections%rowtype;
+  v_body jsonb; v_sig text;
+begin
+  if new.service_type <> 'food' then return new; end if;
+  select * into v_conn from pos_connections
+    where merchant_id = new.merchant_id and status='active' limit 1;
+  if not found then return new; end if;
+
+  v_body := jsonb_build_object(
+    'topic', case when tg_op='INSERT' then 'order.created' else 'order.status' end,
+    'booking_id', new.id, 'merchant_id', new.merchant_id,
+    'status', new.status, 'total', new.price, 'paid', true,
+    'ts', extract(epoch from now())::bigint
+    -- INSERT: เพิ่ม items (join booking_items), customer, dropoff
+  );
+  v_sig := encode(hmac(v_body::text, v_conn.webhook_secret, 'sha256'), 'hex');
+
+  perform net.http_post(
+    url := v_conn.storeos_webhook_url,
+    headers := jsonb_build_object('Content-Type','application/json',
+               'X-Connect-Signature','sha256='||v_sig),
+    body := v_body);
+  return new;
+end $$;
+
+create trigger trg_notify_storeos_order
+after insert or update of status on bookings
+for each row execute function notify_storeos_order();</pre>
+  <div class="note danger"><b>กันบล็อกการสร้างออเดอร์:</b> <code>pg_net</code> ทำงาน async อยู่แล้ว (คิว) จึงไม่หน่วงการ insert; ถ้าปลายทางล่ม StoreOS จะอาศัย reconcile/retry ฝั่งตัวเอง — แนะนำเพิ่มตาราง log การยิงไว้ debug ภายหลัง</div>
+</section>
+
+<section id="flutter">
+  <h2>8. แก้ Flutter UI</h2>
+  <h4>8.1 หน้าจัดการเมนู — เมนู read-only เมื่อเชื่อม POS</h4>
+  <p>โหลด <code>pos_connections</code> ของร้าน ถ้า <code>menu_managed_by_pos = true</code>:</p>
+  <ul>
+    <li>ซ่อน/disable ปุ่ม เพิ่ม-แก้-ลบ เมนู และช่องแก้ชื่อ/ราคา/รูป</li>
+    <li>โชว์แบนเนอร์: <b>"เมนูจัดการจาก StoreOS POS — แก้ที่ระบบหลังร้าน"</b></li>
+    <li>คงให้ toggle <b>"ของหมดวันนี้"</b> (<code>is_available</code>) ได้ เพื่อความเร็วหน้าร้าน (จะ sync กลับ optional ภายหลัง)</li>
+  </ul>
+  <div class="note">ป้องกันการแก้สองที่จนข้อมูลขัดกัน — แหล่งความจริงของเมนูคือ StoreOS</div>
+
+  <h4>8.2 หน้าออเดอร์ร้าน — ไม่ต้องแก้</h4>
+  <p><code>acceptOrder</code> / <code>markFoodReady</code> / <code>finishOrder</code> ทำงานเดิม → trigger §7 ส่งสถานะให้ StoreOS เอง</p>
+
+  <h4>8.3 หน้าตั้งค่าร้าน — ส่วนเชื่อมต่อ POS</h4>
+  <ul>
+    <li>แสดง <b>"รหัสร้านสำหรับเชื่อม POS"</b> = <code>merchant_id</code> (ให้ผู้ใช้ก๊อปไปกรอกฝั่ง StoreOS)</li>
+    <li>แสดงสถานะ: เชื่อมแล้ว/ยังไม่เชื่อม + เวลาที่เมนู sync ล่าสุด</li>
+    <li>(ตามขั้นตอนผูกด้วยมือ §10)</li>
+  </ul>
+</section>
+
+<section id="price">
+  <h2>9. ราคา &amp; การเลือกสินค้าขึ้น JDC (ฝั่ง StoreOS เป็นคนคุม)</h2>
+  <div class="note ok">เรื่องนี้ทำที่ <b>StoreOS</b> ไม่ใช่ JDC — แต่ใส่ไว้ให้เห็นภาพรวม</div>
+  <table>
+    <tr><th>ต้องมีใน StoreOS (products)</th><th>ความหมาย</th><th>JDC ได้รับเป็น</th></tr>
+    <tr><td><code>available_for_delivery</code> (bool ใหม่)</td><td>เลือกว่าสินค้านี้จะขึ้น JDC ไหม (sync เฉพาะที่ติ๊ก)</td><td>มี/ไม่มีใน payload</td></tr>
+    <tr><td><code>delivery_price</code> (numeric ใหม่, nullable)</td><td>ราคาขายบน JDC; ถ้า null ใช้ <code>base_price</code></td><td><code>menu_items.price</code></td></tr>
+  </table>
+  <p>StoreOS Connect จะดันเฉพาะสินค้าที่ <code>available_for_delivery=true</code> และส่ง <code>delivery_price ?? base_price</code> เป็น <code>price</code> → JDC ไม่ต้องรู้เรื่องราคาหน้าร้านเลย</p>
+</section>
+
+<section id="link">
+  <h2>10. ขั้นตอนผูกร้านด้วยมือ (MVP)</h2>
+  <div class="step"><div class="n">1</div><div>ร้านเปิดแอป JDC → หน้าตั้งค่า → ก๊อป <code>merchant_id</code></div></div>
+  <div class="step"><div class="n">2</div><div>super-admin StoreOS เปิดหน้า Connect → สร้าง link: กรอก <code>merchant_id</code>, เลือก store, ระบบ <b>generate webhook_secret</b></div></div>
+  <div class="step"><div class="n">3</div><div>เอา <code>webhook_secret</code> + <code>storeos_webhook_url</code> ไปบันทึกใน <code>pos_connections</code> ของ JDC (ผ่าน admin/service role — <b>ห้ามให้ client เขียน secret</b>)</div></div>
+  <div class="step"><div class="n">4</div><div>กด "Sync เมนูทั้งหมด" ที่ StoreOS → menu_items ฝั่ง JDC เต็ม → พร้อมรับออเดอร์</div></div>
+  <div class="note warn"><b>Blocker ความปลอดภัย (ตาม AGENTS.md):</b> secret/URL ต้องตั้งผ่านช่องทางปลอดภัย ไม่ commit ลง repo, ไม่โชว์ใน client. JDC service key ของ StoreOS เก็บใน Vercel env ฝั่ง StoreOS เท่านั้น</div>
+</section>
+
+<section id="checklist">
+  <h2>11. Checklist + ลำดับการทำฝั่ง JDC</h2>
+  <ul class="chk">
+    <li><b>[DB]</b> migration: <code>menu_items.external_ref/source</code> + unique index</li>
+    <li><b>[DB]</b> migration: ตาราง <code>pos_connections</code> + RLS</li>
+    <li><b>[DB]</b> เปิด extension <code>pg_net</code> + <code>pgcrypto</code></li>
+    <li><b>[FN]</b> Edge Fn <code>connect_upsert_menu</code> (+ verify HMAC)</li>
+    <li><b>[FN]</b> Edge Fn <code>connect_set_shop_status</code></li>
+    <li><b>[DB]</b> trigger <code>notify_storeos_order</code> (order.created + order.status)</li>
+    <li><b>[UI]</b> เมนู read-only เมื่อ <code>menu_managed_by_pos</code> + toggle ของหมด</li>
+    <li><b>[UI]</b> หน้าตั้งค่า: โชว์ merchant_id + สถานะเชื่อมต่อ</li>
+    <li><b>[SEC]</b> ใส่ secret ต่อร้านผ่าน service role; test HMAC ทั้งขาเข้า-ออก</li>
+    <li><b>[opt]</b> Edge Fn <code>connect_update_order_status</code> (ถ้าให้ StoreOS กดสถานะได้)</li>
+  </ul>
+  <div class="note">ลำดับแนะนำ: DB (5) → Edge Functions (6) → trigger ขาออก (7) → ทดสอบ end-to-end กับ StoreOS staging → ค่อยแก้ Flutter UI (8)</div>
+</section>
+
+<section id="contract">
+  <h2>12. สัญญา API (อ้างอิงร่วมกับฝั่ง StoreOS)</h2>
+<pre>JDC → StoreOS   POST {storeos}/api/connect/v1/webhooks/jdc/order
+                Headers: X-Connect-Signature: sha256=&lt;hmac&gt;
+                Body: { topic:'order.created'|'order.status', booking_id, merchant_id,
+                        status, items[], customer, dropoff, total, paid:true, ts }
+
+StoreOS → JDC   POST {jdc}/functions/v1/connect_upsert_menu        { merchant_id, items[], full_sync }
+StoreOS → JDC   POST {jdc}/functions/v1/connect_set_shop_status    { merchant_id, is_open }
+StoreOS → JDC   POST {jdc}/functions/v1/connect_update_order_status { booking_id, status }   (option)</pre>
+  <p class="tag">HMAC = hex(hmac_sha256(rawBody, webhook_secret)) · ตรวจ timestamp (ts) ไม่เกิน 5 นาที กัน replay</p>
+</section>
+
+<footer>
+  StoreOS Connect — คู่มือแก้ฝั่ง JDC v1 · 2026-06-30 · สถานะ: ออกแบบ (Design)<br>
+  คู่กับ <code>D:\Store management system saas\Plan\StoreOS-Connect-Architecture-Plan-v1.html</code> (ฝั่ง StoreOS)<br>
+  ต้องยืนยัน: MVP กดสถานะที่ JDC อย่างเดียวใช่ไหม (ถ้าใช่ ตัด Edge Fn update_status; ปรับแผน StoreOS เป็น v2)
+</footer>
+
+</main>
+</div>
+</body>
+</html>

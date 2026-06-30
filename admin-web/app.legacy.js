@@ -4002,6 +4002,70 @@ async function renderSettings(el) {
         </div>
       </div>
 
+      <!-- ========= StoreOS Connect ========= -->
+      <div class="glass-card p-6">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-10 h-10 bg-violet-50 rounded-xl flex items-center justify-center"><span class="material-icons-round text-violet-500">hub</span></div>
+          <div>
+            <h3 class="font-bold text-gray-800">StoreOS Connect</h3>
+            <p class="text-xs text-gray-400">ออก JDC key และ webhook secret สำหรับนำไปตั้งค่าที่ StoreOS</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">merchant_id</label>
+            <input type="text" id="settStoreOsMerchantId" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all font-mono text-xs" placeholder="UUID ของร้านจาก JDC">
+            <p class="text-xs text-gray-400 mt-1.5">ใช้ merchant_id จากหน้า Merchant Settings ในแอป JDC</p>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">StoreOS webhook URL</label>
+            <input type="url" id="settStoreOsWebhookUrl" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all" placeholder="https://...">
+            <p class="text-xs text-gray-400 mt-1.5">ปล่อยว่างได้ถ้ายังไม่พร้อมรับ outbound webhook</p>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">StoreOS shop ID</label>
+            <input type="text" id="settStoreOsShopId" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all" placeholder="optional">
+            <p class="text-xs text-gray-400 mt-1.5">รหัสร้านฝั่ง StoreOS ถ้ามี</p>
+          </div>
+        </div>
+        <div class="mt-4 flex flex-wrap gap-4">
+          <label class="flex items-center gap-2 text-xs font-semibold text-gray-600">
+            <input type="checkbox" id="settStoreOsMenuManagedByPos" checked class="w-4 h-4 text-violet-600 rounded border-gray-300">
+            ให้ StoreOS จัดการเมนูของร้านนี้
+          </label>
+          <label class="flex items-center gap-2 text-xs font-semibold text-gray-600">
+            <input type="checkbox" id="settStoreOsRotateSecret" class="w-4 h-4 text-rose-600 rounded border-gray-300">
+            Rotate webhook secret รอบนี้
+          </label>
+        </div>
+        <div class="mt-5 flex flex-wrap gap-3">
+          <button onclick="provisionStoreOsConnection()" class="px-5 py-2.5 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-violet-200" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);">
+            <span class="material-icons-round text-sm align-middle mr-1">vpn_key</span> สร้าง/โหลด JDC key
+          </button>
+          <button onclick="rotateStoreOsWebhookSecret()" class="px-5 py-2.5 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-rose-200" style="background:linear-gradient(135deg,#e11d48,#fb7185);">
+            <span class="material-icons-round text-sm align-middle mr-1">sync_lock</span> Rotate webhook secret
+          </button>
+        </div>
+        <div class="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">JDC key</label>
+            <div class="flex gap-2">
+              <input type="text" id="settStoreOsJdcKey" readonly class="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/80 transition-all font-mono text-xs" placeholder="จะแสดงหลังสร้าง connection">
+              <button onclick="copyStoreOsCredential('settStoreOsJdcKey')" class="px-3 py-2.5 bg-violet-50 text-violet-700 rounded-xl text-xs font-semibold border border-violet-100 hover:bg-violet-100">Copy</button>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Webhook secret</label>
+            <div class="flex gap-2">
+              <input type="text" id="settStoreOsWebhookSecret" readonly class="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/80 transition-all font-mono text-xs" placeholder="แสดงเฉพาะตอนสร้างใหม่หรือ rotate">
+              <button onclick="copyStoreOsCredential('settStoreOsWebhookSecret')" class="px-3 py-2.5 bg-rose-50 text-rose-700 rounded-xl text-xs font-semibold border border-rose-100 hover:bg-rose-100">Copy</button>
+            </div>
+            <p class="text-xs text-gray-400 mt-1.5">Preview: <span id="settStoreOsSecretPreview">-</span></p>
+          </div>
+        </div>
+        <p id="settStoreOsResult" class="mt-4 text-xs text-violet-700 bg-violet-50 border border-violet-100 rounded-xl px-4 py-3">ยังไม่ได้สร้าง connection ในรอบนี้</p>
+      </div>
+
       <!-- ========= บริการเรียกรถ ========= -->
       <div class="glass-card p-6">
         <div class="flex items-center gap-3 mb-5">
@@ -5150,6 +5214,46 @@ async function testAdminTelegram() {
   } catch (e) {
     console.error('Test Telegram error:', e);
     showToast('ส่ง Telegram ไม่สำเร็จ: ' + (e.message || 'ตรวจสอบ Edge Function/Bot token'), 'error');
+  }
+}
+
+async function provisionStoreOsConnection() {
+  try {
+    const bridged = window.__adminWebBridge?.provisionStoreOsConnection;
+    if (typeof bridged === 'function') return await bridged({ supabase, supabaseAuth, currentUser, callAdminAction, showToast, escapeHtml, fmt, fmtDate, refreshCurrentPage });
+  } catch (e) {
+    console.error('provisionStoreOsConnection bridge error:', e);
+    showToast('ออกข้อมูลเชื่อมต่อ StoreOS ไม่สำเร็จ: ' + (e.message || e), 'error');
+  }
+}
+
+async function rotateStoreOsWebhookSecret() {
+  try {
+    const bridged = window.__adminWebBridge?.rotateStoreOsWebhookSecret;
+    if (typeof bridged === 'function') return await bridged({ supabase, supabaseAuth, currentUser, callAdminAction, showToast, escapeHtml, fmt, fmtDate, refreshCurrentPage });
+  } catch (e) {
+    console.error('rotateStoreOsWebhookSecret bridge error:', e);
+    showToast('Rotate webhook secret ไม่สำเร็จ: ' + (e.message || e), 'error');
+  }
+}
+
+async function copyStoreOsCredential(fieldId) {
+  try {
+    const bridged = window.__adminWebBridge?.copyStoreOsCredential;
+    if (typeof bridged === 'function') return await bridged(fieldId, { supabase, supabaseAuth, currentUser, callAdminAction, showToast, escapeHtml, fmt, fmtDate, refreshCurrentPage });
+  } catch (_) {}
+
+  const value = document.getElementById(fieldId)?.value?.trim();
+  if (!value) {
+    showToast('ยังไม่มีค่าให้คัดลอก', 'error');
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(value);
+    showToast('คัดลอกข้อมูลเชื่อมต่อแล้ว', 'success');
+  } catch (e) {
+    showToast('คัดลอกไม่สำเร็จ กรุณาเลือกข้อความแล้วคัดลอกเอง', 'error');
   }
 }
 

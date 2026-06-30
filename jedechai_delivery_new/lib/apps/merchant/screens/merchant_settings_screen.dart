@@ -8,7 +8,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:jedechai_delivery_new/theme/app_theme.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../common/services/auth_service.dart';
 import '../../../common/services/profile_service.dart';
 import '../../../common/services/image_picker_service.dart';
@@ -664,6 +663,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
         const SizedBox(height: 16),
         _buildInfoCard(),
         const SizedBox(height: 16),
+        _buildStoreOsConnectCard(),
+        const SizedBox(height: 16),
         _buildMenuCard(),
         const SizedBox(height: 16),
         _buildAppInfoCard(),
@@ -1229,6 +1230,112 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
   }
 
   // ============================================================
+  // StoreOS Connect Card
+  // ============================================================
+
+  Widget _buildStoreOsConnectCard() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final merchantId = AuthService.userId ?? '';
+
+    return _card(
+      title: 'StoreOS Connect',
+      children: [
+        Text(
+          'ใช้ merchant_id นี้กรอกใน StoreOS เพื่อเชื่อมร้านกับ JDC',
+          style: TextStyle(
+            fontSize: 13,
+            height: 1.4,
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: colorScheme.outlineVariant.withValues(alpha: 0.7),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _accent.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.key_outlined,
+                  color: _accent,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'merchant_id',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    if (merchantId.isEmpty)
+                      Text(
+                        'ไม่พบ merchant_id',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: colorScheme.error,
+                        ),
+                      )
+                    else
+                      SelectableText(
+                        merchantId,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                tooltip: 'คัดลอก merchant_id',
+                onPressed: merchantId.isEmpty
+                    ? null
+                    : () => _copyMerchantIdForStoreOs(merchantId),
+                icon: const Icon(Icons.copy_all_outlined),
+                color: _accent,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _copyMerchantIdForStoreOs(String merchantId) async {
+    if (merchantId.isEmpty) return;
+
+    await Clipboard.setData(ClipboardData(text: merchantId));
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('คัดลอก merchant_id แล้ว'),
+      ),
+    );
+  }
+
+  // ============================================================
   // Menu Card
   // ============================================================
 
@@ -1390,7 +1497,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                   ScaffoldMessenger.of(context).clearSnackBars();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Debug: ${_versionTapCount}/7'),
+                      content: Text('Debug: $_versionTapCount/7'),
                       duration: const Duration(milliseconds: 700),
                     ),
                   );

@@ -83,6 +83,7 @@ class MerchantOrderService {
         .from('bookings')
         .update({
           'status': newStatus,
+          'status_origin': 'jdc',
           'updated_at': DateTime.now().toIso8601String(),
         })
         .eq('id', bookingId)
@@ -149,7 +150,10 @@ class MerchantOrderService {
   Future<bool> finishOrder(String bookingId) async {
     final result = await _client
         .from('bookings')
-        .update({'status': 'completed'})
+        .update({
+          'status': 'completed',
+          'status_origin': 'jdc',
+        })
         .eq('id', bookingId)
         .inFilter('status', ['ready_for_pickup', 'in_transit'])
         .select();
