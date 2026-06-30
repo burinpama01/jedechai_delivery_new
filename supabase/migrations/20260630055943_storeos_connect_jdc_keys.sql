@@ -28,7 +28,7 @@ END $$;
 
 CREATE TABLE IF NOT EXISTS public.pos_connections (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  merchant_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  merchant_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE,
   provider text NOT NULL DEFAULT 'storeos',
   status text NOT NULL DEFAULT 'pending',
   storeos_shop_id text,
@@ -52,8 +52,13 @@ CREATE TABLE IF NOT EXISTS public.pos_connections (
     CHECK (storeos_webhook_url IS NULL OR storeos_webhook_url ~* '^https://')
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS uq_pos_connections_system_provider
+  ON public.pos_connections (provider)
+  WHERE merchant_id IS NULL AND status = 'active';
+
 CREATE UNIQUE INDEX IF NOT EXISTS uq_pos_connections_merchant_provider
-  ON public.pos_connections (merchant_id, provider);
+  ON public.pos_connections (merchant_id, provider)
+  WHERE merchant_id IS NOT NULL;
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_pos_connections_jdc_key
   ON public.pos_connections (jdc_connection_key);
@@ -67,7 +72,7 @@ REVOKE ALL ON public.pos_connections FROM anon, authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.pos_connections TO service_role;
 
 COMMENT ON TABLE public.pos_connections IS
-  'Private POS integration credentials. Access through service-role Edge Functions only.';
+  'Private POS integration credentials. StoreOS uses one system connection and sends JDC merchant_id per shop payload.';
 COMMENT ON COLUMN public.pos_connections.jdc_connection_key IS
   'Public identifier StoreOS sends in X-JDC-Connection-Key.';
 COMMENT ON COLUMN public.pos_connections.webhook_secret IS
@@ -366,7 +371,7 @@ BEGIN
   SELECT *
     INTO v_conn
     FROM public.pos_connections
-   WHERE merchant_id = NEW.merchant_id
+   WHERE merchant_id IS NULL
      AND provider = 'storeos'
      AND status = 'active'
      AND storeos_webhook_url IS NOT NULL

@@ -35,11 +35,6 @@ function pickBool(value: unknown, fallback: boolean): boolean {
   return typeof value === "boolean" ? value : fallback;
 }
 
-function isUuid(value: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-    .test(value);
-}
-
 function validateHttpsUrl(value: string | null): string | null {
   if (!value) return null;
   try {
@@ -76,24 +71,9 @@ serve(async (req) => {
       return withCors(errorResponse("Invalid JSON body"));
     }
 
-    const merchantId = pickString(body.merchant_id);
-    if (!merchantId || !isUuid(merchantId)) {
-      return withCors(errorResponse("Valid merchant_id is required"));
-    }
-
     const storeosWebhookUrl = validateHttpsUrl(pickString(body.storeos_webhook_url));
     if (body.storeos_webhook_url && !storeosWebhookUrl) {
       return withCors(errorResponse("storeos_webhook_url must be HTTPS"));
-    }
-
-    const { data: merchant, error: merchantError } = await supabaseAdmin
-      .from("profiles")
-      .select("id, role")
-      .eq("id", merchantId)
-      .maybeSingle();
-    if (merchantError) return withCors(errorResponse(merchantError.message));
-    if (!merchant || merchant.role !== "merchant") {
-      return withCors(errorResponse("Merchant profile not found", 404));
     }
 
     const { data: existing, error: existingError } = await supabaseAdmin
@@ -101,8 +81,9 @@ serve(async (req) => {
       .select(
         "id, status, storeos_shop_id, storeos_webhook_url, jdc_connection_key, webhook_secret, menu_managed_by_pos, key_rotated_at, secret_rotated_at",
       )
-      .eq("merchant_id", merchantId)
       .eq("provider", "storeos")
+      .eq("status", "active")
+      .is("merchant_id", null)
       .maybeSingle();
     if (existingError) return withCors(errorResponse(existingError.message));
 
@@ -115,17 +96,17 @@ serve(async (req) => {
     const webhookSecret = existing && !rotateSecret
       ? existing.webhook_secret
       : generateWebhookSecret();
-    const nextStatus = pickString(body.status) ?? existing?.status ?? "pending";
+    const nextStatus = pickString(body.status) ?? "active";
 
     if (!["pending", "active", "disabled", "revoked"].includes(nextStatus)) {
       return withCors(errorResponse("Invalid connection status"));
     }
 
     const payload = {
-      merchant_id: merchantId,
+      merchant_id: null,
       provider: "storeos",
       status: nextStatus,
-      storeos_shop_id: pickString(body.storeos_shop_id) ?? existing?.storeos_shop_id ?? null,
+      storeos_shop_id: null,
       storeos_webhook_url: storeosWebhookUrl ?? existing?.storeos_webhook_url ?? null,
       jdc_connection_key: jdcConnectionKey,
       webhook_secret: webhookSecret,
@@ -140,11 +121,13 @@ serve(async (req) => {
       updated_at: now,
     };
 
-    const { data: saved, error: saveError } = await supabaseAdmin
-      .from("pos_connections")
-      .upsert(payload, { onConflict: "merchant_id,provider" })
+    const writeQuery = existing?.id
+      ? supabaseAdmin.from("pos_connections").update(payload).eq("id", existing.id)
+      : supabaseAdmin.from("pos_connections").insert(payload);
+
+    const { data: saved, error: saveError } = await writeQuery
       .select(
-        "id, merchant_id, provider, status, storeos_shop_id, storeos_webhook_url, jdc_connection_key, menu_managed_by_pos, key_rotated_at, secret_rotated_at, updated_at",
+        "id, merchant_id, provider, status, storeos_webhook_url, jdc_connection_key, menu_managed_by_pos, key_rotated_at, secret_rotated_at, updated_at",
       )
       .single();
     if (saveError) return withCors(errorResponse(saveError.message));

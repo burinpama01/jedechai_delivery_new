@@ -43,12 +43,24 @@ const adminSettingsActionsSource = readFileSync(
   new URL("../admin-web/src/pages/settingsActionsBridge.js", import.meta.url),
   "utf8",
 );
+const storeOsGuideSource = readFileSync(
+  new URL("../jedechai_delivery_new/Plan/StoreOS-Connect-JDC-Side-Guide-v3.html", import.meta.url),
+  "utf8",
+);
 
 function readStoreosConnectMigration() {
   const file = readdirSync(migrationsDir)
     .filter((name) => name.endsWith(".sql"))
     .find((name) => name.includes("storeos_connect_jdc_keys"));
   assert.ok(file, "missing storeos_connect_jdc_keys migration");
+  return readFileSync(new URL(file, migrationsDir), "utf8");
+}
+
+function readStoreosSystemScopeMigration() {
+  const file = readdirSync(migrationsDir)
+    .filter((name) => name.endsWith(".sql"))
+    .find((name) => name.includes("storeos_connect_system_scope"));
+  assert.ok(file, "missing storeos_connect_system_scope migration");
   return readFileSync(new URL(file, migrationsDir), "utf8");
 }
 
@@ -67,10 +79,32 @@ test("StoreOS Connect migration keeps JDC key and webhook secret server-side", (
   assert.match(migration, /jdc_connection_key text NOT NULL/i);
   assert.match(migration, /webhook_secret text NOT NULL/i);
   assert.match(migration, /menu_managed_by_pos boolean NOT NULL DEFAULT true/i);
+  assert.match(migration, /merchant_id uuid REFERENCES public\.profiles/i);
+  assert.doesNotMatch(migration, /merchant_id uuid NOT NULL/i);
+  assert.match(migration, /uq_pos_connections_system_provider/i);
+  assert.match(migration, /WHERE merchant_id IS NULL/i);
   assert.match(migration, /ALTER TABLE public\.pos_connections ENABLE ROW LEVEL SECURITY/i);
   assert.match(migration, /REVOKE ALL ON public\.pos_connections FROM anon, authenticated/i);
   assert.match(migration, /GRANT SELECT, INSERT, UPDATE, DELETE ON public\.pos_connections TO service_role/i);
   assert.doesNotMatch(migration, /jdc_(live|test)_[A-Za-z0-9]+/);
+});
+
+test("StoreOS Connect has a production migration to switch credentials to system scope", () => {
+  const migration = readStoreosSystemScopeMigration();
+
+  assert.match(migration, /ALTER COLUMN merchant_id DROP NOT NULL/i);
+  assert.match(migration, /merchant_id = NULL/i);
+  assert.match(migration, /storeos_shop_id = NULL/i);
+  assert.match(migration, /status = 'revoked'/i);
+  assert.match(migration, /uq_pos_connections_system_provider/i);
+  assert.match(migration, /WHERE merchant_id IS NULL/i);
+  assert.match(migration, /status = 'active'/i);
+  assert.match(migration, /status IN \('active', 'pending'\)/i);
+  assert.match(migration, /AND pc.status = 'pending'/i);
+  assert.doesNotMatch(migration, /SET\s+merchant_id = NULL,\s+storeos_shop_id = NULL,\s+status = 'active'/i);
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.notify_storeos_order/);
+  assert.match(migration, /merchant_id IS NULL/i);
+  assert.doesNotMatch(migration, /merchant_id\s*=\s*NEW\.merchant_id/i);
 });
 
 test("Connect auth helper verifies StoreOS webhooks with raw-body HMAC", () => {
@@ -96,6 +130,12 @@ test("Connect provisioning function creates and rotates JDC keys without hardcod
   assert.match(source, /generateConnectionKey/);
   assert.match(source, /generateWebhookSecret/);
   assert.match(source, /\.from\(["']pos_connections["']\)/);
+  assert.match(source, /\.is\(["']merchant_id["'],\s*null\)/);
+  assert.match(source, /const nextStatus = pickString\(body\.status\) \?\? ["']active["']/);
+  assert.match(source, /merchant_id:\s*null/);
+  assert.doesNotMatch(source, /Valid merchant_id is required/);
+  assert.doesNotMatch(source, /\.from\(["']profiles["']\)/);
+  assert.doesNotMatch(source, /onConflict:\s*["']merchant_id,provider["']/);
   assert.match(source, /rotate_secret/);
   assert.match(source, /secret_preview/);
   assert.match(source, /jdc_connection_key/);
@@ -129,13 +169,24 @@ test("StoreOS incoming functions authenticate with JDC connection key and webhoo
   assert.match(helper, /\.from\(["']pos_connections["']\)/);
   assert.match(helper, /\.eq\(["']jdc_connection_key["']/);
   assert.match(helper, /\.eq\(["']status["'],\s*["']active["']\)/);
+  assert.match(helper, /pickMerchantId/);
+  assert.match(helper, /verifyConnectMerchant/);
+  assert.match(helper, /approval_status/);
+  assert.match(helper, /menu_managed_by_pos/);
   assert.match(helper, /webhook_secret/);
+  assert.doesNotMatch(helper, /select\(["']id, merchant_id, provider/);
 });
 
 test("StoreOS menu sync upserts StoreOS-owned menu items by external_ref", () => {
   const source = readFileSync(upsertMenuFunctionUrl, "utf8");
 
   assert.match(source, /\.from\(["']menu_items["']\)/);
+  assert.match(source, /pickMerchantId\(body\)/);
+  assert.match(source, /Valid merchant_id is required/);
+  assert.match(source, /verifyConnectMerchant\(supabaseAdmin,\s*merchantId\)/);
+  assert.match(source, /StoreOS menu sync is disabled/);
+  assert.match(source, /connection\.menu_managed_by_pos === false/);
+  assert.match(source, /merchant_id:\s*merchantId/);
   assert.match(source, /external_ref/);
   assert.match(source, /source:\s*["']storeos["']/);
   assert.match(source, /onConflict:\s*["']merchant_id,external_ref["']/);
@@ -144,17 +195,24 @@ test("StoreOS menu sync upserts StoreOS-owned menu items by external_ref", () =>
   assert.doesNotMatch(source, /preparation_time:/);
 });
 
-test("StoreOS shop status and order status updates stay scoped to connected merchant", () => {
+test("StoreOS shop status and order status updates stay scoped to payload merchant_id", () => {
   const shopStatusSource = readFileSync(setShopStatusFunctionUrl, "utf8");
   const orderStatusSource = readFileSync(updateOrderStatusFunctionUrl, "utf8");
 
   assert.match(shopStatusSource, /\.from\(["']profiles["']\)/);
-  assert.match(shopStatusSource, /\.eq\(["']id["'],\s*connection\.merchant_id\)/);
+  assert.match(shopStatusSource, /pickMerchantId\(body\)/);
+  assert.match(shopStatusSource, /verifyConnectMerchant\(supabaseAdmin,\s*merchantId\)/);
+  assert.match(shopStatusSource, /\.eq\(["']id["'],\s*merchantId\)/);
+  assert.doesNotMatch(shopStatusSource, /connection\.merchant_id/);
   assert.match(shopStatusSource, /shop_status/);
   assert.match(shopStatusSource, /is_online/);
 
   assert.match(orderStatusSource, /\.from\(["']bookings["']\)/);
-  assert.match(orderStatusSource, /\.eq\(["']merchant_id["'],\s*connection\.merchant_id\)/);
+  assert.match(orderStatusSource, /pickMerchantId\(body\)/);
+  assert.match(orderStatusSource, /verifyConnectMerchant\(supabaseAdmin,\s*merchantId\)/);
+  assert.match(orderStatusSource, /merchant_id, booking_id and status are required/);
+  assert.match(orderStatusSource, /\.eq\(["']merchant_id["'],\s*merchantId\)/);
+  assert.doesNotMatch(orderStatusSource, /connection\.merchant_id/);
   assert.match(orderStatusSource, /service_type["']?,\s*["']food["']|\.eq\(["']service_type["'],\s*["']food["']\)/);
   assert.match(orderStatusSource, /status_origin:\s*["']storeos["']/);
   assert.match(orderStatusSource, /ready_for_pickup/);
@@ -209,7 +267,15 @@ test("JDC outbound webhook trigger signs order events and skips StoreOS-origin l
   assert.match(migration, /net\.http_post/);
   assert.match(migration, /X-Connect-Signature/);
   assert.match(migration, /webhook_secret/);
+  assert.match(migration, /merchant_id IS NULL/i);
+  assert.doesNotMatch(migration, /merchant_id\s*=\s*NEW\.merchant_id/i);
   assert.match(migration, /CREATE TRIGGER trg_notify_storeos_order/);
+});
+
+test("StoreOS guide documents epoch timestamp contract used by HMAC verifier", () => {
+  assert.match(storeOsGuideSource, /X-Connect-Timestamp: &lt;epoch seconds&gt;/);
+  assert.match(storeOsGuideSource, /epoch seconds หรือ epoch milliseconds/);
+  assert.doesNotMatch(storeOsGuideSource, /ISO timestamp/);
 });
 
 test("StoreOS status update does not directly cancel JDC orders", () => {
@@ -248,9 +314,10 @@ test("Merchant settings exposes merchant_id for StoreOS setup with copy action",
 
 test("Admin web settings provisions StoreOS JDC key and webhook secret", () => {
   assert.match(adminLegacySource, /StoreOS Connect/);
-  assert.match(adminLegacySource, /settStoreOsMerchantId/);
   assert.match(adminLegacySource, /settStoreOsWebhookUrl/);
-  assert.match(adminLegacySource, /settStoreOsShopId/);
+  assert.match(adminLegacySource, /System connection/);
+  assert.doesNotMatch(adminLegacySource, /settStoreOsMerchantId/);
+  assert.doesNotMatch(adminLegacySource, /settStoreOsShopId/);
   assert.match(adminLegacySource, /provisionStoreOsConnection\(\)/);
   assert.match(adminLegacySource, /copyStoreOsCredential\(["']settStoreOsJdcKey["']\)/);
   assert.match(adminLegacySource, /copyStoreOsCredential\(["']settStoreOsWebhookSecret["']\)/);
@@ -260,9 +327,9 @@ test("Admin web settings provisions StoreOS JDC key and webhook secret", () => {
     adminSettingsActionsSource,
     /supabase\.functions\.invoke\(["']connect-provision-merchant["']/,
   );
-  assert.match(adminSettingsActionsSource, /merchant_id:\s*merchantId/);
   assert.match(adminSettingsActionsSource, /storeos_webhook_url:\s*storeosWebhookUrl/);
-  assert.match(adminSettingsActionsSource, /storeos_shop_id:\s*storeosShopId/);
+  assert.doesNotMatch(adminSettingsActionsSource, /merchant_id:\s*merchantId/);
+  assert.doesNotMatch(adminSettingsActionsSource, /storeos_shop_id:\s*storeosShopId/);
   assert.match(adminSettingsActionsSource, /rotate_secret:\s*rotateSecret/);
   assert.match(adminSettingsActionsSource, /connection\.jdc_connection_key/);
   assert.match(adminSettingsActionsSource, /webhook_secret/);

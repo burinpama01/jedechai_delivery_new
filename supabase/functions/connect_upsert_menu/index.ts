@@ -5,7 +5,11 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, errorResponse, jsonResponse } from "../_shared/admin-auth.ts";
-import { authenticateConnectRequest } from "../_shared/connect-auth.ts";
+import {
+  authenticateConnectRequest,
+  pickMerchantId,
+  verifyConnectMerchant,
+} from "../_shared/connect-auth.ts";
 
 function withCors(res: Response) {
   const headers = new Headers(res.headers);
@@ -57,6 +61,13 @@ serve(async (req) => {
     const auth = await authenticateConnectRequest(req, supabaseAdmin);
     if (!auth.ok) return withCors(errorResponse(auth.error, auth.status));
     const { body, connection } = auth;
+    const merchantId = pickMerchantId(body);
+    if (!merchantId) return withCors(errorResponse("Valid merchant_id is required"));
+    const merchantCheck = await verifyConnectMerchant(supabaseAdmin, merchantId);
+    if (!merchantCheck.ok) return withCors(errorResponse(merchantCheck.error, merchantCheck.status));
+    if (connection.menu_managed_by_pos === false) {
+      return withCors(errorResponse("StoreOS menu sync is disabled", 403));
+    }
 
     const items = Array.isArray(body.items) ? body.items : [];
     if (items.length === 0) return withCors(errorResponse("items is required"));
@@ -71,7 +82,7 @@ serve(async (req) => {
         return withCors(errorResponse("Each item needs external_ref, name, and price"));
       }
       rows.push({
-        merchant_id: connection.merchant_id,
+        merchant_id: merchantId,
         external_ref: externalRef,
         source: "storeos",
         name,
@@ -91,7 +102,7 @@ serve(async (req) => {
       const { data: existing, error: existingError } = await supabaseAdmin
         .from("menu_items")
         .select("id, external_ref")
-        .eq("merchant_id", connection.merchant_id)
+        .eq("merchant_id", merchantId)
         .eq("source", "storeos");
       if (existingError) return withCors(errorResponse(existingError.message));
 

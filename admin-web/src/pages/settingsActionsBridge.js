@@ -573,18 +573,11 @@ export async function provisionStoreOsConnection(ctx, options = {}) {
   _ctx = ctx || _ctx;
   const { showToast, supabase } = _deps();
 
-  const merchantId = storeOsInputValue('settStoreOsMerchantId');
   const storeosWebhookUrl = storeOsInputValue('settStoreOsWebhookUrl');
-  const storeosShopId = storeOsInputValue('settStoreOsShopId');
   const rotateSecret = options.rotateSecret === true ||
     document.getElementById('settStoreOsRotateSecret')?.checked === true;
   const menuManagedByPos =
     document.getElementById('settStoreOsMenuManagedByPos')?.checked !== false;
-
-  if (!merchantId) {
-    showToast('กรุณากรอก merchant_id ก่อน', 'error');
-    return;
-  }
 
   if (storeosWebhookUrl && !/^https:\/\//i.test(storeosWebhookUrl)) {
     showToast('StoreOS webhook URL ต้องขึ้นต้นด้วย https://', 'error');
@@ -601,9 +594,7 @@ export async function provisionStoreOsConnection(ctx, options = {}) {
   try {
     const { data, error } = await supabase.functions.invoke('connect-provision-merchant', {
       body: {
-        merchant_id: merchantId,
         storeos_webhook_url: storeosWebhookUrl || null,
-        storeos_shop_id: storeosShopId || null,
         rotate_secret: rotateSecret,
         menu_managed_by_pos: menuManagedByPos,
       },

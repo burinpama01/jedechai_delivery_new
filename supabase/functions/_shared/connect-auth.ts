@@ -34,6 +34,38 @@ export function previewSecret(secret: string): string {
   return `${value.slice(0, 6)}...${value.slice(-4)}`;
 }
 
+export function pickMerchantId(body: Record<string, unknown>): string | null {
+  const value = typeof body?.merchant_id === "string" ? body.merchant_id.trim() : "";
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    .test(value)
+    ? value
+    : null;
+}
+
+export async function verifyConnectMerchant(
+  supabaseAdmin: any,
+  merchantId: string,
+): Promise<
+  | { ok: true; merchant: any }
+  | { ok: false; status: number; error: string }
+> {
+  const { data: merchant, error } = await supabaseAdmin
+    .from("profiles")
+    .select("id, role, approval_status")
+    .eq("id", merchantId)
+    .maybeSingle();
+
+  if (error) return { ok: false, status: 500, error: error.message };
+  if (!merchant || merchant.role !== "merchant") {
+    return { ok: false, status: 404, error: "Merchant profile not found" };
+  }
+  if (merchant.approval_status !== "approved") {
+    return { ok: false, status: 403, error: "Merchant profile is not approved" };
+  }
+
+  return { ok: true, merchant };
+}
+
 function normalizeSignature(signature: string): string {
   return signature.trim().replace(/^sha256=/i, "").toLowerCase();
 }
@@ -131,7 +163,7 @@ export async function authenticateConnectRequest(
 
   const { data: connection, error: connectionError } = await supabaseAdmin
     .from("pos_connections")
-    .select("id, merchant_id, provider, status, webhook_secret")
+    .select("id, provider, status, webhook_secret, menu_managed_by_pos")
     .eq("jdc_connection_key", headers.connectionKey)
     .eq("status", "active")
     .maybeSingle();

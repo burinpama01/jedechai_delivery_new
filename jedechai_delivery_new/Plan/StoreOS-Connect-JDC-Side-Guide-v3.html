@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StoreOS Connect - JDC Side Guide v3</title>
+  <style>
+    body{font-family:Arial,"Noto Sans Thai",sans-serif;margin:0;background:#0f172a;color:#e5e7eb;line-height:1.65}
+    main{max-width:980px;margin:0 auto;padding:32px 20px 56px}
+    h1{font-size:28px;margin:0 0 8px;color:#f8fafc}
+    h2{font-size:20px;margin:28px 0 10px;color:#93c5fd}
+    .card{background:#111827;border:1px solid #334155;border-radius:8px;padding:18px;margin:16px 0}
+    .ok{color:#86efac}.warn{color:#fde68a}
+    code{background:#020617;border:1px solid #334155;border-radius:6px;padding:2px 6px;color:#bfdbfe}
+    pre{background:#020617;border:1px solid #334155;border-radius:8px;padding:14px;overflow:auto}
+    ul{padding-left:22px}
+  </style>
+</head>
+<body>
+<main>
+  <h1>StoreOS Connect - JDC Side Guide v3</h1>
+  <p class="warn">สถานะ: ปรับ scope ล่าสุด 2026-06-30 ตาม decision ใหม่จากผู้ใช้</p>
+
+  <section class="card">
+    <h2>Decision ล่าสุด</h2>
+    <ul>
+      <li><b>ไม่ออก key แยกรายร้าน</b>: JDC มี StoreOS connection ชุดเดียวทั้งระบบ</li>
+      <li><b>StoreOS เป็นฝั่งผูกร้าน</b>: StoreOS ใช้ <code>merchant_id</code> ที่ร้าน copy จากแอป JDC ไป map ร้านเอง</li>
+      <li><b>Admin-web</b>: ออก <code>JDC key</code> และ <code>webhook secret</code> ระดับระบบเท่านั้น</li>
+      <li><b>Merchant app</b>: แสดง <code>merchant_id</code> เพื่อ copy ไปใส่ StoreOS</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Contract StoreOS -> JDC</h2>
+    <p>ทุก request ยังใช้ system credential เดียวกันใน headers:</p>
+    <pre>X-JDC-Connection-Key: &lt;system JDC key&gt;
+X-Connect-Event-Id: &lt;unique event id&gt;
+X-Connect-Timestamp: &lt;epoch seconds&gt;
+X-Connect-Signature: sha256=&lt;HMAC raw body with webhook secret&gt;</pre>
+    <p>ค่า timestamp ใช้ epoch seconds หรือ epoch milliseconds ภายในช่วงเวลา clock skew ที่ JDC กำหนด ไม่ใช่ ISO string</p>
+    <p>และต้องใส่ <code>merchant_id</code> ใน JSON body เพื่อระบุร้าน JDC:</p>
+    <pre>{
+  "merchant_id": "JDC merchant UUID",
+  "...": "payload per endpoint"
+}</pre>
+  </section>
+
+  <section class="card">
+    <h2>JDC Edge Function URLs</h2>
+    <ul>
+      <li><code>https://tfwhfkfgekkkgamhvttk.supabase.co/functions/v1/connect_upsert_menu</code></li>
+      <li><code>https://tfwhfkfgekkkgamhvttk.supabase.co/functions/v1/connect_set_shop_status</code></li>
+      <li><code>https://tfwhfkfgekkkgamhvttk.supabase.co/functions/v1/connect_update_order_status</code></li>
+    </ul>
+    <p>Admin provisioning: <code>https://tfwhfkfgekkkgamhvttk.supabase.co/functions/v1/connect-provision-merchant</code></p>
+  </section>
+
+  <section class="card">
+    <h2>Verification Required</h2>
+    <ul>
+      <li>admin-web ออก key/secret โดยไม่ต้องกรอก <code>merchant_id</code></li>
+      <li>StoreOS ยิง endpoint โดยส่ง <code>merchant_id</code> ใน body แล้ว JDC sync เข้าร้านนั้น</li>
+      <li>request ที่ไม่มี <code>merchant_id</code> ต้องถูก reject</li>
+      <li>outbound webhook จาก JDC ยังส่ง <code>merchant_id</code> ให้ StoreOS ใช้ map ร้าน</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

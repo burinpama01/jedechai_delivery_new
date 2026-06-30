@@ -5,7 +5,11 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, errorResponse, jsonResponse } from "../_shared/admin-auth.ts";
-import { authenticateConnectRequest } from "../_shared/connect-auth.ts";
+import {
+  authenticateConnectRequest,
+  pickMerchantId,
+  verifyConnectMerchant,
+} from "../_shared/connect-auth.ts";
 
 const STOREOS_ALLOWED_STATUSES = new Set([
   "preparing",
@@ -62,12 +66,16 @@ serve(async (req) => {
     if (!auth.ok) return withCors(errorResponse(auth.error, auth.status));
     const { body, connection } = auth;
 
+    const merchantId = pickMerchantId(body);
     const bookingId = pickString(body.booking_id);
     const nextStatus = pickString(body.status);
     const expectedCurrent = pickString(body.expected_current_status);
-    if (!bookingId || !nextStatus) {
-      return withCors(errorResponse("booking_id and status are required"));
+    if (!merchantId || !bookingId || !nextStatus) {
+      return withCors(errorResponse("merchant_id, booking_id and status are required"));
     }
+    const merchantCheck = await verifyConnectMerchant(supabaseAdmin, merchantId);
+    if (!merchantCheck.ok) return withCors(errorResponse(merchantCheck.error, merchantCheck.status));
+
     if (!STOREOS_ALLOWED_STATUSES.has(nextStatus)) {
       return withCors(errorResponse("Status is not allowed for StoreOS", 400));
     }
@@ -76,7 +84,7 @@ serve(async (req) => {
       .from("bookings")
       .select("id, status, service_type, merchant_id, driver_id")
       .eq("id", bookingId)
-      .eq("merchant_id", connection.merchant_id)
+      .eq("merchant_id", merchantId)
       .eq("service_type", "food")
       .maybeSingle();
 
@@ -118,7 +126,7 @@ serve(async (req) => {
       .from("bookings")
       .update(updatePayload)
       .eq("id", bookingId)
-      .eq("merchant_id", connection.merchant_id)
+      .eq("merchant_id", merchantId)
       .eq("service_type", "food")
       .eq("status", booking.status)
       .select("id, status, status_origin, pos_order_id")

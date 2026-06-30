@@ -5,7 +5,11 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, errorResponse, jsonResponse } from "../_shared/admin-auth.ts";
-import { authenticateConnectRequest } from "../_shared/connect-auth.ts";
+import {
+  authenticateConnectRequest,
+  pickMerchantId,
+  verifyConnectMerchant,
+} from "../_shared/connect-auth.ts";
 
 function withCors(res: Response) {
   const headers = new Headers(res.headers);
@@ -40,7 +44,11 @@ serve(async (req) => {
 
     const auth = await authenticateConnectRequest(req, supabaseAdmin);
     if (!auth.ok) return withCors(errorResponse(auth.error, auth.status));
-    const { body, connection } = auth;
+    const { body } = auth;
+    const merchantId = pickMerchantId(body);
+    if (!merchantId) return withCors(errorResponse("Valid merchant_id is required"));
+    const merchantCheck = await verifyConnectMerchant(supabaseAdmin, merchantId);
+    if (!merchantCheck.ok) return withCors(errorResponse(merchantCheck.error, merchantCheck.status));
 
     if (typeof body.is_open !== "boolean") {
       return withCors(errorResponse("is_open boolean is required"));
@@ -52,7 +60,7 @@ serve(async (req) => {
         shop_status: body.is_open,
         is_online: body.is_open,
       })
-      .eq("id", connection.merchant_id)
+      .eq("id", merchantId)
       .select("id, shop_status, is_online")
       .maybeSingle();
 
@@ -61,7 +69,7 @@ serve(async (req) => {
 
     return withCors(jsonResponse({
       success: true,
-      merchant_id: connection.merchant_id,
+      merchant_id: merchantId,
       shop_status: data.shop_status,
       is_online: data.is_online,
     }));

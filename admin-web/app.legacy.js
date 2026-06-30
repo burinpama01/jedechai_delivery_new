@@ -4011,10 +4011,10 @@ async function renderSettings(el) {
             <p class="text-xs text-gray-400">ออก JDC key และ webhook secret สำหรับนำไปตั้งค่าที่ StoreOS</p>
           </div>
         </div>
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="hidden">
             <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">merchant_id</label>
-            <input type="text" id="settStoreOsMerchantId" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all font-mono text-xs" placeholder="UUID ของร้านจาก JDC">
+            <input type="text" data-retired-storeos-merchant-field="true" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all font-mono text-xs" placeholder="UUID ของร้านจาก JDC">
             <p class="text-xs text-gray-400 mt-1.5">ใช้ merchant_id จากหน้า Merchant Settings ในแอป JDC</p>
           </div>
           <div>
@@ -4022,9 +4022,13 @@ async function renderSettings(el) {
             <input type="url" id="settStoreOsWebhookUrl" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all" placeholder="https://...">
             <p class="text-xs text-gray-400 mt-1.5">ปล่อยว่างได้ถ้ายังไม่พร้อมรับ outbound webhook</p>
           </div>
-          <div>
+          <div class="rounded-xl border border-violet-100 bg-violet-50/60 px-4 py-3">
+            <p class="text-xs font-semibold text-violet-700 uppercase tracking-wider">System connection</p>
+            <p class="text-xs text-violet-600 mt-1.5">JDC uses one key/secret for StoreOS. StoreOS binds each shop by merchant_id copied from the JDC merchant app.</p>
+          </div>
+          <div class="hidden">
             <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">StoreOS shop ID</label>
-            <input type="text" id="settStoreOsShopId" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all" placeholder="optional">
+            <input type="text" data-retired-storeos-shop-field="true" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all" placeholder="optional">
             <p class="text-xs text-gray-400 mt-1.5">รหัสร้านฝั่ง StoreOS ถ้ามี</p>
           </div>
         </div>
