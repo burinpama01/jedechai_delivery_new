@@ -4275,6 +4275,12 @@ async function renderSettings(el) {
         </div>
       </div>
 
+      <div class="flex justify-end">
+        <button onclick="saveServiceRatesSettings()" class="px-5 py-2.5 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-blue-200" style="background:linear-gradient(135deg,#3b82f6,#60a5fa);">
+          <span class="material-icons-round text-sm align-middle mr-1">save</span> บันทึกอัตราค่าบริการ
+        </button>
+      </div>
+
       <!-- ========= บริการส่งพัสดุ ========= -->
       <div class="glass-card p-6">
         <div class="flex items-center gap-3 mb-5">

@@ -373,6 +373,16 @@ test("Admin web settings provisions StoreOS JDC key and webhook secret", () => {
   assert.doesNotMatch(adminSettingsActionsSource, /service_role|SUPABASE_SERVICE_ROLE/i);
 });
 
+test("Admin web service-rate forms expose save actions near food and parcel settings", () => {
+  const foodServiceBlock = sourceBetween(adminLegacySource, "บริการส่งอาหาร", "บริการส่งพัสดุ");
+  const parcelServiceBlock = sourceBetween(adminLegacySource, "บริการส่งพัสดุ", "ป้ายโปรโมชั่น");
+
+  assert.match(foodServiceBlock, /saveServiceRatesSettings\(\)/);
+  assert.match(foodServiceBlock, /บันทึกอัตราค่าบริการ/);
+  assert.match(parcelServiceBlock, /saveServiceRatesSettings\(\)/);
+  assert.match(parcelServiceBlock, /บันทึกอัตราค่าบริการ/);
+});
+
 test("Admin web merchant list exposes merchant_id for StoreOS shop mapping", () => {
   assert.match(adminIndexSource, /<script src="app\.js/);
   assert.match(adminAppSource, /loadScript\(["']app\.legacy\.js["']\)/);
