@@ -307,10 +307,20 @@ BEGIN
   FROM public.wallets
   WHERE user_id = v_driver_id;
 
-  IF COALESCE(v_driver_wallet_after, -1) <> COALESCE(v_driver_wallet_before, -1) THEN
-    RAISE EXCEPTION 'cash outbound changed driver wallet balance before %, after %',
+  -- Cash completions settle like food: the platform GP is deducted from the
+  -- driver wallet as a 'commission' transaction.
+  IF COALESCE(v_driver_wallet_after, -1)
+      <> COALESCE(v_driver_wallet_before, -1)
+         - COALESCE((v_result->>'cash_commission')::numeric, 0) THEN
+    RAISE EXCEPTION 'cash outbound commission mismatch before %, after %, commission %',
       v_driver_wallet_before,
-      v_driver_wallet_after;
+      v_driver_wallet_after,
+      v_result->>'cash_commission';
+  END IF;
+
+  IF COALESCE((v_result->>'cash_commission')::numeric, -1)
+      <> COALESCE((v_result->>'app_earnings')::numeric, -2) THEN
+    RAISE EXCEPTION 'cash outbound commission does not match app earnings: %', v_result;
   END IF;
 
   PERFORM set_config('request.jwt.claim.sub', v_customer_id::text, true);

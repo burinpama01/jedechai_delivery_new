@@ -58,8 +58,8 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
     super.dispose();
   }
 
-  Future<void> _loadMerchants() async {
-    setState(() => _isLoading = true);
+  Future<void> _loadMerchants({bool showLoading = true}) async {
+    if (showLoading) setState(() => _isLoading = true);
     try {
       final results = await Future.wait([
         _laundryService.fetchLaundryMerchants(),
@@ -183,18 +183,24 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
             ];
 
       final attachmentUrls = await _uploadQuoteAttachments();
-      final result = await _laundryService.createQuoteRequest(
-        merchantId: merchantId,
-        pickupLat: _pickupLat!,
-        pickupLng: _pickupLng!,
-        pickupAddress: pickupAddress,
-        requestedItems: requestedItems,
-        attachmentUrls: attachmentUrls,
-        customerNote: _noteController.text.trim().isEmpty
-            ? null
-            : _noteController.text.trim(),
-        packageId: _selectedPackageId,
-      );
+      final Map<String, dynamic> result;
+      try {
+        result = await _laundryService.createQuoteRequest(
+          merchantId: merchantId,
+          pickupLat: _pickupLat!,
+          pickupLng: _pickupLng!,
+          pickupAddress: pickupAddress,
+          requestedItems: requestedItems,
+          attachmentUrls: attachmentUrls,
+          customerNote: _noteController.text.trim().isEmpty
+              ? null
+              : _noteController.text.trim(),
+          packageId: _selectedPackageId,
+        );
+      } catch (e) {
+        unawaited(_removeUploadedQuoteAttachments(attachmentUrls));
+        rethrow;
+      }
 
       if (result['success'] == true) {
         final laundryOrderId = result['laundry_order_id']?.toString();
@@ -215,12 +221,24 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
         setState(() => _attachmentFiles = []);
         await _loadMerchants();
       } else {
+        unawaited(_removeUploadedQuoteAttachments(attachmentUrls));
         _showMessage('ส่งคำขอไม่สำเร็จ: ${result['error'] ?? 'unknown'}');
       }
     } catch (e) {
       _showMessage('ส่งคำขอไม่สำเร็จ: $e');
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  Future<void> _removeUploadedQuoteAttachments(List<String> paths) async {
+    if (paths.isEmpty) return;
+    try {
+      await SupabaseService.client.storage
+          .from('laundry-quote-attachments')
+          .remove(paths);
+    } catch (e) {
+      debugLog('Laundry quote attachment cleanup failed: $e');
     }
   }
 
@@ -232,10 +250,10 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
           (row) => row?['id'] == merchantId,
           orElse: () => null,
         );
+    // The sound toggle only mutes the alert sound; the push itself must still
+    // reach the merchant so new quote requests are never silently dropped.
     final soundEnabled =
         (merchant?['laundry_quote_sound_enabled'] as bool?) ?? true;
-    if (!soundEnabled) return;
-
     final soundKey = (merchant?['laundry_quote_sound_key'] as String?)?.trim();
     await NotificationSender.sendNotification(
       targetUserId: merchantId,
@@ -251,7 +269,7 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
         'sound_key': soundKey?.isNotEmpty == true
             ? soundKey!
             : 'merchant_laundry_quote_new',
-        'play_sound': 'true',
+        'play_sound': soundEnabled ? 'true' : 'false',
         'screen': 'merchant_laundry',
         'route': 'merchant_laundry',
       },
@@ -544,7 +562,7 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-              onRefresh: _loadMerchants,
+              onRefresh: () => _loadMerchants(showLoading: false),
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [

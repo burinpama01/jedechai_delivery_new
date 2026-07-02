@@ -91,6 +91,12 @@ function isUnregisteredTokenError(error: unknown) {
 
 function androidChannelFor(data?: Record<string, string>) {
   const type = data?.type ?? data?.notification_type ?? data?.legacy_type;
+  // Senders can opt out of the loud alert channel (e.g. merchant disabled the
+  // laundry quote sound) while still delivering the push itself. Accept both
+  // string and boolean values because data may originate from jsonb.
+  if (String(data?.play_sound ?? "").toLowerCase() === "false") {
+    return "jedechai_channel";
+  }
   if (
     type === "merchant.order.created" ||
     type === "merchant_new_order" ||

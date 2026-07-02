@@ -12,7 +12,7 @@ class LaundryService {
     final response = await _client
         .from('profiles')
         .select(
-          'id, full_name, shop_address, latitude, longitude, shop_photo_url, '
+          'id, full_name, phone_number, shop_address, latitude, longitude, shop_photo_url, '
           'custom_delivery_fee, custom_base_fare, custom_base_distance, custom_per_km, '
           'laundry_quote_sound_enabled, laundry_quote_sound_key',
         )
@@ -255,10 +255,16 @@ class LaundryService {
   }
 
   Future<List<Map<String, dynamic>>> fetchMyLaundryOrders() async {
+    final customerId = _client.auth.currentUser?.id;
+    if (customerId == null) {
+      throw StateError('unauthenticated');
+    }
+
     final response = await _client
         .from('laundry_orders')
         .select(
             '*, outbound_booking:outbound_booking_id(*), return_booking:return_booking_id(*)')
+        .eq('customer_id', customerId)
         .order('created_at', ascending: false);
 
     return (response as List)
@@ -292,9 +298,15 @@ class LaundryService {
   }
 
   Future<List<Map<String, dynamic>>> fetchMerchantLaundryOrders() async {
+    final merchantId = _client.auth.currentUser?.id;
+    if (merchantId == null) {
+      throw StateError('unauthenticated');
+    }
+
     final response = await _client
         .from('laundry_orders')
         .select()
+        .eq('merchant_id', merchantId)
         .order('created_at', ascending: false);
 
     var orders = (response as List)
@@ -315,10 +327,10 @@ class LaundryService {
       );
     }
 
-    for (final order in orders) {
+    await Future.wait(orders.map((order) async {
       order['_attachment_signed_urls'] =
           await _signedQuoteAttachmentUrls(order['attachment_urls']);
-    }
+    }));
     return orders;
   }
 
@@ -326,18 +338,17 @@ class LaundryService {
     final paths = rawPaths is List
         ? rawPaths.whereType<String>().where((path) => path.isNotEmpty).toList()
         : const <String>[];
-    final signedUrls = <String>[];
-    for (final path in paths) {
+    final signedUrls = await Future.wait(paths.map((path) async {
       try {
-        final signedUrl = await _client.storage
+        return await _client.storage
             .from('laundry-quote-attachments')
             .createSignedUrl(path, 3600);
-        signedUrls.add(signedUrl);
       } catch (_) {
         // Keep the order list usable even if one private attachment expires.
+        return null;
       }
-    }
-    return signedUrls;
+    }));
+    return signedUrls.whereType<String>().toList();
   }
 
   Future<Map<String, dynamic>> _rpc(

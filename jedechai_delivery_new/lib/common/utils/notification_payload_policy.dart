@@ -50,7 +50,17 @@ class NotificationNavigationTarget {
 }
 
 class NotificationPayloadPolicy {
+  /// Senders can mute the loud alert treatment (custom sound, alarm channel,
+  /// insistent flags) while still delivering the push, e.g. a merchant that
+  /// disabled the laundry quote sound. Accepts both string and boolean values
+  /// because notification data may arrive as jsonb.
+  static bool isSoundMuted(Map<String, dynamic> data) {
+    final playSound = data['play_sound']?.toString().trim().toLowerCase();
+    return playSound == 'false';
+  }
+
   static bool isMerchantNewOrder(Map<String, dynamic> data) {
+    if (isSoundMuted(data)) return false;
     final type = _type(data);
     return type == NotificationTypes.merchantOrderCreated ||
         type == NotificationTypes.laundryQuoteRequested ||

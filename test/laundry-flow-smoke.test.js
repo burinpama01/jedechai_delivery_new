@@ -962,6 +962,104 @@ test("merchant can explicitly start washing before creating laundry return booki
   assert.match(screen, /เริ่มซัก/);
 });
 
+test("laundry cancel/refund and stage fixes cover hold refund, self-pickup completion, and re-quote", () => {
+  const migration = readLatestMigration(
+    /laundry.*cancel.*refund.*stage.*fixes.*\.sql$/,
+    "laundry cancel refund stage fixes migration not found",
+  );
+  const service = readFileSync(
+    new URL(
+      "../jedechai_delivery_new/lib/common/services/laundry_service.dart",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const customerScreen = readFileSync(
+    new URL(
+      "../jedechai_delivery_new/lib/apps/customer/screens/services/laundry_service_screen.dart",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const merchantScreen = readFileSync(
+    new URL(
+      "../jedechai_delivery_new/lib/apps/merchant/screens/merchant_laundry_screen.dart",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const fcmFunction = readFileSync(
+    new URL("../supabase/functions/send-fcm-notification/index.ts", import.meta.url),
+    "utf8",
+  );
+
+  // Admin force cancel: text cast fix, hold refund, laundry order sync.
+  assert.match(migration, /admin_force_cancel_booking_with_wallet_refund/);
+  assert.match(migration, /refund_booking_to_customer_wallet/);
+  assert.match(migration, /related_booking_id = p_booking_id::text/);
+  assert.match(migration, /wt\.type = 'hold'/);
+  assert.match(migration, /hold_already_released/);
+  assert.match(migration, /laundry_leg = 'outbound'/);
+  assert.match(migration, /laundry_leg = 'return'/);
+  assert.match(migration, /return_booking_id = NULL/);
+  assert.match(migration, /return_wallet_hold_transaction_id = NULL/);
+
+  // Ledger-only refund hardening is preserved (now accepting hold rows) and
+  // the customer self-cancel path gets the same ::text cast fix.
+  assert.match(migration, /wallet_refund_amount_mismatch/);
+  assert.match(migration, /refund_reconciliation_required/);
+  assert.match(migration, /v_ledger_amount/);
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.cancel_wallet_booking_with_refund/);
+  assert.match(migration, /wt\.related_booking_id = p_booking_id::text\s+AND wt\.type = 'payment'/);
+
+  // Self-pickup orders can now be completed by the merchant.
+  assert.match(migration, /merchant_update_laundry_status/);
+  assert.match(migration, /NOT IN \('washing', 'completed'\)/);
+  assert.match(migration, /v_order\.return_mode = 'self_pickup' AND v_order\.status = 'ready_for_return'/);
+  assert.match(migration, /laundry\.completed/);
+  assert.match(merchantScreen, /_completeSelfPickup/);
+  assert.match(merchantScreen, /ลูกค้ารับผ้าแล้ว \/ ปิดงาน/);
+
+  // Expired quotes can be re-sent.
+  assert.match(migration, /NOT IN \('quote_requested', 'quoted', 'quote_expired'\)/);
+  assert.match(merchantScreen, /status == 'quote_expired'/);
+  assert.match(merchantScreen, /ส่ง quote ใหม่/);
+
+  // Order queries are scoped to the signed-in owner instead of RLS alone.
+  assert.match(service, /\.eq\('customer_id', customerId\)/);
+  assert.match(service, /\.eq\('merchant_id', merchantId\)/);
+  assert.match(service, /phone_number/);
+
+  // Sound toggle mutes the alert channel without dropping the push, on both
+  // the FCM server channel and the app's local notification paths.
+  const payloadPolicy = readFileSync(
+    new URL(
+      "../jedechai_delivery_new/lib/common/utils/notification_payload_policy.dart",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(customerScreen, /'play_sound': soundEnabled \? 'true' : 'false'/);
+  assert.doesNotMatch(customerScreen, /if \(!soundEnabled\) return;/);
+  assert.match(fcmFunction, /String\(data\?\.play_sound \?\? ""\)\.toLowerCase\(\) === "false"/);
+  assert.match(payloadPolicy, /static bool isSoundMuted\(Map<String, dynamic> data\)/);
+  assert.match(payloadPolicy, /if \(isSoundMuted\(data\)\) return false;/);
+
+  // Failed quote requests clean up already-uploaded attachments.
+  assert.match(customerScreen, /_removeUploadedQuoteAttachments/);
+
+  // Cash completions settle platform GP from the driver wallet like food.
+  const rollbackScript = readFileSync(
+    new URL("../scripts/laundry_e2e_rollback.sql", import.meta.url),
+    "utf8",
+  );
+  assert.match(migration, /wallet_deduct/);
+  assert.match(migration, /v_cash_commission := v_app_earnings;/);
+  assert.match(migration, /commission_deduct_failed/);
+  assert.match(migration, /wt\.type = 'commission'/);
+  assert.match(rollbackScript, /cash_commission/);
+});
+
 test("runtime profile lookups avoid PostgREST relationship embeds that can PGRST200", () => {
   const riskyFiles = [
     "../jedechai_delivery_new/lib/common/services/admin_service.dart",

@@ -1365,11 +1365,38 @@ async function notifyCancelParticipants(supabase, orderId: string, isForce: bool
 async function handleCancelOrder(supabase, body) {
   const { order_id, reason } = body;
   if (!order_id) return errorResponse("Missing 'order_id'");
+  const nowIso = new Date().toISOString();
+  const { data: booking, error: bookingError } = await supabase
+    .from("bookings")
+    .select("id, service_type, laundry_order_id, laundry_leg")
+    .eq("id", order_id)
+    .maybeSingle();
+  if (bookingError) return errorResponse(bookingError.message);
+  if (!booking) return errorResponse("Booking not found", 404);
+
+  // Laundry bookings need laundry_orders sync plus a return-leg wallet hold
+  // release; the guarded RPC handles all of that atomically.
+  if (booking.service_type === "laundry" && booking.laundry_order_id) {
+    const { data: result, error } = await supabase.rpc("admin_force_cancel_booking_with_wallet_refund", {
+      p_booking_id: order_id,
+      p_reason: reason || "",
+      p_do_refund: booking.laundry_leg === "return",
+    });
+    if (error) return errorResponse(error.message);
+    const payload = Array.isArray(result) ? result[0] : result;
+    if (payload?.success !== true) {
+      return errorResponse(payload?.message || payload?.error || "cancel_order_failed");
+    }
+    await notifyCancelParticipants(supabase, order_id, false);
+    return jsonResponse({ success: true });
+  }
+
   const { error } = await supabase
     .from("bookings")
-    .update({ status: "cancelled", cancellation_reason: reason || "", updated_at: new Date().toISOString() })
+    .update({ status: "cancelled", cancellation_reason: reason || "", updated_at: nowIso })
     .eq("id", order_id);
   if (error) return errorResponse(error.message);
+
   await notifyCancelParticipants(supabase, order_id, false);
   return jsonResponse({ success: true });
 }

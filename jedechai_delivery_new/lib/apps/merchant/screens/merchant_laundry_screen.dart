@@ -14,7 +14,6 @@ class _MerchantLaundryScreenState extends State<MerchantLaundryScreen> {
   final LaundryService _laundryService = LaundryService();
 
   bool _isLoading = true;
-  bool _isSavingSettings = false;
   int _quoteExpiryMinutes = 60;
   bool _quoteSoundEnabled = true;
   List<Map<String, dynamic>> _orders = [];
@@ -26,8 +25,8 @@ class _MerchantLaundryScreenState extends State<MerchantLaundryScreen> {
     _loadOrders();
   }
 
-  Future<void> _loadOrders() async {
-    setState(() => _isLoading = true);
+  Future<void> _loadOrders({bool showLoading = true}) async {
+    if (showLoading) setState(() => _isLoading = true);
     try {
       final ordersFuture = _laundryService.fetchMerchantLaundryOrders();
       final packagesFuture = _laundryService.fetchMyMerchantPackages();
@@ -55,6 +54,7 @@ class _MerchantLaundryScreenState extends State<MerchantLaundryScreen> {
     final expiryController =
         TextEditingController(text: _quoteExpiryMinutes.toString());
     var soundEnabled = _quoteSoundEnabled;
+    var isSaving = false;
 
     final saved = await showDialog<bool>(
       context: context,
@@ -92,7 +92,7 @@ class _MerchantLaundryScreenState extends State<MerchantLaundryScreen> {
                   child: const Text('ยกเลิก'),
                 ),
                 FilledButton(
-                  onPressed: _isSavingSettings
+                  onPressed: isSaving
                       ? null
                       : () async {
                           final expiry =
@@ -101,7 +101,7 @@ class _MerchantLaundryScreenState extends State<MerchantLaundryScreen> {
                             _showMessage('กรุณากรอกเวลา 5-1440 นาที');
                             return;
                           }
-                          setState(() => _isSavingSettings = true);
+                          setDialogState(() => isSaving = true);
                           try {
                             await _laundryService.saveMerchantLaundrySettings(
                               quoteExpiryMinutes: expiry,
@@ -117,9 +117,8 @@ class _MerchantLaundryScreenState extends State<MerchantLaundryScreen> {
                             }
                           } catch (e) {
                             _showMessage('บันทึกตั้งค่าไม่สำเร็จ: $e');
-                          } finally {
-                            if (mounted) {
-                              setState(() => _isSavingSettings = false);
+                            if (context.mounted) {
+                              setDialogState(() => isSaving = false);
                             }
                           }
                         },
@@ -386,6 +385,26 @@ class _MerchantLaundryScreenState extends State<MerchantLaundryScreen> {
   }
 
   Future<void> _openReturnBookingDialog(Map<String, dynamic> order) async {
+    // self_pickup orders have no return driver leg; the RPC only flips the
+    // order to ready_for_return, so skip the delivery fee dialog entirely.
+    if ((order['return_mode'] as String?) == 'self_pickup') {
+      try {
+        final result = await _laundryService.createReturnBooking(
+          laundryOrderId: order['id'] as String,
+        );
+        if (result['success'] == true) {
+          _showMessage('บันทึกซักเสร็จแล้ว รอลูกค้ามารับผ้า');
+          await _loadOrders();
+        } else {
+          _showMessage(
+              'บันทึกซักเสร็จไม่สำเร็จ: ${result['error'] ?? 'unknown'}');
+        }
+      } catch (e) {
+        _showMessage('บันทึกซักเสร็จไม่สำเร็จ: $e');
+      }
+      return;
+    }
+
     final deliveryController = TextEditingController(
       text: (order['delivery_fee_return'] as num?)?.toStringAsFixed(0) ?? '0',
     );
@@ -468,6 +487,23 @@ class _MerchantLaundryScreenState extends State<MerchantLaundryScreen> {
     }
   }
 
+  Future<void> _completeSelfPickup(Map<String, dynamic> order) async {
+    try {
+      final result = await _laundryService.updateMerchantLaundryStatus(
+        laundryOrderId: order['id'] as String,
+        status: 'completed',
+      );
+      if (result['success'] == true) {
+        _showMessage('ปิดงานซักผ้าแล้ว');
+        await _loadOrders();
+      } else {
+        _showMessage('ปิดงานไม่สำเร็จ: ${result['error'] ?? 'unknown'}');
+      }
+    } catch (e) {
+      _showMessage('ปิดงานไม่สำเร็จ: $e');
+    }
+  }
+
   Future<void> _startWashing(Map<String, dynamic> order) async {
     try {
       final result = await _laundryService.updateMerchantLaundryStatus(
@@ -524,14 +560,13 @@ class _MerchantLaundryScreenState extends State<MerchantLaundryScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-              onRefresh: _loadOrders,
+              onRefresh: () => _loadOrders(showLoading: false),
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
                   _LaundrySettingsCard(
                     expiryMinutes: _quoteExpiryMinutes,
                     soundEnabled: _quoteSoundEnabled,
-                    isSaving: _isSavingSettings,
                     onEdit: _openLaundrySettingsDialog,
                   ),
                   const SizedBox(height: 16),
@@ -565,6 +600,7 @@ class _MerchantLaundryScreenState extends State<MerchantLaundryScreen> {
                         onChat: () => _openQuoteChat(order),
                         onStartWashing: () => _startWashing(order),
                         onCreateReturn: () => _openReturnBookingDialog(order),
+                        onCompleteSelfPickup: () => _completeSelfPickup(order),
                       ),
                       const SizedBox(height: 12),
                     ],
@@ -579,13 +615,11 @@ class _LaundrySettingsCard extends StatelessWidget {
   const _LaundrySettingsCard({
     required this.expiryMinutes,
     required this.soundEnabled,
-    required this.isSaving,
     required this.onEdit,
   });
 
   final int expiryMinutes;
   final bool soundEnabled;
-  final bool isSaving;
   final VoidCallback onEdit;
 
   @override
@@ -617,7 +651,7 @@ class _LaundrySettingsCard extends StatelessWidget {
             ),
             IconButton(
               tooltip: 'แก้ตั้งค่า',
-              onPressed: isSaving ? null : onEdit,
+              onPressed: onEdit,
               icon: const Icon(Icons.edit_rounded),
             ),
           ],
@@ -918,6 +952,7 @@ class _LaundryOrderCard extends StatelessWidget {
     required this.onChat,
     required this.onStartWashing,
     required this.onCreateReturn,
+    required this.onCompleteSelfPickup,
   });
 
   final Map<String, dynamic> order;
@@ -925,6 +960,7 @@ class _LaundryOrderCard extends StatelessWidget {
   final VoidCallback onChat;
   final VoidCallback onStartWashing;
   final VoidCallback onCreateReturn;
+  final VoidCallback onCompleteSelfPickup;
 
   @override
   Widget build(BuildContext context) {
@@ -935,7 +971,9 @@ class _LaundryOrderCard extends StatelessWidget {
     final customerName = (customer['full_name'] ??
         customer['phone_number'] ??
         'ลูกค้า') as String;
-    final canQuote = status == 'quote_requested' || status == 'quoted';
+    final canQuote = status == 'quote_requested' ||
+        status == 'quoted' ||
+        status == 'quote_expired';
     final returnMode = (order['return_mode'] as String?) ?? 'delivery';
     final canStartWashing = status == 'at_merchant';
     final selfPickupReady =
@@ -1032,7 +1070,11 @@ class _LaundryOrderCard extends StatelessWidget {
               child: FilledButton.icon(
                 onPressed: canQuote ? onQuote : null,
                 icon: const Icon(Icons.request_quote_rounded),
-                label: Text(status == 'quoted' ? 'แก้ quote' : 'ส่ง quote'),
+                label: Text(switch (status) {
+                  'quoted' => 'แก้ quote',
+                  'quote_expired' => 'ส่ง quote ใหม่',
+                  _ => 'ส่ง quote',
+                }),
               ),
             ),
             const SizedBox(height: 8),
@@ -1067,6 +1109,17 @@ class _LaundryOrderCard extends StatelessWidget {
                   )),
                 ),
               ),
+              if (selfPickupReady) ...[
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: onCompleteSelfPickup,
+                    icon: const Icon(Icons.check_circle_rounded),
+                    label: const Text('ลูกค้ารับผ้าแล้ว / ปิดงาน'),
+                  ),
+                ),
+              ],
             ],
           ],
         ),
