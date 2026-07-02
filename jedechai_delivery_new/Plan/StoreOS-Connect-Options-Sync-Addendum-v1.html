@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StoreOS Connect — Addendum: Sync ตัวเลือกยิบย่อย (option_groups) v1</title>
+<style>
+  :root {
+    --ink: #1a1d27; --muted: #6b7280; --brand: #6d28d9; --accent: #f59e0b;
+    --surface: #ffffff; --bg: #f5f4fb; --border: #e5e7eb; --ok: #059669; --warn: #d97706;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Tahoma, sans-serif; background: var(--bg); color: var(--ink); margin: 0; padding: 32px 16px; line-height: 1.7; }
+  .wrap { max-width: 960px; margin: 0 auto; }
+  header { background: linear-gradient(135deg, #4c1d95, #6d28d9); color: #fff; border-radius: 16px; padding: 28px 32px; margin-bottom: 24px; }
+  header h1 { margin: 0 0 8px; font-size: 1.5rem; }
+  header p { margin: 0; opacity: .85; }
+  .badge { display: inline-block; background: rgba(255,255,255,.18); border-radius: 999px; padding: 2px 12px; font-size: .8rem; margin-right: 6px; }
+  section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px 28px; margin-bottom: 20px; }
+  h2 { font-size: 1.15rem; color: var(--brand); margin-top: 0; }
+  h3 { font-size: 1rem; margin-bottom: 6px; }
+  code, pre { font-family: Consolas, "Courier New", monospace; font-size: .85rem; }
+  pre { background: #14151c; color: #d8dee9; border-radius: 10px; padding: 16px 18px; overflow-x: auto; }
+  code.inline { background: #ede9fe; color: #5b21b6; padding: 1px 6px; border-radius: 6px; }
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
+  th { background: #f3f0ff; }
+  .note { border-left: 4px solid var(--accent); background: #fffbeb; padding: 10px 16px; border-radius: 0 10px 10px 0; margin: 12px 0; }
+  .ok { border-left: 4px solid var(--ok); background: #ecfdf5; padding: 10px 16px; border-radius: 0 10px 10px 0; margin: 12px 0; }
+  ul { padding-left: 22px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Addendum v1 — Sync ตัวเลือกยิบย่อยขึ้น JDC (#12)</h1>
+    <p>
+      <span class="badge">StoreOS Connect</span>
+      <span class="badge">connect_upsert_menu</span>
+      <span class="badge">2026-07-02</span>
+    </p>
+    <p style="margin-top:10px">เอกสารเพิ่มเติมจาก StoreOS-Connect-JDC-Side-Guide-v2.html — ฝั่ง StoreOS ส่ง field ใหม่ <code class="inline">option_groups</code> มากับทุก item ใน payload ของ <code class="inline">connect_upsert_menu</code> แล้ว ฝั่ง JDC ต้องอัปเดต Edge Function ให้ upsert ตัวเลือกลงตาราง <code class="inline">menu_option_groups / menu_options / menu_item_option_links</code></p>
+  </header>
+
+  <section>
+    <h2>1) Payload ใหม่ (ฝั่ง StoreOS ส่งแล้ว — backward compatible)</h2>
+    <pre>POST {functions_base}/connect_upsert_menu
+Headers: X-JDC-Connection-Key: &lt;jdc_xxx&gt;          // connection key ที่ JDC admin ออก
+         X-Connect-Event-Id: &lt;uuid&gt;                // กัน replay (JDC เก็บ event id ที่รับแล้ว)
+         X-Connect-Signature: sha256=&lt;hex hmac_sha256(raw_body, webhook_secret)&gt;
+         X-Connect-Timestamp: &lt;epoch วินาที&gt;
+
+{
+  "merchant_id": "&lt;uuid ร้านฝั่ง JDC&gt;",
+  "full_sync": false,
+  "items": [
+    {
+      "external_ref": "&lt;products.id ฝั่ง StoreOS&gt;",
+      "name": "ข้าวกะเพรา",
+      "description": "…",
+      "price": 65,
+      "image_url": null,
+      "is_available": true,
+      "category": "อาหาร",
+      "preparation_time": null,
+      "option_groups": [                       // ★ ใหม่ (#12)
+        {
+          "name": "ตัวเลือก",                  // จาก product_variants (บังคับเลือก 1)
+          "min_selection": 1,
+          "max_selection": 1,
+          "options": [
+            { "name": "ธรรมดา", "price": 0,  "is_available": true },
+            { "name": "พิเศษ",  "price": 10, "is_available": true }
+          ]
+        },
+        {
+          "name": "ท็อปปิ้ง",                  // จาก modifier_groups
+          "min_selection": 0,
+          "max_selection": 3,
+          "options": [
+            { "name": "ไข่ดาว", "price": 10, "is_available": true }
+          ]
+        }
+      ]
+    }
+  ]
+}</pre>
+    <div class="note"><strong>เงื่อนไขที่ StoreOS ใช้สร้าง option_groups:</strong>
+      <ul>
+        <li>สินค้ามี variant ที่ active ≥ 2 ตัว → ส่งเป็นกลุ่มชื่อ "ตัวเลือก" (min 1 / max 1); มี 0–1 ตัว = ไม่ส่ง</li>
+        <li>modifier group แบบ single → max_selection = 1; แบบ multiple → ตาม max_selections ของร้าน</li>
+        <li>กลุ่มบังคับ (is_required) → min_selection ≥ 1</li>
+        <li>ตัด option/variant ที่ inactive ออกก่อนส่ง; กลุ่มไม่มี option เหลือ = ไม่ส่งทั้งกลุ่ม</li>
+        <li><code class="inline">price</code> เป็นส่วนเพิ่มจากราคาเมนู (บาท, ทศนิยมได้ — JDC menu_options.price เป็น int ให้ round ฝั่ง JDC)</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>2) สิ่งที่ JDC ต้องทำใน Edge Function <code class="inline">connect_upsert_menu</code> <span style="color:var(--ok);font-size:.85rem">✅ IMPLEMENTED 2026-07-02</span></h2>
+    <div class="ok"><strong>ทำแล้ว (2026-07-02):</strong> migration <code class="inline">20260702150000</code> (menu_option_groups.source + ย้าย order.created ไป trigger บน booking_items พร้อม items จริง + ts เป็นตัวเลข) + <code class="inline">connect_upsert_menu</code> รองรับ option_groups แบบ replace ต่อเมนู (source='storeos', merchant_id=null → ร้านแก้ใน JDC ไม่ได้ตามดีไซน์)</div>
+    <table>
+      <tr><th>ขั้น</th><th>รายละเอียด</th></tr>
+      <tr><td>1. เตรียม schema</td><td>เพิ่มคอลัมน์ <code class="inline">menu_option_groups.external_source text</code> (เช่น 'storeos') หรือใช้ naming convention เพื่อแยกกลุ่มที่มาจาก sync ออกจากกลุ่มที่ร้านสร้างเองใน JDC — กัน sync ไปลบของที่ร้านทำมือ</td></tr>
+      <tr><td>2. Upsert รายเมนู</td><td>หลัง upsert <code class="inline">menu_items</code> ด้วย external_ref แล้ว: ถ้า item มี <code class="inline">option_groups</code> ให้ <strong>replace ทั้งชุด</strong> เฉพาะกลุ่มที่ source='storeos' ของเมนูนั้น (ลบ link+group เดิมที่มาจาก sync แล้วสร้างใหม่ตาม payload) — ง่ายและ idempotent กว่า diff รายตัว</td></tr>
+      <tr><td>3. สร้างกลุ่ม</td><td>insert <code class="inline">menu_option_groups</code> (merchant_id, name, min_selection, max_selection, external_source='storeos') → insert <code class="inline">menu_options</code> (group_id, name, price=round(price), is_available) → insert <code class="inline">menu_item_option_links</code> (menu_item_id, option_group_id, sort_order ตามลำดับใน payload)</td></tr>
+      <tr><td>4. ไม่มี option_groups</td><td>item ที่ไม่มี field นี้ (payload เวอร์ชันเก่า) หรือเป็น array ว่าง → ลบกลุ่ม source='storeos' ของเมนูนั้นทิ้ง (เมนูกลับเป็นเมนูเดี่ยว)</td></tr>
+      <tr><td>5. ราคา</td><td>ราคาที่ลูกค้าเห็น = menu_items.price + Σ option.price ที่เลือก (logic เดิมของ JDC ใช้ได้เลย)</td></tr>
+    </table>
+    <div class="ok"><strong>ขาออเดอร์กลับมา (order.created):</strong> ไม่ต้องแก้อะไร — StoreOS รองรับ <code class="inline">items[].options[{name,price}]</code> อยู่แล้ว (เก็บลง order_items.modifiers และแสดงบนบอร์ด /delivery + ตั๋วครัว) ขอแค่ราคา item ใน payload <strong>รวมราคา option แล้ว</strong> ตามสัญญาเดิม</div>
+  </section>
+
+  <section>
+    <h2>3) ผลกระทบ / สิ่งที่ไม่เปลี่ยน</h2>
+    <ul>
+      <li>HMAC, headers, การผูก merchant_id — เหมือนเดิมทุกอย่าง</li>
+      <li>ฝั่ง StoreOS นับ option_groups รวมใน sync hash แล้ว → แก้ variant/modifier ใน catalog จะ auto-push ขึ้น JDC ทันที (best-effort) + reconcile cron รายวันเก็บตก</li>
+      <li>JDC ที่ยังไม่อัปเดต Edge Fn: field ใหม่ถูกเมิน ไม่พังอะไร (backward compatible)</li>
+    </ul>
+  </section>
+</div>
+</body>
+</html>
