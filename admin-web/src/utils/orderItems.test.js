@@ -5,6 +5,7 @@ import {
   getOrderItemsPriceChange,
   renderAdminNote,
   renderCancellationReason,
+  renderDiscountDetails,
   renderOrderItemRows,
   renderSelectedOptions,
   validateOrderItemsPayload,
@@ -69,6 +70,54 @@ test('renderCancellationReason falls back to legacy cancel_reason field', () => 
   }, escapeHtml);
 
   assert.match(html, /customer requested/);
+});
+
+test('renderDiscountDetails renders coupon code and discount safely', () => {
+  const html = renderDiscountDetails({
+    coupon_code: 'SAVE<20>',
+    coupon_name: 'New customer promo',
+    discount_amount: 25,
+    discount_type: 'fixed',
+  }, (value) => String(value), escapeHtml);
+
+  assert.match(html, /รายละเอียดโค้ดส่วนลด/);
+  assert.match(html, /SAVE&lt;20&gt;/);
+  assert.match(html, /New customer promo/);
+  assert.match(html, /fixed/);
+  assert.match(html, /฿25/);
+});
+
+test('renderDiscountDetails falls back to JSON coupon detail fields', () => {
+  const html = renderDiscountDetails({
+    coupon_details: JSON.stringify({
+      code: 'WELCOME10',
+      name: 'Welcome coupon',
+      discount_amount: 10,
+    }),
+  }, (value) => String(value), escapeHtml);
+
+  assert.match(html, /WELCOME10/);
+  assert.match(html, /Welcome coupon/);
+  assert.match(html, /฿10/);
+});
+
+test('renderDiscountDetails supports production coupon usage relation shape', () => {
+  const html = renderDiscountDetails({
+    coupon_usage: {
+      discount_amount: 40,
+      coupon: {
+        code: 'FOOD40',
+        name: 'Food discount',
+        discount_type: 'percentage',
+        discount_value: 50,
+      },
+    },
+  }, (value) => String(value), escapeHtml);
+
+  assert.match(html, /FOOD40/);
+  assert.match(html, /Food discount/);
+  assert.match(html, /percentage/);
+  assert.match(html, /฿40/);
 });
 
 test('getOrderItemsPriceChange calculates increase and cash guidance', () => {

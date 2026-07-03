@@ -12,6 +12,7 @@ graphify-out/
 
 # Local agent/deploy artifacts
 .codex-tmp/
+.codex_logs/
 .antigravitycli/
 admin-web/.netlify/
 admin-web/.npm-cache/

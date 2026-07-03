@@ -88,3 +88,15 @@ test("admin food-ready status allowlist is covered by guarded RPC legacy aliases
   assert.match(foodReadyLegacyStatusMigrationSource, /v_booking\.status IN \('arrived_at_merchant', 'arrived'\)/);
   assert.match(foodReadyLegacyStatusMigrationSource, /v_booking\.status IN \('preparing', 'matched', 'driver_accepted', 'accepted'\)/);
 });
+
+test("admin order detail loads coupon usage details for discount card", () => {
+  const detailFlow = sourceBetween(
+    adminOrdersActionsSource,
+    "export async function showOrderDetail",
+    "export function wireOrdersActionsBridge",
+  );
+  assert.match(adminOrdersActionsSource, /\.from\('coupon_usages'\)/);
+  assert.match(adminOrdersActionsSource, /coupon:coupons\(code, name, discount_type, discount_value/);
+  assert.match(detailFlow, /_loadCouponUsageDetail\(supabase, orderId\)/);
+  assert.match(detailFlow, /renderDiscountDetails\(discountDetail/);
+});

@@ -4,6 +4,7 @@ import {
   renderAdminNote,
   renderCancellationReason,
   renderContactCard,
+  renderDiscountDetails,
   renderOrderItemRows,
   validateOrderItemsPayload,
 } from '../utils/orderItems.js';
@@ -89,6 +90,24 @@ function _profileName(profile, fallback = '-') {
 
 function _profilePhone(profile) {
   return profile?.phone_number || profile?.phone || '';
+}
+
+async function _loadCouponUsageDetail(supabase, bookingId) {
+  if (!supabase || !bookingId) return null;
+
+  const { data, error } = await supabase
+    .from('coupon_usages')
+    .select('booking_id, coupon_id, discount_amount, created_at, coupon:coupons(code, name, discount_type, discount_value, max_discount_amount, discount_base, funding_source)')
+    .eq('booking_id', bookingId)
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  if (error) {
+    console.warn('order detail coupon_usages load failed', error);
+    return null;
+  }
+
+  return Array.isArray(data) && data.length ? data[0] : null;
 }
 
 function _parseJsonInput(value, fallback = []) {
@@ -867,6 +886,8 @@ export async function showOrderDetail(orderId, ctx) {
   if (error) return alert(error.message || JSON.stringify(error));
   if (!order) return alert('Order not found');
 
+  const couponUsage = await _loadCouponUsageDetail(supabase, orderId);
+
   const profileIds = [...new Set([order.customer_id, order.driver_id, order.merchant_id].filter(Boolean))];
   const profileMap = {};
   if (profileIds.length) {
@@ -903,6 +924,7 @@ export async function showOrderDetail(orderId, ctx) {
   const driver = profileMap[order.driver_id];
   const merchant = profileMap[order.merchant_id];
   const dName = driver?.name || globalThis._orderDriverMap?.[order.driver_id] || (order.driver_id ? order.driver_id.substring(0, 8) : '-');
+  const discountDetail = couponUsage ? { ...order, coupon_usage: couponUsage } : order;
   const totalAmount = Number(order.price || 0) + Number(order.delivery_fee || 0);
   const canReassign = ['pending','preparing','driver_accepted','accepted','matched','pending_merchant','arrived_at_merchant','ready_for_pickup'].includes(order.status);
   const canRebroadcast = ['pending','pending_merchant','driver_accepted','accepted','matched','preparing','arrived_at_merchant','ready_for_pickup'].includes(order.status);
@@ -950,6 +972,7 @@ export async function showOrderDetail(orderId, ctx) {
           </div>
         </div>
         ${itemsHtml}
+        ${renderDiscountDetails(discountDetail, fmt, escapeHtml)}
         ${renderAdminNote(order.admin_note, escapeHtml)}
         ${renderCancellationReason(order, escapeHtml)}
         <div class="flex gap-2 pt-2 flex-wrap">

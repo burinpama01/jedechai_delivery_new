@@ -143,6 +143,128 @@ export function renderCancellationReason(order, escapeHtml) {
     </div>`;
 }
 
+function parsePlainObject(value) {
+  if (!value) return null;
+  if (typeof value === 'object' && !Array.isArray(value)) return value;
+  if (typeof value !== 'string') return null;
+
+  try {
+    const parsed = JSON.parse(value);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed;
+  } catch (_) {
+    return null;
+  }
+
+  return null;
+}
+
+function firstFilled(...values) {
+  for (const value of values) {
+    if (value === null || value === undefined) continue;
+    const text = String(value).trim();
+    if (text) return value;
+  }
+  return '';
+}
+
+function pickFirst(sources, keys) {
+  for (const source of sources) {
+    if (!source) continue;
+    for (const key of keys) {
+      const value = source[key];
+      if (value !== null && value !== undefined && String(value).trim() !== '') return value;
+    }
+  }
+  return '';
+}
+
+function numberFrom(value) {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value !== 'string') return null;
+  if (!value.trim()) return null;
+  const parsed = Number(value.replace(/[^\d.-]/g, ''));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+export function renderDiscountDetails(order, fmt, escapeHtml) {
+  const format = fmt || ((value) => value);
+  const couponUsage = parsePlainObject(order?.coupon_usage)
+    || parsePlainObject(order?.couponUsage)
+    || parsePlainObject(order?.coupon_usage_details);
+  const coupon = parsePlainObject(order?.coupon)
+    || parsePlainObject(order?.coupons)
+    || parsePlainObject(couponUsage?.coupon);
+  const detailSources = [
+    order,
+    couponUsage,
+    coupon,
+    parsePlainObject(order?.coupon_details),
+    parsePlainObject(order?.coupon_detail),
+    parsePlainObject(order?.coupon_snapshot),
+    parsePlainObject(order?.applied_coupon),
+    parsePlainObject(order?.discount_details),
+    parsePlainObject(order?.promotion_details),
+    parsePlainObject(order?.voucher_details),
+  ].filter(Boolean);
+
+  const code = firstFilled(pickFirst(detailSources, [
+    'coupon_code',
+    'discount_code',
+    'promo_code',
+    'promotion_code',
+    'voucher_code',
+    'code',
+  ]));
+  const name = firstFilled(pickFirst(detailSources, [
+    'coupon_name',
+    'discount_name',
+    'promotion_name',
+    'voucher_name',
+    'name',
+    'title',
+  ]));
+  const type = firstFilled(pickFirst(detailSources, [
+    'discount_type',
+    'coupon_type',
+    'promotion_type',
+    'voucher_type',
+    'type',
+  ]));
+  const amountRaw = pickFirst(detailSources, [
+    'discount_amount',
+    'coupon_discount_amount',
+    'coupon_discount',
+    'discount_total',
+    'discount',
+    'amount_off',
+    'amount',
+  ]);
+  const percent = firstFilled(pickFirst(detailSources, [
+    'discount_percent',
+    'percent_off',
+    'percentage',
+    'percent',
+  ]));
+  const amount = numberFrom(amountRaw);
+
+  if (!code && !name && !type && amount === null && !percent) return '';
+
+  const amountText = amount === null ? '' : `฿${format(Math.round(Math.abs(amount)))}`;
+  const rows = [
+    code ? `<div><span class="text-gray-400">Code</span><p class="font-semibold text-emerald-700">${esc(code, escapeHtml)}</p></div>` : '',
+    name ? `<div><span class="text-gray-400">Name</span><p class="font-medium text-gray-700">${esc(name, escapeHtml)}</p></div>` : '',
+    type ? `<div><span class="text-gray-400">Type</span><p class="font-medium text-gray-700">${esc(type, escapeHtml)}</p></div>` : '',
+    amountText ? `<div><span class="text-gray-400">Discount</span><p class="font-semibold text-emerald-700">-${esc(amountText, escapeHtml)}</p></div>` : '',
+    percent ? `<div><span class="text-gray-400">Percent</span><p class="font-medium text-gray-700">${esc(percent, escapeHtml)}%</p></div>` : '',
+  ].filter(Boolean).join('');
+
+  return `
+    <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-xs">
+      <p class="font-semibold text-emerald-700 mb-2">รายละเอียดโค้ดส่วนลด</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-2">${rows}</div>
+    </div>`;
+}
+
 export function getOrderItemsPriceChange({ originalTotal, items, paymentMethod } = {}) {
   const newTotal = Math.round((items || []).reduce((sum, item) => {
     const qty = Number(item.quantity || 1);
