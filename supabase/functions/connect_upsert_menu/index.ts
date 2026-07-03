@@ -90,6 +90,7 @@ function parseOptionGroups(value: unknown): Array<{
 async function replaceStoreosOptionGroups(
   supabaseAdmin: any,
   menuItemId: string,
+  merchantId: string,
   groups: NonNullable<ReturnType<typeof parseOptionGroups>>,
 ): Promise<string | null> {
   const { data: links, error: linkError } = await supabaseAdmin
@@ -110,11 +111,12 @@ async function replaceStoreosOptionGroups(
 
   for (let i = 0; i < groups.length; i++) {
     const group = groups[i];
-    // merchant_id stays null so merchant-managed group lists don't show synced
-    // groups (StoreOS owns them); customer menus read via menu_item_option_links.
+    // merchant_id is NOT NULL in prod; source='storeos' still marks these as
+    // sync-owned (edits in JDC get replaced on the next sync).
     const { data: created, error: groupError } = await supabaseAdmin
       .from("menu_option_groups")
       .insert({
+        merchant_id: merchantId,
         name: group.name,
         min_selection: group.min_selection,
         max_selection: group.max_selection,
@@ -235,7 +237,7 @@ serve(async (req) => {
     for (const row of data ?? []) {
       const groups = optionGroupsByRef.get(row.external_ref);
       if (groups === null || groups === undefined) continue; // payload didn't carry the field
-      const syncError = await replaceStoreosOptionGroups(supabaseAdmin, row.id, groups);
+      const syncError = await replaceStoreosOptionGroups(supabaseAdmin, row.id, merchantId, groups);
       if (syncError) {
         optionErrors.push(`${row.external_ref}: ${syncError}`);
       } else {
