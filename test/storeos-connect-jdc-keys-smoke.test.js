@@ -86,6 +86,14 @@ function readStoreosConnectMigration() {
   return readFileSync(new URL(file, migrationsDir), "utf8");
 }
 
+function readStoreosFoodReadyCommissionMigration() {
+  const file = readdirSync(migrationsDir)
+    .filter((name) => name.endsWith(".sql"))
+    .find((name) => name.includes("connect_food_ready_origin_and_commission"));
+  assert.ok(file, "missing connect_food_ready_origin_and_commission migration");
+  return readFileSync(new URL(file, migrationsDir), "utf8");
+}
+
 function readStoreosSystemScopeMigration() {
   const file = readdirSync(migrationsDir)
     .filter((name) => name.endsWith(".sql"))
@@ -318,6 +326,51 @@ test("StoreOS status update does not directly cancel JDC orders", () => {
 
   assert.doesNotMatch(allowedStatusBlock, /cancelled/);
   assert.match(source, /Status is not allowed for StoreOS/);
+});
+
+test("StoreOS ready_for_pickup reuses the in-app food-ready flow with storeos origin", () => {
+  const source = readFileSync(updateOrderStatusFunctionUrl, "utf8");
+  const migration = readStoreosFoodReadyCommissionMigration();
+
+  // Edge Fn ต้องเรียก RPC เดียวกับปุ่ม "อาหารพร้อม" แทนการ update ตรง
+  assert.match(source, /rpc\(\s*["']mark_food_ready_guarded["']/);
+  assert.match(source, /p_origin:\s*["']storeos["']/);
+  assert.match(source, /pending_driver_arrival/);
+
+  // migration เพิ่ม p_origin และคง guard สถานะเดิมของปุ่มในแอป
+  assert.match(migration, /DROP FUNCTION IF EXISTS public\.mark_food_ready_guarded\(uuid, uuid\)/);
+  assert.match(migration, /p_origin text DEFAULT 'jdc'/);
+  assert.match(migration, /status_origin = v_origin/);
+  assert.match(migration, /'arrived_at_merchant', 'arrived'/);
+  assert.match(migration, /'preparing', 'matched', 'driver_accepted', 'accepted'/);
+  assert.match(
+    migration,
+    /GRANT EXECUTE ON FUNCTION public\.mark_food_ready_guarded\(uuid, uuid, text\)/,
+  );
+});
+
+test("StoreOS webhooks include merchant GP commission for net payout display", () => {
+  const migration = readStoreosFoodReadyCommissionMigration();
+
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.connect_merchant_gp_amount/);
+  // สูตรต้องมี preset plan_1/2/3 + ปัดขึ้นเป็นบาทเต็มแยกก้อนเหมือนแอป
+  assert.match(migration, /0\.13/);
+  assert.match(migration, /0\.12/);
+  assert.match(migration, /ceil\(v_price \* v_sys\)/);
+  assert.match(migration, /ceil\(v_price \* v_drv\)/);
+  // ทั้ง order.created และ order.status ต้องส่ง commission
+  const createdBlock = sourceBetween(
+    migration,
+    "'topic', 'order.created'",
+    "PERFORM net.http_post",
+  );
+  const statusBlock = sourceBetween(
+    migration,
+    "'topic', 'order.status'",
+    "PERFORM net.http_post",
+  );
+  assert.match(createdBlock, /'commission', public\.connect_merchant_gp_amount/);
+  assert.match(statusBlock, /'commission', public\.connect_merchant_gp_amount/);
 });
 
 test("StoreOS Connect rejects replayed webhook events by event id", () => {

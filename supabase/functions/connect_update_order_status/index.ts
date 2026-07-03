@@ -16,10 +16,11 @@ const STOREOS_ALLOWED_STATUSES = new Set([
   "ready_for_pickup",
 ]);
 
+// เฉพาะ status ที่อัปเดตตรงบนตาราง bookings — ส่วน ready_for_pickup ไป
+// mark_food_ready_guarded (logic เดียวกับปุ่ม "อาหารพร้อม" ในแอป) แทน
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   pending_merchant: ["preparing"],
   accepted: ["preparing"],
-  preparing: ["ready_for_pickup"],
 };
 
 function withCors(res: Response) {
@@ -97,12 +98,6 @@ serve(async (req) => {
         current: booking.status,
       }, 409));
     }
-    if (!canTransition(booking.status, nextStatus)) {
-      return withCors(jsonResponse({
-        conflict: true,
-        current: booking.status,
-      }, 409));
-    }
     if (booking.status === nextStatus) {
       return withCors(jsonResponse({
         success: true,
@@ -111,15 +106,82 @@ serve(async (req) => {
       }));
     }
 
+    const posOrderId = pickString(body.pos_order_id);
+
+    if (nextStatus === "ready_for_pickup") {
+      // ใช้ logic เดียวกับปุ่ม "อาหารพร้อม" ในแอป: mark_food_ready_guarded รองรับ
+      // arrived_at_merchant / driver_accepted / preparing ฯลฯ และ set
+      // merchant_food_ready_at + status_origin ให้เอง (p_origin=storeos กัน echo)
+      const { data: ready, error: readyError } = await supabaseAdmin.rpc(
+        "mark_food_ready_guarded",
+        {
+          p_booking_id: bookingId,
+          p_merchant_id: merchantId,
+          p_origin: "storeos",
+        },
+      );
+      if (readyError) return withCors(errorResponse(readyError.message));
+      if (!ready || ready.success !== true) {
+        return withCors(jsonResponse({
+          conflict: true,
+          current: ready?.current_status ?? booking.status,
+          error: ready?.error ?? "invalid_status",
+        }, 409));
+      }
+
+      if (posOrderId) {
+        await supabaseAdmin
+          .from("bookings")
+          .update({ pos_order_id: posOrderId })
+          .eq("id", bookingId)
+          .eq("merchant_id", merchantId);
+      }
+
+      let driver_candidate_notifications = 0;
+      if (ready.status === "ready_for_pickup") {
+        // แจ้งคนขับเหมือน flow ในแอป (ครอบคลุมทั้งคนขับที่รับงานแล้วและคนขับใกล้ร้าน)
+        const { data: driverNotifications, error: notifyError } =
+          await supabaseAdmin
+            .rpc("notify_driver_visible_job", { p_booking_id: bookingId });
+        if (notifyError) {
+          console.error(
+            "connect_update_order_status driver notification error:",
+            notifyError.message,
+          );
+        } else {
+          driver_candidate_notifications = Array.isArray(driverNotifications)
+            ? driverNotifications.length
+            : 0;
+        }
+      }
+
+      await supabaseAdmin
+        .from("pos_connections")
+        .update({ last_status_sync_at: new Date().toISOString() })
+        .eq("id", connection.id);
+
+      return withCors(jsonResponse({
+        success: true,
+        booking_id: bookingId,
+        status: ready.status,
+        status_origin: "storeos",
+        pending_driver_arrival: ready.pending_driver_arrival === true,
+        driver_candidate_notifications,
+      }));
+    }
+
+    if (!canTransition(booking.status, nextStatus)) {
+      return withCors(jsonResponse({
+        conflict: true,
+        current: booking.status,
+      }, 409));
+    }
+
     const updatePayload: Record<string, unknown> = {
       status: nextStatus,
       status_origin: "storeos",
       updated_at: new Date().toISOString(),
     };
-    if (nextStatus === "ready_for_pickup") {
-      updatePayload.merchant_food_ready_at = new Date().toISOString();
-    }
-    const posOrderId = pickString(body.pos_order_id);
     if (posOrderId) updatePayload.pos_order_id = posOrderId;
 
     const { data: updated, error: updateError } = await supabaseAdmin
@@ -140,19 +202,6 @@ serve(async (req) => {
       }, 409));
     }
 
-    let driver_candidate_notifications = 0;
-    if (nextStatus === "ready_for_pickup" && !booking.driver_id) {
-      const { data: driverNotifications, error: notifyError } = await supabaseAdmin
-        .rpc("notify_driver_visible_job", { p_booking_id: bookingId });
-      if (notifyError) {
-        console.error("connect_update_order_status driver notification error:", notifyError.message);
-      } else {
-        driver_candidate_notifications = Array.isArray(driverNotifications)
-          ? driverNotifications.length
-          : 0;
-      }
-    }
-
     await supabaseAdmin
       .from("pos_connections")
       .update({ last_status_sync_at: new Date().toISOString() })
@@ -163,7 +212,7 @@ serve(async (req) => {
       booking_id: updated.id,
       status: updated.status,
       status_origin: updated.status_origin,
-      driver_candidate_notifications,
+      driver_candidate_notifications: 0,
     }));
   } catch (error) {
     console.error("connect_update_order_status error:", error?.message || error);
