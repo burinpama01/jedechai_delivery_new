@@ -238,7 +238,8 @@ BEGIN
       -- price = ยอดอาหาร (ไม่รวมค่าส่ง), commission = GP ที่หักจากยอดอาหาร
       -- StoreOS แสดงยอดจ่ายร้าน = merchant_total - commission
       'merchant_total', v_booking.price,
-      'commission', public.connect_merchant_gp_amount(v_booking.merchant_id, v_booking.price),
+      -- price เป็น double precision — ต้อง cast เป็น numeric ให้ตรง signature ของ fn
+      'commission', public.connect_merchant_gp_amount(v_booking.merchant_id, v_booking.price::numeric),
       'total', coalesce(v_booking.price, 0) + coalesce(v_booking.delivery_fee, 0),
       'dropoff', jsonb_build_object('address', v_booking.destination_address),
       'paid', true,
@@ -313,7 +314,8 @@ BEGIN
     'status', NEW.status,
     'total', coalesce(NEW.price, 0) + coalesce(NEW.delivery_fee, 0),
     'merchant_total', NEW.price,
-    'commission', public.connect_merchant_gp_amount(NEW.merchant_id, NEW.price),
+    -- price เป็น double precision — ต้อง cast เป็น numeric ให้ตรง signature ของ fn
+    'commission', public.connect_merchant_gp_amount(NEW.merchant_id, NEW.price::numeric),
     'paid', true,
     'ts', extract(epoch FROM now())::bigint
   );

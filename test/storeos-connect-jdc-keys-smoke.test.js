@@ -369,8 +369,10 @@ test("StoreOS webhooks include merchant GP commission for net payout display", (
     "'topic', 'order.status'",
     "PERFORM net.http_post",
   );
-  assert.match(createdBlock, /'commission', public\.connect_merchant_gp_amount/);
-  assert.match(statusBlock, /'commission', public\.connect_merchant_gp_amount/);
+  // bookings.price เป็น double precision — ต้อง cast ::numeric ให้ตรง signature ของ fn
+  // (ไม่งั้น trigger จะ error 'function does not exist' ตอนรันจริง)
+  assert.match(createdBlock, /'commission', public\.connect_merchant_gp_amount\([^)]*::numeric\)/);
+  assert.match(statusBlock, /'commission', public\.connect_merchant_gp_amount\([^)]*::numeric\)/);
 });
 
 test("StoreOS Connect rejects replayed webhook events by event id", () => {
