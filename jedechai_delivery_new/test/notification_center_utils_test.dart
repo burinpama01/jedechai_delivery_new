@@ -80,6 +80,43 @@ void main() {
         'ราคาซักผ้า',
       );
     });
+
+    test('uses Thai labels for admin/driver notification types', () {
+      expect(
+        NotificationCenterUtils.typeLabel('admin_approve_topup'),
+        'เติมเงินสำเร็จ',
+      );
+      expect(
+        NotificationCenterUtils.typeLabel('admin_reassign_new_driver'),
+        'มอบหมายงานใหม่',
+      );
+      expect(
+        NotificationCenterUtils.typeLabel('admin_reassign_old_driver'),
+        'ย้ายงาน',
+      );
+      expect(
+        NotificationCenterUtils.typeLabel('chat_message'),
+        'แชท',
+      );
+    });
+
+    test('maps role-suffixed admin types via prefix fallback', () {
+      expect(
+        NotificationCenterUtils.typeLabel('admin_approve_driver'),
+        'อนุมัติบัญชี',
+      );
+      expect(
+        NotificationCenterUtils.typeLabel('admin_reject_merchant'),
+        'ปฏิเสธบัญชี',
+      );
+    });
+
+    test('never surfaces a raw unknown type code to the user', () {
+      expect(
+        NotificationCenterUtils.typeLabel('some_future_unmapped_type'),
+        'แจ้งเตือน',
+      );
+    });
   });
 }
 

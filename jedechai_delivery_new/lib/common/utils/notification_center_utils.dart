@@ -45,21 +45,67 @@ class NotificationCenterUtils {
   }
 
   static String typeLabel(String? type) {
+    if (type == null || type.isEmpty) return 'ทั่วไป';
     switch (type) {
+      // งาน / ออเดอร์
       case 'driver.job.available':
         return 'งานใหม่';
       case 'merchant.order.created':
         return 'ออเดอร์ใหม่';
+      case 'merchant_accepted':
+        return 'ร้านรับออเดอร์';
+      case 'food_ready':
+      case 'food_ready_driver':
+        return 'อาหารพร้อม';
       case 'customer.booking.status_changed':
+      case 'booking_status_update':
         return 'สถานะงาน';
       case 'customer.booking.driver_assigned':
         return 'คนขับรับงาน';
+      case 'driver_arrived_merchant':
+        return 'คนขับถึงร้าน';
+      case 'booking_cancelled':
+        return 'ยกเลิกงาน';
+      // แชท
       case 'chat':
+      case 'chat_message':
         return 'แชท';
+      // การเงิน
+      case 'topup_request':
+        return 'คำขอเติมเงิน';
+      case 'admin_approve_topup':
+        return 'เติมเงินสำเร็จ';
+      case 'admin_reject_topup':
+        return 'เติมเงินไม่สำเร็จ';
+      case 'withdrawal':
+        return 'คำขอถอนเงิน';
+      case 'withdrawal_refund':
+        return 'คืนเงินถอน';
+      case 'admin_approve_withdrawal':
+        return 'อนุมัติถอนเงิน';
+      case 'admin_reject_withdrawal':
+        return 'ปฏิเสธถอนเงิน';
+      // งานถูกโอนโดยแอดมิน
+      case 'admin_reassign':
+        return 'โอนงาน';
+      case 'admin_reassign_new_driver':
+        return 'มอบหมายงานใหม่';
+      case 'admin_reassign_old_driver':
+        return 'ย้ายงาน';
+      case 'admin_reassign_customer':
+      case 'admin_reassign_merchant':
+        return 'เปลี่ยนคนขับ';
+      // ปัญหา / บัญชี
+      case 'new_ticket':
+        return 'ปัญหาใหม่';
+      case 'ticket_updated':
+        return 'อัปเดตปัญหา';
+      case 'account.deletion.rejected':
+        return 'คำขอลบบัญชี';
+      // ซักผ้า
       case 'laundry.quote_requested':
         return 'คำขอซักผ้า';
       case 'laundry.quote_ready':
-        return 'ราคาซักผ้า';
       case 'laundry.quote_sent':
         return 'ราคาซักผ้า';
       case 'laundry.quote_message':
@@ -70,8 +116,14 @@ class NotificationCenterUtils {
         return 'Quote หมดอายุ';
       case 'laundry.return_booking_created':
         return 'ส่งผ้ากลับ';
-      default:
-        return type == null || type.isEmpty ? 'ทั่วไป' : type;
     }
+    // เผื่อ type ที่ต่อท้ายด้วย role (admin_approve_driver/customer/merchant ฯลฯ)
+    if (type.startsWith('admin_approve_')) return 'อนุมัติบัญชี';
+    if (type.startsWith('admin_reject_')) return 'ปฏิเสธบัญชี';
+    if (type.startsWith('admin_reassign')) return 'โอนงาน';
+    if (type.startsWith('laundry.')) return 'ซักผ้า';
+    if (type.startsWith('chat')) return 'แชท';
+    // ไม่โชว์ type code ดิบให้ผู้ใช้เห็นอีกต่อไป
+    return 'แจ้งเตือน';
   }
 }
