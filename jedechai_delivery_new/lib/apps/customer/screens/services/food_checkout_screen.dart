@@ -58,6 +58,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
   // ── ข้อมูลร้านค้า ──
   double? _merchantLat;
   double? _merchantLng;
+  double _minOrderAmount = 0;
 
   // ── ค่าส่ง + ระยะทาง ──
   double _distanceKm = 0;
@@ -270,13 +271,15 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       final profile = await Supabase.instance.client
           .from('profiles')
           .select(
-              'latitude, longitude, shop_address, gp_rate, merchant_gp_system_rate, merchant_gp_driver_rate, custom_delivery_fee, custom_service_fee, custom_base_fare, custom_base_distance, custom_per_km')
+              'latitude, longitude, shop_address, gp_rate, merchant_gp_system_rate, merchant_gp_driver_rate, custom_delivery_fee, custom_service_fee, custom_base_fare, custom_base_distance, custom_per_km, min_order_amount')
           .eq('id', merchantId)
           .maybeSingle();
 
       if (profile != null) {
         _merchantLat = (profile['latitude'] as num?)?.toDouble();
         _merchantLng = (profile['longitude'] as num?)?.toDouble();
+        _minOrderAmount =
+            (profile['min_order_amount'] as num?)?.toDouble() ?? 0;
         debugLog('📍 Merchant location: $_merchantLat, $_merchantLng');
 
         final configService = SystemConfigService();
@@ -1124,6 +1127,11 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       if (_merchantLat == null || _merchantLng == null) {
         throw Exception(
             'ไม่พบตำแหน่งร้านค้า กรุณาให้ร้านค้าตั้งค่าตำแหน่งร้านก่อนรับออเดอร์');
+      }
+
+      if (_minOrderAmount > 0 && cart.subtotal < _minOrderAmount) {
+        throw Exception(
+            'ยอดสั่งซื้อต่ำกว่าขั้นต่ำของร้าน (฿${_minOrderAmount.ceil()}) กรุณาเพิ่มรายการอาหาร');
       }
 
       final note = _noteController.text.trim();

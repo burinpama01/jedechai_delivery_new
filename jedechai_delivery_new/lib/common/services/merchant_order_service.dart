@@ -147,6 +147,18 @@ class MerchantOrderService {
     }).eq('id', merchantId);
   }
 
+  /// อัพเดทยอดสั่งซื้อขั้นต่ำของร้าน (0 = ไม่มีขั้นต่ำ)
+  Future<void> updateMinOrderAmount(
+    String merchantId,
+    double minOrderAmount,
+  ) async {
+    final value = minOrderAmount < 0 ? 0.0 : minOrderAmount;
+    await _client.from('profiles').update({
+      'min_order_amount': value,
+      'updated_at': DateTime.now().toIso8601String(),
+    }).eq('id', merchantId);
+  }
+
   Future<bool> finishOrder(String bookingId) async {
     final result = await _client
         .from('bookings')

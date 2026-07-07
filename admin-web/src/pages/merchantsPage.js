@@ -548,6 +548,11 @@ export async function editMerchantProfile(id, ctx) {
             <input id="editMrcAutoSchedule" type="checkbox" class="w-4 h-4" ${(m.shop_auto_schedule_enabled ?? true) ? 'checked' : ''}>
             <label for="editMrcAutoSchedule" class="text-sm font-medium text-gray-700">เปิด-ปิดร้านอัตโนมัติตามวันและเวลา</label>
           </div>
+          <div data-merchant-service-panel="food">
+            <label class="block text-sm font-medium mb-1">ยอดสั่งซื้อขั้นต่ำ (บาท)</label>
+            <input id="editMrcMinOrder" type="number" value="${m.min_order_amount != null && Number(m.min_order_amount) > 0 ? Number(m.min_order_amount) : ''}" class="w-full border rounded-lg px-3 py-2 text-sm" min="0" step="1" placeholder="0 = ไม่มีขั้นต่ำ">
+            <p class="text-xs text-gray-400 mt-0.5">ลูกค้าต้องสั่งไม่ต่ำกว่ายอดนี้จึงจะสั่งได้</p>
+          </div>
         </div>
       </div>
 
@@ -673,6 +678,12 @@ export async function submitEditMerchant(id, ctx) {
       shop_open_time: document.getElementById('editMrcOpenTime')?.value || '08:00',
       shop_close_time: document.getElementById('editMrcCloseTime')?.value || '22:00',
       shop_open_days: selectedDays,
+      min_order_amount: (() => {
+        const raw = document.getElementById('editMrcMinOrder')?.value;
+        if (raw === '' || raw == null) return 0;
+        const n = parseFloat(raw);
+        return Number.isFinite(n) && n > 0 ? n : 0;
+      })(),
       updated_at: new Date().toISOString(),
     };
 

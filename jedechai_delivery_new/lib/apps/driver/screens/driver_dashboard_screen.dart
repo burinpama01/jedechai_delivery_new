@@ -1868,6 +1868,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         '🎯 Building action buttons for job: ${job.id} - Status: ${job.status}');
     final isScheduledLocked =
         job.scheduledAt != null && job.scheduledAt!.isAfter(DateTime.now());
+    final currentDriverId = AuthService.userId;
+    final isMine = job.driverId != null &&
+        job.driverId!.isNotEmpty &&
+        job.driverId == currentDriverId;
 
     switch (job.status) {
       case 'pending':
@@ -1911,15 +1915,109 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         if (job.serviceType != 'food') {
           return const SizedBox.shrink();
         }
-        return SizedBox(
+        return _buildAcceptFoodButton(job, isScheduledLocked);
+      case 'ready_for_pickup':
+        // งานอาหาร "พร้อมรับ" ที่ broadcast อยู่ แต่คนขับคนนี้ยังไม่ได้รับงาน
+        // (driver_id ว่าง หรือเป็นของคนอื่น) ต้องกด "รับงาน" ก่อน ไม่งั้นเข้าหน้า
+        // nav แล้วกด "รับอาหาร" จะ error driver_mismatch (RPC เช็ค driver_id = ตัวเอง)
+        if (!isMine && job.serviceType == 'food') {
+          return _buildAcceptFoodButton(job, isScheduledLocked);
+        }
+        return _buildResumeNavCard(job);
+      case 'matched':
+      case 'accepted':
+      case 'driver_accepted':
+      case 'traveling_to_merchant':
+      case 'arrived_at_merchant':
+      case 'picking_up_order':
+      case 'in_transit':
+        return _buildResumeNavCard(job);
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  /// ปุ่ม "รับงาน" สำหรับออเดอร์อาหารที่ยัง broadcast อยู่ (preparing / ready_for_pickup
+  /// ที่ยังไม่มีคนขับ) — เรียก accept_booking ก่อนเข้าหน้า nav
+  Widget _buildAcceptFoodButton(Booking job, bool isScheduledLocked) {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: ElevatedButton(
+        onPressed: (_isAcceptingJob || isScheduledLocked)
+            ? null
+            : () => _acceptJob(job.id),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF3B82F6),
+          foregroundColor: Colors.white,
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: Text(
+          isScheduledLocked
+              ? AppLocalizations.of(context)!
+                  .driverDashAcceptAt(_formatScheduledDateTime(job.scheduledAt!))
+              : AppLocalizations.of(context)!.driverDashAcceptFood,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// การ์ด "งานที่ทำค้างอยู่" + ปุ่มไปหน้า nav — เฉพาะงานที่คนขับรับแล้ว
+  Widget _buildResumeNavCard(Booking job) {
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.blue[50],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.blue[200]!),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                Icons.check_circle,
+                color: Colors.blue[600],
+                size: 32,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                AppLocalizations.of(context)!.driverDashIncompleteJob,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue[700],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                AppLocalizations.of(context)!.driverDashInProgress,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.blue[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
           width: double.infinity,
           height: 50,
           child: ElevatedButton(
-            onPressed: (_isAcceptingJob || isScheduledLocked)
-                ? null
-                : () => _acceptJob(job.id),
+            onPressed: () => _navigateToPickup(job.id),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF3B82F6),
+              backgroundColor: const Color(0xFF3B82F6), // Blue
               foregroundColor: Colors.white,
               elevation: 2,
               shape: RoundedRectangleBorder(
@@ -1927,92 +2025,16 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               ),
             ),
             child: Text(
-              isScheduledLocked
-                  ? AppLocalizations.of(context)!.driverDashAcceptAt(
-                      _formatScheduledDateTime(job.scheduledAt!))
-                  : AppLocalizations.of(context)!.driverDashAcceptFood,
-              style: const TextStyle(
+              AppLocalizations.of(context)!.driverDashGoToNav,
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
-        );
-      case 'matched':
-      case 'accepted':
-      case 'driver_accepted':
-      case 'ready_for_pickup':
-      case 'traveling_to_merchant':
-      case 'arrived_at_merchant':
-      case 'picking_up_order':
-      case 'in_transit':
-        return Column(
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.blue[50],
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.blue[200]!),
-              ),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.check_circle,
-                    color: Colors.blue[600],
-                    size: 32,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    AppLocalizations.of(context)!.driverDashIncompleteJob,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue[700],
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    AppLocalizations.of(context)!.driverDashInProgress,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.blue[600],
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: () => _navigateToPickup(job.id),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF3B82F6), // Blue
-                  foregroundColor: Colors.white,
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  AppLocalizations.of(context)!.driverDashGoToNav,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
-      default:
-        return const SizedBox.shrink();
-    }
+        ),
+      ],
+    );
   }
 
   Future<void> _navigateToPickup(String bookingId) async {

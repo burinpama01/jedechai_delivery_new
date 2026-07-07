@@ -48,6 +48,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
   String? _phoneNumber;
   String? _promoText;
   bool _promoEnabled = false;
+  double _minOrderAmount = 0;
   bool _isFavorite = false;
   final CouponService _couponService = CouponService();
   final CustomerFavoriteService _favoriteService =
@@ -138,7 +139,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
       final futures = await Future.wait([
         Supabase.instance.client
             .from('profiles')
-            .select('shop_photo_url, shop_address, phone_number')
+            .select('shop_photo_url, shop_address, phone_number, min_order_amount')
             .eq('id', widget.merchantId)
             .maybeSingle(),
         Supabase.instance.client
@@ -155,6 +156,10 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
       _shopPhotoUrl = profile?['shop_photo_url'] as String?;
       _shopAddress = profile?['shop_address'] as String?;
       _phoneNumber = profile?['phone_number'] as String?;
+      final rawMinOrder = profile?['min_order_amount'];
+      _minOrderAmount = rawMinOrder is num
+          ? rawMinOrder.toDouble()
+          : (rawMinOrder is String ? double.tryParse(rawMinOrder) ?? 0 : 0);
 
       _menuItems = List<Map<String, dynamic>>.from(menuResponse);
 
@@ -852,54 +857,105 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                       ],
                     ),
                     child: SafeArea(
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child: Builder(
+                        builder: (context) {
+                          final belowMin = _minOrderAmount > 0 &&
+                              cart.subtotal < _minOrderAmount;
+                          final shortfall =
+                              (_minOrderAmount - cart.subtotal).ceil();
+                          return Column(
                             children: [
-                              Text(AppLocalizations.of(context)!.restTotal,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16)),
-                              Text('฿${cart.subtotal.ceil()}',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18,
-                                      color: AppTheme.accentOrange)),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.of(context).pop(); // close sheet
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const FoodCheckoutScreen(),
-                                  ),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.accentOrange,
-                                foregroundColor: Colors.white,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14)),
-                                elevation: 0,
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(AppLocalizations.of(context)!.restTotal,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16)),
+                                  Text('฿${cart.subtotal.ceil()}',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                          color: AppTheme.accentOrange)),
+                                ],
                               ),
-                              child: Text(
-                                  AppLocalizations.of(context)!
-                                      .restGoToCheckout(
-                                          cart.subtotal.ceil().toString()),
-                                  style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold)),
-                            ),
-                          ),
-                        ],
+                              if (belowMin) ...[
+                                const SizedBox(height: 10),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.errorContainer
+                                        .withValues(alpha: 0.5),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.info_outline,
+                                          size: 18,
+                                          color: colorScheme.error),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'สั่งขั้นต่ำ ฿${_minOrderAmount.ceil()} • เพิ่มอีก ฿$shortfall',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: colorScheme.error,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: belowMin
+                                      ? null
+                                      : () {
+                                          Navigator.of(context)
+                                              .pop(); // close sheet
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const FoodCheckoutScreen(),
+                                            ),
+                                          );
+                                        },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.accentOrange,
+                                    foregroundColor: Colors.white,
+                                    disabledBackgroundColor:
+                                        colorScheme.surfaceContainerHighest,
+                                    disabledForegroundColor:
+                                        colorScheme.onSurfaceVariant,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 16),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(14)),
+                                    elevation: 0,
+                                  ),
+                                  child: Text(
+                                      belowMin
+                                          ? 'สั่งขั้นต่ำ ฿${_minOrderAmount.ceil()}'
+                                          : AppLocalizations.of(context)!
+                                              .restGoToCheckout(cart.subtotal
+                                                  .ceil()
+                                                  .toString()),
+                                      style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold)),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ),
                   ),

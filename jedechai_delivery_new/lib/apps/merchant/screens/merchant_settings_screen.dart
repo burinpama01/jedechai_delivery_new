@@ -905,8 +905,136 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
               : AppLocalizations.of(context)!.mchSetAutoScheduleOff,
           _showEditShopHoursDialog,
         ),
+        _divider(),
+        _infoRow(
+          PlatformAdaptive.icon(
+            android: Icons.shopping_cart_checkout,
+            ios: CupertinoIcons.cart,
+          ),
+          'ยอดสั่งซื้อขั้นต่ำ',
+          _formatMinOrderText(_currentMinOrderAmount()),
+          _showEditMinOrderDialog,
+        ),
       ],
     );
+  }
+
+  double _currentMinOrderAmount() {
+    final raw = _userProfile?['min_order_amount'];
+    if (raw is num) return raw.toDouble();
+    if (raw is String) return double.tryParse(raw) ?? 0;
+    return 0;
+  }
+
+  String _formatMinOrderText(double amount) {
+    if (amount <= 0) return 'ไม่มีขั้นต่ำ';
+    return '฿${amount.toStringAsFixed(amount.truncateToDouble() == amount ? 0 : 2)}';
+  }
+
+  Future<void> _showEditMinOrderDialog() async {
+    final current = _currentMinOrderAmount();
+    final controller = TextEditingController(
+      text: current > 0
+          ? current.toStringAsFixed(
+              current.truncateToDouble() == current ? 0 : 2)
+          : '',
+    );
+    final result = await showDialog<double>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'ยอดสั่งซื้อขั้นต่ำ',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'ลูกค้าต้องสั่งอาหารยอดรวมไม่ต่ำกว่าจำนวนนี้จึงจะสั่งได้\nใส่ 0 หรือเว้นว่าง = ไม่มีขั้นต่ำ',
+              style: TextStyle(fontSize: 13, height: 1.4),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+              ],
+              decoration: InputDecoration(
+                prefixText: '฿ ',
+                hintText: '0',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(AppLocalizations.of(context)!.mchSetCancel),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final text = controller.text.trim();
+              final value = text.isEmpty ? 0.0 : (double.tryParse(text) ?? -1);
+              if (value < 0) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('กรุณาใส่จำนวนเงินที่ถูกต้อง'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+              Navigator.of(ctx).pop(value);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _accent,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: Text(AppLocalizations.of(context)!.mchSetSave),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null) {
+      try {
+        final userId = AuthService.userId;
+        if (userId == null) return;
+        await MerchantOrderService().updateMinOrderAmount(userId, result);
+        await _fetchUserProfile();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result <= 0
+                  ? 'ยกเลิกยอดสั่งซื้อขั้นต่ำแล้ว'
+                  : 'ตั้งยอดสั่งซื้อขั้นต่ำ ${_formatMinOrderText(result)} แล้ว'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        debugLog('❌ Error updating min order amount: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  AppLocalizations.of(context)!.mchSetSaveFailed(e.toString())),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
   }
 
   List<String> _extractShopOpenDays(dynamic rawValue) {
