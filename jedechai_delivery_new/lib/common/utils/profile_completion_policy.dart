@@ -31,6 +31,17 @@ bool isProfileCompleteForRole(Map<String, dynamic> profile) {
     if (!hasValidMerchantServiceType(profile['merchant_service_types'])) {
       return false;
     }
+    // ร้านอาหารที่ยังไม่ผ่านการอนุมัติต้องเลือกแพ็กเกจ GP ก่อน
+    // (กัน state ค้างเมื่อบันทึกโปรไฟล์สำเร็จแต่เลือกแพลนไม่สำเร็จ)
+    // ร้านซักรีดใช้อัตรา GP ฝั่ง laundry ที่แอดมินตั้ง ไม่ต้องเลือกแพลน
+    final approvalStatus = (profile['approval_status'] as String? ?? '').trim();
+    final serviceType =
+        normalizeMerchantServiceType(profile['merchant_service_types']);
+    if (approvalStatus != 'approved' &&
+        serviceType == 'food' &&
+        (profile['gp_plan_id']?.toString().trim().isNotEmpty != true)) {
+      return false;
+    }
   }
 
   return true;

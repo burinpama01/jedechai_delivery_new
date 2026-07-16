@@ -656,9 +656,15 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
   }
 
   Widget _buildContent() {
+    final approvalStatus = _userProfile?['approval_status'] as String?;
+    final showPendingBanner = approvalStatus != null && approvalStatus != 'approved';
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        if (showPendingBanner) ...[
+          _buildPendingApprovalBanner(),
+          const SizedBox(height: 16),
+        ],
         _buildProfileHeader(),
         const SizedBox(height: 16),
         _buildInfoCard(),
@@ -674,6 +680,55 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
         _buildDeleteAccountButton(),
         const SizedBox(height: 32),
       ],
+    );
+  }
+
+  // ============================================================
+  // Pending Approval Banner
+  // ============================================================
+
+  /// ป้ายเตือน: ร้านยังไม่ผ่านการอนุมัติจากแอดมิน — ยังไม่แสดงต่อลูกค้า
+  Widget _buildPendingApprovalBanner() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.amber.shade300),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.hourglass_top, color: Colors.amber.shade800, size: 26),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'ร้านค้ารอการอนุมัติจากแอดมิน',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Colors.amber.shade900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'คุณสามารถกรอกข้อมูลร้านและเพิ่มเมนูได้เลย '
+                  'แต่ร้านของคุณจะยังไม่แสดงให้ลูกค้าเห็นจนกว่าจะได้รับการอนุมัติ',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    height: 1.45,
+                    color: Colors.amber.shade900,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

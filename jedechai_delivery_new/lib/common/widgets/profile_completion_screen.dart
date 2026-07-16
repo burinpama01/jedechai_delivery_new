@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/debug_logger.dart';
 import '../services/auth_service.dart';
+import '../services/gp_plan_service.dart';
 import '../services/image_picker_service.dart';
 import '../services/storage_service.dart';
 import '../utils/profile_completion_policy.dart';
@@ -54,16 +55,67 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
   String _selectedVehicleType = 'motorcycle';
   String? _selectedMerchantServiceType;
 
+  // GP plan selection (merchant ที่ยังไม่ผ่านการอนุมัติเท่านั้น)
+  List<Map<String, dynamic>> _gpPlans = [];
+  bool _gpPlansLoading = false;
+  String? _gpPlansError;
+  String? _selectedGpPlanId;
+
   // Driver document uploads
   File? _idCardFile;
   File? _driverLicenseFile;
   File? _vehiclePhotoFile;
   File? _licensePlatePhotoFile;
 
+  // จับค่าครั้งเดียวตอนเปิดหน้า กัน step index เพี้ยนถ้า approval_status
+  // เปลี่ยนระหว่างที่ผู้ใช้ค้างอยู่ในหน้านี้
+  late final bool _gpStepAllowed;
+
+  // แพ็กเกจ GP เป็นเงื่อนไขของร้านอาหาร (ค่าส่ง/กม.) — ร้านซักรีดไม่ต้องเลือก
+  bool get _showGpPlanStep =>
+      _gpStepAllowed && _selectedMerchantServiceType == 'food';
+
   @override
   void initState() {
     super.initState();
+    // แสดงขั้นตอนเลือกแพ็กเกจ GP เฉพาะร้านที่ยังไม่ผ่านการอนุมัติ
+    // (ร้านที่อนุมัติแล้ว การเปลี่ยน GP ต้องให้แอดมินทำ)
+    _gpStepAllowed = widget.role == 'merchant' &&
+        (widget.existingProfile?['approval_status'] as String?) != 'approved';
     _prefillFromExisting();
+    if (_gpStepAllowed) {
+      _loadGpPlans();
+    }
+  }
+
+  Future<void> _loadGpPlans() async {
+    setState(() {
+      _gpPlansLoading = true;
+      _gpPlansError = null;
+    });
+    try {
+      final plans = await GpPlanService.fetchActivePlans();
+      if (!mounted) return;
+      setState(() {
+        _gpPlans = plans;
+        _gpPlansLoading = false;
+        // preselect ถ้าเคยเลือกไว้แล้ว
+        final existingPlanId =
+            widget.existingProfile?['gp_plan_id']?.toString();
+        if (_selectedGpPlanId == null &&
+            existingPlanId != null &&
+            plans.any((p) => p['id'].toString() == existingPlanId)) {
+          _selectedGpPlanId = existingPlanId;
+        }
+      });
+    } catch (e) {
+      debugLog('❌ Error loading GP plans: $e');
+      if (!mounted) return;
+      setState(() {
+        _gpPlansLoading = false;
+        _gpPlansError = e.toString();
+      });
+    }
   }
 
   void _prefillFromExisting() {
@@ -144,6 +196,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
     if (!_isDriver && !_ensureMerchantServiceTypeSelected()) return;
+    if (_showGpPlanStep && !_ensureGpPlanSelected()) return;
 
     setState(() => _isSaving = true);
 
@@ -199,6 +252,21 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
           .update(updateData)
           .eq('id', userId);
 
+      // เลือกแพ็กเกจ GP (ค่า GP/ค่าส่งถูก copy ลง profile ฝั่ง server)
+      // ถ้าเลือกไม่สำเร็จ policy จะพากลับมาหน้านี้ใหม่จนกว่าจะสำเร็จ
+      if (_showGpPlanStep && _selectedGpPlanId != null) {
+        try {
+          await GpPlanService.selectPlan(_selectedGpPlanId!);
+        } catch (e) {
+          // แอดมินอนุมัติระหว่างกรอก -> การตั้ง GP เป็นหน้าที่แอดมินแล้ว ไปต่อได้
+          if (e.toString().contains('already_approved')) {
+            debugLog('⚠️ GP plan skipped: merchant already approved');
+          } else {
+            rethrow;
+          }
+        }
+      }
+
       debugLog('✅ Profile completed for $userId');
 
       if (mounted) {
@@ -241,6 +309,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
           ]
         : [
             l10n.profileCompleteStepMerchantTitle,
+            if (_showGpPlanStep) 'แพ็กเกจ GP',
             l10n.profileCompleteStepBankTitle,
           ];
 
@@ -429,10 +498,15 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
   }
 
   void _onNext() {
-    final steps = _isDriver ? 4 : 2;
+    final steps = _isDriver ? 4 : (_showGpPlanStep ? 3 : 2);
     if (!_isDriver &&
         _currentStep == 0 &&
         !_ensureMerchantServiceTypeSelected()) {
+      return;
+    }
+
+    // ต้องเลือกแพ็กเกจ GP ก่อนไปขั้นถัดไป
+    if (_showGpPlanStep && _currentStep == 1 && !_ensureGpPlanSelected()) {
       return;
     }
 
@@ -480,6 +554,189 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
     return false;
   }
 
+  bool _ensureGpPlanSelected() {
+    if (_selectedGpPlanId != null) return true;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('กรุณาเลือกแพ็กเกจ GP สำหรับร้านของคุณ')),
+    );
+    return false;
+  }
+
+  static String _fmtNum(dynamic value) {
+    final n = (value is num) ? value : num.tryParse(value?.toString() ?? '');
+    if (n == null) return '0';
+    if (n == n.roundToDouble()) return n.round().toString();
+    return n.toString();
+  }
+
+  Widget _buildGpPlanStep({Key? key}) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    Widget body;
+    if (_gpPlansLoading) {
+      body = const Padding(
+        padding: EdgeInsets.symmetric(vertical: 32),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    } else if (_gpPlansError != null) {
+      body = Column(
+        children: [
+          const SizedBox(height: 8),
+          Icon(Icons.wifi_off, color: colorScheme.error, size: 36),
+          const SizedBox(height: 8),
+          Text(
+            'โหลดแพ็กเกจ GP ไม่สำเร็จ',
+            style: TextStyle(color: colorScheme.error),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: _loadGpPlans,
+            icon: const Icon(Icons.refresh),
+            label: const Text('ลองใหม่'),
+          ),
+        ],
+      );
+    } else if (_gpPlans.isEmpty) {
+      body = Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Text(
+          'ยังไม่มีแพ็กเกจ GP ให้เลือกในขณะนี้ กรุณาติดต่อแอดมิน',
+          style: TextStyle(color: colorScheme.onSurfaceVariant),
+          textAlign: TextAlign.center,
+        ),
+      );
+    } else {
+      body = Column(
+        children: [
+          for (final plan in _gpPlans) ...[
+            _buildGpPlanCard(plan),
+            const SizedBox(height: 12),
+          ],
+        ],
+      );
+    }
+
+    return _StepCard(
+      key: key,
+      icon: Icons.percent,
+      title: 'เลือกแพ็กเกจ GP',
+      subtitle: 'เลือกรูปแบบที่ใช่สำหรับร้านคุณ (เปลี่ยนภายหลังได้โดยติดต่อแอดมิน)',
+      children: [body],
+    );
+  }
+
+  Widget _buildGpPlanCard(Map<String, dynamic> plan) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final planId = plan['id'].toString();
+    final isSelected = _selectedGpPlanId == planId;
+    final name = (plan['name'] as String?)?.trim() ?? 'แพ็กเกจ';
+    final description = (plan['description'] as String?)?.trim();
+
+    final gpRate = (plan['gp_rate'] as num?)?.toDouble() ?? 0;
+    final gpPercent = _fmtNum(gpRate * 100);
+    final baseFee = _fmtNum(plan['base_delivery_fee']);
+    final baseKm = _fmtNum(plan['base_distance_km']);
+    final perKm = _fmtNum(plan['per_km_charge']);
+
+    return InkWell(
+      onTap: () => setState(() => _selectedGpPlanId = planId),
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color:
+                isSelected ? AppTheme.primaryGreen : colorScheme.outlineVariant,
+            width: isSelected ? 2 : 1,
+          ),
+          color: isSelected
+              ? AppTheme.primaryGreen.withValues(alpha: 0.06)
+              : colorScheme.surface,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              isSelected
+                  ? Icons.radio_button_checked
+                  : Icons.radio_button_unchecked,
+              color: isSelected
+                  ? AppTheme.primaryGreen
+                  : colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppTheme.primaryGreen
+                              : colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          'หัก GP $gpPercent%',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected
+                                ? colorScheme.onPrimary
+                                : colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'ค่าส่ง $baseFee ฿ ในระยะ $baseKm กิโลเมตรจากร้าน',
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'เมื่อเกินระยะคิด $perKm บาท/กิโลเมตร',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  if (description != null && description.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildStepContent() {
     if (_isDriver) {
       switch (_currentStep) {
@@ -491,6 +748,15 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
           return _buildDocumentUploadStep(key: const ValueKey('driver_docs'));
         case 3:
           return _buildBankInfoStep(key: const ValueKey('driver_bank'));
+      }
+    } else if (_showGpPlanStep) {
+      switch (_currentStep) {
+        case 0:
+          return _buildMerchantInfoStep(key: const ValueKey('merchant_info'));
+        case 1:
+          return _buildGpPlanStep(key: const ValueKey('merchant_gp_plan'));
+        case 2:
+          return _buildBankInfoStep(key: const ValueKey('merchant_bank'));
       }
     } else {
       switch (_currentStep) {

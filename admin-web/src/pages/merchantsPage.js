@@ -77,6 +77,7 @@ export async function renderMerchantsPage(el, ctx) {
         </div>
         <button onclick="exportMerchantsCsv()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors">Export CSV</button>
         <button onclick="exportMerchantsExcel()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200 hover:bg-cyan-100 transition-colors">Export Excel</button>
+        <button onclick="showGpPlansManager()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-orange-50 text-orange-700 border border-orange-200 hover:bg-orange-100 transition-colors flex items-center gap-1.5"><span class="material-icons-round text-sm">percent</span> แพ็กเกจ GP</button>
         <button onclick="showAddMerchantForm()" class="px-5 py-2 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-indigo-200 flex items-center gap-1.5" style="background:linear-gradient(135deg,#6366f1,#818cf8);"><span class="material-icons-round text-sm">add</span> เพิ่มร้านค้า</button>
       </div>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -125,6 +126,10 @@ export async function renderMerchantsPage(el, ctx) {
   globalThis.syncMerchantServiceTypeFields = syncMerchantServiceTypeFields;
   globalThis.uploadMerchantImage = uploadMerchantImage;
   globalThis.toggleMerchantShopStatus = toggleMerchantShopStatus;
+  globalThis.showGpPlansManager = showGpPlansManager;
+  globalThis.showGpPlanForm = showGpPlanForm;
+  globalThis.submitGpPlan = submitGpPlan;
+  globalThis.deleteGpPlan = deleteGpPlan;
 }
 
 function merchantServiceTypes(m) {
@@ -764,6 +769,168 @@ export async function toggleMerchantShopStatus(id, currentlyOpen, ctx) {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════
+// GP Plans Manager (แพ็กเกจ GP ให้ร้านเลือกตอนสมัคร)
+// ═══════════════════════════════════════════════════════════════
+
+function gpPlanPct(rate) {
+  if (rate == null || rate === '') return '-';
+  const n = parseFloat(rate) * 100;
+  return Number.isFinite(n) ? `${n % 1 === 0 ? n.toFixed(0) : n.toFixed(1)}%` : '-';
+}
+
+function gpPlanNum(value) {
+  const n = parseFloat(value ?? 0);
+  if (!Number.isFinite(n)) return '0';
+  return n % 1 === 0 ? n.toFixed(0) : n.toString();
+}
+
+export async function showGpPlansManager(ctx) {
+  _ctx = ctx || _ctx;
+  const { supabase, escapeHtml, showToast } = _deps();
+  const c = document.getElementById('merchantFormContainer');
+  if (!c) return;
+
+  c.innerHTML = '<div class="glass-card p-6 text-sm text-gray-500">กำลังโหลดแพ็กเกจ GP...</div>';
+
+  const { data: plans, error } = await supabase
+    .from('gp_plans')
+    .select('*')
+    .order('sort_order', { ascending: true });
+  if (error) {
+    showToast('โหลดแพ็กเกจ GP ไม่สำเร็จ: ' + escapeHtml(error.message), 'error');
+    c.innerHTML = '';
+    return;
+  }
+
+  globalThis._gpPlansCache = plans || [];
+
+  const rows = (plans || [])
+    .map((p) => {
+      const planIdJsArg = escapeHtml(escapeJsStringForInlineHandler(p.id));
+      return `
+      <tr class="${p.is_active ? '' : 'opacity-50'}">
+        <td class="px-4 py-2.5 text-sm font-semibold">${escapeHtml(p.name || '-')}</td>
+        <td class="px-4 py-2.5 text-sm">${gpPlanPct(p.gp_rate)}</td>
+        <td class="px-4 py-2.5 text-sm">${gpPlanNum(p.base_delivery_fee)} ฿ / ${gpPlanNum(p.base_distance_km)} กม.</td>
+        <td class="px-4 py-2.5 text-sm">${gpPlanNum(p.per_km_charge)} ฿/กม.</td>
+        <td class="px-4 py-2.5 text-sm">${gpPlanPct(p.gp_system_rate)} / ${gpPlanPct(p.gp_driver_rate)}</td>
+        <td class="px-4 py-2.5 text-sm">${p.is_active ? '<span class="text-emerald-600 font-medium">เปิดใช้</span>' : '<span class="text-gray-400">ปิด</span>'}</td>
+        <td class="px-4 py-2.5 text-sm whitespace-nowrap">
+          <button onclick="showGpPlanForm('${planIdJsArg}')" class="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-medium hover:bg-indigo-100 mr-1">แก้ไข</button>
+          <button onclick="deleteGpPlan('${planIdJsArg}')" class="px-3 py-1 bg-red-50 text-red-600 rounded-lg text-xs font-medium hover:bg-red-100">ลบ</button>
+        </td>
+      </tr>`;
+    })
+    .join('');
+
+  c.innerHTML = `
+    <div class="glass-card p-6">
+      <div class="flex items-center justify-between mb-1">
+        <h4 class="font-bold text-gray-800">แพ็กเกจ GP (ร้านเลือกเองตอนสมัคร)</h4>
+        <div class="flex gap-2">
+          <button onclick="showGpPlanForm()" class="px-4 py-2 text-white rounded-xl text-xs font-semibold hover:opacity-90 shadow-md" style="background:linear-gradient(135deg,#f97316,#fb923c);">+ เพิ่มแพ็กเกจ</button>
+          <button onclick="document.getElementById('merchantFormContainer').innerHTML=''" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium hover:bg-gray-200">ปิด</button>
+        </div>
+      </div>
+      <p class="text-xs text-gray-500 mb-4">ร้านที่สมัครใหม่จะเห็นรายการนี้ให้เลือก — แก้ไข/ลบมีผลกับการสมัครครั้งถัดไป ค่า GP ของร้านที่เลือกไปแล้วไม่เปลี่ยน (ร้านที่รออนุมัติและแพลนถูกลบ จะถูกให้เลือกแพลนใหม่)</p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr class="bg-gray-50/80">
+            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-400 uppercase">ชื่อแพ็กเกจ</th>
+            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-400 uppercase">หักร้านค้า</th>
+            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-400 uppercase">ค่าส่ง/ระยะเริ่มต้น</th>
+            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-400 uppercase">เกินระยะ</th>
+            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-400 uppercase">แบ่ง ระบบ/คนขับ</th>
+            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-400 uppercase">สถานะ</th>
+            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-400 uppercase">จัดการ</th>
+          </tr></thead>
+          <tbody class="divide-y divide-gray-100">${rows || '<tr><td colspan="7" class="px-4 py-6 text-center text-sm text-gray-400">ยังไม่มีแพ็กเกจ</td></tr>'}</tbody>
+        </table>
+      </div>
+      <div id="gpPlanFormContainer" class="mt-4"></div>
+    </div>`;
+}
+
+export function showGpPlanForm(id, ctx) {
+  _ctx = ctx || _ctx;
+  const { escapeHtml } = _deps();
+  const c = document.getElementById('gpPlanFormContainer');
+  if (!c) return;
+
+  const p = id ? (globalThis._gpPlansCache || []).find((x) => x.id === id) : null;
+  const pct = (rate) => (rate != null && rate !== '' ? (parseFloat(rate) * 100).toString() : '');
+
+  c.innerHTML = `
+    <div class="border border-orange-200 bg-orange-50/40 rounded-xl p-5">
+      <h5 class="font-bold text-gray-800 mb-3">${p ? 'แก้ไขแพ็กเกจ GP' : 'เพิ่มแพ็กเกจ GP ใหม่'}</h5>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div><label class="block text-sm font-medium mb-1">ชื่อแพ็กเกจ *</label><input id="gpPlanName" value="${escapeHtml(p?.name || '')}" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="เช่น รูปแบบที่ 1" /></div>
+        <div><label class="block text-sm font-medium mb-1">หักร้านค้า GP (%) *</label><input id="gpPlanRate" type="number" min="0" max="95" step="0.1" value="${pct(p?.gp_rate)}" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="เช่น 15" /></div>
+        <div><label class="block text-sm font-medium mb-1">ลำดับแสดง</label><input id="gpPlanSort" type="number" step="1" value="${p?.sort_order ?? ''}" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="1" /></div>
+        <div><label class="block text-sm font-medium mb-1">ค่าส่งเริ่มต้น (บาท)</label><input id="gpPlanBaseFee" type="number" min="0" step="1" value="${p?.base_delivery_fee ?? ''}" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="10" /></div>
+        <div><label class="block text-sm font-medium mb-1">ในระยะ (กม.)</label><input id="gpPlanBaseKm" type="number" min="0" step="0.5" value="${p?.base_distance_km ?? ''}" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="5" /></div>
+        <div><label class="block text-sm font-medium mb-1">เกินระยะคิด (บาท/กม.)</label><input id="gpPlanPerKm" type="number" min="0" step="0.5" value="${p?.per_km_charge ?? ''}" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="3" /></div>
+        <div><label class="block text-sm font-medium mb-1">แบ่งเข้าระบบ (%)</label><input id="gpPlanSystemRate" type="number" min="0" max="95" step="0.1" value="${pct(p?.gp_system_rate)}" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="ว่าง = อัตโนมัติ" /></div>
+        <div><label class="block text-sm font-medium mb-1">แบ่งให้คนขับ (%)</label><input id="gpPlanDriverRate" type="number" min="0" max="95" step="0.1" value="${pct(p?.gp_driver_rate)}" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="ว่าง = อัตโนมัติ" /></div>
+        <div class="flex items-end pb-1"><label class="flex items-center gap-2 text-sm font-medium"><input id="gpPlanActive" type="checkbox" ${p ? (p.is_active ? 'checked' : '') : 'checked'} class="w-4 h-4" /> เปิดใช้งาน</label></div>
+        <div class="md:col-span-3"><label class="block text-sm font-medium mb-1">คำอธิบายเพิ่มเติม</label><input id="gpPlanDesc" value="${escapeHtml(p?.description || '')}" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="แสดงต่อร้านค้าใต้รายละเอียดแพ็กเกจ (ไม่บังคับ)" /></div>
+      </div>
+      <div class="mt-4 flex gap-2">
+        <button onclick="submitGpPlan(${p ? `'${escapeHtml(escapeJsStringForInlineHandler(p.id))}'` : ''})" class="px-5 py-2 text-white rounded-xl text-sm font-semibold hover:opacity-90 shadow-md" style="background:linear-gradient(135deg,#f97316,#fb923c);">บันทึกแพ็กเกจ</button>
+        <button onclick="document.getElementById('gpPlanFormContainer').innerHTML=''" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200">ยกเลิก</button>
+      </div>
+    </div>`;
+}
+
+export async function submitGpPlan(id, ctx) {
+  _ctx = ctx || _ctx;
+  const { callAdminAction, showToast, escapeHtml } = _deps();
+
+  const name = document.getElementById('gpPlanName')?.value?.trim();
+  const gpRateRaw = document.getElementById('gpPlanRate')?.value;
+  if (!name) return alert('กรุณากรอกชื่อแพ็กเกจ');
+  if (gpRateRaw === '' || gpRateRaw == null) return alert('กรุณากรอก % GP หักร้านค้า');
+
+  const pctToRate = (raw) =>
+    raw !== '' && raw != null && !Number.isNaN(parseFloat(raw)) ? parseFloat(raw) / 100 : null;
+
+  const planData = {
+    id: id || undefined,
+    name,
+    description: document.getElementById('gpPlanDesc')?.value?.trim() || null,
+    gp_rate: pctToRate(gpRateRaw),
+    gp_system_rate: pctToRate(document.getElementById('gpPlanSystemRate')?.value),
+    gp_driver_rate: pctToRate(document.getElementById('gpPlanDriverRate')?.value),
+    base_delivery_fee: parseFloat(document.getElementById('gpPlanBaseFee')?.value || '0') || 0,
+    base_distance_km: parseFloat(document.getElementById('gpPlanBaseKm')?.value || '0') || 0,
+    per_km_charge: parseFloat(document.getElementById('gpPlanPerKm')?.value || '0') || 0,
+    sort_order: parseInt(document.getElementById('gpPlanSort')?.value || '0', 10) || 0,
+    is_active: !!document.getElementById('gpPlanActive')?.checked,
+  };
+
+  try {
+    await callAdminAction({ action: 'upsert_gp_plan', plan_data: planData });
+    showToast('บันทึกแพ็กเกจ GP สำเร็จ!', 'success');
+    await showGpPlansManager();
+  } catch (e) {
+    showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message || JSON.stringify(e)), 'error');
+  }
+}
+
+export async function deleteGpPlan(id, ctx) {
+  _ctx = ctx || _ctx;
+  const { callAdminAction, showToast, escapeHtml } = _deps();
+  if (!confirm('ลบแพ็กเกจ GP นี้? ค่า GP ของร้านที่เลือกไปแล้วไม่เปลี่ยน แต่ร้านที่รออนุมัติจะต้องเลือกแพลนใหม่')) return;
+  try {
+    await callAdminAction({ action: 'delete_gp_plan', id });
+    showToast('ลบแพ็กเกจ GP แล้ว', 'info');
+    await showGpPlansManager();
+  } catch (e) {
+    showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message || JSON.stringify(e)), 'error');
+  }
+}
+
 export function wireMerchantsBridge() {
   globalThis.__adminWebBridge = globalThis.__adminWebBridge || {};
   globalThis.__adminWebBridge.renderMerchantsPage = renderMerchantsPage;
@@ -782,6 +949,14 @@ export function wireMerchantsBridge() {
   globalThis.__adminWebBridge.uploadMerchantImage = uploadMerchantImage;
   globalThis.__adminWebBridge.toggleMerchantShopStatus = toggleMerchantShopStatus;
   globalThis.__adminWebBridge.copyMerchantIdForStoreOs = copyMerchantIdForStoreOs;
+  globalThis.__adminWebBridge.showGpPlansManager = showGpPlansManager;
+  globalThis.__adminWebBridge.showGpPlanForm = showGpPlanForm;
+  globalThis.__adminWebBridge.submitGpPlan = submitGpPlan;
+  globalThis.__adminWebBridge.deleteGpPlan = deleteGpPlan;
 
   globalThis.copyMerchantIdForStoreOs = copyMerchantIdForStoreOs;
+  globalThis.showGpPlansManager = showGpPlansManager;
+  globalThis.showGpPlanForm = showGpPlanForm;
+  globalThis.submitGpPlan = submitGpPlan;
+  globalThis.deleteGpPlan = deleteGpPlan;
 }

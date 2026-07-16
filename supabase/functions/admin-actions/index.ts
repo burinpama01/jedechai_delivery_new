@@ -144,6 +144,14 @@ serve(async (req) => {
         result = await handleToggleShopStatus(supabaseAdmin, body);
         break;
 
+      // ─── GP Plans (แพ็กเกจ GP ให้ร้านเลือกตอนสมัคร) ───
+      case "upsert_gp_plan":
+        result = await handleUpsertGpPlan(supabaseAdmin, body);
+        break;
+      case "delete_gp_plan":
+        result = await handleDeleteGpPlan(supabaseAdmin, body);
+        break;
+
       // ─── System Config ───
       case "upsert_system_config":
         result = await handleUpsertSystemConfig(supabaseAdmin, body);
@@ -584,6 +592,128 @@ async function handleToggleShopStatus(supabase, body) {
     .eq("id", id);
   if (error) return errorResponse(error.message);
 
+  return jsonResponse({ success: true });
+}
+
+// ─── GP Plans ───
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// ต้องเหลือแพลนที่เปิดใช้อย่างน้อย 1 รายการเสมอ
+// ไม่งั้นร้านที่สมัครใหม่จะติดค้างที่ขั้นเลือกแพ็กเกจ GP ทั้งระบบ
+async function wouldRemoveLastActiveGpPlan(supabase, excludeId: string) {
+  const { count, error } = await supabase
+    .from("gp_plans")
+    .select("id", { count: "exact", head: true })
+    .eq("is_active", true)
+    .neq("id", excludeId);
+  if (error) return { error: error.message };
+  return { isLast: (count ?? 0) === 0 };
+}
+
+function normalizeGpPlanRate(value: unknown, field: string) {
+  if (value === null || value === undefined || value === "") return { value: null };
+  const num = Number(value);
+  if (!Number.isFinite(num) || num < 0 || num > 0.95) {
+    return { error: `Invalid '${field}' (ต้องเป็นสัดส่วน 0-0.95 เช่น 0.15 = 15%)` };
+  }
+  return { value: num };
+}
+
+function normalizeGpPlanAmount(value: unknown, field: string) {
+  const num = Number(value ?? 0);
+  if (!Number.isFinite(num) || num < 0) {
+    return { error: `Invalid '${field}' (ต้องเป็นตัวเลข >= 0)` };
+  }
+  return { value: num };
+}
+
+async function handleUpsertGpPlan(supabase, body) {
+  const plan = body.plan_data;
+  if (!plan || typeof plan !== "object") return errorResponse("Missing 'plan_data'");
+
+  const name = (plan.name ?? "").toString().trim();
+  if (!name) return errorResponse("Missing 'name'");
+
+  const gpRate = normalizeGpPlanRate(plan.gp_rate, "gp_rate");
+  if (gpRate.error) return errorResponse(gpRate.error);
+  if (gpRate.value === null) return errorResponse("Missing 'gp_rate'");
+
+  const gpSystemRate = normalizeGpPlanRate(plan.gp_system_rate, "gp_system_rate");
+  if (gpSystemRate.error) return errorResponse(gpSystemRate.error);
+  const gpDriverRate = normalizeGpPlanRate(plan.gp_driver_rate, "gp_driver_rate");
+  if (gpDriverRate.error) return errorResponse(gpDriverRate.error);
+
+  if (
+    (gpSystemRate.value !== null || gpDriverRate.value !== null) &&
+    (gpSystemRate.value ?? 0) + (gpDriverRate.value ?? 0) - gpRate.value > 0.0001
+  ) {
+    return errorResponse("ส่วนแบ่ง system + driver ต้องไม่เกิน GP รวม");
+  }
+
+  const baseFee = normalizeGpPlanAmount(plan.base_delivery_fee, "base_delivery_fee");
+  if (baseFee.error) return errorResponse(baseFee.error);
+  const baseKm = normalizeGpPlanAmount(plan.base_distance_km, "base_distance_km");
+  if (baseKm.error) return errorResponse(baseKm.error);
+  const perKm = normalizeGpPlanAmount(plan.per_km_charge, "per_km_charge");
+  if (perKm.error) return errorResponse(perKm.error);
+
+  const row: Record<string, unknown> = {
+    name,
+    description: (plan.description ?? "").toString().trim() || null,
+    gp_rate: gpRate.value,
+    gp_system_rate: gpSystemRate.value,
+    gp_driver_rate: gpDriverRate.value,
+    base_delivery_fee: baseFee.value,
+    base_distance_km: baseKm.value,
+    per_km_charge: perKm.value,
+    sort_order: Number.isFinite(Number(plan.sort_order)) ? Number(plan.sort_order) : 0,
+    is_active: plan.is_active === undefined ? true : !!plan.is_active,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (plan.id) {
+    if (!UUID_RE.test(String(plan.id))) return errorResponse("Invalid plan 'id'");
+
+    // ห้ามปิดใช้งานแพลน active ตัวสุดท้าย
+    if (row.is_active === false) {
+      const check = await wouldRemoveLastActiveGpPlan(supabase, String(plan.id));
+      if (check.error) return errorResponse(check.error);
+      if (check.isLast) {
+        return errorResponse("ต้องมีแพ็กเกจ GP ที่เปิดใช้งานอย่างน้อย 1 รายการ");
+      }
+    }
+
+    const { error } = await supabase.from("gp_plans").update(row).eq("id", plan.id);
+    if (error) return errorResponse(error.message);
+    return jsonResponse({ success: true, id: plan.id });
+  }
+
+  const { data, error } = await supabase
+    .from("gp_plans")
+    .insert(row)
+    .select("id")
+    .single();
+  if (error) return errorResponse(error.message);
+  return jsonResponse({ success: true, id: data?.id });
+}
+
+async function handleDeleteGpPlan(supabase, body) {
+  const { id } = body;
+  if (!id) return errorResponse("Missing 'id'");
+  if (!UUID_RE.test(String(id))) return errorResponse("Invalid 'id'");
+
+  const check = await wouldRemoveLastActiveGpPlan(supabase, String(id));
+  if (check.error) return errorResponse(check.error);
+  if (check.isLast) {
+    return errorResponse("ต้องมีแพ็กเกจ GP ที่เปิดใช้งานอย่างน้อย 1 รายการ ลบไม่ได้");
+  }
+
+  // ร้านที่เคยเลือกแพลนนี้: FK เป็น ON DELETE SET NULL — ค่า GP ที่ copy ไว้ใน
+  // profile ยังอยู่ครบ ไม่กระทบการคำนวณเดิม
+  const { error } = await supabase.from("gp_plans").delete().eq("id", id);
+  if (error) return errorResponse(error.message);
   return jsonResponse({ success: true });
 }
 

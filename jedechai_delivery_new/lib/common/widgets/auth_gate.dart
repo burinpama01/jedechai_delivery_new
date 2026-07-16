@@ -342,8 +342,11 @@ class _AuthGateState extends State<AuthGate> {
     }
 
     // Check approval status for driver/merchant
-    if ((_userRole == 'driver' || _userRole == 'merchant') &&
-        (_approvalStatus == 'pending' || _approvalStatus == 'rejected')) {
+    // merchant ที่ pending ผ่านขั้น 1 อัตโนมัติ: เข้าแอปกรอกข้อมูลร้าน/เพิ่มเมนูได้เลย
+    // แต่ร้านจะยังไม่แสดงต่อลูกค้าจนกว่าแอดมินจะอนุมัติ (มีป้ายเตือนในหน้าบัญชี)
+    if ((_userRole == 'driver' &&
+            (_approvalStatus == 'pending' || _approvalStatus == 'rejected')) ||
+        (_userRole == 'merchant' && _approvalStatus == 'rejected')) {
       return PendingApprovalScreen(
         role: _userRole,
         approvalStatus: _approvalStatus,

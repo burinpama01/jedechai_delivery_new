@@ -15,6 +15,7 @@ graphify-out/
 .codex_logs/
 .antigravitycli/
 admin-web/.netlify/
+.netlify/
 admin-web/.npm-cache/
 deploy-*.zip
 laundry-*.png
