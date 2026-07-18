@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แผนงาน Admin-Web P0–P3 (v1) — 2026-07-18</title>
+<style>
+  body { font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 960px; margin: 0 auto; padding: 24px; color: #1f2937; line-height: 1.65; }
+  h1 { color: #312e81; border-bottom: 3px solid #6366f1; padding-bottom: 8px; }
+  h2 { color: #4338ca; margin-top: 32px; border-left: 5px solid #6366f1; padding-left: 10px; }
+  h3 { color: #1e40af; }
+  code, pre { background: #f3f4f6; border-radius: 6px; font-family: Consolas, monospace; font-size: 0.9em; }
+  code { padding: 1px 6px; }
+  pre { padding: 12px; overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+  th, td { border: 1px solid #d1d5db; padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: #eef2ff; }
+  .warn { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 12px 16px; margin: 12px 0; }
+  .crit { background: #fee2e2; border: 1px solid #ef4444; border-radius: 8px; padding: 12px 16px; margin: 12px 0; }
+  .ok { background: #d1fae5; border: 1px solid #10b981; border-radius: 8px; padding: 12px 16px; margin: 12px 0; }
+  ul li, ol li { margin: 4px 0; }
+  .tag { display: inline-block; background: #e0e7ff; color: #3730a3; border-radius: 9999px; padding: 1px 10px; font-size: 0.8em; font-weight: 600; margin-right: 6px; }
+</style>
+</head>
+<body>
+
+<h1>แผนงาน Admin-Web P0–P3 (v1)</h1>
+<p><strong>วันที่วางแผน:</strong> 2026-07-18 00:45 น. · <strong>กำหนดเริ่มงาน:</strong> 02:10 น. (scheduled task) · <strong>อ้างอิง audit:</strong> Obsidian <code>Projects/jedechai_delivery_new/log.md</code> entry "2026-07-18 — Audit admin-web"</p>
+
+<h2>0. คำสั่งและข้อจำกัดจากผู้ใช้ (บังคับ)</h2>
+<div class="crit">
+<ul>
+<li>ทำงานตามลำดับ P0 → P1 → P2 → P3 จนจบ P3 โดยไม่หยุดถามระหว่างทาง (ยกเว้นเจอ blocker ที่ irreversible/destructive นอกเหนือจากที่อนุญาต)</li>
+<li><strong>อนุญาตให้ deploy ได้เลย</strong> (migration ผ่าน node+pg, edge function, admin-web ขึ้น Netlify)</li>
+<li><strong>ห้าม rotate key ใดๆ</strong> ในรอบนี้</li>
+<li><strong>ห้ามลบไฟล์ใดๆ และห้ามตัด dead code</strong> — งานประเภท "ลบ" ทั้งหมดให้ข้าม แล้วรวบรวมเป็นรายการ "สิ่งที่ต้องลบ" ในรายงานสุดท้ายแทน (ห้ามแตะ <code>config.production.js</code> ด้วย — อยู่ในรายการรอลบ)</li>
+<li>จบงานต้องรายงานสถานะทุก P + <strong>รายการสิ่งที่ต้องลบให้ชัดเจน</strong> (ดูหัวข้อ 8)</li>
+</ul>
+</div>
+
+<h2>1. P0 — README ปลอดภัยและตรงความจริง</h2>
+<ul>
+<li>แก้ <code>admin-web/README.md</code>:
+  <ul>
+  <li>ลบคำแนะนำให้ใส่ <code>SUPABASE_SERVICE_KEY</code> ใน config (โค้ดปัจจุบันไม่ใช้ key นี้แล้ว — privileged write ทำผ่าน edge function <code>admin-actions</code> ทั้งหมด) และเขียนเตือนชัดว่า "ห้ามใส่ service key ใน config ฝั่ง browser"</li>
+  <li>อัปเดตโครงสร้างไฟล์: มี <code>src/</code> (modular pages), <code>app.legacy.js</code> (ของเดิม เหลือ bootstrap/login/shell + settings), <code>app.js</code> (loader)</li>
+  <li>อัปเดตรายการฟีเจอร์ให้ครบ (laundry, topups, customer wallets, referrals, notification deliveries, GP plans, min order)</li>
+  <li>อธิบาย deploy จริง: ใช้ <code>node scripts/prepare-admin-web-netlify-deploy.mjs</code> (sanitize config) + Netlify — อ้าง <code>deployment.md</code> ใน Obsidian</li>
+  </ul>
+</li>
+</ul>
+
+<h2>2. P1a — Laundry: admin จัดการแทนร้านครบชุด</h2>
+<p>ปัจจุบันหน้า Laundry (<code>admin-web/src/pages/laundryPage.js</code>) ทำได้แค่ ดูรายการ/จัดการแพ็กเกจ/assign คนขับ — RPC ฝั่งร้าน (<code>merchant_send_laundry_quote</code>, <code>merchant_update_laundry_status</code>, <code>create_laundry_return_booking</code>) เช็ค <code>auth.uid()</code> = merchant/customer ทำให้ admin เรียกตรงไม่ได้</p>
+
+<h3>2.1 Migration ใหม่ (deploy ผ่าน node+pg เท่านั้น — ดูหัวข้อ 6)</h3>
+<ul>
+<li>สร้าง admin-variant DB functions (SECURITY DEFINER, <strong>GRANT EXECUTE เฉพาะ <code>service_role</code></strong> — ห้าม grant ให้ authenticated):
+  <ul>
+  <li><code>admin_send_laundry_quote(p_laundry_order_id, p_laundry_amount, p_delivery_fee_outbound, p_quote_message, p_quote_expires_minutes, p_platform_gp_rate)</code> — นำ logic จาก <code>merchant_send_laundry_quote</code> (เวอร์ชันล่าสุดใน migration <code>20260702160000_laundry_cancel_refund_and_stage_fixes.sql</code>) มาใช้โดยตัดเช็ค merchant_id ออก อย่า duplicate สูตร GP — ถ้าแยก shared function ได้ให้แยก ถ้าเสี่ยงให้ copy แล้ว comment อ้างที่มา</li>
+  <li><code>admin_update_laundry_status(p_laundry_order_id, p_status)</code> — stage guard เดียวกับของ merchant (washing เมื่อ at_merchant; completed เมื่อ self_pickup + ready_for_return) แต่ไม่เช็ค merchant_id</li>
+  <li><code>admin_cancel_laundry_order(p_laundry_order_id, p_reason, p_do_refund)</code> — ยกเลิกได้ทุกสถานะที่ไม่ใช่ completed/cancelled:
+    <ul>
+    <li>สถานะก่อนชำระ (quote_requested/quoted/quote_expired/quote_rejected): เปลี่ยนสถานะ + notify</li>
+    <li>สถานะหลัง accept: ถ้ามี booking ค้าง (outbound/return) ให้ยกเลิก booking ด้วย logic เดิม (<code>admin_force_cancel_booking_with_wallet_refund</code> / <code>cancel_wallet_booking_with_refund</code> จาก migration 20260702160000) แล้ว sync laundry_orders เป็น cancelled; ถ้าจ่าย wallet แล้วและ p_do_refund=true ให้คืนเงินตามแนวทาง refund เดิม (<code>refund_booking_to_customer_wallet</code>) — ตรวจ flow การ hold/charge จริงใน migration ก่อนเขียน ห้ามเดา</li>
+    </ul>
+  </li>
+  </ul>
+</li>
+<li>ตรวจ constraint ของ <code>laundry_quote_messages.sender_role</code> — ถ้าจำกัดแค่ customer/merchant ให้ขยายรองรับ <code>admin</code></li>
+</ul>
+
+<h3>2.2 Edge function <code>supabase/functions/admin-actions/index.ts</code> — เพิ่ม actions</h3>
+<table>
+<tr><th>action</th><th>ทำอะไร</th></tr>
+<tr><td><code>admin_laundry_send_quote</code></td><td>เรียก <code>admin_send_laundry_quote</code> + notify ลูกค้า (แจ้งว่า quote มาแล้ว) + insert ข้อความระบบใน chat</td></tr>
+<tr><td><code>admin_laundry_update_status</code></td><td>เรียก <code>admin_update_laundry_status</code> + notify ลูกค้า/ร้าน</td></tr>
+<tr><td><code>admin_laundry_cancel</code></td><td>เรียก <code>admin_cancel_laundry_order</code> + notify ลูกค้า/ร้าน/คนขับ (ถ้ามี)</td></tr>
+<tr><td><code>admin_laundry_create_return_booking</code></td><td>เรียก <code>create_laundry_return_booking</code> — function เดิมอาจเช็ค actor; ตรวจก่อน ถ้าเช็คให้ทำ admin variant ใน migration ข้อ 2.1</td></tr>
+<tr><td><code>admin_laundry_get_chat</code></td><td>คืน thread <code>laundry_quote_messages</code> ของ order (เรียงเวลา)</td></tr>
+<tr><td><code>admin_laundry_send_chat_message</code></td><td>insert ข้อความ sender_role='admin' + notify คู่สนทนา</td></tr>
+</table>
+
+<h3>2.3 Frontend <code>laundryPage.js</code></h3>
+<ul>
+<li>ปุ่มตามสถานะของแต่ละ order:
+  <ul>
+  <li><code>quote_requested</code> → "ส่ง quote แทนร้าน" (modal: ยอดซัก, ค่าส่งขาไป, ข้อความ, อายุ quote)</li>
+  <li><code>at_merchant</code> → "เริ่มซัก (แทนร้าน)"</li>
+  <li><code>washing</code> → "พร้อมส่งกลับ / สร้างงานขากลับ" (ตาม return_mode)</li>
+  <li><code>ready_for_return</code> + self_pickup → "ปิดงาน (ลูกค้ารับแล้ว)"</li>
+  <li>ทุกสถานะ active → "ยกเลิก" (modal: เหตุผล + checkbox คืนเงิน ถ้าชำระแล้ว)</li>
+  </ul>
+</li>
+<li>Chat: กดที่ cell แล้วเปิด modal thread เต็ม + ช่องพิมพ์ตอบ (ส่งผ่าน <code>admin_laundry_send_chat_message</code>)</li>
+<li>เพิ่ม status filter + ช่องค้นหา (ชื่อ/เบอร์/รหัส order) + ปุ่ม export CSV (ใช้ helper <code>exportRowsToCsv</code> เดิม)</li>
+<li>แก้บั๊ก <code>bookingCell</code>: booking.status (pending, driver_accepted, in_transit, delivered ฯลฯ) ต้องมี label map ภาษาไทยของตัวเอง — ห้ามใช้ <code>statusLabel</code> ของ laundry order</li>
+<li>แก้ Thai escaped unicode (<code>ว...</code> บรรทัด ~573-574) เป็นตัวอักษรไทยตรงๆ</li>
+</ul>
+
+<h2>3. P1b — Cache busting</h2>
+<ul>
+<li>แก้ <code>scripts/prepare-admin-web-netlify-deploy.mjs</code>: ตอน copy ให้ stamp <code>?v=&lt;version จาก admin-web/package.json&gt;-&lt;timestamp&gt;</code> ลง <code>index.html</code> (ทั้ง src/main.js และ app.js) และ sync <code>ASSET_VERSION</code> ใน <code>app.js</code> อัตโนมัติ — แก้เฉพาะใน out dir ไม่แตะ source</li>
+<li>เพิ่ม Cache-Control ใน <code>admin-web/_headers</code>: <code>/index.html</code> + <code>/</code> → <code>no-cache</code>; ไฟล์ <code>*.js</code> → <code>public, max-age=300, must-revalidate</code> (ยังไม่มี content-hash จึงใช้ max-age สั้น)</li>
+<li>ห้ามลบ <code>clear-cache.html</code> (อยู่ในรายการรอลบ)</li>
+</ul>
+
+<h2>4. P2 — Visibility &amp; แจ้งเตือน</h2>
+<ul>
+<li><strong>Laundry เข้า pending orders:</strong> <code>pendingOrdersPage.js</code> เพิ่ม section/รวมรายการ laundry ที่ต้องจัดการ: <code>quote_requested</code> ค้าง, <code>outbound_pending</code>/<code>return_pending</code> ไม่มีคนขับ — ลิงก์ไปหน้า Laundry</li>
+<li><strong>Dashboard:</strong> การ์ดจำนวน laundry รอจัดการ (นับสถานะเดียวกัน)</li>
+<li><strong>Notify คนขับตอน assign:</strong> ใน <code>handleAssignOrder</code> (admin-actions index.ts ~1434) เพิ่ม <code>notifyTargets</code> ถึง driver_id (title/body ไทย + type <code>order.assigned</code> + data order_id) — ดูรูปแบบจาก reassign/cancel ที่มีอยู่</li>
+<li><strong>Scheduled orders:</strong> <code>ordersPage.js</code> แสดงคอลัมน์/badge <code>scheduled_at</code> (ถ้ามีค่า) + filter "จองล่วงหน้า"; ตรวจชื่อคอลัมน์จริงจาก migration <code>20260302_add_scheduled_at_to_bookings.sql</code> ก่อน</li>
+</ul>
+
+<h2>5. P3 — งานเพิ่ม (additive เท่านั้น)</h2>
+<ul>
+<li><strong>Migrate หน้า Settings:</strong> ย้าย <code>renderSettings</code> + ส่วน banners/assets/GP/system config จาก <code>app.legacy.js</code> มาเป็น implementation เต็มใน <code>src/pages/settingsPage.js</code> (แนวเดียวกับหน้าที่ย้ายแล้ว เช่น driversPage) — <strong>ห้ามลบโค้ดฝั่ง legacy</strong> แค่ทำให้ src ถูกใช้ก่อนผ่าน bridge เดิม; escape ทุกค่า DB ด้วย <code>escapeHtml</code> ปิดช่อง XSS ที่ audit เก่าเจอ</li>
+<li><strong>หน้า Reviews:</strong> หน้าใหม่ <code>reviewsPage.js</code> + sidebar "รีวิว" — list รีวิวล่าสุด (ตาราง: ผู้ให้, ผู้ถูกรีวิว, ดาว, คอมเมนต์, วันที่, order) + action ซ่อน/ลบรีวิวไม่เหมาะสมผ่าน admin-actions ใหม่ (<code>admin_delete_review</code> หรือ soft-hide ตาม schema จริง — ตรวจตาราง reviews ใน migrations ก่อน)</li>
+<li><strong>Broadcast:</strong> UI ส่งประกาศ (อยู่ในหน้า Settings หรือหน้าใหม่): เลือกกลุ่มเป้าหมาย (ทุกคน/ลูกค้า/คนขับ/ร้าน), หัวข้อ+ข้อความ → action <code>admin_broadcast_notification</code> ใน admin-actions: insert <code>notifications</code> เป็น batch + ยิง FCM ผ่าน function <code>send-fcm-notification</code> ที่มีอยู่ (ตรวจ signature การเรียกก่อน) — จำกัด batch size ป้องกัน timeout</li>
+<li>อัปเดต sidebar ใน <code>index.html</code> + <code>src/router/meta.js</code> (page titles) + <code>src/pages/index.js</code> ให้ครบทุกหน้าใหม่</li>
+</ul>
+
+<h2>6. Deploy (ยืนยันวิธีจาก deployment.md แล้ว)</h2>
+<ol>
+<li><strong>Migrations:</strong> ห้าม <code>supabase db push</code> (history desync) — ใช้ node+pg ต่อ DB ตรงด้วย <code>SUPABASE_DATABASE_URL</code> จาก <code>.env</code> (host aws-1-ap-south-1) ตาม pattern ใน <code>deployment.md</code> ของ Obsidian; รัน guard test query หลัง apply</li>
+<li><strong>Edge function:</strong> deploy <code>admin-actions</code> ตามวิธีที่เคยสำเร็จใน deployment.md; smoke test: เรียกโดยไม่มี JWT ต้องได้ 401</li>
+<li><strong>Admin-web:</strong> <code>node scripts/prepare-admin-web-netlify-deploy.mjs</code> → deploy โฟลเดอร์ out ขึ้น Netlify site <code>jedechai-delivery</code> ตามวิธีใน deployment.md → เปิด production URL ตรวจ HTTP 200 + version stamp ใหม่</li>
+<li>บันทึก deploy id + ผล verify ลง <code>deployment.md</code></li>
+</ol>
+
+<h2>7. คุณภาพ / กติกา</h2>
+<ul>
+<li><strong>Version bump ก่อน commit/deploy:</strong> <code>admin-web/package.json</code> 1.4.0 → <strong>1.5.0</strong> (minor: feature ใหม่); Flutter ไม่แตะ ไม่ bump</li>
+<li><strong>Commit:</strong> แยก commit ตามกลุ่มงาน (P0, P1a backend, P1a frontend, P1b, P2, P3) ข้อความไทยตาม convention เดิม + ระบุเวอร์ชัน; ห้าม commit <code>.env</code>/secret</li>
+<li><strong>Code review:</strong> หลัง implement เสร็จให้รัน code review ก่อนสรุป — ใช้ agent <code>code_reviewer</code> ถ้าเรียกได้; ถ้าไม่มีใน environment ให้ใช้ skill <code>/code-review</code> แทน และระบุในรายงานว่าใช้ช่องทางไหน (ห้าม fallback เงียบ) แก้ FAIL ให้หมดก่อน commit สุดท้าย</li>
+<li><strong>Verification ขั้นต่ำ:</strong> <code>node --check</code> ทุกไฟล์ JS ที่แก้, unit test เดิมต้องผ่าน (<code>node --test admin-web/src/**/*.test.js</code>), migration รันบน DB จริงสำเร็จ, smoke test edge function, เปิดหน้าเว็บ production ตรวจหน้า Laundry</li>
+<li><strong>Obsidian:</strong> จบงานบันทึก <code>log.md</code> (พร้อม Learning Review) + อัปเดต <code>issue.md</code> ถ้าเจอ issue + อัปเดต <code>deployment.md</code></li>
+</ul>
+
+<h2>8. รายการ "สิ่งที่ต้องลบ" — ห้ามทำในรอบนี้ ให้ใส่ในรายงานสุดท้าย</h2>
+<table>
+<tr><th>#</th><th>รายการ</th><th>หมายเหตุ</th></tr>
+<tr><td>1</td><td><code>SUPABASE_SERVICE_KEY</code> ใน <code>admin-web/config.production.js</code></td><td>โค้ดไม่ใช้แล้ว; หลังลบควร rotate key (รอผู้ใช้สั่ง)</td></tr>
+<tr><td>2</td><td>Dead code ใน <code>app.legacy.js</code></td><td>หลัง settings migrate แล้ว renderer เก่าตายทั้งหมด — ระบุช่วงบรรทัด/ฟังก์ชันที่ปลอดภัยต่อการตัดในรายงาน</td></tr>
+<tr><td>3</td><td><code>admin-web/clear-cache.html</code></td><td>หมดความจำเป็นเมื่อ cache fix ขึ้น production</td></tr>
+<tr><td>4</td><td><code>deploy-*.zip</code> 3 ไฟล์ใน repo root</td><td>ไฟล์เสีย (corrupt) เปิดไม่ได้</td></tr>
+<tr><td>5</td><td><code>build_log.txt</code>, <code>laundry-current.png</code>, <code>laundry-post-install.png</code> ใน repo root</td><td>ขยะชั่วคราว</td></tr>
+<tr><td>6</td><td><code>admin-web/vercel.json</code></td><td>ถ้ายืนยันใช้ Netlify เท่านั้น (พฤติกรรม redirect ขัดกับ _redirects)</td></tr>
+<tr><td>7</td><td>Stub ซ้ำ 19 ไฟล์ (<code>laundry.js</code> คู่ <code>laundryPage.js</code> ฯลฯ)</td><td>ยุบได้ภายหลัง — ความสำคัญต่ำ</td></tr>
+</table>
+
+<h2>9. เงื่อนไขหยุดงาน (blocker)</h2>
+<ul>
+<li>ขาด credential/CLI (เช่น Netlify auth หมดอายุ, .env ไม่มี SUPABASE_DATABASE_URL) → บันทึก + รายงาน ห้ามเดา</li>
+<li>Migration รันแล้ว error ที่แก้ไม่ได้ปลอดภัย → หยุด migration นั้น รายงาน พร้อมสถานะ DB ล่าสุด</li>
+<li>ทำงานเสร็จไม่ครบทุกข้อ → รายงานตามจริงว่าเสร็จถึงไหน อะไรค้าง เพราะอะไร</li>
+</ul>
+
+</body>
+</html>
