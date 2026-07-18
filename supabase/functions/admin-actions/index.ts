@@ -616,6 +616,19 @@ async function handleToggleShopStatus(supabase, body) {
     .eq("id", id);
   if (error) return errorResponse(error.message);
 
+  // แจ้งร้านให้รู้ว่าแอดมินเปิด/ปิดร้านแทน (transparency — ร้านจะได้ไม่งงว่าทำไมสถานะเปลี่ยนเอง)
+  await notifyTargets(supabase, [
+    {
+      user_id: id,
+      title: make_open ? "แอดมินเปิดร้านของคุณ" : "แอดมินปิดร้านของคุณชั่วคราว",
+      body: make_open
+        ? "ร้านของคุณถูกเปิดรับออเดอร์โดยผู้ดูแลระบบ"
+        : "ร้านของคุณถูกปิดรับออเดอร์ชั่วคราวโดยผู้ดูแลระบบ หากมีข้อสงสัยติดต่อแอดมิน",
+      type: "shop.status_changed_by_admin",
+      data: { shop_open: !!make_open },
+    },
+  ]);
+
   return jsonResponse({ success: true });
 }
 
@@ -969,11 +982,24 @@ async function handleRejectTopup(supabase, body) {
     })
     .eq("id", id)
     .eq("status", "pending")
-    .select("id")
+    .select("id, user_id, amount")
     .maybeSingle();
   if (error) return errorResponse(error.message);
   if (!updated) {
     return jsonResponse({ success: false, already_processed: true });
+  }
+
+  // เดิม approve แจ้งแต่ reject เงียบ — ลูกค้าต้องรู้ว่าสลิปไม่ผ่านพร้อมเหตุผล
+  if (updated.user_id) {
+    await notifyTargets(supabase, [
+      {
+        user_id: updated.user_id,
+        title: "คำขอเติมเงินไม่ได้รับการอนุมัติ",
+        body: `คำขอเติมเงิน ฿${Number(updated.amount || 0).toLocaleString("th-TH")} ถูกปฏิเสธ${reason ? ` เหตุผล: ${reason}` : " กรุณาตรวจสอบสลิปแล้วส่งใหม่อีกครั้ง"}`,
+        type: "topup.rejected",
+        data: { topup_id: updated.id },
+      },
+    ]);
   }
 
   return jsonResponse({ success: true });
@@ -1179,6 +1205,28 @@ async function handleRejectAccountDeletion(supabase, body, adminId) {
     p_reason: reason || "",
   });
   if (error) return errorResponse(error.message);
+
+  // ผู้ขอลบบัญชีควรรู้ผลการพิจารณา (เคส approve บัญชีถูกลบ แจ้งไม่ได้อยู่แล้ว)
+  if (data?.success !== false) {
+    const { data: request } = await supabase
+      .from("account_deletion_requests")
+      .select("user_id")
+      .eq("id", id)
+      .maybeSingle();
+    if (request?.user_id) {
+      await notifyTargets(supabase, [
+        {
+          user_id: request.user_id,
+          title: "คำขอลบบัญชีไม่ได้รับการอนุมัติ",
+          body: reason
+            ? `คำขอลบบัญชีของคุณถูกปฏิเสธ เหตุผล: ${reason}`
+            : "คำขอลบบัญชีของคุณถูกปฏิเสธ หากต้องการดำเนินการต่อกรุณาติดต่อฝ่ายบริการ",
+          type: "account_deletion.rejected",
+          data: { request_id: id },
+        },
+      ]);
+    }
+  }
 
   return jsonResponse(data || { success: true });
 }
@@ -1498,28 +1546,20 @@ async function handleAdminLaundryUpdateStatus(supabase, body) {
   if (error) return errorResponse(error.message);
   if (!data?.success) return errorResponse(data?.error || "admin_update_laundry_status_failed");
 
+  // ลูกค้าถูกแจ้งโดย trigger trg_laundry_status_notify แล้ว (migration 20260718230000)
+  // — เหลือแจ้งร้านเพื่อความโปร่งใสว่าแอดมินเป็นคนกดแทน
   const order = await loadLaundryOrderParticipants(supabase, laundryOrderId).catch(() => null);
-  const rows = [];
-  if (status === "washing" && order?.customer_id) {
-    // RPC แจ้งลูกค้าเฉพาะตอน completed — เติมแจ้งตอนเริ่มซักให้ครบ
-    rows.push({
-      user_id: order.customer_id,
-      title: "ร้านเริ่มซักผ้าแล้ว",
-      body: `คำขอซักผ้า #${laundryOrderId.substring(0, 8)} กำลังซัก`,
-      type: "laundry.washing",
-      data: { laundry_order_id: laundryOrderId },
-    });
-  }
   if (order?.merchant_id) {
-    rows.push({
-      user_id: order.merchant_id,
-      title: "แอดมินอัปเดตสถานะซักผ้าแทนร้าน",
-      body: `คำขอ #${laundryOrderId.substring(0, 8)} → ${status === "washing" ? "กำลังซัก" : "เสร็จสิ้น"}`,
-      type: "laundry.admin_status_updated",
-      data: { laundry_order_id: laundryOrderId, status },
-    });
+    await notifyTargets(supabase, [
+      {
+        user_id: order.merchant_id,
+        title: "แอดมินอัปเดตสถานะซักผ้าแทนร้าน",
+        body: `คำขอ #${laundryOrderId.substring(0, 8)} → ${status === "washing" ? "กำลังซัก" : "เสร็จสิ้น"}`,
+        type: "laundry.admin_status_updated",
+        data: { laundry_order_id: laundryOrderId, status },
+      },
+    ]);
   }
-  if (rows.length) await notifyTargets(supabase, rows);
   return jsonResponse({ success: true, result: data });
 }
 
@@ -1706,14 +1746,36 @@ async function handleAdminBroadcastNotification(supabase, body, adminId: string)
 
 // ─── Support Tickets ──────────────────────────────────
 
+const TICKET_STATUS_LABELS: Record<string, string> = {
+  open: "รอดำเนินการ",
+  in_progress: "กำลังดำเนินการ",
+  resolved: "แก้ไขแล้ว",
+  closed: "ปิดเรื่อง",
+};
+
 async function handleUpdateTicketStatus(supabase, body) {
   const { id, status } = body;
   if (!id || !status) return errorResponse("Missing 'id' or 'status'");
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from("support_tickets")
     .update({ status, updated_at: new Date().toISOString() })
-    .eq("id", id);
+    .eq("id", id)
+    .select("id, user_id, subject")
+    .maybeSingle();
   if (error) return errorResponse(error.message);
+
+  // ผู้ร้องเรียนควรเห็นความคืบหน้า ไม่ใช่ยื่นแล้วเงียบหาย
+  if (updated?.user_id) {
+    await notifyTargets(supabase, [
+      {
+        user_id: updated.user_id,
+        title: "อัปเดตเรื่องร้องเรียนของคุณ",
+        body: `"${String(updated.subject || "").slice(0, 60)}" สถานะ: ${TICKET_STATUS_LABELS[String(status)] || status}`,
+        type: "ticket.status_updated",
+        data: { ticket_id: updated.id, status },
+      },
+    ]);
+  }
   return jsonResponse({ success: true });
 }
 
@@ -1721,11 +1783,25 @@ async function handleResolveTicket(supabase, body) {
   const { id, resolution } = body;
   if (!id || !resolution) return errorResponse("Missing 'id' or 'resolution'");
   const nowIso = new Date().toISOString();
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from("support_tickets")
     .update({ status: "resolved", resolution, resolved_at: nowIso, updated_at: nowIso })
-    .eq("id", id);
+    .eq("id", id)
+    .select("id, user_id, subject")
+    .maybeSingle();
   if (error) return errorResponse(error.message);
+
+  if (updated?.user_id) {
+    await notifyTargets(supabase, [
+      {
+        user_id: updated.user_id,
+        title: "เรื่องร้องเรียนได้รับการแก้ไขแล้ว",
+        body: `"${String(updated.subject || "").slice(0, 60)}" — ${String(resolution).slice(0, 140)}`,
+        type: "ticket.resolved",
+        data: { ticket_id: updated.id },
+      },
+    ]);
+  }
   return jsonResponse({ success: true });
 }
 
@@ -1964,6 +2040,29 @@ async function handleMarkFoodReadyAsMerchant(supabase, body, adminId: string) {
     }
   }
 
+  // เดิมแจ้งเฉพาะ driver candidates ตอนยังไม่มีคนขับ —
+  // คนขับที่รับงานอยู่แล้วและลูกค้าไม่เคยรู้ว่าอาหารเสร็จ
+  const readyRows = [];
+  if (booking.driver_id) {
+    readyRows.push({
+      user_id: booking.driver_id,
+      title: "อาหารพร้อมแล้ว 🍽",
+      body: `ออเดอร์ #${String(order_id).substring(0, 8)} เตรียมเสร็จแล้ว ไปรับที่ร้านได้เลย`,
+      type: "order.food_ready",
+      data: { order_id },
+    });
+  }
+  if (booking.customer_id) {
+    readyRows.push({
+      user_id: booking.customer_id,
+      title: "ร้านเตรียมอาหารเสร็จแล้ว",
+      body: `ออเดอร์ #${String(order_id).substring(0, 8)} พร้อมส่ง กำลังรอคนขับไปรับ`,
+      type: "order.food_ready",
+      data: { order_id },
+    });
+  }
+  if (readyRows.length) await notifyTargets(supabase, readyRows);
+
   console.log("mark_food_ready_as_merchant", {
     admin_id: adminId,
     booking_id: order_id,
@@ -2158,6 +2257,17 @@ async function handleWalletAdjust(supabase, body) {
   });
   if (txErr) return errorResponse(txErr.message);
 
+  // เจ้าของกระเป๋าต้องรู้ทุกครั้งที่ยอดถูกแก้โดยแอดมิน (การเงินห้ามเงียบ)
+  await notifyTargets(supabase, [
+    {
+      user_id,
+      title: amount >= 0 ? "แอดมินปรับเพิ่มยอดเงินในกระเป๋า" : "แอดมินปรับลดยอดเงินในกระเป๋า",
+      body: `${amount >= 0 ? "+" : "-"}฿${Math.abs(Number(amount)).toLocaleString("th-TH")} (ยอดใหม่ ฿${Math.round(after).toLocaleString("th-TH")})${reason ? ` เหตุผล: ${reason}` : ""}`,
+      type: "wallet.admin_adjusted",
+      data: { amount, before, after },
+    },
+  ]);
+
   return jsonResponse({ success: true, before, after });
 }
 
@@ -2220,6 +2330,16 @@ async function handleManualTopup(supabase, body) {
   } catch (e) {
     topupRequestLogError = String((e as Error)?.message || e);
   }
+
+  await notifyTargets(supabase, [
+    {
+      user_id,
+      title: "เติมเงินเข้ากระเป๋าแล้ว 💰",
+      body: `แอดมินเติมเงิน ฿${Number(amount).toLocaleString("th-TH")} เข้ากระเป๋าของคุณ (ยอดใหม่ ฿${Math.round(after).toLocaleString("th-TH")})`,
+      type: "wallet.manual_topup",
+      data: { amount, after },
+    },
+  ]);
 
   return jsonResponse({
     success: true,
