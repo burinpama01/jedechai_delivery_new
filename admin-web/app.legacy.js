@@ -345,6 +345,9 @@ function showMainApp() {
   document.getElementById('adminName').textContent = name;
   const sidebarName = document.getElementById('sidebarAdminName');
   if (sidebarName) sidebarName.textContent = name;
+  try {
+    window.__adminWebBridge?.initAdminNotifBell?.({ supabase, currentUser: { id: currentUser?.id }, escapeHtml, showToast });
+  } catch (_) {}
   navigateTo('dashboard');
 }
 

@@ -6,6 +6,7 @@ import { fmt, fmtDate } from "./utils/format.js";
 import { exportRowsToCsv, exportRowsToExcel } from "./utils/export.js";
 import { showToast } from "./ui/toast.js";
 import { wireLegacyHelpers } from "./ui/helpers.js";
+import "./ui/adminNotifBell.js";
 import { wireRouterBridge } from "./router/bridge.js";
 import { registerInitialPages } from "./pages/index.js";
 import { wireWithdrawalsBridge } from "./pages/withdrawalsPage.js";
