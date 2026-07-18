@@ -84,6 +84,9 @@ export async function renderPendingOrdersPage(el, ctx) {
     .channel('pending-orders-rt')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => {
       refreshPendingOrders();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'laundry_orders' }, () => {
+      refreshPendingOrders();
     }).subscribe();
 }
 
@@ -102,7 +105,11 @@ export async function refreshPendingOrders(ctx) {
   const pendingStatuses = ['pending', 'pending_merchant', 'matched'];
   const stuckStatuses = ['driver_accepted', 'accepted', 'preparing', 'arrived_at_merchant', 'ready_for_pickup', 'picking_up_order'];
 
-  const [{ data: pendingOrders }, { data: stuckOrders }] = await Promise.all([
+  // Laundry orders ที่ค้างในขั้นที่ "ไม่มี booking ให้เห็นในตารางล่าง"
+  // (รอร้านส่ง quote / กำลังซัก / พร้อมส่งกลับแต่ยังไม่มีงานขากลับ)
+  const laundryAttentionStatuses = ['quote_requested', 'washing', 'ready_for_return'];
+
+  const [{ data: pendingOrders }, { data: stuckOrders }, { data: laundryAttentionRaw }] = await Promise.all([
     supabase.from('bookings')
       .select('id, driver_id, merchant_id, customer_id, status, service_type, price, delivery_fee, pickup_address, destination_address, origin_lat, origin_lng, dest_lat, dest_lng, admin_note, created_at')
       .in('status', pendingStatuses)
@@ -111,7 +118,14 @@ export async function refreshPendingOrders(ctx) {
       .select('id, driver_id, merchant_id, customer_id, status, service_type, price, delivery_fee, pickup_address, destination_address, origin_lat, origin_lng, dest_lat, dest_lng, admin_note, created_at')
       .in('status', stuckStatuses)
       .order('created_at', { ascending: true }),
+    supabase.from('laundry_orders')
+      .select('id, customer_id, merchant_id, status, laundry_amount, return_mode, return_booking_id, quote_expires_at, created_at, updated_at')
+      .in('status', laundryAttentionStatuses)
+      .order('created_at', { ascending: true }),
   ]);
+
+  const laundryAttention = (laundryAttentionRaw || []).filter((o) =>
+    o.status !== 'ready_for_return' || (o.return_mode === 'delivery' && !o.return_booking_id));
 
   const allIds = [...new Set([
     ...(pendingOrders || []).map(o => o.driver_id),
@@ -120,6 +134,8 @@ export async function refreshPendingOrders(ctx) {
     ...(stuckOrders || []).map(o => o.driver_id),
     ...(stuckOrders || []).map(o => o.merchant_id),
     ...(stuckOrders || []).map(o => o.customer_id),
+    ...laundryAttention.map(o => o.merchant_id),
+    ...laundryAttention.map(o => o.customer_id),
   ].filter(Boolean))];
 
   let namesMap = {};
@@ -278,6 +294,74 @@ export async function refreshPendingOrders(ctx) {
       </div>`;
   }
 
+  function laundryHint(o) {
+    if (o.status === 'quote_requested') {
+      return '<span class="text-amber-600 font-semibold">รอร้านส่ง quote — ส่งแทนได้ที่หน้า Laundry</span>';
+    }
+    if (o.status === 'washing') {
+      return '<span class="text-cyan-600 font-semibold">กำลังซัก — รอสร้างงานขากลับ</span>';
+    }
+    return '<span class="text-violet-600 font-semibold">พร้อมส่งกลับ แต่ยังไม่มีงานขากลับ</span>';
+  }
+
+  function laundrySection(orders) {
+    if (!orders.length) return '';
+    const laundryStatusLabels = {
+      quote_requested: 'รอร้านประเมิน',
+      washing: 'กำลังซัก',
+      ready_for_return: 'พร้อมส่งกลับ',
+    };
+    const rows = orders.map((o) => {
+      const mins = Math.floor((Date.now() - new Date(o.created_at).getTime()) / 60000);
+      const timeLabel = mins < 60 ? `${mins} นาที` : `${Math.floor(mins / 60)} ชม. ${mins % 60} น.`;
+      const isUrgent = o.status === 'quote_requested' && mins > 15;
+      const custInfo = namesMap[o.customer_id];
+      const merInfo = namesMap[o.merchant_id];
+      return `
+        <tr class="table-row ${isUrgent ? 'bg-red-50/40' : 'hover:bg-gray-50/50'}">
+          <td class="px-3 py-2.5 font-mono text-xs text-indigo-600">#${o.id.substring(0, 8)}</td>
+          <td class="px-3 py-2.5 text-xs">${escapeHtml(laundryStatusLabels[o.status] || o.status)}</td>
+          <td class="px-3 py-2.5 text-xs">${custInfo ? escapeHtml(custInfo.name) : '-'}</td>
+          <td class="px-3 py-2.5 text-xs">${merInfo ? `🧺 ${escapeHtml(merInfo.name)}` : '-'}</td>
+          <td class="px-3 py-2.5 text-[11px]">${laundryHint(o)}</td>
+          <td class="px-3 py-2.5">
+            <span class="inline-flex items-center gap-1 text-xs font-semibold ${isUrgent ? 'text-red-600' : 'text-gray-500'}">
+              ${isUrgent ? '<span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>' : ''}
+              ${timeLabel}
+            </span>
+          </td>
+          <td class="px-3 py-2.5">
+            <button onclick="navigateTo('laundry')" class="min-h-[36px] px-3 py-1.5 bg-cyan-100 text-cyan-700 rounded-lg text-xs font-semibold hover:bg-cyan-200 transition-colors">จัดการที่หน้า Laundry</button>
+          </td>
+        </tr>`;
+    }).join('');
+    return `
+      <div class="glass-card overflow-hidden">
+        <div class="px-5 py-3.5 flex items-center gap-3 border-b border-gray-100">
+          <div class="w-8 h-8 bg-cyan-50 text-cyan-500 rounded-xl flex items-center justify-center"><span class="material-icons-round text-sm" style="color:inherit">local_laundry_service</span></div>
+          <div class="flex-1 min-w-0">
+            <h3 class="font-bold text-gray-800 text-sm">Laundry รอจัดการ</h3>
+            <p class="text-[11px] text-gray-400">${orders.length} รายการ — ขั้นตอนที่ไม่มี booking (quote/ซัก/รอสร้างงานขากลับ)</p>
+          </div>
+          <button onclick="navigateTo('laundry')" class="px-3 py-1.5 text-xs font-semibold text-cyan-600 bg-cyan-50 rounded-lg hover:bg-cyan-100 transition-colors">🧺 เปิดหน้า Laundry</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead><tr class="bg-gray-50/80">
+              <th class="px-3 py-2.5 text-left text-xs font-semibold text-gray-400">ID</th>
+              <th class="px-3 py-2.5 text-left text-xs font-semibold text-gray-400">สถานะ</th>
+              <th class="px-3 py-2.5 text-left text-xs font-semibold text-gray-400">ลูกค้า</th>
+              <th class="px-3 py-2.5 text-left text-xs font-semibold text-gray-400">ร้าน</th>
+              <th class="px-3 py-2.5 text-left text-xs font-semibold text-gray-400">สิ่งที่ต้องทำ</th>
+              <th class="px-3 py-2.5 text-left text-xs font-semibold text-gray-400">รอมา</th>
+              <th class="px-3 py-2.5 text-left text-xs font-semibold text-gray-400">จัดการ</th>
+            </tr></thead>
+            <tbody class="divide-y divide-gray-100">${rows}</tbody>
+          </table>
+        </div>
+      </div>`;
+  }
+
   const contentEl = document.getElementById('poContent');
   if (!contentEl) return;
 
@@ -310,7 +394,8 @@ export async function refreshPendingOrders(ctx) {
         'ออเดอร์ค้างนาน (>30 นาที)', `${stuckLong.length} รายการ — อาจต้องติดตามหรือยกเลิก`,
         stuckLong
       ) : ''}
-      ${totalPending === 0 ? `
+      ${laundrySection(laundryAttention)}
+      ${totalPending === 0 && laundryAttention.length === 0 ? `
         <div class=\"glass-card p-12 text-center\">
           <span class=\"material-icons-round text-5xl text-green-400\">check_circle</span>
           <p class=\"mt-3 font-bold text-gray-700\">ไม่มีออเดอร์ที่รอจัดการ</p>
