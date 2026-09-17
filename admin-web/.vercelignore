@@ -1,4 +1,4 @@
-.netlify/
+.vercel/
 .npm-cache/
 node_modules/
 config.production.js

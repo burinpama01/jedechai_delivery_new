@@ -251,7 +251,7 @@ Endpoint:
 https://<project>.supabase.co/functions/v1/web-topup-request
 ```
 
-ถ้า deploy ผ่าน Netlify ให้ Netlify Function ต้อง forward Authorization header ไป Supabase Function.
+ถ้า deploy ผ่าน Vercel ให้ Vercel Serverless Function ต้อง forward Authorization header ไป Supabase Function.
 
 ## Task 4: Add Authenticated Backend Request Endpoint
 

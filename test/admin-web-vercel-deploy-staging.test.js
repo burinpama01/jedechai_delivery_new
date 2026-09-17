@@ -7,13 +7,13 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const prepareScriptPath = fileURLToPath(
-  new URL("../scripts/prepare-admin-web-netlify-deploy.mjs", import.meta.url),
+  new URL("../scripts/prepare-admin-web-vercel-deploy.mjs", import.meta.url),
 );
 const preflightScriptPath = fileURLToPath(
   new URL("../scripts/verify-admin-web-production-config.mjs", import.meta.url),
 );
 
-test("admin-web Netlify deploy staging writes a public-only production config", () => {
+test("admin-web Vercel deploy staging writes a public-only production config", () => {
   const dir = mkdtempSync(join(tmpdir(), "admin-web-deploy-source-"));
   const sourceDir = join(dir, "admin-web");
   const outDir = join(dir, "deploy");
@@ -21,7 +21,7 @@ test("admin-web Netlify deploy staging writes a public-only production config", 
   try {
     mkdirSync(sourceDir, { recursive: true });
     writeFileSync(join(sourceDir, "index.html"), '<script src="config.production.js"></script>', "utf8");
-    writeFileSync(join(sourceDir, ".netlifyignore"), "config.production.js\n*.log\n", "utf8");
+    writeFileSync(join(sourceDir, ".vercelignore"), "config.production.js\n*.log\n", "utf8");
     writeFileSync(join(sourceDir, "app.js"), "console.log('app');\n", "utf8");
     writeFileSync(
       join(sourceDir, "config.production.js"),
@@ -55,7 +55,7 @@ test("admin-web Netlify deploy staging writes a public-only production config", 
     assert.doesNotMatch(deployConfig, /SUPABASE_SERVICE_KEY/);
     assert.doesNotMatch(deployConfig, /server-side-key/);
 
-    const deployIgnore = readFileSync(join(outDir, ".netlifyignore"), "utf8");
+    const deployIgnore = readFileSync(join(outDir, ".vercelignore"), "utf8");
     assert.doesNotMatch(deployIgnore, /^config\.production\.js$/m);
 
     const preflight = spawnSync(process.execPath, [preflightScriptPath], {

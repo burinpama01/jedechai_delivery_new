@@ -55,8 +55,8 @@ const adminAppSource = readFileSync(
   new URL("../admin-web/app.js", import.meta.url),
   "utf8",
 );
-const adminNetlifyIgnoreSource = readFileSync(
-  new URL("../admin-web/.netlifyignore", import.meta.url),
+const adminVercelIgnoreSource = readFileSync(
+  new URL("../admin-web/.vercelignore", import.meta.url),
   "utf8",
 );
 const adminProductionConfigPreflightUrl = new URL(
@@ -67,7 +67,7 @@ const adminProductionConfigPreflightSource = existsSync(adminProductionConfigPre
   ? readFileSync(adminProductionConfigPreflightUrl, "utf8")
   : "";
 const adminDeployPrepUrl = new URL(
-  "../scripts/prepare-admin-web-netlify-deploy.mjs",
+  "../scripts/prepare-admin-web-vercel-deploy.mjs",
   import.meta.url,
 );
 const adminDeployPrepSource = existsSync(adminDeployPrepUrl)
@@ -457,7 +457,7 @@ test("Admin web merchant list exposes merchant_id for StoreOS shop mapping", () 
 test("Admin web deploy keeps production config script available for login", () => {
   assert.match(adminIndexSource, /<script src="config\.production\.js"/);
   assert.match(
-    adminNetlifyIgnoreSource,
+    adminVercelIgnoreSource,
     /^config\.production\.js$/m,
     "source deploy ignore must protect the raw local production config from direct upload",
   );
@@ -467,9 +467,9 @@ test("Admin web deploy keeps production config script available for login", () =
   assert.match(adminProductionConfigPreflightSource, /placeholder Supabase host/);
   assert.match(adminProductionConfigPreflightSource, /JEDECHAI_CONFIG|SUPABASE_URL|SUPABASE_ANON_KEY/);
   assert.match(adminProductionConfigPreflightSource, /process\.exitCode\s*=\s*1/);
-  assert.ok(adminDeployPrepSource, "missing admin-web Netlify deploy staging script");
+  assert.ok(adminDeployPrepSource, "missing admin-web Vercel deploy staging script");
   assert.match(adminDeployPrepSource, /SUPABASE_URL/);
   assert.match(adminDeployPrepSource, /SUPABASE_ANON_KEY/);
   assert.match(adminDeployPrepSource, /config\.production\.js/);
-  assert.match(adminDeployPrepSource, /\.netlifyignore/);
+  assert.match(adminDeployPrepSource, /\.vercelignore/);
 });

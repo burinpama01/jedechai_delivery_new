@@ -34,7 +34,7 @@ window.JEDECHAI_CONFIG = {
 มีหน้า web สำหรับรองรับลิงก์จากอีเมลลืมรหัสผ่านแล้ว:
 
 - `reset-password.html`
-- รองรับเส้นทาง `/reset-password` ผ่านไฟล์ `_redirects`
+- รองรับเส้นทาง `/reset-password` ผ่าน `rewrites` ในไฟล์ `vercel.json`
 
 ให้ตั้งค่าใน Flutter `.env`:
 
@@ -48,21 +48,35 @@ PASSWORD_RESET_REDIRECT_URL=https://your-domain.com/reset-password
 
 ## วิธี Deploy ขึ้น Hosting
 
-### Netlify (แนะนำ)
+### Vercel (แนะนำ)
 
-1. สมัคร [Netlify](https://www.netlify.com/) แล้วเชื่อมต่อ Git repository
-2. ตั้งค่า Deploy:
-   - **Publish directory:** `admin-web`
-   - **Build command:** *(ไม่ต้อง — เป็น static site)*
-3. สร้างไฟล์ `config.production.js` บน server หรือใส่ค่าใน config.js ก่อน deploy
+1. สมัคร [Vercel](https://vercel.com/) แล้ว import Git repository
+2. ตั้งค่า Project:
+   - **Root Directory:** `admin-web`
+   - **Framework Preset:** `Other`
+   - **Build Command:** *(ไม่ต้อง — เป็น static site)*
+   - **Output Directory:** *(ปล่อยว่าง — deploy ไฟล์ในโฟลเดอร์ตรง ๆ)*
+3. Routing (SPA rewrites) และ security headers ถูกกำหนดไว้แล้วในไฟล์ `vercel.json`
 4. ⚠️ **ห้าม commit `config.production.js` ลง Git!** (มี `.gitignore` ป้องกันอยู่)
 
-### Vercel
+#### Deploy ด้วย Vercel CLI (แนะนำสำหรับ production)
 
-1. สมัคร [Vercel](https://vercel.com/) แล้ว import project
-2. ตั้ง **Root Directory:** `admin-web`
-3. Framework: `Other`
-4. สร้าง `config.production.js` ผ่าน build script หรือ env variable
+ใช้สคริปต์ staging เพื่อสร้างโฟลเดอร์ deploy ที่มี `config.production.js` แบบ public-only
+(มีแค่ `SUPABASE_URL` + `SUPABASE_ANON_KEY` — ตัด service key ออกเสมอ):
+
+```bash
+# 1) ตรวจสอบ config ก่อน deploy
+npm --prefix admin-web run verify:production-config
+
+# 2) สร้างโฟลเดอร์ deploy (ได้ path ใน stdout เป็น JSON)
+node scripts/prepare-admin-web-vercel-deploy.mjs --source admin-web --out /tmp/admin-web-deploy
+
+# 3) deploy โฟลเดอร์นั้นขึ้น Vercel
+npx vercel deploy /tmp/admin-web-deploy --prod
+```
+
+หมายเหตุ: ไฟล์ `.vercelignore` กันไม่ให้ `config.production.js` ในเครื่องถูกอัปโหลดตรง ๆ
+สคริปต์ staging จะปลดบรรทัดนั้นในโฟลเดอร์ deploy แล้วเขียนไฟล์ฉบับ sanitize ทับให้เอง
 
 ### Firebase Hosting
 
@@ -84,7 +98,7 @@ firebase deploy
 - ใช้ `config.production.js` แยกไฟล์ Service Key ออกจาก source code
 - ไฟล์ `robots.txt` บล็อก search engines ไม่ให้ index หน้า admin
 - Header `X-Frame-Options: DENY` ป้องกัน clickjacking
-- แนะนำ: จำกัด access ด้วย IP whitelist หรือ Netlify Identity
+- แนะนำ: จำกัด access ด้วย IP whitelist หรือ Vercel Authentication (Deployment Protection)
 
 ## เทคโนโลยี
 
@@ -106,8 +120,8 @@ admin-web/
 ├── package.json            — สำหรับ npm run dev
 ├── reset-password.html     — หน้า web สำหรับตั้งรหัสผ่านใหม่จากอีเมล
 ├── robots.txt              — บล็อก search engines
-├── _redirects              — Netlify SPA redirects
-├── _headers                — Netlify security headers
+├── vercel.json             — Vercel rewrites + security headers
+├── .vercelignore           — กันไฟล์ลับ/ขยะไม่ให้ถูกอัปโหลดตอน deploy
 ├── .gitignore              — ป้องกัน commit production config
 └── README.md               — คู่มือนี้
 ```

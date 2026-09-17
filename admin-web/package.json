@@ -1,11 +1,12 @@
 {
   "name": "jedechai-admin-web",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "private": true,
   "scripts": {
     "dev": "npx serve .",
     "start": "npx serve .",
-    "verify:production-config": "node ../scripts/verify-admin-web-production-config.mjs"
+    "verify:production-config": "node ../scripts/verify-admin-web-production-config.mjs",
+    "deploy:prepare": "node ../scripts/prepare-admin-web-vercel-deploy.mjs --source ."
   },
   "description": "Jedechai Delivery Admin Dashboard Web App"
 }

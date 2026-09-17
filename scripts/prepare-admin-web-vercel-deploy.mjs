@@ -63,7 +63,7 @@ function readPublicConfig(sourceDir) {
   return { supabaseUrl, supabaseAnonKey };
 }
 
-const skipNames = new Set([".netlify", ".npm-cache", "node_modules", "config.production.js"]);
+const skipNames = new Set([".vercel", ".npm-cache", "node_modules", "config.production.js"]);
 
 function copyAdminWeb(sourceDir, outDir) {
   let copiedFiles = 0;
@@ -89,7 +89,7 @@ function copyAdminWeb(sourceDir, outDir) {
 }
 
 function allowSanitizedConfigInStaging(outDir) {
-  const ignorePath = join(outDir, ".netlifyignore");
+  const ignorePath = join(outDir, ".vercelignore");
   if (!existsSync(ignorePath)) return;
 
   const next = readFileSync(ignorePath, "utf8")
@@ -103,7 +103,7 @@ function allowSanitizedConfigInStaging(outDir) {
 const args = parseArgs(process.argv.slice(2));
 const sourceDir = resolve(args.source || join(process.cwd(), "admin-web"));
 const outDir = resolve(
-  args.out || join(tmpdir(), `jedechai-admin-web-netlify-${Date.now()}`),
+  args.out || join(tmpdir(), `jedechai-admin-web-vercel-${Date.now()}`),
 );
 
 if (!statSync(sourceDir).isDirectory()) {

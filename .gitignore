@@ -14,8 +14,8 @@ graphify-out/
 .codex-tmp/
 .codex_logs/
 .antigravitycli/
-admin-web/.netlify/
-.netlify/
+admin-web/.vercel/
+.vercel/
 admin-web/.npm-cache/
 deploy-*.zip
 laundry-*.png
