@@ -40,8 +40,12 @@ admin-web/
 ├── config.js               — ค่า dev (placeholder)
 ├── config.production.js    — ค่า production (gitignored, ห้าม commit)
 ├── reset-password.html     — หน้า public ตั้งรหัสผ่านใหม่
-├── landing.html            — หน้า landing สาธารณะ
-├── _redirects / _headers   — Netlify config
+├── refund-policy.html      — หน้านโยบายการคืนเงิน (สาธารณะ)
+├── landing.html            — หน้า landing สาธารณะ (เวอร์ชันจาก landing-deploy/)
+├── admin.html              — admin shell (เดิมชื่อ index.html — rename เพื่อให้ `/` เป็น landing บน Vercel)
+├── robots.txt              — อนุญาต landing, บล็อก /admin
+├── vercel.json             — Vercel routing + headers (deploy ปัจจุบัน)
+├── _redirects / _headers   — Netlify legacy config (inert — เก็บไว้เพื่อ parity)
 └── package.json            — เวอร์ชัน + npm scripts
 ```
 
@@ -59,18 +63,18 @@ window.JEDECHAI_CONFIG = {
 2. รัน `npm run dev` (npx serve) แล้วเปิด `http://localhost:3000`
 3. เข้าสู่ระบบด้วยบัญชี Admin (role = 'admin' ใน profiles table)
 
-## วิธี Deploy (Netlify — วิธีที่ยืนยันแล้ว)
+## วิธี Deploy (Vercel — วิธีที่ยืนยันแล้ว)
 
 > รายละเอียด/ประวัติอยู่ใน Obsidian: `Projects/jedechai_delivery_new/deployment.md`
+> (Netlify เลิกใช้แล้วตั้งแต่ 2026-09-19 — site เดิม 404 ทุก path)
 
 ```bash
-# 1) เตรียม artifact (sanitize config → เหลือเฉพาะ SUPABASE_URL + ANON_KEY)
-node scripts/prepare-admin-web-netlify-deploy.mjs
-
-# 2) deploy artifact ที่ได้ (ห้าม deploy จากโฟลเดอร์ admin-web ตรงๆ)
-npx netlify@26.1.0 deploy --prod --dir=<artifact-dir> --site=<site-id>
+# one-shot จาก root ของ repo — เตรียม artifact (sanitize config) แล้ว deploy ขึ้น Vercel production
+node scripts/deploy-admin-web-vercel.mjs
 ```
 
+- Production URL: `https://jedechai-delivery.vercel.app` (admin ที่ `/admin`, landing ที่ `/`)
+- ต้องมี `VERCEL_TOKEN` ใน `jedechai_delivery_new/.env` (หรือ env var — ห้าม commit/log token)
 - สคริปต์ prepare จะ **ปฏิเสธ** config ที่มี service-role key และเขียน `config.production.js` ฉบับ sanitize ให้เอง
 - ตัวสคริปต์ยัง stamp เวอร์ชัน asset (`?v=…`) จาก `package.json` ให้อัตโนมัติ กัน browser cache ค้าง
 
@@ -84,9 +88,8 @@ npx netlify@26.1.0 deploy --prod --dir=<artifact-dir> --site=<site-id>
 
 - privileged writes ทั้งหมดผ่าน Edge Function `admin-actions` (ตรวจ admin + rate limit ฝั่ง server)
 - `config.production.js` ถูก gitignore และถูก sanitize ก่อน deploy เสมอ
-- `robots.txt` + `noindex` บล็อก search engines
+- `robots.txt` (บล็อก `/admin`) + `noindex` บน config บล็อกส่วนที่ไม่ต้องการให้ index
 - Header `X-Frame-Options: DENY` ป้องกัน clickjacking
-- แนะนำเพิ่ม: จำกัด access ด้วย IP whitelist หรือ Netlify Identity
 
 ## เทคโนโลยี
 
