@@ -99,7 +99,7 @@ class CartProvider extends ChangeNotifier {
 
     _merchantId = merchantId;
     _merchantName = merchantName;
-    _items.add(item);
+    _addOrMerge(item);
 
     debugLog('🛒 เพิ่ม ${item.name} x${item.quantity} ลงตะกร้า');
     debugLog(
@@ -118,8 +118,37 @@ class CartProvider extends ChangeNotifier {
     clearCart();
     _merchantId = merchantId;
     _merchantName = merchantName;
-    _items.add(item);
+    _addOrMerge(item);
     notifyListeners();
+  }
+
+  /// ISSUE-124: รวมจำนวนกับรายการเดิมถ้าเป็นเมนูเดียวกันและตัวเลือกเหมือนกัน
+  /// เดิม addItem() ทำ _items.add() เสมอ สั่งเมนูเดิมซ้ำ 3 ครั้งจึงได้ 3 บรรทัด
+  /// ทั้งในตะกร้าและในใบออเดอร์ของร้าน
+  /// (รายการที่ตัวเลือกต่างกันยังแยกบรรทัดตามเดิม)
+  void _addOrMerge(CartItem item) {
+    final index = _items.indexWhere((existing) => _isSameLine(existing, item));
+    if (index >= 0) {
+      final existing = _items[index];
+      _items[index] =
+          existing.copyWith(quantity: existing.quantity + item.quantity);
+      return;
+    }
+    _items.add(item);
+  }
+
+  bool _isSameLine(CartItem a, CartItem b) {
+    if (a.menuItemId != b.menuItemId) return false;
+    if (a.basePrice != b.basePrice || a.optionsPrice != b.optionsPrice) {
+      return false;
+    }
+    if (a.selectedOptions.length != b.selectedOptions.length) return false;
+    final aOptions = [...a.selectedOptions]..sort();
+    final bOptions = [...b.selectedOptions]..sort();
+    for (var i = 0; i < aOptions.length; i++) {
+      if (aOptions[i] != bOptions[i]) return false;
+    }
+    return true;
   }
 
   /// อัพเดทจำนวน

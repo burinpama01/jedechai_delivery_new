@@ -75,11 +75,20 @@ class RoleAmountCalculator {
     return net < 0 ? 0 : net;
   }
 
+  /// ISSUE-121: clamp เรตทั้งสองด้านเหมือน DriverAmountCalculator._clampRate
+  /// ถ้าแอดมินกรอก GP เป็น 30 (ตั้งใจหมายถึง 30%) แทน 0.3 ร้านจะถูกหักเกิน
+  /// ยอดขายทั้งก้อนและ merchantReceives กลายเป็น 0
+  static double clampRate(double value) {
+    if (value < 0) return 0;
+    if (value > 1) return 1;
+    return value;
+  }
+
   static double merchantGpAmount({
     required double merchantGrossSales,
     required double merchantGpRate,
   }) {
-    final rate = merchantGpRate < 0 ? 0 : merchantGpRate;
+    final rate = clampRate(merchantGpRate);
     final gp = clampNonNegative(merchantGrossSales) * rate;
     return gp < 0 ? 0 : gp;
   }

@@ -33,8 +33,9 @@ class AuthHelper {
       if (session != null) {
         // Check if token is close to expiry (within 10 minutes)
         final expiresAt = session.expiresAt;
+        if (expiresAt == null) return; // ISSUE-118: ไม่มีข้อมูลหมดอายุ = ข้าม
         final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-        final timeUntilExpiry = expiresAt! - now;
+        final timeUntilExpiry = expiresAt - now;
         
         if (timeUntilExpiry < 600) { // Less than 10 minutes
           await AuthService.refreshSession();
@@ -69,14 +70,20 @@ class AuthHelper {
   }
 
   /// Check if current session is valid
+  ///
+  /// ISSUE-118: session.expiresAt เป็น int? การ force-unwrap ตรงนี้ไม่มี
+  /// try/catch ครอบ (ต่างจาก _attemptTokenRefresh) session ที่ไม่มี expiresAt
+  /// จึงทำให้ crash — ถือว่า session ที่ไม่บอกเวลาหมดอายุ = ใช้ไม่ได้
   static bool isSessionValid() {
     final session = AuthService.currentSession;
     if (session == null) return false;
-    
+
     final expiresAt = session.expiresAt;
+    if (expiresAt == null) return false;
+
     final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    
-    return expiresAt! > now;
+
+    return expiresAt > now;
   }
 
   /// Get remaining time until token expires

@@ -440,8 +440,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       }
 
       // Load accepted service types
+      // ISSUE-117: setState ก้อนนี้เคยอยู่นอก if (mounted) ของก้อนบน
+      // ถ้า widget ถูก dispose ระหว่าง await จะโยน setState() after dispose
       final rawServiceTypes = _driverProfile?['accepted_service_types'];
-      if (rawServiceTypes is List) {
+      if (rawServiceTypes is List && mounted) {
         setState(() {
           _acceptedServiceTypes = rawServiceTypes.cast<String>();
         });
@@ -462,7 +464,15 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     } catch (e) {
       debugLog('❌ Error loading driver profile: $e');
       // Safe default: show offline so driver knows tracking isn't active
+      //
+      // ISSUE-117: เดิมเปลี่ยนแค่ UI ทำให้ DB ยังเป็น is_online = true
+      // คนขับเห็นว่าตัวเอง offline แต่ระบบยังจ่ายงานให้อยู่ — ต้องหยุด
+      // tracking และเขียนสถานะลง DB ให้ตรงกับที่แสดงด้วย
       if (mounted) setState(() => _isOnline = false);
+      unawaited(_updateOnlineStatusInDB(false));
+      unawaited(_stopDriverLocationTracking());
+      unawaited(DriverForegroundService.stop());
+      _stopHeartbeat();
     }
   }
 

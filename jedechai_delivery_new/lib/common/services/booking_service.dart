@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/booking.dart';
 import '../utils/driver_amount_calculator.dart';
 import '../utils/notification_payload_policy.dart';
+import '../utils/app_time.dart';
 import 'mock_auth_service.dart';
 import 'auth_service.dart';
 import 'wallet_service.dart';
@@ -1000,15 +1001,9 @@ class BookingService {
       }
     }
 
-    // Determine new status based on service_type
-    String newStatus;
-    if (booking.serviceType == 'food') {
-      newStatus = 'driver_accepted';
-    } else if (booking.serviceType == 'ride') {
-      newStatus = 'accepted';
-    } else {
-      newStatus = 'accepted'; // Default fallback
-    }
+    // ISSUE-115: เดิมมีตัวแปร newStatus ที่คำนวณแยก food/ride แล้วไม่ถูกใช้
+    // (RPC accept_booking ตั้ง status = 'driver_accepted' ตายตัวเสมอ)
+    // แต่ debugLog กลับรายงานค่านั้นออกมา ทำให้ log ไม่ตรงกับ DB จริง
 
     // Optimistic concurrency: use RPC to atomically claim the booking (Phase 2)
     // Only succeeds if booking still has no driver and expected status
@@ -1027,19 +1022,38 @@ class BookingService {
       updates['merchant_food_ready_at'] = DateTime.now().toIso8601String();
     }
     if (updates.isNotEmpty) {
-      await _client.from('bookings').update(updates).eq('id', bookingId);
+      // ISSUE-115: การเขียนค่าชดเชยระยะทางยังแยกจาก RPC ที่เคลมงาน ถ้า call นี้
+      // ล้มเหลว คนขับจะได้งานแต่ไม่ได้ค่าชดเชย จึงต้องไม่กลืน error เงียบ ๆ
+      // ไม่ rethrow เพราะงานถูกเคลมไปแล้ว การโยน error จะทำให้ UI บอกว่า
+      // "รับงานไม่สำเร็จ" ทั้งที่ DB บอกว่ารับแล้ว — ลองซ้ำหนึ่งครั้งแล้ว log ดัง ๆ แทน
+      // (ยังไม่ atomic เต็มรูปแบบ ต้องย้าย updates เข้า accept_booking RPC)
+      try {
+        await _client.from('bookings').update(updates).eq('id', bookingId);
+      } catch (e) {
+        debugLog('⚠️ บันทึกค่าชดเชยไม่สำเร็จ กำลังลองใหม่: $e');
+        try {
+          await _client.from('bookings').update(updates).eq('id', bookingId);
+        } catch (e2) {
+          debugLog(
+            '❌ รับงานสำเร็จแต่บันทึกค่าชดเชย/ค่าส่งที่ปรับแล้วไม่สำเร็จ '
+            '(booking $bookingId, updates: $updates): $e2',
+          );
+        }
+      }
     }
 
-    debugLog('✅ Driver accepted job: $bookingId with status: $newStatus');
+    debugLog('✅ Driver accepted job: $bookingId (status ถูกตั้งโดย RPC)');
   }
 
+  /// ISSUE-125: ใช้เวลากรุงเทพตายตัวตาม policy ของโปรเจค (AppTime)
+  /// ไม่ใช่ toLocal() ซึ่งเปลี่ยนไปตาม timezone ของเครื่องผู้ใช้
   String _formatScheduledDateTime(DateTime scheduledAt) {
-    final local = scheduledAt.toLocal();
-    final day = local.day.toString().padLeft(2, '0');
-    final month = local.month.toString().padLeft(2, '0');
-    final year = local.year;
-    final hour = local.hour.toString().padLeft(2, '0');
-    final minute = local.minute.toString().padLeft(2, '0');
+    final bangkok = AppTime.toBangkok(scheduledAt);
+    final day = bangkok.day.toString().padLeft(2, '0');
+    final month = bangkok.month.toString().padLeft(2, '0');
+    final year = bangkok.year;
+    final hour = bangkok.hour.toString().padLeft(2, '0');
+    final minute = bangkok.minute.toString().padLeft(2, '0');
     return '$day/$month/$year $hour:$minute';
   }
 

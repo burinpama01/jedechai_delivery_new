@@ -135,24 +135,10 @@ class LocationService {
     }
   }
 
-  static Future<List<AddressPlacemark>> getAddressFromCoordinates(
-    double latitude,
-    double longitude,
-  ) async {
-    try {
-      // Mock implementation for now
-      return [
-        AddressPlacemark(
-          street: 'Mock Street',
-          locality: 'Bangkok',
-          administrativeArea: 'Bangkok',
-          country: 'Thailand',
-        ),
-      ];
-    } catch (e) {
-      return [];
-    }
-  }
+  // ISSUE-119: ลบ getAddressFromCoordinates ที่คืน 'Mock Street, Bangkok'
+  // เสมอ — ของจริงอยู่ที่ GeocodingService.getAddressFromCoordinates
+  // (เคยมี object นี้หลุดไปถูก stringify เก็บลง DB จนต้องมีโค้ดกรอง
+  // คำว่า 'AddressPlacemark' กระจายอยู่หลายหน้าจอ)
 
   static Future<List<Location>> searchPlaces(String query) async {
     if (query.trim().isEmpty) return [];
@@ -306,18 +292,4 @@ class Location {
       'address': address,
     };
   }
-}
-
-class AddressPlacemark {
-  final String? street;
-  final String? locality;
-  final String? administrativeArea;
-  final String? country;
-
-  AddressPlacemark({
-    this.street,
-    this.locality,
-    this.administrativeArea,
-    this.country,
-  });
 }
