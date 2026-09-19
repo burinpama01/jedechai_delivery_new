@@ -29,6 +29,5 @@ export 'report_export_service.dart';
 export 'version_check_service.dart';
 export 'app_update_policy_service.dart';
 export 'payment_gateway_service.dart';
-export 'omise_service.dart';
 export 'account_deletion_service.dart';
 export 'admin_line_notification_service.dart';

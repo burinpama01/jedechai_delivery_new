@@ -8,8 +8,10 @@ class EnvConfig {
   // Supabase
   static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
   static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
-  static String get supabaseServiceKey =>
-      dotenv.env['SUPABASE_SERVICE_KEY'] ?? '';
+  // ISSUE-102: ห้ามอ่าน SUPABASE_SERVICE_KEY จากฝั่งแอปเด็ดขาด
+  // .env ถูก bundle เป็น Flutter asset (pubspec.yaml) จึงถูกแตกออกจาก
+  // APK/IPA ได้แบบ plaintext — service role key bypass RLS ทั้งระบบ
+  // งานที่ต้องใช้สิทธิ์ service role ต้องไปอยู่ใน Supabase Edge Function
 
   // Google Maps
   static String get googleMapsApiKey => dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
@@ -23,17 +25,15 @@ class EnvConfig {
       dotenv.env['FIREBASE_PROJECT_ID'] ?? '';
 
   // Omise Payment Gateway
+  // ISSUE-102: อ่านได้เฉพาะ public key — secret key ต้องอยู่ฝั่ง Edge Function
+  // (payment-create-charge / payment-check-status) เท่านั้น
   static String get omisePublicKey => dotenv.env['OMISE_PUBLIC_KEY'] ?? '';
-  static String get omiseSecretKey => dotenv.env['OMISE_SECRET_KEY'] ?? '';
 
-  static bool get isOmiseConfigured =>
-      omisePublicKey.isNotEmpty && omiseSecretKey.isNotEmpty;
+  static bool get isOmiseConfigured => omisePublicKey.isNotEmpty;
 
   // Validation
   static bool get isSupabaseConfigured =>
       supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
-
-  static bool get isServiceKeyConfigured => supabaseServiceKey.isNotEmpty;
 
   static bool get isGoogleMapsConfigured => googleMapsApiKey.isNotEmpty;
 

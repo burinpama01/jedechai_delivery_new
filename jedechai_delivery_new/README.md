@@ -16,20 +16,29 @@
 ```env
 SUPABASE_URL=
 SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_KEY=
 PASSWORD_RESET_REDIRECT_URL=
 
 GOOGLE_MAPS_API_KEY=
 
 FIREBASE_PROJECT_ID=
-FIREBASE_PRIVATE_KEY_ID=
-FIREBASE_PRIVATE_KEY=
-FIREBASE_CLIENT_EMAIL=
-FIREBASE_CLIENT_ID=
 
 OMISE_PUBLIC_KEY=
-OMISE_SECRET_KEY=
 ```
+
+> ⚠️ **ห้ามใส่ secret ลง `.env` ของแอปเด็ดขาด** (ISSUE-102)
+> `pubspec.yaml` ประกาศ `.env` เป็น Flutter asset → ไฟล์นี้ถูกแพ็กเข้า APK/IPA
+> แบบ plaintext ใครก็แตกไฟล์อ่านได้ ดังนั้นคีย์ต่อไปนี้ **ต้องไม่อยู่ที่นี่**:
+>
+> | Key | เก็บที่ไหนแทน |
+> |---|---|
+> | `SUPABASE_SERVICE_KEY` | Supabase Edge Function secrets เท่านั้น (bypass RLS ทั้งระบบ) |
+> | `OMISE_SECRET_KEY` | Edge Function `payment-create-charge` / `payment-check-status` |
+> | `FIREBASE_PRIVATE_KEY`, `FIREBASE_PRIVATE_KEY_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_CLIENT_ID` | Edge Function `send-fcm-notification` (service account ฝั่ง server) |
+>
+> ถ้าเคยปล่อย build ที่มีคีย์เหล่านี้ออกไปแล้ว ต้องถือว่า **คีย์รั่ว** และ rotate ทุกตัว
+>
+> `GOOGLE_MAPS_API_KEY` ยังอยู่ฝั่งแอปได้ แต่ต้องตั้ง restriction ที่ Google Cloud
+> Console และแยก key ของ Maps SDK (app-restricted) ออกจาก key ของ Web Service
 
 > สำหรับลืมรหัสผ่าน: ตั้งค่า `PASSWORD_RESET_REDIRECT_URL` ให้เป็น URL จริงที่ผู้ใช้เปิดได้ (ห้ามเป็น localhost)
 > และเพิ่ม URL เดียวกันใน Supabase Dashboard → Authentication → URL Configuration → Redirect URLs
