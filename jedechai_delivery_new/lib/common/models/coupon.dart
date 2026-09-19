@@ -131,8 +131,8 @@ class Coupon {
       'merchant_gp_charge_rate': merchantGpChargeRate,
       'merchant_gp_system_rate': merchantGpSystemRate,
       'merchant_gp_driver_rate': merchantGpDriverRate,
-      'start_date': startDate?.toIso8601String(),
-      'end_date': endDate?.toIso8601String(),
+      'start_date': startDate?.toUtc().toIso8601String(),
+      'end_date': endDate?.toUtc().toIso8601String(),
       'created_at': createdAt.toIso8601String(),
     };
   }
@@ -142,14 +142,14 @@ class Coupon {
   static bool isSystemCouponCode(String? code) =>
       _systemCouponCodes.contains(code?.trim().toUpperCase());
 
-  /// Bangkok time (UTC+7) for server-aligned date validation.
-  static DateTime _bangkokNow() =>
-      DateTime.now().toUtc().add(const Duration(hours: 7));
+  /// เวลาปัจจุบัน (instant) — start/end_date จาก DB เป็น UTC อยู่แล้ว
+  /// DateTime.isAfter/isBefore เทียบตาม instant จึงไม่ต้องบวก 7 ชม. (C4)
+  static DateTime _now() => DateTime.now().toUtc();
 
   /// Check if coupon is currently valid (active + within date range).
   /// Uses Bangkok time to match server-side schedule.
   bool get isValid {
-    final now = _bangkokNow();
+    final now = _now();
     return isActive &&
         (startDate == null || now.isAfter(startDate!)) &&
         (endDate == null || now.isBefore(endDate!)) &&
@@ -157,7 +157,7 @@ class Coupon {
   }
 
   /// Check if coupon has expired (Bangkok time). Returns false if no end date set.
-  bool get isExpired => endDate != null && _bangkokNow().isAfter(endDate!);
+  bool get isExpired => endDate != null && _now().isAfter(endDate!);
 
   /// Check if coupon has reached its usage limit
   bool get isUsedUp => usageLimit > 0 && usedCount >= usageLimit;

@@ -11,6 +11,7 @@ import '../../../utils/connection_helper.dart';
 import '../../../utils/mock_data_service.dart';
 import 'services/waiting_for_driver_screen.dart';
 import 'services/customer_order_detail_screen.dart';
+import '../../../common/utils/role_amount_calculator.dart';
 
 enum _ActivityDateFilter {
   today,
@@ -659,8 +660,8 @@ class _ActivityScreenState extends State<ActivityScreen> {
               _buildStatChip(AppLocalizations.of(context)!.activityStatTotal, AppLocalizations.of(context)!.activityStatItems(totalOrders.toString())),
               _buildStatChip(AppLocalizations.of(context)!.activityStatCompleted, AppLocalizations.of(context)!.activityStatItems(completedCount.toString())),
               _buildStatChip(AppLocalizations.of(context)!.activityStatCancelled, AppLocalizations.of(context)!.activityStatItems(cancelledCount.toString())),
-              _buildStatChip(AppLocalizations.of(context)!.activityStatTotalSpent, '฿${totalSpent.ceil()}'),
-              _buildStatChip(AppLocalizations.of(context)!.activityStatCouponSavings, '฿${totalSavings.ceil()}'),
+              _buildStatChip(AppLocalizations.of(context)!.activityStatTotalSpent, '฿${RoleAmountCalculator.ceilBaht(totalSpent)}'),
+              _buildStatChip(AppLocalizations.of(context)!.activityStatCouponSavings, '฿${RoleAmountCalculator.ceilBaht(totalSavings)}'),
             ],
           ),
         ],
@@ -974,7 +975,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                         ),
                       ),
                       Text(
-                        '฿${_getTotalPrice(booking).ceil()}',
+                        '฿${RoleAmountCalculator.ceilBaht(_getTotalPrice(booking))}',
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -1133,7 +1134,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
 
   String _buildCouponLabel(Booking booking) {
     final code = _getCouponCode(booking);
-    final discount = _getCouponDiscount(booking).ceil();
+    final discount = RoleAmountCalculator.ceilBaht(_getCouponDiscount(booking));
     if (code != null && code.isNotEmpty) {
       return AppLocalizations.of(context)!.activityUsedCouponWithCode(code, discount.toString());
     }
