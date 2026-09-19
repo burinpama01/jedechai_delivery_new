@@ -8,7 +8,6 @@ import '../../../common/utils/order_code_formatter.dart';
 import '../../../common/widgets/status_badge.dart';
 import '../../../theme/app_theme.dart';
 import '../../../utils/connection_helper.dart';
-import '../../../utils/mock_data_service.dart';
 import 'services/waiting_for_driver_screen.dart';
 import 'services/customer_order_detail_screen.dart';
 
@@ -266,24 +265,10 @@ class _ActivityScreenState extends State<ActivityScreen> {
         return;
       }
 
-      // Check real Supabase connection first
-      final isRealSupabaseAvailable =
-          await MockDataService.checkRealConnection();
-
-      if (!isRealSupabaseAvailable) {
-        await Future.delayed(
-            const Duration(seconds: 1)); // Simulate network delay
-        final mockBookings = MockDataService.getMockBookings();
-        setState(() {
-          _bookings = mockBookings;
-          _isLoading = false;
-        });
-        return;
-      }
-
-      debugLog('🔗 Using real Supabase connection');
-
-      // Add timeout and retry logic
+      // ISSUE-104: เดิมตรงนี้เรียก MockDataService.checkRealConnection()
+      // (ซึ่ง return true เสมอหลังหน่วง 500ms) แล้ว fallback ไปแสดง
+      // mock bookings — ลูกค้าเห็นออเดอร์ปลอมในประวัติตัวเองเวลาเน็ตมีปัญหา
+      // ตอนนี้ตัดออกทั้งหมด: โหลดไม่ได้ต้องขึ้น error ให้กดลองใหม่เท่านั้น
       try {
         final response = await ConnectionHelper.withTimeout(() async {
           return await Supabase.instance.client
@@ -313,21 +298,12 @@ class _ActivityScreenState extends State<ActivityScreen> {
           _isLoading = false;
         });
       } catch (supabaseError) {
-        // Handle Supabase connection errors
-
-        // Fallback to mock data on connection error
-        if (ConnectionHelper.isConnectionError(supabaseError)) {
-          final mockBookings = MockDataService.getMockBookings();
-          setState(() {
-            _bookings = mockBookings;
-            _isLoading = false;
-          });
-        } else {
-          setState(() {
-            _error = ConnectionHelper.getErrorMessage(supabaseError);
-            _isLoading = false;
-          });
-        }
+        // ISSUE-104: ห้าม fallback ไป mock data — แสดง error จริงเสมอ
+        debugLog('❌ Failed to load customer bookings: $supabaseError');
+        setState(() {
+          _error = ConnectionHelper.getErrorMessage(supabaseError);
+          _isLoading = false;
+        });
       }
     } catch (e) {
       debugLog('❌ Error loading bookings: $e');

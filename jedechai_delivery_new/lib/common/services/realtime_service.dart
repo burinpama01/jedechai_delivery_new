@@ -52,13 +52,21 @@ class RealtimeService {
   }
 
   /// Subscribe to driver location updates
+  ///
+  /// ISSUE-106: ต้อง "ใช้ controller เดิมซ้ำ" เมื่อ resubscribe ไปที่ target
+  /// เดิม (เช่นหลัง refresh JWT) ไม่งั้น controller ที่ widget ฟังอยู่จะถูก
+  /// close() แล้ว stream ส่ง done — หน้าติดตามคนขับจะหยุดอัปเดตแบบเงียบ ๆ
   Stream<Map<String, dynamic>?> subscribeToDriverLocation(String driverId) {
+    final isSameTarget = _lastDriverId == driverId;
     _lastDriverId = driverId;
     _driverLocationChannel?.unsubscribe();
-    _driverLocationController?.close();
 
-    _driverLocationController =
-        StreamController<Map<String, dynamic>?>.broadcast();
+    final existing = _driverLocationController;
+    if (existing == null || existing.isClosed || !isSameTarget) {
+      existing?.close();
+      _driverLocationController =
+          StreamController<Map<String, dynamic>?>.broadcast();
+    }
 
     _driverLocationChannel = _client
         .channel('driver_location_$driverId')
@@ -93,12 +101,17 @@ class RealtimeService {
   Stream<Map<String, dynamic>?> subscribeToBooking(String bookingId) {
     debugLog(
         '🔍 RealtimeService: Setting up subscription for booking: $bookingId');
+    // ISSUE-106: ใช้ controller เดิมซ้ำเมื่อ resubscribe booking เดิม
+    final isSameTarget = _lastBookingId == bookingId;
     _lastBookingId = bookingId;
 
     _bookingChannel?.unsubscribe();
-    _bookingController?.close();
 
-    _bookingController = StreamController<Map<String, dynamic>?>.broadcast();
+    final existing = _bookingController;
+    if (existing == null || existing.isClosed || !isSameTarget) {
+      existing?.close();
+      _bookingController = StreamController<Map<String, dynamic>?>.broadcast();
+    }
 
     _bookingChannel = _client
         .channel('booking_$bookingId')

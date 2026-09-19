@@ -42,20 +42,53 @@ void main() async {
   }
 
   // Load environment variables from .env file
-  await dotenv.load(fileName: '.env');
-
-  // Initialize Supabase with credentials from .env
+  // ISSUE-123: ถ้า .env ไม่ถูก bundle มาด้วย dotenv.load จะ throw ทำให้แอป
+  // ดับตั้งแต่ก่อน runApp() เป็นจอขาวโดยไม่บอกสาเหตุ
   try {
-    await Supabase.initialize(
-      url: EnvConfig.supabaseUrl,
-      anonKey: EnvConfig.supabaseAnonKey,
-      authOptions: const FlutterAuthClientOptions(
-        authFlowType: AuthFlowType.implicit,
-      ),
-      debug: false, // Set to false in production
-    );
+    await dotenv.load(fileName: '.env');
   } catch (e) {
-    await MockAuthService.initialize();
+    runApp(_StartupErrorApp(
+      title: 'โหลดไฟล์ตั้งค่าไม่สำเร็จ',
+      detail: 'ไม่พบไฟล์ .env ในแอป กรุณาติดต่อผู้ดูแลระบบ\n\n$e',
+    ));
+    return;
+  }
+
+  // ISSUE-105: เดิมถ้า Supabase.initialize ล้มเหลวจะ fallback ไป
+  // MockAuthService เงียบ ๆ ซึ่งใช้งานไม่ได้จริง (useMockMode อิง .env
+  // ไม่ได้อิงผลของ initialize) ทำให้ทุก call หลังจากนั้นโยน assertion
+  // "You must initialize the supabase instance" ทั้งแอป
+  // ตอนนี้ล้มเหลวเมื่อไหร่ = ขึ้นหน้า error ที่บอกสาเหตุชัดเจน
+  if (!EnvConfig.isSupabaseConfigured) {
+    if (kDebugMode) {
+      // โหมด dev เท่านั้น: ให้รันต่อด้วย mock auth เพื่อทำ UI ได้
+      await MockAuthService.initialize();
+    } else {
+      runApp(const _StartupErrorApp(
+        title: 'ตั้งค่าเซิร์ฟเวอร์ไม่ครบ',
+        detail: 'ไม่พบ SUPABASE_URL หรือ SUPABASE_ANON_KEY '
+            'กรุณาติดต่อผู้ดูแลระบบ',
+      ));
+      return;
+    }
+  } else {
+    try {
+      await Supabase.initialize(
+        url: EnvConfig.supabaseUrl,
+        anonKey: EnvConfig.supabaseAnonKey,
+        authOptions: const FlutterAuthClientOptions(
+          authFlowType: AuthFlowType.implicit,
+        ),
+        debug: false, // Set to false in production
+      );
+    } catch (e) {
+      runApp(_StartupErrorApp(
+        title: 'เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ',
+        detail: 'เริ่มต้นการเชื่อมต่อไม่สำเร็จ '
+            'กรุณาตรวจสอบอินเทอร์เน็ตแล้วเปิดแอปใหม่\n\n$e',
+      ));
+      return;
+    }
   }
 
   // Initialize AuthService
@@ -71,6 +104,45 @@ void main() async {
   await FCMNotificationService().initialize();
 
   runApp(const MyApp());
+}
+
+/// หน้าจอ fatal error ตอนเปิดแอป — ใช้แทนการ fallback เงียบ ๆ (ISSUE-105/123)
+class _StartupErrorApp extends StatelessWidget {
+  final String title;
+  final String detail;
+
+  const _StartupErrorApp({required this.title, required this.detail});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 56, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(detail, textAlign: TextAlign.center),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class MyApp extends StatefulWidget {

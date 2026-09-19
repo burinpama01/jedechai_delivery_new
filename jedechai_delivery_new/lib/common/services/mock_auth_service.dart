@@ -1,4 +1,5 @@
 import 'package:jedechai_delivery_new/utils/debug_logger.dart';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_config.dart';
 
@@ -244,14 +245,21 @@ class MockAuthService {
   // ==================== UTILITY METHODS ====================
 
   /// Check if Supabase is configured
-  static bool get isSupabaseConfigured {
-    return SupabaseConfig.supabaseUrl !=
-            'https://YOUR_PROJECT_ID.supabase.co' &&
-        SupabaseConfig.supabaseAnonKey != 'YOUR_ANON_KEY';
-  }
+  ///
+  /// ISSUE-105: เดิมเช็คแค่ว่าค่าไม่เท่ากับ placeholder ทำให้ค่าว่างถูกนับว่า
+  /// "configured" แล้วขัดกับ SupabaseConfig.isConfigured ที่เช็คว่าไม่ว่าง
+  /// ตอนนี้ยึด SupabaseConfig.isConfigured เป็น source of truth เดียว
+  static bool get isSupabaseConfigured =>
+      SupabaseConfig.isConfigured &&
+      SupabaseConfig.supabaseUrl != 'https://YOUR_PROJECT_ID.supabase.co' &&
+      SupabaseConfig.supabaseAnonKey != 'YOUR_ANON_KEY';
 
   /// Get appropriate service based on configuration
-  static bool get useMockMode => !isSupabaseConfigured;
+  ///
+  /// ISSUE-105: mock auth รับอีเมลอะไรก็ได้ + รหัสผ่าน 6 ตัวขึ้นไป จึงต้อง
+  /// ไม่มีทางทำงานใน release build เด็ดขาด — ถ้า config หายใน production
+  /// ให้แอปแสดงหน้า error แทนการปล่อยให้ล็อกอินปลอมได้
+  static bool get useMockMode => kDebugMode && !isSupabaseConfigured;
 
   /// Print current configuration status
   static void printConfigStatus() {
