@@ -658,34 +658,19 @@ class AdminService {
       final adminId = AuthService.userId;
       if (adminId == null) return false;
 
-      // คืนเงินเข้ากระเป๋า
-      final request = await _client
-          .from('withdrawal_requests')
-          .select('user_id, amount')
-          .eq('id', requestId)
-          .single();
-
-      final userId = request['user_id'] as String;
-      final amount = (request['amount'] as num).toDouble();
-
-      // คืนเงินเข้า wallet
-      final wallet = await _client
-          .from('wallets')
-          .select('id, balance')
-          .eq('user_id', userId)
-          .single();
-
-      final newBalance = (wallet['balance'] as num).toDouble() + amount;
-      await _client
-          .from('wallets')
-          .update({'balance': newBalance}).eq('id', wallet['id']);
-
-      // อัปเดตสถานะ
+      // ปฏิเสธ + คืนเงินเข้ากระเป๋าแบบ atomic (มี ledger) ผ่าน RPC
+      final result = await _client.rpc('reject_withdrawal_request', params: {
+        'p_request_id': requestId,
+        'p_reason': reason,
+      });
+      if (result is! Map || result['success'] != true) {
+        debugLog('❌ rejectWithdrawal failed: $result');
+        return false;
+      }
+      final userId = result['user_id']?.toString();
+      final amount = (result['amount'] as num?)?.toDouble() ?? 0;
       await _client.from('withdrawal_requests').update({
-        'status': 'rejected',
         'processed_by': adminId,
-        'processed_at': DateTime.now().toIso8601String(),
-        'admin_note': reason,
       }).eq('id', requestId);
 
       await _logAction(

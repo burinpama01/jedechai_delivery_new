@@ -1037,40 +1037,17 @@ async function handleRejectWithdrawal(supabase, body) {
     return jsonResponse({ success: false, already_processed: true });
   }
 
-  // Refund to wallet (read-then-write for now; Phase 2 will make this atomic via RPC)
-  const { data: wallet } = await supabase
-    .from("wallets")
-    .select("id, balance")
-    .eq("user_id", req.user_id)
-    .single();
-  if (wallet) {
-    await supabase
-      .from("wallets")
-      .update({ balance: (wallet.balance || 0) + req.amount })
-      .eq("id", wallet.id);
-    await supabase.from("wallet_transactions").insert({
-      wallet_id: wallet.id,
-      amount: req.amount,
-      type: "refund",
-      description: `คืนเงินจากคำขอถอนที่ถูกปฏิเสธ: ${reason}`,
-    });
-  }
-
-  // Update request with expected-state guard
-  const { data: updated, error: updateErr } = await supabase
-    .from("withdrawal_requests")
-    .update({
-      status: "rejected",
-      admin_note: reason,
-      processed_at: new Date().toISOString(),
-    })
-    .eq("id", id)
-    .eq("status", "pending")
-    .select("id")
-    .maybeSingle();
-  if (updateErr) return errorResponse(updateErr.message);
-  if (!updated) {
-    return jsonResponse({ success: false, already_processed: true });
+  // ปฏิเสธ + คืนเงินแบบ atomic (FOR UPDATE + ledger) — กันคืนเงินซ้ำเมื่อกดซ้ำ/พร้อมกัน
+  const { data: result, error: rpcErr } = await supabase.rpc("reject_withdrawal_request", {
+    p_request_id: id,
+    p_reason: reason,
+  });
+  if (rpcErr) return errorResponse(rpcErr.message);
+  if (result?.success !== true) {
+    if (result?.error === "already_processed") {
+      return jsonResponse({ success: false, already_processed: true });
+    }
+    return errorResponse(result?.error ?? "reject_withdrawal_failed");
   }
 
   await notifyTargets(supabase, [

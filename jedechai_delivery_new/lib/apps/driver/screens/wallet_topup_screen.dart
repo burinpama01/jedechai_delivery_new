@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../common/services/wallet_service.dart';
+import '../../../common/services/withdrawal_service.dart';
 import '../../../common/services/auth_service.dart';
 import '../../../common/services/beam_topup_service.dart';
 import '../../../common/services/promptpay_service.dart';
@@ -919,50 +920,17 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                     if (userId == null) return;
                     _isWithdrawing = true;
                     try {
-                      // สร้างคำขอถอนเงินก่อน (ถ้า insert ล้มเหลว เงินจะไม่หาย)
-                      await Supabase.instance.client
-                          .from('withdrawal_requests')
-                          .insert({
-                        'user_id': userId,
-                        'amount': amount,
-                        'bank_name': bankNameController.text.trim(),
-                        'account_number': accountNumController.text.trim(),
-                        'status': 'pending',
-                      });
-                      // หักเงินจาก wallet หลังจาก insert สำเร็จ
-                      final wallet =
-                          await _walletService.getDriverWallet(userId);
-                      if (wallet != null) {
-                        await Supabase.instance.client
-                            .from('wallet_transactions')
-                            .insert({
-                          'wallet_id': wallet.id,
-                          'amount': -amount,
-                          'type': 'withdrawal',
-                          'description':
-                              l10n.topupWithdrawalTransactionDescription(
-                            amount.toStringAsFixed(2),
-                            bankNameController.text.trim(),
-                            accountNumController.text.trim(),
-                          ),
-                        });
-                        await Supabase.instance.client
-                            .from('wallets')
-                            .update({'balance': wallet.balance - amount}).eq(
-                                'id', wallet.id);
-                      }
-                      await AdminLineNotificationService.notify(
-                        eventType: 'withdrawal_request',
-                        title: 'JDC: คำขอถอนเงินใหม่',
-                        message:
-                            'มีคำขอถอนเงินใหม่ จำนวน ฿${amount.toStringAsFixed(0)} รอแอดมินตรวจสอบ',
-                        data: {
-                          'user_id': userId,
-                          'amount': amount.toStringAsFixed(0),
-                          'bank_name': bankNameController.text.trim(),
-                          'account_number': accountNumController.text.trim(),
-                        },
+                      // ถอนผ่าน RPC create_wallet_withdrawal_request (หักเงิน + ledger แบบ atomic ฝั่ง server)
+                      final ok = await WithdrawalService().createWithdrawalRequest(
+                        amount: amount,
+                        bankName: bankNameController.text.trim(),
+                        bankAccountNumber: accountNumController.text.trim(),
+                        bankAccountName: accountNameController.text.trim(),
                       );
+                      if (!ok) {
+                        throw Exception(
+                            'ส่งคำขอถอนไม่สำเร็จ (ขั้นต่ำ ฿100 และต้องกรอกบัญชีให้ครบ)');
+                      }
                       if (ctx.mounted) Navigator.of(ctx).pop(true);
                     } catch (e) {
                       debugLog('❌ Error withdraw: $e');

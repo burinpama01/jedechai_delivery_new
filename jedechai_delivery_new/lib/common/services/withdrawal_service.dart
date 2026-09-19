@@ -2,7 +2,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/debug_logger.dart';
 import 'admin_line_notification_service.dart';
 import 'auth_service.dart';
-import 'wallet_service.dart';
 
 /// WithdrawalService - บริการแจ้งถอนเงินสำหรับ driver/merchant
 ///
@@ -12,7 +11,6 @@ import 'wallet_service.dart';
 /// - ยกเลิกคำขอ (คืนเงินเข้า wallet)
 class WithdrawalService {
   final SupabaseClient _client = Supabase.instance.client;
-  final WalletService _walletService = WalletService();
 
   /// สร้างคำขอถอนเงิน
   ///
@@ -97,52 +95,20 @@ class WithdrawalService {
     }
   }
 
-  /// ยกเลิกคำขอถอนเงิน (เฉพาะสถานะ pending)
+  /// ยกเลิกคำขอถอนเงิน (เฉพาะสถานะ pending) — คืนเงินผ่าน RPC แบบ atomic
   Future<bool> cancelWithdrawalRequest(String requestId) async {
-    final userId = AuthService.userId;
-    if (userId == null) return false;
-
+    if (AuthService.userId == null) return false;
     try {
-      // ดึงข้อมูลคำขอ
-      final request = await _client
-          .from('withdrawal_requests')
-          .select()
-          .eq('id', requestId)
-          .eq('user_id', userId)
-          .eq('status', 'pending')
-          .maybeSingle();
-
-      if (request == null) {
-        debugLog('❌ ไม่พบคำขอถอนเงินที่สามารถยกเลิกได้');
-        return false;
+      final result = await _client.rpc(
+        'cancel_wallet_withdrawal_request',
+        params: {'p_request_id': requestId},
+      );
+      if (result is Map && result['success'] == true) {
+        debugLog('✅ Withdrawal request cancelled, refunded ฿${result['amount']}');
+        return true;
       }
-
-      final amount = (request['amount'] as num).toDouble();
-
-      // คืนเงินเข้า wallet
-      final wallet = await _walletService.getDriverWallet(userId);
-      if (wallet == null) return false;
-
-      final newBalance = wallet.balance + amount;
-
-      await _client.from('wallet_transactions').insert({
-        'wallet_id': wallet.id,
-        'amount': amount,
-        'type': 'withdrawal_refund',
-        'description': 'ยกเลิกคำขอถอนเงิน ฿${amount.ceil()}',
-      });
-
-      await _client
-          .from('wallets')
-          .update({'balance': newBalance}).eq('id', wallet.id);
-
-      // อัปเดตสถานะคำขอ
-      await _client
-          .from('withdrawal_requests')
-          .update({'status': 'cancelled'}).eq('id', requestId);
-
-      debugLog('✅ Withdrawal request cancelled, refunded ฿$amount');
-      return true;
+      debugLog('❌ Cancel withdrawal failed: $result');
+      return false;
     } catch (e) {
       debugLog('❌ Error cancelling withdrawal request: $e');
       return false;
