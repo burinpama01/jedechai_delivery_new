@@ -4,14 +4,11 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../../l10n/app_localizations.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'dart:async';
 import '../../../../theme/app_theme.dart';
 import '../../../../common/models/booking.dart';
 import '../../../../common/services/booking_service.dart';
 import '../../../../common/services/supabase_service.dart';
-import '../../../../common/config/env_config.dart';
 import '../../../../common/services/auth_service.dart';
 import '../../../../common/services/chat_service.dart';
 import '../../../../common/utils/order_code_formatter.dart';
@@ -19,6 +16,7 @@ import '../../../../common/widgets/location_disclosure_dialog.dart';
 import '../../../../common/widgets/chat_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../customer_main_screen.dart';
+import '../../../../common/services/maps_service.dart';
 
 /// Customer Ride Status Screen
 /// 
@@ -54,7 +52,6 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
   Map<String, dynamic>? _driverProfile;
   Map<String, dynamic>? _couponUsage;
   
-  static String get _googleApiKey => EnvConfig.googleMapsApiKey;
   
   @override
   void initState() {
@@ -516,20 +513,21 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
     }
 
     try {
-      final url = Uri.parse(
-        'https://maps.googleapis.com/maps/api/directions/json'
-        '?origin=${origin.latitude},${origin.longitude}'
-        '&destination=${destination.latitude},${destination.longitude}'
-        '&mode=driving'
-        '&key=$_googleApiKey',
-      );
-
-      debugLog('🗺️ Requesting directions from Google Maps API...');
+      debugLog('🗺️ Requesting directions via maps-proxy...');
       debugLog('🗺️ Origin: ${origin.latitude}, ${origin.longitude}');
       debugLog('🗺️ Destination: ${destination.latitude}, ${destination.longitude}');
-      
-      final response = await http.get(url);
-      final data = json.decode(response.body);
+
+      // ISSUE-120: ผ่าน Edge Function แทนการยิง Google ตรงจากเครื่องผู้ใช้
+      final data = await MapsService.directions(
+        originLat: origin.latitude,
+        originLng: origin.longitude,
+        destinationLat: destination.latitude,
+        destinationLng: destination.longitude,
+      );
+      if (data == null) {
+        debugLog('❌ Directions request failed');
+        return;
+      }
 
       debugLog('📡 Directions API response status: ${data['status']}');
 

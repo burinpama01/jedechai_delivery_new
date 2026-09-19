@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import '../config/env_config.dart';
 import '../widgets/location_disclosure_dialog.dart';
+import 'maps_service.dart';
 
 /// Location Service
 /// 
@@ -61,17 +59,16 @@ class LocationService {
     double endLongitude,
   ) async {
     try {
-      final String googleApiKey = EnvConfig.googleMapsApiKey;
-      final url = Uri.parse(
-        'https://maps.googleapis.com/maps/api/directions/json'
-        '?origin=$startLatitude,$startLongitude'
-        '&destination=$endLatitude,$endLongitude'
-        '&mode=driving'
-        '&key=$googleApiKey',
+      // ISSUE-120: ผ่าน Edge Function แทนการยิง Google ตรงจากเครื่องผู้ใช้
+      final data = await MapsService.directions(
+        originLat: startLatitude,
+        originLng: startLongitude,
+        destinationLat: endLatitude,
+        destinationLng: endLongitude,
       );
-      final response = await http.get(url);
-      final data = json.decode(response.body);
-      if (data['status'] == 'OK' && (data['routes'] as List).isNotEmpty) {
+      if (data != null &&
+          data['status'] == 'OK' &&
+          (data['routes'] as List).isNotEmpty) {
         final leg = (data['routes'][0]['legs'] as List?)?.firstOrNull as Map?;
         final value = leg?['distance']?['value'] as int?;
         if (value != null) {
@@ -92,20 +89,17 @@ class LocationService {
     double endLng,
   ) async {
     try {
-      final String googleApiKey = EnvConfig.googleMapsApiKey;
-      
-      final url = Uri.parse(
-        'https://maps.googleapis.com/maps/api/directions/json'
-        '?origin=$startLat,$startLng'
-        '&destination=$endLat,$endLng'
-        '&mode=driving'
-        '&key=$googleApiKey',
+      // ISSUE-120: ผ่าน Edge Function แทนการยิง Google ตรงจากเครื่องผู้ใช้
+      final data = await MapsService.directions(
+        originLat: startLat,
+        originLng: startLng,
+        destinationLat: endLat,
+        destinationLng: endLng,
       );
 
-      final response = await http.get(url);
-      final data = json.decode(response.body);
-
-      if (data['status'] == 'OK' && data['routes'].isNotEmpty) {
+      if (data != null &&
+          data['status'] == 'OK' &&
+          (data['routes'] as List).isNotEmpty) {
         final routes = data['routes'] as List;
         final route = routes[0] as Map<String, dynamic>;
         final legs = route['legs'] as List?;
@@ -149,22 +143,11 @@ class LocationService {
   static Future<List<Location>> searchPlaces(String query) async {
     if (query.trim().isEmpty) return [];
 
-    final apiKey = EnvConfig.googleMapsApiKey;
-    if (apiKey.isEmpty) return [];
-
     try {
-      final textSearchUri = Uri.parse(
-        'https://maps.googleapis.com/maps/api/place/textsearch/json'
-        '?query=${Uri.encodeQueryComponent(query)}'
-        '&language=th'
-        '&region=th'
-        '&key=$apiKey',
-      );
+      // ISSUE-120: ผ่าน Edge Function แทนการยิง Google ตรงจากเครื่องผู้ใช้
+      final data = await MapsService.placeTextSearch(query);
 
-      final response = await http.get(textSearchUri);
-      final data = json.decode(response.body) as Map<String, dynamic>;
-
-      if (data['status'] != 'OK') return [];
+      if (data == null || data['status'] != 'OK') return [];
 
       final places = (data['results'] as List<dynamic>? ?? []).take(5);
 
@@ -198,21 +181,11 @@ class LocationService {
   static Future<LatLng?> getCoordinatesFromAddress(String address) async {
     if (address.trim().isEmpty) return null;
 
-    final apiKey = EnvConfig.googleMapsApiKey;
-    if (apiKey.isEmpty) return null;
-
     try {
-      final geocodeUri = Uri.parse(
-        'https://maps.googleapis.com/maps/api/geocode/json'
-        '?address=${Uri.encodeQueryComponent(address)}'
-        '&language=th'
-        '&key=$apiKey',
-      );
+      // ISSUE-120: ผ่าน Edge Function แทนการยิง Google ตรงจากเครื่องผู้ใช้
+      final data = await MapsService.geocode(address);
 
-      final response = await http.get(geocodeUri);
-      final data = json.decode(response.body) as Map<String, dynamic>;
-
-      if (data['status'] != 'OK') return null;
+      if (data == null || data['status'] != 'OK') return null;
 
       final results = data['results'] as List<dynamic>?;
       if (results == null || results.isEmpty) return null;

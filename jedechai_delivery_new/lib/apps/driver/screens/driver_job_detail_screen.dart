@@ -4,7 +4,7 @@ import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:intl/intl.dart';
 
 import '../../../l10n/app_localizations.dart';
-import '../../../common/config/env_config.dart';
+import '../../../common/services/maps_service.dart';
 import '../../../common/models/booking.dart';
 import '../../../common/models/coupon.dart';
 import '../../../common/utils/driver_amount_calculator.dart';
@@ -36,7 +36,6 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
   GoogleMapController? _mapController;
   final Set<Marker> _markers = {};
   final Set<Polyline> _polylines = {};
-  static String get _googleApiKey => EnvConfig.googleMapsApiKey;
   double _couponDiscount = 0.0;
   String? _couponCode;
   double _merchantSystemRate = 0.10;
@@ -179,23 +178,36 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
   Future<void> _fetchRoute() async {
     final b = widget.booking;
     try {
-      final polylinePoints = PolylinePoints();
-      final result = await polylinePoints.getRouteBetweenCoordinates(
-        googleApiKey: _googleApiKey,
-        request: PolylineRequest(
-          origin: PointLatLng(b.originLat, b.originLng),
-          destination: PointLatLng(b.destLat, b.destLng),
-          mode: TravelMode.driving,
-        ),
+      // ISSUE-120: เดิมใช้ PolylinePoints.getRouteBetweenCoordinates ซึ่งต้อง
+      // ส่ง Google API key จากเครื่องผู้ใช้เข้าไปเรียก Directions API โดยตรง
+      // ตอนนี้ขอเส้นทางผ่าน Edge Function แล้วค่อย decode polyline ในแอป
+      final data = await MapsService.directions(
+        originLat: b.originLat,
+        originLng: b.originLng,
+        destinationLat: b.destLat,
+        destinationLng: b.destLng,
       );
-      if (result.points.isNotEmpty && mounted) {
+
+      final routes = data != null && data['status'] == 'OK'
+          ? (data['routes'] as List?) ?? const []
+          : const [];
+      final encodedPolyline = routes.isNotEmpty
+          ? ((routes[0] as Map)['overview_polyline']
+              as Map?)?['points'] as String?
+          : null;
+
+      final points = encodedPolyline == null || encodedPolyline.isEmpty
+          ? const <PointLatLng>[]
+          : PolylinePoints().decodePolyline(encodedPolyline);
+
+      if (points.isNotEmpty && mounted) {
         setState(() {
           _polylines.clear();
           _polylines.add(Polyline(
             polylineId: const PolylineId('route'),
             color: const Color(0xFF1E88E5),
             width: 5,
-            points: result.points.map((p) => LatLng(p.latitude, p.longitude)).toList(),
+            points: points.map((p) => LatLng(p.latitude, p.longitude)).toList(),
           ));
         });
       } else if (mounted) {

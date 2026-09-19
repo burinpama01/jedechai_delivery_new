@@ -4,9 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import '../../../../common/config/env_config.dart';
 import '../../../../common/services/geocoding_service.dart';
 import '../../../../common/services/notification_sender.dart';
 import '../../../../theme/app_theme.dart';
@@ -28,6 +25,7 @@ import 'customer_order_detail_screen.dart';
 import '../../../../common/models/booking.dart';
 import '../../../../common/models/saved_address.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../common/services/maps_service.dart';
 
 /// Food Checkout Screen — หน้ายืนยันคำสั่งซื้อ
 ///
@@ -383,20 +381,18 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
     _distanceUnavailable = false;
 
     try {
-      final apiKey = EnvConfig.googleMapsApiKey;
-      final url = Uri.parse(
-        'https://maps.googleapis.com/maps/api/directions/json'
-        '?origin=$_merchantLat,$_merchantLng'
-        '&destination=$_customerLat,$_customerLng'
-        '&mode=driving'
-        '&key=$apiKey',
+      debugLog('🗺️ Calculating real distance: merchant → customer');
+      // ISSUE-120: ผ่าน Edge Function แทนการยิง Google ตรงจากเครื่องผู้ใช้
+      final data = await MapsService.directions(
+        originLat: _merchantLat!,
+        originLng: _merchantLng!,
+        destinationLat: _customerLat!,
+        destinationLng: _customerLng!,
       );
 
-      debugLog('🗺️ Calculating real distance: merchant → customer');
-      final response = await http.get(url);
-      final data = json.decode(response.body);
-
-      if (data['status'] == 'OK' && (data['routes'] as List).isNotEmpty) {
+      if (data != null &&
+          data['status'] == 'OK' &&
+          (data['routes'] as List).isNotEmpty) {
         final leg = (data['routes'][0]['legs'] as List)[0];
         final distanceMeters = leg['distance']['value'] as int;
         _distanceKm = distanceMeters / 1000.0;

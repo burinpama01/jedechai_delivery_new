@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import '../../../../common/config/env_config.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:jedechai_delivery_new/utils/debug_logger.dart';
+import '../../../../common/services/maps_service.dart';
 
 /// Delivery Map Picker Screen — หน้าปักหมุดเลือกตำแหน่งจัดส่ง
 ///
@@ -87,19 +85,16 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
     _lastGeocodedPosition = position;
     setState(() => _isLoadingAddress = true);
     try {
-      final apiKey = EnvConfig.googleMapsApiKey;
-      final url = Uri.parse(
-        'https://maps.googleapis.com/maps/api/geocode/json'
-        '?latlng=${position.latitude},${position.longitude}'
-        '&language=th'
-        '&key=$apiKey',
+      // ISSUE-120: ผ่าน Edge Function แทนการยิง Google ตรงจากเครื่องผู้ใช้
+      final data = await MapsService.reverseGeocode(
+        lat: position.latitude,
+        lng: position.longitude,
       );
-
-      final response = await http.get(url);
       if (!mounted) return;
-      final data = json.decode(response.body);
 
-      if (data['status'] == 'OK' && (data['results'] as List).isNotEmpty) {
+      if (data != null &&
+          data['status'] == 'OK' &&
+          (data['results'] as List).isNotEmpty) {
         final results = data['results'] as List;
         // ใช้ผลลัพธ์แรกที่เป็นที่อยู่ที่อ่านง่าย
         String address = results[0]['formatted_address'] as String? ?? '';

@@ -1,15 +1,13 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../common/models/booking.dart';
-import '../../../../common/config/env_config.dart';
 import '../../../../utils/debug_logger.dart';
+import '../../../../common/services/maps_service.dart';
 
 /// Tracking Screen
 /// 
@@ -32,7 +30,6 @@ class _TrackingScreenState extends State<TrackingScreen> {
   bool _didInitialDriverCamera = false;
   final Set<Marker> _markers = {};
   final Set<Polyline> _polylines = {};
-  static String get _googleApiKey => EnvConfig.googleMapsApiKey;
 
   @override
   void initState() {
@@ -69,17 +66,17 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
   Future<void> _fetchRoute() async {
     try {
-      final url = Uri.parse(
-        'https://maps.googleapis.com/maps/api/directions/json'
-        '?origin=${_booking.originLat},${_booking.originLng}'
-        '&destination=${_booking.destLat},${_booking.destLng}'
-        '&mode=driving'
-        '&key=$_googleApiKey',
+      // ISSUE-120: ผ่าน Edge Function แทนการยิง Google ตรงจากเครื่องผู้ใช้
+      final data = await MapsService.directions(
+        originLat: _booking.originLat,
+        originLng: _booking.originLng,
+        destinationLat: _booking.destLat,
+        destinationLng: _booking.destLng,
       );
-      final response = await http.get(url);
-      final data = json.decode(response.body) as Map<String, dynamic>;
       if (!mounted) return;
-      if (data['status'] == 'OK' && (data['routes'] as List).isNotEmpty) {
+      if (data != null &&
+          data['status'] == 'OK' &&
+          (data['routes'] as List).isNotEmpty) {
         final encoded = (data['routes'][0] as Map)['overview_polyline']?['points'] as String?;
         if (encoded != null && encoded.isNotEmpty) {
           final points = _decodePolyline(encoded);

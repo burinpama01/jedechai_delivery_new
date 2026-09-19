@@ -1005,41 +1005,28 @@ class BookingService {
     // (RPC accept_booking ตั้ง status = 'driver_accepted' ตายตัวเสมอ)
     // แต่ debugLog กลับรายงานค่านั้นออกมา ทำให้ log ไม่ตรงกับ DB จริง
 
+    final expectedStatus = booking.status;
+
+    // ค่าที่ต้องเขียนพร้อมกับการเคลมงาน (ค่าชดเชยระยะทาง ฯลฯ)
+    if (booking.serviceType == 'food' && expectedStatus == 'ready_for_pickup') {
+      updates['merchant_food_ready_at'] = DateTime.now().toIso8601String();
+    }
+
     // Optimistic concurrency: use RPC to atomically claim the booking (Phase 2)
     // Only succeeds if booking still has no driver and expected status
-    final expectedStatus = booking.status;
+    //
+    // ISSUE-115: ส่ง updates เข้าไปใน RPC ด้วย เพื่อให้เคลมงานและเขียน
+    // ค่าชดเชย/ค่าส่งที่ปรับแล้วอยู่ใน UPDATE เดียวกัน เดิมยิงเป็น UPDATE
+    // แยกอีกรอบหลังเคลมสำเร็จ ถ้า call นั้นล้มเหลวคนขับจะได้งานแต่ไม่ได้
+    // ค่าชดเชย และ rollback ไม่ได้เพราะงานถูกเคลมไปแล้ว
     final rpcResult = await _client.rpc('accept_booking', params: {
       'p_booking_id': bookingId,
       'p_driver_id': driverId,
       'p_expected_status': expectedStatus,
+      'p_updates': updates.isEmpty ? null : updates,
     });
     if (rpcResult is Map && rpcResult['success'] != true) {
       throw Exception(rpcResult['message'] ?? 'งานนี้ถูกรับไปแล้ว');
-    }
-
-    // Apply additional updates (surcharge, etc.) if any
-    if (booking.serviceType == 'food' && expectedStatus == 'ready_for_pickup') {
-      updates['merchant_food_ready_at'] = DateTime.now().toIso8601String();
-    }
-    if (updates.isNotEmpty) {
-      // ISSUE-115: การเขียนค่าชดเชยระยะทางยังแยกจาก RPC ที่เคลมงาน ถ้า call นี้
-      // ล้มเหลว คนขับจะได้งานแต่ไม่ได้ค่าชดเชย จึงต้องไม่กลืน error เงียบ ๆ
-      // ไม่ rethrow เพราะงานถูกเคลมไปแล้ว การโยน error จะทำให้ UI บอกว่า
-      // "รับงานไม่สำเร็จ" ทั้งที่ DB บอกว่ารับแล้ว — ลองซ้ำหนึ่งครั้งแล้ว log ดัง ๆ แทน
-      // (ยังไม่ atomic เต็มรูปแบบ ต้องย้าย updates เข้า accept_booking RPC)
-      try {
-        await _client.from('bookings').update(updates).eq('id', bookingId);
-      } catch (e) {
-        debugLog('⚠️ บันทึกค่าชดเชยไม่สำเร็จ กำลังลองใหม่: $e');
-        try {
-          await _client.from('bookings').update(updates).eq('id', bookingId);
-        } catch (e2) {
-          debugLog(
-            '❌ รับงานสำเร็จแต่บันทึกค่าชดเชย/ค่าส่งที่ปรับแล้วไม่สำเร็จ '
-            '(booking $bookingId, updates: $updates): $e2',
-          );
-        }
-      }
     }
 
     debugLog('✅ Driver accepted job: $bookingId (status ถูกตั้งโดย RPC)');

@@ -3,6 +3,7 @@ export 'auth_service.dart';
 export 'supabase_service.dart';
 export 'app_navigation_service.dart';
 export 'location_service.dart';
+export 'maps_service.dart';
 export 'notification_service.dart';
 export 'notification_sender.dart';
 export 'fcm_notification_service.dart';

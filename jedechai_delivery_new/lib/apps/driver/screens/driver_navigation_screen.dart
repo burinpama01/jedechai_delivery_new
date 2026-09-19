@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:async';
@@ -28,12 +27,12 @@ import '../../../common/utils/booking_status_policy.dart';
 import '../../../common/utils/driver_amount_calculator.dart';
 import '../../../common/utils/order_code_formatter.dart';
 import '../../../theme/app_theme.dart';
-import '../../../common/config/env_config.dart';
 import '../../customer/screens/services/support_tickets_screen.dart';
 import 'driver_main_screen.dart';
 import 'driver_job_detail_screen.dart';
 import 'driver_parcel_confirmation_screen.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../common/services/maps_service.dart';
 
 /// Driver Navigation Screen
 ///
@@ -102,7 +101,6 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   StreamSubscription<List<Map<String, dynamic>>>? _bookingStreamSub;
 
   // Constants
-  static String get _googleApiKey => EnvConfig.googleMapsApiKey;
   static const double kAllowedRadiusMeters = 100.0; // Geofencing radius
   final PolylinePoints _polylinePoints = PolylinePoints();
 
@@ -1207,21 +1205,19 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         '   └─ To: ${_pickupLocation!.latitude}, ${_pickupLocation!.longitude}');
 
     try {
-      final url = Uri.parse(
-        'https://maps.googleapis.com/maps/api/directions/json'
-        '?origin=${_currentPosition!.latitude},${_currentPosition!.longitude}'
-        '&destination=${_pickupLocation!.latitude},${_pickupLocation!.longitude}'
-        '&mode=driving'
-        '&key=$_googleApiKey',
+      debugLog('🌐 Requesting directions via maps-proxy...');
+      // ISSUE-120: ผ่าน Edge Function แทนการยิง Google ตรงจากเครื่องผู้ใช้
+      final data = await MapsService.directions(
+        originLat: _currentPosition!.latitude,
+        originLng: _currentPosition!.longitude,
+        destinationLat: _pickupLocation!.latitude,
+        destinationLng: _pickupLocation!.longitude,
       );
 
-      debugLog('🌐 Requesting directions from Google Maps API...');
-      final response = await http.get(url);
-      final data = json.decode(response.body);
+      debugLog('📡 Directions response status: ${data?['status']}');
 
-      debugLog('📡 Directions API response status: ${data['status']}');
-
-      if (data['status'] == 'OK' &&
+      if (data != null &&
+          data['status'] == 'OK' &&
           data['routes'] != null &&
           (data['routes'] as List).isNotEmpty) {
         final routes = data['routes'] as List;
@@ -1372,18 +1368,17 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     debugLog('🗺️ Drawing route to destination from driver position');
 
     try {
-      final url = Uri.parse(
-        'https://maps.googleapis.com/maps/api/directions/json'
-        '?origin=$originLat,$originLng'
-        '&destination=${_destinationLocation!.latitude},${_destinationLocation!.longitude}'
-        '&mode=driving'
-        '&key=$_googleApiKey',
+      // ISSUE-120: ผ่าน Edge Function แทนการยิง Google ตรงจากเครื่องผู้ใช้
+      final data = await MapsService.directions(
+        originLat: originLat,
+        originLng: originLng,
+        destinationLat: _destinationLocation!.latitude,
+        destinationLng: _destinationLocation!.longitude,
       );
 
-      final response = await http.get(url);
-      final data = json.decode(response.body);
-
-      if (data['status'] == 'OK' && data['routes'].isNotEmpty) {
+      if (data != null &&
+          data['status'] == 'OK' &&
+          (data['routes'] as List).isNotEmpty) {
         final routes = data['routes'] as List;
         final route = routes[0] as Map<String, dynamic>;
         final encodedPolyline =
@@ -1587,25 +1582,23 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         LatLng(_currentPosition!.latitude, _currentPosition!.longitude);
 
     try {
-      final url = Uri.parse(
-        'https://maps.googleapis.com/maps/api/directions/json'
-        '?origin=${origin.latitude},${origin.longitude}'
-        '&destination=${destination.latitude},${destination.longitude}'
-        '&mode=driving'
-        '&key=$_googleApiKey',
-      );
-
-      debugLog('🗺️ Requesting directions from Google Maps API...');
+      debugLog('🗺️ Requesting directions via maps-proxy...');
       debugLog('🗺️ Origin: ${origin.latitude}, ${origin.longitude}');
       debugLog(
           '🗺️ Destination: ${destination.latitude}, ${destination.longitude}');
 
-      final response = await http.get(url);
-      final data = json.decode(response.body);
+      // ISSUE-120: ผ่าน Edge Function แทนการยิง Google ตรงจากเครื่องผู้ใช้
+      final data = await MapsService.directions(
+        originLat: origin.latitude,
+        originLng: origin.longitude,
+        destinationLat: destination.latitude,
+        destinationLng: destination.longitude,
+      );
 
-      debugLog('📡 Directions API response status: ${data['status']}');
+      debugLog('📡 Directions response status: ${data?['status']}');
 
-      if (data['status'] == 'OK' &&
+      if (data != null &&
+          data['status'] == 'OK' &&
           data['routes'] != null &&
           (data['routes'] as List).isNotEmpty) {
         final routes = data['routes'] as List;

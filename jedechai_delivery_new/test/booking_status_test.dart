@@ -20,6 +20,34 @@ void main() {
       expect(BookingStatus.fromString('cancelled'), BookingStatus.cancelled);
     });
 
+    test('converts laundry status strings correctly (ISSUE-122)', () {
+      expect(BookingStatus.fromString('quote_requested'),
+          BookingStatus.quoteRequested);
+      expect(BookingStatus.fromString('quoted'), BookingStatus.quoted);
+      expect(
+          BookingStatus.fromString('quote_expired'), BookingStatus.quoteExpired);
+      expect(BookingStatus.fromString('at_merchant'), BookingStatus.atMerchant);
+      expect(BookingStatus.fromString('washing'), BookingStatus.washing);
+      expect(BookingStatus.fromString('ready_for_return'),
+          BookingStatus.readyForReturn);
+    });
+
+    test('สถานะงานซักผ้าต้องไม่ถูกแสดงว่า "กำลังหาคนขับ" (ISSUE-122)', () {
+      for (final raw in const [
+        'quote_requested',
+        'quoted',
+        'quote_expired',
+        'at_merchant',
+        'washing',
+        'ready_for_return',
+      ]) {
+        final status = BookingStatus.fromString(raw);
+        expect(status, isNot(BookingStatus.pending), reason: raw);
+        expect(status.customerText, isNot(BookingStatus.pending.customerText),
+            reason: raw);
+      }
+    });
+
     test('returns pending for unknown status', () {
       expect(BookingStatus.fromString('unknown'), BookingStatus.pending);
       expect(BookingStatus.fromString(null), BookingStatus.pending);
@@ -40,9 +68,16 @@ void main() {
       expect(BookingStatus.arrivedAtMerchant.toDbString(), 'arrived_at_merchant');
       expect(BookingStatus.pickingUpOrder.toDbString(), 'picking_up_order');
       expect(BookingStatus.inTransit.toDbString(), 'in_transit');
+      expect(BookingStatus.quoteRequested.toDbString(), 'quote_requested');
+      expect(BookingStatus.quoted.toDbString(), 'quoted');
+      expect(BookingStatus.quoteExpired.toDbString(), 'quote_expired');
+      expect(BookingStatus.atMerchant.toDbString(), 'at_merchant');
+      expect(BookingStatus.washing.toDbString(), 'washing');
+      expect(BookingStatus.readyForReturn.toDbString(), 'ready_for_return');
       expect(BookingStatus.completed.toDbString(), 'completed');
       expect(BookingStatus.cancelled.toDbString(), 'cancelled');
     });
+
 
     test('roundtrip: fromString(toDbString()) returns same value', () {
       for (final status in BookingStatus.values) {

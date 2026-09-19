@@ -385,7 +385,7 @@ bool get isExpired => endDate != null && _bangkokNow().isAfter(endDate!);       
 
 # รอบแก้ไข 2026-09-19
 
-สรุป: **Fixed 22 / Partial 2 / Deferred 1** — commit บน branch `claude/laughing-rubin-ju2d71`
+สรุป: **Fixed 25 / 25** — commit บน branch `claude/laughing-rubin-ju2d71`
 
 > ⚠️ **ยังไม่ได้ verify ด้วย tool** — container ที่ใช้แก้ไม่มี Flutter SDK จึงยังไม่ได้รัน
 > `flutter analyze` และ `flutter test` ต้องรันทั้งสองคำสั่งบนเครื่อง dev ก่อน merge
@@ -406,36 +406,52 @@ bool get isExpired => endDate != null && _bangkokNow().isAfter(endDate!);       
   ค่าส่ง/ยอดรวมที่ไม่ตรงความจริง** ก่อนที่ลูกค้าจะรู้ว่าสั่งไม่ได้ (severity จริงต่ำกว่า
   ที่รายงานไว้) แก้แล้วเช่นกัน
 
-## ยังค้าง (Partial / Deferred)
+## รอบเก็บตก 2026-09-19 (รอบสอง) — เคลียร์ของค้างครบ
 
-### ISSUE-115 — Partial
-ลบ dead code และทำให้ error ไม่เงียบแล้ว แต่การเขียนค่าชดเชยระยะทาง
-(`price` / `delivery_fee` / `notes`) ยังเป็น `UPDATE` แยกจาก RPC `accept_booking`
-จึงยังไม่ atomic ถ้า call นั้นล้มเหลวทั้งสองครั้ง คนขับจะได้งานแต่ไม่ได้ค่าชดเชย
-**ทางแก้ที่เหลือ:** เพิ่ม parameter `p_updates jsonb` ให้ `accept_booking` แล้วรวม
-เข้าไปใน `UPDATE` เดียวกับตอนเคลมงาน (ต้อง drop/recreate function + แก้ caller)
+### ISSUE-115 — Fixed
+เพิ่ม parameter `p_updates jsonb` ให้ RPC `accept_booking`
+(`supabase/migrations/20260919090000_accept_booking_atomic_updates.sql`)
+ตอนนี้การเคลมงานกับการเขียน `price` / `delivery_fee` / `notes` /
+`merchant_food_ready_at` อยู่ใน `UPDATE` เดียวกันแล้ว ไม่มีช่องที่คนขับได้งาน
+แต่ไม่ได้ค่าชดเชยอีก + ใส่ actor check (`auth.uid()`) แบบเดียวกับ ISSUE-103 ไปด้วย
 
-### ISSUE-120 — Partial
-แก้ N+1 แล้ว (`searchPlaces` เปลี่ยนจาก Autocomplete + Place Details × 5
-เป็น Places Text Search คำขอเดียว) และเขียนเงื่อนไขการตั้ง key restriction
-ลง README แล้ว แต่ **แอปยังเรียก Google Web Service API ตรงจากเครื่องผู้ใช้**
-(`Directions` ใน `food_checkout_screen`, `driver_navigation_screen`,
-`location_service`) ซึ่งต้องใช้ key ที่ผูก application restriction ไม่ได้
-**ทางแก้ที่เหลือ:** ย้าย call เหล่านี้ไป Edge Function แล้วให้แอปเรียกผ่าน Supabase
-(เป็นงานที่ต้องสร้าง + deploy Edge Function ใหม่ จึงรอการตัดสินใจก่อน)
+> **ต้อง `DROP FUNCTION` ตัวเดิม (3 args) ก่อน** ไม่ปล่อยให้เป็น overload
+> เพราะ PostgREST จะเลือกฟังก์ชันไม่ถูกเมื่อ argument set ทับซ้อนกัน
 
-### ISSUE-122 — Deferred (ตั้งใจไม่แก้ตอนนี้)
-ตรวจเพิ่มแล้วพบว่า:
-- `StatusBadge` มี caller เดียวคือ `activity_screen.dart:851` ซึ่งอ่านจากตาราง
-  `bookings` และหน้านี้ไม่ได้แสดงงานซักผ้า สถานะซักผ้าจึงยังไม่เคยไหลมาถึง
-  `BookingStatus.fromString()` จริง
-- พฤติกรรม `default → pending` มีเทสต์ล็อกไว้อยู่แล้วที่
-  `test/booking_status_test.dart:24-26` แปลว่าเป็น contract ที่ตั้งใจ
+### ISSUE-120 — Fixed
+สร้าง Edge Function `supabase/functions/maps-proxy/` ที่ถือ
+`GOOGLE_MAPS_SERVER_KEY` ฝั่ง server + ตรวจ JWT ของผู้เรียก + รับเฉพาะ
+operation ที่ allowlist ไว้ (`directions`, `geocode`, `reverse_geocode`,
+`place_text_search`) และ normalize พารามิเตอร์ทุกตัวเอง ไม่ให้ client ส่ง
+path/query อะไรก็ได้ทะลุไปหา Google
 
-สรุปคือเป็น **กับดักรอในอนาคต ไม่ใช่บั๊กที่เกิดอยู่ตอนนี้** การเพิ่ม enum อีก 7 ค่า
-(`searching`, `quote_requested`, `quoted`, `quote_expired`, `confirmed_merchant`,
-`at_merchant`, `ready_for_return`) ต้องแก้ switch 5 ชุด + แก้เทสต์เดิม จึงควรทำพร้อม
-ตอนที่เอางานซักผ้าเข้าหน้า Activity จริง ๆ ไม่ใช่ทำล่วงหน้าแบบเดา
+ฝั่งแอปเพิ่ม `lib/common/services/maps_service.dart` แล้วย้าย **ทั้ง 12 จุด**
+ที่เคยยิง `maps.googleapis.com` ตรง ๆ มาเรียกผ่าน proxy:
+
+| ไฟล์ | จุดที่ย้าย |
+|---|---|
+| `common/services/location_service.dart` | directions ×2, place text search, geocode |
+| `customer/screens/services/food_checkout_screen.dart` | directions (คำนวณค่าส่ง) |
+| `customer/screens/services/delivery_map_picker_screen.dart` | reverse geocode |
+| `customer/screens/services/customer_ride_status_screen.dart` | directions |
+| `customer/screens/services/tracking_screen.dart` | directions |
+| `customer/screens/ride/ride_home_screen.dart` | directions |
+| `driver/screens/driver_navigation_screen.dart` | directions ×3 |
+| `driver/screens/driver_job_detail_screen.dart` | เลิกใช้ `PolylinePoints.getRouteBetweenCoordinates` ที่ต้องส่ง key จากเครื่อง มา decode polyline เองจากผล proxy |
+
+`EnvConfig.googleMapsApiKey` เหลือไว้สำหรับ Maps SDK (แสดงแผนที่) เท่านั้น
+ซึ่ง key ตัวนั้นผูก application restriction ได้ และลบ import/ฟิลด์
+`_googleApiKey` ที่ไม่ได้ใช้แล้วออกจากทุกหน้าจอ
+
+### ISSUE-122 — Fixed
+เพิ่มสถานะงานซักผ้า 6 ค่าเข้า `BookingStatus`
+(`quote_requested`, `quoted`, `quote_expired`, `at_merchant`, `washing`,
+`ready_for_return`) พร้อมข้อความไทยของทั้ง 3 role, สี และไอคอน — ตรวจแล้วว่า
+switch ทั้ง 6 ชุดครอบคลุมครบ 19 ค่า
+
+พฤติกรรม `default → pending` ยังคงเดิมตาม contract ที่
+`test/booking_status_test.dart:24-26` ล็อกไว้ และเพิ่มเทสต์ว่าสถานะซักผ้า
+ต้องไม่ถูกแสดงว่า "กำลังหาคนขับ" อีก
 
 ## Action ที่ต้องทำนอก repo (ISSUE-102)
 
@@ -449,10 +465,16 @@ bool get isExpired => endDate != null && _bangkokNow().isAfter(endDate!);       
 3. ตั้ง restriction ให้ `GOOGLE_MAPS_API_KEY` ที่ Google Cloud Console และแยก key
    ของ Maps SDK (app-restricted) ออกจาก key ที่ใช้เรียก Web Service
 
-## Migration ที่ต้อง deploy
+## Migration / Edge Function ที่ต้อง deploy
 
 - `supabase/migrations/20260917100000_fix_withdrawal_cancel_atomic.sql`
 - `supabase/migrations/20260917100100_harden_wallet_settlement_rpcs.sql`
+- `supabase/migrations/20260919090000_accept_booking_atomic_updates.sql`
+- Edge Function `maps-proxy` พร้อม secret:
+  `supabase secrets set GOOGLE_MAPS_SERVER_KEY=xxx`
+  แล้ว `supabase functions deploy maps-proxy`
+  (ถ้ายังไม่ deploy หรือยังไม่ตั้ง secret หน้าจอที่ใช้เส้นทาง/ค้นหาที่อยู่
+  จะตกไป fallback เส้นตรง/คืนผลว่าง — ต้อง deploy ก่อนปล่อยแอป)
 
 migration ตัวที่สองจะพยายามสร้าง partial unique index กันค่าคอมซ้ำ
 (`uniq_wallet_tx_commission_per_booking`) ถ้ามีข้อมูลค่าคอมซ้ำค้างอยู่แล้ว index จะ

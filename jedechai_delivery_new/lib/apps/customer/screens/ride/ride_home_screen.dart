@@ -4,9 +4,7 @@ import '../../../../l10n/app_localizations.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
-import 'package:http/http.dart' as http;
 import 'dart:async';
-import 'dart:convert';
 import '../../../../theme/app_theme.dart';
 import '../../../../common/services/auth_service.dart';
 import '../../../../common/services/booking_service.dart';
@@ -15,7 +13,6 @@ import '../../../../common/services/supabase_service.dart';
 import '../../../../common/services/system_config_service.dart';
 import '../../../../common/models/booking.dart';
 import '../../../../common/services/notification_sender.dart';
-import '../../../../common/config/env_config.dart';
 import '../../../../common/utils/notification_payload_policy.dart';
 import '../../../../common/widgets/location_disclosure_dialog.dart';
 import '../../../../common/widgets/coupon_entry_widget.dart';
@@ -24,6 +21,7 @@ import '../../../../common/services/coupon_service.dart';
 import '../services/waiting_for_driver_screen.dart';
 import '../services/saved_addresses_screen.dart';
 import '../../../../common/models/saved_address.dart';
+import '../../../../common/services/maps_service.dart';
 
 /// Ride Home Screen
 ///
@@ -98,7 +96,6 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
   bool _rideRatesUnavailable = false;
 
   // Constants
-  static String get _googleApiKey => EnvConfig.googleMapsApiKey;
 
   @override
   void initState() {
@@ -487,19 +484,17 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
     if (_currentLocation == null || _selectedDestination == null) return;
 
     try {
-      // Use Google Directions API for real routing
-      final url = Uri.parse(
-        'https://maps.googleapis.com/maps/api/directions/json'
-        '?origin=${_currentLocation!.latitude},${_currentLocation!.longitude}'
-        '&destination=${_selectedDestination!.latitude},${_selectedDestination!.longitude}'
-        '&mode=driving'
-        '&key=$_googleApiKey',
+      // ISSUE-120: ผ่าน Edge Function แทนการยิง Google ตรงจากเครื่องผู้ใช้
+      final data = await MapsService.directions(
+        originLat: _currentLocation!.latitude,
+        originLng: _currentLocation!.longitude,
+        destinationLat: _selectedDestination!.latitude,
+        destinationLng: _selectedDestination!.longitude,
       );
 
-      final response = await http.get(url);
-      final data = json.decode(response.body);
-
-      if (data['status'] == 'OK' && data['routes'].isNotEmpty) {
+      if (data != null &&
+          data['status'] == 'OK' &&
+          (data['routes'] as List).isNotEmpty) {
         final routes = data['routes'] as List;
         final route = routes[0] as Map<String, dynamic>;
         final legs = route['legs'] as List?;

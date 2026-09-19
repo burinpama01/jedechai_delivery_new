@@ -37,8 +37,17 @@ OMISE_PUBLIC_KEY=
 >
 > ถ้าเคยปล่อย build ที่มีคีย์เหล่านี้ออกไปแล้ว ต้องถือว่า **คีย์รั่ว** และ rotate ทุกตัว
 >
-> `GOOGLE_MAPS_API_KEY` ยังอยู่ฝั่งแอปได้ แต่ต้องตั้ง restriction ที่ Google Cloud
-> Console และแยก key ของ Maps SDK (app-restricted) ออกจาก key ของ Web Service
+> `GOOGLE_MAPS_API_KEY` ฝั่งแอปเหลือไว้สำหรับ **Maps SDK** (แสดงแผนที่) เท่านั้น
+> ต้องตั้ง application restriction ที่ Google Cloud Console
+>
+> การเรียก **Web Service** (Directions / Geocoding / Places) ไปที่ Edge Function
+> `maps-proxy` ซึ่งใช้ `GOOGLE_MAPS_SERVER_KEY` ฝั่ง server (ตั้ง IP restriction ได้)
+> ตั้งค่าด้วย:
+>
+> ```bash
+> supabase secrets set GOOGLE_MAPS_SERVER_KEY=xxx
+> supabase functions deploy maps-proxy
+> ```
 
 > สำหรับลืมรหัสผ่าน: ตั้งค่า `PASSWORD_RESET_REDIRECT_URL` ให้เป็น URL จริงที่ผู้ใช้เปิดได้ (ห้ามเป็น localhost)
 > และเพิ่ม URL เดียวกันใน Supabase Dashboard → Authentication → URL Configuration → Redirect URLs

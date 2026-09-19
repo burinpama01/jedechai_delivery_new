@@ -3,7 +3,7 @@
 > Batch: App-side bug audit (2026-09-17) — ID เริ่มที่ ISSUE-101 เพื่อเลี่ยงชนกับ ISSUE-0xx เดิมใน Obsidian
 > รายละเอียดเต็มอยู่ใน `issue.md`
 >
-> **สถานะรอบแก้ 2026-09-19:** Fixed 22 / Partial 2 / Deferred 1
+> **สถานะรอบแก้ 2026-09-19:** Fixed 25 / Partial 0 / Deferred 0 (ครบทุกข้อ)
 > `Fixed*` = แก้ฝั่งโค้ดแล้ว แต่ยังมี action ที่ต้องทำนอก repo (rotate key)
 > ⚠️ ยังไม่ได้รัน `flutter analyze` / `flutter test` — container ไม่มี Flutter SDK
 
@@ -23,14 +23,14 @@
 | ISSUE-112 | Fixed | Major | `isShopOpenNow` เช็ควันผิดสำหรับร้านที่เปิดคร่อมเที่ยงคืน | merchant/schedule | 2026-09-19 |
 | ISSUE-113 | Fixed | Major | `Coupon` แปลงวันที่ด้วย `DateTime.parse` ตรง ๆ ไม่ผ่าน `AppTime` → วันหมดอายุเพี้ยนตาม timezone | coupon/time | 2026-09-19 |
 | ISSUE-114 | Fixed | Major | `_updateJobStatus` สร้าง `updateData` (รวม backfill driver_id) แล้วไม่เคยส่งขึ้น DB | driver/navigation | 2026-09-19 |
-| ISSUE-115 | Partial | Minor | `acceptBooking`: ตัวแปร `newStatus` ตายแล้ว + อัปเดต surcharge แยก call ไม่มี guard | driver/booking | 2026-09-19 |
+| ISSUE-115 | Fixed | Minor | `acceptBooking`: ตัวแปร `newStatus` ตายแล้ว + อัปเดต surcharge แยก call ไม่มี guard | driver/booking | 2026-09-19 |
 | ISSUE-116 | Fixed | Minor | ราคาค่าโดยสาร fallback เป็นค่า hardcode 25 + 8/กม. เงียบ ๆ | customer/ride | 2026-09-19 |
 | ISSUE-117 | Fixed | Minor | โหลดโปรไฟล์คนขับล้มเหลว → UI เป็น offline แต่ DB ยัง online + `setState` ไม่เช็ค mounted | driver/dashboard | 2026-09-19 |
 | ISSUE-118 | Fixed | Minor | `AuthHelper.isSessionValid` force-unwrap `expiresAt!` | auth | 2026-09-19 |
 | ISSUE-119 | Fixed | Minor | Geocoding/Places หลายตัวยังเป็น mock hardcode ใน production code | location | 2026-09-19 |
-| ISSUE-120 | Partial | Minor | `searchPlaces` ยิง Place Details N+1 ครั้งต่อการค้นหา + ใช้ Google API key จากฝั่ง client | location/cost | 2026-09-19 |
+| ISSUE-120 | Fixed | Minor | `searchPlaces` ยิง Place Details N+1 ครั้งต่อการค้นหา + ใช้ Google API key จากฝั่ง client | location/cost | 2026-09-19 |
 | ISSUE-121 | Fixed | Minor | `RoleAmountCalculator.merchantGpAmount` ไม่ clamp rate ที่ > 1 | settlement | 2026-09-19 |
-| ISSUE-122 | Deferred | Minor | `BookingStatus.fromString` คืน `pending` สำหรับสถานะที่ไม่รู้จัก → งานซักผ้าแสดง "กำลังหาคนขับ" | status/ui | 2026-09-19 |
+| ISSUE-122 | Fixed | Minor | `BookingStatus.fromString` คืน `pending` สำหรับสถานะที่ไม่รู้จัก → งานซักผ้าแสดง "กำลังหาคนขับ" | status/ui | 2026-09-19 |
 | ISSUE-123 | Fixed | Minor | `dotenv.load` ใน `main()` ไม่มี try/catch → แอปดับตั้งแต่เปิดถ้าไม่มี .env | startup | 2026-09-19 |
 | ISSUE-124 | Fixed | Minor | ตะกร้าเพิ่มรายการซ้ำเป็นคนละบรรทัดเสมอ ไม่รวม quantity | customer/cart | 2026-09-19 |
 | ISSUE-125 | Fixed | Minor | `_formatScheduledDateTime` ใช้เวลาเครื่อง ขัดกับนโยบายเวลา Bangkok ของโปรเจค | booking/time | 2026-09-19 |

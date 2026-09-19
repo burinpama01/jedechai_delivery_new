@@ -16,6 +16,15 @@ enum BookingStatus {
   arrivedAtMerchant,
   pickingUpOrder,
   inTransit,
+  // ISSUE-122: สถานะของงานซักผ้า (laundry_orders) เดิมไม่มีใน enum นี้
+  // fromString() จึงตกไปที่ default → pending ทำให้ StatusBadge แสดงว่า
+  // "กำลังหาคนขับ" ซึ่งผิดความจริงทั้งหมด
+  quoteRequested,
+  quoted,
+  quoteExpired,
+  atMerchant,
+  washing,
+  readyForReturn,
   completed,
   cancelled;
 
@@ -44,6 +53,18 @@ enum BookingStatus {
         return BookingStatus.pickingUpOrder;
       case 'in_transit':
         return BookingStatus.inTransit;
+      case 'quote_requested':
+        return BookingStatus.quoteRequested;
+      case 'quoted':
+        return BookingStatus.quoted;
+      case 'quote_expired':
+        return BookingStatus.quoteExpired;
+      case 'at_merchant':
+        return BookingStatus.atMerchant;
+      case 'washing':
+        return BookingStatus.washing;
+      case 'ready_for_return':
+        return BookingStatus.readyForReturn;
       case 'completed':
         return BookingStatus.completed;
       case 'cancelled':
@@ -78,6 +99,18 @@ enum BookingStatus {
         return 'picking_up_order';
       case BookingStatus.inTransit:
         return 'in_transit';
+      case BookingStatus.quoteRequested:
+        return 'quote_requested';
+      case BookingStatus.quoted:
+        return 'quoted';
+      case BookingStatus.quoteExpired:
+        return 'quote_expired';
+      case BookingStatus.atMerchant:
+        return 'at_merchant';
+      case BookingStatus.washing:
+        return 'washing';
+      case BookingStatus.readyForReturn:
+        return 'ready_for_return';
       case BookingStatus.completed:
         return 'completed';
       case BookingStatus.cancelled:
@@ -110,6 +143,18 @@ enum BookingStatus {
         return 'กำลังรับอาหาร';
       case BookingStatus.inTransit:
         return 'กำลังเดินทาง';
+      case BookingStatus.quoteRequested:
+        return 'รอร้านประเมินราคา';
+      case BookingStatus.quoted:
+        return 'ร้านเสนอราคาแล้ว';
+      case BookingStatus.quoteExpired:
+        return 'ใบเสนอราคาหมดอายุ';
+      case BookingStatus.atMerchant:
+        return 'ของถึงร้านแล้ว';
+      case BookingStatus.washing:
+        return 'ร้านกำลังซัก';
+      case BookingStatus.readyForReturn:
+        return 'พร้อมส่งคืน';
       case BookingStatus.completed:
         return 'เสร็จสิ้น';
       case BookingStatus.cancelled:
@@ -142,6 +187,18 @@ enum BookingStatus {
         return 'กำลังรับอาหาร';
       case BookingStatus.inTransit:
         return 'กำลังส่ง';
+      case BookingStatus.quoteRequested:
+        return 'รอร้านประเมินราคา';
+      case BookingStatus.quoted:
+        return 'ร้านเสนอราคาแล้ว';
+      case BookingStatus.quoteExpired:
+        return 'ใบเสนอราคาหมดอายุ';
+      case BookingStatus.atMerchant:
+        return 'ส่งของถึงร้านแล้ว';
+      case BookingStatus.washing:
+        return 'ร้านกำลังซัก';
+      case BookingStatus.readyForReturn:
+        return 'รอรับไปส่งคืน';
       case BookingStatus.completed:
         return 'ส่งเสร็จแล้ว';
       case BookingStatus.cancelled:
@@ -174,6 +231,18 @@ enum BookingStatus {
         return 'กำลังรับอาหาร';
       case BookingStatus.inTransit:
         return 'กำลังส่ง';
+      case BookingStatus.quoteRequested:
+        return 'รอเสนอราคา';
+      case BookingStatus.quoted:
+        return 'เสนอราคาแล้ว';
+      case BookingStatus.quoteExpired:
+        return 'ใบเสนอราคาหมดอายุ';
+      case BookingStatus.atMerchant:
+        return 'รับของแล้ว';
+      case BookingStatus.washing:
+        return 'กำลังซัก';
+      case BookingStatus.readyForReturn:
+        return 'พร้อมส่งคืน';
       case BookingStatus.completed:
         return 'เสร็จสิ้น';
       case BookingStatus.cancelled:
@@ -206,6 +275,18 @@ enum BookingStatus {
         return Colors.deepPurple;
       case BookingStatus.inTransit:
         return Colors.indigo;
+      case BookingStatus.quoteRequested:
+        return Colors.orange;
+      case BookingStatus.quoted:
+        return Colors.blue;
+      case BookingStatus.quoteExpired:
+        return Colors.grey;
+      case BookingStatus.atMerchant:
+        return Colors.purple;
+      case BookingStatus.washing:
+        return Colors.cyan;
+      case BookingStatus.readyForReturn:
+        return Colors.teal;
       case BookingStatus.completed:
         return Colors.green;
       case BookingStatus.cancelled:
@@ -238,6 +319,18 @@ enum BookingStatus {
         return Icons.shopping_bag;
       case BookingStatus.inTransit:
         return Icons.local_shipping;
+      case BookingStatus.quoteRequested:
+        return Icons.request_quote;
+      case BookingStatus.quoted:
+        return Icons.price_check;
+      case BookingStatus.quoteExpired:
+        return Icons.timer_off;
+      case BookingStatus.atMerchant:
+        return Icons.storefront;
+      case BookingStatus.washing:
+        return Icons.local_laundry_service;
+      case BookingStatus.readyForReturn:
+        return Icons.inventory_2;
       case BookingStatus.completed:
         return Icons.done_all;
       case BookingStatus.cancelled:

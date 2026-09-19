@@ -27,3 +27,6 @@ verify_jwt = false
 
 [functions.connect_update_order_status]
 verify_jwt = false
+
+[functions.maps-proxy]
+verify_jwt = false
