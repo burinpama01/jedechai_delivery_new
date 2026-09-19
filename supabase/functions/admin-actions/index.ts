@@ -7,6 +7,13 @@ import {
   errorResponse,
   notifyTargets,
 } from "../_shared/admin-auth.ts";
+import {
+  isBeamConfigured,
+  isValidBase64Key,
+  loadBeamSettings,
+  maskSecret,
+  testBeamConnection,
+} from "../_shared/beam.ts";
 
 // Phase 7: Simple in-memory rate limiter (per admin user)
 const _rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -142,6 +149,20 @@ serve(async (req) => {
 
       case "toggle_shop_status":
         result = await handleToggleShopStatus(supabaseAdmin, body);
+        break;
+
+      // ─── Payment gateway (Beam) ───
+      case "get_beam_settings":
+        result = await handleGetBeamSettings(supabaseAdmin);
+        break;
+      case "save_beam_settings":
+        result = await handleSaveBeamSettings(supabaseAdmin, body, adminId);
+        break;
+      case "test_beam_connection":
+        result = await handleTestBeamConnection(supabaseAdmin);
+        break;
+      case "set_topup_mode":
+        result = await handleSetTopupMode(supabaseAdmin, body);
         break;
 
       // ─── GP Plans (แพ็กเกจ GP ให้ร้านเลือกตอนสมัคร) ───
@@ -630,6 +651,162 @@ async function handleToggleShopStatus(supabase, body) {
   ]);
 
   return jsonResponse({ success: true });
+}
+
+// ─── Payment gateway (Beam) ───
+// คีย์อยู่ใน payment_gateway_settings (ไม่มี RLS policy) — ส่งกลับให้แอดมินแบบ mask เท่านั้น
+
+async function readMainTopupMode(supabase): Promise<{ id: number | null; mode: string }> {
+  const { data } = await supabase
+    .from("system_config")
+    .select("id, topup_mode")
+    .is("key", null)
+    .order("id", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  return { id: data?.id ?? null, mode: data?.topup_mode ?? "admin_approve" };
+}
+
+function beamSettingsView(s, topupMode: string) {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  return {
+    success: true,
+    topup_mode: topupMode,
+    environment: s?.environment ?? "playground",
+    merchant_id: s?.merchant_id ?? "",
+    has_api_key: !!s?.api_key,
+    api_key_masked: maskSecret(s?.api_key),
+    has_webhook_hmac_key: !!s?.webhook_hmac_key,
+    webhook_hmac_key_masked: maskSecret(s?.webhook_hmac_key),
+    qr_expiry_minutes: s?.qr_expiry_minutes ?? 15,
+    last_test_at: s?.last_test_at ?? null,
+    last_test_ok: s?.last_test_ok ?? null,
+    last_test_message: s?.last_test_message ?? null,
+    updated_at: s?.updated_at ?? null,
+    webhook_url: `${supabaseUrl}/functions/v1/beam-webhook`,
+  };
+}
+
+async function handleGetBeamSettings(supabase) {
+  const s = await loadBeamSettings(supabase);
+  const { mode } = await readMainTopupMode(supabase);
+  return jsonResponse(beamSettingsView(s, mode));
+}
+
+async function handleSaveBeamSettings(supabase, body, adminId: string) {
+  const current = await loadBeamSettings(supabase);
+  const environment = String(body.environment ?? current?.environment ?? "playground");
+  if (!["playground", "production"].includes(environment)) {
+    return errorResponse("environment must be playground or production");
+  }
+  const merchantId = typeof body.merchant_id === "string" ? body.merchant_id.trim() : "";
+  if (!merchantId || merchantId.length > 128) return errorResponse("merchant_id is required");
+
+  // ช่องคีย์ว่าง = คงค่าเดิม
+  const apiKeyInput = typeof body.api_key === "string" ? body.api_key.trim() : "";
+  const hmacInput = typeof body.webhook_hmac_key === "string" ? body.webhook_hmac_key.trim() : "";
+  if (apiKeyInput.length > 512 || hmacInput.length > 512) return errorResponse("key too long");
+  if (hmacInput && !isValidBase64Key(hmacInput)) {
+    return errorResponse("webhook_hmac_key ต้องเป็น base64 จาก Beam Lighthouse");
+  }
+  const apiKey = apiKeyInput || current?.api_key || null;
+  const hmacKey = hmacInput || current?.webhook_hmac_key || null;
+  if (!apiKey) return errorResponse("api_key is required");
+
+  const expiry = Number(body.qr_expiry_minutes ?? current?.qr_expiry_minutes ?? 15);
+  if (!Number.isInteger(expiry) || expiry < 5 || expiry > 60) {
+    return errorResponse("qr_expiry_minutes must be 5-60");
+  }
+
+  const credentialsChanged =
+    environment !== current?.environment ||
+    merchantId !== current?.merchant_id ||
+    apiKey !== current?.api_key;
+
+  // เปลี่ยน HMAC key ขณะเปิดใช้ Beam → ถ้าไม่ตรงกับ Lighthouse webhook ทุกตัวจะถูกปฏิเสธ
+  const hmacChanged = hmacKey !== (current?.webhook_hmac_key ?? null);
+
+  const { mode } = await readMainTopupMode(supabase);
+  if (mode === "beam" && (credentialsChanged || hmacChanged)) {
+    return errorResponse(
+      "ปิดโหมด Beam (สลับเป็นแนบสลิป) ก่อนเปลี่ยน Merchant ID / API Key / Webhook HMAC Key / environment",
+      409,
+    );
+  }
+
+  const patch: Record<string, unknown> = {
+    provider: "beam",
+    environment,
+    merchant_id: merchantId,
+    api_key: apiKey,
+    webhook_hmac_key: hmacKey,
+    qr_expiry_minutes: expiry,
+    updated_by: adminId,
+    updated_at: new Date().toISOString(),
+  };
+  if (credentialsChanged) {
+    patch.last_test_at = null;
+    patch.last_test_ok = null;
+    patch.last_test_message = null;
+  }
+
+  const { error } = await supabase.from("payment_gateway_settings").upsert(patch, { onConflict: "provider" });
+  if (error) return errorResponse(error.message, 500);
+
+  const saved = await loadBeamSettings(supabase);
+  return jsonResponse(beamSettingsView(saved, mode));
+}
+
+async function handleTestBeamConnection(supabase) {
+  const s = await loadBeamSettings(supabase);
+  if (!isBeamConfigured(s)) return errorResponse("กรุณาบันทึก Merchant ID และ API Key ก่อนทดสอบ");
+
+  const result = await testBeamConnection({
+    environment: s.environment,
+    merchant_id: s.merchant_id,
+    api_key: s.api_key,
+  });
+  let message = result.message;
+  if (result.ok && !s.webhook_hmac_key) {
+    message += " · ยังไม่ได้ใส่ Webhook HMAC Key";
+  }
+
+  await supabase
+    .from("payment_gateway_settings")
+    .update({
+      last_test_at: new Date().toISOString(),
+      last_test_ok: result.ok,
+      last_test_message: message,
+    })
+    .eq("provider", "beam");
+
+  const { mode } = await readMainTopupMode(supabase);
+  const saved = await loadBeamSettings(supabase);
+  return jsonResponse({ ...beamSettingsView(saved, mode), test_ok: result.ok, test_message: message });
+}
+
+async function handleSetTopupMode(supabase, body) {
+  const mode = String(body.mode ?? "");
+  if (!["admin_approve", "beam"].includes(mode)) {
+    return errorResponse("mode must be admin_approve or beam");
+  }
+  if (mode === "beam") {
+    const s = await loadBeamSettings(supabase);
+    if (!isBeamConfigured(s)) return errorResponse("ยังไม่ได้ตั้งค่า Beam Merchant ID / API Key", 409);
+    if (!s.webhook_hmac_key) return errorResponse("ยังไม่ได้ใส่ Webhook HMAC Key", 409);
+    if (s.last_test_ok !== true) return errorResponse("กรุณากดทดสอบการเชื่อมต่อให้ผ่านก่อนเปิดใช้ Beam", 409);
+  }
+
+  const { id } = await readMainTopupMode(supabase);
+  if (id == null) return errorResponse("system_config main row not found", 500);
+  const { error } = await supabase
+    .from("system_config")
+    .update({ topup_mode: mode, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) return errorResponse(error.message, 500);
+
+  const s = await loadBeamSettings(supabase);
+  return jsonResponse(beamSettingsView(s, mode));
 }
 
 // ─── GP Plans ───

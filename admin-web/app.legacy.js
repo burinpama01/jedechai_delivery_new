@@ -3394,7 +3394,6 @@ async function saveTopupModeSettings() {
 
   try {
     await _upsertSystemConfig({
-      topup_mode: 'admin_approve',
       slip2go_receiver_account: document.getElementById('settSlip2goReceiverAccount')?.value?.trim() || null,
       slip2go_allow_masked_receiver_account: document.getElementById('settSlip2goAllowMaskedReceiver')?.checked === true,
     });

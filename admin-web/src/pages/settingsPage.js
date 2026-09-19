@@ -177,8 +177,75 @@ export async function renderSettingsPage(el, ctx) {
         <div class="flex items-center gap-3 mb-5">
           <div class="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center"><span class="material-icons-round text-teal-500">account_balance_wallet</span></div>
           <div>
-            <h3 class="font-bold text-gray-800">โหมดเติมเงิน Wallet คนขับ</h3>
-            <p class="text-xs text-gray-400">PromptPay + ตรวจสลิปอัตโนมัติผ่าน Slip2Go และยังคงรองรับแอดมินจัดการด้วยมือ</p>
+            <h3 class="font-bold text-gray-800">โหมดเติมเงิน Wallet</h3>
+            <p class="text-xs text-gray-400">เลือกช่องทางเติมเงินของคนขับ/ลูกค้า: แนบสลิป (Slip2Go + แอดมิน) หรือ Beam Checkout (QR PromptPay อัตโนมัติ)</p>
+          </div>
+        </div>
+
+        <!-- สวิตช์โหมดเติมเงิน -->
+        <div class="mb-5 rounded-xl border border-gray-200 p-4" data-testid="topup-mode-switch">
+          <p class="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">ช่องทางที่ใช้อยู่ตอนนี้</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <label class="flex items-start gap-3 rounded-xl border-2 p-3 cursor-pointer" id="topupModeOptSlip">
+              <input type="radio" name="settTopupMode" value="admin_approve" ${config.topup_mode !== 'beam' ? 'checked' : ''} onchange="setTopupMode('admin_approve')" class="mt-1">
+              <span><span class="block font-semibold text-gray-800">แนบสลิป</span><span class="block text-xs text-gray-500">PromptPay QR ของระบบ → แนบสลิป → Slip2Go ตรวจอัตโนมัติ / แอดมินอนุมัติ</span></span>
+            </label>
+            <label class="flex items-start gap-3 rounded-xl border-2 p-3 cursor-pointer" id="topupModeOptBeam">
+              <input type="radio" name="settTopupMode" value="beam" ${config.topup_mode === 'beam' ? 'checked' : ''} onchange="setTopupMode('beam')" class="mt-1">
+              <span><span class="block font-semibold text-gray-800">Beam Checkout</span><span class="block text-xs text-gray-500">สแกน QR PromptPay จาก Beam → เงินเข้า Wallet อัตโนมัติ ไม่ต้องแนบสลิป (ต้องทดสอบเชื่อมต่อผ่านก่อน)</span></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- ตั้งค่า Beam -->
+        <div class="mb-5 rounded-xl border border-indigo-200 bg-indigo-50/40 p-4" data-testid="beam-settings">
+          <div class="flex items-center justify-between mb-3">
+            <p class="font-bold text-gray-800">ตั้งค่า Beam Checkout</p>
+            <span id="beamTestBadge" class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-500">ยังไม่ทดสอบ</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5">Environment</label>
+              <select id="settBeamEnvironment" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-white">
+                <option value="playground">Playground (ทดสอบ)</option>
+                <option value="production">Production (เงินจริง)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5">Merchant ID</label>
+              <input type="text" id="settBeamMerchantId" autocomplete="off" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-white" placeholder="จาก Beam Lighthouse → Developers">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5">API Key</label>
+              <input type="password" id="settBeamApiKey" autocomplete="new-password" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-white" placeholder="เว้นว่าง = ใช้คีย์เดิม">
+              <p id="settBeamApiKeyHint" class="text-xs text-gray-400 mt-1">ยังไม่ได้ตั้งค่า</p>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5">Webhook HMAC Key</label>
+              <input type="password" id="settBeamWebhookKey" autocomplete="new-password" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-white" placeholder="เว้นว่าง = ใช้คีย์เดิม">
+              <p id="settBeamWebhookKeyHint" class="text-xs text-gray-400 mt-1">ยังไม่ได้ตั้งค่า</p>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5">อายุ QR (นาที)</label>
+              <input type="number" id="settBeamQrExpiry" min="5" max="60" step="1" value="15" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-white">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5">Webhook URL (นำไปใส่ใน Beam Lighthouse → Webhook Settings, เลือก charge.succeeded / charge.failed)</label>
+              <div class="flex gap-2">
+                <input type="text" id="settBeamWebhookUrl" readonly class="w-full px-3 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-xs">
+                <button type="button" onclick="copyBeamWebhookUrl()" class="px-3 rounded-xl border border-gray-200 bg-white text-xs font-semibold">คัดลอก</button>
+              </div>
+            </div>
+          </div>
+          <p id="beamLastTestMessage" class="text-xs text-gray-500 mt-3"></p>
+          <p class="text-xs text-gray-400 mt-1">คีย์ถูกเก็บฝั่ง server เท่านั้น หน้านี้แสดงแค่ 4 ตัวท้าย · ต้องสลับเป็นโหมดแนบสลิปก่อนเปลี่ยน Merchant ID / API Key / Environment</p>
+          <div class="mt-4 flex flex-wrap gap-2 justify-end">
+            <button id="testBeamConnectionButton" data-testid="test-beam-connection-button" onclick="testBeamConnection()" class="px-5 py-2.5 rounded-xl text-sm font-semibold border border-indigo-300 bg-white text-indigo-700 hover:bg-indigo-50">
+              <span class="material-icons-round text-sm align-middle mr-1">wifi_tethering</span> ทดสอบการเชื่อมต่อ
+            </button>
+            <button id="saveBeamSettingsButton" data-testid="save-beam-settings-button" onclick="saveBeamSettings()" class="px-5 py-2.5 text-white rounded-xl text-sm font-semibold hover:opacity-90" style="background:linear-gradient(135deg,#4f46e5,#818cf8);">
+              <span class="material-icons-round text-sm align-middle mr-1">save</span> บันทึกคีย์ Beam
+            </button>
           </div>
         </div>
         <div class="rounded-xl border-2 border-teal-200 bg-teal-50/70 p-4">
@@ -855,6 +922,7 @@ export async function renderSettingsPage(el, ctx) {
   // Load banners and app assets after render
   loadBanners();
   loadAppAssets();
+  if (typeof globalThis.loadBeamSettings === 'function') globalThis.loadBeamSettings();
 }
 
 export function wireSettingsBridge() {

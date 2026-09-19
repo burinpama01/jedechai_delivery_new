@@ -54,3 +54,23 @@ test("app update policy settings save through system_config app_update_policy", 
   assert.match(actionsSource, /target_roles:\s*\[\]/);
   assert.match(actionsSource, /globalThis\.__adminWebBridge\.saveAppUpdatePolicySettings = saveAppUpdatePolicySettings/);
 });
+
+test("settings page exposes topup mode switch and Beam settings with connection test", () => {
+  assert.match(settingsPageSource, /name="settTopupMode" value="admin_approve"/);
+  assert.match(settingsPageSource, /name="settTopupMode" value="beam"/);
+  assert.match(settingsPageSource, /onchange="setTopupMode\('beam'\)"/);
+  assert.match(settingsPageSource, /id="settBeamMerchantId"/);
+  assert.match(settingsPageSource, /id="settBeamApiKey"[^>]*type="password"|type="password" id="settBeamApiKey"/);
+  assert.match(settingsPageSource, /id="settBeamWebhookKey"/);
+  assert.match(settingsPageSource, /onclick="testBeamConnection\(\)"/);
+  assert.match(settingsPageSource, /onclick="saveBeamSettings\(\)"/);
+});
+
+test("Beam actions go through admin-actions and never write keys to system_config", () => {
+  assert.match(actionsSource, /action: 'get_beam_settings'/);
+  assert.match(actionsSource, /action: 'save_beam_settings'/);
+  assert.match(actionsSource, /action: 'test_beam_connection'/);
+  assert.match(actionsSource, /action: 'set_topup_mode', mode/);
+  assert.doesNotMatch(actionsSource, /topup_mode: 'admin_approve'/);
+  assert.doesNotMatch(legacySettingsSource, /topup_mode: 'admin_approve'/);
+});

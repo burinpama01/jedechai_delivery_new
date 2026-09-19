@@ -27,3 +27,9 @@ verify_jwt = false
 
 [functions.connect_update_order_status]
 verify_jwt = false
+
+[functions.beam-topup]
+verify_jwt = false
+
+[functions.beam-webhook]
+verify_jwt = false

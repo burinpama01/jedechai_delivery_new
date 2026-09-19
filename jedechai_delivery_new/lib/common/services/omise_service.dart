@@ -12,7 +12,7 @@ import '../../utils/debug_logger.dart';
 ///
 /// ใช้ Basic Auth:
 ///   Public Key  → สร้าง Source (client-side safe)
-///   Secret Key  → สร้าง Charge + ตรวจสถานะ (ควรอยู่ server-side ใน production)
+///   Secret Key  → ห้ามอยู่ในแอป (createCharge/checkChargeStatus ถูกปิด รอ Beam ฝั่ง server)
 class OmiseService {
   static const String _apiBase = 'https://api.omise.co';
 
@@ -83,43 +83,16 @@ class OmiseService {
   ///   - charge['id'] → ใช้ตรวจสถานะ
   ///   - charge['source']['scannable_code']['image']['download_uri'] → QR Image URL
   ///   - charge['status'] → 'pending', 'successful', 'failed'
+  ///
+  /// ปิดใช้งานฝั่งแอป: การสร้าง Charge ต้องใช้ Secret Key ซึ่งห้ามอยู่ในแอป
+  /// (กำลังย้ายระบบชำระเงินไป Beam ผ่าน Edge Function)
+  @Deprecated('ต้องเรียกผ่าน server (Edge Function) — กำลังย้ายไป Beam')
   static Future<Map<String, dynamic>?> createCharge(
     String sourceId,
     int amountSatang,
   ) async {
-    try {
-      final secretKey = EnvConfig.omiseSecretKey;
-      if (secretKey.isEmpty) {
-        debugLog('❌ OMISE_SECRET_KEY ไม่ได้ตั้งค่าใน .env');
-        return null;
-      }
-
-      debugLog('📤 Omise: สร้าง Charge — source=$sourceId, amount=$amountSatang');
-
-      final response = await http.post(
-        Uri.parse('$_apiBase/charges'),
-        headers: _headers(secretKey),
-        body: {
-          'source': sourceId,
-          'amount': amountSatang.toString(),
-          'currency': 'thb',
-          'return_uri': 'http://localhost',
-        },
-      );
-
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode == 200) {
-        debugLog('✅ Omise Charge สร้างสำเร็จ: ${data['id']} — status: ${data['status']}');
-        return data;
-      } else {
-        debugLog('❌ Omise Charge error: ${data['message'] ?? response.body}');
-        return null;
-      }
-    } catch (e) {
-      debugLog('❌ Omise createCharge error: $e');
-      return null;
-    }
+    debugLog('❌ Omise createCharge ถูกปิดฝั่งแอป — ต้องทำผ่าน server');
+    return null;
   }
 
   // ══════════════════════════════════════════
@@ -128,37 +101,11 @@ class OmiseService {
 
   /// ตรวจสอบสถานะของ Charge
   ///
-  /// [chargeId] — ID ของ charge ที่ได้จาก createCharge
-  /// Returns: สถานะของ charge ('pending', 'successful', 'failed', 'expired')
+  /// ปิดใช้งานฝั่งแอป: ต้องใช้ Secret Key — ต้องตรวจผ่าน server
+  @Deprecated('ต้องเรียกผ่าน server (Edge Function) — กำลังย้ายไป Beam')
   static Future<String> checkChargeStatus(String chargeId) async {
-    try {
-      final secretKey = EnvConfig.omiseSecretKey;
-      if (secretKey.isEmpty) {
-        debugLog('❌ OMISE_SECRET_KEY ไม่ได้ตั้งค่าใน .env');
-        return 'failed';
-      }
-
-      debugLog('🔍 Omise: ตรวจสอบสถานะ Charge — $chargeId');
-
-      final response = await http.get(
-        Uri.parse('$_apiBase/charges/$chargeId'),
-        headers: _headers(secretKey),
-      );
-
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode == 200) {
-        final status = data['status'] as String? ?? 'pending';
-        debugLog('📋 Omise Charge status: $status');
-        return status;
-      } else {
-        debugLog('❌ Omise checkCharge error: ${data['message'] ?? response.body}');
-        return 'failed';
-      }
-    } catch (e) {
-      debugLog('❌ Omise checkChargeStatus error: $e');
-      return 'failed';
-    }
+    debugLog('❌ Omise checkChargeStatus ถูกปิดฝั่งแอป — ต้องทำผ่าน server');
+    return 'failed';
   }
 
   // ══════════════════════════════════════════

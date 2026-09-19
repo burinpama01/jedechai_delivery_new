@@ -41,8 +41,8 @@ void main() async {
     }
   }
 
-  // Load environment variables from .env file
-  await dotenv.load(fileName: '.env');
+  // Load public client config (bundled asset) — secret ห้ามอยู่ในไฟล์นี้
+  await dotenv.load(fileName: '.env.client');
 
   // Initialize Supabase with credentials from .env
   try {

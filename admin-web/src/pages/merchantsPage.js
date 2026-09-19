@@ -130,6 +130,7 @@ export async function renderMerchantsPage(el, ctx) {
   globalThis.showGpPlanForm = showGpPlanForm;
   globalThis.submitGpPlan = submitGpPlan;
   globalThis.deleteGpPlan = deleteGpPlan;
+  globalThis.applyGpPlanToMerchantForm = applyGpPlanToMerchantForm;
 }
 
 function merchantServiceTypes(m) {
@@ -200,7 +201,7 @@ export function renderMerchantRows(merchants, ctx) {
     .map((m) => {
       const isOnline = typeof truthyFlag === 'function' ? truthyFlag(m.is_online) : !!m.is_online;
       const isShopOpen = typeof truthyFlag === 'function' ? truthyFlag(m.shop_status) : !!m.shop_status;
-      const safeName = escapeHtml((m.full_name || '').replace(/'/g, ''));
+      const safeName = escapeHtml(escapeJsStringForInlineHandler(m.full_name || ''));
       const merchantIdHtml = escapeHtml(m.id);
       const merchantIdJsArg = escapeHtml(escapeJsStringForInlineHandler(m.id));
       return `
@@ -400,6 +401,17 @@ export async function editMerchantProfile(id, ctx) {
   const { data: m } = await supabase.from('profiles').select('*').eq('id', id).single();
   if (!m) return;
 
+  // แพ็กเกจ GP: แอดมินเลือกแพ็กเกจแทนร้านได้ (ไม่นับรอบเปลี่ยนเดือนละครั้งของร้าน)
+  const { data: gpPlansForEdit } = await supabase
+    .from('gp_plans')
+    .select('*')
+    .order('sort_order', { ascending: true });
+  globalThis._gpPlansCache = gpPlansForEdit || [];
+  const gpPlanOptions = (gpPlansForEdit || [])
+    .filter((p) => p.is_active || p.id === m.gp_plan_id)
+    .map((p) => `<option value="${escapeHtml(p.id)}" ${p.id === m.gp_plan_id ? 'selected' : ''}>${escapeHtml(p.name)} — หัก ${gpPlanPct(p.gp_rate)} · ${gpPlanNum(p.base_delivery_fee)} ฿/${gpPlanNum(p.base_distance_km)} กม. · ${gpPlanNum(p.per_km_charge)} ฿/กม.${p.is_active ? '' : ' (ปิดใช้งาน)'}</option>`)
+    .join('');
+
   let merchantSystemSplitPct =
     m.merchant_gp_system_rate != null ? (parseFloat(m.merchant_gp_system_rate) * 100).toFixed(1) : '';
   let merchantDriverSplitPct =
@@ -564,6 +576,14 @@ export async function editMerchantProfile(id, ctx) {
       <div class="mb-5">
         <p class="text-sm font-semibold text-gray-600 mb-2 border-b pb-1">💰 ค่าธรรมเนียมเฉพาะร้าน <span class="text-xs text-gray-400 font-normal">(ว่าง = ใช้ค่าเริ่มต้นระบบ)</span></p>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div data-merchant-service-panel="food" class="md:col-span-2 lg:col-span-3">
+            <label class="block text-sm font-medium mb-1">แพ็กเกจ GP</label>
+            <select id="editMrcGpPlan" onchange="applyGpPlanToMerchantForm()" class="w-full border rounded-lg px-3 py-2 text-sm">
+              <option value="" ${m.gp_plan_id ? '' : 'selected'}>ดีลตรง / ตั้งค่าเอง</option>
+              ${gpPlanOptions}
+            </select>
+            <p class="text-xs text-gray-400 mt-0.5">เลือกแพ็กเกจเพื่อเติมค่า GP/ค่าส่งอัตโนมัติ · ถ้าแก้ค่าให้ต่างจากแพ็กเกจ ระบบจะถือเป็นดีลตรง (ร้านเปลี่ยนเองไม่ได้) · การเปลี่ยนโดยแอดมินไม่นับรอบเปลี่ยนเดือนละครั้งของร้าน</p>
+          </div>
           <div data-merchant-service-panel="food">
             <label class="block text-sm font-medium mb-1">GP Share (%)</label>
             <input id="editMrcGP" type="number" value="${m.gp_rate != null ? (m.gp_rate * 100).toFixed(0) : ''}" class="w-full border rounded-lg px-3 py-2 text-sm" min="0" max="50" step="1" placeholder="ค่าเริ่มต้นระบบ">
@@ -677,6 +697,10 @@ export async function submitEditMerchant(id, ctx) {
       custom_per_km: perKmVal !== '' ? parseFloat(perKmVal) : null,
       custom_delivery_fee: deliveryFeeVal !== '' ? parseFloat(deliveryFeeVal) : null,
       custom_service_fee: serviceFeeVal !== '' ? parseFloat(serviceFeeVal) : null,
+      // food เท่านั้น — server จะล้างเป็น NULL เองถ้าค่าไม่ตรงกับแพ็กเกจ (ดีลตรง)
+      ...(serviceType === 'food'
+        ? { gp_plan_id: document.getElementById('editMrcGpPlan')?.value || null }
+        : {}),
       shop_status: document.getElementById('editMrcOpenStatus')?.value !== 'closed',
       order_accept_mode: document.getElementById('editMrcAcceptMode')?.value || 'manual',
       shop_auto_schedule_enabled: !!document.getElementById('editMrcAutoSchedule')?.checked,
@@ -783,6 +807,26 @@ function gpPlanNum(value) {
   const n = parseFloat(value ?? 0);
   if (!Number.isFinite(n)) return '0';
   return n % 1 === 0 ? n.toFixed(0) : n.toString();
+}
+
+/** เติมค่าจากแพ็กเกจที่เลือกลงฟอร์มแก้ร้าน (ไม่บันทึกจนกด "บันทึก") */
+export function applyGpPlanToMerchantForm() {
+  const planId = document.getElementById('editMrcGpPlan')?.value;
+  if (!planId) return; // ดีลตรง: คงค่าที่กรอกไว้
+  const p = (globalThis._gpPlansCache || []).find((x) => x.id === planId);
+  if (!p) return;
+  const set = (elId, v) => {
+    const el = document.getElementById(elId);
+    if (el) el.value = v;
+  };
+  const pct = (rate) => (rate == null ? '' : String(Math.round(parseFloat(rate) * 1000) / 10));
+  set('editMrcGP', pct(p.gp_rate));
+  set('editMrcGpSystemRate', pct(p.gp_system_rate));
+  set('editMrcGpDriverRate', pct(p.gp_driver_rate));
+  set('editMrcBaseFare', p.base_delivery_fee ?? '');
+  set('editMrcBaseDist', p.base_distance_km ?? '');
+  set('editMrcPerKm', p.per_km_charge ?? '');
+  set('editMrcDeliveryFee', ''); // แพ็กเกจคิดค่าส่งตามระยะ ไม่ใช้ค่าส่งคงที่
 }
 
 export async function showGpPlansManager(ctx) {
@@ -953,10 +997,12 @@ export function wireMerchantsBridge() {
   globalThis.__adminWebBridge.showGpPlanForm = showGpPlanForm;
   globalThis.__adminWebBridge.submitGpPlan = submitGpPlan;
   globalThis.__adminWebBridge.deleteGpPlan = deleteGpPlan;
+  globalThis.__adminWebBridge.applyGpPlanToMerchantForm = applyGpPlanToMerchantForm;
 
   globalThis.copyMerchantIdForStoreOs = copyMerchantIdForStoreOs;
   globalThis.showGpPlansManager = showGpPlansManager;
   globalThis.showGpPlanForm = showGpPlanForm;
   globalThis.submitGpPlan = submitGpPlan;
   globalThis.deleteGpPlan = deleteGpPlan;
+  globalThis.applyGpPlanToMerchantForm = applyGpPlanToMerchantForm;
 }

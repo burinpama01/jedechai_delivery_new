@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../common/services/wallet_service.dart';
 import '../../../common/services/auth_service.dart';
+import '../../../common/services/beam_topup_service.dart';
 import '../../../common/services/promptpay_service.dart';
 import '../../../common/services/notification_sender.dart';
 import '../../../common/services/admin_line_notification_service.dart';
@@ -47,6 +49,17 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
   File? _selectedSlipFile;
   String? _selectedSlipFileName;
 
+  // โหมดเติมเงินจาก system_config.topup_mode: admin_approve (แนบสลิป) | beam
+  String _topupMode = 'admin_approve';
+  bool get _isBeamMode => _topupMode == 'beam';
+
+  // Beam state
+  BeamTopupCharge? _beamCharge;
+  Timer? _beamPollTimer;
+  Timer? _beamCountdownTimer;
+  String? _beamStatusMessage;
+  bool _beamPollInFlight = false;
+
   // จำนวนเงินที่เลือกได้
   final List<double> _presetAmounts = [50, 100, 200, 500, 1000, 2000];
 
@@ -55,12 +68,222 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
     super.initState();
     _loadBalance();
     _loadHistory();
+    _loadTopupMode();
   }
 
   @override
   void dispose() {
+    _stopBeamTimers();
     _amountController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadTopupMode() async {
+    final mode = await BeamTopupService.fetchTopupMode();
+    if (mounted) setState(() => _topupMode = mode);
+  }
+
+  // ══════════════════════════════════════════
+  // Beam Checkout Flow (QR PromptPay อัตโนมัติ)
+  // ══════════════════════════════════════════
+
+  void _stopBeamTimers() {
+    _beamPollTimer?.cancel();
+    _beamPollTimer = null;
+    _beamCountdownTimer?.cancel();
+    _beamCountdownTimer = null;
+  }
+
+  void _resetBeamState() {
+    _stopBeamTimers();
+    _beamCharge = null;
+    _beamStatusMessage = null;
+  }
+
+  Future<void> _createBeamCharge(double amount) async {
+    try {
+      final charge = await BeamTopupService.createCharge(amount);
+      if (!mounted) return;
+      setState(() {
+        _beamCharge = charge;
+        _beamStatusMessage = null;
+      });
+      _beamPollTimer = Timer.periodic(
+        const Duration(seconds: 4),
+        (_) => _pollBeamStatus(),
+      );
+      _beamCountdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) setState(() {});
+      });
+    } on BeamTopupException catch (e) {
+      if (e.reason == 'beam_disabled') {
+        // แอดมินสลับกลับเป็นแนบสลิประหว่างนี้ — โหลดโหมดใหม่
+        await _loadTopupMode();
+      }
+      if (mounted) _showErrorDialog(e.message);
+    } finally {
+      if (mounted) setState(() => _isGenerating = false);
+    }
+  }
+
+  Future<void> _pollBeamStatus({bool manual = false}) async {
+    final charge = _beamCharge;
+    if (charge == null || _beamPollInFlight) return;
+    _beamPollInFlight = true;
+    if (manual && mounted) setState(() => _isCheckingStatus = true);
+    try {
+      final status = await BeamTopupService.checkStatus(charge.requestId);
+      if (!mounted || _beamCharge?.requestId != charge.requestId) return;
+      switch (status) {
+        case 'completed':
+          _stopBeamTimers();
+          setState(() {
+            _autoTopupCompleted = true;
+            _beamCharge = null;
+          });
+          await _loadBalance();
+          await _loadHistory();
+          break;
+        case 'failed':
+          _stopBeamTimers();
+          setState(() => _beamStatusMessage =
+              'การชำระเงินไม่สำเร็จ กรุณาสร้าง QR ใหม่');
+          break;
+        case 'expired':
+          _stopBeamTimers();
+          setState(() => _beamStatusMessage =
+              'QR หมดอายุแล้ว — ถ้าชำระแล้ว ระบบจะเติมเงินให้อัตโนมัติ ไม่ต้องจ่ายซ้ำ');
+          break;
+        case 'manual_review':
+          _stopBeamTimers();
+          setState(() => _beamStatusMessage =
+              'ได้รับการชำระเงินแล้ว รอแอดมินตรวจสอบยอด');
+          break;
+        default:
+          if (manual) {
+            setState(() => _beamStatusMessage = 'ยังไม่พบการชำระเงิน');
+          }
+      }
+    } catch (e) {
+      debugLog('⚠️ beam status poll error: $e');
+    } finally {
+      _beamPollInFlight = false;
+      if (manual && mounted) setState(() => _isCheckingStatus = false);
+    }
+  }
+
+  String _beamCountdownText() {
+    final exp = _beamCharge?.expiresAt;
+    if (exp == null) return '';
+    final left = exp.difference(DateTime.now());
+    if (left.isNegative) return 'QR หมดอายุแล้ว';
+    final m = left.inMinutes.toString().padLeft(2, '0');
+    final sec = left.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return 'QR หมดอายุใน $m:$sec';
+  }
+
+  Widget _buildBeamPaymentSection() {
+    final charge = _beamCharge!;
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            const Text('สแกน QR PromptPay เพื่อชำระเงิน',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Text(
+              'ชำระผ่าน Beam — เงินเข้า Wallet อัตโนมัติ ไม่ต้องแนบสลิป',
+              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              textAlign: TextAlign.center,
+            ),
+            if (charge.isPlayground) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text('โหมดทดสอบ (Playground)',
+                    style: TextStyle(fontSize: 12, color: Colors.orange)),
+              ),
+            ],
+            const SizedBox(height: 16),
+            Container(
+              width: 260,
+              height: 260,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey[200]!),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: charge.qrImageBytes != null
+                    ? Image.memory(charge.qrImageBytes!, fit: BoxFit.contain)
+                    : const Center(child: Text('ไม่พบรูป QR')),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              AppLocalizations.of(context)!
+                  .topupAmount(charge.amount.toStringAsFixed(0)),
+              style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.accentBlue),
+            ),
+            const SizedBox(height: 6),
+            Text(_beamCountdownText(),
+                style: TextStyle(fontSize: 13, color: Colors.grey[600])),
+            const SizedBox(height: 12),
+            if (_beamStatusMessage != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(_beamStatusMessage!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.orange)),
+              )
+            else
+              const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2)),
+                  SizedBox(width: 8),
+                  Text('รอการชำระเงิน...'),
+                ],
+              ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _isCheckingStatus
+                        ? null
+                        : () => _pollBeamStatus(manual: true),
+                    child: const Text('ตรวจสอบสถานะ'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => setState(_resetBeamState),
+                    child: const Text('สร้าง QR ใหม่'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _loadBalance() async {
@@ -86,6 +309,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
       _selectedAmount = amount;
       _amountController.text = amount.toStringAsFixed(0);
       // reset QR state เมื่อเลือกจำนวนเงินใหม่
+      _resetBeamState();
       _qrImageUrl = null;
       _requestSent = false;
       _autoTopupCompleted = false;
@@ -115,6 +339,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
     setState(() {
       _isGenerating = true;
       _selectedAmount = amount;
+      _resetBeamState();
       _qrImageUrl = null;
       _requestSent = false;
       _autoTopupCompleted = false;
@@ -122,6 +347,12 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
       _selectedSlipFileName = null;
     });
 
+    // เช็คโหมดล่าสุดก่อนสร้าง QR (แอดมินอาจเพิ่งสลับ)
+    await _loadTopupMode();
+    if (_isBeamMode) {
+      await _createBeamCharge(amount);
+      return;
+    }
     await _generateLocalQR(amount);
   }
 
@@ -830,6 +1061,8 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                   const SizedBox(height: 20),
                   if (_autoTopupCompleted) ...[
                     _buildAutoTopupCompletedCard(),
+                  ] else if (_beamCharge != null) ...[
+                    _buildBeamPaymentSection(),
                   ] else if (_requestSent) ...[
                     _buildRequestSentCard(),
                   ] else if (hasQR) ...[
@@ -967,6 +1200,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                 setState(() {
                   _selectedAmount = amount;
                   // reset QR เมื่อเปลี่ยนจำนวนเงิน
+                  _resetBeamState();
                   _qrImageUrl = null;
                   _requestSent = false;
                   _autoTopupCompleted = false;
@@ -1453,21 +1687,34 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                 ? DateFormat('dd/MM/yyyy HH:mm')
                     .format(DateTime.parse(r['created_at']).toLocal())
                 : '-';
+            // สถานะจาก Beam: awaiting_payment / expired / failed
+            final isBeamClosed = status == 'expired' || status == 'failed';
             final statusColor = status == 'completed'
                 ? Colors.green
                 : status == 'rejected'
                     ? Colors.red
-                    : Colors.orange;
+                    : isBeamClosed
+                        ? Colors.grey
+                        : Colors.orange;
             final statusText = status == 'completed'
                 ? AppLocalizations.of(context)!.topupStatusApproved
                 : status == 'rejected'
                     ? AppLocalizations.of(context)!.topupStatusRejected
-                    : AppLocalizations.of(context)!.topupStatusPending;
+                    : status == 'awaiting_payment'
+                        ? 'รอชำระเงิน'
+                        : status == 'expired'
+                            ? 'QR หมดอายุ'
+                            : status == 'failed'
+                                ? 'ชำระไม่สำเร็จ'
+                                : AppLocalizations.of(context)!
+                                    .topupStatusPending;
             final statusIcon = status == 'completed'
                 ? Icons.check_circle
                 : status == 'rejected'
                     ? Icons.cancel
-                    : Icons.hourglass_top;
+                    : isBeamClosed
+                        ? Icons.remove_circle_outline
+                        : Icons.hourglass_top;
 
             return Card(
               margin: const EdgeInsets.only(bottom: 8),

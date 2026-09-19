@@ -2,14 +2,14 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Environment Configuration
 ///
-/// Centralized access to all environment variables from .env file
-/// All secrets/keys are loaded from .env instead of being hardcoded
+/// Centralized access to public client config from `.env.client`
+/// (bundled into the app as a Flutter asset — anyone can read it from the APK/IPA).
+/// NEVER add service keys, secret keys, private keys or database URLs here;
+/// server-side secrets belong in Supabase secrets / Edge Functions.
 class EnvConfig {
   // Supabase
   static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
   static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
-  static String get supabaseServiceKey =>
-      dotenv.env['SUPABASE_SERVICE_KEY'] ?? '';
 
   // Google Maps
   static String get googleMapsApiKey => dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
@@ -22,18 +22,13 @@ class EnvConfig {
   static String get firebaseProjectId =>
       dotenv.env['FIREBASE_PROJECT_ID'] ?? '';
 
-  // Omise Payment Gateway
-  static String get omisePublicKey => dotenv.env['OMISE_PUBLIC_KEY'] ?? '';
-  static String get omiseSecretKey => dotenv.env['OMISE_SECRET_KEY'] ?? '';
-
-  static bool get isOmiseConfigured =>
-      omisePublicKey.isNotEmpty && omiseSecretKey.isNotEmpty;
+  // Omise Payment Gateway — ปิดแล้ว (กำลังเปลี่ยนเป็น Beam ผ่าน server)
+  // คืนค่าว่างเสมอเพื่อไม่ให้ flow Omise ฝั่งแอปทำงาน
+  static String get omisePublicKey => '';
 
   // Validation
   static bool get isSupabaseConfigured =>
       supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
-
-  static bool get isServiceKeyConfigured => supabaseServiceKey.isNotEmpty;
 
   static bool get isGoogleMapsConfigured => googleMapsApiKey.isNotEmpty;
 
