@@ -240,6 +240,13 @@ class WalletService {
   ///
   /// Returns: Map with 'platformFee', 'merchantGP', 'totalDeduction', 'driverNetIncome'
   ///          or null if failed
+  ///
+  /// ISSUE-109: หักเงินอย่างเดียวโดยไม่ผูกกับการเปลี่ยนสถานะ booking จึงไม่
+  /// atomic กับการปิดงาน ให้ใช้ BookingService.completeBooking() แทน ซึ่ง
+  /// เรียก RPC complete_booking (ล็อกแถว + เช็คสถานะ + settle ในครั้งเดียว)
+  @Deprecated(
+    'ใช้ BookingService.completeBooking() แทน — เมธอดนี้ไม่ atomic กับสถานะงาน (ISSUE-109)',
+  )
   Future<Map<String, double>?> deductFoodCommission({
     required String driverId,
     required double deliveryFee,
@@ -396,6 +403,12 @@ class WalletService {
   /// [bookingId] - ID ของการจอง
   ///
   /// Returns: true ถ้าหักเงินสำเร็จ
+  ///
+  /// ISSUE-109: ดูหมายเหตุของ deductFoodCommission — ให้ใช้
+  /// BookingService.completeBooking() แทน
+  @Deprecated(
+    'ใช้ BookingService.completeBooking() แทน — เมธอดนี้ไม่ atomic กับสถานะงาน (ISSUE-109)',
+  )
   Future<bool> deductCommission({
     required String driverId,
     required int jobPrice,

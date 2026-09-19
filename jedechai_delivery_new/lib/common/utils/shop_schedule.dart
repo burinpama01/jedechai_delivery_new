@@ -37,19 +37,29 @@ bool isShopOpenNow(Map<String, dynamic> merchant, {DateTime? nowUtc}) {
   final openMinutes = openHour * 60 + openMinute;
   final closeMinutes = closeHour * 60 + closeMinute;
 
-  final withinHours = openMinutes <= closeMinutes
-      ? nowMinutes >= openMinutes && nowMinutes < closeMinutes
-      : nowMinutes >= openMinutes || nowMinutes < closeMinutes;
+  final isOvernight = openMinutes > closeMinutes;
+  final withinHours = isOvernight
+      ? nowMinutes >= openMinutes || nowMinutes < closeMinutes
+      : nowMinutes >= openMinutes && nowMinutes < closeMinutes;
 
   final rawDays = merchant['shop_open_days'];
   if (rawDays is List && rawDays.isNotEmpty) {
     const weekdayKeys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-    final todayKey = weekdayKeys[bangkokNow.weekday - 1];
+
+    // ISSUE-112: กะที่เปิดคร่อมเที่ยงคืน (เช่น 18:00–02:00) ช่วงหลังเที่ยงคืน
+    // ยังนับเป็น "กะของเมื่อวาน" ถ้าเทียบกับ weekday ของวันนี้ ร้านที่ตั้ง
+    // shop_open_days = ['fri'] จะหายไปจากรายการทันทีที่ผ่านเที่ยงคืน
+    final isPastMidnightPartOfShift = isOvernight && nowMinutes < closeMinutes;
+    final shiftStartDay = isPastMidnightPartOfShift
+        ? bangkokNow.subtract(const Duration(days: 1))
+        : bangkokNow;
+    final shiftDayKey = weekdayKeys[shiftStartDay.weekday - 1];
+
     final allowedDays = rawDays
         .map((e) => e.toString().toLowerCase().trim())
         .where((e) => weekdayKeys.contains(e))
         .toSet();
-    if (allowedDays.isNotEmpty && !allowedDays.contains(todayKey)) {
+    if (allowedDays.isNotEmpty && !allowedDays.contains(shiftDayKey)) {
       return false;
     }
   }

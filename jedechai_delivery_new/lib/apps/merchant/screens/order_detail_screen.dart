@@ -1810,10 +1810,13 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                         final itemName = item['name'] as String? ??
                             item['item_name'] as String? ??
                             l10n.orderDetailItemNotSpecified;
-                        final quantity = item['quantity'] as int? ?? 1;
-                        final itemPrice = item['price'] is int
-                            ? (item['price'] as int).toDouble()
-                            : (item['price'] as num?)?.toDouble() ?? 0.0;
+                        final quantity = (item['quantity'] as num?)?.toInt() ?? 1;
+                        // ISSUE-111: booking_items.price = ราคาต่อหน่วย
+                        // ต้องคูณ quantity ให้ตรงกับหน้าหลัก (build())
+                        // ไม่งั้นออเดอร์ที่ quantity >= 2 จะแสดงยอดคนละค่า
+                        final unitPrice =
+                            (item['price'] as num?)?.toDouble() ?? 0.0;
+                        final itemPrice = unitPrice * quantity;
 
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 8),

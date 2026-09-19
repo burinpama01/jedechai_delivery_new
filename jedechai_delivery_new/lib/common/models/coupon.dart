@@ -1,3 +1,5 @@
+import '../utils/app_time.dart';
+
 /// Coupon Model
 ///
 /// Represents a discount coupon/voucher
@@ -97,9 +99,16 @@ class Coupon {
       merchantGpChargeRate: (json['merchant_gp_charge_rate'] as num?)?.toDouble() ?? 0.0,
       merchantGpSystemRate: (json['merchant_gp_system_rate'] as num?)?.toDouble() ?? 0.0,
       merchantGpDriverRate: (json['merchant_gp_driver_rate'] as num?)?.toDouble() ?? 0.0,
-      startDate: json['start_date'] != null ? DateTime.parse(json['start_date'] as String) : null,
-      endDate: json['end_date'] != null ? DateTime.parse(json['end_date'] as String) : null,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      // ISSUE-113: ใช้ AppTime.parseDbTimestamp ให้ตรงกับ policy เวลาของโปรเจค
+      // DateTime.parse ดิบ ๆ จะตีความ string ที่ไม่มี offset เป็นเวลาเครื่อง
+      // ทำให้วันหมดอายุคูปองเพี้ยนไปตาม timezone ของผู้ใช้
+      startDate: json['start_date'] != null
+          ? AppTime.parseDbTimestamp(json['start_date'] as String)
+          : null,
+      endDate: json['end_date'] != null
+          ? AppTime.parseDbTimestamp(json['end_date'] as String)
+          : null,
+      createdAt: AppTime.parseDbTimestamp(json['created_at'] as String),
     );
   }
 
@@ -142,14 +151,18 @@ class Coupon {
   static bool isSystemCouponCode(String? code) =>
       _systemCouponCodes.contains(code?.trim().toUpperCase());
 
-  /// Bangkok time (UTC+7) for server-aligned date validation.
-  static DateTime _bangkokNow() =>
-      DateTime.now().toUtc().add(const Duration(hours: 7));
+  /// ISSUE-113: ใช้ instant จริง (UTC) ในการเทียบ ไม่ใช่ UTC ที่บวก 7 ชม.
+  ///
+  /// เดิม `DateTime.now().toUtc().add(7h)` ให้ค่าที่ล้ำหน้า instant จริงไป
+  /// 7 ชั่วโมง เมื่อเทียบกับ endDate ที่ parse มาเป็น instant จะตัดสินว่า
+  /// คูปองหมดอายุเร็วเกินไป การเทียบ instant กับ instant ตรง ๆ ถูกต้องอยู่แล้ว
+  /// เพราะ DateTime.isAfter/isBefore เทียบที่ absolute time ไม่ใช่ wall clock
+  static DateTime _nowInstant() => DateTime.now().toUtc();
 
   /// Check if coupon is currently valid (active + within date range).
   /// Uses Bangkok time to match server-side schedule.
   bool get isValid {
-    final now = _bangkokNow();
+    final now = _nowInstant();
     return isActive &&
         (startDate == null || now.isAfter(startDate!)) &&
         (endDate == null || now.isBefore(endDate!)) &&
@@ -157,7 +170,7 @@ class Coupon {
   }
 
   /// Check if coupon has expired (Bangkok time). Returns false if no end date set.
-  bool get isExpired => endDate != null && _bangkokNow().isAfter(endDate!);
+  bool get isExpired => endDate != null && _nowInstant().isAfter(endDate!);
 
   /// Check if coupon has reached its usage limit
   bool get isUsedUp => usageLimit > 0 && usedCount >= usageLimit;

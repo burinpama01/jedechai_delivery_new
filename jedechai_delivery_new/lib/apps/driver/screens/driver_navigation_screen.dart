@@ -1695,33 +1695,21 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       debugLog('📋 Booking ID: ${widget.bookingId}');
       debugLog('👤 Driver ID: ${AuthService.userId}');
 
-      // Add timestamp for debugging
-      final timestamp = DateTime.now().toIso8601String();
-      debugLog('🕐 Update timestamp: $timestamp');
-
-      // Prepare update data
-      final updateData = {
-        'status': newStatus,
-        'updated_at': timestamp,
-      };
-
-      // Add driver_id if not already set
-      if (_booking!.driverId == null || _booking!.driverId!.isEmpty) {
-        final driverId = AuthService.userId;
-        if (driverId != null) {
-          updateData['driver_id'] = driverId;
-          debugLog('👤 Adding driver_id: $driverId');
-        } else {
-          debugLog('❌ Driver ID is null - cannot update');
-          if (mounted) {
-            _showErrorSnackBar(
-                AppLocalizations.of(context)!.driverNavNoDriverData);
-          }
-          return false;
+      // ISSUE-114: เดิมตรงนี้ประกอบ map `updateData` (รวมการ backfill
+      // driver_id) แล้ว debugLog ว่า "กำลังส่งข้อมูล" — แต่ทุก branch
+      // ด้านล่างเรียก RPC ที่ไม่รับ map นี้เลย ค่าที่ประกอบไว้จึงไม่เคยถูก
+      // ส่งขึ้น DB จริง การ backfill driver_id จึงไม่เคยเกิดขึ้น
+      // สถานะและ driver_id ถูกจัดการโดย RPC ฝั่ง Postgres อยู่แล้ว
+      // (accept_booking ตั้ง driver_id, complete_booking/…_guarded ตั้งสถานะ)
+      // เหลือไว้เฉพาะการเช็คว่าคนขับล็อกอินอยู่จริง
+      if (AuthService.userId == null) {
+        debugLog('❌ Driver ID is null - cannot update');
+        if (mounted) {
+          _showErrorSnackBar(
+              AppLocalizations.of(context)!.driverNavNoDriverData);
         }
+        return false;
       }
-
-      debugLog('📤 Update data: $updateData');
 
       // Use BookingService to update status
       final bookingService = BookingService();

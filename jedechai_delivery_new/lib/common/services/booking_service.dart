@@ -502,15 +502,26 @@ class BookingService {
 
   /// Update booking status
   ///
-  /// Automatically handles financial logic when status is 'completed':
-  /// - Food orders: Platform Fee (15% of delivery_fee) + Merchant GP (10% of food price)
-  /// - Other orders: Standard commission deduction (from system_config)
+  /// ISSUE-109: เมธอดนี้ "ห้าม" ใช้ปิดงานอีกต่อไป
   ///
-  /// Saves driver_earnings and app_earnings to booking record.
+  /// เดิมมี branch newStatus == 'completed' ที่ UPDATE สถานะก่อนแล้วค่อยหัก
+  /// ค่าคอมทีหลัง โดยไม่เช็คสถานะเดิมและไม่มี idempotency ใด ๆ การเรียกซ้ำ
+  /// (retry / กดซ้ำ / แอดมินตั้งสถานะใหม่) จึงหักเงินคนขับซ้ำได้ และถ้าการ
+  /// หักเงินล้มเหลวก็แค่ debugLog ทิ้งไว้ ทั้งที่ booking เป็น completed แล้ว
+  ///
+  /// การปิดงานต้องผ่าน [completeBooking] เท่านั้น ซึ่งเรียก RPC
+  /// `complete_booking` ที่ล็อกแถว + เช็คสถานะ + settle ให้จบใน transaction เดียว
   Future<void> updateBookingStatus(
     String bookingId,
     String newStatus,
   ) async {
+    if (newStatus == 'completed') {
+      throw ArgumentError(
+        'ห้ามปิดงานผ่าน updateBookingStatus — ใช้ completeBooking(bookingId) '
+        'ซึ่งหักค่าคอมและปิดงานแบบ atomic (ISSUE-109)',
+      );
+    }
+
     debugLog('🔍 DEBUG: updateBookingStatus called');
     debugLog('   └─ Booking ID: $bookingId');
     debugLog('   └─ New Status: $newStatus');
@@ -539,151 +550,6 @@ class BookingService {
         .update({'status': newStatus}).eq('id', bookingId);
 
     debugLog('✅ DEBUG: Booking status updated in database');
-
-    // If job is completed, handle financial deductions
-    if (newStatus == 'completed') {
-      try {
-        debugLog('🔍 DEBUG: Job completed, processing financial logic...');
-        debugLog('   └─ Booking ID: $bookingId');
-
-        // Fetch booking details
-        final booking = await getBookingById(bookingId);
-        debugLog('   └─ Booking data: ${booking?.toJson()}');
-
-        if (booking == null || booking.driverId == null) {
-          debugLog('❌ Missing required data for commission deduction:');
-          debugLog('   └─ Booking exists: ${booking != null}');
-          debugLog('   └─ Driver ID exists: ${booking?.driverId != null}');
-          return;
-        }
-
-        final walletService = WalletService();
-
-        if (booking.serviceType == 'food') {
-          final configService = SystemConfigService();
-          await configService.fetchSettings();
-          final merchantFoodConfig = await _getMerchantFoodConfig(
-            merchantId: booking.merchantId,
-            configService: configService,
-          );
-          final driverDeliverySystemRate =
-              await _getDriverDeliverySystemRateOverride(booking.driverId) ??
-                  merchantFoodConfig.deliverySystemRate;
-
-          // ── Food Order Financial Logic ──
-          // price = food cost (menu items total)
-          // delivery_fee = delivery fee
-          final foodPrice = booking.price;
-          final deliveryFee = booking.deliveryFee ?? 0;
-          Map<String, dynamic>? couponUsage;
-          String? couponCode;
-          double couponDiscountAmount = 0.0;
-          try {
-            couponUsage = await _client
-                .from('coupon_usages')
-                .select('discount_amount, coupon:coupons(code)')
-                .eq('booking_id', bookingId)
-                .maybeSingle();
-            if (couponUsage != null) {
-              couponDiscountAmount =
-                  (couponUsage['discount_amount'] as num?)?.toDouble() ?? 0.0;
-              final coupon = couponUsage['coupon'] as Map<String, dynamic>?;
-              couponCode = coupon?['code'] as String?;
-            }
-          } catch (e) {
-            debugLog('⚠️ Failed to load coupon usage for completion: $e');
-          }
-          final couponFinance = await _getFoodCouponFinanceContext(
-            bookingId: bookingId,
-            merchantId: booking.merchantId,
-            deliveryFee: deliveryFee,
-          );
-          final applyFreeDeliveryAdjustment = couponFinance != null;
-
-          debugLog('💰 Food Order Completion:');
-          debugLog('   └─ Food Price: $foodPrice');
-          debugLog('   └─ Delivery Fee: $deliveryFee');
-          debugLog('   └─ Merchant mode: ${merchantFoodConfig.summary}');
-          if (applyFreeDeliveryAdjustment) {
-            debugLog('   └─ Applying merchant free-delivery GP split');
-          }
-
-          final result = await walletService.deductFoodCommission(
-            driverId: booking.driverId!,
-            deliveryFee: deliveryFee,
-            foodPrice: foodPrice,
-            bookingId: bookingId,
-            couponCode: couponCode,
-            couponDiscountAmount: couponDiscountAmount,
-            deliverySystemRateOverride: driverDeliverySystemRate,
-            merchantGpSystemRateOverride:
-                merchantFoodConfig.merchantGpSystemRate,
-            merchantGpDriverRateOverride:
-                merchantFoodConfig.merchantGpDriverRate,
-            applyMerchantFreeDeliveryAdjustment: applyFreeDeliveryAdjustment,
-            merchantFreeDeliveryChargeRate:
-                couponFinance?['chargeRate'] ?? 0.25,
-            merchantFreeDeliverySystemRate:
-                couponFinance?['systemRate'] ?? 0.10,
-            merchantFreeDeliveryDriverRate:
-                couponFinance?['driverRate'] ?? 0.15,
-          );
-
-          if (result != null) {
-            // Update booking with earnings breakdown
-            await _client.from('bookings').update({
-              'driver_earnings': result['driverNetIncome'],
-              'app_earnings': result['appEarnings'] ?? result['totalDeduction'],
-            }).eq('id', bookingId);
-
-            debugLog('✅ Food commission deducted & earnings saved:');
-            debugLog(
-                '   └─ Delivery System Fee: ${result['deliverySystemFee'] ?? result['platformFee']}');
-            debugLog(
-                '   └─ Merchant GP (System): ${result['merchantSystemGP'] ?? result['merchantGP']}');
-            debugLog(
-                '   └─ Merchant GP (Driver): ${result['merchantDriverGP'] ?? 0}');
-            debugLog('   └─ Total Deduction: ${result['totalDeduction']}');
-            debugLog('   └─ Driver Net Income: ${result['driverNetIncome']}');
-          } else {
-            debugLog('❌ Food commission deduction failed for job: $bookingId');
-          }
-        } else {
-          // ── Ride/Parcel: Standard commission logic ──
-          debugLog('   └─ Driver ID: ${booking.driverId}');
-          debugLog('   └─ Job Price: ${booking.price}');
-
-          final success = await walletService.deductCommission(
-            driverId: booking.driverId!,
-            jobPrice: booking.price.toInt(),
-            bookingId: bookingId,
-          );
-
-          if (success) {
-            // Calculate and save earnings for ride/parcel
-            final configService = SystemConfigService();
-            await configService.fetchSettings();
-            final commission =
-                configService.calculateCommission(booking.price.toInt());
-            final driverNet = booking.price - commission;
-
-            await _client.from('bookings').update({
-              'driver_earnings': driverNet,
-              'app_earnings': commission,
-            }).eq('id', bookingId);
-
-            debugLog('✅ Commission deducted for completed job: $bookingId');
-            debugLog('   └─ Commission: $commission');
-            debugLog('   └─ Driver Net: $driverNet');
-          } else {
-            debugLog('❌ Commission deduction failed for job: $bookingId');
-          }
-        }
-      } catch (e) {
-        debugLog('❌ ERROR: Failed to process completion financials: $e');
-        debugLog('   └─ Stack trace: ${StackTrace.current}');
-      }
-    }
   }
 
   Future<void> updateBookingStatusGuarded(
@@ -1179,17 +1045,26 @@ class BookingService {
 
   /// Insert booking items for food orders
   /// DB columns: booking_id, menu_item_id, name, price, quantity
+  ///
+  /// ISSUE-111: `booking_items.price` = **ราคาต่อหน่วย** (รวม options แล้ว)
+  /// แต่ CartItem.toJson() ส่ง `price` มาเป็นราคารวมทั้งบรรทัด
+  /// ((base + options) × quantity) จึงต้องหารด้วย quantity ก่อนบันทึก
+  /// ให้ตรงกับเส้นทาง food_checkout_screen มิฉะนั้นหน้าแสดงผลที่คูณ
+  /// quantity ซ้ำจะได้ quantity² × ราคาต่อหน่วย
   Future<void> insertBookingItems(
       String bookingId, List<Map<String, dynamic>> items) async {
     try {
       final bookingItems = items.map((item) {
         final selectedOptions = item['selected_options'];
+        final quantity = ((item['quantity'] as num?) ?? 1).toInt();
+        final lineTotal = (item['price'] as num?)?.toDouble() ?? 0.0;
+        final unitPrice = quantity > 0 ? lineTotal / quantity : lineTotal;
         return {
           'booking_id': bookingId,
           'menu_item_id': item['id'],
           'name': item['name'],
-          'price': item['price'],
-          'quantity': item['quantity'] ?? 1,
+          'price': unitPrice,
+          'quantity': quantity,
           'selected_options':
               selectedOptions is List ? selectedOptions : <String>[],
           'options': selectedOptions is List ? selectedOptions : <String>[],
