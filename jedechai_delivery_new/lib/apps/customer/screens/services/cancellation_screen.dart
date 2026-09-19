@@ -194,6 +194,7 @@ class _CancellationScreenState extends State<CancellationScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
     final reasons = _getReasons(context);
     final serviceLabel = {
           'food': l10n.cancelServiceFood,
@@ -220,7 +221,7 @@ class _CancellationScreenState extends State<CancellationScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: colorScheme.surfaceContainer,
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: [
                         BoxShadow(
@@ -245,34 +246,42 @@ class _CancellationScreenState extends State<CancellationScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(serviceLabel,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 16,
-                                      fontWeight: FontWeight.bold)),
+                                      fontWeight: FontWeight.bold,
+                                      color: colorScheme.onSurface)),
                               const SizedBox(height: 4),
                               Text(
                                   OrderCodeFormatter.formatByServiceType(
                                     widget.booking.id,
                                     serviceType: widget.booking.serviceType,
                                   ),
-                                  style: const TextStyle(
-                                      fontSize: 13, color: Colors.grey)),
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      color: colorScheme.onSurfaceVariant)),
                             ],
                           ),
                         ),
                         Text('฿${_displayAmount.ceil()}',
-                            style: const TextStyle(
-                                fontSize: 17, fontWeight: FontWeight.bold)),
+                            style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.onSurface)),
                       ],
                     ),
                   ),
 
                   const SizedBox(height: 24),
                   Text(l10n.cancelReasonsTitle,
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold)),
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface)),
                   const SizedBox(height: 4),
                   Text(l10n.cancelReasonsSubtitle,
-                      style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                      style: TextStyle(
+                          fontSize: 14,
+                          color: colorScheme.onSurfaceVariant)),
                   const SizedBox(height: 16),
 
                   // รายการเหตุผล
@@ -289,19 +298,19 @@ class _CancellationScreenState extends State<CancellationScreen> {
                               horizontal: 16, vertical: 14),
                           decoration: BoxDecoration(
                             color:
-                                isSelected ? Colors.red.shade50 : Colors.white,
+                                isSelected ? Colors.red.shade50 : colorScheme.surfaceContainer,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: isSelected
                                   ? Colors.red
-                                  : Colors.grey.shade200,
+                                  : colorScheme.outlineVariant,
                               width: isSelected ? 1.5 : 1,
                             ),
                           ),
                           child: Row(
                             children: [
                               Icon(reason['icon'] as IconData,
-                                  color: isSelected ? Colors.red : Colors.grey,
+                                  color: isSelected ? Colors.red : colorScheme.onSurfaceVariant,
                                   size: 22),
                               const SizedBox(width: 12),
                               Expanded(
@@ -324,7 +333,7 @@ class _CancellationScreenState extends State<CancellationScreen> {
                                     : Icons.radio_button_off,
                                 color: isSelected
                                     ? Colors.red
-                                    : Colors.grey.shade400,
+                                    : colorScheme.onSurfaceVariant,
                                 size: 22,
                               ),
                             ],
@@ -341,9 +350,11 @@ class _CancellationScreenState extends State<CancellationScreen> {
                       controller: _otherReasonController,
                       maxLines: 3,
                       maxLength: 300,
+                      style: TextStyle(color: colorScheme.onSurface),
                       decoration: InputDecoration(
                         hintText: l10n.cancelOtherHint,
-                        hintStyle: TextStyle(color: Colors.grey.shade400),
+                        hintStyle:
+                            TextStyle(color: colorScheme.onSurfaceVariant),
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12)),
                         focusedBorder: OutlineInputBorder(
@@ -352,7 +363,7 @@ class _CancellationScreenState extends State<CancellationScreen> {
                               const BorderSide(color: Colors.red, width: 1.5),
                         ),
                         filled: true,
-                        fillColor: Colors.grey.shade50,
+                        fillColor: colorScheme.surfaceContainerHighest,
                         contentPadding: const EdgeInsets.all(14),
                       ),
                     ),
@@ -366,7 +377,7 @@ class _CancellationScreenState extends State<CancellationScreen> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: colorScheme.surface,
               boxShadow: [
                 BoxShadow(
                     color: Colors.black.withValues(alpha: 0.05),
