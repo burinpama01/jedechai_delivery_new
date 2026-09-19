@@ -115,11 +115,13 @@ function stampAssetVersion(sourceDir, outDir) {
   const pad = (n) => String(n).padStart(2, "0");
   const stamp = `${version}-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}`;
 
-  const indexPath = join(outDir, "index.html");
-  if (existsSync(indexPath)) {
-    const html = readFileSync(indexPath, "utf8")
+  const adminShellNames = ["admin.html", "index.html"];
+  for (const shellName of adminShellNames) {
+    const shellPath = join(outDir, shellName);
+    if (!existsSync(shellPath)) continue;
+    const html = readFileSync(shellPath, "utf8")
       .replace(/\?v=[A-Za-z0-9._-]+/g, `?v=${stamp}`);
-    writeFileSync(indexPath, html, "utf8");
+    writeFileSync(shellPath, html, "utf8");
   }
 
   const appJsPath = join(outDir, "app.js");

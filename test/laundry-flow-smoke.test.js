@@ -623,7 +623,7 @@ test("admin web exposes a Laundry inspection page", () => {
     new URL("../admin-web/src/pages/index.js", import.meta.url),
     "utf8",
   );
-  const adminNav = readFileSync(new URL("../admin-web/index.html", import.meta.url), "utf8");
+  const adminNav = readFileSync(new URL("../admin-web/admin.html", import.meta.url), "utf8");
   const wrapperPath = new URL("../admin-web/src/pages/laundry.js", import.meta.url);
   const pagePath = new URL("../admin-web/src/pages/laundryPage.js", import.meta.url);
   const merchantsPage = readFileSync(

@@ -48,7 +48,7 @@ const adminMerchantsPageSource = readFileSync(
   "utf8",
 );
 const adminIndexSource = readFileSync(
-  new URL("../admin-web/index.html", import.meta.url),
+  new URL("../admin-web/admin.html", import.meta.url),
   "utf8",
 );
 const adminAppSource = readFileSync(
