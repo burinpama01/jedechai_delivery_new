@@ -16,11 +16,13 @@ class WithdrawalService {
   ///
   /// หักเงินจาก wallet ทันที แล้วรอ admin อนุมัติ
   /// ถ้า admin ปฏิเสธ จะคืนเงินเข้า wallet
+  /// [bucket] 'topup' (เติมเอง ขั้นต่ำ ฿100) หรือ 'system' (จากระบบ ขั้นต่ำ ฿200)
   Future<bool> createWithdrawalRequest({
     required double amount,
     required String bankName,
     required String bankAccountNumber,
     required String bankAccountName,
+    String bucket = 'topup',
   }) async {
     final userId = AuthService.userId;
     if (userId == null) {
@@ -29,7 +31,8 @@ class WithdrawalService {
     }
 
     // Phase 6: Validate withdrawal amount (min/max)
-    const double minWithdrawal = 100.0;
+    // ขั้นต่ำต่อถัง (server เป็นผู้ตัดสินใจจริง — ค่านี้ไว้กันเรียกผิดฝั่ง client)
+    final double minWithdrawal = bucket == 'system' ? 200.0 : 100.0;
     const double maxWithdrawal = 50000.0;
     if (amount < minWithdrawal) {
       debugLog('❌ จำนวนเงินต่ำกว่าขั้นต่ำ: $amount < $minWithdrawal');
@@ -41,10 +44,9 @@ class WithdrawalService {
     }
 
     try {
-      final rpcResult =
-          await _client.rpc('create_wallet_withdrawal_request', params: {
-        'p_user_id': userId,
+      final rpcResult = await _client.rpc('request_wallet_withdrawal', params: {
         'p_amount': amount,
+        'p_bucket': bucket,
         'p_bank_name': bankName,
         'p_bank_account_number': bankAccountNumber,
         'p_bank_account_name': bankAccountName,

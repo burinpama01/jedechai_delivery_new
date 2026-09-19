@@ -834,6 +834,98 @@ export async function copyBeamWebhookUrl() {
   }
 }
 
+// ─── โปรโมชั่นชวนเพื่อน + ขั้นต่ำถอน (Batch 3) ───
+const REFERRAL_KEYS = {
+  settRefBaseDriverMerchant: 'referral_reward_base_driver_invite_merchant',
+  settRefBaseCustomerMerchant: 'referral_reward_base_customer_invite_merchant',
+  settRefBaseDriverDriverReferrer: 'referral_reward_base_driver_invite_driver_referrer',
+  settRefBaseDriverDriverNew: 'referral_reward_base_driver_invite_driver_newdriver',
+  settRefMaxPerMonth: 'referral_max_rewards_per_month',
+  settRefTiers: 'referral_reward_tiers',
+  settWithdrawMinTopup: 'withdrawal_min_topup',
+  settWithdrawMinSystem: 'withdrawal_min_system',
+};
+
+export async function loadReferralSettings(ctx) {
+  _ctx = ctx || _ctx;
+  const { _fetchSystemConfigKeyValues, supabase, escapeHtml } = _deps();
+  try {
+    const values = (await _fetchSystemConfigKeyValues(Object.values(REFERRAL_KEYS))) || {};
+    Object.entries(REFERRAL_KEYS).forEach(([id, key]) => {
+      const el = document.getElementById(id);
+      if (el && values[key] != null) el.value = values[key];
+    });
+    const { data: pending } = await supabase
+      .from('referral_rewards')
+      .select('id, beneficiary_user_id, amount, reward_type, created_at')
+      .eq('status', 'pending_review')
+      .order('created_at', { ascending: true })
+      .limit(50);
+    const box = document.getElementById('referralPendingReviewBox');
+    if (box) {
+      box.innerHTML = (pending || []).length === 0
+        ? 'ไม่มีรางวัลที่รออนุมัติ'
+        : `<p class="font-semibold text-gray-700 mb-2">รางวัลรออนุมัติ (เกินแคป) ${pending.length} รายการ</p>` +
+          pending.map((r) => `
+            <div class="flex items-center justify-between border border-gray-100 rounded-lg px-3 py-2 mb-1">
+              <span class="text-xs">${escapeHtml(r.reward_type)} · ฿${Number(r.amount).toFixed(0)} · ${escapeHtml(String(r.beneficiary_user_id).slice(0, 8))}</span>
+              <button onclick="releaseReferralReward('${escapeHtml(r.id)}')" class="px-3 py-1 rounded-lg text-xs font-semibold bg-emerald-500 text-white">จ่ายรางวัล</button>
+            </div>`).join('');
+    }
+  } catch (e) {
+    showToastSafe('โหลดการตั้งค่ารางวัลไม่สำเร็จ: ' + (e?.message || e), 'error');
+  }
+}
+
+function showToastSafe(msg, kind) {
+  const { showToast } = _deps();
+  if (typeof showToast === 'function') showToast(msg, kind);
+}
+
+export async function saveReferralSettings(ctx) {
+  _ctx = ctx || _ctx;
+  const { _upsertSystemConfigKeyValues } = _deps();
+  try {
+    const tiersRaw = document.getElementById('settRefTiers')?.value?.trim() || '';
+    if (tiersRaw) {
+      let parsed;
+      try {
+        parsed = JSON.parse(tiersRaw);
+      } catch (_) {
+        throw new Error('ขั้นบันไดต้องเป็น JSON เช่น [{"from":1,"to":5,"multiplier":1}]');
+      }
+      if (!Array.isArray(parsed) || parsed.length === 0) throw new Error('ขั้นบันไดต้องเป็น array อย่างน้อย 1 ขั้น');
+      for (const t of parsed) {
+        if (!(Number(t.multiplier) > 0)) throw new Error('multiplier ต้องมากกว่า 0 ทุกขั้น');
+      }
+    }
+    const payload = {};
+    Object.entries(REFERRAL_KEYS).forEach(([id, key]) => {
+      const raw = document.getElementById(id)?.value;
+      if (raw == null || String(raw).trim() === '') return;
+      payload[key] = String(raw).trim();
+    });
+    await _upsertSystemConfigKeyValues(payload);
+    showToastSafe('บันทึกการตั้งค่ารางวัลแล้ว', 'success');
+    await loadReferralSettings();
+  } catch (e) {
+    showToastSafe('บันทึกไม่สำเร็จ: ' + (e?.message || e), 'error');
+  }
+}
+
+export async function releaseReferralReward(rewardId, ctx) {
+  _ctx = ctx || _ctx;
+  const { callAdminAction } = _deps();
+  if (!confirm('จ่ายรางวัลนี้เข้ากระเป๋าผู้ชวน?')) return;
+  try {
+    await callAdminAction({ action: 'release_referral_reward', reward_id: rewardId });
+    showToastSafe('จ่ายรางวัลแล้ว', 'success');
+    await loadReferralSettings();
+  } catch (e) {
+    showToastSafe('จ่ายรางวัลไม่สำเร็จ: ' + (e?.message || e), 'error');
+  }
+}
+
 export function wireSettingsActionsBridge() {
   globalThis.__adminWebBridge = globalThis.__adminWebBridge || {};
   globalThis.__adminWebBridge.saveGeneralSettings = saveGeneralSettings;
@@ -865,4 +957,10 @@ export function wireSettingsActionsBridge() {
   globalThis.testBeamConnection = testBeamConnection;
   globalThis.setTopupMode = setTopupMode;
   globalThis.copyBeamWebhookUrl = copyBeamWebhookUrl;
+  globalThis.__adminWebBridge.loadReferralSettings = loadReferralSettings;
+  globalThis.__adminWebBridge.saveReferralSettings = saveReferralSettings;
+  globalThis.__adminWebBridge.releaseReferralReward = releaseReferralReward;
+  globalThis.loadReferralSettings = loadReferralSettings;
+  globalThis.saveReferralSettings = saveReferralSettings;
+  globalThis.releaseReferralReward = releaseReferralReward;
 }

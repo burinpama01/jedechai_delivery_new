@@ -285,6 +285,58 @@ export async function renderSettingsPage(el, ctx) {
         </div>
       </div>
 
+      <!-- ========= โปรโมชั่นชวนเพื่อน + การถอน ========= -->
+      <div class="glass-card p-6" data-testid="referral-settings">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-10 h-10 bg-pink-50 rounded-xl flex items-center justify-center"><span class="material-icons-round text-pink-500">card_giftcard</span></div>
+          <div>
+            <h3 class="font-bold text-gray-800">โปรโมชั่นชวนเพื่อน & การถอนเงิน</h3>
+            <p class="text-xs text-gray-400">รางวัลเข้ากระเป๋า "ถังระบบ" ของผู้ชวน · ขั้นบันไดคูณตามจำนวนชวนสำเร็จสะสม</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5">ฐานรางวัล: คนขับชวนร้าน (฿)</label>
+            <input type="number" id="settRefBaseDriverMerchant" min="0" step="1" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5">ฐานรางวัล: ลูกค้าชวนร้าน (฿)</label>
+            <input type="number" id="settRefBaseCustomerMerchant" min="0" step="1" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5">ฐานรางวัล: คนขับชวนคนขับ — ผู้ชวน (฿)</label>
+            <input type="number" id="settRefBaseDriverDriverReferrer" min="0" step="1" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5">รางวัลคนขับใหม่ (ไม่คูณขั้น) (฿)</label>
+            <input type="number" id="settRefBaseDriverDriverNew" min="0" step="1" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5">แคปรางวัล/เดือน/ผู้ชวน (เกินแล้วรอแอดมินอนุมัติ)</label>
+            <input type="number" id="settRefMaxPerMonth" min="0" step="1" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5">ขั้นบันได (JSON: from/to/multiplier)</label>
+            <input type="text" id="settRefTiers" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 font-mono text-xs">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5">ถอนขั้นต่ำ — ถังเติมเอง (฿)</label>
+            <input type="number" id="settWithdrawMinTopup" min="0" step="1" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5">ถอนขั้นต่ำ — ถังระบบ (฿)</label>
+            <input type="number" id="settWithdrawMinSystem" min="0" step="1" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50">
+          </div>
+        </div>
+        <div id="referralPendingReviewBox" class="mt-4 text-sm text-gray-500"></div>
+        <div class="mt-5 flex justify-end gap-2">
+          <button onclick="loadReferralSettings()" class="px-4 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 bg-white">รีเฟรช</button>
+          <button data-testid="save-referral-settings-button" onclick="saveReferralSettings()" class="px-5 py-2.5 text-white rounded-xl text-sm font-semibold hover:opacity-90 shadow-md shadow-pink-200" style="background:linear-gradient(135deg,#db2777,#f472b6);">
+            <span class="material-icons-round text-sm align-middle mr-1">save</span> บันทึกการตั้งค่ารางวัล
+          </button>
+        </div>
+      </div>
+
       <!-- ========= อีเมลแจ้งเตือนแอดมิน ========= -->
       <div class="glass-card p-6">
         <div class="flex items-center gap-3 mb-5">
@@ -923,6 +975,7 @@ export async function renderSettingsPage(el, ctx) {
   loadBanners();
   loadAppAssets();
   if (typeof globalThis.loadBeamSettings === 'function') globalThis.loadBeamSettings();
+  if (typeof globalThis.loadReferralSettings === 'function') globalThis.loadReferralSettings();
 }
 
 export function wireSettingsBridge() {

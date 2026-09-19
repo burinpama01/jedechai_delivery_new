@@ -91,7 +91,7 @@ serve(async (req) => {
       // Update both shop_status and is_online together to keep them in sync (ISSUE-048)
       const { error: updateError } = await supabase
         .from("profiles")
-        .update({ shop_status: shouldBeOpen, is_online: shouldBeOpen })
+        .update({ shop_status: shouldBeOpen, is_online: shouldBeOpen, shop_status_source: "schedule" })
         .eq("id", merchant.id);
       results.push({ id: merchant.id, changed: !updateError, shouldBeOpen });
     }

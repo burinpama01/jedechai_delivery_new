@@ -151,6 +151,11 @@ serve(async (req) => {
         result = await handleToggleShopStatus(supabaseAdmin, body);
         break;
 
+      // ─── Referral payouts ───
+      case "release_referral_reward":
+        result = await handleReleaseReferralReward(supabaseAdmin, body);
+        break;
+
       // ─── Payment gateway (Beam) ───
       case "get_beam_settings":
         result = await handleGetBeamSettings(supabaseAdmin);
@@ -633,7 +638,7 @@ async function handleToggleShopStatus(supabase, body) {
   const nowIso = new Date().toISOString();
   const { error } = await supabase
     .from("profiles")
-    .update({ shop_status: !!make_open, is_online: !!make_open, updated_at: nowIso })
+    .update({ shop_status: !!make_open, is_online: !!make_open, shop_status_source: "admin", updated_at: nowIso })
     .eq("id", id);
   if (error) return errorResponse(error.message);
 
@@ -651,6 +656,19 @@ async function handleToggleShopStatus(supabase, body) {
   ]);
 
   return jsonResponse({ success: true });
+}
+
+// ─── Referral payouts ───
+
+async function handleReleaseReferralReward(supabase, body) {
+  const { reward_id } = body;
+  if (!reward_id) return errorResponse("Missing 'reward_id'");
+  const { data, error } = await supabase.rpc("admin_release_referral_reward", {
+    p_reward_id: reward_id,
+  });
+  if (error) return errorResponse(error.message);
+  if (data?.success !== true) return errorResponse(data?.error ?? "release_referral_reward_failed");
+  return jsonResponse({ success: true, reward: data });
 }
 
 // ─── Payment gateway (Beam) ───

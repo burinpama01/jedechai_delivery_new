@@ -74,3 +74,22 @@ test("Beam actions go through admin-actions and never write keys to system_confi
   assert.doesNotMatch(actionsSource, /topup_mode: 'admin_approve'/);
   assert.doesNotMatch(legacySettingsSource, /topup_mode: 'admin_approve'/);
 });
+
+test("settings page exposes referral reward + withdrawal minimum controls", () => {
+  assert.match(settingsPageSource, /id="settRefBaseDriverMerchant"/);
+  assert.match(settingsPageSource, /id="settRefBaseCustomerMerchant"/);
+  assert.match(settingsPageSource, /id="settRefBaseDriverDriverReferrer"/);
+  assert.match(settingsPageSource, /id="settRefBaseDriverDriverNew"/);
+  assert.match(settingsPageSource, /id="settRefTiers"/);
+  assert.match(settingsPageSource, /id="settRefMaxPerMonth"/);
+  assert.match(settingsPageSource, /id="settWithdrawMinTopup"/);
+  assert.match(settingsPageSource, /id="settWithdrawMinSystem"/);
+  assert.match(settingsPageSource, /onclick="saveReferralSettings\(\)"/);
+});
+
+test("referral settings save validates tiers and pays pending rewards via admin-actions", () => {
+  assert.match(actionsSource, /referral_reward_base_driver_invite_merchant/);
+  assert.match(actionsSource, /referral_reward_tiers/);
+  assert.match(actionsSource, /multiplier ต้องมากกว่า 0/);
+  assert.match(actionsSource, /action: 'release_referral_reward', reward_id: rewardId/);
+});

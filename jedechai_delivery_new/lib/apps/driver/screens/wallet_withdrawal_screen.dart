@@ -6,6 +6,7 @@ import '../../../common/services/auth_service.dart';
 import '../../../theme/app_theme.dart';
 import '../../../utils/debug_logger.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../common/services/referral_service.dart';
 
 /// Wallet Withdrawal Screen
 ///
@@ -31,6 +32,15 @@ class _WalletWithdrawalScreenState extends State<WalletWithdrawalScreen> {
   final WalletService _walletService = WalletService();
 
   double _currentBalance = 0;
+  // ถังเงิน (Batch 3): 'topup' = เติมเอง (ขั้นต่ำ ฿100) · 'system' = จากระบบ (ขั้นต่ำ ฿200)
+  String _bucket = 'topup';
+  double _availableTopup = 0;
+  double _availableSystem = 0;
+  double _minTopup = 100;
+  double _minSystem = 200;
+
+  double get _bucketAvailable => _bucket == 'system' ? _availableSystem : _availableTopup;
+  double get _bucketMinimum => _bucket == 'system' ? _minSystem : _minTopup;
   List<Map<String, dynamic>> _history = [];
   bool _isLoading = true;
   bool _isSubmitting = false;
@@ -76,12 +86,21 @@ class _WalletWithdrawalScreenState extends State<WalletWithdrawalScreen> {
       if (userId == null) return;
 
       final balance = await _walletService.getBalance(userId);
+      final wallet = await _walletService.getDriverWallet(userId);
+      final summary = await ReferralService().getSummary();
       final history = await _withdrawalService.getMyWithdrawalRequests();
       final bankInfo = await _withdrawalService.getBankInfo();
+      final mins = summary?['withdrawal_min'];
 
       if (mounted) {
         setState(() {
           _currentBalance = balance;
+          _availableTopup = wallet?.availableTopup ?? balance;
+          _availableSystem = wallet?.availableSystem ?? 0;
+          if (mins is Map) {
+            _minTopup = (mins['topup'] as num?)?.toDouble() ?? 100;
+            _minSystem = (mins['system'] as num?)?.toDouble() ?? 200;
+          }
           _history = history;
           _isLoading = false;
 
@@ -111,8 +130,14 @@ class _WalletWithdrawalScreenState extends State<WalletWithdrawalScreen> {
       _showErrorDialog(AppLocalizations.of(context)!.withdrawAmountRequired);
       return;
     }
-    if (amount > _currentBalance) {
-      _showErrorDialog(AppLocalizations.of(context)!.withdrawInsufficientBalance(_currentBalance.toStringAsFixed(2)));
+    if (amount < _bucketMinimum) {
+      _showErrorDialog('ถอนขั้นต่ำ ฿${_bucketMinimum.toStringAsFixed(0)} สำหรับ'
+          '${_bucket == 'system' ? 'เงินจากระบบ' : 'เงินที่เติมเอง'}');
+      return;
+    }
+    if (amount > _bucketAvailable) {
+      _showErrorDialog(AppLocalizations.of(context)!
+          .withdrawInsufficientBalance(_bucketAvailable.toStringAsFixed(2)));
       return;
     }
 
@@ -132,6 +157,7 @@ class _WalletWithdrawalScreenState extends State<WalletWithdrawalScreen> {
         bankName: _bankNameController.text.trim(),
         bankAccountNumber: _accountNumberController.text.trim(),
         bankAccountName: _accountNameController.text.trim(),
+        bucket: _bucket,
       );
 
       if (success) {
@@ -289,6 +315,8 @@ class _WalletWithdrawalScreenState extends State<WalletWithdrawalScreen> {
             Text(AppLocalizations.of(context)!.withdrawAmountSectionTitle,
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
+            _buildBucketSelector(),
+            const SizedBox(height: 12),
             TextFormField(
               controller: _amountController,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -298,18 +326,68 @@ class _WalletWithdrawalScreenState extends State<WalletWithdrawalScreen> {
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 filled: true,
                 fillColor: Colors.grey[50],
-                helperText: AppLocalizations.of(context)!.withdrawMinHelper,
+                helperText: 'ขั้นต่ำ ฿${_bucketMinimum.toStringAsFixed(0)} · '
+                    'ถอนได้ ฿${_bucketAvailable.toStringAsFixed(2)}',
               ),
               validator: (v) {
                 if (v == null || v.isEmpty) return AppLocalizations.of(context)!.withdrawAmountValidation;
                 final amount = double.tryParse(v);
-                if (amount == null || amount < 100) return AppLocalizations.of(context)!.withdrawMinValidation;
+                if (amount == null || amount < _bucketMinimum) {
+                  return 'ขั้นต่ำ ฿${_bucketMinimum.toStringAsFixed(0)}';
+                }
+                if (amount > _bucketAvailable) {
+                  return 'ยอดในถังนี้ไม่พอ (฿${_bucketAvailable.toStringAsFixed(2)})';
+                }
                 return null;
               },
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildBucketSelector() {
+    Widget option(String value, String title, double available, double min) {
+      final selected = _bucket == value;
+      return Expanded(
+        child: InkWell(
+          onTap: () => setState(() => _bucket = value),
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: selected ? AppTheme.primaryGreen : Colors.grey.shade300,
+                width: selected ? 2 : 1,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: selected ? AppTheme.primaryGreen : null)),
+                const SizedBox(height: 2),
+                Text('฿${available.toStringAsFixed(2)}',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Text('ขั้นต่ำ ฿${min.toStringAsFixed(0)}',
+                    style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        option('topup', 'เงินที่เติมเอง', _availableTopup, _minTopup),
+        const SizedBox(width: 10),
+        option('system', 'เงินจากระบบ', _availableSystem, _minSystem),
+      ],
     );
   }
 

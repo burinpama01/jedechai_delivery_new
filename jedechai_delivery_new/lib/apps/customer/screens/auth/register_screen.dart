@@ -219,9 +219,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void _showSuccessDialog() {
     final l10n = AppLocalizations.of(context)!;
-    final referralCode = _selectedRole == 'customer' || _selectedRole == 'driver'
-        ? _referralCodeController.text.trim()
-        : '';
+    final referralCode = _referralCodeController.text.trim();
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -421,7 +419,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 16),
 
-              if (_selectedRole == 'customer' || _selectedRole == 'driver') ...[
+              // ทุก role ใส่โค้ดผู้ชวนได้ (ร้านค้าที่ถูกชวน = รางวัล S1/S2)
+              ...[
                 TextFormField(
                   controller: _referralCodeController,
                   decoration: InputDecoration(

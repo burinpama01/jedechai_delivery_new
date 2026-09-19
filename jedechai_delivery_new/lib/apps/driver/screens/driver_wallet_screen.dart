@@ -18,6 +18,7 @@ class DriverWalletScreen extends StatefulWidget {
 class _DriverWalletScreenState extends State<DriverWalletScreen> {
   final WalletService _walletService = WalletService();
   late Future<double> _balanceFuture;
+  late Future<DriverWallet?> _walletFuture;
   late Future<List<Map<String, dynamic>>> _transactionsFuture;
 
   @override
@@ -29,6 +30,7 @@ class _DriverWalletScreenState extends State<DriverWalletScreen> {
   void _loadData() {
     final driverId = AuthService.userId!;
     _balanceFuture = _walletService.getBalance(driverId);
+    _walletFuture = _walletService.getDriverWallet(driverId);
     _transactionsFuture = _walletService.getTransactions(driverId);
   }
 
@@ -67,6 +69,39 @@ class _DriverWalletScreenState extends State<DriverWalletScreen> {
   }
 
   /// สร้างการ์ดแสดงยอดเงินคงเหลือ
+  Widget _buildBucketRow() {
+    return FutureBuilder<DriverWallet?>(
+      future: _walletFuture,
+      builder: (context, snapshot) {
+        final wallet = snapshot.data;
+        if (wallet == null) return const SizedBox.shrink();
+        Widget cell(String label, double value, String hint) => Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label,
+                      style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                  Text('฿${value.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold)),
+                  Text(hint,
+                      style: const TextStyle(color: Colors.white60, fontSize: 10)),
+                ],
+              ),
+            );
+        return Row(
+          children: [
+            cell('เติมเอง', wallet.availableTopup, 'ถอนขั้นต่ำ ฿100'),
+            const SizedBox(width: 12),
+            cell('จากระบบ', wallet.availableSystem, 'รางวัล/ชดเชย · ถอนขั้นต่ำ ฿200'),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildBalanceCard() {
     return Container(
       margin: const EdgeInsets.all(16),
@@ -147,6 +182,11 @@ class _DriverWalletScreenState extends State<DriverWalletScreen> {
           
           const SizedBox(height: 16),
           
+// แยกถังเงิน (Batch 3): เติมเอง vs จากระบบ
+          _buildBucketRow(),
+
+          const SizedBox(height: 16),
+
           // Top Up Button
           ElevatedButton.icon(
             onPressed: () {
