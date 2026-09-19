@@ -325,6 +325,23 @@ class _DriverWalletScreenState extends State<DriverWalletScreen> {
         iconData = Icons.gavel;
         displayType = AppLocalizations.of(context)!.walletTypePenalty;
         break;
+      case 'coupon_compensation':
+        iconData = Icons.local_offer;
+        displayType = 'ชดเชยส่วนลดคูปอง';
+        break;
+      case 'job_payout':
+        iconData = Icons.attach_money;
+        displayType = 'รับค่าออเดอร์ (ลูกค้าจ่ายผ่าน Wallet)';
+        break;
+      case 'withdrawal_pending':
+        iconData = Icons.account_balance;
+        displayType = 'ถอนเงิน (รอโอน)';
+        break;
+      case 'withdrawal_refund':
+      case 'refund':
+        iconData = Icons.undo;
+        displayType = 'คืนเงิน';
+        break;
       default:
         iconData = Icons.receipt;
         displayType = type;

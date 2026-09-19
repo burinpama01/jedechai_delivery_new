@@ -637,6 +637,15 @@ class WalletTransaction {
         return 'รายได้จากงาน';
       case 'penalty':
         return 'ค่าปรับ';
+      case 'coupon_compensation':
+        return 'ชดเชยส่วนลดคูปอง';
+      case 'job_payout':
+        return 'รับค่าออเดอร์ (ลูกค้าจ่ายผ่าน Wallet)';
+      case 'withdrawal_pending':
+        return 'ถอนเงิน (รอโอน)';
+      case 'withdrawal_refund':
+      case 'refund':
+        return 'คืนเงิน';
       default:
         return type;
     }
