@@ -471,7 +471,7 @@ class FCMNotificationService {
 
       if (_fcmToken != null) {
         debugLog('✅ FCM Token obtained successfully');
-        debugLog('   └─ Token: ${_fcmToken!.substring(0, 20)}...');
+        debugLog('   └─ Token: ${_previewToken(_fcmToken!)}');
         debugLog('   └─ Length: ${_fcmToken!.length} characters');
         debugLog('   └─ Timestamp: ${DateTime.now()}');
 
@@ -487,6 +487,11 @@ class FCMNotificationService {
       debugLog('   └─ Stack trace: ${StackTrace.current}');
     }
   }
+
+  /// ISSUE-110: ตัด token มาโชว์แบบปลอดภัย — substring ตายตัวจะ RangeError
+  /// ถ้า token สั้นกว่าที่คาด (argument ของ debugLog evaluate เสมอ)
+  static String _previewToken(String token) =>
+      token.length > 20 ? '${token.substring(0, 20)}...' : token;
 
   /// Save FCM token to Supabase profiles table
   Future<void> _saveFCMTokenToSupabase(String token) async {
@@ -511,7 +516,7 @@ class FCMNotificationService {
 
       debugLog('✅ FCM token saved to Supabase successfully');
       debugLog('   └─ Updated user: ${currentUser.id}');
-      debugLog('   └─ Token saved: ${token.substring(0, 20)}...');
+      debugLog('   └─ Token saved: ${_previewToken(token)}');
     } catch (e) {
       debugLog('❌ Error saving FCM token to Supabase: $e');
       debugLog('   └─ Stack trace: ${StackTrace.current}');

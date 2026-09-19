@@ -96,7 +96,14 @@ class _CouponEntryWidgetState extends State<CouponEntryWidget> {
     super.didUpdateWidget(oldWidget);
     // Re-validate when order amount changes while a coupon is active,
     // so minOrderAmount and percentage caps stay accurate.
-    if (_appliedCoupon != null && oldWidget.orderAmount != widget.orderAmount) {
+    //
+    // ISSUE-107: ต้องดู deliveryFee ด้วย ไม่ใช่แค่ orderAmount — คูปอง
+    // free_delivery และ discount_base = 'delivery_fee' คิดส่วนลดจากค่าส่ง
+    // ถ้าลูกค้าเปลี่ยนที่อยู่หลังใส่คูปอง ค่าส่งจะเปลี่ยนแต่ส่วนลดค้างค่าเดิม
+    // (ค่าส่งขึ้น = "ส่งฟรี" แต่ยังต้องจ่าย / ค่าส่งลง = ลดเกินไปกินค่าอาหาร)
+    if (_appliedCoupon != null &&
+        (oldWidget.orderAmount != widget.orderAmount ||
+            oldWidget.deliveryFee != widget.deliveryFee)) {
       _validateCoupon();
     }
   }

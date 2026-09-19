@@ -1238,7 +1238,13 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           return;
         }
 
-        debugLog('✅ Polyline encoded: ${encodedPolyline.substring(0, 50)}...');
+        // ISSUE-110: polyline ของเส้นทางสั้นอาจยาวไม่ถึง 50 ตัวอักษร
+        // substring แบบตายตัวจะโยน RangeError แล้วเส้นทางจริงหายไป
+        // (argument ของ debugLog ถูก evaluate เสมอ แม้ใน release)
+        final polylinePreview = encodedPolyline.length > 50
+            ? '${encodedPolyline.substring(0, 50)}...'
+            : encodedPolyline;
+        debugLog('✅ Polyline encoded: $polylinePreview');
         final points = _polylinePoints.decodePolyline(encodedPolyline);
         debugLog('✅ Decoded ${points.length} points');
 

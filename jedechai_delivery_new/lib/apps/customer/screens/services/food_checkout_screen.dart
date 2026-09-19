@@ -64,6 +64,10 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
   double _distanceKm = 0;
   double _deliveryFee = 0;
 
+  /// ISSUE-108: true เมื่อยังไม่มีพิกัดครบพอจะคำนวณระยะทางจริงได้
+  /// ห้ามเดาระยะทางแทน เพราะค่าส่งที่โชว์จะไม่ตรงกับระยะจริง
+  bool _distanceUnavailable = false;
+
   // ── คูปอง ──
   Coupon? _appliedCoupon;
   double _couponDiscount = 0;
@@ -365,11 +369,18 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         _merchantLng == null ||
         _customerLat == null ||
         _customerLng == null) {
-      // ไม่มีพิกัด → ใช้ค่าเริ่มต้น
-      _distanceKm = 3.0;
-      _deliveryFee = _calculateFeeFromDistance(_distanceKm);
+      // ISSUE-108: เดิมตั้ง _distanceKm = 3.0 ตายตัวแล้วคิดค่าส่งจากค่านั้น
+      // ทำให้ลูกค้าที่อยู่ไกล 15-20 กม. เห็นค่าส่งของระยะ 3 กม.
+      // ตอนนี้ไม่เดาระยะทางแล้ว — ขึ้นสถานะ "คำนวณค่าส่งไม่ได้" แทน
+      // (_placeOrder บล็อกการสั่งอยู่แล้วถ้าไม่มีพิกัด)
+      _distanceKm = 0;
+      _deliveryFee = 0;
+      _distanceUnavailable = true;
+      debugLog('⚠️ ไม่มีพิกัดครบ — ยังคำนวณค่าส่งไม่ได้');
       return;
     }
+
+    _distanceUnavailable = false;
 
     try {
       final apiKey = EnvConfig.googleMapsApiKey;
@@ -786,7 +797,9 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                     child: SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: (_isPlacingOrder || _isCalculatingFee)
+                        onPressed: (_isPlacingOrder ||
+                                _isCalculatingFee ||
+                                _distanceUnavailable)
                             ? null
                             : () => _placeOrder(context, cart),
                         style: ElevatedButton.styleFrom(
@@ -805,7 +818,9 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                                     strokeWidth: 2, color: Colors.white),
                               )
                             : Text(
-                                '${AppLocalizations.of(context)!.foodCheckoutConfirmButton} — ฿${_calculateFinalTotal(cart.subtotal, _deliveryFee).ceil()}',
+                                _distanceUnavailable
+                                    ? 'รอตำแหน่งจัดส่ง'
+                                    : '${AppLocalizations.of(context)!.foodCheckoutConfirmButton} — ฿${_calculateFinalTotal(cart.subtotal, _deliveryFee).ceil()}',
                                 style: const TextStyle(
                                     fontSize: 16, fontWeight: FontWeight.bold),
                               ),
@@ -978,11 +993,17 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                     ),
                   ],
                 )
-              : _buildPriceRow(
-                  AppLocalizations.of(context)!
-                      .foodDeliveryFeeWithDist(_distanceKm.toStringAsFixed(1)),
-                  '฿${_deliveryFee.ceil()}',
-                ),
+              : _distanceUnavailable
+                  // ISSUE-108: ไม่รู้ระยะทาง = ไม่โชว์ตัวเลขค่าส่งมั่ว ๆ
+                  ? _buildPriceRow(
+                      AppLocalizations.of(context)!.foodCartDeliveryFee,
+                      'รอตำแหน่งจัดส่ง',
+                    )
+                  : _buildPriceRow(
+                      AppLocalizations.of(context)!.foodDeliveryFeeWithDist(
+                          _distanceKm.toStringAsFixed(1)),
+                      '฿${_deliveryFee.ceil()}',
+                    ),
           if (_couponDiscount > 0) ...[
             const SizedBox(height: 8),
             _buildPriceRow(
@@ -996,10 +1017,20 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
             AppLocalizations.of(context)!.foodCartTotal,
             _isCalculatingFee
                 ? AppLocalizations.of(context)!.foodCalculating
-                : '฿${_calculateFinalTotal(cart.subtotal, _deliveryFee).ceil()}',
+                : _distanceUnavailable
+                    ? 'รอตำแหน่งจัดส่ง'
+                    : '฿${_calculateFinalTotal(cart.subtotal, _deliveryFee).ceil()}',
             isBold: true,
             isOrange: true,
           ),
+          if (_distanceUnavailable) ...[
+            const SizedBox(height: 8),
+            Text(
+              'ยังคำนวณค่าส่งไม่ได้เพราะยังไม่รู้ตำแหน่งจัดส่ง '
+              'กรุณาเลือกที่อยู่จัดส่งหรือเปิดสิทธิ์เข้าถึงตำแหน่ง',
+              style: TextStyle(fontSize: 12, color: colorScheme.error),
+            ),
+          ],
         ],
       ),
     );
