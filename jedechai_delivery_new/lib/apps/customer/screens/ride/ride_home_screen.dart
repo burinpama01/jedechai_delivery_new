@@ -93,6 +93,10 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
   // Ride rates loaded from DB (keyed by service_type)
   Map<String, Map<String, num>> _rideRates = {};
 
+  /// ISSUE-116: true เมื่อยังโหลดเรตค่าโดยสารจาก DB ไม่ได้
+  /// ห้ามคิดราคาด้วยค่า hardcode เพราะลูกค้าจะได้ราคาที่ไม่ตรงกับที่แอดมินตั้ง
+  bool _rideRatesUnavailable = false;
+
   // Constants
   static String get _googleApiKey => EnvConfig.googleMapsApiKey;
 
@@ -159,12 +163,23 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
         };
       }
       debugLog('📊 Loaded ride rates: ${_rideRates.keys.join(', ')}');
+      if (mounted) {
+        setState(() => _rideRatesUnavailable = _rideRates.isEmpty);
+      } else {
+        _rideRatesUnavailable = _rideRates.isEmpty;
+      }
       // Recalculate price if distance already known
       if (_estimatedDistance > 0 && _selectedVehicleIndex >= 0) {
         await _recalculateEstimatedFareWithNearestDriver();
       }
     } catch (e) {
-      debugLog('⚠️ Could not load ride rates: $e');
+      // ISSUE-116: โหลดเรตไม่ได้ = ห้ามเดาราคา ต้องบล็อกการเรียกรถแทน
+      debugLog('❌ Could not load ride rates: $e');
+      if (mounted) {
+        setState(() => _rideRatesUnavailable = true);
+      } else {
+        _rideRatesUnavailable = true;
+      }
     }
   }
 
@@ -600,9 +615,11 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
       if (distanceInKm <= baseDist) return basePrice;
       return basePrice + ((distanceInKm - baseDist) * perKm);
     }
-    const double baseFare = 25.0;
-    const double perKmCharge = 8.0;
-    return baseFare + (distanceInKm * perKmCharge);
+    // ISSUE-116: เดิมตกกลับไปใช้ค่า hardcode 25 + 8/กม. เงียบ ๆ ทำให้ลูกค้า
+    // ได้ราคาที่ไม่ตรงกับเรตที่แอดมินตั้งไว้ แล้วจองจริงด้วยราคานั้น
+    // ตอนนี้คืน 0 พร้อมตั้ง flag ให้ UI บล็อกการเรียกรถแทน
+    _rideRatesUnavailable = true;
+    return 0;
   }
 
   double get _finalRidePrice {
@@ -1375,6 +1392,26 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                         const SizedBox(height: 12),
                       ],
 
+                      // ISSUE-116: บอกเหตุผลที่ปุ่มเรียกรถถูกปิด
+                      if (_rideRatesUnavailable) ...[
+                        Row(
+                          children: [
+                            Icon(Icons.error_outline,
+                                size: 18, color: colorScheme.error),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'ยังโหลดอัตราค่าโดยสารไม่ได้ '
+                                'กรุณาลองใหม่อีกครั้ง',
+                                style: TextStyle(
+                                    fontSize: 13, color: colorScheme.error),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+
                       if (_estimatedPrice > 0) ...[
                         CouponEntryWidget(
                           serviceType: 'ride',
@@ -1434,6 +1471,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: (_isLoading ||
+                                  _rideRatesUnavailable ||
                                   _selectedDestination == null ||
                                   _selectedVehicleIndex < 0 ||
                                   (_onlineDriverCounts[_vehicleTypes[

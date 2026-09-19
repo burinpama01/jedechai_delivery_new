@@ -140,6 +140,12 @@ class LocationService {
   // (เคยมี object นี้หลุดไปถูก stringify เก็บลง DB จนต้องมีโค้ดกรอง
   // คำว่า 'AddressPlacemark' กระจายอยู่หลายหน้าจอ)
 
+  /// ค้นหาสถานที่จากข้อความ
+  ///
+  /// ISSUE-120: เดิมยิง Places Autocomplete 1 ครั้ง แล้ววนยิง Place Details
+  /// อีก 5 ครั้งเพื่อเอาพิกัด (N+1) ทำให้ทั้งช้าและเสียค่า API ต่อการค้นหา
+  /// หนึ่งครั้งถึง 6 request — เปลี่ยนมาใช้ Places Text Search ซึ่งคืน
+  /// geometry มาพร้อมผลลัพธ์ในคำขอเดียว
   static Future<List<Location>> searchPlaces(String query) async {
     if (query.trim().isEmpty) return [];
 
@@ -147,62 +153,38 @@ class LocationService {
     if (apiKey.isEmpty) return [];
 
     try {
-      final autocompleteUri = Uri.parse(
-        'https://maps.googleapis.com/maps/api/place/autocomplete/json'
-        '?input=${Uri.encodeQueryComponent(query)}'
+      final textSearchUri = Uri.parse(
+        'https://maps.googleapis.com/maps/api/place/textsearch/json'
+        '?query=${Uri.encodeQueryComponent(query)}'
         '&language=th'
-        '&components=country:th'
+        '&region=th'
         '&key=$apiKey',
       );
 
-      final autocompleteResponse = await http.get(autocompleteUri);
-      final autocompleteData =
-          json.decode(autocompleteResponse.body) as Map<String, dynamic>;
+      final response = await http.get(textSearchUri);
+      final data = json.decode(response.body) as Map<String, dynamic>;
 
-      if (autocompleteData['status'] != 'OK') {
-        return [];
-      }
+      if (data['status'] != 'OK') return [];
 
-      final predictions =
-          (autocompleteData['predictions'] as List<dynamic>? ?? []).take(5);
+      final places = (data['results'] as List<dynamic>? ?? []).take(5);
 
       final results = <Location>[];
-      for (final item in predictions) {
-        final prediction = item as Map<String, dynamic>;
-        final placeId = prediction['place_id'] as String?;
-        if (placeId == null || placeId.isEmpty) continue;
-
-        final detailsUri = Uri.parse(
-          'https://maps.googleapis.com/maps/api/place/details/json'
-          '?place_id=${Uri.encodeQueryComponent(placeId)}'
-          '&fields=place_id,name,formatted_address,geometry'
-          '&language=th'
-          '&key=$apiKey',
-        );
-
-        final detailsResponse = await http.get(detailsUri);
-        final detailsData =
-            json.decode(detailsResponse.body) as Map<String, dynamic>;
-
-        if (detailsData['status'] != 'OK') continue;
-
-        final place = detailsData['result'] as Map<String, dynamic>?;
-        final geometry = place?['geometry'] as Map<String, dynamic>?;
+      for (final item in places) {
+        final place = item as Map<String, dynamic>;
+        final geometry = place['geometry'] as Map<String, dynamic>?;
         final location = geometry?['location'] as Map<String, dynamic>?;
         final lat = (location?['lat'] as num?)?.toDouble();
         final lng = (location?['lng'] as num?)?.toDouble();
-        if (place == null || lat == null || lng == null) continue;
+        final placeId = place['place_id'] as String?;
+        if (lat == null || lng == null || placeId == null) continue;
 
         results.add(
           Location(
-            id: place['place_id'] as String? ?? placeId,
-            name: place['name'] as String? ??
-                prediction['description'] as String? ??
-                query,
+            id: placeId,
+            name: place['name'] as String? ?? query,
             latitude: lat,
             longitude: lng,
-            address: place['formatted_address'] as String? ??
-                prediction['description'] as String?,
+            address: place['formatted_address'] as String?,
           ),
         );
       }

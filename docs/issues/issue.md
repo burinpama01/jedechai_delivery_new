@@ -380,3 +380,89 @@ bool get isExpired => endDate != null && _bangkokNow().isAfter(endDate!);       
 - ยังไม่ได้ตรวจเชิงลึก: `admin-web/`, Supabase Edge Functions ทั้งหมด, RLS policy รายตาราง, และหน้าจอกลุ่ม admin/laundry
 - `warnings_only.txt` ในโปรเจคมี `unnecessary_non_null_assertion` / `unused_element` / `dead_null_aware_expression` ค้างอยู่หลายสิบรายการ (ไม่ได้ยกมาเป็น issue เพราะเป็น lint ไม่ใช่ bug) แต่ `unused_element` หลายตัวใน `driver_navigation_screen.dart` และ `merchant_orders_screen.dart` บ่งชี้ว่ามีฟีเจอร์ที่เขียนไว้แล้วไม่ได้ต่อสาย ควรไล่ดูว่าตั้งใจหรือหลุด
 - ข้อ ISSUE-103 เป็น backend แต่ต้องแก้ก่อน/พร้อมกับข้ออื่น เพราะเป็นความเสี่ยงสูงสุดของระบบเงิน
+
+---
+
+# รอบแก้ไข 2026-09-19
+
+สรุป: **Fixed 22 / Partial 2 / Deferred 1** — commit บน branch `claude/laughing-rubin-ju2d71`
+
+> ⚠️ **ยังไม่ได้ verify ด้วย tool** — container ที่ใช้แก้ไม่มี Flutter SDK จึงยังไม่ได้รัน
+> `flutter analyze` และ `flutter test` ต้องรันทั้งสองคำสั่งบนเครื่อง dev ก่อน merge
+> (มีเทสต์ใหม่ 2 ไฟล์ที่ยังไม่เคยถูกรัน: `test/shop_schedule_test.dart`,
+> `test/coupon_validity_time_test.dart`)
+
+## แก้ไขข้อเท็จจริงจากรายงานรอบแรก
+
+ระหว่างแก้พบว่ารายงานรอบแรก 2 ข้อระบุผลกระทบเกินจริง — บันทึกไว้ให้ตรงความจริง:
+
+- **ISSUE-105** เส้นทาง "ล็อกอินปลอมด้วยอีเมลอะไรก็ได้" เกิดขึ้นได้เฉพาะเมื่อ `.env`
+  มีค่า placeholder จริง ๆ (`https://YOUR_PROJECT_ID.supabase.co` / `YOUR_ANON_KEY`)
+  ไม่ใช่กรณี `.env` ว่าง เพราะ `MockAuthService.isSupabaseConfigured` เทียบกับ
+  placeholder ไม่ได้เทียบว่าว่าง กรณี `.env` ว่างจะตกไปที่อาการ "แอปพังทั้งระบบด้วย
+  assertion ของ Supabase" แทน ทั้งสองทางแก้แล้วในรอบนี้
+- **ISSUE-108** `_placeOrder()` มีการเช็ค `_customerLat/_customerLng == null` อยู่ก่อนแล้ว
+  ออเดอร์จึงสร้างด้วยค่าส่งของระยะ 3 กม. ไม่ได้จริง ผลกระทบที่เหลือคือ **UI แสดง
+  ค่าส่ง/ยอดรวมที่ไม่ตรงความจริง** ก่อนที่ลูกค้าจะรู้ว่าสั่งไม่ได้ (severity จริงต่ำกว่า
+  ที่รายงานไว้) แก้แล้วเช่นกัน
+
+## ยังค้าง (Partial / Deferred)
+
+### ISSUE-115 — Partial
+ลบ dead code และทำให้ error ไม่เงียบแล้ว แต่การเขียนค่าชดเชยระยะทาง
+(`price` / `delivery_fee` / `notes`) ยังเป็น `UPDATE` แยกจาก RPC `accept_booking`
+จึงยังไม่ atomic ถ้า call นั้นล้มเหลวทั้งสองครั้ง คนขับจะได้งานแต่ไม่ได้ค่าชดเชย
+**ทางแก้ที่เหลือ:** เพิ่ม parameter `p_updates jsonb` ให้ `accept_booking` แล้วรวม
+เข้าไปใน `UPDATE` เดียวกับตอนเคลมงาน (ต้อง drop/recreate function + แก้ caller)
+
+### ISSUE-120 — Partial
+แก้ N+1 แล้ว (`searchPlaces` เปลี่ยนจาก Autocomplete + Place Details × 5
+เป็น Places Text Search คำขอเดียว) และเขียนเงื่อนไขการตั้ง key restriction
+ลง README แล้ว แต่ **แอปยังเรียก Google Web Service API ตรงจากเครื่องผู้ใช้**
+(`Directions` ใน `food_checkout_screen`, `driver_navigation_screen`,
+`location_service`) ซึ่งต้องใช้ key ที่ผูก application restriction ไม่ได้
+**ทางแก้ที่เหลือ:** ย้าย call เหล่านี้ไป Edge Function แล้วให้แอปเรียกผ่าน Supabase
+(เป็นงานที่ต้องสร้าง + deploy Edge Function ใหม่ จึงรอการตัดสินใจก่อน)
+
+### ISSUE-122 — Deferred (ตั้งใจไม่แก้ตอนนี้)
+ตรวจเพิ่มแล้วพบว่า:
+- `StatusBadge` มี caller เดียวคือ `activity_screen.dart:851` ซึ่งอ่านจากตาราง
+  `bookings` และหน้านี้ไม่ได้แสดงงานซักผ้า สถานะซักผ้าจึงยังไม่เคยไหลมาถึง
+  `BookingStatus.fromString()` จริง
+- พฤติกรรม `default → pending` มีเทสต์ล็อกไว้อยู่แล้วที่
+  `test/booking_status_test.dart:24-26` แปลว่าเป็น contract ที่ตั้งใจ
+
+สรุปคือเป็น **กับดักรอในอนาคต ไม่ใช่บั๊กที่เกิดอยู่ตอนนี้** การเพิ่ม enum อีก 7 ค่า
+(`searching`, `quote_requested`, `quoted`, `quote_expired`, `confirmed_merchant`,
+`at_merchant`, `ready_for_return`) ต้องแก้ switch 5 ชุด + แก้เทสต์เดิม จึงควรทำพร้อม
+ตอนที่เอางานซักผ้าเข้าหน้า Activity จริง ๆ ไม่ใช่ทำล่วงหน้าแบบเดา
+
+## Action ที่ต้องทำนอก repo (ISSUE-102)
+
+โค้ดไม่อ่าน secret จาก `.env` แล้ว แต่ต้องทำต่ออีก 3 อย่าง:
+
+1. ลบ `SUPABASE_SERVICE_KEY`, `OMISE_SECRET_KEY`, `FIREBASE_PRIVATE_KEY`,
+   `FIREBASE_PRIVATE_KEY_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_CLIENT_ID`
+   ออกจากไฟล์ `.env` จริงบนเครื่อง dev และ CI
+2. **Rotate คีย์ทั้งหมดข้างบน** — ถ้าเคยปล่อย build ที่มีคีย์เหล่านี้ออกไปแล้ว
+   ต้องถือว่ารั่ว
+3. ตั้ง restriction ให้ `GOOGLE_MAPS_API_KEY` ที่ Google Cloud Console และแยก key
+   ของ Maps SDK (app-restricted) ออกจาก key ที่ใช้เรียก Web Service
+
+## Migration ที่ต้อง deploy
+
+- `supabase/migrations/20260917100000_fix_withdrawal_cancel_atomic.sql`
+- `supabase/migrations/20260917100100_harden_wallet_settlement_rpcs.sql`
+
+migration ตัวที่สองจะพยายามสร้าง partial unique index กันค่าคอมซ้ำ
+(`uniq_wallet_tx_commission_per_booking`) ถ้ามีข้อมูลค่าคอมซ้ำค้างอยู่แล้ว index จะ
+สร้างไม่สำเร็จและขึ้น `WARNING` แทนการล้ม migration — **ต้องเช็ค log ตอน deploy** ถ้า
+เจอ warning ให้เคลียร์แถวซ้ำแล้วรัน migration ซ้ำอีกรอบ
+
+```sql
+-- หาแถวค่าคอมซ้ำก่อน deploy
+SELECT wallet_id, related_booking_id, count(*)
+FROM public.wallet_transactions
+WHERE type = 'commission' AND related_booking_id IS NOT NULL
+GROUP BY 1, 2 HAVING count(*) > 1;
+```
