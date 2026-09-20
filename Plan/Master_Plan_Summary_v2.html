@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สรุปแผนงานทั้งหมด v2</title>
+<style>
+  :root { --ink:#1a2332; --sub:#5a6a80; --line:#e3e8f0; --bg:#f7f9fc; --card:#ffffff;
+    --red:#c0392b; --red-bg:#fdecea; --amber:#b9770e; --amber-bg:#fef6e0;
+    --green:#1e8449; --green-bg:#e9f7ef; --blue:#1f618d; --blue-bg:#eaf2f8;
+    --purple:#6c3483; --purple-bg:#f4ecf9; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink:#e8edf5; --sub:#9fb0c6; --line:#2b3648; --bg:#12171f; --card:#1a2130;
+      --red:#f19a90; --red-bg:#3a1f1c; --amber:#f0c274; --amber-bg:#3a2d12; --green:#7fd3a3; --green-bg:#15301f;
+      --blue:#8ec2e8; --blue-bg:#152a3a; --purple:#caa6e0; --purple-bg:#2a1c33; }
+  }
+  * { box-sizing:border-box; }
+  body { font-family:'Segoe UI',Tahoma,'Noto Sans Thai',sans-serif; color:var(--ink);
+    background:var(--bg); margin:0; line-height:1.65; }
+  .wrap { max-width:1040px; margin:0 auto; padding:32px 20px 80px; }
+  header.hero { background:linear-gradient(135deg,#1a5276,#1f618d); color:#fff;
+    border-radius:16px; padding:30px 32px; margin-bottom:26px; }
+  header.hero h1 { margin:0 0 8px; font-size:25px; }
+  header.hero p { margin:4px 0; opacity:.92; font-size:14px; }
+  h2 { font-size:20px; margin:40px 0 12px; padding-bottom:8px; border-bottom:2px solid var(--line); }
+  h3 { font-size:16px; margin:20px 0 8px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:18px 20px; margin:14px 0; }
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; margin:12px 0; font-size:13px; background:var(--card); }
+  th { background:var(--blue-bg); text-align:left; padding:8px 10px; border:1px solid var(--line); }
+  td { padding:7px 10px; border:1px solid var(--line); vertical-align:top; }
+  .tag { display:inline-block; padding:2px 9px; border-radius:999px; font-size:11.5px; font-weight:600; white-space:nowrap; }
+  .t-red { background:var(--red-bg); color:var(--red); }
+  .t-amber { background:var(--amber-bg); color:var(--amber); }
+  .t-green { background:var(--green-bg); color:var(--green); }
+  .t-blue { background:var(--blue-bg); color:var(--blue); }
+  .t-grey { background:var(--line); color:var(--sub); }
+  code { background:var(--blue-bg); padding:1px 6px; border-radius:6px; font-size:12.5px;
+    font-family:Consolas,'Courier New',monospace; }
+  .note { border-left:4px solid var(--blue); background:var(--blue-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  .ok { border-left:4px solid var(--green); background:var(--green-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  .danger { border-left:4px solid var(--red); background:var(--red-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  ul { margin:8px 0; padding-left:22px; } li { margin:5px 0; }
+  .small { color:var(--sub); font-size:12.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>🗺️ สรุปแผนงานทั้งหมด v2 — หลังปิด Batch 0–5</h1>
+  <p>เวอร์ชัน 2 · 20 กันยายน 2569 · ต่อจาก <code>Master_Plan_Summary_v1.html</code> (เก็บไว้ ไม่แก้ทับ)</p>
+  <p>ทุก migration ขึ้น production แล้ว · แอปล่าสุด 1.13.0+123 · admin-web 1.7.0</p>
+</header>
+
+<div class="ok">
+<strong>สิ่งที่เปลี่ยนจาก v1</strong> — v1 วางแผนไว้ 6 Batch · ตอนนี้ Batch 0–5 <b>ทำเสร็จและขึ้น production แล้ว</b>
+ระหว่างทางพบช่องโหว่ความปลอดภัยเพิ่ม 4 จุดที่ v1 ยังไม่รู้ และตัดงานบางข้อออกเพราะตรวจแล้วไม่จำเป็น
+</div>
+
+<h2>1) งานที่ปิดแล้ว (เรียงตาม commit)</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Commit</th><th>งาน</th><th>เวอร์ชัน</th></tr></thead>
+<tbody>
+<tr><td><code>a924ac9</code></td><td>แยก secret ออกจากแอป · ร้านเลือกแพ็กเกจ GP เอง + cooldown 30 วัน · Beam Checkout (สวิตช์/คีย์/ทดสอบเชื่อมต่อ)</td><td>1.11.0+119 · admin-web 1.7.0</td></tr>
+<tr><td><code>78f9ffb</code></td><td>ปิดช่องโหว่ยกระดับสิทธิ์ใน <code>profiles</code> (ตั้งตัวเองเป็นแอดมิน / สมัครเป็นแอดมิน)</td><td>DB</td></tr>
+<tr><td><code>227588d</code></td><td><b>Batch 0</b> ล็อกกระเป๋าเงินและออเดอร์ (policy เปิดโล่ง + RPC เงินที่ใครก็เรียกได้)</td><td>1.11.1+120</td></tr>
+<tr><td><code>61bacd0</code></td><td><b>Batch 1</b> server คำนวณเงินเอง (G2/G1/G4/W1) · ชดเชยคูปองคนขับ · F2/C2/C3</td><td>1.12.0+121</td></tr>
+<tr><td><code>400e259</code></td><td><b>Batch 2</b> ปัดเงินจุดเดียวทุกจอ (P1/P2) · แก้คูปองเพี้ยน 7 ชม. (C4)</td><td>1.12.1+122</td></tr>
+<tr><td><code>c7d8c53</code></td><td><b>Batch 3–5</b> กระเป๋า 2 ถัง + รางวัลชวนเพื่อน · coupon ใน webhook + backfill · log/per-merchant/shop status source</td><td>1.13.0+123</td></tr>
+</tbody></table></div>
+
+<h2>2) ช่องโหว่ที่พบเพิ่ม (ไม่มีใน v1) — ปิดหมดแล้ว</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>ช่องโหว่</th><th>ผลถ้าถูกใช้</th><th>สถานะ</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><code>.env</code> ถูก bundle เข้าแอป (service key, DB URL, Firebase private key, Omise secret)</td><td>ได้สิทธิ์เต็มฐานข้อมูลและระบบจ่ายเงิน</td><td><span class="tag t-amber">แก้แล้ว · ยังไม่ rotate key</span></td></tr>
+<tr><td>2</td><td>RLS <code>profiles</code> ให้ผู้ใช้แก้ <code>role</code>/<code>approval_status</code> ของตัวเอง + สมัครด้วย metadata role=admin</td><td>ตั้งตัวเองเป็นแอดมิน</td><td><span class="tag t-green">ปิดแล้ว</span></td></tr>
+<tr><td>3</td><td><code>topup_requests</code> มี policy เปิดให้ทุก role แก้แถวของคนอื่น</td><td>โอนคำขอเติมเงินของคนอื่นเป็นของตัวเอง</td><td><span class="tag t-green">ปิดแล้ว</span></td></tr>
+<tr><td>4</td><td>RPC เงิน (<code>wallet_adjust</code>, <code>wallet_deduct</code>, <code>complete_booking</code>, approve/reject ถอน) เรียกได้โดย anon และไม่ตรวจสิทธิ์</td><td>เสกเงิน / ดูดเงินคนอื่น / ปิดงานของคนอื่น / อนุมัติถอนเอง</td><td><span class="tag t-green">ปิดแล้ว</span></td></tr>
+<tr><td>5</td><td>คนขับตั้ง <code>status='completed'</code> ตรง หรือส่งค่าคอม 0</td><td>ไม่ถูกหักค่าคอมเลย</td><td><span class="tag t-green">ปิดแล้ว (Batch 1)</span></td></tr>
+<tr><td>6</td><td><code>process_referral</code> ผูก referral ให้ผู้ใช้คนอื่นได้</td><td>ขโมยเครดิตการชวน</td><td><span class="tag t-green">ปิดแล้ว (Batch 3)</span></td></tr>
+</tbody></table></div>
+
+<h2>3) สิ่งที่ตัดออกจากแผนเดิม (ตรวจแล้วไม่ต้องทำ)</h2>
+<ul>
+<li><b>สคริปต์ปรับวันที่คูปอง +7 ชม. (C4)</b> — ข้อมูลใน DB เป็น UTC ถูกอยู่แล้ว (เวลาเริ่มห่างจากเวลาสร้างไม่กี่นาที) ที่ผิดคือแอปส่ง query เป็นเวลาไทยแบบไม่มีโซน จึงแก้ที่แอปอย่างเดียว</li>
+<li><b>P0-2 ย้อนเงินทดสอบ ฿977,620 (W4)</b> — ผู้ใช้ยืนยันว่าเป็นบัญชีทดสอบของตัวเอง ไม่ย้อน · แทนที่ด้วยการให้เงินเดิมทั้งหมดอยู่ "ถังเติมเอง" และถังระบบเริ่มที่ 0 จึงไม่มีใครถอนเงินรางวัลที่ไม่ได้รับจริง</li>
+<li><b>referral offset เดิม</b> (คูปอง WELCOME20/REFERRER20 ลดค่าคอมแล้วตัดรายได้คนขับส่วนที่เหลือ) — แทนด้วยนโยบายชดเชยเต็มจำนวนเข้ากระเป๋าคนขับ</li>
+</ul>
+
+<h2>4) งานที่เหลือ</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>งาน</th><th>ทำไมยังไม่ทำ</th><th>ใครต้องตัดสินใจ</th></tr></thead>
+<tbody>
+<tr><td><span class="tag t-red">เร่ง</span> เปลี่ยนคีย์ที่หลุด (service key, DB, Firebase, Omise/Beam, Vercel, SMS)</td><td>ผู้ใช้เลือกเลื่อนไว้เพราะยังไม่เปิดตัวเต็ม แต่แอปเวอร์ชันเก่าที่ปล่อยไปแล้วยังมีคีย์เดิม</td><td>ผู้ใช้</td></tr>
+<tr><td><span class="tag t-amber">รอข้อมูล</span> ใส่คีย์ Beam (Playground → Production) + Webhook URL ใน Lighthouse</td><td>ยังไม่มีคีย์ · ระบบพร้อมใช้งานแล้ว (โหมดปัจจุบันยังเป็น <code>admin_approve</code>)</td><td>ผู้ใช้</td></tr>
+<tr><td><span class="tag t-amber">รอตอบ</span> W3 ซ่อม 3 กระเป๋าที่ยอดไม่ตรง ledger (บัญชีทดสอบทั้งหมด)</td><td>เป็นการแก้ตัวเลขเงิน ต้องเลือกว่าจะเพิ่มรายการปรับยอดหรือปรับ balance</td><td>ผู้ใช้</td></tr>
+<tr><td><span class="tag t-blue">เลื่อน</span> C5 ดันคูปองในกระเป๋าตอนเช็คเอาท์ · W6 กระเป๋าเงินร้านค้า</td><td>ต้องตัดสินใจเชิงธุรกิจ/UX ก่อน (W6 กระทบว่าร้านรับเงินอย่างไรทั้งระบบ)</td><td>ผู้ใช้</td></tr>
+<tr><td><span class="tag t-blue">แผนแยก</span> F3 รับออเดอร์จาก POS (inbound order.created)</td><td>เป็นฟีเจอร์ใหม่ ต้องคุยกับฝั่ง StoreOS</td><td>ผู้ใช้ + StoreOS</td></tr>
+<tr><td><span class="tag t-blue">ถัดไป</span> AI Merchant Quick Setup (แผน v3)</td><td>Phase 0 (secret) ทำเสร็จแล้ว เริ่ม Phase 1–2 ได้เมื่อพร้อม</td><td>ผู้ใช้</td></tr>
+</tbody></table></div>
+
+<h2>5) ระบบคนขับ — สถานะหลัง Batch 1–5</h2>
+<ul>
+<li><b>ปิดแล้ว:</b> ข้ามการหักค่าคอมไม่ได้ · แก้ราคา/รายได้ในออเดอร์ตัวเองไม่ได้ · ปิดงานของคนอื่นไม่ได้ · ตั้งยอดกระเป๋าเองไม่ได้ · ถอนเงินผ่าน RPC ที่ตรวจยอดและถังจริง</li>
+<li><b>คนขับได้เงินครบขึ้น:</b> ออเดอร์จ่ายผ่าน Wallet ได้ <code>job_payout</code> · ส่วนลดคูปองที่ระบบออกให้ ได้ชดเชยเต็มจำนวนพร้อมแจ้งเตือน · GP ใช้อัตรา ณ วันสั่ง</li>
+<li><b>ยังค้างจากแผนคนขับเดิม (พ.ค.):</b> multi-stop delivery · แยกไฟล์ใหญ่ (<code>driver_navigation_screen.dart</code> 4,112 บรรทัด, <code>driver_dashboard_screen.dart</code> 2,799 บรรทัด) · unit test เดิมล้ม 4 ตัว (ล้มมาก่อนอยู่แล้ว — ISSUE-20260920-TESTS)</li>
+</ul>
+
+<h2>6) วิธีตรวจว่าระบบยังดีอยู่ (ใช้ซ้ำได้)</h2>
+<ul>
+<li>ทุก migration: dry-run ใน transaction แล้ว <code>ROLLBACK</code> บนฐานข้อมูลจริง (skill <code>rls-rollback-test</code> ใน Obsidian)</li>
+<li>สวมบทผู้ใช้จริงด้วย <code>set_config('request.jwt.claims', …)</code> + <code>set local role authenticated</code> เพื่อทดสอบ RLS</li>
+<li>ก่อน commit: สแกน secret ใน diff · <code>flutter analyze</code>/<code>flutter test</code> · <code>node --test</code> ของ admin-web · ให้ <code>code_reviewer</code> ตรวจและแก้จนผ่าน</li>
+<li>deploy: migration ผ่าน node+pg (ไฟล์ห่อ BEGIN/COMMIT) → edge functions → admin-web (<code>node scripts/deploy-admin-web-vercel.mjs</code>) → build แอป</li>
+</ul>
+
+<p class="small">ที่มา: Master_Plan_Summary_v1 · แผน 3 ชุดใน Plan/ · รายงาน 4 ฉบับใน docs/ · Obsidian log.md + issue.md (2026-09-19 ถึง 2026-09-20)</p>
+
+</div>
+</body>
+</html>

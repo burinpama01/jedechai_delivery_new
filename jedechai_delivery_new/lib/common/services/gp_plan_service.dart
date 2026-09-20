@@ -110,6 +110,25 @@ class GpPlanService {
     }
   }
 
+  /// ค่าส่งที่ลูกค้าจ่ายตามแพ็กเกจ = ค่าเริ่มต้น + (ระยะส่วนเกิน × ฿/กม.)
+  /// ใช้แสดงตัวอย่างในหน้าเลือกแพ็กเกจ (สูตรเดียวกับที่ระบบคิดจริง)
+  static double deliveryFeeFor(Map<String, dynamic> plan, double distanceKm) {
+    final base = (plan['base_delivery_fee'] as num?)?.toDouble() ?? 0;
+    final baseKm = (plan['base_distance_km'] as num?)?.toDouble() ?? 0;
+    final perKm = (plan['per_km_charge'] as num?)?.toDouble() ?? 0;
+    final km = distanceKm < 0 ? 0.0 : distanceKm;
+    final extra = km - baseKm;
+    return base + (extra > 0 ? extra * perKm : 0);
+  }
+
+  /// ยอดที่ร้านได้รับหลังหัก GP ของแพ็กเกจ
+  static double merchantReceivesFor(Map<String, dynamic> plan, double amount) {
+    final gpRate = (plan['gp_rate'] as num?)?.toDouble() ?? 0;
+    final safeAmount = amount < 0 ? 0.0 : amount;
+    final net = safeAmount * (1 - gpRate);
+    return net < 0 ? 0 : net;
+  }
+
   /// แปลง error จาก RPC เป็นข้อความภาษาไทยสำหรับร้าน
   static String errorMessage(Object error) {
     final raw = error is PostgrestException ? error.message : error.toString();

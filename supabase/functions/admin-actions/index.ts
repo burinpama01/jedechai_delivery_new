@@ -358,8 +358,33 @@ serve(async (req) => {
 // ─── Handlers ───────────────────────────────────────────
 
 async function handleApproveProfile(supabase, body, role: string) {
-  const { id } = body;
+  const { id, override_gp } = body;
   if (!id) return errorResponse("Missing 'id'");
+
+  // G1: ร้านอาหารต้องเลือกแพ็กเกจ GP เองก่อน แอดมินจะได้ไม่ต้องตั้งค่าให้ภายหลัง
+  if (role === "merchant") {
+    const { data: profile, error: profileErr } = await supabase
+      .from("profiles")
+      .select("gp_plan_id, merchant_service_types, gp_rate")
+      .eq("id", id)
+      .maybeSingle();
+    if (profileErr) return errorResponse(profileErr.message);
+    if (!profile) return errorResponse("Merchant profile not found", 404);
+
+    const serviceTypes = Array.isArray(profile.merchant_service_types)
+      ? profile.merchant_service_types
+      : [];
+    const isFood = serviceTypes.length === 0 || serviceTypes.includes("food");
+    if (isFood && !profile.gp_plan_id && override_gp !== true) {
+      // ตอบ 200 เพื่อให้ admin-web อ่าน payload ได้ (callAdminAction throw เมื่อ non-2xx)
+      return jsonResponse({
+        success: false,
+        error: "gp_plan_required",
+        message:
+          "ร้านยังไม่ได้เลือกแพ็กเกจ GP — ให้ร้านเลือกในแอป หรือกำหนดแพ็กเกจให้ในหน้าแก้ไขร้านก่อนอนุมัติ",
+      });
+    }
+  }
 
   const { error } = await supabase
     .from("profiles")

@@ -18,7 +18,8 @@ void main() {
       expect(result.reason, DriverJobHiddenReason.waitingMerchantAccept);
     });
 
-    test('food preparing is hidden with merchant preparing reason', () {
+    // ตั้งแต่ 1c2119e: คนขับเห็นงานอาหารตั้งแต่ร้านเริ่มทำอาหาร เพื่อออกเดินทางไปรอได้
+    test('food preparing is visible so the driver can head to the shop', () {
       final result = DriverJobVisibilityPolicy.evaluate(
         serviceType: 'food',
         status: 'preparing',
@@ -29,8 +30,8 @@ void main() {
         acceptedServiceTypes: null,
       );
 
-      expect(result.visible, isFalse);
-      expect(result.reason, DriverJobHiddenReason.merchantPreparing);
+      expect(result.visible, isTrue);
+      expect(result.reason, isNull);
     });
 
     test('food ready for pickup is visible when available and in radius', () {

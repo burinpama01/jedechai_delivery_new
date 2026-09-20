@@ -43,6 +43,16 @@ function _deps() {
 }
 
 export async function renderMerchantsPage(el, ctx) {
+  // โหลดรายการแพ็กเกจ GP ไว้ใช้แสดง badge ของแต่ละร้าน (G2)
+  try {
+    const sb = (ctx && ctx.supabase) || globalThis.supabase;
+    if (sb && !globalThis._gpPlansCache) {
+      const { data } = await sb.from('gp_plans').select('id, name, gp_rate').order('sort_order');
+      globalThis._gpPlansCache = data || [];
+    }
+  } catch (_) {
+    globalThis._gpPlansCache = globalThis._gpPlansCache || [];
+  }
   _ctx = ctx || null;
   const { supabase, fetchUserEmails, renderMiniBarChart, fmt, truthyFlag } = _deps();
 
@@ -204,6 +214,13 @@ export function renderMerchantRows(merchants, ctx) {
       const safeName = escapeHtml(escapeJsStringForInlineHandler(m.full_name || ''));
       const merchantIdHtml = escapeHtml(m.id);
       const merchantIdJsArg = escapeHtml(escapeJsStringForInlineHandler(m.id));
+      // G2: แพ็กเกจ GP ที่ร้านเลือกเอง (แอดมินดูอย่างเดียว ไม่ต้องกรอก)
+      const gpPlan = (globalThis._gpPlansCache || []).find((p) => p.id === m.gp_plan_id);
+      const gpPlanHtml = m.gp_plan_id
+        ? `<span class="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[11px]">${escapeHtml(gpPlan?.name || 'แพ็กเกจ GP')} · หัก ${gpPlanPct(m.gp_rate)}</span>`
+        : (m.gp_rate != null
+            ? `<span class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[11px]">ดีลตรง · หัก ${gpPlanPct(m.gp_rate)}</span>`
+            : '<span class="px-2 py-0.5 rounded-full bg-red-50 text-red-600 text-[11px]">ยังไม่เลือกแพ็กเกจ GP</span>');
       return `
         <tr class="table-row border-b border-gray-50">
           <td class="px-4 py-3 font-medium">
@@ -221,6 +238,7 @@ export function renderMerchantRows(merchants, ctx) {
           <td class="px-4 py-3 text-gray-600 max-w-[200px] truncate">${escapeHtml(m.shop_address) || '-'}</td>
           <td class="px-4 py-3">
             ${statusBadge(m.approval_status || 'pending')}
+            <div class="mt-1">${gpPlanHtml}</div>
             ${isShopOpen
               ? '<span class="ml-1 inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700">ร้านเปิด</span>'
               : '<span class="ml-1 inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-200 text-slate-700">ร้านปิด</span>'}
@@ -317,11 +335,29 @@ export async function approveMerchant(id, ctx) {
   const { callAdminAction, showToast, escapeHtml, refreshCurrentPage } = _deps();
   if (!confirm('อนุมัติร้านค้านี้?')) return;
   try {
-    await callAdminAction({ action: 'approve_merchant', id });
+    const result = await callAdminAction({ action: 'approve_merchant', id });
+    // G1: ร้านอาหารต้องมีแพ็กเกจ GP ก่อน — ให้แอดมินเลือกว่าจะไปตั้งให้ หรืออนุมัติแบบดีลตรง
+    if (result && result.success === false && result.error === 'gp_plan_required') {
+      const goSetup = confirm(
+        (result.message || 'ร้านยังไม่ได้เลือกแพ็กเกจ GP') +
+          '\n\nกด OK เพื่อเปิดหน้าแก้ไขร้าน (เลือกแพ็กเกจให้) หรือ Cancel เพื่ออนุมัติแบบดีลตรงโดยใช้ค่าปัจจุบัน',
+      );
+      if (goSetup) {
+        await editMerchantProfile(id);
+        return;
+      }
+      if (!confirm('ยืนยันอนุมัติโดยไม่ผูกแพ็กเกจ (ถือเป็นดีลตรง ร้านจะเปลี่ยนแพ็กเกจเองไม่ได้)?')) return;
+      await callAdminAction({ action: 'approve_merchant', id, override_gp: true });
+    }
     showToast('อนุมัติร้านค้าสำเร็จ', 'success');
     refreshCurrentPage();
   } catch (e) {
-    showToast('เกิดข้อผิดพลาด: ' + escapeHtml(e.message), 'error');
+    const msg = String(e?.message || e);
+    if (msg.includes('gp_plan_required')) {
+      showToast('ร้านยังไม่ได้เลือกแพ็กเกจ GP — เปิดหน้าแก้ไขร้านเพื่อกำหนดแพ็กเกจก่อนอนุมัติ', 'error');
+      return;
+    }
+    showToast('เกิดข้อผิดพลาด: ' + escapeHtml(msg), 'error');
   }
 }
 

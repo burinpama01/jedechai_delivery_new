@@ -60,6 +60,12 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
   bool _gpPlansLoading = false;
   String? _gpPlansError;
   String? _selectedGpPlanId;
+  // G3: ตัวอย่างคำนวณให้ร้านเห็นก่อนเลือก + ต้องยอมรับเงื่อนไข
+  final TextEditingController _gpCalcAmountController =
+      TextEditingController(text: '100');
+  final TextEditingController _gpCalcKmController =
+      TextEditingController(text: '8');
+  bool _gpTermsAccepted = false;
 
   // Driver document uploads
   File? _idCardFile;
@@ -159,6 +165,8 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
 
   @override
   void dispose() {
+    _gpCalcAmountController.dispose();
+    _gpCalcKmController.dispose();
     _fullNameController.dispose();
     _phoneController.dispose();
     _vehicleTypeController.dispose();
@@ -555,11 +563,103 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
   }
 
   bool _ensureGpPlanSelected() {
-    if (_selectedGpPlanId != null) return true;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('กรุณาเลือกแพ็กเกจ GP สำหรับร้านของคุณ')),
+    if (_selectedGpPlanId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('กรุณาเลือกแพ็กเกจ GP สำหรับร้านของคุณ')),
+      );
+      return false;
+    }
+    if (!_gpTermsAccepted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('กรุณาติ๊กยอมรับเงื่อนไขแพ็กเกจ GP')),
+      );
+      return false;
+    }
+    return true;
+  }
+
+  double get _gpCalcAmount =>
+      double.tryParse(_gpCalcAmountController.text.trim()) ?? 0;
+  double get _gpCalcKm => double.tryParse(_gpCalcKmController.text.trim()) ?? 0;
+
+  double _gpPlanDeliveryFee(Map<String, dynamic> plan) =>
+      GpPlanService.deliveryFeeFor(plan, _gpCalcKm);
+
+  double _gpPlanMerchantReceives(Map<String, dynamic> plan) =>
+      GpPlanService.merchantReceivesFor(plan, _gpCalcAmount);
+
+  Widget _buildGpCalculator() {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('ลองคำนวณก่อนเลือก',
+              style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _gpCalcAmountController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'ยอดอาหาร (บาท)',
+                    isDense: true,
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextField(
+                  controller: _gpCalcKmController,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(
+                    labelText: 'ระยะลูกค้า (กม.)',
+                    isDense: true,
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'ตัวเลขในแต่ละแพ็กเกจด้านล่างจะอัปเดตตามที่กรอก',
+            style: TextStyle(
+                fontSize: 11, color: colorScheme.onSurfaceVariant),
+          ),
+        ],
+      ),
     );
-    return false;
+  }
+
+  Widget _buildGpTermsCheckbox() {
+    return CheckboxListTile(
+      value: _gpTermsAccepted,
+      onChanged: (v) => setState(() => _gpTermsAccepted = v ?? false),
+      controlAffinity: ListTileControlAffinity.leading,
+      contentPadding: EdgeInsets.zero,
+      title: const Text(
+        'ยอมรับเงื่อนไขแพ็กเกจ GP ที่เลือก',
+        style: TextStyle(fontSize: 13),
+      ),
+      subtitle: const Text(
+        'ระบบจะหัก GP ตามแพ็กเกจนี้ทุกออเดอร์ และคิดค่าส่งกับลูกค้าตามที่ระบุ '
+        'หลังร้านได้รับอนุมัติ เปลี่ยนแพ็กเกจเองได้เดือนละ 1 ครั้ง',
+        style: TextStyle(fontSize: 11),
+      ),
+    );
   }
 
   static String _fmtNum(dynamic value) {
@@ -609,10 +709,12 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
     } else {
       body = Column(
         children: [
+          _buildGpCalculator(),
           for (final plan in _gpPlans) ...[
             _buildGpPlanCard(plan),
             const SizedBox(height: 12),
           ],
+          _buildGpTermsCheckbox(),
         ],
       );
     }
@@ -621,7 +723,8 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
       key: key,
       icon: Icons.percent,
       title: 'เลือกแพ็กเกจ GP',
-      subtitle: 'เลือกรูปแบบที่ใช่สำหรับร้านคุณ (เปลี่ยนภายหลังได้โดยติดต่อแอดมิน)',
+      subtitle: 'เลือกรูปแบบที่ใช่สำหรับร้านคุณ '
+          '(หลังอนุมัติแล้วเปลี่ยนเองได้เดือนละ 1 ครั้งในหน้าตั้งค่าร้าน)',
       children: [body],
     );
   }
@@ -706,6 +809,17 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                     ],
                   ),
                   const SizedBox(height: 8),
+                  Text(
+                    'ตัวอย่าง: ขาย ${_fmtNum(_gpCalcAmount)} ฿ ลูกค้าห่าง ${_fmtNum(_gpCalcKm)} กม. '
+                    '→ ร้านได้ ${_fmtNum(_gpPlanMerchantReceives(plan).roundToDouble())} ฿ · '
+                    'ลูกค้าจ่ายค่าส่ง ${_fmtNum(_gpPlanDeliveryFee(plan).roundToDouble())} ฿',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
                   Text(
                     'ค่าส่ง $baseFee ฿ ในระยะ $baseKm กิโลเมตรจากร้าน',
                     style: const TextStyle(fontSize: 13),

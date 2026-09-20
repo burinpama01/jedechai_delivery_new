@@ -57,7 +57,8 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
   String? _driverPhone;
   String? _customerName;
   String? _customerPhone;
-  final MerchantOrderService _merchantOrderService = MerchantOrderService();
+  // สร้างแบบ lazy: หน้าจอ render ได้โดยไม่ต้องมี Supabase instance (widget test)
+  late final MerchantOrderService _merchantOrderService = MerchantOrderService();
 
   @override
   void initState() {
