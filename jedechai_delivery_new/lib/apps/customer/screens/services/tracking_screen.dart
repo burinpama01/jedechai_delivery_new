@@ -6,13 +6,14 @@ import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../theme/jdc_colors.dart';
+import '../../../../theme/jdc_layout.dart';
 import '../../../../common/models/booking.dart';
 import '../../../../common/config/env_config.dart';
 import '../../../../utils/debug_logger.dart';
 
 /// Tracking Screen
-/// 
+///
 /// Shows real-time tracking of delivery with map and status timeline
 class TrackingScreen extends StatefulWidget {
   final Booking booking;
@@ -52,18 +53,23 @@ class _TrackingScreenState extends State<TrackingScreen> {
   }
 
   void _setupMarkers() {
-    _markers.removeWhere((m) => m.markerId.value == 'origin' || m.markerId.value == 'destination');
+    _markers.removeWhere(
+        (m) => m.markerId.value == 'origin' || m.markerId.value == 'destination');
     _markers.add(Marker(
       markerId: const MarkerId('origin'),
       position: LatLng(_booking.originLat, _booking.originLng),
       icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-      infoWindow: InfoWindow(title: AppLocalizations.of(context)!.trackPickup, snippet: _booking.pickupAddress ?? ''),
+      infoWindow: InfoWindow(
+          title: AppLocalizations.of(context)!.trackPickup,
+          snippet: _booking.pickupAddress ?? ''),
     ));
     _markers.add(Marker(
       markerId: const MarkerId('destination'),
       position: LatLng(_booking.destLat, _booking.destLng),
       icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-      infoWindow: InfoWindow(title: AppLocalizations.of(context)!.trackDestination, snippet: _booking.destinationAddress ?? ''),
+      infoWindow: InfoWindow(
+          title: AppLocalizations.of(context)!.trackDestination,
+          snippet: _booking.destinationAddress ?? ''),
     ));
   }
 
@@ -80,14 +86,16 @@ class _TrackingScreenState extends State<TrackingScreen> {
       final data = json.decode(response.body) as Map<String, dynamic>;
       if (!mounted) return;
       if (data['status'] == 'OK' && (data['routes'] as List).isNotEmpty) {
-        final encoded = (data['routes'][0] as Map)['overview_polyline']?['points'] as String?;
+        final encoded = (data['routes'][0] as Map)['overview_polyline']
+            ?['points'] as String?;
         if (encoded != null && encoded.isNotEmpty) {
           final points = _decodePolyline(encoded);
+          final routeColor = JdcColors.of(context).route;
           setState(() {
             _polylines.clear();
             _polylines.add(Polyline(
               polylineId: const PolylineId('route'),
-              color: AppTheme.primaryGreen,
+              color: routeColor,
               width: 5,
               points: points,
             ));
@@ -105,11 +113,12 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
   void _drawFallbackLine() {
     if (!mounted) return;
+    final fallbackColor = JdcColors.of(context).muted;
     setState(() {
       _polylines.clear();
       _polylines.add(Polyline(
         polylineId: const PolylineId('route'),
-        color: Colors.grey,
+        color: fallbackColor,
         width: 3,
         patterns: [PatternItem.dash(12), PatternItem.gap(6)],
         points: [
@@ -156,11 +165,13 @@ class _TrackingScreenState extends State<TrackingScreen> {
         if (data.isNotEmpty && mounted) {
           final updated = Booking.fromJson(data.first);
           setState(() => _booking = updated);
-          // Start tracking driver location once a driver is assigned
-          if (updated.driverId != null && updated.driverId != _trackedDriverId) {
+          if (updated.driverId != null &&
+              updated.driverId != _trackedDriverId) {
             _listenToDriverLocation(updated.driverId!);
           }
         }
+      }, onError: (Object error) {
+        debugLog('Booking stream error: $error');
       });
     } catch (e) {
       debugLog('Error listening to booking updates: $e');
@@ -188,15 +199,20 @@ class _TrackingScreenState extends State<TrackingScreen> {
           _markers.add(Marker(
             markerId: const MarkerId('driver'),
             position: driverPos,
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-            infoWindow: InfoWindow(title: AppLocalizations.of(context)!.trackDriverFallback),
+            icon: BitmapDescriptor.defaultMarkerWithHue(
+                BitmapDescriptor.hueBlue),
+            infoWindow: InfoWindow(
+                title:
+                    AppLocalizations.of(context)!.trackDriverFallback),
           ));
         });
-        // Animate camera only on first driver fix; subsequent updates update the marker only
         if (!_didInitialDriverCamera) {
           _didInitialDriverCamera = true;
-          _mapController?.animateCamera(CameraUpdate.newLatLng(driverPos));
+          _mapController?.animateCamera(
+              CameraUpdate.newLatLng(driverPos));
         }
+      }, onError: (Object error) {
+        debugLog('Driver location stream error: $error');
       });
     } catch (e) {
       debugLog('Error listening to driver location: $e');
@@ -213,7 +229,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return Scaffold(
       body: Stack(
         children: [
@@ -233,37 +249,46 @@ class _TrackingScreenState extends State<TrackingScreen> {
             zoomControlsEnabled: false,
             onMapCreated: (controller) {
               _mapController = controller;
-              // Fit bounds
-              _mapController?.animateCamera(CameraUpdate.newLatLngBounds(
-                LatLngBounds(
-                  southwest: LatLng(
-                    _booking.originLat < _booking.destLat ? _booking.originLat : _booking.destLat,
-                    _booking.originLng < _booking.destLng ? _booking.originLng : _booking.destLng,
+              _mapController?.animateCamera(
+                CameraUpdate.newLatLngBounds(
+                  LatLngBounds(
+                    southwest: LatLng(
+                      _booking.originLat < _booking.destLat
+                          ? _booking.originLat
+                          : _booking.destLat,
+                      _booking.originLng < _booking.destLng
+                          ? _booking.originLng
+                          : _booking.destLng,
+                    ),
+                    northeast: LatLng(
+                      _booking.originLat > _booking.destLat
+                          ? _booking.originLat
+                          : _booking.destLat,
+                      _booking.originLng > _booking.destLng
+                          ? _booking.originLng
+                          : _booking.destLng,
+                    ),
                   ),
-                  northeast: LatLng(
-                    _booking.originLat > _booking.destLat ? _booking.originLat : _booking.destLat,
-                    _booking.originLng > _booking.destLng ? _booking.originLng : _booking.destLng,
-                  ),
+                  80,
                 ),
-                80,
-              ));
+              );
             },
           ),
 
           // ปุ่มกลับ
           Positioned(
-            top: MediaQuery.of(context).padding.top + 8,
-            left: 12,
+            top: MediaQuery.of(context).padding.top + JdcSpacing.sm,
+            left: JdcSpacing.md,
             child: CircleAvatar(
-              backgroundColor: colorScheme.surface,
+              backgroundColor: jdc.surface,
               child: IconButton(
-                icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
+                icon: Icon(Icons.arrow_back, color: jdc.text),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ),
           ),
 
-          // Bottom sheet — ข้อมูลสถานะ
+          // Bottom sheet
           Positioned(
             bottom: 0,
             left: 0,
@@ -276,48 +301,36 @@ class _TrackingScreenState extends State<TrackingScreen> {
   }
 
   Widget _buildStatusPanel() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.12),
-            blurRadius: 12,
-            offset: const Offset(0, -4),
-          )
-        ],
+        color: jdc.surface,
+        borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(JdcRadius.sheet)),
+        boxShadow: jdc.shadowFloat,
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+          padding: const EdgeInsets.fromLTRB(
+              JdcSpacing.xl, JdcSpacing.lg, JdcSpacing.xl, JdcSpacing.md),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Handle
               Container(
-                width: 40, height: 4,
+                width: 40,
+                height: 4,
                 decoration: BoxDecoration(
-                  color: colorScheme.outlineVariant,
+                  color: jdc.line,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(height: 16),
-
-              // สถานะปัจจุบัน
+              const SizedBox(height: JdcSpacing.lg),
               _buildCurrentStatus(),
-              const SizedBox(height: 16),
-
-              // Timeline
+              const SizedBox(height: JdcSpacing.lg),
               _buildTimeline(),
-              const SizedBox(height: 16),
-
-              // ข้อมูลคนขับ
+              const SizedBox(height: JdcSpacing.lg),
               if (_booking.driverName != null) _buildDriverInfo(),
-
-              // ข้อมูลที่อยู่
-              const SizedBox(height: 12),
+              const SizedBox(height: JdcSpacing.md),
               _buildAddressInfo(),
             ],
           ),
@@ -327,34 +340,35 @@ class _TrackingScreenState extends State<TrackingScreen> {
   }
 
   Widget _buildCurrentStatus() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     final statusInfo = _getStatusInfo(_booking.status);
+    final statusColor = statusInfo['color'] as Color;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [statusInfo['color'] as Color, (statusInfo['color'] as Color).withValues(alpha: 0.7)],
+          colors: [statusColor, statusColor.withValues(alpha: 0.7)],
         ),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(JdcRadius.field),
       ),
       child: Row(
         children: [
-          Icon(statusInfo['icon'] as IconData, color: colorScheme.onPrimary, size: 28),
-          const SizedBox(width: 12),
+          Icon(statusInfo['icon'] as IconData, color: jdc.onCta, size: 28),
+          const SizedBox(width: JdcSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(statusInfo['title'] as String,
                     style: TextStyle(
-                      color: colorScheme.onPrimary,
+                      color: jdc.onCta,
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
                     )),
                 const SizedBox(height: 2),
                 Text(statusInfo['subtitle'] as String,
                     style: TextStyle(
-                      color: colorScheme.onPrimary.withValues(alpha: 0.9),
+                      color: jdc.onCta.withValues(alpha: 0.9),
                       fontSize: 13,
                     )),
               ],
@@ -366,7 +380,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
   }
 
   Widget _buildTimeline() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     final steps = _getTimelineSteps();
     return Column(
       children: List.generate(steps.length, (i) {
@@ -379,33 +393,35 @@ class _TrackingScreenState extends State<TrackingScreen> {
             Column(
               children: [
                 Container(
-                  width: 24, height: 24,
+                  width: 24,
+                  height: 24,
                   decoration: BoxDecoration(
-                    color: isActive ? AppTheme.primaryGreen : colorScheme.outlineVariant,
+                    color: isActive ? jdc.cta : jdc.line,
                     shape: BoxShape.circle,
                   ),
                   child: isActive
-                      ? const Icon(Icons.check, color: Colors.white, size: 14)
+                      ? Icon(Icons.check, color: jdc.onCta, size: 14)
                       : null,
                 ),
                 if (!isLast)
                   Container(
-                    width: 2, height: 30,
-                    color: isActive ? AppTheme.primaryGreen : colorScheme.outlineVariant,
+                    width: 2,
+                    height: 30,
+                    color: isActive ? jdc.cta : jdc.line,
                   ),
               ],
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: JdcSpacing.md),
             Expanded(
               child: Padding(
                 padding: EdgeInsets.only(bottom: isLast ? 0 : 14),
                 child: Text(step['label'] as String,
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-                      color: isActive
-                          ? colorScheme.onSurface
-                          : colorScheme.onSurfaceVariant,
+                      fontWeight: isActive
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                      color: isActive ? jdc.text : jdc.muted,
                     )),
               ),
             ),
@@ -416,49 +432,54 @@ class _TrackingScreenState extends State<TrackingScreen> {
   }
 
   Widget _buildDriverInfo() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
+        color: jdc.sunken,
+        borderRadius: BorderRadius.circular(JdcRadius.small),
       ),
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: AppTheme.primaryGreen.withValues(alpha: 0.1),
+            backgroundColor: jdc.brandSoft,
             radius: 22,
-            child: const Icon(Icons.person, color: AppTheme.primaryGreen),
+            child: Icon(Icons.person, color: jdc.brandOnSoft),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: JdcSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_booking.driverName ?? AppLocalizations.of(context)!.trackDriverFallback,
+                Text(
+                    _booking.driverName ??
+                        AppLocalizations.of(context)!.trackDriverFallback,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
-                      color: colorScheme.onSurface,
+                      color: jdc.text,
                     )),
                 if (_booking.driverVehicle != null)
                   Text(
                     _booking.driverVehicle!,
-                    style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                    style: TextStyle(fontSize: 13, color: jdc.muted),
                   ),
               ],
             ),
           ),
           if (_booking.driverPhone != null)
             IconButton(
-              icon: const Icon(Icons.phone, color: AppTheme.primaryGreen),
+              icon: Icon(Icons.phone, color: jdc.cta),
               onPressed: () async {
-                final uri = Uri(scheme: 'tel', path: _booking.driverPhone!);
+                final uri =
+                    Uri(scheme: 'tel', path: _booking.driverPhone!);
                 if (await canLaunchUrl(uri)) {
                   await launchUrl(uri);
                 } else if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(AppLocalizations.of(context)!.trackCallNotSupported)),
+                    SnackBar(
+                        content: Text(AppLocalizations.of(context)!
+                            .trackCallNotSupported)),
                   );
                 }
               },
@@ -469,30 +490,32 @@ class _TrackingScreenState extends State<TrackingScreen> {
   }
 
   Widget _buildAddressInfo() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
+        color: jdc.sunken,
+        borderRadius: BorderRadius.circular(JdcRadius.small),
       ),
       child: Column(
         children: [
           _buildAddressRow(
             icon: Icons.circle,
-            color: AppTheme.primaryGreen,
+            color: jdc.cta,
             label: AppLocalizations.of(context)!.trackPickup,
-            address: _booking.pickupAddress ?? AppLocalizations.of(context)!.trackNotSpecified,
+            address: _booking.pickupAddress ??
+                AppLocalizations.of(context)!.trackNotSpecified,
           ),
           Padding(
             padding: const EdgeInsets.only(left: 11),
-            child: Container(width: 2, height: 20, color: colorScheme.outlineVariant),
+            child: Container(width: 2, height: 20, color: jdc.line),
           ),
           _buildAddressRow(
             icon: Icons.location_on,
-            color: Colors.red,
+            color: jdc.danger,
             label: AppLocalizations.of(context)!.trackDestination,
-            address: _booking.destinationAddress ?? AppLocalizations.of(context)!.trackNotSpecified,
+            address: _booking.destinationAddress ??
+                AppLocalizations.of(context)!.trackNotSpecified,
           ),
         ],
       ),
@@ -505,19 +528,20 @@ class _TrackingScreenState extends State<TrackingScreen> {
     required String label,
     required String address,
   }) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return Row(
       children: [
         Icon(icon, color: color, size: 22),
-        const SizedBox(width: 10),
+        const SizedBox(width: JdcSpacing.md),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
+              Text(label,
+                  style: TextStyle(fontSize: 12, color: jdc.muted)),
               Text(
                 address,
-                style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+                style: TextStyle(fontSize: 14, color: jdc.text),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -529,32 +553,80 @@ class _TrackingScreenState extends State<TrackingScreen> {
   }
 
   Map<String, dynamic> _getStatusInfo(String status) {
+    final jdc = JdcColors.of(context);
     switch (status) {
       case 'pending':
-        return {'icon': Icons.hourglass_empty, 'color': Colors.orange, 'title': AppLocalizations.of(context)!.trackStatusPendingTitle, 'subtitle': AppLocalizations.of(context)!.trackStatusPendingSub};
+        return {
+          'icon': Icons.hourglass_empty,
+          'color': jdc.brand,
+          'title': AppLocalizations.of(context)!.trackStatusPendingTitle,
+          'subtitle': AppLocalizations.of(context)!.trackStatusPendingSub
+        };
       case 'accepted':
       case 'assigned':
-        return {'icon': Icons.delivery_dining, 'color': AppTheme.accentBlue, 'title': AppLocalizations.of(context)!.trackStatusAcceptedTitle, 'subtitle': AppLocalizations.of(context)!.trackStatusAcceptedSub};
+        return {
+          'icon': Icons.delivery_dining,
+          'color': jdc.infoInk,
+          'title': AppLocalizations.of(context)!.trackStatusAcceptedTitle,
+          'subtitle': AppLocalizations.of(context)!.trackStatusAcceptedSub
+        };
       case 'picking_up':
       case 'arrived':
       case 'arrived_at_pickup':
-        return {'icon': Icons.store, 'color': AppTheme.accentBlue, 'title': AppLocalizations.of(context)!.trackStatusPickingUpTitle, 'subtitle': AppLocalizations.of(context)!.trackStatusPickingUpSub};
+        return {
+          'icon': Icons.store,
+          'color': jdc.infoInk,
+          'title':
+              AppLocalizations.of(context)!.trackStatusPickingUpTitle,
+          'subtitle':
+              AppLocalizations.of(context)!.trackStatusPickingUpSub
+        };
       case 'preparing':
-        return {'icon': Icons.restaurant, 'color': Colors.orange, 'title': AppLocalizations.of(context)!.trackStatusPreparingTitle, 'subtitle': AppLocalizations.of(context)!.trackStatusPreparingSub};
+        return {
+          'icon': Icons.restaurant,
+          'color': jdc.brand,
+          'title':
+              AppLocalizations.of(context)!.trackStatusPreparingTitle,
+          'subtitle':
+              AppLocalizations.of(context)!.trackStatusPreparingSub
+        };
       case 'in_transit':
       case 'delivering':
-        return {'icon': Icons.local_shipping, 'color': AppTheme.primaryGreen, 'title': AppLocalizations.of(context)!.trackStatusInTransitTitle, 'subtitle': AppLocalizations.of(context)!.trackStatusInTransitSub};
+        return {
+          'icon': Icons.local_shipping,
+          'color': jdc.cta,
+          'title': AppLocalizations.of(context)!.trackStatusInTransitTitle,
+          'subtitle': AppLocalizations.of(context)!.trackStatusInTransitSub
+        };
       case 'arrived_at_dropoff':
-        return {'icon': Icons.pin_drop, 'color': AppTheme.primaryGreen, 'title': AppLocalizations.of(context)!.trackStatusArrivedTitle, 'subtitle': AppLocalizations.of(context)!.trackStatusArrivedSub};
+        return {
+          'icon': Icons.pin_drop,
+          'color': jdc.cta,
+          'title': AppLocalizations.of(context)!.trackStatusArrivedTitle,
+          'subtitle': AppLocalizations.of(context)!.trackStatusArrivedSub
+        };
       case 'completed':
-        return {'icon': Icons.check_circle, 'color': AppTheme.primaryGreen, 'title': AppLocalizations.of(context)!.trackStatusCompletedTitle, 'subtitle': AppLocalizations.of(context)!.trackStatusCompletedSub};
+        return {
+          'icon': Icons.check_circle,
+          'color': jdc.successInk,
+          'title':
+              AppLocalizations.of(context)!.trackStatusCompletedTitle,
+          'subtitle':
+              AppLocalizations.of(context)!.trackStatusCompletedSub
+        };
       case 'cancelled':
-        return {'icon': Icons.cancel, 'color': Colors.red, 'title': AppLocalizations.of(context)!.trackStatusCancelledTitle, 'subtitle': AppLocalizations.of(context)!.trackStatusCancelledSub};
+        return {
+          'icon': Icons.cancel,
+          'color': jdc.danger,
+          'title':
+              AppLocalizations.of(context)!.trackStatusCancelledTitle,
+          'subtitle':
+              AppLocalizations.of(context)!.trackStatusCancelledSub
+        };
       default:
-        final colorScheme = Theme.of(context).colorScheme;
         return {
           'icon': Icons.info,
-          'color': colorScheme.outlineVariant,
+          'color': jdc.dim,
           'title': AppLocalizations.of(context)!.trackStatusUnknownTitle,
           'subtitle': status,
         };
@@ -562,7 +634,13 @@ class _TrackingScreenState extends State<TrackingScreen> {
   }
 
   List<Map<String, dynamic>> _getTimelineSteps() {
-    final statusOrder = ['pending', 'accepted', 'picking_up', 'in_transit', 'completed'];
+    final statusOrder = [
+      'pending',
+      'accepted',
+      'picking_up',
+      'in_transit',
+      'completed'
+    ];
     final l10n = AppLocalizations.of(context)!;
     final labels = {
       'pending': l10n.trackTimelineCreated,
@@ -597,9 +675,11 @@ class _TrackingScreenState extends State<TrackingScreen> {
       }
     }
 
-    return List.generate(statusOrder.length, (i) => {
-      'label': labels[statusOrder[i]]!,
-      'active': i <= currentIndex,
-    });
+    return List.generate(
+        statusOrder.length,
+        (i) => {
+              'label': labels[statusOrder[i]]!,
+              'active': i <= currentIndex,
+            });
   }
 }

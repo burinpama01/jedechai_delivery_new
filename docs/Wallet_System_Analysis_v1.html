@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>วิเคราะห์ระบบ Wallet — Wallet System Analysis v1</title>
+<style>
+  :root { --ink:#1a2332; --sub:#5a6a80; --line:#e3e8f0; --bg:#f7f9fc; --card:#ffffff;
+    --red:#c0392b; --red-bg:#fdecea; --amber:#b9770e; --amber-bg:#fef6e0;
+    --green:#1e8449; --green-bg:#e9f7ef; --blue:#1f618d; --blue-bg:#eaf2f8; }
+  * { box-sizing:border-box; }
+  body { font-family:'Segoe UI',Tahoma,'Noto Sans Thai',sans-serif; color:var(--ink);
+    background:var(--bg); margin:0; line-height:1.65; }
+  .wrap { max-width:1000px; margin:0 auto; padding:32px 20px 80px; }
+  header.hero { background:linear-gradient(135deg,#186a3b,#148f77); color:#fff;
+    border-radius:16px; padding:30px 32px; margin-bottom:26px; }
+  header.hero h1 { margin:0 0 8px; font-size:25px; }
+  header.hero p { margin:4px 0; opacity:.92; font-size:14px; }
+  h2 { font-size:20px; margin:40px 0 12px; padding-bottom:8px; border-bottom:2px solid var(--line); }
+  h3 { font-size:16px; margin:20px 0 8px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:18px 20px; margin:14px 0; }
+  table { width:100%; border-collapse:collapse; margin:12px 0; font-size:13.5px; }
+  th { background:#eef2f7; text-align:left; padding:9px 10px; border:1px solid var(--line); }
+  td { padding:8px 10px; border:1px solid var(--line); vertical-align:top; }
+  .tag { display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; font-weight:600; white-space:nowrap; }
+  .t-red { background:var(--red-bg); color:var(--red); }
+  .t-amber { background:var(--amber-bg); color:var(--amber); }
+  .t-green { background:var(--green-bg); color:var(--green); }
+  .t-blue { background:var(--blue-bg); color:var(--blue); }
+  code { background:#eef2f7; padding:1px 6px; border-radius:6px; font-size:12.5px;
+    font-family:Consolas,'Courier New',monospace; }
+  .money { font-family:Consolas,monospace; font-weight:600; }
+  .note { border-left:4px solid var(--blue); background:var(--blue-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  .danger { border-left:4px solid var(--red); background:var(--red-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  .ok { border-left:4px solid var(--green); background:var(--green-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  ul { margin:8px 0; padding-left:22px; } li { margin:5px 0; }
+  .small { color:var(--sub); font-size:12.5px; }
+  .flow { background:#0f1b2d; color:#d7e3f4; border-radius:12px; padding:14px 18px;
+    font-family:Consolas,monospace; font-size:12px; line-height:1.8; overflow-x:auto; white-space:pre; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>👛 วิเคราะห์ระบบ Wallet — พบช่องโหว่วางเงินได้ 1 จุด + จุดที่เงินลูกค้า "หายเงียบ" 1 จุด</h1>
+  <p>เวอร์ชัน 1 · 19 กันยายน 2569 · ตรวจ schema + RPC + RLS + trigger + ข้อมูลจริงทั้ง ledger (86 รายการ) + reconcile ทุกกระเป๋า</p>
+</header>
+
+<h2>1) สถาปัตยกรรมปัจจุบัน</h2>
+<div class="flow">โครงสร้าง
+
+ wallets (user_id, balance)          ← balance เป็น "ค่าที่แสดง" ไม่ได้ derive จาก ledger
+ wallet_transactions (type, amount, related_booking_id)  ← ledger บันทึกทุกการเคลื่อนย้าย
+ withdrawal_requests                 ← schema+RLS พร้อม แต่ยัง 0 รายการ
+
+ การขยับเงิน "ควร" ผ่าน RPC ทั้ง 3 ตัว (SECURITY DEFINER):
+   wallet_topup(user, amount, desc, type, booking)   เครดิต + บันทึก ledger
+   wallet_deduct(user, amount, desc, type, booking)   เดบิต + บันทึก ledger
+   wallet_adjust(user, amount, desc)                  ปรับแบบมี ledger
+
+ type ที่ใช้จริง: topup ×14 · commission ×41 · admin_adjustment ×9 (+977,620!)
+ · payment ×1 · hold/release ×1 · laundry_payout ×1 · invalid_refund(±) ×9</div>
+
+<h3>สิ่งที่ออกแบบดีและทำงานจริง</h3>
+<div class="ok">
+<ul>
+  <li><b>ทุกการขยับเงินมี ledger + อ้างอิง booking:</b> RPC ทั้งสามบังคับ type + description + related_booking_id — ตรวจสอบย้อนได้</li>
+  <li><b>Laundry คือ reference implementation ครบวงจร:</b> payment (−6) → hold ค่าส่งขากลับ (−1) → release (+1) → laundry_payout คนขับ (+5.50) — ทุกบาทมีที่มีที่ไป</li>
+  <li><b>ค่าคอมมิชชันหักอัตโนมัติตอน complete:</b> 41 รายการ ตรงกับ driver_earnings/app_earnings บน booking</li>
+  <li><b>Topup ผ่านสลิกมี pipeline:</b> topup_requests → ตรวจสลิก → เครดิต (14 รายการ รวม ฿24,660)</li>
+  <li>RPC ชำระเงินลูกค้า (<code>customer_wallet_pay_booking</code>) validate ยอดฝั่ง server จาก booking จริง (แก้ไปแล้วรอบ มิ.ย.)</li>
+  <li>RLS ฝั่งอ่านถูกต้อง: เห็นกระเป๋า/ประวัติของตัวเองเท่านั้น + แอดมินเห็นทุกอย่าง</li>
+</ul>
+</div>
+
+<h2>2) ช่องโหว่ / ปัญหาที่พบ</h2>
+
+<h3>W2 — ผู้ใช้ "ตั้งยอดกระเป๋าตัวเอง" ได้ผ่าน API โดยตรง <span class="tag t-red">CRITICAL · ใช้ได้เลยตอนนี้</span></h3>
+<div class="danger">
+<b>RLS เปิดให้เขียนโดยตรง:</b> policy <code>wallets_update_own</code> ให้ <code>UPDATE wallets</code> แบบ <b>WITH CHECK = null</b> (ไม่จำกัดคอลัมน์/ค่า)
+และ <code>wallet_tx_insert</code> ให้ <code>INSERT wallet_transactions</code> ของกระเป๋าตัวเองได้
+→ ผู้ใช้เรียก PostgREST ตรงๆ: <code>update wallets set balance = 999999 where user_id = ตัวเอง</code> ได้ทันที
+<b>ไม่มี trigger กัน</b> (มีแค่ trigger อัปเดต updated_at)
+ตรวจแล้ว: <b>แอปไม่ได้เขียนทางนี้เลย</b> (WalletService ใช้ RPC ล้วน — grep ทั้ง repo) → policy เหล่านี้คือพื้นผิวโจมตีล้วนๆ ปิดทิ้งได้เลยไม่กระทบอะไร
+<span class="small">· คลาสเดียวกับ policy "Allow all selects/updates on bookings" ที่พบไว้ก่อนหน้า — โปรเจคมี policy หลวมตกค้างหลายจุด ควรรีวิวทั้ง schema รอบเดียว</span>
+</div>
+
+<h3>W1 — ออเดอร์ food/ride/parcel ที่ "จ่า่ยด้วย Wallet": เงินลูกค้าหายเงียบ คนขับไม่มีทางได้เงิน <span class="tag t-red">CRITICAL (latent) · UI เข้าถึงได้ทุกบริการ</span></h3>
+<div class="danger">
+<b>เส้นเงินวันนี้:</b> ลูกค้ากดจ่ายด้วย Wallet (มีใน checkout ของ food + payment_screen ใช้ได้ทุก service) →
+<code>customer_wallet_pay_booking</code> เดบิตกระเป๋าลูกค้า → จบ. <b>ไม่มีโค้ดไหนเครดิตคนขับอีกเลย</b>
+(complete_booking มีแค่ "หัก commission จากกระเป๋าคนขับ"; ledger ไม่มี type จ่ายคนขับสำหรับ non-laundry เลย — laundry_payout มีเฉพาะทางซักผ้า)
+<b>ถ้าเกิดจริง:</b> คนขับส่งเสร็จ ไม่ได้เงินจากลูกค้า (จ่าย wallet แล้ว) ไม่ได้เครดิตจากระบบ แถมถูกหัก commission จากกระเป๋าตัวเอง และยังต้องจ่ายร้านเงินสด → ขาดทุนเต็มยอด
+<b>ยังไม่เคยเกิดจริง</b> (ใน production มีออเดอร์ wallet แค่ 2 ใบ เป็น laundry ทดสอบเดือน มิ.ย.) — แต่เมนูเปิดใช้ได้อยู่ทุกวันนี้
+<br><b>ตอบคำถามเปิดของแผนคูปองแล้ว:</b> เงื่อนไขชดเชยส่วนลด "เฉพาะเงินสด/โอน" ถูกต้อง — และยิ่งไปกว่านั้น: <b>ห้ามกระตุ้นให้ใช้ wallet กับ food ก่อนแก้ W1</b>
+</div>
+
+<h3>ระดับรอง</h3>
+<table>
+<tr><th>#</th><th>ปัญหา</th><th>รายละเอียด</th><th>ระดับ</th></tr>
+<tr><td><b>W3</b></td><td>balance ≠ ledger ใน 3 กระเป๋า</td><td>ต่างกัน −100 / +100 / +276.05 — balance ถูกแก้โดยไม่มีรายการ ledger รองรับ (น่าจะจากการซ่อมมือรอบ มิ.ย.) และไม่มี job reconcile → ยอดที่แสดงอ้างอิงไม่ได้ด้วย ledger</td><td><span class="tag t-amber">กลาง</span></td></tr>
+<tr><td><b>W4</b></td><td>เงินทดสอบปนในยอดรวม</td><td>admin_adjustment สุทธิ <span class="money">+฿977,620</span> อยู่ในกระเป๋าคนขับ 12 ใบ (รวม ~฿1 ล้าน) — ตัวเลขรวม/รายงาน/การตัดสินใจอนุมัติถอน ใช้ balance ตรงๆ ไม่ได้</td><td><span class="tag t-amber">กลาง (รายงาน)</span></td></tr>
+<tr><td><b>W5</b></td><td>ระบบถอนยังไม่เคยใช้จริง</td><td>withdrawal_requests 0 รายการ — flow (ขอ→แอดมินอนุมัติ) มี schema+RLS แล้ว แต่ยังไม่มีการยืนยันเลยว่าการอนุมัติเดบิตกระเป๋าจริง (ควร E2E ก่อนเปิดใช้จริง)</td><td><span class="tag t-blue">ต่ำ (จนกว่าจะเปิดใช้)</span></td></tr>
+<tr><td><b>W6</b></td><td>ไม่มีกระเป๋าร้านค้า</td><td>merchant ไม่มี wallet — ทุกการเคล็ดเงินร้านผ่านมือคนขับเงินสด ทำให้ "ระบบแบกคูปอง/ส่วนแบ่ง" ไม่มีทางตั้งต้น (เกี่ยวเนื่อง W1/G3)</td><td><span class="tag t-blue">โครงสร้าง</span></td></tr>
+</table>
+
+<h2>3) ตารางเงินจริงทั้งระบบ (ตรวจ 19 ก.ย.)</h2>
+<table>
+<tr><th>type</th><th>จำนวน</th><th>สุทธิ</th><th>ความหมาย</th></tr>
+<tr><td>admin_adjustment</td><td>9</td><td class="money" style="color:#c0392b">+977,620.00</td><td>ปรับมือ/ทดสอบ — ต้องแยกออกก่อนใช้ยอดรวม</td></tr>
+<tr><td>topup</td><td>14</td><td class="money">+24,660.00</td><td>เติมผ่านสลิก/แอดมิน</td></tr>
+<tr><td>commission</td><td>41</td><td class="money">−352.25</td><td>หักระบบตอน complete (ทำงานถูกต้อง)</td></tr>
+<tr><td>invalid_refund / reversal</td><td>9+9</td><td class="money">±586.00</td><td>เคลียร์ legacy รอบ มิ.ย.</td></tr>
+<tr><td>payment</td><td>1</td><td class="money">−6.00</td><td>ลูกค้าจ่าย (laundry) — ออเดอร์เดียวที่เคยใช้ wallet</td></tr>
+<tr><td>hold / release / laundry_payout</td><td>1+1+1</td><td class="money">−1 / +1 / +5.50</td><td>วงจร laundry ครบ (พาย่อยอย่างเดียวที่ปิดสวย)</td></tr>
+</table>
+
+<h2>4) ข้อเสนอ (เรียงตามความเร่ง)</h2>
+<div class="card">
+<ol>
+  <li><b>W2 — ปิด policy เปิดวางทันที (migration เล็ก งาน 15 นาที):</b> DROP policy <code>wallets_update_own</code> + <code>wallet_tx_insert</code> (+ policy ซ้ำเดิม "Users can insert own transactions" / "Users can update own wallet balance") — เหลือไว้เฉพาะ SELECT own + admin; การเขียนทุกทางผ่าน RPC อย่างเดียว (แอปไม่กระทบ — ตรวจแล้วไม่มี direct write) · <span class="small">แนะนำรีวิว policy หลวมทั้ง schema พร้อมกัน (เช่น bookings "Allow all" ที่รายงานไว้ก่อนหน้า)</span></li>
+  <li><b>W1 — ปิดกั้นชั่วคราวก่อน แล้วแก้ถาวร:</b>
+    <ul>
+      <li>ทันที: ซ่อนตัวเลือก "จ่ายด้วย Wallet" ใน checkout food/ride/parcel (เหลือ laundry ที่ปิดวงจรแล้ว) — หรือยอมรับความเสี่ยงต่ำชั่วคราวเพราะยังไม่มีใครใช้</li>
+      <li>ถาวร: ตอน complete_booking ของ non-laundry ที่ payment_method='wallet' → เครดิตคนขับ <code>driver_earnings</code> (type ใหม่ เช่น <code>job_payout</code>) — จุดเดียวกับที่แผนคูปอง (ข้อ A) และแผนรวม (G2) จะแก้ → <b>รวม migration ทั้งสามแผนเป็นจุดเดียวได้</b> · พร้อมกันนั้นต้องตอบ: ร้านได้เงินยังไงใน wallet order (คนขับจ่ายสดที่ร้านแล้วระบบคืนให้? หรือรอมีกระเป๋าร้าน — W6)</li>
+    </ul></li>
+  <li><b>W3 — reconciliation job:</b> cron เทียบ balance กับ sum(ledger) ทุกกระเป๋า + แจ้งแอดมินเมื่อเพี้ยน + ซ่อม 3 กระเป๋าปัจจุบันด้วย ledger ปรับแต่งที่มี description ชัดเจน</li>
+  <li><b>W4 — แยกเงินทดสอบ:</b> tag ledger admin_adjustment ที่เป็นเงินทดสอบ / หรือปรับเป็นศูนย์ด้วยรายการ reverse ที่อธิบายเหตุผล ก่อนรายงานการเงินจริง</li>
+  <li><b>W5 — E2E ถอนเงินก่อนเปิดใช้จริง</b> (ขอ→อนุมัติ→เดบิตจริง→สถานะ)</li>
+</ol>
+</div>
+
+<div class="note"><b>สรุปหนึ่งบรรทัด:</b> แกนกลาง (RPC+ledger+laundry วงจรเต็ม) แข็งแรง — แต่ policy เขียนตรงคือประตูเปิด (W2 ปิดได้เลยวันนี้) และ wallet payment ของบริการทั่วไปยังเป็น "ท่อตัน" ที่เงินลูกค้าเข้าแล้วไม่ถึงใคร (W1) ซึ่งผูกกับแผนคูปอง/แผนรวมที่จุด complete_booking จุดเดียวกัน<br><b>ที่มา:</b> schema wallets/wallet_transactions/withdrawal_requests · RPC wallet_topup/deduct/adjust · RLS policies + WITH CHECK · triggers · ledger ทั้ง 86 รายการ · payment_screen/food_checkout (UI wallet payment) · WalletService (RPC-only ✓)</div>
+
+</div>
+</body>
+</html>

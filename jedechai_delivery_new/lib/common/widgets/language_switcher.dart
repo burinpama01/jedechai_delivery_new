@@ -41,6 +41,14 @@ class LanguageSwitcher extends StatelessWidget {
             await p.useEnglish();
           }
         },
+        // ปุ่มตอนปิดอยู่ต้องสั้น ไม่งั้นความกว้างจะถูกกำหนดโดยตัวเลือกที่ยาวที่สุด
+        // ("ใช้ภาษาของระบบ") แล้วไปดัน Row ที่ครอบอยู่จนล้นบนจอแคบ
+        selectedItemBuilder: (context) => [
+          if (showSystemOption)
+            const Center(child: Text('ระบบ')),
+          const Center(child: Text('TH')),
+          const Center(child: Text('EN')),
+        ],
         items: [
           if (showSystemOption)
             DropdownMenuItem(

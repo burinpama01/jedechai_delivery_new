@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../common/services/system_config_service.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../theme/jdc_colors.dart';
 import '../../../../common/models/coupon.dart';
 import '../../../../common/models/menu_item.dart';
 import '../../../../common/services/coupon_service.dart';
@@ -229,8 +229,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
     return Scaffold(
       backgroundColor: colorScheme.surface,
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppTheme.accentOrange))
+          ? Center(
+              child: CircularProgressIndicator(color: JdcColors.of(context).brand))
           : _error != null
               ? _buildErrorState()
               : _buildContent(),
@@ -247,8 +247,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
           SliverAppBar(
             expandedHeight: 200,
             pinned: true,
-            backgroundColor: AppTheme.accentOrange,
-            foregroundColor: Colors.white,
+            backgroundColor: JdcColors.of(context).brand,
+            foregroundColor: JdcColors.of(context).surface,
             title: innerBoxIsScrolled ? Text(widget.merchantName) : null,
             actions: [
               IconButton(
@@ -256,7 +256,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                 onPressed: _toggleFavorite,
                 icon: Icon(
                   _isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: Colors.white,
+                  color: JdcColors.of(context).surface,
                 ),
               ),
             ],
@@ -274,9 +274,9 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                 TabBar(
                   controller: _tabController,
                   isScrollable: true,
-                  labelColor: AppTheme.accentOrange,
+                  labelColor: JdcColors.of(context).brand,
                   unselectedLabelColor: colorScheme.onSurfaceVariant,
-                  indicatorColor: AppTheme.accentOrange,
+                  indicatorColor: JdcColors.of(context).brand,
                   indicatorWeight: 3,
                   labelStyle: const TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 14),
@@ -318,7 +318,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
               end: Alignment.bottomCenter,
               colors: [
                 Colors.transparent,
-                Colors.black.withValues(alpha: 0.6),
+                JdcColors.of(context).text.withValues(alpha: 0.6),
               ],
             ),
           ),
@@ -330,8 +330,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
           right: 16,
           child: Text(
             widget.merchantName,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: JdcColors.of(context).surface,
               fontSize: 24,
               fontWeight: FontWeight.bold,
               shadows: [Shadow(blurRadius: 8, color: Color(0x8A000000))],
@@ -460,24 +460,24 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                   borderRadius: BorderRadius.circular(10),
                   child: Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 0.08),
+                      color: JdcColors.of(context).successInk.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                          color: Colors.green.withValues(alpha: 0.25)),
+                          color: JdcColors.of(context).successInk.withValues(alpha: 0.25)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.local_offer_outlined,
-                            size: 14, color: Colors.green),
-                        const SizedBox(width: 6),
+                        Icon(Icons.local_offer_outlined,
+                            size: 14, color: JdcColors.of(context).successInk),
+                        SizedBox(width: 6),
                         Text(
                           '${coupon.code} • ${coupon.discountText}',
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 12,
-                              color: Colors.green,
+                              color: JdcColors.of(context).successInk,
                               fontWeight: FontWeight.w600),
                         ),
                       ],
@@ -525,19 +525,19 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
         children: [
           Icon(Icons.restaurant_menu,
               size: 64, color: colorScheme.outlineVariant),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             AppLocalizations.of(context)!.restNoMenu,
             style: TextStyle(fontSize: 16, color: colorScheme.onSurfaceVariant),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           ElevatedButton.icon(
             onPressed: _fetchData,
-            icon: const Icon(Icons.refresh),
+            icon: Icon(Icons.refresh),
             label: Text(AppLocalizations.of(context)!.restRefresh),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.accentOrange,
-              foregroundColor: Colors.white,
+              backgroundColor: JdcColors.of(context).brand,
+              foregroundColor: JdcColors.of(context).surface,
             ),
           ),
         ],
@@ -563,19 +563,19 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                 color: colorScheme.onSurface,
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(
               AppLocalizations.of(context)!.restTryAgain,
               style: TextStyle(color: colorScheme.onSurfaceVariant),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: _fetchData,
-              icon: const Icon(Icons.refresh),
+              icon: Icon(Icons.refresh),
               label: Text(AppLocalizations.of(context)!.restRetry),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accentOrange,
-                foregroundColor: Colors.white,
+                backgroundColor: JdcColors.of(context).brand,
+                foregroundColor: JdcColors.of(context).surface,
               ),
             ),
           ],
@@ -616,8 +616,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                 _showAddedSnackBar(cartItem.name);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accentOrange,
-                foregroundColor: Colors.white,
+                backgroundColor: JdcColors.of(context).brand,
+                foregroundColor: JdcColors.of(context).surface,
               ),
               child: Text(AppLocalizations.of(context)!.restClearAndAdd),
             ),
@@ -658,7 +658,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
               BoxShadow(
                 color: colorScheme.shadow.withValues(alpha: 0.12),
                 blurRadius: 10,
-                offset: const Offset(0, -4),
+                offset: Offset(0, -4),
               ),
             ],
           ),
@@ -675,47 +675,47 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
               },
               child: Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
-                  color: AppTheme.accentOrange,
+                  color: JdcColors.of(context).brand,
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.accentOrange.withValues(alpha: 0.4),
+                      color: JdcColors.of(context).brand.withValues(alpha: 0.4),
                       blurRadius: 8,
-                      offset: const Offset(0, 3),
+                      offset: Offset(0, 3),
                     ),
                   ],
                 ),
                 child: Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(
+                      padding: EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.25),
+                        color: JdcColors.of(context).surface.withValues(alpha: 0.25),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         '${cart.totalItems}',
-                        style: const TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            color: JdcColors.of(context).surface, fontWeight: FontWeight.bold),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         AppLocalizations.of(context)!.restViewCart,
-                        style: const TextStyle(
-                            color: Colors.white,
+                        style: TextStyle(
+                            color: JdcColors.of(context).surface,
                             fontWeight: FontWeight.w600,
                             fontSize: 15),
                       ),
                     ),
                     Text(
                       '฿${cart.subtotal.ceil()}',
-                      style: const TextStyle(
-                          color: Colors.white,
+                      style: TextStyle(
+                          color: JdcColors.of(context).surface,
                           fontWeight: FontWeight.bold,
                           fontSize: 16),
                     ),
@@ -747,7 +747,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                 children: [
                   // Handle
                   Container(
-                    margin: const EdgeInsets.only(top: 12),
+                    margin: EdgeInsets.only(top: 12),
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
@@ -757,11 +757,11 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                   ),
                   // Header
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
+                    padding: EdgeInsets.fromLTRB(20, 16, 12, 8),
                     child: Row(
                       children: [
-                        const Icon(Icons.shopping_bag,
-                            color: AppTheme.accentOrange),
+                        Icon(Icons.shopping_bag,
+                            color: JdcColors.of(context).brand),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -817,7 +817,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(item.name,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontWeight: FontWeight.w600)),
                                   if (item.selectedOptions.isNotEmpty)
                                     Text(item.selectedOptions.join(', '),
@@ -825,14 +825,14 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                                             fontSize: 12,
                                             color:
                                                 colorScheme.onSurfaceVariant)),
-                                  const SizedBox(height: 6),
+                                  SizedBox(height: 6),
                                   Row(
                                     children: [
                                       Text('฿${item.totalPrice.ceil()}',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                               fontWeight: FontWeight.bold,
-                                              color: AppTheme.accentOrange)),
-                                      const Spacer(),
+                                              color: JdcColors.of(context).brand)),
+                                      Spacer(),
                                       _buildQtyControl(cart, index, item),
                                     ],
                                   ),
@@ -846,12 +846,12 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                   ),
                   // Bottom
                   Container(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                    padding: EdgeInsets.fromLTRB(20, 12, 20, 12),
                     decoration: BoxDecoration(
                       color: colorScheme.surfaceContainer,
                       boxShadow: [
                         BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.06),
+                            color: JdcColors.of(context).text.withValues(alpha: 0.06),
                             blurRadius: 8,
                             offset: const Offset(0, -2))
                       ],
@@ -870,14 +870,14 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(AppLocalizations.of(context)!.restTotal,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 16)),
                                   Text('฿${cart.subtotal.ceil()}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 18,
-                                          color: AppTheme.accentOrange)),
+                                          color: JdcColors.of(context).brand)),
                                 ],
                               ),
                               if (belowMin) ...[
@@ -911,7 +911,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                                   ),
                                 ),
                               ],
-                              const SizedBox(height: 12),
+                              SizedBox(height: 12),
                               SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton(
@@ -923,13 +923,13 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                                           Navigator.of(context).push(
                                             MaterialPageRoute(
                                               builder: (context) =>
-                                                  const FoodCheckoutScreen(),
+                                                  FoodCheckoutScreen(),
                                             ),
                                           );
                                         },
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppTheme.accentOrange,
-                                    foregroundColor: Colors.white,
+                                    backgroundColor: JdcColors.of(context).brand,
+                                    foregroundColor: JdcColors.of(context).surface,
                                     disabledBackgroundColor:
                                         colorScheme.surfaceContainerHighest,
                                     disabledForegroundColor:
@@ -981,26 +981,26 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
           InkWell(
             onTap: () => cart.updateQuantity(index, item.quantity - 1),
             child: Padding(
-              padding: const EdgeInsets.all(4),
+              padding: EdgeInsets.all(4),
               child: Icon(
                 item.quantity > 1 ? Icons.remove : Icons.delete_outline,
                 size: 18,
                 color: item.quantity > 1
                     ? colorScheme.onSurfaceVariant
-                    : Colors.red,
+                    : JdcColors.of(context).danger,
               ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
+            padding: EdgeInsets.symmetric(horizontal: 10),
             child: Text('${item.quantity}',
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+                style: TextStyle(fontWeight: FontWeight.bold)),
           ),
           InkWell(
             onTap: () => cart.updateQuantity(index, item.quantity + 1),
             child: Padding(
-              padding: const EdgeInsets.all(4),
-              child: Icon(Icons.add, size: 18, color: AppTheme.accentOrange),
+              padding: EdgeInsets.all(4),
+              child: Icon(Icons.add, size: 18, color: JdcColors.of(context).brand),
             ),
           ),
         ],
@@ -1070,7 +1070,7 @@ class _MenuItemCard extends StatelessWidget {
                       ),
                     ),
                     if (description.isNotEmpty) ...[
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(
                         description,
                         style: TextStyle(
@@ -1081,13 +1081,13 @@ class _MenuItemCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     Text(
                       '฿${price.ceil()}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.accentOrange,
+                        color: JdcColors.of(context).brand,
                       ),
                     ),
                     if (hasRequiredOptions) ...[

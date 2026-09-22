@@ -5,7 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../theme/jdc_colors.dart';
 import '../../../../common/services/location_service.dart';
 import '../../../../common/services/parcel_service.dart';
 import '../../../../common/services/image_picker_service.dart';
@@ -491,9 +491,11 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) {
+        final jdc = JdcColors.of(context);
+        return AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        icon: const Icon(Icons.error_outline, color: Colors.red, size: 48),
+        icon: Icon(Icons.error_outline, color: jdc.dangerInk, size: 48),
         title: Text(
           AppLocalizations.of(context)!.parcelErrorTitle,
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
@@ -510,8 +512,8 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
             child: ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accentBlue,
-                foregroundColor: Colors.white,
+                backgroundColor: jdc.infoInk,
+                foregroundColor: jdc.onCta,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -522,15 +524,17 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
             ),
           ),
         ],
-      ),
+      );
+      },
     );
   }
 
   Widget _buildDriverAvailabilityHint() {
+    final jdc = JdcColors.of(context);
     final hasDriver = _nearbyOnlineDrivers > 0;
-    final bgColor = hasDriver ? Colors.green[50] : Colors.orange[50];
-    final borderColor = hasDriver ? Colors.green[200] : Colors.orange[200];
-    final textColor = hasDriver ? Colors.green[800] : Colors.orange[800];
+    final bgColor = hasDriver ? jdc.successSoft : jdc.brandSoft;
+    final borderColor = hasDriver ? jdc.successLine : jdc.brandLine;
+    final textColor = hasDriver ? jdc.successInk : jdc.brandOnSoft;
 
     return Container(
       width: double.infinity,
@@ -538,7 +542,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: borderColor!),
+        border: Border.all(color: borderColor),
       ),
       child: Text(
         hasDriver
@@ -574,11 +578,13 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final jdc = JdcColors.of(context);
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.parcelTitle),
-        backgroundColor: AppTheme.accentBlue,
-        foregroundColor: Colors.white,
+        backgroundColor: jdc.surface,
+        foregroundColor: jdc.text,
+        shape: Border(bottom: BorderSide(color: jdc.line)),
       ),
       body: _isLoadingLocation
           ? const Center(child: CircularProgressIndicator())
@@ -629,31 +635,33 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
   }
 
   Widget _buildHeader() {
+    final jdc = JdcColors.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
+        gradient: LinearGradient(
+          colors: [jdc.infoInk, jdc.infoInk.withValues(alpha: 0.75)],
         ),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
-          const Icon(Icons.local_shipping, color: Colors.white, size: 40),
+          Icon(Icons.local_shipping, color: jdc.onCta, size: 40),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(AppLocalizations.of(context)!.parcelHeaderTitle,
-                    style: const TextStyle(
-                        color: Colors.white,
+                    style: TextStyle(
+                        color: jdc.onCta,
                         fontSize: 20,
                         fontWeight: FontWeight.bold)),
                 const SizedBox(height: 4),
                 Text(AppLocalizations.of(context)!.parcelHeaderSubtitle,
-                    style:
-                        const TextStyle(color: Colors.white70, fontSize: 14)),
+                    style: TextStyle(
+                        color: jdc.onCta.withValues(alpha: 0.7),
+                        fontSize: 14)),
               ],
             ),
           ),
@@ -663,6 +671,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
   }
 
   Widget _buildSenderSection() {
+    final jdc = JdcColors.of(context);
     final colorScheme = Theme.of(context).colorScheme;
     return Card(
       elevation: 2,
@@ -675,7 +684,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
             Row(
               children: [
                 Icon(Icons.person_pin_circle,
-                    color: Colors.green[700], size: 22),
+                    color: jdc.successInk, size: 22),
                 const SizedBox(width: 8),
                 Text(AppLocalizations.of(context)!.parcelSenderInfo,
                     style: const TextStyle(
@@ -718,7 +727,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
               controller: _pickupController,
               decoration: InputDecoration(
                 labelText: AppLocalizations.of(context)!.parcelPickupAddress,
-                prefixIcon: const Icon(Icons.my_location, color: Colors.green),
+                prefixIcon: Icon(Icons.my_location, color: jdc.cta),
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 filled: true,
@@ -752,6 +761,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
   }
 
   Widget _buildRecipientSection() {
+    final jdc = JdcColors.of(context);
     final colorScheme = Theme.of(context).colorScheme;
     return Card(
       elevation: 2,
@@ -763,7 +773,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
           children: [
             Row(
               children: [
-                Icon(Icons.location_on, color: Colors.red[700], size: 22),
+                Icon(Icons.location_on, color: jdc.dangerInk, size: 22),
                 const SizedBox(width: 8),
                 Expanded(
                     child: Text(
@@ -776,21 +786,21 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                      color: jdc.cta.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                          color: AppTheme.primaryGreen.withValues(alpha: 0.3)),
+                          color: jdc.cta.withValues(alpha: 0.3)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.bookmark_outline,
-                            size: 16, color: AppTheme.primaryGreen),
+                        Icon(Icons.bookmark_outline,
+                            size: 16, color: jdc.cta),
                         const SizedBox(width: 4),
                         Text(AppLocalizations.of(context)!.parcelSavedAddresses,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 12,
-                                color: AppTheme.primaryGreen,
+                                color: jdc.cta,
                                 fontWeight: FontWeight.w600)),
                       ],
                     ),
@@ -840,7 +850,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
               controller: _dropoffController,
               decoration: InputDecoration(
                 labelText: AppLocalizations.of(context)!.parcelDropoffAddress,
-                prefixIcon: const Icon(Icons.location_on, color: Colors.red),
+                prefixIcon: Icon(Icons.location_on, color: jdc.dangerInk),
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 filled: true,
@@ -896,6 +906,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
   }
 
   Widget _buildSizeSection() {
+    final jdc = JdcColors.of(context);
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -919,7 +930,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                       style: const TextStyle(fontWeight: FontWeight.w600)),
                   subtitle: Text(option['desc'],
                       style: const TextStyle(fontSize: 12)),
-                  secondary: Icon(option['icon'], color: AppTheme.accentBlue),
+                  secondary: Icon(option['icon'], color: jdc.infoInk),
                   contentPadding: EdgeInsets.zero,
                   dense: true,
                 )),
@@ -982,6 +993,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
   }
 
   Widget _buildPhotoSection() {
+    final jdc = JdcColors.of(context);
     final colorScheme = Theme.of(context).colorScheme;
     return Card(
       elevation: 2,
@@ -1026,12 +1038,12 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                                     setState(() => _parcelPhoto = null),
                                 child: Container(
                                   padding: const EdgeInsets.all(4),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.red,
+                                  decoration: BoxDecoration(
+                                    color: jdc.dangerInk,
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(Icons.close,
-                                      color: Colors.white, size: 18),
+                                  child: Icon(Icons.close,
+                                      color: jdc.onCta, size: 18),
                                 ),
                               ),
                             ),
@@ -1059,13 +1071,14 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
   }
 
   Widget _buildPriceCard() {
+    final jdc = JdcColors.of(context);
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.green[50],
+        color: jdc.successSoft,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.green[200]!),
+        border: Border.all(color: jdc.successLine),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1099,10 +1112,10 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
                 ),
               Text(
                 '฿${_finalParcelPrice.ceil()}',
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: Colors.green),
+                    color: jdc.successInk),
               ),
             ],
           ),
@@ -1112,24 +1125,25 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
   }
 
   Widget _buildBookButton() {
+    final jdc = JdcColors.of(context);
     return SizedBox(
       width: double.infinity,
       height: 54,
       child: ElevatedButton(
         onPressed: _isLoading ? null : _bookParcel,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.accentBlue,
-          foregroundColor: Colors.white,
+          backgroundColor: jdc.infoInk,
+          foregroundColor: jdc.onCta,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           elevation: 3,
         ),
         child: _isLoading
-            ? const SizedBox(
+            ? SizedBox(
                 width: 24,
                 height: 24,
                 child: CircularProgressIndicator(
-                    color: Colors.white, strokeWidth: 2))
+                    color: jdc.onCta, strokeWidth: 2))
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

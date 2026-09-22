@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>ลูกค้า — ยกเลิกคำสั่งซื้อ</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@500;600;700&amp;family=Noto+Sans+Thai:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light;
+  --paper:#f4f7f4;--surface:#ffffff;--sunken:#eef2ee;--line:#dbe4de;
+  --text:#0f3b33;--muted:#5c6f68;--dim:#66736d;
+  --panel:#0f3b33;--on-panel:#ffffff;--panel-dim:#b7cfc8;
+  --panel-soft:rgba(255,255,255,.10);--panel-soft2:rgba(255,255,255,.12);--panel-soft3:rgba(255,255,255,.14);--panel-line:rgba(255,255,255,.24);--bar-dim:rgba(255,255,255,.26);
+  --brand:#e39c2e;--brand-hi:#f3c06a;--cta:#8a5a0a;--on-cta:#ffffff;--link:#8a5a0a;--link-hover:#6d4708;
+  --brand-soft:#fff3dc;--brand-soft2:#fffaf0;--brand-line:#f0cf95;--brand-on-soft:#8a5a0a;
+  --green-ink:#2b6b2b;--green-soft:#e6f4e2;--green-line:#bfe0b6;--green-fill:#2e7d43;--green-dot:#5fcf7a;--green-on-panel:#a8e0b4;--green-panel:rgba(46,125,67,.30);--green-panel-line:rgba(95,207,122,.45);
+  --teal-soft:#e2f1ef;--teal-ink:#16605a;
+  --danger:#b42318;--danger-ink:#8f1c14;--danger-soft:#ffece9;--danger-line:#f0b3ab;
+  --off-track:#c3ccc6;--knob:#ffffff;--track-empty:#e1e8e3;
+  --map-bg:#dfe7e2;--map-grid:#d4ded8;--map-road:#ffffff;--route:#8a5a0a;
+  --hero:linear-gradient(132deg,#0e382f 0%,#1d5f50 55%,#8a5a0a 150%);
+  --hero2:linear-gradient(140deg,#0e382f 0%,#1a5548 70%);
+  --hero3:linear-gradient(140deg,#0e382f 0%,#20655a 55%,#8a5a0a 140%);
+  --sh-card:0 6px 18px rgba(12,44,37,.07);--sh-raise:0 12px 30px rgba(12,44,37,.10);--sh-float:0 6px 16px rgba(12,44,37,.16);--sh-deep:0 10px 24px rgba(12,44,37,.30);--sh-sheet:0 -10px 30px rgba(12,44,37,.08);--sh-brand:0 10px 26px rgba(227,156,46,.22);--sh-brand-lg:0 14px 34px rgba(227,156,46,.26);
+}
+/* โหมดมืด: ตอนนี้ปิดการสลับอัตโนมัติไว้ เปิดได้โดยใส่ data-theme="dark" ที่ :root */
+:root[data-theme="dark"]{
+  --paper:#0b1a17;--surface:#12241f;--sunken:#0e1f1b;--line:#24403a;
+  --text:#e8f1ed;--muted:#9cb1a9;--dim:#8fa39c;
+  --panel:#16352e;--on-panel:#f2f8f5;--panel-dim:#9ab6ae;
+  --panel-soft:rgba(255,255,255,.08);--panel-soft2:rgba(255,255,255,.10);--panel-soft3:rgba(255,255,255,.12);--panel-line:rgba(255,255,255,.18);--bar-dim:rgba(255,255,255,.24);
+  --brand:#e0a53f;--brand-hi:#f3c06a;--cta:#a0690f;--on-cta:#ffffff;--link:#edbb62;--link-hover:#f6d493;
+  --brand-soft:#2a2114;--brand-soft2:#241d12;--brand-line:#4a3a1c;--brand-on-soft:#edbb62;
+  --green-ink:#85cf82;--green-soft:#14301c;--green-line:#26512a;--green-fill:#2e7d43;--green-dot:#5fcf7a;--green-on-panel:#a8e0b4;--green-panel:rgba(46,125,67,.32);--green-panel-line:rgba(95,207,122,.40);
+  --teal-soft:#0f2a28;--teal-ink:#6fc3ba;
+  --danger:#ff8a7d;--danger-ink:#ff9a8e;--danger-soft:#351a17;--danger-line:#55302b;
+  --off-track:#3a4d47;--knob:#f2f8f5;--track-empty:#24403a;
+  --map-bg:#17302a;--map-grid:#1e3b34;--map-road:#25453d;--route:#e0a53f;
+  --hero:linear-gradient(132deg,#0a2621 0%,#134137 55%,#5e3f0b 150%);
+  --hero2:linear-gradient(140deg,#0a2621 0%,#123b33 70%);
+  --hero3:linear-gradient(140deg,#0a2621 0%,#154439 55%,#5e3f0b 140%);
+  --sh-card:0 6px 18px rgba(0,0,0,.40);--sh-raise:0 12px 30px rgba(0,0,0,.45);--sh-float:0 6px 16px rgba(0,0,0,.45);--sh-deep:0 10px 24px rgba(0,0,0,.55);--sh-sheet:0 -10px 30px rgba(0,0,0,.40);--sh-brand:0 10px 26px rgba(0,0,0,.45);--sh-brand-lg:0 14px 34px rgba(0,0,0,.50);
+}
+body{margin:0;font-family:"Noto Sans Thai",system-ui,sans-serif;color:var(--text);background:var(--paper);-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:"IBM Plex Sans Thai","Noto Sans Thai",sans-serif;margin:0}
+.dsp{font-family:"IBM Plex Sans Thai","Noto Sans Thai",sans-serif}
+button{font-family:inherit;cursor:pointer}
+a{color:var(--link);text-decoration:none}
+a:hover{color:var(--link-hover)}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--paper); overflow: hidden;">
+
+  <div style="flex-shrink: 0; display: flex; align-items: center; gap: 10px; padding: 16px 20px; background: var(--surface); border-bottom: 1px solid var(--line);">
+    <a href="Customer-WaitingDriver.dc.html" aria-label="ย้อนกลับ" style="width: 44px; height: 44px; margin-left: -10px; border-radius: 14px; color: var(--text); display: flex; align-items: center; justify-content: center;">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg>
+    </a>
+    <h1 style="flex-grow: 1; font-size: 17px; font-weight: 700;">ยกเลิกคำสั่งซื้อ</h1>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; padding: 16px 20px 0; display: flex; flex-direction: column; gap: 16px; overflow: hidden;">
+
+    <div style="display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border-radius: 16px; background: var(--danger-soft); border: 1px solid var(--danger-line);">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--danger-ink); flex-shrink: 0;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10.5v4"></path><path d="M12 17.2h.01"></path></svg>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px;">
+        <span style="font-size: 13px; font-weight: 700; color: var(--danger-ink);">ร้านเริ่มทำอาหารแล้ว</span>
+        <span style="font-size: 12px; color: var(--danger-ink);">ยกเลิกตอนนี้จะมีค่าธรรมเนียม ฿35 หักจากยอดคืน</span>
+      </span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <h2 style="font-size: 14px; font-weight: 700;">เหตุผลที่ยกเลิก</h2>
+      <sc-for list="{{reasons}}" as="r" hint-placeholder-count="5">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 13px 15px; border-radius: 14px; background: var(--surface); border: 1px solid {{r.line}};">
+          <input id="{{r.id}}" type="radio" name="reason" style="width: 20px; height: 20px; accent-color: var(--cta); flex-shrink: 0;">
+          <label for="{{r.id}}" style="flex-grow: 1; font-size: 14px; font-weight: 600;">{{r.name}}</label>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="padding: 14px 16px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 9px;">
+      <h2 style="font-size: 14px; font-weight: 700;">ยอดที่จะได้คืน</h2>
+      <div style="display: flex; font-size: 13px; color: var(--muted);"><span style="flex-grow: 1;">ยอดที่ชำระไป</span><span>฿175.00</span></div>
+      <div style="display: flex; font-size: 13px; color: var(--danger-ink); font-weight: 600;"><span style="flex-grow: 1;">ค่าธรรมเนียมยกเลิก</span><span>-฿35.00</span></div>
+      <div style="height: 1px; background: var(--line);"></div>
+      <div style="display: flex; align-items: baseline;"><span class="dsp" style="flex-grow: 1; font-size: 14px; font-weight: 700;">คืนเข้า JDC Wallet</span><span class="dsp" style="font-size: 20px; font-weight: 700;">฿140.00</span></div>
+      <span style="font-size: 12px; color: var(--muted);">คืนเข้ากระเป๋าทันทีหลังยืนยัน</span>
+    </div>
+  </div>
+
+  <div style="flex-shrink: 0; padding: 14px 20px 20px; background: var(--surface); border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px;">
+    <button type="button" style="min-height: 54px; border-radius: 16px; border: 0; background: var(--danger-ink); color: var(--on-cta); font-size: 16px; font-weight: 700;">ยืนยันยกเลิก</button>
+    <a href="Customer-WaitingDriver.dc.html" style="display: flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 16px; border: 1px solid var(--line); color: var(--text); font-size: 14px; font-weight: 700;">ไม่ยกเลิกแล้ว</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      reasons: [
+        { id: 'r1', name: 'รอนานเกินไป', line: 'var(--line)' },
+        { id: 'r2', name: 'สั่งผิดร้าน / ผิดเมนู', line: 'var(--line)' },
+        { id: 'r3', name: 'ที่อยู่จัดส่งไม่ถูกต้อง', line: 'var(--line)' },
+        { id: 'r4', name: 'เปลี่ยนใจ ไม่ต้องการแล้ว', line: 'var(--line)' },
+        { id: 'r5', name: 'อื่นๆ', line: 'var(--line)' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

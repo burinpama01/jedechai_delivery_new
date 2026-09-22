@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
-import '../../../theme/app_theme.dart';
+import '../../../theme/jdc_colors.dart';
+import '../../../theme/jdc_layout.dart';
 
 class MerchantOrderList extends StatelessWidget {
   const MerchantOrderList({
@@ -23,13 +24,13 @@ class MerchantOrderList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     final localizations = AppLocalizations.of(context)!;
 
     if (isLoading) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accentOrange),
+          valueColor: AlwaysStoppedAnimation<Color>(jdc.brand),
         ),
       );
     }
@@ -41,12 +42,25 @@ class MerchantOrderList extends StatelessWidget {
           children: [
             Text(
               error!,
-              style: TextStyle(color: colorScheme.error),
+              textAlign: TextAlign.center,
+              style: _jt(fontSize: 14, color: jdc.danger),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: JdcSpacing.lg),
             ElevatedButton(
               onPressed: onRetry,
-              child: Text(localizations.merchantRetry),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: jdc.cta,
+                foregroundColor: jdc.onCta,
+                minimumSize: Size.fromHeight(JdcTouch.field),
+                padding: const EdgeInsets.symmetric(horizontal: JdcSpacing.xl),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(JdcRadius.field),
+                ),
+              ),
+              child: Text(
+                localizations.merchantRetry,
+                style: _jt(fontSize: 14, color: jdc.onCta, weight: 600),
+              ),
             ),
           ],
         ),
@@ -55,50 +69,40 @@ class MerchantOrderList extends StatelessWidget {
 
     if (orders.isEmpty) {
       return Container(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(JdcSpacing.xxxl),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.shadow.withValues(alpha: 0.12),
-              blurRadius: 4,
-              spreadRadius: 1,
-            ),
-          ],
+          color: jdc.surface,
+          borderRadius: BorderRadius.circular(JdcRadius.card),
+          border: Border.all(color: jdc.line),
+          boxShadow: jdc.shadowCard,
         ),
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(JdcSpacing.xxl),
               decoration: BoxDecoration(
-                color: AppTheme.accentOrange.withValues(alpha: 0.1),
+                color: jdc.brandSoft,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.restaurant_outlined,
                 size: 64,
-                color: AppTheme.accentOrange,
+                color: jdc.brandOnSoft,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: JdcSpacing.xl),
             Text(
               localizations.merchantNoOrders,
-              style: TextStyle(
-                fontSize: 20,
-                color: colorScheme.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
+              textAlign: TextAlign.center,
+              style: _jt(fontSize: 20, color: jdc.text, weight: 600),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: JdcSpacing.sm),
             Text(
               isShopOpen
                   ? localizations.merchantOrdersWillAppear
                   : localizations.merchantOpenShopToReceive,
-              style: TextStyle(
-                fontSize: 14,
-                color: colorScheme.onSurfaceVariant,
-              ),
+              textAlign: TextAlign.center,
+              style: _jt(fontSize: 14, color: jdc.muted),
             ),
           ],
         ),
@@ -109,4 +113,31 @@ class MerchantOrderList extends StatelessWidget {
       children: orders.map(orderBuilder).toList(),
     );
   }
+}
+
+/// TextStyle มาตรฐานของกลุ่มหน้าออเดอร์ — ผูก fontWeight กับ fontVariations
+/// ให้คู่กันเสมอตามธีม JDC
+TextStyle _jt({
+  double? fontSize,
+  Color? color,
+  double weight = 400,
+  double? height,
+  double? letterSpacing,
+}) {
+  const weightMap = <int, FontWeight>{
+    400: FontWeight.w400,
+    500: FontWeight.w500,
+    600: FontWeight.w600,
+    700: FontWeight.w700,
+    800: FontWeight.w800,
+    900: FontWeight.w900,
+  };
+  return TextStyle(
+    fontSize: fontSize,
+    color: color,
+    height: height,
+    letterSpacing: letterSpacing,
+    fontWeight: weightMap[weight.round()] ?? FontWeight.w400,
+    fontVariations: [FontVariation('wght', weight)],
+  );
 }

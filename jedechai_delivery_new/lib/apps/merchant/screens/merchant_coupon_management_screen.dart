@@ -1,12 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import '../../../theme/jdc_colors.dart';
 import 'package:intl/intl.dart';
 import '../../../common/models/coupon.dart';
 import '../../../common/services/auth_service.dart';
 import '../../../common/services/coupon_service.dart';
 import '../../../common/utils/platform_adaptive.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../../theme/app_theme.dart';
 
 class MerchantCouponManagementScreen extends StatefulWidget {
   final String? targetMerchantId;
@@ -213,7 +213,7 @@ class _MerchantCouponManagementScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)!.couponCreateSuccess),
-            backgroundColor: Colors.green,
+            backgroundColor: JdcColors.of(context).successFill,
           ),
         );
         onSuccess?.call();
@@ -222,7 +222,7 @@ class _MerchantCouponManagementScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)!.couponCreateFailed),
-            backgroundColor: Colors.red,
+            backgroundColor: JdcColors.of(context).danger,
           ),
         );
       }
@@ -254,8 +254,8 @@ class _MerchantCouponManagementScreenState
                   : AppLocalizations.of(context)!.couponAdminTitleNoName)
               : AppLocalizations.of(context)!.couponTitle,
         ),
-        backgroundColor: AppTheme.accentOrange,
-        foregroundColor: Colors.white,
+        backgroundColor: JdcColors.of(context).cta,
+        foregroundColor: JdcColors.of(context).onCta,
       ),
       body: RefreshIndicator(
         onRefresh: _loadCoupons,
@@ -279,11 +279,11 @@ class _MerchantCouponManagementScreenState
             ),
             const SizedBox(height: 8),
             if (_isLoading)
-              const Center(
+              Center(
                 child: Padding(
                   padding: EdgeInsets.all(16),
                   child: CircularProgressIndicator(
-                    color: AppTheme.accentOrange,
+                    color: JdcColors.of(context).cta,
                   ),
                 ),
               )
@@ -322,12 +322,12 @@ class _MerchantCouponManagementScreenState
       decoration: BoxDecoration(
         color: isDark
             ? colorScheme.surfaceContainerHighest
-            : Colors.orange.withValues(alpha: 0.08),
+            : JdcColors.of(context).brandSoft,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark
               ? colorScheme.outline.withOpacity(0.18)
-              : Colors.orange.withValues(alpha: 0.3),
+              : JdcColors.of(context).brandLine,
         ),
       ),
       child: Column(
@@ -380,8 +380,8 @@ class _MerchantCouponManagementScreenState
         ),
         label: Text(AppLocalizations.of(context)!.couponAdminOpenForm),
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppTheme.accentOrange,
-          side: const BorderSide(color: AppTheme.accentOrange),
+          foregroundColor: JdcColors.of(context).cta,
+          side: BorderSide(color: JdcColors.of(context).cta),
           padding: const EdgeInsets.symmetric(vertical: 12),
         ),
       ),
@@ -423,6 +423,8 @@ class _MerchantCouponManagementScreenState
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               initialValue: _discountType,
+              // ข้อความตัวเลือกภาษาไทยยาวเกินกรอบบนจอ 360 ถ้าไม่ให้ยืดเต็มความกว้าง
+              isExpanded: true,
               items: [
                 DropdownMenuItem(
                   value: 'percentage',
@@ -540,16 +542,16 @@ class _MerchantCouponManagementScreenState
                     ? null
                     : () => _createCoupon(onSuccess: onCreated),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accentOrange,
-                  foregroundColor: Colors.white,
+                  backgroundColor: JdcColors.of(context).cta,
+                  foregroundColor: JdcColors.of(context).onCta,
                 ),
                 child: _isCreating
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 18,
                         height: 18,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Colors.white,
+                          color: JdcColors.of(context).onCta,
                         ),
                       )
                     : Text(AppLocalizations.of(context)!.couponCreateBtn),

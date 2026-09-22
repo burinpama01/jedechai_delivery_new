@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
-import '../../../theme/app_theme.dart';
+import '../../../theme/jdc_colors.dart';
+import '../../../theme/jdc_layout.dart';
 
 class MerchantShopStatusCard extends StatelessWidget {
   const MerchantShopStatusCard({
@@ -19,108 +20,125 @@ class MerchantShopStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     final localizations = AppLocalizations.of(context)!;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(JdcSpacing.xl),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isShopOpen
-              ? [
-                  AppTheme.accentOrange,
-                  AppTheme.accentOrange.withValues(alpha: 0.8),
-                ]
-              : [
-                  colorScheme.outline,
-                  colorScheme.outline.withValues(alpha: 0.8),
-                ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: (isShopOpen ? AppTheme.accentOrange : colorScheme.outline)
-                .withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        // แถบเข้มตาม artboard: พื้น panel ไล่ hero2 เพื่อมิติแบบ canvas
+        gradient: jdc.hero2,
+        borderRadius: BorderRadius.circular(JdcRadius.card),
+        boxShadow: jdc.shadowFloat,
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                isShopOpen ? Icons.store : Icons.store_mall_directory,
-                color: colorScheme.onPrimary,
-                size: 28,
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: jdc.panelSoft3,
+                  borderRadius: BorderRadius.circular(JdcRadius.field - 1),
+                ),
+                child: Icon(
+                  isShopOpen ? Icons.storefront_outlined : Icons.storefront,
+                  color: jdc.onPanel,
+                  size: 22,
+                ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: JdcSpacing.md),
               Expanded(
-                child: Text(
-                  localizations.merchantShopStatus,
-                  style: TextStyle(
-                    color: colorScheme.onPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      localizations.merchantShopStatus,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: _jt(
+                        fontSize: 15,
+                        color: jdc.onPanel,
+                        weight: 700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isShopOpen ? jdc.successDot : jdc.offTrack,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            isShopOpen
+                                ? localizations.merchantShopOpen
+                                : localizations.merchantShopClosed2,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: _jt(
+                              fontSize: 12,
+                              color: isShopOpen
+                                  ? jdc.successOnPanel
+                                  : jdc.panelDim,
+                              weight: 600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
               Switch(
                 value: isShopOpen,
                 onChanged: onShopStatusChanged,
-                activeThumbColor: colorScheme.onPrimary,
-                inactiveThumbColor: colorScheme.surfaceContainerHighest,
-                activeTrackColor: colorScheme.onPrimary.withValues(alpha: 0.5),
-                inactiveTrackColor:
-                    colorScheme.onPrimary.withValues(alpha: 0.3),
+                activeThumbColor: jdc.knob,
+                inactiveThumbColor: jdc.knob,
+                activeTrackColor: jdc.successFill,
+                inactiveTrackColor: jdc.trackEmpty,
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            isShopOpen
-                ? localizations.merchantShopOpen
-                : localizations.merchantShopClosed2,
-            style: TextStyle(
-              color: colorScheme.onPrimary,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
+          const SizedBox(height: JdcSpacing.md),
           Text(
             isShopOpen
                 ? localizations.merchantShopOpenDesc
                 : localizations.merchantShopClosedDesc,
-            style: TextStyle(
-              color: colorScheme.onPrimary.withValues(alpha: 0.9),
-              fontSize: 14,
-            ),
+            style: _jt(fontSize: 14, color: jdc.panelDim),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: JdcSpacing.sm),
           Row(
             children: [
               Icon(
                 isAutoAcceptMode
                     ? Icons.auto_mode_outlined
                     : Icons.pan_tool_alt_outlined,
-                color: colorScheme.onPrimary.withValues(alpha: 0.9),
+                color: jdc.panelDim,
                 size: 16,
               ),
               const SizedBox(width: 6),
-              Text(
-                isAutoAcceptMode
-                    ? localizations.merchantAcceptModeAuto
-                    : localizations.merchantAcceptModeManual,
-                style: TextStyle(
-                  color: colorScheme.onPrimary.withValues(alpha: 0.95),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+              Expanded(
+                child: Text(
+                  isAutoAcceptMode
+                      ? localizations.merchantAcceptModeAuto
+                      : localizations.merchantAcceptModeManual,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: _jt(
+                    fontSize: 13,
+                    color: jdc.onPanel,
+                    weight: 600,
+                  ),
                 ),
               ),
             ],
@@ -132,18 +150,22 @@ class MerchantShopStatusCard extends StatelessWidget {
                 isAutoScheduleEnabled
                     ? Icons.av_timer
                     : Icons.av_timer_outlined,
-                color: colorScheme.onPrimary.withValues(alpha: 0.9),
+                color: jdc.panelDim,
                 size: 16,
               ),
               const SizedBox(width: 6),
-              Text(
-                isAutoScheduleEnabled
-                    ? localizations.merchantAutoScheduleOn
-                    : localizations.merchantAutoScheduleOff,
-                style: TextStyle(
-                  color: colorScheme.onPrimary.withValues(alpha: 0.95),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+              Expanded(
+                child: Text(
+                  isAutoScheduleEnabled
+                      ? localizations.merchantAutoScheduleOn
+                      : localizations.merchantAutoScheduleOff,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: _jt(
+                    fontSize: 13,
+                    color: jdc.onPanel,
+                    weight: 600,
+                  ),
                 ),
               ),
             ],
@@ -152,4 +174,31 @@ class MerchantShopStatusCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// TextStyle มาตรฐานของกลุ่มหน้าออเดอร์ — ผูก fontWeight กับ fontVariations
+/// ให้คู่กันเสมอตามธีม JDC
+TextStyle _jt({
+  double? fontSize,
+  Color? color,
+  double weight = 400,
+  double? height,
+  double? letterSpacing,
+}) {
+  const weightMap = <int, FontWeight>{
+    400: FontWeight.w400,
+    500: FontWeight.w500,
+    600: FontWeight.w600,
+    700: FontWeight.w700,
+    800: FontWeight.w800,
+    900: FontWeight.w900,
+  };
+  return TextStyle(
+    fontSize: fontSize,
+    color: color,
+    height: height,
+    letterSpacing: letterSpacing,
+    fontWeight: weightMap[weight.round()] ?? FontWeight.w400,
+    fontVariations: [FontVariation('wght', weight)],
+  );
 }

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../theme/jdc_colors.dart';
+import '../../../../theme/jdc_layout.dart';
 import '../../../../common/models/booking.dart';
 import '../../../../common/services/payment_service.dart';
 import '../../../../utils/debug_logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Payment Screen
-/// 
+///
 /// Shows payment method selection and processing
 class PaymentScreen extends StatefulWidget {
   final Booking booking;
@@ -30,30 +31,43 @@ class _PaymentScreenState extends State<PaymentScreen> {
         'label': l10n.payCash,
         'subtitle': l10n.payCashSubtitle,
         'icon': Icons.money,
-        'color': AppTheme.primaryGreen,
+        'colorKey': 'cta',
       },
       {
         'id': 'promptpay',
         'label': 'PromptPay',
         'subtitle': l10n.payPromptPaySubtitle,
         'icon': Icons.qr_code,
-        'color': const Color(0xFF1A3C6E),
+        'colorKey': 'info',
       },
       {
         'id': 'mobile_banking',
         'label': 'Mobile Banking',
         'subtitle': l10n.payMobileBankingSubtitle,
         'icon': Icons.account_balance,
-        'color': AppTheme.accentBlue,
+        'colorKey': 'info',
       },
       {
         'id': 'wallet',
         'label': 'Wallet',
         'subtitle': 'ชำระจากยอดเงินใน Wallet',
         'icon': Icons.account_balance_wallet,
-        'color': AppTheme.accentOrange,
+        'colorKey': 'brand',
       },
     ];
+  }
+
+  Color _methodColor(String colorKey, JdcColors jdc) {
+    switch (colorKey) {
+      case 'cta':
+        return jdc.cta;
+      case 'info':
+        return jdc.infoInk;
+      case 'brand':
+        return jdc.brand;
+      default:
+        return jdc.brand;
+    }
   }
 
   Future<void> _processPayment() async {
@@ -100,10 +114,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
       debugLog('Error processing payment: $e');
       setState(() => _isProcessing = false);
       if (mounted) {
+        final jdc = JdcColors.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.payError(e.toString())),
-            backgroundColor: Theme.of(context).colorScheme.error,
+            content:
+                Text(AppLocalizations.of(context)!.payError(e.toString())),
+            backgroundColor: jdc.danger,
           ),
         );
       }
@@ -111,220 +127,263 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   void _showSuccessDialog() {
-    final colorScheme = Theme.of(context).colorScheme;
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryGreen.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.check_circle, size: 60, color: AppTheme.primaryGreen),
-            ),
-            const SizedBox(height: 20),
-            Text(AppLocalizations.of(context)!.paySuccess,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text('฿${widget.booking.totalAmount.ceil()}',
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen)),
-            const SizedBox(height: 8),
-            Text(
-              _selectedMethod == 'cash' ? AppLocalizations.of(context)!.payCashPrepare : AppLocalizations.of(context)!.payRecorded,
-              style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  Navigator.of(context).pop(true);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryGreen,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+      builder: (ctx) {
+        final jdc2 = JdcColors.of(ctx);
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(JdcRadius.sheet)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: JdcSpacing.sm),
+              Container(
+                padding: const EdgeInsets.all(JdcSpacing.xl),
+                decoration: BoxDecoration(
+                  color: jdc2.successSoft,
+                  shape: BoxShape.circle,
                 ),
-                child: Text(AppLocalizations.of(context)!.payOk, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                child: Icon(Icons.check_circle, size: 60, color: jdc2.successInk),
               ),
-            ),
-          ],
-        ),
-      ),
+              const SizedBox(height: JdcSpacing.xl),
+              Text(AppLocalizations.of(context)!.paySuccess,
+                  style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: jdc2.text)),
+              const SizedBox(height: JdcSpacing.sm),
+              Text('฿${widget.booking.totalAmount.ceil()}',
+                  style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: jdc2.cta)),
+              const SizedBox(height: JdcSpacing.sm),
+              Text(
+                _selectedMethod == 'cash'
+                    ? AppLocalizations.of(context)!.payCashPrepare
+                    : AppLocalizations.of(context)!.payRecorded,
+                style: TextStyle(fontSize: 14, color: jdc2.muted),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: JdcSpacing.xl),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    Navigator.of(context).pop(true);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: jdc2.cta,
+                    foregroundColor: jdc2.onCta,
+                    shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(JdcRadius.small)),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: JdcSpacing.md),
+                  ),
+                  child: Text(AppLocalizations.of(context)!.payOk,
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
+    final methods = _getPaymentMethods(context);
     return Scaffold(
+      backgroundColor: jdc.paper,
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.payTitle),
-        backgroundColor: AppTheme.primaryGreen,
-        foregroundColor: Colors.white,
+        backgroundColor: jdc.panel,
+        foregroundColor: jdc.onPanel,
       ),
       body: Column(
         children: [
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // สรุปยอดเงิน
-                  _buildAmountSummary(),
-                  const SizedBox(height: 24),
+              padding: const EdgeInsets.all(JdcSpacing.xl),
+              child: JdcContentFrame(
+                padded: false,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // สรุปยอดเงิน
+                    _buildAmountSummary(),
+                    const SizedBox(height: JdcSpacing.xxl),
 
-                  // เลือกวิธีชำระเงิน
-                  Text(
-                    AppLocalizations.of(context)!.paySelectMethod,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onSurface,
+                    // เลือกวิธีชำระเงิน
+                    Text(
+                      AppLocalizations.of(context)!.paySelectMethod,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: jdc.text,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 14),
+                    const SizedBox(height: 14),
 
-                  ...List.generate(_getPaymentMethods(context).length, (i) {
-                    final method = _getPaymentMethods(context)[i];
-                    final isSelected = _selectedMethod == method['id'];
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: InkWell(
-                        onTap: () => setState(() => _selectedMethod = method['id'] as String),
-                        borderRadius: BorderRadius.circular(14),
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: colorScheme.surface,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: isSelected
-                                  ? AppTheme.primaryGreen
-                                  : colorScheme.outlineVariant,
-                              width: isSelected ? 2 : 1,
+                    ...List.generate(methods.length, (i) {
+                      final method = methods[i];
+                      final isSelected =
+                          _selectedMethod == method['id'];
+                      final color =
+                          _methodColor(method['colorKey'] as String, jdc);
+                      return Padding(
+                        padding:
+                            const EdgeInsets.only(bottom: JdcSpacing.md),
+                        child: InkWell(
+                          onTap: () => setState(
+                              () => _selectedMethod = method['id'] as String),
+                          borderRadius:
+                              BorderRadius.circular(JdcRadius.field),
+                          child: Container(
+                            padding: const EdgeInsets.all(JdcSpacing.lg),
+                            decoration: BoxDecoration(
+                              color: jdc.surface,
+                              borderRadius:
+                                  BorderRadius.circular(JdcRadius.field),
+                              border: Border.all(
+                                color: isSelected ? jdc.cta : jdc.line,
+                                width: isSelected ? 2 : 1,
+                              ),
+                              boxShadow: isSelected
+                                  ? [
+                                      BoxShadow(
+                                          color: jdc.cta
+                                              .withValues(alpha: 0.08),
+                                          blurRadius: 8)
+                                    ]
+                                  : null,
                             ),
-                            boxShadow: isSelected
-                                ? [BoxShadow(color: AppTheme.primaryGreen.withValues(alpha: 0.1), blurRadius: 8)]
-                                : null,
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: (method['color'] as Color).withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(10),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(JdcSpacing.md),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        color.withValues(alpha: 0.1),
+                                    borderRadius:
+                                        BorderRadius.circular(JdcRadius.small),
+                                  ),
+                                  child: Icon(method['icon'] as IconData,
+                                      color: color, size: 26),
                                 ),
-                                child: Icon(method['icon'] as IconData,
-                                    color: method['color'] as Color, size: 26),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(method['label'] as String,
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                          color: colorScheme.onSurface,
-                                        )),
-                                    const SizedBox(height: 2),
-                                    Text(method['subtitle'] as String,
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          color: colorScheme.onSurfaceVariant,
-                                        )),
-                                  ],
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(method['label'] as String,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                            color: jdc.text,
+                                          )),
+                                      const SizedBox(height: 2),
+                                      Text(method['subtitle'] as String,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: jdc.muted,
+                                          )),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              Icon(
-                                isSelected ? Icons.check_circle : Icons.radio_button_off,
-                                color: isSelected
-                                    ? AppTheme.primaryGreen
-                                    : colorScheme.outlineVariant,
-                                size: 24,
-                              ),
-                            ],
+                                Icon(
+                                  isSelected
+                                      ? Icons.check_circle
+                                      : Icons.radio_button_off,
+                                  color: isSelected ? jdc.cta : jdc.dim,
+                                  size: 24,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  }),
+                      );
+                    }),
 
-                  // หมายเหตุ PromptPay
-                  if (_selectedMethod == 'promptpay') ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1A3C6E).withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF1A3C6E).withValues(alpha: 0.2)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.info_outline, color: Color(0xFF1A3C6E), size: 20),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              AppLocalizations.of(context)!.payPromptPayNote,
-                              style: const TextStyle(fontSize: 13, color: Color(0xFF1A3C6E)),
+                    // หมายเหตุ PromptPay
+                    if (_selectedMethod == 'promptpay') ...[
+                      const SizedBox(height: JdcSpacing.md),
+                      Container(
+                        padding: const EdgeInsets.all(JdcSpacing.md),
+                        decoration: BoxDecoration(
+                          color: jdc.infoSoft,
+                          borderRadius:
+                              BorderRadius.circular(JdcRadius.small),
+                          border: Border.all(
+                              color: jdc.infoInk.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline,
+                                color: jdc.infoInk, size: 20),
+                            const SizedBox(width: JdcSpacing.md),
+                            Expanded(
+                              child: Text(
+                                AppLocalizations.of(context)!
+                                    .payPromptPayNote,
+                                style: TextStyle(
+                                    fontSize: 13, color: jdc.infoInk),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),
 
           // ปุ่มชำระเงิน
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(JdcSpacing.xl),
             decoration: BoxDecoration(
-              color: colorScheme.surface,
-              boxShadow: [
-                BoxShadow(
-                  color: colorScheme.shadow.withValues(alpha: 0.12),
-                  blurRadius: 8,
-                  offset: const Offset(0, -2),
-                )
-              ],
+              color: jdc.surface,
+              boxShadow: jdc.shadowSheet,
             ),
             child: SafeArea(
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isProcessing ? null : _processPayment,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryGreen,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              child: JdcContentFrame(
+                padded: false,
+                child: SizedBox(
+                  width: double.infinity,
+                  height: JdcTouch.button,
+                  child: ElevatedButton(
+                    onPressed: _isProcessing ? null : _processPayment,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: jdc.cta,
+                      foregroundColor: jdc.onCta,
+                      shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(JdcRadius.field)),
+                    ),
+                    child: _isProcessing
+                        ? SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                                color: jdc.onCta, strokeWidth: 2.5),
+                          )
+                        : Text(
+                            AppLocalizations.of(context)!.payButton(
+                                widget.booking.totalAmount.ceil().toString()),
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
                   ),
-                  child: _isProcessing
-                      ? const SizedBox(
-                          width: 24, height: 24,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
-                        )
-                      : Text(
-                          AppLocalizations.of(context)!.payButton(widget.booking.totalAmount.ceil().toString()),
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
                 ),
               ),
             ),
@@ -335,38 +394,48 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Widget _buildAmountSummary() {
+    final jdc = JdcColors.of(context);
     final isFood = widget.booking.serviceType == 'food';
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(JdcSpacing.xl),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppTheme.primaryGreen, AppTheme.primaryGreen.withValues(alpha: 0.85)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
+        gradient: jdc.hero2,
+        borderRadius: BorderRadius.circular(JdcRadius.card),
       ),
       child: Column(
         children: [
           Text(AppLocalizations.of(context)!.payTotalAmount,
-              style: const TextStyle(fontSize: 15, color: Colors.white70)),
-          const SizedBox(height: 6),
+              style: TextStyle(fontSize: 15, color: jdc.panelDim)),
+          const SizedBox(height: JdcSpacing.sm),
           Text('฿${widget.booking.totalAmount.ceil()}',
-              style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white)),
+              style: TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.bold,
+                  color: jdc.onPanel)),
           if (isFood && widget.booking.deliveryFee != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: JdcSpacing.md),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 14, vertical: JdcSpacing.sm),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8),
+                color: jdc.panelSoft3,
+                borderRadius: BorderRadius.circular(JdcRadius.small),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _buildMiniAmount(AppLocalizations.of(context)!.payFoodCost, '฿${widget.booking.price.ceil()}'),
-                  Container(width: 1, height: 24, color: Colors.white30, margin: const EdgeInsets.symmetric(horizontal: 14)),
-                  _buildMiniAmount(AppLocalizations.of(context)!.payDeliveryFee, '฿${widget.booking.deliveryFee!.ceil()}'),
+                  _buildMiniAmount(
+                      AppLocalizations.of(context)!.payFoodCost,
+                      '฿${widget.booking.price.ceil()}'),
+                  Container(
+                      width: 1,
+                      height: 24,
+                      color: jdc.panelLine,
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: JdcSpacing.md)),
+                  _buildMiniAmount(
+                      AppLocalizations.of(context)!.payDeliveryFee,
+                      '฿${widget.booking.deliveryFee!.ceil()}'),
                 ],
               ),
             ),
@@ -377,11 +446,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Widget _buildMiniAmount(String label, String amount) {
+    final jdc = JdcColors.of(context);
     return Column(
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, color: Colors.white60)),
+        Text(label, style: TextStyle(fontSize: 12, color: jdc.panelDim)),
         const SizedBox(height: 2),
-        Text(amount, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+        Text(amount,
+            style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: jdc.onPanel)),
       ],
     );
   }

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+
+import '../../../theme/jdc_colors.dart';
 import 'package:intl/intl.dart';
 
 import '../../../common/services/auth_service.dart';
 import '../../../common/services/wallet_service.dart';
 import '../../../common/services/withdrawal_service.dart';
-import '../../../theme/app_theme.dart';
 import '../../driver/screens/wallet_topup_screen.dart';
 import '../../driver/screens/wallet_withdrawal_screen.dart';
 
@@ -93,8 +94,8 @@ class _CustomerWalletScreenState extends State<CustomerWalletScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Wallet ลูกค้า'),
-        backgroundColor: AppTheme.accentBlue,
-        foregroundColor: Colors.white,
+        backgroundColor: JdcColors.of(context).infoInk,
+        foregroundColor: JdcColors.of(context).onPanel,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -120,23 +121,23 @@ class _CustomerWalletScreenState extends State<CustomerWalletScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppTheme.accentBlue, Color(0xFF0F766E)],
+        gradient: LinearGradient(
+          colors: [JdcColors.of(context).infoInk, JdcColors.of(context).panel],
         ),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'ยอดเงินใน Wallet',
-            style: TextStyle(color: Colors.white70, fontSize: 14),
+            style: TextStyle(color: JdcColors.of(context).panelDim, fontSize: 14),
           ),
           const SizedBox(height: 8),
           Text(
             _money(_balance),
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: JdcColors.of(context).onPanel,
               fontSize: 34,
               fontWeight: FontWeight.bold,
             ),
@@ -144,7 +145,7 @@ class _CustomerWalletScreenState extends State<CustomerWalletScreen> {
           const SizedBox(height: 8),
           Text(
             'ถอนเงินขั้นต่ำ ${_money(_minimumWithdrawalAmount)}',
-            style: const TextStyle(color: Colors.white70, fontSize: 13),
+            style: TextStyle(color: JdcColors.of(context).panelDim, fontSize: 13),
           ),
         ],
       ),
@@ -160,8 +161,8 @@ class _CustomerWalletScreenState extends State<CustomerWalletScreen> {
             icon: const Icon(Icons.add_circle_outline),
             label: const Text('เติมเงิน'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryGreen,
-              foregroundColor: Colors.white,
+              backgroundColor: JdcColors.of(context).cta,
+              foregroundColor: JdcColors.of(context).onPanel,
             ),
           ),
         ),
@@ -218,14 +219,14 @@ class _CustomerWalletScreenState extends State<CustomerWalletScreen> {
             return ListTile(
               leading: Icon(
                 amount >= 0 ? Icons.arrow_downward : Icons.arrow_upward,
-                color: amount >= 0 ? AppTheme.primaryGreen : Colors.red,
+                color: amount >= 0 ? JdcColors.of(context).cta : JdcColors.of(context).danger,
               ),
               title: Text(_transactionTitle(type)),
               subtitle: Text(description?.isNotEmpty == true ? description! : type),
               trailing: Text(
                 _money(amount),
                 style: TextStyle(
-                  color: amount >= 0 ? AppTheme.primaryGreen : Colors.red,
+                  color: amount >= 0 ? JdcColors.of(context).cta : JdcColors.of(context).danger,
                   fontWeight: FontWeight.bold,
                 ),
               ),

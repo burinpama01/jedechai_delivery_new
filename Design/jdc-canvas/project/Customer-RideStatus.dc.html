@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>ลูกค้า — สถานะการเดินทาง</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@500;600;700&amp;family=Noto+Sans+Thai:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light;
+  --paper:#f4f7f4;--surface:#ffffff;--sunken:#eef2ee;--line:#dbe4de;
+  --text:#0f3b33;--muted:#5c6f68;--dim:#66736d;
+  --panel:#0f3b33;--on-panel:#ffffff;--panel-dim:#b7cfc8;
+  --panel-soft:rgba(255,255,255,.10);--panel-soft2:rgba(255,255,255,.12);--panel-soft3:rgba(255,255,255,.14);--panel-line:rgba(255,255,255,.24);--bar-dim:rgba(255,255,255,.26);
+  --brand:#e39c2e;--brand-hi:#f3c06a;--cta:#8a5a0a;--on-cta:#ffffff;--link:#8a5a0a;--link-hover:#6d4708;
+  --brand-soft:#fff3dc;--brand-soft2:#fffaf0;--brand-line:#f0cf95;--brand-on-soft:#8a5a0a;
+  --green-ink:#2b6b2b;--green-soft:#e6f4e2;--green-line:#bfe0b6;--green-fill:#2e7d43;--green-dot:#5fcf7a;--green-on-panel:#a8e0b4;--green-panel:rgba(46,125,67,.30);--green-panel-line:rgba(95,207,122,.45);
+  --teal-soft:#e2f1ef;--teal-ink:#16605a;
+  --danger:#b42318;--danger-ink:#8f1c14;--danger-soft:#ffece9;--danger-line:#f0b3ab;
+  --off-track:#c3ccc6;--knob:#ffffff;--track-empty:#e1e8e3;
+  --map-bg:#dfe7e2;--map-grid:#d4ded8;--map-road:#ffffff;--route:#8a5a0a;
+  --hero:linear-gradient(132deg,#0e382f 0%,#1d5f50 55%,#8a5a0a 150%);
+  --hero2:linear-gradient(140deg,#0e382f 0%,#1a5548 70%);
+  --hero3:linear-gradient(140deg,#0e382f 0%,#20655a 55%,#8a5a0a 140%);
+  --sh-card:0 6px 18px rgba(12,44,37,.07);--sh-raise:0 12px 30px rgba(12,44,37,.10);--sh-float:0 6px 16px rgba(12,44,37,.16);--sh-deep:0 10px 24px rgba(12,44,37,.30);--sh-sheet:0 -10px 30px rgba(12,44,37,.08);--sh-brand:0 10px 26px rgba(227,156,46,.22);--sh-brand-lg:0 14px 34px rgba(227,156,46,.26);
+}
+/* โหมดมืด: ตอนนี้ปิดการสลับอัตโนมัติไว้ เปิดได้โดยใส่ data-theme="dark" ที่ :root */
+:root[data-theme="dark"]{
+  --paper:#0b1a17;--surface:#12241f;--sunken:#0e1f1b;--line:#24403a;
+  --text:#e8f1ed;--muted:#9cb1a9;--dim:#8fa39c;
+  --panel:#16352e;--on-panel:#f2f8f5;--panel-dim:#9ab6ae;
+  --panel-soft:rgba(255,255,255,.08);--panel-soft2:rgba(255,255,255,.10);--panel-soft3:rgba(255,255,255,.12);--panel-line:rgba(255,255,255,.18);--bar-dim:rgba(255,255,255,.24);
+  --brand:#e0a53f;--brand-hi:#f3c06a;--cta:#a0690f;--on-cta:#ffffff;--link:#edbb62;--link-hover:#f6d493;
+  --brand-soft:#2a2114;--brand-soft2:#241d12;--brand-line:#4a3a1c;--brand-on-soft:#edbb62;
+  --green-ink:#85cf82;--green-soft:#14301c;--green-line:#26512a;--green-fill:#2e7d43;--green-dot:#5fcf7a;--green-on-panel:#a8e0b4;--green-panel:rgba(46,125,67,.32);--green-panel-line:rgba(95,207,122,.40);
+  --teal-soft:#0f2a28;--teal-ink:#6fc3ba;
+  --danger:#ff8a7d;--danger-ink:#ff9a8e;--danger-soft:#351a17;--danger-line:#55302b;
+  --off-track:#3a4d47;--knob:#f2f8f5;--track-empty:#24403a;
+  --map-bg:#17302a;--map-grid:#1e3b34;--map-road:#25453d;--route:#e0a53f;
+  --hero:linear-gradient(132deg,#0a2621 0%,#134137 55%,#5e3f0b 150%);
+  --hero2:linear-gradient(140deg,#0a2621 0%,#123b33 70%);
+  --hero3:linear-gradient(140deg,#0a2621 0%,#154439 55%,#5e3f0b 140%);
+  --sh-card:0 6px 18px rgba(0,0,0,.40);--sh-raise:0 12px 30px rgba(0,0,0,.45);--sh-float:0 6px 16px rgba(0,0,0,.45);--sh-deep:0 10px 24px rgba(0,0,0,.55);--sh-sheet:0 -10px 30px rgba(0,0,0,.40);--sh-brand:0 10px 26px rgba(0,0,0,.45);--sh-brand-lg:0 14px 34px rgba(0,0,0,.50);
+}
+body{margin:0;font-family:"Noto Sans Thai",system-ui,sans-serif;color:var(--text);background:var(--paper);-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:"IBM Plex Sans Thai","Noto Sans Thai",sans-serif;margin:0}
+.dsp{font-family:"IBM Plex Sans Thai","Noto Sans Thai",sans-serif}
+button{font-family:inherit;cursor:pointer}
+a{color:var(--link);text-decoration:none}
+a:hover{color:var(--link-hover)}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--paper); overflow: hidden;">
+
+  <div style="flex-shrink: 0; height: 344px; position: relative; background: var(--map-bg); overflow: hidden;">
+    <div style="position: absolute; inset: 0; background: repeating-linear-gradient(90deg, var(--map-grid) 0 1px, transparent 1px 46px), repeating-linear-gradient(0deg, var(--map-grid) 0 1px, transparent 1px 46px);"></div>
+    <div style="position: absolute; left: -30px; top: 200px; width: 470px; height: 17px; background: var(--map-road); transform: rotate(-7deg);"></div>
+    <div style="position: absolute; left: 186px; top: -40px; width: 15px; height: 430px; background: var(--map-road); transform: rotate(10deg);"></div>
+    <svg width="390" height="344" viewBox="0 0 390 344" fill="none" style="position: absolute; inset: 0;" aria-hidden="true">
+      <path d="M96 254c52 0 62-56 110-70s92-8 126-36" stroke="currentColor" style="color: var(--route);" stroke-width="6" stroke-linecap="round"></path>
+    </svg>
+    <span style="position: absolute; left: 164px; top: 176px; width: 36px; height: 36px; border-radius: 999px; background: var(--panel); border: 3px solid var(--map-road); box-shadow: var(--sh-deep); display: flex; align-items: center; justify-content: center;">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--on-panel);" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16.4v-3.2l1.8-4A2 2 0 0 1 7.6 8h8.8a2 2 0 0 1 1.8 1.2l1.8 4v3.2"></path><path d="M5 16.4h14"></path></svg>
+    </span>
+    <span style="position: absolute; left: 314px; top: 132px; width: 16px; height: 16px; border-radius: 4px; background: var(--cta); border: 3px solid var(--map-road); box-shadow: var(--sh-float);"></span>
+
+    <div style="position: absolute; top: 16px; left: 20px; right: 20px; display: flex; align-items: center; gap: 10px;">
+      <a href="Main.dc.html" aria-label="ย้อนกลับ" style="width: 44px; height: 44px; border-radius: 14px; background: var(--surface); color: var(--text); box-shadow: var(--sh-float); display: flex; align-items: center; justify-content: center;">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg>
+      </a>
+      <span style="flex-grow: 1;"></span>
+      <span style="padding: 9px 14px; border-radius: 999px; background: var(--surface); box-shadow: var(--sh-float); font-size: 12px; font-weight: 700;">#JD-2845</span>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; margin-top: -24px; padding: 20px; border-radius: 24px 24px 0 0; background: var(--surface); box-shadow: var(--sh-sheet); display: flex; flex-direction: column; gap: 16px;">
+
+    <div style="display: flex; align-items: flex-end; gap: 12px;">
+      <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+        <span style="font-size: 11px; font-weight: 700; letter-spacing: .09em; color: var(--link);">กำลังเดินทาง</span>
+        <h1 style="font-size: 21px; font-weight: 700;">มุ่งหน้าเซ็นทรัลขอนแก่น</h1>
+      </div>
+      <span style="display: flex; flex-direction: column; align-items: flex-end;">
+        <span class="dsp" style="font-size: 26px; font-weight: 700; line-height: 1;">9</span>
+        <span style="font-size: 11px; color: var(--muted);">นาที</span>
+      </span>
+    </div>
+
+    <div style="display: flex; gap: 6px;">
+      <span style="flex-grow: 1; height: 5px; border-radius: 999px; background: var(--cta);"></span>
+      <span style="flex-grow: 1; height: 5px; border-radius: 999px; background: var(--cta);"></span>
+      <span style="flex-grow: 1; height: 5px; border-radius: 999px; background: var(--cta);"></span>
+      <span style="flex-grow: 1; height: 5px; border-radius: 999px; background: var(--track-empty);"></span>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <span class="dsp" style="width: 48px; height: 48px; border-radius: 999px; background: var(--panel); color: var(--on-panel); display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">ปก</span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">ประกิจ ท.</span>
+        <span style="font-size: 12px; color: var(--muted);">Yamaha Fino · ขข 5678 ขอนแก่น</span>
+      </span>
+      <a href="#chat" aria-label="แชทกับคนขับ" style="width: 44px; height: 44px; border-radius: 14px; border: 1px solid var(--line); color: var(--text); display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12.5c0 3.6-3.6 6.5-8 6.5-1 0-2-.15-2.9-.42L4.5 20l1.2-3.3C4.6 15.6 4 14.1 4 12.5 4 8.9 7.6 6 12 6s8 2.9 8 6.5z"></path></svg></a>
+      <a href="#call" aria-label="โทรหาคนขับ" style="width: 44px; height: 44px; border-radius: 14px; background: var(--panel); color: var(--on-panel); display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 4.5h3l1.4 3.5-2 1.3a10.5 10.5 0 0 0 5.3 5.3l1.3-2 3.5 1.4v3a1.5 1.5 0 0 1-1.7 1.5C10.9 17.8 6.2 13.1 5 6.2A1.5 1.5 0 0 1 6.5 4.5z"></path></svg></a>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; background: var(--paper); border: 1px solid var(--line);">
+      <span style="flex-grow: 1; font-size: 13px; color: var(--muted);">ยอดชำระ · เงินสดปลายทาง</span>
+      <span class="dsp" style="font-size: 16px; font-weight: 700;">฿65.00</span>
+    </div>
+
+    <span style="flex-grow: 1;"></span>
+
+    <div style="display: flex; gap: 10px;">
+      <a href="#share" style="flex-grow: 1; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; border-radius: 14px; border: 1px solid var(--line); color: var(--text); font-size: 13px; font-weight: 700;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="17.5" cy="6" r="2.5"></circle><circle cx="6.5" cy="12" r="2.5"></circle><circle cx="17.5" cy="18" r="2.5"></circle><path d="m8.8 10.8 6.4-3.5"></path><path d="m8.8 13.2 6.4 3.5"></path></svg>
+        แชร์การเดินทาง
+      </a>
+      <a href="Customer-Cancellation.dc.html" style="flex-grow: 1; display: flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 14px; border: 1px solid var(--danger-line); color: var(--danger-ink); font-size: 13px; font-weight: 700;">ยกเลิก</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

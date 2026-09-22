@@ -5,7 +5,8 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../common/providers/language_provider.dart';
 import '../../../../common/models/support_ticket.dart';
 import '../../../../common/services/ticket_service.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../theme/jdc_colors.dart';
+import '../../../../theme/jdc_layout.dart';
 
 /// Support Tickets Screen (Customer/Driver/Merchant)
 ///
@@ -48,6 +49,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
     var isSubmitting = false;
 
     final l10n = AppLocalizations.of(context)!;
+    final jdc = JdcColors.of(context);
     final categories = [
       {'value': 'lost_item', 'label': l10n.ticketCatLostItem, 'icon': Icons.search_off},
       {'value': 'wrong_order', 'label': l10n.ticketCatWrongOrder, 'icon': Icons.error_outline},
@@ -61,17 +63,17 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(JdcRadius.sheet)),
       ),
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
             return Padding(
               padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                top: 20,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                left: JdcSpacing.xl,
+                right: JdcSpacing.xl,
+                top: JdcSpacing.xl,
+                bottom: MediaQuery.of(context).viewInsets.bottom + JdcSpacing.xl,
               ),
               child: SingleChildScrollView(
                 child: Column(
@@ -81,42 +83,40 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                     // Header
                     Row(
                       children: [
-                        const Icon(Icons.support_agent, color: AppTheme.primaryGreen),
-                        const SizedBox(width: 8),
+                        Icon(Icons.support_agent, color: jdc.cta),
+                        const SizedBox(width: JdcSpacing.sm),
                         Text(
                           l10n.ticketCreateTitle,
-                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: jdc.text),
                         ),
                         const Spacer(),
                         IconButton(
                           onPressed: () => Navigator.pop(context, false),
-                          icon: const Icon(Icons.close),
+                          icon: Icon(Icons.close, color: jdc.muted),
                         ),
                       ],
                     ),
-                    const Divider(),
-                    const SizedBox(height: 8),
+                    Divider(color: jdc.line),
+                    const SizedBox(height: JdcSpacing.sm),
 
                     // Category
                     Text(l10n.ticketCategoryLabel,
-                        style: const TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
+                        style: TextStyle(fontWeight: FontWeight.w600, color: jdc.text)),
+                    const SizedBox(height: JdcSpacing.sm),
                     Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                      spacing: JdcSpacing.sm,
+                      runSpacing: JdcSpacing.sm,
                       children: categories.map((c) {
                         final isSelected = category == c['value'];
                         return ChoiceChip(
                           avatar: Icon(c['icon'] as IconData,
                               size: 18,
-                              color: isSelected ? Colors.white : Colors.grey),
+                              color: isSelected ? jdc.onCta : jdc.muted),
                           label: Text(c['label'] as String),
                           selected: isSelected,
-                          selectedColor: AppTheme.primaryGreen,
+                          selectedColor: jdc.cta,
                           labelStyle: TextStyle(
-                            color: isSelected
-                                ? Colors.white
-                                : Theme.of(context).colorScheme.onSurface,
+                            color: isSelected ? jdc.onCta : jdc.text,
                             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                           ),
                           onSelected: (_) =>
@@ -124,7 +124,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                         );
                       }).toList(),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: JdcSpacing.lg),
 
                     // Subject
                     TextField(
@@ -135,7 +135,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                         prefixIcon: const Icon(Icons.title),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: JdcSpacing.md),
 
                     // Description
                     TextField(
@@ -148,12 +148,12 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                         alignLabelWithHint: true,
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: JdcSpacing.xl),
 
                     // Submit
                     SizedBox(
                       width: double.infinity,
-                      height: 50,
+                      height: JdcTouch.button,
                       child: ElevatedButton.icon(
                         onPressed: isSubmitting
                             ? null
@@ -184,21 +184,21 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                                 }
                               },
                         icon: isSubmitting
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 18,
                                 height: 18,
                                 child: CircularProgressIndicator(
-                                    strokeWidth: 2, color: Colors.white),
+                                    strokeWidth: 2, color: jdc.onCta),
                               )
                             : const Icon(Icons.send),
                         label: Text(l10n.ticketSubmit,
                             style: const TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.w600)),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryGreen,
-                          foregroundColor: Colors.white,
+                          backgroundColor: jdc.cta,
+                          foregroundColor: jdc.onCta,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(JdcRadius.small),
                           ),
                         ),
                       ),
@@ -217,48 +217,20 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
     if (result == true) _loadTickets();
   }
 
-  Color _statusColor(String status) {
-    switch (status) {
-      case 'open':
-        return Colors.orange;
-      case 'in_progress':
-        return Colors.blue;
-      case 'resolved':
-        return Colors.green;
-      case 'closed':
-        return Colors.grey;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  IconData _categoryIcon(String category) {
-    switch (category) {
-      case 'lost_item':
-        return Icons.search_off;
-      case 'wrong_order':
-        return Icons.error_outline;
-      case 'rude_driver':
-        return Icons.person_off;
-      case 'refund':
-        return Icons.money_off;
-      case 'app_bug':
-        return Icons.bug_report;
-      default:
-        return Icons.help_outline;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    final jdc = JdcColors.of(context);
     return Scaffold(
+      backgroundColor: jdc.paper,
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.ticketTitle),
-        backgroundColor: AppTheme.primaryGreen,
-        foregroundColor: Colors.white,
+        backgroundColor: jdc.surface,
+        foregroundColor: jdc.text,
+        shape: Border(bottom: BorderSide(color: jdc.line)),
+        iconTheme: IconThemeData(color: jdc.text),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: jdc.cta))
           : _tickets.isEmpty
               ? _buildEmptyState()
               : _buildTicketList(),
@@ -266,30 +238,31 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
         onPressed: _showCreateDialog,
         icon: const Icon(Icons.add),
         label: Text(AppLocalizations.of(context)!.ticketFab),
-        backgroundColor: AppTheme.primaryGreen,
-        foregroundColor: Colors.white,
+        backgroundColor: jdc.cta,
+        foregroundColor: jdc.onCta,
       ),
     );
   }
 
   Widget _buildEmptyState() {
+    final jdc = JdcColors.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.support_agent, size: 80, color: Colors.grey[300]),
+          Icon(Icons.support_agent, size: 80, color: jdc.offTrack),
           const SizedBox(height: 16),
           Text(
             AppLocalizations.of(context)!.ticketEmptyTitle,
             style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey[600]),
+                color: jdc.muted),
           ),
           const SizedBox(height: 8),
           Text(
             AppLocalizations.of(context)!.ticketEmptySubtitle,
-            style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+            style: TextStyle(fontSize: 14, color: jdc.dim),
           ),
         ],
       ),
@@ -308,114 +281,103 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
   }
 
   Widget _buildTicketCard(SupportTicket ticket) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     final locale = context.watch<LanguageProvider>().localeOverride?.languageCode ?? 'th';
     final dateStr = DateFormat('d MMM yyyy, HH:mm', locale).format(ticket.createdAt);
-    final color = _statusColor(ticket.status);
+    final statusBg = ticket.status == 'open' || ticket.status == 'in_progress'
+        ? jdc.brandSoft
+        : jdc.sunken;
+    final statusFg = ticket.status == 'open' || ticket.status == 'in_progress'
+        ? jdc.brandOnSoft
+        : jdc.muted;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Row(
-              children: [
-                Icon(_categoryIcon(ticket.category),
-                    size: 20, color: Colors.grey[600]),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    ticket.subject,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+    return Container(
+      margin: const EdgeInsets.only(bottom: JdcSpacing.md),
+      decoration: BoxDecoration(
+        color: jdc.surface,
+        borderRadius: BorderRadius.circular(JdcRadius.card),
+        border: Border.all(color: jdc.line),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(JdcRadius.card),
+        onTap: () {},
+        child: Padding(
+          padding: const EdgeInsets.all(JdcSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // status + id
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: statusBg,
+                      borderRadius: BorderRadius.circular(JdcRadius.chip),
+                    ),
+                    child: Text(
+                      ticket.statusText,
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: statusFg),
                     ),
                   ),
-                ),
+                  const Spacer(),
+                  Text(
+                    dateStr,
+                    style: TextStyle(fontSize: 11, color: jdc.muted),
+                  ),
+                ],
+              ),
+              const SizedBox(height: JdcSpacing.sm),
+              Text(
+                ticket.subject,
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: jdc.text),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: JdcSpacing.xs),
+              Text(
+                ticket.description,
+                style: TextStyle(fontSize: 12, color: jdc.muted, height: 1.6),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (ticket.resolution != null && ticket.resolution!.isNotEmpty) ...[
+                const SizedBox(height: JdcSpacing.sm),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(JdcSpacing.sm),
                   decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: color.withValues(alpha: 0.3)),
+                    color: jdc.successSoft,
+                    borderRadius: BorderRadius.circular(JdcSpacing.sm),
+                    border: Border.all(color: jdc.successLine),
                   ),
-                  child: Text(
-                    ticket.statusText,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: color,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-
-            // Category + Date
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    ticket.categoryText,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  dateStr,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                ),
-              ],
-            ),
-
-            // Description
-            const SizedBox(height: 8),
-            Text(
-              ticket.description,
-              style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-
-            // Resolution (if any)
-            if (ticket.resolution != null && ticket.resolution!.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.green[50],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.green[200]!),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.check_circle, size: 16, color: Colors.green[600]),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        ticket.resolution!,
-                        style: TextStyle(fontSize: 13, color: Colors.green[800]),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.check_circle, size: 16, color: jdc.successInk),
+                      const SizedBox(width: JdcSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          ticket.resolution!,
+                          style: TextStyle(fontSize: 13, color: jdc.successInk),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: JdcSpacing.sm),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  ticket.status == 'open' || ticket.status == 'in_progress'
+                      ? 'ดูบทสนทนา'
+                      : 'ดูรายละเอียด',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: jdc.link),
                 ),
               ),
             ],
-          ],
+          ),
         ),
       ),
     );

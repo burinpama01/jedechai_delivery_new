@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+
+import '../../theme/jdc_colors.dart';
+import 'app_network_image.dart';
 import 'package:intl/intl.dart';
 import '../models/review.dart';
 import '../services/review_service.dart';
-import '../../theme/app_theme.dart';
 
 /// Reviews Screen
 ///
@@ -79,7 +81,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
         title: Text(widget.title),
         backgroundColor: widget.targetRole == 'driver'
             ? Colors.blue[700]
-            : AppTheme.accentOrange,
+            : JdcColors.of(context).brand,
         foregroundColor: Colors.white,
       ),
       body: _isLoading
@@ -238,26 +240,32 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
   }
 
   Widget _buildEmptyState() {
+    final jdc = JdcColors.of(context);
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.rate_review_outlined, size: 64, color: Colors.grey[300]),
-          const SizedBox(height: 16),
-          Text(
-            'ยังไม่มีรีวิว',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[600],
+      // จอเตี้ยเนื้อหาสูงเกิน ต้องเลื่อนได้แทนการล้น
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.rate_review_outlined, size: 64, color: jdc.offTrack),
+            const SizedBox(height: 16),
+            Text(
+              'ยังไม่มีรีวิว',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: jdc.muted,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'รีวิวจากลูกค้าจะแสดงที่นี่',
-            style: TextStyle(fontSize: 14, color: Colors.grey[400]),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              'รีวิวจากลูกค้าจะแสดงที่นี่',
+              style: TextStyle(fontSize: 14, color: jdc.dim),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -278,15 +286,14 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
             // Header: name + date
             Row(
               children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: Colors.grey[200],
-                  child: Text(
-                    customerName.isNotEmpty ? customerName[0].toUpperCase() : '?',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+                // Review ยังไม่มีฟิลด์รูปลูกค้า → โลโก้ระบบสีเทา (มาตรฐานทุกช่องรูป ห้ามใช้ตัวย่อ)
+                // ถ้าเพิ่มรูปลูกค้าในอนาคต ให้ใช้ AppNetworkImage แล้ว fallback เป็นโลโก้นี้
+                ClipOval(
+                  child: GrayscaleLogoPlaceholder(
+                    width: 36,
+                    height: 36,
+                    padding: const EdgeInsets.all(4),
+                    backgroundColor: JdcColors.of(context).sunken,
                   ),
                 ),
                 const SizedBox(width: 12),

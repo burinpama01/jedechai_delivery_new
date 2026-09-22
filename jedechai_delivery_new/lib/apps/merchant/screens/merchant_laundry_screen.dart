@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../theme/jdc_colors.dart';
 
 import '../../../common/services/laundry_service.dart';
-import '../../../theme/app_theme.dart';
 
 class MerchantLaundryScreen extends StatefulWidget {
   const MerchantLaundryScreen({super.key});
@@ -22,18 +22,25 @@ class _MerchantLaundryScreenState extends State<MerchantLaundryScreen> {
   @override
   void initState() {
     super.initState();
-    _loadOrders();
+    // _loadOrders อ่าน context (AppLocalizations) ระหว่างทาง จึงต้องรอเฟรมแรก
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadOrders();
+    });
   }
 
   Future<void> _loadOrders({bool showLoading = true}) async {
     if (showLoading) setState(() => _isLoading = true);
     try {
-      final ordersFuture = _laundryService.fetchMerchantLaundryOrders();
-      final packagesFuture = _laundryService.fetchMyMerchantPackages();
-      final settingsFuture = _laundryService.fetchMerchantLaundrySettings();
-      final orders = await ordersFuture;
-      final packages = await packagesFuture;
-      final settings = await settingsFuture;
+      // ยิงพร้อมกันแล้วรอด้วย Future.wait — ถ้า await ทีละตัวแล้วตัวแรก throw
+      // อีกสองตัวจะกลายเป็น unhandled async error (เจอจริงตอนไม่มี session)
+      final results = await Future.wait<dynamic>([
+        _laundryService.fetchMerchantLaundryOrders(),
+        _laundryService.fetchMyMerchantPackages(),
+        _laundryService.fetchMerchantLaundrySettings(),
+      ]);
+      final orders = results[0] as List<Map<String, dynamic>>;
+      final packages = results[1] as List<Map<String, dynamic>>;
+      final settings = results[2] as Map<String, dynamic>;
       if (!mounted) return;
       setState(() {
         _orders = orders;
@@ -631,7 +638,7 @@ class _LaundrySettingsCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            const Icon(Icons.tune_rounded, color: AppTheme.primaryGreen),
+            Icon(Icons.tune_rounded, color: JdcColors.of(context).cta),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -845,8 +852,8 @@ class _LaundryPackageManagerCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.inventory_2_rounded,
-                    color: AppTheme.primaryGreen),
+                Icon(Icons.inventory_2_rounded,
+                    color: JdcColors.of(context).cta),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -910,7 +917,7 @@ class _LaundryPackageRow extends StatelessWidget {
       children: [
         Icon(
           isActive ? Icons.check_circle_rounded : Icons.pause_circle_rounded,
-          color: isActive ? Colors.green : Colors.grey,
+          color: isActive ? JdcColors.of(context).successInk : JdcColors.of(context).muted,
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -926,7 +933,7 @@ class _LaundryPackageRow extends StatelessWidget {
                     style: Theme.of(context)
                         .textTheme
                         .bodySmall
-                        ?.copyWith(color: Colors.grey)),
+                        ?.copyWith(color: JdcColors.of(context).muted)),
             ],
           ),
         ),
@@ -1004,8 +1011,8 @@ class _LaundryOrderCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.local_laundry_service_rounded,
-                    color: AppTheme.primaryGreen),
+                Icon(Icons.local_laundry_service_rounded,
+                    color: JdcColors.of(context).cta),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(

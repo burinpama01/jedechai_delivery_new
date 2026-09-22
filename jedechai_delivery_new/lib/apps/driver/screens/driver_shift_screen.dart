@@ -1,10 +1,12 @@
 import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:jedechai_delivery_new/theme/app_theme.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
 import '../../../common/services/auth_service.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../theme/jdc_colors.dart';
+import '../../../theme/jdc_layout.dart';
 
 class DriverShiftScreen extends StatefulWidget {
   const DriverShiftScreen({super.key});
@@ -109,7 +111,7 @@ class _DriverShiftScreenState extends State<DriverShiftScreen> {
       debugLog('❌ Error starting shift: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('เริ่มกะไม่สำเร็จ: $e'), backgroundColor: Colors.red));
+          SnackBar(content: Text(AppLocalizations.of(context)!.driverShiftStartError(e.toString())), backgroundColor: context.jdc.danger));
       }
     } finally {
       if (mounted) setState(() => _isActionLoading = false);
@@ -131,7 +133,7 @@ class _DriverShiftScreenState extends State<DriverShiftScreen> {
       debugLog('❌ Error ending shift: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('หยุดกะไม่สำเร็จ: $e'), backgroundColor: Colors.red));
+          SnackBar(content: Text(AppLocalizations.of(context)!.driverShiftEndError(e.toString())), backgroundColor: context.jdc.danger));
       }
     } finally {
       if (mounted) setState(() => _isActionLoading = false);
@@ -162,152 +164,248 @@ class _DriverShiftScreenState extends State<DriverShiftScreen> {
     } catch (_) { return Duration.zero; }
   }
 
+  /// สร้าง TextStyle พร้อม fontVariations คู่กับ fontWeight ตามกฎดีไซน์
+  TextStyle _txt(
+    Color color,
+    double size, {
+    double w = 400,
+    double? height,
+    List<FontFeature>? fontFeatures,
+  }) {
+    return TextStyle(
+      color: color,
+      fontSize: size,
+      height: height,
+      fontWeight: FontWeight.values[(w.round() ~/ 100) - 1],
+      fontVariations: [FontVariation('wght', w)],
+      fontFeatures: fontFeatures,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: const Text('การจัดการกะ'),
-        backgroundColor: AppTheme.accentBlue,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
-        ],
-      ),
+      backgroundColor: jdc.paper,
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accentBlue)))
+          ? Center(child: CircularProgressIndicator(color: jdc.cta))
           : _error != null
               ? _buildErrorState()
-              : RefreshIndicator(
-                  onRefresh: _loadData,
-                  color: AppTheme.accentBlue,
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: Column(
-                      children: [
-                        _buildShiftControl(),
-                        _buildShiftHistory(),
-                        const SizedBox(height: 24),
-                      ],
+              : Column(
+                  children: [
+                    _buildHeader(),
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: _loadData,
+                        color: jdc.cta,
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: JdcContentFrame(
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                top: JdcSpacing.lg,
+                                bottom: JdcSpacing.xxl,
+                              ),
+                              child: _buildShiftHistory(),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
     );
   }
 
-  Widget _buildErrorState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
-            const SizedBox(height: 16),
-            const Text('โหลดข้อมูลไม่สำเร็จ',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text(_error ?? '', style: TextStyle(color: Colors.grey[500], fontSize: 13),
-                textAlign: TextAlign.center),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: _loadData,
-              icon: const Icon(Icons.refresh),
-              label: const Text('ลองใหม่'),
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accentBlue, foregroundColor: Colors.white),
-            ),
-          ],
+  /// ส่วนหัวสีเข้ม (hero2) ตาม artboard Driver-Shift —
+  /// ปุ่มย้อนกลับ 44x44 + ไทต์เติล + ปุ่มรีเฟรช + สถิติย่อย + การ์ดควบคุมกะ
+  Widget _buildHeader() {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final isActive = _activeShift != null;
+
+    // ตัวเลขสรุป 7 วัน คำนวณจากข้อมูลจริงที่โหลดมา (ไม่มีข้อมูลรายเดือน/ตรงเวลา → ดู known gap)
+    final weekMinutes = _shiftHistory.fold<int>(
+          0,
+          (sum, s) => sum + _shiftDuration(s).inMinutes,
+        ) + (isActive ? _elapsed.inMinutes : 0);
+    final weekShifts = _shiftHistory.length + (isActive ? 1 : 0);
+    final weekJobs = _shiftHistory.fold<int>(
+      0,
+      (sum, s) => sum + ((s['total_jobs'] as num?)?.toInt() ?? 0),
+    );
+
+    return Container(
+      decoration: BoxDecoration(gradient: jdc.hero2),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            JdcSpacing.xl, JdcSpacing.lg, JdcSpacing.xl, JdcSpacing.xl),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  _buildBackButton(),
+                  const SizedBox(width: JdcSpacing.md),
+                  Expanded(
+                    child: Text(
+                      l10n.driverShiftTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: _txt(jdc.onPanel, 18, w: 700),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: l10n.driverDashRefresh,
+                    icon: Icon(Icons.refresh, color: jdc.onPanel),
+                    onPressed: _loadData,
+                  ),
+                ],
+              ),
+              const SizedBox(height: JdcSpacing.xl),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildHeroStat(
+                      l10n.driverShiftWeeklyHours,
+                      l10n.driverShiftHoursMinutes(
+                          (weekMinutes ~/ 60).toString(), (weekMinutes % 60).toString()),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(child: _buildHeroStat(l10n.driverShiftWeeklyShifts, '$weekShifts')),
+                  const SizedBox(width: 10),
+                  Expanded(child: _buildHeroStat(l10n.driverShiftWeeklyJobs, '$weekJobs')),
+                ],
+              ),
+              const SizedBox(height: JdcSpacing.xl),
+              _buildShiftControl(),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildBackButton() {
+    final jdc = JdcColors.of(context);
+    return SizedBox(
+      width: JdcTouch.minTarget,
+      height: JdcTouch.minTarget,
+      child: Material(
+        color: jdc.panelSoft2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(JdcRadius.field),
+          side: BorderSide(color: jdc.panelLine),
+        ),
+        child: InkWell(
+          onTap: () => Navigator.of(context).maybePop(),
+          child: Icon(Icons.chevron_left, size: 20, color: jdc.onPanel),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeroStat(String label, String value) {
+    final jdc = JdcColors.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: JdcSpacing.md,
+        vertical: 11,
+      ),
+      decoration: BoxDecoration(
+        color: jdc.panelSoft,
+        borderRadius: BorderRadius.circular(JdcRadius.field),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: _txt(jdc.onPanel, 16, w: 700),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: _txt(jdc.panelDim, 11),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildShiftControl() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final isActive = _activeShift != null;
     final startStr = _activeShift?['shift_start_at'] as String?;
 
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(JdcSpacing.lg),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isActive
-              ? [Colors.green[700]!, Colors.green[500]!]
-              : [AppTheme.accentBlue, AppTheme.accentBlue.withValues(alpha: 0.8)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: (isActive ? Colors.green : AppTheme.accentBlue).withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        color: jdc.panelSoft2,
+        borderRadius: BorderRadius.circular(JdcRadius.card),
+        border: Border.all(color: jdc.panelLine),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  isActive ? Icons.work : Icons.work_off,
-                  color: Colors.white,
-                  size: 28,
-                ),
-              ),
-              const SizedBox(width: 14),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isActive ? 'กะปัจจุบัน' : 'ยังไม่ได้เริ่มกะ',
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 13),
-                    ),
-                    Text(
-                      isActive ? _formatDuration(_elapsed) : '--:--:--',
-                      style: const TextStyle(
-                          color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold,
-                          fontFeatures: [FontFeature.tabularFigures()]),
-                    ),
-                  ],
+                child: Text(
+                  isActive ? l10n.driverShiftActive : l10n.driverShiftNotStarted,
+                  style: _txt(jdc.panelDim, 12),
                 ),
               ),
+              if (isActive)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: jdc.successPanel,
+                    borderRadius: BorderRadius.circular(JdcRadius.chip),
+                    border: Border.all(color: jdc.successPanelLine),
+                  ),
+                  child: Text(l10n.driverShiftActiveBadge, style: _txt(jdc.successOnPanel, 11, w: 700)),
+                ),
             ],
           ),
+          const SizedBox(height: JdcSpacing.xs),
+          Text(
+            isActive ? _formatDuration(_elapsed) : '--:--:--',
+            style: _txt(jdc.onPanel, 34, w: 700, fontFeatures: [
+              FontFeature.tabularFigures(),
+            ]),
+          ),
           if (isActive && startStr != null) ...[
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'เริ่มเมื่อ ${_formatDateTime(startStr)}',
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 12),
-              ),
+            const SizedBox(height: JdcSpacing.xs),
+            Text(
+              l10n.driverShiftStartedAt(_formatDateTime(startStr)),
+              style: _txt(jdc.panelDim, 12),
             ),
           ],
-          const SizedBox(height: 20),
+          const SizedBox(height: JdcSpacing.md),
           SizedBox(
             width: double.infinity,
-            height: 52,
+            height: JdcTouch.button,
             child: ElevatedButton(
               onPressed: _isActionLoading ? null : (isActive ? _endShift : _startShift),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: isActive ? Colors.green[700] : AppTheme.accentBlue,
+                backgroundColor: isActive ? jdc.surface : jdc.cta,
+                foregroundColor: isActive ? jdc.danger : jdc.onCta,
+                disabledBackgroundColor: isActive ? jdc.sunken : jdc.brandSoft2,
+                disabledForegroundColor: isActive ? jdc.muted : jdc.brandOnSoft,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(JdcRadius.field),
+                  side: isActive ? BorderSide(color: jdc.dangerLine) : BorderSide.none,
+                ),
               ),
               child: _isActionLoading
                   ? SizedBox(
@@ -315,13 +413,12 @@ class _DriverShiftScreenState extends State<DriverShiftScreen> {
                       height: 22,
                       child: CircularProgressIndicator(
                         strokeWidth: 2.5,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                            isActive ? Colors.green[700]! : AppTheme.accentBlue),
+                        color: isActive ? jdc.danger : jdc.onCta,
                       ),
                     )
                   : Text(
-                      isActive ? 'หยุดกะ' : 'เริ่มกะ',
-                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                      isActive ? l10n.driverShiftEnd : l10n.driverShiftStart,
+                      style: _txt(isActive ? jdc.danger : jdc.onCta, 17, w: 700),
                     ),
             ),
           ),
@@ -330,95 +427,138 @@ class _DriverShiftScreenState extends State<DriverShiftScreen> {
     );
   }
 
-  Widget _buildShiftHistory() {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('ประวัติกะ 7 วัน',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
-          const SizedBox(height: 12),
-          if (_shiftHistory.isEmpty)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(32),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainer,
-                borderRadius: BorderRadius.circular(12),
+  Widget _buildErrorState() {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(JdcSpacing.xxxl),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 64, color: jdc.danger),
+            const SizedBox(height: JdcSpacing.lg),
+            Text(l10n.activityLoadFailed, style: _txt(jdc.text, 16, w: 700)),
+            const SizedBox(height: JdcSpacing.sm),
+            Text(
+              _error ?? '',
+              style: _txt(jdc.muted, 13),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: JdcSpacing.xl),
+            ElevatedButton.icon(
+              onPressed: _loadData,
+              icon: const Icon(Icons.refresh),
+              label: Text(l10n.earnRetry),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: jdc.cta,
+                foregroundColor: jdc.onCta,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(JdcRadius.field),
+                ),
               ),
-              child: Column(
-                children: [
-                  Icon(Icons.history, size: 48,
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.45)),
-                  const SizedBox(height: 12),
-                  Text('ยังไม่มีประวัติกะ',
-                      style: TextStyle(color: colorScheme.onSurfaceVariant)),
-                ],
-              ),
-            )
-          else
-            ...List.generate(_shiftHistory.length, (i) => _buildShiftCard(_shiftHistory[i])),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
+  Widget _buildShiftHistory() {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l10n.driverShiftHistoryTitle, style: _txt(jdc.text, 14, w: 700)),
+        const SizedBox(height: JdcSpacing.md),
+        if (_shiftHistory.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(JdcSpacing.xxxl),
+            decoration: BoxDecoration(
+              color: jdc.surface,
+              borderRadius: BorderRadius.circular(JdcRadius.card),
+              border: Border.all(color: jdc.line),
+              boxShadow: jdc.shadowCard,
+            ),
+            child: Column(
+              children: [
+                Icon(Icons.history, size: 48, color: jdc.muted),
+                const SizedBox(height: JdcSpacing.md),
+                Text(l10n.driverShiftHistoryEmpty, style: _txt(jdc.muted, 13)),
+              ],
+            ),
+          )
+        else
+          ...List.generate(_shiftHistory.length, (i) => _buildShiftCard(_shiftHistory[i])),
+      ],
+    );
+  }
+
   Widget _buildShiftCard(Map<String, dynamic> shift) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final dur = _shiftDuration(shift);
     final jobs = (shift['total_jobs'] as num?)?.toInt() ?? 0;
     final earnings = (shift['total_earnings'] as num?)?.toDouble() ?? 0;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(JdcSpacing.lg),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 4, offset: const Offset(0, 2))],
+        color: jdc.surface,
+        borderRadius: BorderRadius.circular(JdcRadius.card),
+        border: Border.all(color: jdc.line),
+        boxShadow: jdc.shadowCard,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Icon(Icons.access_time, size: 16, color: AppTheme.accentBlue),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  '${_formatDateTime(shift['shift_start_at'] as String?)} → ${_formatDateTime(shift['shift_end_at'] as String?)}',
-                  style: TextStyle(fontSize: 13, color: colorScheme.onSurface, fontWeight: FontWeight.w500),
-                ),
-              ),
-            ],
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: jdc.sunken,
+              borderRadius: BorderRadius.circular(JdcRadius.small),
+            ),
+            child: Icon(Icons.access_time, size: 19, color: jdc.text),
           ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(child: _buildShiftStat('ระยะเวลา', _formatDuration(dur), Icons.timer_outlined, Colors.blue)),
-              const SizedBox(width: 10),
-              Expanded(child: _buildShiftStat('งานทั้งหมด', '$jobs ครั้ง', Icons.work_outline, Colors.orange)),
-              const SizedBox(width: 10),
-              Expanded(child: _buildShiftStat('รายได้', '฿${earnings.toStringAsFixed(0)}', Icons.payments_outlined, Colors.green)),
-            ],
+          const SizedBox(width: JdcSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${_formatDateTime(shift['shift_start_at'] as String?)} → ${_formatDateTime(shift['shift_end_at'] as String?)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: _txt(jdc.text, 14, w: 700),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  l10n.driverShiftCardSummary(_formatDuration(dur), jobs.toString()),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: _txt(jdc.muted, 12),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: JdcSpacing.md),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: jdc.successSoft,
+              borderRadius: BorderRadius.circular(JdcRadius.chip),
+            ),
+            child: Text(
+              l10n.driverEarningsBaht(earnings.toStringAsFixed(0)),
+              style: _txt(jdc.successInk, 11, w: 700),
+            ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildShiftStat(String label, String value, IconData icon, Color color) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Column(
-      children: [
-        Icon(icon, size: 18, color: color),
-        const SizedBox(height: 4),
-        Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: color)),
-        const SizedBox(height: 2),
-        Text(label, style: TextStyle(fontSize: 10, color: colorScheme.onSurfaceVariant)),
-      ],
     );
   }
 }

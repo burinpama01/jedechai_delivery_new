@@ -698,7 +698,7 @@ abstract class AppLocalizations {
   /// No description provided for @foodHomeEmptyNoArea.
   ///
   /// In en, this message translates to:
-  /// **'No restaurants in your area yet'**
+  /// **'No partner restaurants in your area yet'**
   String get foodHomeEmptyNoArea;
 
   /// No description provided for @foodHomeEmptyNoneOpen.
@@ -722,7 +722,7 @@ abstract class AppLocalizations {
   /// No description provided for @foodHomeEmptyNoAreaHint.
   ///
   /// In en, this message translates to:
-  /// **'No open restaurants within {radius} km'**
+  /// **'No partner restaurants within {radius} km of you yet'**
   String foodHomeEmptyNoAreaHint(Object radius);
 
   /// No description provided for @foodHomeEmptyTryLater.
@@ -754,6 +754,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'20-30 min'**
   String get foodHomeEstTime;
+
+  /// No description provided for @foodHomeOpenNowTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Open now'**
+  String get foodHomeOpenNowTitle;
+
+  /// No description provided for @foodHomeSeeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'See all'**
+  String get foodHomeSeeAll;
+
+  /// No description provided for @foodHomeAllShopsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'All restaurants'**
+  String get foodHomeAllShopsTooltip;
+
+  /// No description provided for @foodHomeOpenUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Open until {time}'**
+  String foodHomeOpenUntil(Object time);
+
+  /// No description provided for @foodCategoryOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Others'**
+  String get foodCategoryOther;
+
+  /// No description provided for @foodHomeFavoriteAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to favorites'**
+  String get foodHomeFavoriteAdd;
+
+  /// No description provided for @foodHomeFavoriteRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from favorites'**
+  String get foodHomeFavoriteRemove;
+
+  /// No description provided for @foodHomeFavoriteError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t update favorites. Please try again.'**
+  String get foodHomeFavoriteError;
+
+  /// No description provided for @foodHomeEmptyCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'No open restaurants in this category right now'**
+  String get foodHomeEmptyCategory;
+
+  /// No description provided for @foodHomeEmptyCategoryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Try another category, or tap it again to see all restaurants'**
+  String get foodHomeEmptyCategoryHint;
 
   /// No description provided for @foodPromoCodeTitle.
   ///
@@ -11128,6 +11188,966 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Back to login'**
   String get rejectedDeletionBack;
+
+  /// No description provided for @driverServiceTypeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Job types to accept'**
+  String get driverServiceTypeTitle;
+
+  /// No description provided for @driverServiceTypeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose which job types to accept (none selected = accept all)'**
+  String get driverServiceTypeSubtitle;
+
+  /// No description provided for @driverServiceTypeFood.
+  ///
+  /// In en, this message translates to:
+  /// **'Food delivery'**
+  String get driverServiceTypeFood;
+
+  /// No description provided for @driverServiceTypeRide.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride'**
+  String get driverServiceTypeRide;
+
+  /// No description provided for @driverServiceTypeParcel.
+  ///
+  /// In en, this message translates to:
+  /// **'Parcel delivery'**
+  String get driverServiceTypeParcel;
+
+  /// No description provided for @driverServiceTypeLaundry.
+  ///
+  /// In en, this message translates to:
+  /// **'Laundry pickup & return'**
+  String get driverServiceTypeLaundry;
+
+  /// No description provided for @driverServiceTypeFoodDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders from restaurants in the system'**
+  String get driverServiceTypeFoodDesc;
+
+  /// No description provided for @driverServiceTypeRideDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Passenger transport'**
+  String get driverServiceTypeRideDesc;
+
+  /// No description provided for @driverServiceTypeParcelDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Parcels up to 10 kg'**
+  String get driverServiceTypeParcelDesc;
+
+  /// No description provided for @driverServiceTypeLaundryDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick up laundry from customers and return it'**
+  String get driverServiceTypeLaundryDesc;
+
+  /// No description provided for @driverServiceTypeSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save settings'**
+  String get driverServiceTypeSave;
+
+  /// No description provided for @driverServiceTypeSaveError.
+  ///
+  /// In en, this message translates to:
+  /// **'Save failed: {error}'**
+  String driverServiceTypeSaveError(Object error);
+
+  /// No description provided for @driverProfileRatingJobs.
+  ///
+  /// In en, this message translates to:
+  /// **'{rating} · {count} jobs'**
+  String driverProfileRatingJobs(Object rating, Object count);
+
+  /// No description provided for @driverJobBaht.
+  ///
+  /// In en, this message translates to:
+  /// **'฿{amount}'**
+  String driverJobBaht(Object amount);
+
+  /// No description provided for @driverJobBahtNeg.
+  ///
+  /// In en, this message translates to:
+  /// **'-฿{amount}'**
+  String driverJobBahtNeg(Object amount);
+
+  /// No description provided for @driverEarningsBaht.
+  ///
+  /// In en, this message translates to:
+  /// **'฿{amount}'**
+  String driverEarningsBaht(Object amount);
+
+  /// No description provided for @driverEarningsBahtNeg.
+  ///
+  /// In en, this message translates to:
+  /// **'-฿{amount}'**
+  String driverEarningsBahtNeg(Object amount);
+
+  /// No description provided for @driverEarningsExportCsv.
+  ///
+  /// In en, this message translates to:
+  /// **'Export CSV'**
+  String get driverEarningsExportCsv;
+
+  /// No description provided for @driverEarningsFilterFood.
+  ///
+  /// In en, this message translates to:
+  /// **'🍔 Food'**
+  String get driverEarningsFilterFood;
+
+  /// No description provided for @driverEarningsFilterRide.
+  ///
+  /// In en, this message translates to:
+  /// **'🚗 Ride'**
+  String get driverEarningsFilterRide;
+
+  /// No description provided for @driverEarningsFilterParcel.
+  ///
+  /// In en, this message translates to:
+  /// **'📦 Parcel'**
+  String get driverEarningsFilterParcel;
+
+  /// No description provided for @driverEarningsWeekdayMon.
+  ///
+  /// In en, this message translates to:
+  /// **'M'**
+  String get driverEarningsWeekdayMon;
+
+  /// No description provided for @driverEarningsWeekdayTue.
+  ///
+  /// In en, this message translates to:
+  /// **'T'**
+  String get driverEarningsWeekdayTue;
+
+  /// No description provided for @driverEarningsWeekdayWed.
+  ///
+  /// In en, this message translates to:
+  /// **'W'**
+  String get driverEarningsWeekdayWed;
+
+  /// No description provided for @driverEarningsWeekdayThu.
+  ///
+  /// In en, this message translates to:
+  /// **'Th'**
+  String get driverEarningsWeekdayThu;
+
+  /// No description provided for @driverEarningsWeekdayFri.
+  ///
+  /// In en, this message translates to:
+  /// **'F'**
+  String get driverEarningsWeekdayFri;
+
+  /// No description provided for @driverEarningsWeekdaySat.
+  ///
+  /// In en, this message translates to:
+  /// **'S'**
+  String get driverEarningsWeekdaySat;
+
+  /// No description provided for @driverEarningsWeekdaySun.
+  ///
+  /// In en, this message translates to:
+  /// **'Su'**
+  String get driverEarningsWeekdaySun;
+
+  /// No description provided for @driverEarningsWeeklyChartTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Earnings — last 7 days'**
+  String get driverEarningsWeeklyChartTitle;
+
+  /// No description provided for @driverEarningsCsvHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Date,Type,Status,Job ID,Driver Earnings,App Fee'**
+  String get driverEarningsCsvHeader;
+
+  /// No description provided for @driverEarningsCsvShareSubject.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver earnings report'**
+  String get driverEarningsCsvShareSubject;
+
+  /// No description provided for @driverEarningsExportError.
+  ///
+  /// In en, this message translates to:
+  /// **'Export failed: {error}'**
+  String driverEarningsExportError(Object error);
+
+  /// No description provided for @driverWalletBucketTopup.
+  ///
+  /// In en, this message translates to:
+  /// **'Self top-up'**
+  String get driverWalletBucketTopup;
+
+  /// No description provided for @driverWalletBucketTopupHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Min withdraw ฿100'**
+  String get driverWalletBucketTopupHint;
+
+  /// No description provided for @driverWalletBucketSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'From system'**
+  String get driverWalletBucketSystem;
+
+  /// No description provided for @driverWalletBucketSystemHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Rewards/compensation · Min withdraw ฿200'**
+  String get driverWalletBucketSystemHint;
+
+  /// No description provided for @driverWalletTypeCouponCompensation.
+  ///
+  /// In en, this message translates to:
+  /// **'Coupon compensation'**
+  String get driverWalletTypeCouponCompensation;
+
+  /// No description provided for @driverWalletTypeJobPayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Order payment (customer paid via Wallet)'**
+  String get driverWalletTypeJobPayout;
+
+  /// No description provided for @driverWalletTypeWithdrawalPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal (pending transfer)'**
+  String get driverWalletTypeWithdrawalPending;
+
+  /// No description provided for @driverWalletTypeRefund.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund'**
+  String get driverWalletTypeRefund;
+
+  /// No description provided for @driverPerfTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stats & Rating'**
+  String get driverPerfTitle;
+
+  /// No description provided for @driverPerfBadgeLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Level {level}'**
+  String driverPerfBadgeLevel(Object level);
+
+  /// No description provided for @driverPerfAvgRating.
+  ///
+  /// In en, this message translates to:
+  /// **'Average customer rating'**
+  String get driverPerfAvgRating;
+
+  /// No description provided for @driverPerfOutOfFive.
+  ///
+  /// In en, this message translates to:
+  /// **'out of 5.0'**
+  String get driverPerfOutOfFive;
+
+  /// No description provided for @driverPerfMaxLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Highest level reached'**
+  String get driverPerfMaxLevel;
+
+  /// No description provided for @driverPerfBadgeProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress to next level {current} / {target}'**
+  String driverPerfBadgeProgress(Object current, Object target);
+
+  /// No description provided for @driverPerfMetrics.
+  ///
+  /// In en, this message translates to:
+  /// **'Key metrics'**
+  String get driverPerfMetrics;
+
+  /// No description provided for @driverPerfAcceptanceRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Job acceptance rate'**
+  String get driverPerfAcceptanceRate;
+
+  /// No description provided for @driverPerfTarget90.
+  ///
+  /// In en, this message translates to:
+  /// **'Target 90%'**
+  String get driverPerfTarget90;
+
+  /// No description provided for @driverPerfCompletionRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery success rate'**
+  String get driverPerfCompletionRate;
+
+  /// No description provided for @driverPerfCompletionRateHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Jobs delivered in full'**
+  String get driverPerfCompletionRateHint;
+
+  /// No description provided for @driverPerfTotalCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Total completed jobs'**
+  String get driverPerfTotalCompleted;
+
+  /// No description provided for @driverPerfTotalCompletedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Since you started'**
+  String get driverPerfTotalCompletedHint;
+
+  /// No description provided for @driverPerfJobsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} jobs'**
+  String driverPerfJobsCount(Object count);
+
+  /// No description provided for @driverPerfLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Level'**
+  String get driverPerfLevel;
+
+  /// No description provided for @driverShiftStartError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to start shift: {error}'**
+  String driverShiftStartError(Object error);
+
+  /// No description provided for @driverShiftEndError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to end shift: {error}'**
+  String driverShiftEndError(Object error);
+
+  /// No description provided for @driverShiftTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Work Shift'**
+  String get driverShiftTitle;
+
+  /// No description provided for @driverShiftWeeklyHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 7 days'**
+  String get driverShiftWeeklyHours;
+
+  /// No description provided for @driverShiftHoursMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h {minutes}m'**
+  String driverShiftHoursMinutes(Object hours, Object minutes);
+
+  /// No description provided for @driverShiftWeeklyShifts.
+  ///
+  /// In en, this message translates to:
+  /// **'Shifts (7d)'**
+  String get driverShiftWeeklyShifts;
+
+  /// No description provided for @driverShiftWeeklyJobs.
+  ///
+  /// In en, this message translates to:
+  /// **'Jobs (7d)'**
+  String get driverShiftWeeklyJobs;
+
+  /// No description provided for @driverShiftActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Current shift'**
+  String get driverShiftActive;
+
+  /// No description provided for @driverShiftNotStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'No shift started'**
+  String get driverShiftNotStarted;
+
+  /// No description provided for @driverShiftActiveBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get driverShiftActiveBadge;
+
+  /// No description provided for @driverShiftStartedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Started at {time}'**
+  String driverShiftStartedAt(Object time);
+
+  /// No description provided for @driverShiftEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'End shift'**
+  String get driverShiftEnd;
+
+  /// No description provided for @driverShiftStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start shift'**
+  String get driverShiftStart;
+
+  /// No description provided for @driverShiftHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shift history (7 days)'**
+  String get driverShiftHistoryTitle;
+
+  /// No description provided for @driverShiftHistoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No shift history yet'**
+  String get driverShiftHistoryEmpty;
+
+  /// No description provided for @driverShiftCardSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration {duration} · {jobs} jobs'**
+  String driverShiftCardSummary(Object duration, Object jobs);
+
+  /// No description provided for @withdrawMinBucketError.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum withdrawal ฿{amount} for {bucket}'**
+  String withdrawMinBucketError(Object amount, Object bucket);
+
+  /// No description provided for @withdrawBucketTopup.
+  ///
+  /// In en, this message translates to:
+  /// **'Self top-up funds'**
+  String get withdrawBucketTopup;
+
+  /// No description provided for @withdrawBucketSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System funds'**
+  String get withdrawBucketSystem;
+
+  /// No description provided for @withdrawAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawable ฿{amount}'**
+  String withdrawAvailable(Object amount);
+
+  /// No description provided for @withdrawBahtPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'฿'**
+  String get withdrawBahtPrefix;
+
+  /// No description provided for @withdrawMinMaxHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Min ฿{min} · Available ฿{available}'**
+  String withdrawMinMaxHelper(Object min, Object available);
+
+  /// No description provided for @withdrawMinAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum ฿{amount}'**
+  String withdrawMinAmount(Object amount);
+
+  /// No description provided for @withdrawBucketInsufficient.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough in this bucket (฿{amount})'**
+  String withdrawBucketInsufficient(Object amount);
+
+  /// No description provided for @driverDashJobLaundry.
+  ///
+  /// In en, this message translates to:
+  /// **'Laundry'**
+  String get driverDashJobLaundry;
+
+  /// No description provided for @driverDashQuickPerf.
+  ///
+  /// In en, this message translates to:
+  /// **'Performance'**
+  String get driverDashQuickPerf;
+
+  /// No description provided for @driverDashQuickShift.
+  ///
+  /// In en, this message translates to:
+  /// **'Shift'**
+  String get driverDashQuickShift;
+
+  /// No description provided for @driverDashServiceTypeSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Job type settings'**
+  String get driverDashServiceTypeSettings;
+
+  /// No description provided for @driverDashEarnBreakdownFood.
+  ///
+  /// In en, this message translates to:
+  /// **'Food'**
+  String get driverDashEarnBreakdownFood;
+
+  /// No description provided for @driverDashEarnBreakdownRide.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride'**
+  String get driverDashEarnBreakdownRide;
+
+  /// No description provided for @driverDashEarnBreakdownParcel.
+  ///
+  /// In en, this message translates to:
+  /// **'Parcel'**
+  String get driverDashEarnBreakdownParcel;
+
+  /// No description provided for @driverDashEarnBreakdownEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'{type} ฿{amount}'**
+  String driverDashEarnBreakdownEntry(Object type, Object amount);
+
+  /// No description provided for @driverDashNoJobsInRadius.
+  ///
+  /// In en, this message translates to:
+  /// **'No jobs within {km} km'**
+  String driverDashNoJobsInRadius(Object km);
+
+  /// No description provided for @driverDashPullToRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull down to refresh'**
+  String get driverDashPullToRefresh;
+
+  /// No description provided for @driverDashScheduledJobs.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled jobs'**
+  String get driverDashScheduledJobs;
+
+  /// No description provided for @driverDashScheduledJobsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No scheduled jobs'**
+  String get driverDashScheduledJobsEmpty;
+
+  /// No description provided for @driverDashMonthJan.
+  ///
+  /// In en, this message translates to:
+  /// **'Jan'**
+  String get driverDashMonthJan;
+
+  /// No description provided for @driverDashMonthFeb.
+  ///
+  /// In en, this message translates to:
+  /// **'Feb'**
+  String get driverDashMonthFeb;
+
+  /// No description provided for @driverDashMonthMar.
+  ///
+  /// In en, this message translates to:
+  /// **'Mar'**
+  String get driverDashMonthMar;
+
+  /// No description provided for @driverDashMonthApr.
+  ///
+  /// In en, this message translates to:
+  /// **'Apr'**
+  String get driverDashMonthApr;
+
+  /// No description provided for @driverDashMonthMay.
+  ///
+  /// In en, this message translates to:
+  /// **'May'**
+  String get driverDashMonthMay;
+
+  /// No description provided for @driverDashMonthJun.
+  ///
+  /// In en, this message translates to:
+  /// **'Jun'**
+  String get driverDashMonthJun;
+
+  /// No description provided for @driverDashMonthJul.
+  ///
+  /// In en, this message translates to:
+  /// **'Jul'**
+  String get driverDashMonthJul;
+
+  /// No description provided for @driverDashMonthAug.
+  ///
+  /// In en, this message translates to:
+  /// **'Aug'**
+  String get driverDashMonthAug;
+
+  /// No description provided for @driverDashMonthSep.
+  ///
+  /// In en, this message translates to:
+  /// **'Sep'**
+  String get driverDashMonthSep;
+
+  /// No description provided for @driverDashMonthOct.
+  ///
+  /// In en, this message translates to:
+  /// **'Oct'**
+  String get driverDashMonthOct;
+
+  /// No description provided for @driverDashMonthNov.
+  ///
+  /// In en, this message translates to:
+  /// **'Nov'**
+  String get driverDashMonthNov;
+
+  /// No description provided for @driverDashMonthDec.
+  ///
+  /// In en, this message translates to:
+  /// **'Dec'**
+  String get driverDashMonthDec;
+
+  /// No description provided for @driverDashScheduledTime.
+  ///
+  /// In en, this message translates to:
+  /// **'{day} {month} {year} {hour}:{minute}'**
+  String driverDashScheduledTime(Object day, Object month, Object year, Object hour, Object minute);
+
+  /// No description provided for @driverNavLaundryArrivedPickup.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrive at laundry pickup'**
+  String get driverNavLaundryArrivedPickup;
+
+  /// No description provided for @driverNavLaundryPhotoPickup.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photo & pick up'**
+  String get driverNavLaundryPhotoPickup;
+
+  /// No description provided for @driverNavLaundryComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete laundry job'**
+  String get driverNavLaundryComplete;
+
+  /// No description provided for @driverNavLaundryConfirmError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to confirm laundry pickup: {error}'**
+  String driverNavLaundryConfirmError(Object error);
+
+  /// No description provided for @driverNavLaundryEvidenceSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup evidence saved'**
+  String get driverNavLaundryEvidenceSaved;
+
+  /// No description provided for @driverNavBahtPlus.
+  ///
+  /// In en, this message translates to:
+  /// **'+฿{amount}'**
+  String driverNavBahtPlus(Object amount);
+
+  /// No description provided for @driverNavStepAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted'**
+  String get driverNavStepAccept;
+
+  /// No description provided for @driverNavStepArriveStore.
+  ///
+  /// In en, this message translates to:
+  /// **'At store'**
+  String get driverNavStepArriveStore;
+
+  /// No description provided for @driverNavStepPickupFood.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick up food'**
+  String get driverNavStepPickupFood;
+
+  /// No description provided for @driverNavStepDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered'**
+  String get driverNavStepDelivered;
+
+  /// No description provided for @driverNavStepArrivePickup.
+  ///
+  /// In en, this message translates to:
+  /// **'At pickup'**
+  String get driverNavStepArrivePickup;
+
+  /// No description provided for @driverNavStepDelivering.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivering'**
+  String get driverNavStepDelivering;
+
+  /// No description provided for @driverNavStepDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get driverNavStepDone;
+
+  /// No description provided for @driverNavEtaMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String driverNavEtaMinutes(Object minutes);
+
+  /// No description provided for @topupBeamFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment failed. Please generate a new QR code.'**
+  String get topupBeamFailed;
+
+  /// No description provided for @topupBeamExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'QR expired — if you already paid, the system will top up automatically. Do not pay again.'**
+  String get topupBeamExpired;
+
+  /// No description provided for @topupBeamManualReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment received. Waiting for admin to verify the amount.'**
+  String get topupBeamManualReview;
+
+  /// No description provided for @topupBeamNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No payment found yet.'**
+  String get topupBeamNotFound;
+
+  /// No description provided for @topupBeamQrExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'QR code has expired.'**
+  String get topupBeamQrExpired;
+
+  /// No description provided for @topupBeamExpiresIn.
+  ///
+  /// In en, this message translates to:
+  /// **'QR expires in {time}'**
+  String topupBeamExpiresIn(Object time);
+
+  /// No description provided for @topupBeamScanPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan the PromptPay QR to pay'**
+  String get topupBeamScanPrompt;
+
+  /// No description provided for @topupBeamHowItWorks.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay via Beam — money goes to your wallet automatically, no slip needed'**
+  String get topupBeamHowItWorks;
+
+  /// No description provided for @topupBeamPlayground.
+  ///
+  /// In en, this message translates to:
+  /// **'Test mode (Playground)'**
+  String get topupBeamPlayground;
+
+  /// No description provided for @topupBeamQrMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'QR image not found'**
+  String get topupBeamQrMissing;
+
+  /// No description provided for @topupBeamWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for payment...'**
+  String get topupBeamWaiting;
+
+  /// No description provided for @topupBeamCheckStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Check status'**
+  String get topupBeamCheckStatus;
+
+  /// No description provided for @topupBeamNewQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate new QR'**
+  String get topupBeamNewQr;
+
+  /// No description provided for @topupSlipAttachFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Please attach the slip before confirming the top-up'**
+  String get topupSlipAttachFirst;
+
+  /// No description provided for @topupSlipVerifyFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Slip verification failed. Please choose a new slip, or contact admin if you already transferred.'**
+  String get topupSlipVerifyFailed;
+
+  /// No description provided for @topupSlipReasonFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'This slip did not pass automatic verification. Please use a real bank transfer slip and try again.'**
+  String get topupSlipReasonFailed;
+
+  /// No description provided for @topupSlipReasonAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'The slip amount does not match the top-up amount. Please check and try again.'**
+  String get topupSlipReasonAmount;
+
+  /// No description provided for @topupSlipReasonReceiver.
+  ///
+  /// In en, this message translates to:
+  /// **'The receiving account on the slip does not match the system\'s destination account.'**
+  String get topupSlipReasonReceiver;
+
+  /// No description provided for @topupSlipReasonDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'This slip has already been used. Please use a new slip.'**
+  String get topupSlipReasonDuplicate;
+
+  /// No description provided for @topupSlipReasonRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many verification attempts. Please wait a moment and try again.'**
+  String get topupSlipReasonRate;
+
+  /// No description provided for @topupSlipReasonInvalidAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid top-up amount. Please generate a new QR.'**
+  String get topupSlipReasonInvalidAmount;
+
+  /// No description provided for @topupSlipReasonInvalidImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid slip file. Please choose a new image file.'**
+  String get topupSlipReasonInvalidImage;
+
+  /// No description provided for @topupSlipReasonFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Slip verification did not pass. Please check the slip and try again.'**
+  String get topupSlipReasonFallback;
+
+  /// No description provided for @topupSlipHumanFraud.
+  ///
+  /// In en, this message translates to:
+  /// **'This slip did not pass verification. Please use a genuine bank transfer slip with the correct amount and destination account.'**
+  String get topupSlipHumanFraud;
+
+  /// No description provided for @topupWithdrawRequestError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not submit withdrawal request (min ฿100 and complete bank details required)'**
+  String get topupWithdrawRequestError;
+
+  /// No description provided for @topupSlipStepHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer via the QR, then attach the slip — the system will verify and top up automatically'**
+  String get topupSlipStepHint;
+
+  /// No description provided for @topupSlipAutoDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Slip verified and money added to your wallet'**
+  String get topupSlipAutoDone;
+
+  /// No description provided for @topupSlipTopUpAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Top up again'**
+  String get topupSlipTopUpAgain;
+
+  /// No description provided for @topupSlipSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Slip selected'**
+  String get topupSlipSelected;
+
+  /// No description provided for @topupSlipAttachSlip.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach transfer slip'**
+  String get topupSlipAttachSlip;
+
+  /// No description provided for @topupSlipReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready for verification'**
+  String get topupSlipReady;
+
+  /// No description provided for @topupSlipPickHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Take or pick a slip photo after transferring via the QR'**
+  String get topupSlipPickHint;
+
+  /// No description provided for @topupSlipVerifyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The system checks the amount and blocks duplicate slips before topping up'**
+  String get topupSlipVerifyHint;
+
+  /// No description provided for @topupSlipChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change slip'**
+  String get topupSlipChange;
+
+  /// No description provided for @topupSlipChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose slip photo'**
+  String get topupSlipChoose;
+
+  /// No description provided for @topupSlipRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove slip'**
+  String get topupSlipRemove;
+
+  /// No description provided for @topupSlipChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Verifying slip...'**
+  String get topupSlipChecking;
+
+  /// No description provided for @topupSlipCheckAndTopUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify slip & top up ฿{amount}'**
+  String topupSlipCheckAndTopUp(Object amount);
+
+  /// No description provided for @topupStatusAwaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting payment'**
+  String get topupStatusAwaiting;
+
+  /// No description provided for @topupStatusQrExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'QR expired'**
+  String get topupStatusQrExpired;
+
+  /// No description provided for @topupStatusFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment failed'**
+  String get topupStatusFailed;
+
+  /// No description provided for @driverNavProxLaundryPickup.
+  ///
+  /// In en, this message translates to:
+  /// **'Laundry pickup point'**
+  String get driverNavProxLaundryPickup;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

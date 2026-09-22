@@ -1,5 +1,7 @@
 import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
+
+import '../../theme/jdc_colors.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:async';
@@ -237,7 +239,7 @@ class _AuthGateState extends State<AuthGate> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: const Color(0xFF4CAF50),
+        backgroundColor: JdcColors.of(context).successFill,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

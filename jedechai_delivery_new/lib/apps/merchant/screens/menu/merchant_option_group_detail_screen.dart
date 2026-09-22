@@ -1,9 +1,9 @@
 ﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
+import '../../../../theme/jdc_colors.dart';
 import '../../../../common/services/menu_option_service.dart';
 import '../../../../common/models/menu_option.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../theme/app_theme.dart';
 
 /// Merchant Option Group Detail Screen
 /// 
@@ -116,7 +116,7 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
             content: Text(widget.group == null 
                 ? AppLocalizations.of(context)!.optGroupCreateSuccess
                 : AppLocalizations.of(context)!.optGroupUpdateSuccess),
-            backgroundColor: Colors.green,
+            backgroundColor: JdcColors.of(context).successFill,
           ),
         );
         Navigator.of(context).pop(true);
@@ -126,7 +126,7 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('❌ $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: JdcColors.of(context).danger,
           ),
         );
       }
@@ -164,7 +164,7 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context)!.optGroupOptionNameRequired),
-          backgroundColor: Colors.red,
+          backgroundColor: JdcColors.of(context).danger,
         ),
       );
       return;
@@ -175,7 +175,7 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context)!.optGroupOptionPriceNegative),
-          backgroundColor: Colors.red,
+          backgroundColor: JdcColors.of(context).danger,
         ),
       );
       return;
@@ -219,8 +219,8 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
     return Scaffold(
       appBar: AppBar(
         title: Text(isEditing ? AppLocalizations.of(context)!.optGroupEditTitle : AppLocalizations.of(context)!.optGroupCreateTitle),
-        backgroundColor: AppTheme.accentOrange,
-        foregroundColor: Colors.white,
+        backgroundColor: JdcColors.of(context).cta,
+        foregroundColor: JdcColors.of(context).onCta,
         elevation: 0,
         actions: [
           if (isEditing)
@@ -260,10 +260,10 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: JdcColors.of(context).surface,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: JdcColors.of(context).shadowCard.first.color,
                     blurRadius: 10,
                     offset: const Offset(0, -2),
                   ),
@@ -275,20 +275,20 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
                   child: ElevatedButton(
                     onPressed: _isSaving ? null : _saveGroup,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.accentOrange,
-                      foregroundColor: Colors.white,
+                      backgroundColor: JdcColors.of(context).cta,
+                      foregroundColor: JdcColors.of(context).onCta,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     child: _isSaving
-                        ? const SizedBox(
+                        ? SizedBox(
                             height: 20,
                             width: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(JdcColors.of(context).onCta),
                             ),
                           )
                         : Text(
@@ -391,7 +391,7 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
           AppLocalizations.of(context)!.optGroupSelectionHint,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.grey[600],
+            color: JdcColors.of(context).muted,
           ),
         ),
       ],
@@ -447,8 +447,8 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
             ElevatedButton(
               onPressed: _addOption,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accentOrange,
-                foregroundColor: Colors.white,
+                backgroundColor: JdcColors.of(context).cta,
+                foregroundColor: JdcColors.of(context).onCta,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               ),
               child: const Icon(Icons.add),
@@ -464,7 +464,7 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
       return Container(
         padding: const EdgeInsets.all(32),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade300),
+          border: Border.all(color: JdcColors.of(context).line),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -472,14 +472,14 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
             Icon(
               Icons.list_alt,
               size: 48,
-              color: Colors.grey[400],
+              color: JdcColors.of(context).trackEmpty,
             ),
             const SizedBox(height: 16),
             Text(
               AppLocalizations.of(context)!.optGroupNoOptions,
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.grey[600],
+                color: JdcColors.of(context).muted,
               ),
             ),
             const SizedBox(height: 8),
@@ -487,7 +487,7 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
               AppLocalizations.of(context)!.optGroupNoOptionsHint,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[500],
+                color: JdcColors.of(context).dim,
               ),
             ),
           ],
@@ -512,7 +512,7 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
               AppLocalizations.of(context)!.optGroupItemCount(_options.length.toString()),
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[600],
+                color: JdcColors.of(context).muted,
               ),
             ),
           ],
@@ -546,7 +546,7 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
             Text(
               AppLocalizations.of(context)!.optLibDeleteNote((widget.group!.options?.length ?? 0).toString()),
               style: TextStyle(
-                color: Colors.orange.shade700,
+                color: JdcColors.of(context).brandOnSoft,
                 fontSize: 12,
               ),
             ),
@@ -560,8 +560,8 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+              backgroundColor: JdcColors.of(context).danger,
+              foregroundColor: JdcColors.of(context).onCta,
             ),
             child: Text(AppLocalizations.of(context)!.optLibDeleteBtn),
           ),
@@ -577,7 +577,7 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context)!.optLibDeleteSuccess(widget.group!.name)),
-              backgroundColor: Colors.green,
+              backgroundColor: JdcColors.of(context).successFill,
             ),
           );
           Navigator.of(context).pop(true);
@@ -587,7 +587,7 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context)!.optLibDeleteFailed(e.toString())),
-              backgroundColor: Colors.red,
+              backgroundColor: JdcColors.of(context).danger,
             ),
           );
         }
@@ -623,12 +623,12 @@ class OptionCard extends StatelessWidget {
                 width: 24,
                 height: 24,
                 decoration: BoxDecoration(
-                  color: option.isAvailable ? Colors.green : Colors.grey,
+                  color: option.isAvailable ? JdcColors.of(context).successInk : JdcColors.of(context).muted,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   option.isAvailable ? Icons.check : Icons.close,
-                  color: Colors.white,
+                  color: JdcColors.of(context).surface,
                   size: 16,
                 ),
               ),
@@ -645,7 +645,7 @@ class OptionCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: option.isAvailable ? Colors.black : Colors.grey,
+                      color: option.isAvailable ? JdcColors.of(context).text : JdcColors.of(context).muted,
                     ),
                   ),
                   if (option.price > 0)
@@ -653,7 +653,7 @@ class OptionCard extends StatelessWidget {
                       '+฿${option.price}',
                       style: TextStyle(
                         fontSize: 14,
-                        color: AppTheme.accentOrange,
+                        color: JdcColors.of(context).cta,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -663,7 +663,7 @@ class OptionCard extends StatelessWidget {
             
             // Remove Button
             IconButton(
-              icon: const Icon(Icons.remove_circle, color: Colors.red),
+              icon: Icon(Icons.remove_circle, color: JdcColors.of(context).dangerInk),
               onPressed: onRemove,
             ),
           ],

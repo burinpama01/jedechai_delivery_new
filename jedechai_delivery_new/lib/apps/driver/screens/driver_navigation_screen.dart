@@ -27,7 +27,8 @@ import '../../../common/models/booking.dart';
 import '../../../common/utils/booking_status_policy.dart';
 import '../../../common/utils/driver_amount_calculator.dart';
 import '../../../common/utils/order_code_formatter.dart';
-import '../../../theme/app_theme.dart';
+import '../../../theme/jdc_colors.dart';
+import '../../../theme/jdc_layout.dart';
 import '../../../common/config/env_config.dart';
 import '../../customer/screens/services/support_tickets_screen.dart';
 import 'driver_main_screen.dart';
@@ -394,7 +395,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           _isLoading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+          SnackBar(content: Text(e.toString()), backgroundColor: JdcColors.of(context).danger),
         );
       }
     }
@@ -419,7 +420,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
               SnackBar(
                 content: Text(
                     AppLocalizations.of(context)!.driverNavLocationPermSnack),
-                backgroundColor: Theme.of(context).colorScheme.tertiary,
+                backgroundColor: JdcColors.of(context).panel,
                 duration: const Duration(seconds: 3),
               ),
             );
@@ -436,7 +437,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
             builder: (ctx) => AlertDialog(
               icon: Icon(
                 Icons.location_off,
-                color: Theme.of(context).colorScheme.error,
+                color: JdcColors.of(context).danger,
                 size: 48,
               ),
               title: Text(
@@ -816,18 +817,20 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) {
-        final colorScheme = Theme.of(context).colorScheme;
+        final jdc = JdcColors.of(context);
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
               title: Row(
                 children: [
                   Icon(Icons.cancel_outlined,
-                      color: colorScheme.error, size: 24),
+                      color: jdc.danger, size: 24),
                   const SizedBox(width: 8),
                   Text(l10n.driverNavCancelTitle,
                       style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold)),
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          fontVariations: [FontVariation('wght', 700)])),
                 ],
               ),
               content: Column(
@@ -837,7 +840,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                   Text(
                     l10n.driverNavCancelSelectReason,
                     style: TextStyle(
-                        fontSize: 14, color: colorScheme.onSurfaceVariant),
+                        fontSize: 14, color: jdc.muted),
                   ),
                   const SizedBox(height: 12),
                   ...reasons.map((reason) => RadioListTile<String>(
@@ -846,7 +849,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                         value: reason,
                         groupValue: selectedReason,
                         dense: true,
-                        activeColor: colorScheme.error,
+                        activeColor: jdc.danger,
                         onChanged: (val) =>
                             setDialogState(() => selectedReason = val),
                       )),
@@ -854,22 +857,21 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: colorScheme.errorContainer.withValues(alpha: 0.6),
+                      color: jdc.dangerSoft,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                          color: colorScheme.error.withValues(alpha: 0.4)),
+                      border: Border.all(color: jdc.dangerLine),
                     ),
                     child: Row(
                       children: [
                         Icon(Icons.warning_amber_rounded,
-                            size: 18, color: colorScheme.error),
+                            size: 18, color: jdc.danger),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             l10n.driverNavCancelWarning,
                             style: TextStyle(
                               fontSize: 12,
-                              color: colorScheme.onErrorContainer,
+                              color: jdc.dangerInk,
                             ),
                           ),
                         ),
@@ -888,8 +890,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                       ? null
                       : () => Navigator.of(ctx).pop(true),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: colorScheme.error,
-                    foregroundColor: colorScheme.onError,
+                    backgroundColor: jdc.danger,
+                    foregroundColor: jdc.knob,
                   ),
                   child: Text(l10n.driverNavCancelConfirm),
                 ),
@@ -1205,6 +1207,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         '   └─ From: ${_currentPosition!.latitude}, ${_currentPosition!.longitude}');
     debugLog(
         '   └─ To: ${_pickupLocation!.latitude}, ${_pickupLocation!.longitude}');
+    final jdc = JdcColors.of(context);
 
     try {
       final url = Uri.parse(
@@ -1295,7 +1298,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
             // Add polyline
             _polylines.add(Polyline(
               polylineId: const PolylineId('route_to_pickup'),
-              color: AppTheme.accentBlue,
+              color: jdc.route,
               width: 5,
               points: points
                   .map((point) => LatLng(point.latitude, point.longitude))
@@ -1364,6 +1367,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     if (originLat == null || originLng == null) return;
 
     debugLog('🗺️ Drawing route to destination from driver position');
+    final jdc = JdcColors.of(context);
 
     try {
       final url = Uri.parse(
@@ -1433,7 +1437,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           // Add polyline
           _polylines.add(Polyline(
             polylineId: const PolylineId('route_to_destination'),
-            color: AppTheme.accentBlue,
+            color: jdc.route,
             width: 5,
             points: points
                 .map((point) => LatLng(point.latitude, point.longitude))
@@ -1579,6 +1583,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
     final origin =
         LatLng(_currentPosition!.latitude, _currentPosition!.longitude);
+    final jdc = JdcColors.of(context);
 
     try {
       final url = Uri.parse(
@@ -1620,7 +1625,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
               _polylines.add(
                 Polyline(
                   polylineId: const PolylineId('route'),
-                  color: AppTheme.accentBlue,
+                  color: jdc.route,
                   width: 5,
                   points: polylineCoordinates,
                 ),
@@ -1648,13 +1653,14 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   void _drawStraightLine(LatLng origin, LatLng destination) {
     if (!mounted) return;
+    final jdc = JdcColors.of(context);
     final points = [origin, destination];
     setState(() {
       _polylines.clear();
       _polylines.add(
         Polyline(
           polylineId: const PolylineId('route_fallback'),
-          color: AppTheme.accentBlue.withValues(alpha: 0.75),
+          color: jdc.route.withValues(alpha: 0.75),
           width: 4,
           patterns: [PatternItem.dash(24), PatternItem.gap(12)],
           points: points,
@@ -1940,11 +1946,11 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       switch (status) {
         case 'accepted':
         case 'driver_accepted':
-          return 'ถึงจุดรับผ้า';
+          return l10n.driverNavLaundryArrivedPickup;
         case 'arrived':
-          return 'ถ่ายรูปและรับผ้า';
+          return l10n.driverNavLaundryPhotoPickup;
         case 'in_transit':
-          return 'ส่งงานซักผ้าให้เสร็จ';
+          return l10n.driverNavLaundryComplete;
         default:
           return l10n.driverNavUpdateStatus;
       }
@@ -1978,24 +1984,24 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   // ignore: unused_element
   Color _getActionButtonColor() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     switch (_booking?.status) {
       case 'accepted': // Ride - driver accepted, going to pickup
-        return AppTheme.accentBlue;
+        return jdc.cta;
       case 'driver_accepted': // Food - going to merchant
-        return colorScheme.tertiary;
+        return jdc.cta;
       case 'arrived_at_merchant': // Food - at merchant, waiting for food
-        return colorScheme.outline; // Disabled state
+        return jdc.offTrack; // Disabled state
       case 'arrived': // Ride - arrived at pickup
-        return colorScheme.tertiary;
+        return jdc.cta;
       case 'ready_for_pickup': // Ride - ready to pickup customer
-        return colorScheme.primary;
+        return jdc.cta;
       case 'picking_up_order': // Food - picked up order
-        return colorScheme.secondary;
+        return jdc.cta;
       case 'in_transit':
-        return colorScheme.error;
+        return jdc.cta;
       default:
-        return colorScheme.outline;
+        return jdc.offTrack;
     }
   }
 
@@ -2133,7 +2139,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       );
       if (result['success'] != true) {
         _showErrorSnackBar(
-          'ยืนยันรับผ้าไม่สำเร็จ: ${result['error'] ?? 'unknown'}',
+          AppLocalizations.of(context)!.driverNavLaundryConfirmError(
+              result['error']?.toString() ?? 'unknown'),
         );
         return;
       }
@@ -2148,11 +2155,11 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         await _notifyCustomerStatusUpdate(rows.first, 'in_transit');
       }
 
-      _showSuccessSnackBar('บันทึกหลักฐานรับผ้าแล้ว');
+      _showSuccessSnackBar(AppLocalizations.of(context)!.driverNavLaundryEvidenceSaved);
       _launchGoogleMapsNavigation();
     } catch (e) {
       debugLog('❌ Laundry pickup evidence error: $e');
-      _showErrorSnackBar('ยืนยันรับผ้าไม่สำเร็จ: $e');
+      _showErrorSnackBar(AppLocalizations.of(context)!.driverNavLaundryConfirmError(e.toString()));
     } finally {
       if (mounted) setState(() => _isUpdatingStatus = false);
     }
@@ -2224,12 +2231,12 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           (status == 'accepted' || status == 'driver_accepted')) {
         targetLat = _booking!.originLat;
         targetLng = _booking!.originLng;
-        locationName = 'จุดรับผ้า';
+        locationName = l10n.driverNavProxLaundryPickup;
         debugLog('📍 Target: Laundry pickup (${targetLat}, ${targetLng})');
       } else if (serviceType == 'laundry' && status == 'arrived') {
         targetLat = _booking!.originLat;
         targetLng = _booking!.originLng;
-        locationName = 'จุดรับผ้า';
+        locationName = l10n.driverNavProxLaundryPickup;
         debugLog('📍 Target: Laundry pickup evidence (${targetLat}, ${targetLng})');
       } else {
         debugLog('⚠️ Unexpected service type or status for proximity check');
@@ -2346,7 +2353,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           .eq('booking_id', _booking!.id);
 
       if (!mounted) return;
-      final colorScheme = Theme.of(context).colorScheme;
+      final jdc = JdcColors.of(context);
       final l10n = AppLocalizations.of(context)!;
 
       final orderItems = List<Map<String, dynamic>>.from(items);
@@ -2355,11 +2362,11 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         context: context,
         builder: (ctx) => AlertDialog(
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(JdcRadius.card)),
           title: Row(
             children: [
               Icon(Icons.restaurant_menu,
-                  color: colorScheme.tertiary, size: 28),
+                  color: jdc.cta, size: 28),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(l10n.driverNavOrderItemsTitle,
@@ -2409,12 +2416,11 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
                         return Container(
                           margin: const EdgeInsets.only(bottom: 10),
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(JdcSpacing.md),
                           decoration: BoxDecoration(
-                            color: colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(12),
-                            border:
-                                Border.all(color: colorScheme.outlineVariant),
+                            color: jdc.paper,
+                            borderRadius: BorderRadius.circular(JdcRadius.small),
+                            border: Border.all(color: jdc.line),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -2425,26 +2431,35 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: colorScheme.tertiaryContainer,
+                                      color: jdc.brandSoft,
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text('x$qty',
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold,
-                                            color: colorScheme.tertiary,
-                                            fontSize: 15)),
+                                            color: jdc.brandOnSoft,
+                                            fontSize: 15,
+                                            fontVariations: const [
+                                              FontVariation('wght', 700)
+                                            ])),
                                   ),
                                   const SizedBox(width: 10),
                                   Expanded(
                                       child: Text(name,
                                           style: const TextStyle(
                                               fontSize: 16,
-                                              fontWeight: FontWeight.w600))),
-                                  Text('฿${(price * qty).toStringAsFixed(0)}',
+                                              fontWeight: FontWeight.w600,
+                                              fontVariations: [
+                                                FontVariation('wght', 600)
+                                              ]))),
+                                  Text(l10n.driverEarningsBaht((price * qty).toStringAsFixed(0)),
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold,
-                                          color: colorScheme.tertiary,
-                                          fontSize: 16)),
+                                          color: jdc.cta,
+                                          fontSize: 16,
+                                          fontVariations: const [
+                                            FontVariation('wght', 700)
+                                          ])),
                                 ],
                               ),
                               if (parsedOptions.isNotEmpty) ...[
@@ -2453,8 +2468,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                   width: double.infinity,
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: colorScheme.tertiaryContainer
-                                        .withValues(alpha: 0.45),
+                                    color: jdc.sunken,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Column(
@@ -2465,7 +2479,10 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                           style: TextStyle(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w600,
-                                              color: colorScheme.tertiary)),
+                                              color: jdc.muted,
+                                              fontVariations: const [
+                                                FontVariation('wght', 600)
+                                              ])),
                                       const SizedBox(height: 4),
                                       ...parsedOptions.map((opt) {
                                         final optName =
@@ -2480,24 +2497,26 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                             children: [
                                               Text('  • ',
                                                   style: TextStyle(
-                                                      color:
-                                                          colorScheme.tertiary,
+                                                      color: jdc.dim,
                                                       fontSize: 14)),
                                               Expanded(
                                                   child: Text(optName,
                                                       style: TextStyle(
                                                           fontSize: 14,
-                                                          color: colorScheme
-                                                              .onSurface))),
+                                                          color:
+                                                              jdc.text))),
                                               if (optPrice > 0)
                                                 Text(
-                                                    '+฿${optPrice.toStringAsFixed(0)}',
+                                                    l10n.driverNavBahtPlus(optPrice.toStringAsFixed(0)),
                                                     style: TextStyle(
                                                         fontSize: 13,
-                                                        color: colorScheme
-                                                            .tertiary,
+                                                        color: jdc.link,
                                                         fontWeight:
-                                                            FontWeight.w500)),
+                                                            FontWeight.w500,
+                                                        fontVariations: const [
+                                                          FontVariation(
+                                                              'wght', 500)
+                                                        ])),
                                             ],
                                           ),
                                         );
@@ -2514,14 +2533,13 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                   children: [
                                     Icon(Icons.note_alt_outlined,
                                         size: 16,
-                                        color: colorScheme.onSurfaceVariant),
+                                        color: jdc.muted),
                                     const SizedBox(width: 4),
                                     Expanded(
                                         child: Text(specialInstructions,
                                             style: TextStyle(
                                                 fontSize: 13,
-                                                color: colorScheme
-                                                    .onSurfaceVariant,
+                                                color: jdc.muted,
                                                 fontStyle: FontStyle.italic))),
                                   ],
                                 ),
@@ -2539,15 +2557,17 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
               child: ElevatedButton(
                 onPressed: () => Navigator.of(ctx).pop(),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accentBlue,
-                  foregroundColor: colorScheme.onPrimary,
+                  backgroundColor: jdc.cta,
+                  foregroundColor: jdc.onCta,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(JdcRadius.small)),
                 ),
                 child: Text(AppLocalizations.of(context)!.driverNavClose,
                     style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold)),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        fontVariations: [FontVariation('wght', 700)])),
               ),
             ),
           ],
@@ -2563,11 +2583,22 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   Widget _buildStepProgressBar() {
     final status = _booking?.status ?? '';
     final serviceType = _booking?.serviceType ?? 'ride';
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     final steps = serviceType == 'food'
-        ? ['รับงาน', 'มาถึงร้าน', 'รับอาหาร', 'ส่งแล้ว']
-        : ['รับงาน', 'มาถึงจุดรับ', 'กำลังส่ง', 'เสร็จสิ้น'];
+        ? [
+            l10n.driverNavStepAccept,
+            l10n.driverNavStepArriveStore,
+            l10n.driverNavStepPickupFood,
+            l10n.driverNavStepDelivered
+          ]
+        : [
+            l10n.driverNavStepAccept,
+            l10n.driverNavStepArrivePickup,
+            l10n.driverNavStepDelivering,
+            l10n.driverNavStepDone
+          ];
 
     int currentStep = 0;
     if (['accepted', 'driver_accepted'].contains(status)) {
@@ -2589,7 +2620,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           return Expanded(
             child: Container(
               height: 2,
-              color: active ? AppTheme.accentBlue : colorScheme.outlineVariant,
+              color: active ? jdc.cta : jdc.trackEmpty,
             ),
           );
         } else {
@@ -2603,17 +2634,15 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                 width: 22,
                 height: 22,
                 decoration: BoxDecoration(
-                  color: active
-                      ? AppTheme.accentBlue
-                      : colorScheme.surfaceContainerHighest,
+                  color: active ? jdc.cta : jdc.trackEmpty,
                   shape: BoxShape.circle,
                   border: isCurrent
-                      ? Border.all(color: AppTheme.accentBlue, width: 2)
+                      ? Border.all(color: jdc.cta, width: 2)
                       : null,
                 ),
                 child: Icon(
                   stepIndex < currentStep ? Icons.check : Icons.circle,
-                  color: active ? Colors.white : colorScheme.outlineVariant,
+                  color: active ? jdc.knob : jdc.trackEmpty,
                   size: 10,
                 ),
               ),
@@ -2622,10 +2651,11 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                 steps[stepIndex],
                 style: TextStyle(
                   fontSize: 9,
-                  color: active
-                      ? AppTheme.accentBlue
-                      : colorScheme.onSurfaceVariant,
+                  color: active ? jdc.cta : jdc.muted,
                   fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                  fontVariations: [
+                    FontVariation('wght', isCurrent ? 700 : 400),
+                  ],
                 ),
               ),
             ],
@@ -2716,24 +2746,24 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   /// สีของปุ่ม action หลัก
   Color _getMainActionColor() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     final status = _booking?.status ?? 'unknown';
     switch (status) {
       case 'accepted':
       case 'driver_accepted':
-        return AppTheme.accentBlue;
+        return jdc.cta;
       case 'arrived_at_merchant':
-        return colorScheme.outline; // Food only: disabled waiting for merchant
+        return jdc.offTrack; // Food only: disabled waiting for merchant
       case 'arrived':
-        return colorScheme.tertiary; // Ride/parcel: start trip
+        return jdc.cta; // Ride/parcel: start trip
       case 'ready_for_pickup':
-        return colorScheme.secondary; // Food only: pick up order
+        return jdc.cta; // Food only: pick up order
       case 'picking_up_order':
-        return colorScheme.secondary;
+        return jdc.cta;
       case 'in_transit':
-        return colorScheme.error;
+        return jdc.cta;
       default:
-        return AppTheme.accentBlue;
+        return jdc.cta;
     }
   }
 
@@ -2818,18 +2848,19 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     final l10n = AppLocalizations.of(context)!;
     if (_isLoading || _booking == null) {
       return Scaffold(
+        backgroundColor: jdc.paper,
         appBar: AppBar(
           title: Text(l10n.driverNavLoading),
-          backgroundColor: AppTheme.accentBlue,
-          foregroundColor: colorScheme.onPrimary,
+          backgroundColor: jdc.panel,
+          foregroundColor: jdc.onPanel,
         ),
-        body: const Center(
+        body: Center(
           child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accentBlue),
+            color: jdc.cta,
           ),
         ),
       );
@@ -2858,30 +2889,36 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         }
       },
       child: Scaffold(
+        backgroundColor: jdc.paper,
         appBar: AppBar(
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(l10n.driverNavActiveJob,
                   style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w600)),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      fontVariations: [FontVariation('wght', 600)])),
               Text(OrderCodeFormatter.format(booking.id),
                   style: const TextStyle(
-                      fontSize: 11, fontWeight: FontWeight.w400)),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w400,
+                      fontVariations: [FontVariation('wght', 400)])),
             ],
           ),
-          backgroundColor: AppTheme.accentBlue,
-          foregroundColor: colorScheme.onPrimary,
+          backgroundColor: jdc.panel,
+          foregroundColor: jdc.onPanel,
           actions: [
             // ปุ่มโทรหาลูกค้า
             Container(
-              margin: const EdgeInsets.only(right: 12),
+              margin: const EdgeInsets.only(right: JdcSpacing.md),
               decoration: BoxDecoration(
-                color: colorScheme.onPrimary.withValues(alpha: 0.2),
+                color: jdc.panelSoft2,
                 shape: BoxShape.circle,
+                border: Border.all(color: jdc.panelLine),
               ),
               child: IconButton(
-                icon: const Icon(Icons.phone, size: 22),
+                icon: Icon(Icons.phone, size: 22, color: jdc.onPanel),
                 onPressed: _callCustomer,
                 tooltip: l10n.driverNavCallCustomer,
               ),
@@ -2956,9 +2993,9 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                     ),
                   ),
                   Positioned(
-                    left: 12,
+                    left: JdcSpacing.md,
                     right: 72,
-                    top: 12,
+                    top: JdcSpacing.md,
                     child: Row(
                       children: [
                         Expanded(
@@ -2966,26 +3003,26 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                             _getServiceTypeIcon(),
                             l10n.driverNavChipType,
                             _getServiceTypeName(),
-                            AppTheme.accentBlue,
+                            jdc.cta,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: JdcSpacing.sm),
                         Expanded(
                           child: _buildFloatingInfoChip(
                             Icons.route_rounded,
                             l10n.driverNavChipDistance,
                             distanceText,
-                            colorScheme.tertiary,
+                            jdc.link,
                           ),
                         ),
                         if (_etaMinutes != null) ...[
-                          const SizedBox(width: 8),
+                          const SizedBox(width: JdcSpacing.sm),
                           Expanded(
                             child: _buildFloatingInfoChip(
                               Icons.access_time_rounded,
                               'ETA',
-                              '$_etaMinutes นาที',
-                              Colors.orange.shade700,
+                              l10n.driverNavEtaMinutes('$_etaMinutes'),
+                              jdc.brandOnSoft,
                             ),
                           ),
                         ],
@@ -3009,16 +3046,10 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainer,
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(20)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colorScheme.shadow.withValues(alpha: 0.12),
-                      blurRadius: 16,
-                      offset: const Offset(0, -4),
-                    ),
-                  ],
+                  color: jdc.surface,
+                  borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(JdcRadius.sheet)),
+                  boxShadow: jdc.shadowSheet,
                 ),
                 child: SafeArea(
                   top: false,
@@ -3035,7 +3066,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                   width: 56,
                                   height: 5,
                                   decoration: BoxDecoration(
-                                    color: colorScheme.outlineVariant,
+                                    color: jdc.offTrack,
                                     borderRadius: BorderRadius.circular(99),
                                   ),
                                 ),
@@ -3055,7 +3086,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                     _isInfoPanelCollapsed
                                         ? Icons.keyboard_arrow_up_rounded
                                         : Icons.keyboard_arrow_down_rounded,
-                                    color: colorScheme.onSurfaceVariant,
+                                    color: jdc.muted,
                                   ),
                                 ),
                               ),
@@ -3075,23 +3106,27 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                             Expanded(
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 10),
+                                    horizontal: JdcSpacing.md, vertical: 10),
                                 decoration: BoxDecoration(
-                                  color: colorScheme.surfaceContainerHighest,
-                                  borderRadius: BorderRadius.circular(12),
+                                  color: jdc.sunken,
+                                  borderRadius:
+                                      BorderRadius.circular(JdcRadius.small),
                                 ),
                                 child: Row(
                                   children: [
                                     Icon(_getStatusIcon(),
-                                        size: 18, color: AppTheme.accentBlue),
-                                    const SizedBox(width: 8),
+                                        size: 18, color: jdc.cta),
+                                    const SizedBox(width: JdcSpacing.sm),
                                     Expanded(
                                       child: Text(
                                         _getStatusBarText(),
                                         style: TextStyle(
                                           fontSize: 13,
                                           fontWeight: FontWeight.w600,
-                                          color: colorScheme.onSurface,
+                                          color: jdc.text,
+                                          fontVariations: const [
+                                            FontVariation('wght', 600)
+                                          ],
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -3100,11 +3135,11 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: JdcSpacing.sm),
                             // ปุ่มนำทาง Google Maps
                             _buildActionCircleButton(
                               Icons.navigation_rounded,
-                              colorScheme.secondary,
+                              jdc.panel,
                               _launchGoogleMapsNavigation,
                               tooltip: l10n.driverNavTooltipNav,
                             ),
@@ -3112,7 +3147,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                             // ปุ่มแชท
                             _buildActionCircleButton(
                               Icons.chat_rounded,
-                              colorScheme.tertiary,
+                              jdc.panel,
                               _openChat,
                               tooltip: l10n.driverNavTooltipChat,
                             ),
@@ -3120,7 +3155,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                             // ปุ่มโทร
                             _buildActionCircleButton(
                               Icons.phone_rounded,
-                              AppTheme.accentBlue,
+                              jdc.cta,
                               _callCustomer,
                               tooltip: l10n.driverNavCallCustomer,
                             ),
@@ -3130,7 +3165,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
                         SizedBox(
                           width: double.infinity,
-                          height: 52,
+                          height: JdcTouch.button,
                           child: ElevatedButton.icon(
                             onPressed:
                                 _isUpdatingStatus ? null : _handleActionPress,
@@ -3140,22 +3175,27 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                     height: 20,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      color: colorScheme.onPrimary,
+                                      color: jdc.onCta,
                                     ),
                                   )
                                 : Icon(_getMainActionIcon(), size: 22),
                             label: Text(
                               _getActionButtonText(),
                               style: const TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  fontVariations: [FontVariation('wght', 700)]),
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: _getMainActionColor(),
-                              foregroundColor: colorScheme.onPrimary,
+                              foregroundColor: jdc.onCta,
+                              disabledBackgroundColor: jdc.offTrack,
+                              disabledForegroundColor: jdc.onCta,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
+                                borderRadius:
+                                    BorderRadius.circular(JdcRadius.field),
                               ),
-                              elevation: 2,
+                              elevation: 0,
                             ),
                           ),
                         ),
@@ -3164,7 +3204,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                         ] else ...[
                           // ─── ปุ่มดูรายการอาหาร (เฉพาะ food) ───
                           if (booking.serviceType == 'food') ...[
-                            const SizedBox(height: 8),
+                            const SizedBox(height: JdcSpacing.sm),
                             SizedBox(
                               width: double.infinity,
                               height: 42,
@@ -3173,19 +3213,21 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                 icon: Icon(
                                   Icons.receipt_long,
                                   size: 18,
-                                  color: colorScheme.tertiary,
+                                  color: jdc.link,
                                 ),
                                 label: Text(l10n.driverNavViewFoodItems,
                                     style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
-                                        color: colorScheme.tertiary)),
+                                        color: jdc.link,
+                                        fontVariations: const [
+                                          FontVariation('wght', 600)
+                                        ])),
                                 style: OutlinedButton.styleFrom(
-                                  side: BorderSide(
-                                      color: colorScheme.tertiary
-                                          .withValues(alpha: 0.5)),
+                                  side: BorderSide(color: jdc.brandLine),
                                   shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12)),
+                                      borderRadius:
+                                          BorderRadius.circular(JdcRadius.small)),
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 12),
                                 ),
@@ -3198,23 +3240,19 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                           Container(
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
+                                horizontal: JdcSpacing.md, vertical: 8),
                             decoration: BoxDecoration(
-                              color: colorScheme.primaryContainer,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color:
-                                    colorScheme.primary.withValues(alpha: 0.2),
-                              ),
+                              color: jdc.paper,
+                              borderRadius: BorderRadius.circular(JdcRadius.small),
+                              border: Border.all(color: jdc.line),
                             ),
                             child: Row(
                               children: [
                                 CircleAvatar(
                                   radius: 16,
-                                  backgroundColor: colorScheme.primary
-                                      .withValues(alpha: 0.24),
+                                  backgroundColor: jdc.panel,
                                   child: Icon(Icons.person,
-                                      size: 18, color: colorScheme.onPrimary),
+                                      size: 18, color: jdc.onPanel),
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
@@ -3227,7 +3265,10 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                         style: TextStyle(
                                           fontSize: 13,
                                           fontWeight: FontWeight.w600,
-                                          color: colorScheme.onPrimaryContainer,
+                                          color: jdc.text,
+                                          fontVariations: const [
+                                            FontVariation('wght', 600)
+                                          ],
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -3235,8 +3276,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                         _customerPhone,
                                         style: TextStyle(
                                           fontSize: 11,
-                                          color: colorScheme.onPrimaryContainer
-                                              .withValues(alpha: 0.8),
+                                          color: jdc.muted,
                                         ),
                                       ),
                                     ],
@@ -3249,13 +3289,13 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                   child: Container(
                                     padding: const EdgeInsets.all(6),
                                     decoration: BoxDecoration(
-                                      color: colorScheme.primaryContainer,
+                                      color: jdc.panel,
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(
                                       Icons.phone,
                                       size: 16,
-                                      color: colorScheme.primary,
+                                      color: jdc.onPanel,
                                     ),
                                   ),
                                 ),
@@ -3270,25 +3310,22 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                             Container(
                               width: double.infinity,
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
+                                  horizontal: JdcSpacing.md, vertical: 8),
                               decoration: BoxDecoration(
-                                color: colorScheme.secondaryContainer,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: colorScheme.secondary
-                                      .withValues(alpha: 0.22),
-                                ),
+                                color: jdc.brandSoft,
+                                borderRadius:
+                                    BorderRadius.circular(JdcRadius.small),
+                                border: Border.all(color: jdc.brandLine),
                               ),
                               child: Row(
                                 children: [
                                   CircleAvatar(
                                     radius: 16,
-                                    backgroundColor: colorScheme.secondary
-                                        .withValues(alpha: 0.24),
+                                    backgroundColor: jdc.brandSoft2,
                                     child: Icon(
                                       Icons.store,
                                       size: 18,
-                                      color: colorScheme.onSecondaryContainer,
+                                      color: jdc.brandOnSoft,
                                     ),
                                   ),
                                   const SizedBox(width: 10),
@@ -3302,8 +3339,10 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                           style: TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w600,
-                                            color: colorScheme
-                                                .onSecondaryContainer,
+                                            color: jdc.text,
+                                            fontVariations: const [
+                                              FontVariation('wght', 600)
+                                            ],
                                           ),
                                           overflow: TextOverflow.ellipsis,
                                         ),
@@ -3312,9 +3351,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                             _merchantPhone,
                                             style: TextStyle(
                                               fontSize: 11,
-                                              color: colorScheme
-                                                  .onSecondaryContainer
-                                                  .withValues(alpha: 0.8),
+                                              color: jdc.muted,
                                             ),
                                           ),
                                       ],
@@ -3327,13 +3364,13 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                       child: Container(
                                         padding: const EdgeInsets.all(6),
                                         decoration: BoxDecoration(
-                                          color: colorScheme.tertiaryContainer,
+                                          color: jdc.panel,
                                           shape: BoxShape.circle,
                                         ),
                                         child: Icon(
                                           Icons.phone,
                                           size: 16,
-                                          color: colorScheme.tertiary,
+                                          color: jdc.onPanel,
                                         ),
                                       ),
                                     ),
@@ -3358,16 +3395,13 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                   label: Text(l10n.driverNavReportIssue,
                                       style: const TextStyle(fontSize: 13)),
                                   style: OutlinedButton.styleFrom(
-                                    foregroundColor: colorScheme.primary,
-                                    side: BorderSide(
-                                      color: colorScheme.primary
-                                          .withValues(alpha: 0.5),
-                                    ),
+                                    foregroundColor: jdc.link,
+                                    side: BorderSide(color: jdc.line),
                                     padding: const EdgeInsets.symmetric(
                                         vertical: 10),
                                     shape: RoundedRectangleBorder(
                                         borderRadius:
-                                            BorderRadius.circular(10)),
+                                            BorderRadius.circular(JdcRadius.small)),
                                   ),
                                 ),
                               ),
@@ -3381,16 +3415,13 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                   label: Text(l10n.driverNavCancelJob,
                                       style: const TextStyle(fontSize: 13)),
                                   style: OutlinedButton.styleFrom(
-                                    foregroundColor: colorScheme.error,
-                                    side: BorderSide(
-                                      color: colorScheme.error
-                                          .withValues(alpha: 0.5),
-                                    ),
+                                    foregroundColor: jdc.danger,
+                                    side: BorderSide(color: jdc.dangerLine),
                                     padding: const EdgeInsets.symmetric(
                                         vertical: 10),
                                     shape: RoundedRectangleBorder(
                                         borderRadius:
-                                            BorderRadius.circular(10)),
+                                            BorderRadius.circular(JdcRadius.small)),
                                   ),
                                 ),
                               ),
@@ -3411,17 +3442,18 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   /// ปุ่มกลมบนแผนที่ (my location, zoom, etc.)
   Widget _buildMapButton(IconData icon, VoidCallback onPressed) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return Material(
-      elevation: 2,
-      shape: const CircleBorder(),
-      color: colorScheme.surfaceContainerHighest,
+      elevation: 0,
+      shape: CircleBorder(side: BorderSide(color: jdc.line)),
+      color: jdc.surface,
+      shadowColor: Colors.transparent,
       child: InkWell(
         onTap: onPressed,
         customBorder: const CircleBorder(),
         child: Padding(
           padding: const EdgeInsets.all(10),
-          child: Icon(icon, size: 20, color: colorScheme.onSurface),
+          child: Icon(icon, size: 20, color: jdc.text),
         ),
       ),
     );
@@ -3429,13 +3461,14 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   /// ปุ่มกลมสำหรับ action (นำทาง, โทร)
   Widget _buildActionCircleButton(
-      IconData icon, Color color, VoidCallback onPressed,
-      {String? tooltip}) {
-    final colorScheme = Theme.of(context).colorScheme;
+    IconData icon, Color color, VoidCallback onPressed,
+    {String? tooltip}) {
+    final jdc = JdcColors.of(context);
     return Material(
-      elevation: 1,
+      elevation: 0,
       shape: const CircleBorder(),
       color: color,
+      shadowColor: Colors.transparent,
       child: InkWell(
         onTap: onPressed,
         customBorder: const CircleBorder(),
@@ -3443,7 +3476,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
           message: tooltip ?? '',
           child: Padding(
             padding: const EdgeInsets.all(10),
-            child: Icon(icon, size: 20, color: colorScheme.onPrimary),
+            child: Icon(icon, size: 20, color: jdc.onPanel),
           ),
         ),
       ),
@@ -3456,20 +3489,14 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     String value,
     Color color,
   ) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
       decoration: BoxDecoration(
-        color: colorScheme.surface.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.outlineVariant),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.12),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: jdc.surface,
+        borderRadius: BorderRadius.circular(JdcRadius.small),
+        border: Border.all(color: jdc.line),
+        boxShadow: jdc.shadowFloat,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -3484,8 +3511,9 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                   label,
                   style: TextStyle(
                     fontSize: 10,
-                    color: colorScheme.onSurfaceVariant,
+                    color: jdc.muted,
                     fontWeight: FontWeight.w600,
+                    fontVariations: const [FontVariation('wght', 600)],
                   ),
                 ),
                 Text(
@@ -3495,7 +3523,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
+                    color: jdc.text,
+                    fontVariations: const [FontVariation('wght', 700)],
                   ),
                 ),
               ],
@@ -3507,17 +3536,17 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   }
 
   void _showSuccessSnackBar(String message) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            Icon(Icons.check_circle, color: colorScheme.onPrimary, size: 20),
+            Icon(Icons.check_circle, color: jdc.knob, size: 20),
             const SizedBox(width: 8),
             Expanded(child: Text(message)),
           ],
         ),
-        backgroundColor: AppTheme.accentBlue,
+        backgroundColor: jdc.successFill,
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -3529,6 +3558,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   void _showCancellationDialog() {
     if (!mounted) return;
+    final jdc = JdcColors.of(context);
 
     showDialog(
       context: context,
@@ -3536,7 +3566,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       builder: (ctx) => AlertDialog(
         icon: Icon(
           Icons.cancel,
-          color: Theme.of(context).colorScheme.error,
+          color: jdc.danger,
           size: 48,
         ),
         title: Text(AppLocalizations.of(context)!.driverNavJobCancelledTitle),
@@ -3553,8 +3583,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accentBlue,
-                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                backgroundColor: jdc.cta,
+                foregroundColor: jdc.onCta,
               ),
               child: Text(AppLocalizations.of(context)!.driverNavGoHome),
             ),
@@ -3628,17 +3658,17 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   }
 
   void _showErrorSnackBar(String message) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            Icon(Icons.error, color: colorScheme.onError, size: 20),
+            Icon(Icons.error, color: jdc.knob, size: 20),
             const SizedBox(width: 8),
             Expanded(child: Text(message)),
           ],
         ),
-        backgroundColor: colorScheme.error,
+        backgroundColor: jdc.danger,
         duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -3650,7 +3680,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   void _showMerchantPaymentDialog() {
     if (_booking == null || !mounted) return;
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     final l10n = AppLocalizations.of(context)!;
 
     final foodPrice = _booking!.price;
@@ -3666,25 +3696,27 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(JdcRadius.card)),
         title: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(JdcSpacing.lg),
               decoration: BoxDecoration(
-                color: AppTheme.accentBlue.withValues(alpha: 0.1),
+                color: jdc.brandSoft,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.payments,
-                  color: AppTheme.accentBlue, size: 48),
+              child: Icon(Icons.payments,
+                  color: jdc.cta, size: 48),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: JdcSpacing.md),
             Text(
               l10n.driverNavPaymentTitle,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.accentBlue),
+                  color: jdc.cta,
+                  fontVariations: const [FontVariation('wght', 700)]),
               textAlign: TextAlign.center,
             ),
           ],
@@ -3695,17 +3727,16 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
             Text(
               l10n.driverNavPaymentBody,
               style: TextStyle(
-                  fontSize: 15, color: colorScheme.onSurface, height: 1.5),
+                  fontSize: 15, color: jdc.text, height: 1.5),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: JdcSpacing.lg),
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                    color: colorScheme.secondary.withValues(alpha: 0.35)),
+                color: jdc.brandSoft,
+                borderRadius: BorderRadius.circular(JdcRadius.small),
+                border: Border.all(color: jdc.brandLine),
               ),
               child: Column(
                 children: [
@@ -3715,10 +3746,15 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                       Text(l10n.driverNavPaymentSales,
                           style: TextStyle(
                               fontSize: 14,
-                              color: colorScheme.onSurfaceVariant)),
+                              color: jdc.muted)),
                       Text('฿${foodPrice.toStringAsFixed(0)}',
-                          style: const TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w600)),
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: jdc.text,
+                              fontVariations: const [
+                                FontVariation('wght', 600)
+                              ])),
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -3729,11 +3765,11 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                         l10n.driverNavPaymentDeduction(
                             (merchantChargeRate * 100).toStringAsFixed(0)),
                         style:
-                            TextStyle(fontSize: 13, color: colorScheme.error),
+                            TextStyle(fontSize: 13, color: jdc.dangerInk),
                       ),
                       Text('-฿${serviceFee.toStringAsFixed(0)}',
                           style: TextStyle(
-                              fontSize: 13, color: colorScheme.error)),
+                              fontSize: 13, color: jdc.dangerInk)),
                     ],
                   ),
                   const Divider(height: 16),
@@ -3744,12 +3780,18 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                           style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: colorScheme.secondary)),
+                              color: jdc.cta,
+                              fontVariations: const [
+                                FontVariation('wght', 700)
+                              ])),
                       Text('฿${merchantReceives.toStringAsFixed(0)}',
                           style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: colorScheme.secondary)),
+                              color: jdc.cta,
+                              fontVariations: const [
+                                FontVariation('wght', 700)
+                              ])),
                     ],
                   ),
                 ],
@@ -3767,13 +3809,15 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
               icon: const Icon(Icons.delivery_dining),
               label: Text(l10n.driverNavPaymentDeliver,
                   style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold)),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      fontVariations: [FontVariation('wght', 700)])),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accentBlue,
-                foregroundColor: colorScheme.onPrimary,
+                backgroundColor: jdc.cta,
+                foregroundColor: jdc.onCta,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(JdcRadius.small)),
               ),
             ),
           ),
@@ -3824,44 +3868,45 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
       context: context,
       barrierDismissible: false,
       builder: (context) {
-        final colorScheme = Theme.of(context).colorScheme;
+        final jdc = JdcColors.of(context);
         return AlertDialog(
           title: Text(l10n.driverNavCompletionTitle),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
+              Icon(
                 Icons.check_circle,
-                color: AppTheme.accentBlue,
+                color: jdc.successFill,
                 size: 64,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: JdcSpacing.lg),
               Text(
                 l10n.driverNavCompletionSuccess,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
+                  color: jdc.text,
+                  fontVariations: const [FontVariation('wght', 700)],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: JdcSpacing.md),
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(JdcSpacing.md),
                 decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest,
+                  color: jdc.sunken,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
                   children: [
                     _buildSummaryRow(l10n.driverNavCompletionCollect,
-                        '฿${totalCollect.ceil()}', colorScheme.onSurface,
+                        '฿${totalCollect.ceil()}', jdc.text,
                         isBold: true),
                     if (isFood) ...[
                       const SizedBox(height: 4),
                       _buildSummaryRow(l10n.driverNavCompletionFoodCost,
-                          '฿${foodPrice.ceil()}', colorScheme.tertiary),
+                          '฿${foodPrice.ceil()}', jdc.muted),
                       _buildSummaryRow(l10n.driverNavCompletionDeliveryFee,
-                          '฿${deliveryFee.ceil()}', colorScheme.primary),
+                          '฿${deliveryFee.ceil()}', jdc.muted),
                     ],
                     if (_couponDiscount > 0) ...[
                       const SizedBox(height: 4),
@@ -3873,19 +3918,19 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                                     .driverNavCompletionCouponCode(_couponCode!)
                                 : l10n.driverNavCompletionCoupon),
                         '-฿${_couponDiscount.ceil()}',
-                        colorScheme.secondary,
+                        jdc.successInk,
                       ),
                     ],
                     _buildSummaryRow(
                       l10n.driverNavCompletionServiceFee,
                       '-฿${commission.ceil()}',
-                      colorScheme.error,
+                      jdc.dangerInk,
                     ),
                     const Divider(height: 16),
                     _buildSummaryRow(
                       l10n.driverNavCompletionNetEarnings,
                       '฿${netEarnings.ceil()}',
-                      AppTheme.accentBlue,
+                      jdc.cta,
                       isBold: true,
                       fontSize: 18,
                     ),
@@ -3909,14 +3954,14 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                       );
                     },
                     style: TextButton.styleFrom(
-                      backgroundColor: colorScheme.surfaceContainerHigh,
-                      foregroundColor: colorScheme.onSurface,
+                      backgroundColor: jdc.sunken,
+                      foregroundColor: jdc.text,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     child: Text(l10n.driverNavCompletionViewDetails),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: JdcSpacing.sm),
                 Expanded(
                   child: TextButton(
                     onPressed: () {
@@ -3928,8 +3973,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                       );
                     },
                     style: TextButton.styleFrom(
-                      backgroundColor: AppTheme.accentBlue,
-                      foregroundColor: colorScheme.onPrimary,
+                      backgroundColor: jdc.cta,
+                      foregroundColor: jdc.onCta,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     child: Text(l10n.driverNavGoHome),
@@ -3944,7 +3989,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
   }
 
   Widget _buildFinancialCard(Booking booking) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     final l10n = AppLocalizations.of(context)!;
     final isFood = booking.serviceType == 'food';
     final foodPrice = booking.price;
@@ -3954,11 +3999,11 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     final payToMerchant = settlement?.merchantReceives ?? 0.0;
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(JdcSpacing.md),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.outlineVariant),
+        color: jdc.paper,
+        borderRadius: BorderRadius.circular(JdcRadius.small),
+        border: Border.all(color: jdc.line),
       ),
       child: Column(
         children: [
@@ -3968,14 +4013,15 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
             children: [
               Row(
                 children: [
-                  Icon(Icons.payments, color: colorScheme.secondary, size: 20),
+                  Icon(Icons.payments, color: jdc.cta, size: 20),
                   const SizedBox(width: 6),
                   Text(
                     l10n.driverNavFinCardCollect,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface,
+                      color: jdc.text,
+                      fontVariations: const [FontVariation('wght', 600)],
                     ),
                   ),
                 ],
@@ -3985,7 +4031,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: colorScheme.secondary,
+                  color: jdc.cta,
+                  fontVariations: const [FontVariation('wght', 700)],
                 ),
               ),
             ],
@@ -3998,15 +4045,15 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                   child: _buildMiniInfo(
                     l10n.driverNavFinCardFoodCost,
                     '฿${foodPrice.toStringAsFixed(0)}',
-                    colorScheme.tertiary,
+                    jdc.link,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: JdcSpacing.sm),
                 Expanded(
                   child: _buildMiniInfo(
                     l10n.driverNavFinCardDeliveryFee,
                     '฿${deliveryFee.toStringAsFixed(0)}',
-                    colorScheme.primary,
+                    jdc.link,
                   ),
                 ),
               ],
@@ -4015,25 +4062,24 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: colorScheme.secondaryContainer.withValues(alpha: 0.55),
+                color: jdc.brandSoft,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: colorScheme.secondary.withValues(alpha: 0.35),
-                ),
+                border: Border.all(color: jdc.brandLine),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.store, color: colorScheme.tertiary, size: 16),
+                      Icon(Icons.store, color: jdc.brandOnSoft, size: 16),
                       const SizedBox(width: 4),
                       Text(
                         l10n.driverNavFinCardPayMerchant,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: colorScheme.tertiary,
+                          color: jdc.brandOnSoft,
+                          fontVariations: const [FontVariation('wght', 600)],
                         ),
                       ),
                     ],
@@ -4043,7 +4089,8 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: colorScheme.tertiary,
+                      color: jdc.brandOnSoft,
+                      fontVariations: const [FontVariation('wght', 700)],
                     ),
                   ),
                 ],
@@ -4057,11 +4104,11 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
 
   /// Mini info widget
   Widget _buildMiniInfo(String label, String value, Color color) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
+        color: jdc.sunken,
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
@@ -4069,12 +4116,13 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         children: [
           Text(
             label,
-            style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+            style: TextStyle(fontSize: 11, color: jdc.muted),
           ),
           Text(
             value,
             style: TextStyle(
-                fontSize: 13, fontWeight: FontWeight.bold, color: color),
+                fontSize: 13, fontWeight: FontWeight.bold, color: color,
+                fontVariations: const [FontVariation('wght', 700)]),
           ),
         ],
       ),
@@ -4095,6 +4143,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
               fontSize: isBold ? 13 : 12,
               fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
               color: color,
+              fontVariations: [FontVariation('wght', isBold ? 600 : 400)],
             ),
           ),
           Text(
@@ -4103,6 +4152,7 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
               fontSize: fontSize,
               fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
               color: color,
+              fontVariations: [FontVariation('wght', isBold ? 700 : 500)],
             ),
           ),
         ],

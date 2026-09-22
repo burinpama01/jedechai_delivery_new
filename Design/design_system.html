@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jedechai AI Design System v1</title>
+  <style>
+    :root {
+      --ink: #14213d;
+      --muted: #5f6b7a;
+      --paper: #f6f8fb;
+      --surface: #ffffff;
+      --line: #dce3ec;
+      --brand: #f28c28;
+      --brand-dark: #a84e08;
+      --accent: #2367d1;
+      --success: #16794a;
+      --warning: #9a5b00;
+      --danger: #b42318;
+      --info-soft: #eaf2ff;
+      --success-soft: #e9f7ef;
+      --warning-soft: #fff4da;
+      --danger-soft: #ffebe9;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 22px;
+      --shadow: 0 14px 38px rgba(20, 33, 61, .10);
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 24px;
+      --space-6: 32px;
+      --space-7: 48px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Noto Sans Thai", "Leelawadee UI", Tahoma, sans-serif;
+      color: var(--ink);
+      background: linear-gradient(145deg, #fff8ee 0%, var(--paper) 42%, #eef4ff 100%);
+      line-height: 1.65;
+    }
+    main { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 48px 0 80px; }
+    header {
+      padding: 36px;
+      border-radius: var(--radius-lg);
+      color: #fff;
+      background: linear-gradient(120deg, #14213d, #263b68 70%, #a84e08);
+      box-shadow: var(--shadow);
+    }
+    h1, h2, h3 { line-height: 1.25; margin-top: 0; }
+    h1 { font-size: clamp(2rem, 5vw, 3.6rem); margin-bottom: 10px; }
+    h2 { margin-top: 44px; font-size: 1.8rem; }
+    h3 { font-size: 1.05rem; margin-bottom: 8px; }
+    p { margin: 8px 0; }
+    .eyebrow { color: #ffd6ad; letter-spacing: .08em; text-transform: uppercase; font-weight: 800; }
+    .meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+    .chip, .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border-radius: 999px;
+      padding: 6px 11px;
+      font-size: .84rem;
+      font-weight: 800;
+    }
+    .chip { color: #fff; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.22); }
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; }
+    .card {
+      grid-column: span 4;
+      padding: 20px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      box-shadow: 0 7px 22px rgba(20, 33, 61, .06);
+    }
+    .wide { grid-column: span 12; }
+    .half { grid-column: span 6; }
+    .swatch { height: 76px; border-radius: 10px; margin-bottom: 12px; border: 1px solid rgba(0,0,0,.07); }
+    code { padding: 2px 6px; border-radius: 6px; background: #eef1f5; font-family: Consolas, monospace; font-size: .9em; }
+    .type-hero { font-size: 2.4rem; font-weight: 900; line-height: 1.1; }
+    .type-title { font-size: 1.5rem; font-weight: 800; }
+    .muted { color: var(--muted); }
+    .badge.success { color: var(--success); background: var(--success-soft); }
+    .badge.warning { color: var(--warning); background: var(--warning-soft); }
+    .badge.danger { color: var(--danger); background: var(--danger-soft); }
+    .badge.info { color: var(--accent); background: var(--info-soft); }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      font: inherit;
+      font-weight: 800;
+    }
+    .btn.primary { color: #fff; background: var(--brand-dark); }
+    .btn.secondary { color: var(--ink); background: #fff; border-color: var(--line); }
+    .btn.danger { color: var(--danger); background: #fff; border-color: #f4b8b1; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    .mock {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      min-height: 390px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+    }
+    .mock aside { padding: 22px; color: #fff; background: var(--ink); }
+    .mock aside div { margin: 10px 0; padding: 9px 10px; border-radius: 8px; }
+    .mock aside .active { background: rgba(242, 140, 40, .25); color: #ffd3a6; }
+    .mock section { padding: 24px; }
+    .menu-row {
+      display: grid;
+      grid-template-columns: 28px 1.5fr .7fr 1fr .7fr;
+      gap: 12px;
+      align-items: center;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .confidence { height: 8px; overflow: hidden; border-radius: 999px; background: #e6ebf1; }
+    .confidence i { display: block; height: 100%; background: var(--success); }
+    .confidence.low i { width: 58%; background: var(--warning); }
+    .callout { padding: 17px 18px; border-left: 5px solid var(--accent); background: var(--info-soft); border-radius: 0 12px 12px 0; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+    th { color: var(--muted); font-size: .82rem; text-transform: uppercase; letter-spacing: .04em; }
+    @media (max-width: 760px) {
+      main { width: min(100% - 20px, 1120px); padding-top: 16px; }
+      header { padding: 26px 20px; }
+      .card, .half { grid-column: span 12; }
+      .mock { grid-template-columns: 1fr; }
+      .mock aside { display: none; }
+      .menu-row { grid-template-columns: 26px 1fr .65fr; }
+      .menu-row > :nth-child(4), .menu-row > :nth-child(5) { display: none; }
+    }
+    @media print {
+      body { background: #fff; }
+      main { width: 100%; padding: 0; }
+      header, .card { box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="eyebrow">Jedechai Delivery · AI Experience</div>
+      <h1>AI Design System v1</h1>
+      <p>ชุดกติกาหน้าจอสำหรับ AI Menu Import, Admin Assist และ Revenue Recommendation โดยยึดหลัก “AI เสนอ — คนยืนยัน”</p>
+      <div class="meta">
+        <span class="chip">สถานะ: Approved design baseline</span>
+        <span class="chip">วันที่: 31 สิงหาคม 2569</span>
+        <span class="chip">ใช้กับ Flutter + Admin Web</span>
+      </div>
+    </header>
+
+    <h2>1. หลักการออกแบบ</h2>
+    <div class="grid">
+      <article class="card"><h3>Human in the loop</h3><p class="muted">ผลลัพธ์ AI ต้องอยู่ในสถานะ draft จนกว่าผู้ใช้กดยืนยัน ห้ามเขียนราคา เมนู หรือสถานะสำคัญอัตโนมัติ</p></article>
+      <article class="card"><h3>Confidence ที่เข้าใจง่าย</h3><p class="muted">แสดง “มั่นใจสูง / ต้องตรวจ / อ่านไม่ชัด” พร้อมเหตุผล ไม่แสดงคะแนนดิบอย่างเดียว</p></article>
+      <article class="card"><h3>แก้ไขได้ก่อนบันทึก</h3><p class="muted">ทุกชื่อ ราคา หมวดหมู่ และตัวเลือกต้องแก้ได้แบบ inline พร้อมเลือกบันทึกเฉพาะรายการ</p></article>
+    </div>
+
+    <h2>2. สีและสถานะ</h2>
+    <div class="grid">
+      <article class="card"><div class="swatch" style="background:#14213d"></div><h3>Ink · #14213D</h3><p class="muted">หัวข้อ แถบนำทาง และข้อความสำคัญ</p></article>
+      <article class="card"><div class="swatch" style="background:#F28C28"></div><h3>JDC Orange · #F28C28</h3><p class="muted">จุดเน้น ไม่ใช้กับข้อความขนาดเล็กบนพื้นขาว</p></article>
+      <article class="card"><div class="swatch" style="background:#2367D1"></div><h3>AI Blue · #2367D1</h3><p class="muted">งาน AI ที่กำลังประมวลผลและข้อมูลอธิบาย</p></article>
+      <article class="card"><div class="swatch" style="background:#16794A"></div><h3>Verified · #16794A</h3><p class="muted">ข้อมูลผ่านเกณฑ์และผู้ใช้ตรวจแล้ว</p></article>
+      <article class="card"><div class="swatch" style="background:#9A5B00"></div><h3>Review · #9A5B00</h3><p class="muted">ข้อมูล confidence ต่ำหรือมีคำเตือน</p></article>
+      <article class="card"><div class="swatch" style="background:#B42318"></div><h3>Blocked · #B42318</h3><p class="muted">ข้อมูลไม่ครบ ความปลอดภัย หรือการทำงานล้มเหลว</p></article>
+    </div>
+
+    <h2>3. ตัวอักษรและองค์ประกอบ</h2>
+    <div class="grid">
+      <article class="card half">
+        <div class="type-hero">สแกนเมนูด้วย AI</div>
+        <div class="type-title">ตรวจรายการก่อนบันทึก</div>
+        <p>ข้อความเนื้อหาใช้ขนาดไม่น้อยกว่า 16px บนมือถือ และต้องรองรับการขยายตัวอักษร</p>
+        <p class="muted">Fallback font: Noto Sans Thai → Leelawadee UI → Tahoma</p>
+      </article>
+      <article class="card half">
+        <span class="badge success">มั่นใจสูง</span>
+        <span class="badge warning">ต้องตรวจราคา</span>
+        <span class="badge danger">อ่านไม่สำเร็จ</span>
+        <span class="badge info">AI กำลังประมวลผล</span>
+        <div class="toolbar">
+          <button class="btn primary" type="button">ยืนยัน 18 รายการ</button>
+          <button class="btn secondary" type="button">บันทึกแบบร่าง</button>
+          <button class="btn danger" type="button">ยกเลิกงาน</button>
+        </div>
+      </article>
+    </div>
+
+    <h2>4. Reference UI — AI Menu Review</h2>
+    <div class="mock">
+      <aside>
+        <strong>Jedechai Merchant</strong>
+        <div>ภาพรวม</div><div>ออเดอร์</div><div class="active">เมนู · AI Import</div><div>คูปอง</div><div>ตั้งค่า</div>
+      </aside>
+      <section>
+        <span class="badge info">อ่านแล้ว 20 รายการ</span>
+        <h2 style="margin:12px 0 4px">ตรวจเมนูก่อนบันทึก</h2>
+        <p class="muted">AI ไม่บันทึกลงร้านโดยอัตโนมัติ เลือกเฉพาะรายการที่ถูกต้อง</p>
+        <div class="menu-row"><strong>✓</strong><strong>กะเพราหมูกรอบ</strong><strong>฿65</strong><span>อาหารตามสั่ง</span><div class="confidence"><i style="width:96%"></i></div></div>
+        <div class="menu-row"><strong>✓</strong><strong>ข้าวผัดทะเล</strong><strong>฿80</strong><span>อาหารจานเดียว</span><div class="confidence"><i style="width:91%"></i></div></div>
+        <div class="menu-row"><strong>!</strong><strong>ต้มยำรวมมิตร</strong><strong>฿1?0</strong><span>ต้ม / แกง</span><div class="confidence low"><i></i></div></div>
+        <div class="toolbar"><button class="btn primary" type="button">ยืนยันรายการที่เลือก</button><button class="btn secondary" type="button">แก้รายการเตือน</button></div>
+      </section>
+    </div>
+
+    <h2>5. State และข้อความ</h2>
+    <div class="grid">
+      <article class="card"><h3>Uploading</h3><p>“กำลังอัปโหลดรูป 2 จาก 4 — ออกจากหน้านี้ได้ งานจะทำต่อในพื้นหลัง”</p></article>
+      <article class="card"><h3>Processing</h3><p>“AI กำลังอ่านชื่อและราคา โดยทั่วไปใช้เวลาไม่เกิน 1 นาที”</p></article>
+      <article class="card"><h3>Needs review</h3><p>“พบ 3 รายการที่ราคาไม่ชัด กรุณาตรวจสอบก่อนบันทึก”</p></article>
+      <article class="card"><h3>Failed safely</h3><p>“ยังไม่มีเมนูถูกบันทึก ลองถ่ายใหม่ในที่สว่างหรือกรอกด้วยตนเอง”</p></article>
+      <article class="card"><h3>Budget blocked</h3><p>“ถึงขีดจำกัดการใช้งาน AI วันนี้แล้ว เมนูเดิมไม่ได้รับผลกระทบ”</p></article>
+      <article class="card"><h3>Committed</h3><p>“เพิ่มเมนูแล้ว 18 รายการ ข้าม 2 รายการซ้ำ”</p></article>
+    </div>
+
+    <h2>6. Accessibility และ Responsive</h2>
+    <div class="card wide">
+      <table>
+        <thead><tr><th>หัวข้อ</th><th>ข้อกำหนด</th></tr></thead>
+        <tbody>
+          <tr><td>การแตะ</td><td>พื้นที่กดขั้นต่ำ 44×44px และมี label สำหรับ screen reader</td></tr>
+          <tr><td>สี</td><td>ห้ามใช้สีเป็นสัญญาณเพียงอย่างเดียว ต้องมีข้อความหรือไอคอนร่วม</td></tr>
+          <tr><td>Keyboard</td><td>Admin Web ต้องแก้ตาราง เลือกรายการ และยืนยันได้ด้วยคีย์บอร์ด</td></tr>
+          <tr><td>Mobile</td><td>ต่ำกว่า 768px เปลี่ยนตารางเป็นการ์ด แต่ต้องคง draft และการเลือกรายการไว้</td></tr>
+          <tr><td>State preservation</td><td>เปลี่ยนหน้า/กลับจากกล้องแล้วรูป draft รายการที่เลือก scroll และ focus ต้องไม่หาย</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout" style="margin-top:32px"><strong>ขอบเขตความปลอดภัย:</strong> AI ทำหน้าที่อ่าน สรุป จัดหมวดหมู่ และเสนอเท่านั้น การสร้างเมนูจริง เปลี่ยนราคา คืนเงิน ปรับ Wallet ระงับบัญชี หรือส่งข้อความภายนอกต้องผ่านกฎระบบและการยืนยันของมนุษย์</div>
+  </main>
+</body>
+</html>

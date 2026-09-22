@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../../../theme/jdc_colors.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../common/services/menu_option_service.dart';
 import '../../../../common/services/image_picker_service.dart';
@@ -7,7 +8,6 @@ import '../../../../common/services/storage_service.dart';
 import '../../../../common/models/menu_option.dart';
 import '../../../../common/widgets/app_network_image.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../theme/app_theme.dart';
 import '../../../../utils/debug_logger.dart';
 
 /// Merchant Add/Edit Menu Screen
@@ -142,7 +142,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
           SnackBar(
             content: Text(AppLocalizations.of(context)!
                 .menuEditLoadOptionsFailed(e.toString())),
-            backgroundColor: Colors.red,
+            backgroundColor: JdcColors.of(context).danger,
           ),
         );
       }
@@ -160,10 +160,10 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.add_a_photo, size: 48, color: Colors.grey[400]),
+        Icon(Icons.add_a_photo, size: 48, color: JdcColors.of(context).trackEmpty),
         const SizedBox(height: 8),
         Text(AppLocalizations.of(context)!.menuEditTapToPhoto,
-            style: TextStyle(color: Colors.grey[500], fontSize: 14)),
+            style: TextStyle(color: JdcColors.of(context).dim, fontSize: 14)),
       ],
     );
   }
@@ -255,7 +255,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
             content: Text(widget.item == null
                 ? AppLocalizations.of(context)!.menuEditAddSuccess
                 : AppLocalizations.of(context)!.menuEditUpdateSuccess),
-            backgroundColor: Colors.green,
+            backgroundColor: JdcColors.of(context).successFill,
           ),
         );
         Navigator.of(context).pop(true);
@@ -265,7 +265,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('❌ $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: JdcColors.of(context).danger,
           ),
         );
       }
@@ -319,7 +319,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
         SnackBar(
           content: Text(AppLocalizations.of(context)!
               .menuEditDeleteGroupSuccess(group.name)),
-          backgroundColor: Colors.green,
+          backgroundColor: JdcColors.of(context).successFill,
         ),
       );
     } catch (e) {
@@ -327,7 +327,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
         SnackBar(
           content: Text(AppLocalizations.of(context)!
               .menuEditDeleteGroupFailed(e.toString())),
-          backgroundColor: Colors.red,
+          backgroundColor: JdcColors.of(context).danger,
         ),
       );
     }
@@ -342,8 +342,8 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
         title: Text(isEditing
             ? AppLocalizations.of(context)!.menuEditTitleEdit
             : AppLocalizations.of(context)!.menuEditTitleAdd),
-        backgroundColor: AppTheme.accentOrange,
-        foregroundColor: Colors.white,
+        backgroundColor: JdcColors.of(context).cta,
+        foregroundColor: JdcColors.of(context).onCta,
         elevation: 0,
       ),
       body: Form(
@@ -372,10 +372,10 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: JdcColors.of(context).surface,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: JdcColors.of(context).shadowCard.first.color,
                     blurRadius: 10,
                     offset: const Offset(0, -2),
                   ),
@@ -387,21 +387,21 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
                   child: ElevatedButton(
                     onPressed: _isSaving ? null : _saveMenuItem,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.accentOrange,
-                      foregroundColor: Colors.white,
+                      backgroundColor: JdcColors.of(context).cta,
+                      foregroundColor: JdcColors.of(context).onCta,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     child: _isSaving
-                        ? const SizedBox(
+                        ? SizedBox(
                             height: 20,
                             width: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
                               valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                                  AlwaysStoppedAnimation<Color>(JdcColors.of(context).onCta),
                             ),
                           )
                         : Text(
@@ -492,10 +492,10 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
             width: double.infinity,
             height: 180,
             decoration: BoxDecoration(
-              color: Colors.grey[100],
+              color: JdcColors.of(context).sunken,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                  color: Colors.grey[300]!, style: BorderStyle.solid),
+                  color: JdcColors.of(context).line, style: BorderStyle.solid),
             ),
             child: _menuItemPhoto != null
                 ? ClipRRect(
@@ -517,8 +517,8 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
                                 color: Colors.red,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.close,
-                                  color: Colors.white, size: 18),
+                              child: Icon(Icons.close,
+                                  color: JdcColors.of(context).surface, size: 18),
                             ),
                           ),
                         ),
@@ -534,7 +534,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
                             AppNetworkImage(
                               imageUrl: _imageUrl,
                               fit: BoxFit.cover,
-                              backgroundColor: Colors.grey[100],
+                              backgroundColor: JdcColors.of(context).sunken,
                             ),
                             Positioned(
                               top: 8,
@@ -547,8 +547,8 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
                                     color: Colors.red,
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(Icons.close,
-                                      color: Colors.white, size: 18),
+                                  child: Icon(Icons.close,
+                                      color: JdcColors.of(context).surface, size: 18),
                                 ),
                               ),
                             ),
@@ -644,7 +644,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
               _isAvailable = value;
             });
           },
-          activeThumbColor: AppTheme.accentOrange,
+          activeThumbColor: JdcColors.of(context).cta,
         ),
       ],
     );
@@ -670,7 +670,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
                     .menuEditGroupCount(_linkedOptionGroups.length.toString()),
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey[600],
+                  color: JdcColors.of(context).muted,
                 ),
               ),
           ],
@@ -690,7 +690,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(color: JdcColors.of(context).line),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
@@ -698,14 +698,14 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
                 Icon(
                   Icons.category_outlined,
                   size: 48,
-                  color: Colors.grey[400],
+                  color: JdcColors.of(context).trackEmpty,
                 ),
                 const SizedBox(height: 12),
                 Text(
                   AppLocalizations.of(context)!.menuEditNoOptionGroups,
                   style: TextStyle(
                     fontSize: 16,
-                    color: Colors.grey[600],
+                    color: JdcColors.of(context).muted,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -713,7 +713,7 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
                   AppLocalizations.of(context)!.menuEditNoOptionGroupsHint,
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey[500],
+                    color: JdcColors.of(context).dim,
                   ),
                 ),
               ],
@@ -740,8 +740,8 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
             label: Text(AppLocalizations.of(context)!.menuEditAddOptionGroup),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
-              side: BorderSide(color: AppTheme.accentOrange),
-              foregroundColor: AppTheme.accentOrange,
+              side: BorderSide(color: JdcColors.of(context).cta),
+              foregroundColor: JdcColors.of(context).cta,
             ),
           ),
         ),
@@ -791,12 +791,12 @@ class LinkedOptionGroupCard extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: AppTheme.accentOrange.withValues(alpha: 0.1),
+                color: JdcColors.of(context).brandSoft,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 _getGroupIcon(),
-                color: AppTheme.accentOrange,
+                color: JdcColors.of(context).cta,
                 size: 20,
               ),
             ),
@@ -819,7 +819,7 @@ class LinkedOptionGroupCard extends StatelessWidget {
                     _getSelectionText(context),
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey[600],
+                      color: JdcColors.of(context).muted,
                     ),
                   ),
                   if (optionCount > 0)
@@ -828,7 +828,7 @@ class LinkedOptionGroupCard extends StatelessWidget {
                           .menuEditOptionCount(optionCount.toString()),
                       style: TextStyle(
                         fontSize: 12,
-                        color: AppTheme.accentOrange,
+                        color: JdcColors.of(context).cta,
                       ),
                     ),
                 ],
@@ -837,7 +837,7 @@ class LinkedOptionGroupCard extends StatelessWidget {
 
             // Remove Button
             IconButton(
-              icon: const Icon(Icons.remove_circle, color: Colors.red),
+              icon: Icon(Icons.remove_circle, color: JdcColors.of(context).dangerInk),
               onPressed: onRemove,
               tooltip: AppLocalizations.of(context)!.menuEditRemoveGroupTooltip,
             ),
@@ -940,8 +940,8 @@ class _OptionGroupSelectionSheetState extends State<OptionGroupSelectionSheet> {
       maxChildSize: 0.9,
       builder: (context, scrollController) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: JdcColors.of(context).surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: Column(
@@ -952,7 +952,7 @@ class _OptionGroupSelectionSheetState extends State<OptionGroupSelectionSheet> {
                 height: 4,
                 margin: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: JdcColors.of(context).muted,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -975,13 +975,13 @@ class _OptionGroupSelectionSheetState extends State<OptionGroupSelectionSheet> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppTheme.accentOrange,
+                          color: JdcColors.of(context).cta,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           '${_selectedGroups.length}',
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: JdcColors.of(context).onCta,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
@@ -1002,10 +1002,10 @@ class _OptionGroupSelectionSheetState extends State<OptionGroupSelectionSheet> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: JdcColors.of(context).surface,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
+                      color: JdcColors.of(context).shadowCard.first.color,
                       blurRadius: 10,
                       offset: const Offset(0, -2),
                     ),
@@ -1017,8 +1017,8 @@ class _OptionGroupSelectionSheetState extends State<OptionGroupSelectionSheet> {
                     child: ElevatedButton(
                       onPressed: _saveSelection,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.accentOrange,
-                        foregroundColor: Colors.white,
+                        backgroundColor: JdcColors.of(context).cta,
+                        foregroundColor: JdcColors.of(context).onCta,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -1057,14 +1057,14 @@ class _OptionGroupSelectionSheetState extends State<OptionGroupSelectionSheet> {
             Icon(
               Icons.error_outline,
               size: 64,
-              color: Colors.grey[400],
+              color: JdcColors.of(context).trackEmpty,
             ),
             const SizedBox(height: 16),
             Text(
               _error!,
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.grey[600],
+                color: JdcColors.of(context).muted,
               ),
               textAlign: TextAlign.center,
             ),
@@ -1086,14 +1086,14 @@ class _OptionGroupSelectionSheetState extends State<OptionGroupSelectionSheet> {
             Icon(
               Icons.category_outlined,
               size: 64,
-              color: Colors.grey[400],
+              color: JdcColors.of(context).trackEmpty,
             ),
             const SizedBox(height: 16),
             Text(
               AppLocalizations.of(context)!.menuEditSheetNoGroups,
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.grey[600],
+                color: JdcColors.of(context).muted,
               ),
             ),
             const SizedBox(height: 8),
@@ -1101,7 +1101,7 @@ class _OptionGroupSelectionSheetState extends State<OptionGroupSelectionSheet> {
               AppLocalizations.of(context)!.menuEditSheetNoGroupsHint,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[500],
+                color: JdcColors.of(context).dim,
               ),
               textAlign: TextAlign.center,
             ),
@@ -1173,7 +1173,7 @@ class OptionGroupSelectionCard extends StatelessWidget {
               Checkbox(
                 value: isSelected,
                 onChanged: (value) => onTap(),
-                activeColor: AppTheme.accentOrange,
+                activeColor: JdcColors.of(context).cta,
               ),
 
               // Icon
@@ -1181,12 +1181,12 @@ class OptionGroupSelectionCard extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: AppTheme.accentOrange.withValues(alpha: 0.1),
+                  color: JdcColors.of(context).brandSoft,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   _getGroupIcon(),
-                  color: AppTheme.accentOrange,
+                  color: JdcColors.of(context).cta,
                   size: 20,
                 ),
               ),
@@ -1209,7 +1209,7 @@ class OptionGroupSelectionCard extends StatelessWidget {
                       _getSelectionText(context),
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: JdcColors.of(context).muted,
                       ),
                     ),
                     if (optionCount > 0)
@@ -1218,7 +1218,7 @@ class OptionGroupSelectionCard extends StatelessWidget {
                             .menuEditOptionCount(optionCount.toString()),
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppTheme.accentOrange,
+                          color: JdcColors.of(context).cta,
                         ),
                       ),
                   ],

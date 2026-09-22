@@ -319,7 +319,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get foodHomeEmptySearch => 'ไม่พบร้านอาหารที่ค้นหา';
 
   @override
-  String get foodHomeEmptyNoArea => 'ในพื้นที่ของคุณยังไม่มีร้านอาหาร';
+  String get foodHomeEmptyNoArea => 'ในพื้นที่ของคุณยังไม่มีร้านอาหารเข้าร่วม';
 
   @override
   String get foodHomeEmptyNoneOpen => 'ไม่มีร้านอาหารเปิดให้บริการ';
@@ -332,7 +332,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String foodHomeEmptyNoAreaHint(Object radius) {
-    return 'ไม่พบร้านอาหารที่เปิดอยู่ภายในรัศมี $radius กม.';
+    return 'ยังไม่มีร้านอาหารเข้าร่วมภายในรัศมี $radius กม. จากตำแหน่งของคุณ';
   }
 
   @override
@@ -351,6 +351,38 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get foodHomeEstTime => '20-30 นาที';
+
+  @override
+  String get foodHomeOpenNowTitle => 'ร้านเปิดอยู่ตอนนี้';
+
+  @override
+  String get foodHomeSeeAll => 'ดูทั้งหมด';
+
+  @override
+  String get foodHomeAllShopsTooltip => 'ดูร้านทั้งหมด';
+
+  @override
+  String foodHomeOpenUntil(Object time) {
+    return 'เปิดถึง $time';
+  }
+
+  @override
+  String get foodCategoryOther => 'อื่นๆ';
+
+  @override
+  String get foodHomeFavoriteAdd => 'เพิ่มเป็นร้านโปรด';
+
+  @override
+  String get foodHomeFavoriteRemove => 'เอาออกจากร้านโปรด';
+
+  @override
+  String get foodHomeFavoriteError => 'อัปเดตร้านโปรดไม่สำเร็จ ลองใหม่อีกครั้ง';
+
+  @override
+  String get foodHomeEmptyCategory => 'ยังไม่มีร้านในหมวดนี้ที่เปิดอยู่ตอนนี้';
+
+  @override
+  String get foodHomeEmptyCategoryHint => 'ลองเลือกหมวดอื่น หรือแตะหมวดเดิมอีกครั้งเพื่อดูร้านทั้งหมด';
 
   @override
   String get foodPromoCodeTitle => 'โค้ดส่วนลด';
@@ -5960,4 +5992,540 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get rejectedDeletionBack => 'กลับสู่หน้าล็อกอิน';
+
+  @override
+  String get driverServiceTypeTitle => 'ประเภทงานที่รับ';
+
+  @override
+  String get driverServiceTypeSubtitle => 'เลือกประเภทงานที่ต้องการรับ (ไม่เลือก = รับทั้งหมด)';
+
+  @override
+  String get driverServiceTypeFood => 'ส่งอาหาร';
+
+  @override
+  String get driverServiceTypeRide => 'เรียกรถ';
+
+  @override
+  String get driverServiceTypeParcel => 'ส่งพัสดุ';
+
+  @override
+  String get driverServiceTypeLaundry => 'รับส่งผ้าซักรีด';
+
+  @override
+  String get driverServiceTypeFoodDesc => 'ออเดอร์จากร้านในระบบ';
+
+  @override
+  String get driverServiceTypeRideDesc => 'รับส่งผู้โดยสาร';
+
+  @override
+  String get driverServiceTypeParcelDesc => 'พัสดุขนาดไม่เกิน 10 กก.';
+
+  @override
+  String get driverServiceTypeLaundryDesc => 'รับผ้าจากลูกค้าไปร้าน และส่งคืน';
+
+  @override
+  String get driverServiceTypeSave => 'บันทึกการตั้งค่า';
+
+  @override
+  String driverServiceTypeSaveError(Object error) {
+    return 'บันทึกไม่สำเร็จ: $error';
+  }
+
+  @override
+  String driverProfileRatingJobs(Object rating, Object count) {
+    return '$rating · $count งาน';
+  }
+
+  @override
+  String driverJobBaht(Object amount) {
+    return '฿ $amount';
+  }
+
+  @override
+  String driverJobBahtNeg(Object amount) {
+    return '-฿ $amount';
+  }
+
+  @override
+  String driverEarningsBaht(Object amount) {
+    return '฿$amount';
+  }
+
+  @override
+  String driverEarningsBahtNeg(Object amount) {
+    return '-฿$amount';
+  }
+
+  @override
+  String get driverEarningsExportCsv => 'ส่งออก CSV';
+
+  @override
+  String get driverEarningsFilterFood => '🍔 อาหาร';
+
+  @override
+  String get driverEarningsFilterRide => '🚗 รับส่ง';
+
+  @override
+  String get driverEarningsFilterParcel => '📦 พัสดุ';
+
+  @override
+  String get driverEarningsWeekdayMon => 'จ';
+
+  @override
+  String get driverEarningsWeekdayTue => 'อ';
+
+  @override
+  String get driverEarningsWeekdayWed => 'พ';
+
+  @override
+  String get driverEarningsWeekdayThu => 'พฤ';
+
+  @override
+  String get driverEarningsWeekdayFri => 'ศ';
+
+  @override
+  String get driverEarningsWeekdaySat => 'ส';
+
+  @override
+  String get driverEarningsWeekdaySun => 'อา';
+
+  @override
+  String get driverEarningsWeeklyChartTitle => 'รายได้ 7 วันที่ผ่านมา';
+
+  @override
+  String get driverEarningsCsvHeader => 'วันที่,ประเภท,สถานะ,รหัสงาน,รายได้คนขับ,ค่าธรรมเนียม App';
+
+  @override
+  String get driverEarningsCsvShareSubject => 'รายงานรายได้คนขับ';
+
+  @override
+  String driverEarningsExportError(Object error) {
+    return 'ส่งออกไม่สำเร็จ: $error';
+  }
+
+  @override
+  String get driverWalletBucketTopup => 'เติมเอง';
+
+  @override
+  String get driverWalletBucketTopupHint => 'ถอนขั้นต่ำ ฿100';
+
+  @override
+  String get driverWalletBucketSystem => 'จากระบบ';
+
+  @override
+  String get driverWalletBucketSystemHint => 'รางวัล/ชดเชย · ถอนขั้นต่ำ ฿200';
+
+  @override
+  String get driverWalletTypeCouponCompensation => 'ชดเชยส่วนลดคูปอง';
+
+  @override
+  String get driverWalletTypeJobPayout => 'รับค่าออเดอร์ (ลูกค้าจ่ายผ่าน Wallet)';
+
+  @override
+  String get driverWalletTypeWithdrawalPending => 'ถอนเงิน (รอโอน)';
+
+  @override
+  String get driverWalletTypeRefund => 'คืนเงิน';
+
+  @override
+  String get driverPerfTitle => 'สถิติและคะแนน';
+
+  @override
+  String driverPerfBadgeLevel(Object level) {
+    return 'ระดับ $level';
+  }
+
+  @override
+  String get driverPerfAvgRating => 'คะแนนเฉลี่ยจากลูกค้า';
+
+  @override
+  String get driverPerfOutOfFive => 'จากคะแนนเต็ม 5.0';
+
+  @override
+  String get driverPerfMaxLevel => 'ระดับสูงสุดแล้ว';
+
+  @override
+  String driverPerfBadgeProgress(Object current, Object target) {
+    return 'คืบหน้าสู่ระดับถัดไป $current / $target';
+  }
+
+  @override
+  String get driverPerfMetrics => 'ตัวชี้วัด';
+
+  @override
+  String get driverPerfAcceptanceRate => 'อัตราการรับงาน';
+
+  @override
+  String get driverPerfTarget90 => 'เป้าหมาย 90%';
+
+  @override
+  String get driverPerfCompletionRate => 'อัตราการส่งสำเร็จ';
+
+  @override
+  String get driverPerfCompletionRateHint => 'งานที่ส่งถึงผู้รับครบถ้วน';
+
+  @override
+  String get driverPerfTotalCompleted => 'งานสำเร็จทั้งหมด';
+
+  @override
+  String get driverPerfTotalCompletedHint => 'สะสมตั้งแต่เริ่มทำงาน';
+
+  @override
+  String driverPerfJobsCount(Object count) {
+    return '$count งาน';
+  }
+
+  @override
+  String get driverPerfLevel => 'ระดับ';
+
+  @override
+  String driverShiftStartError(Object error) {
+    return 'เริ่มกะไม่สำเร็จ: $error';
+  }
+
+  @override
+  String driverShiftEndError(Object error) {
+    return 'หยุดกะไม่สำเร็จ: $error';
+  }
+
+  @override
+  String get driverShiftTitle => 'กะทำงาน';
+
+  @override
+  String get driverShiftWeeklyHours => 'วิ่งสะสม 7 วัน';
+
+  @override
+  String driverShiftHoursMinutes(Object hours, Object minutes) {
+    return '$hours ชม. $minutes นาที';
+  }
+
+  @override
+  String get driverShiftWeeklyShifts => 'กะ 7 วัน';
+
+  @override
+  String get driverShiftWeeklyJobs => 'งาน 7 วัน';
+
+  @override
+  String get driverShiftActive => 'กะปัจจุบัน';
+
+  @override
+  String get driverShiftNotStarted => 'ยังไม่ได้เริ่มกะ';
+
+  @override
+  String get driverShiftActiveBadge => 'กำลังทำงาน';
+
+  @override
+  String driverShiftStartedAt(Object time) {
+    return 'เริ่มเมื่อ $time';
+  }
+
+  @override
+  String get driverShiftEnd => 'หยุดกะ';
+
+  @override
+  String get driverShiftStart => 'เริ่มกะ';
+
+  @override
+  String get driverShiftHistoryTitle => 'ประวัติกะ 7 วัน';
+
+  @override
+  String get driverShiftHistoryEmpty => 'ยังไม่มีประวัติกะ';
+
+  @override
+  String driverShiftCardSummary(Object duration, Object jobs) {
+    return 'ระยะเวลา $duration · งาน $jobs ครั้ง';
+  }
+
+  @override
+  String withdrawMinBucketError(Object amount, Object bucket) {
+    return 'ถอนขั้นต่ำ ฿$amount สำหรับ$bucket';
+  }
+
+  @override
+  String get withdrawBucketTopup => 'เงินที่เติมเอง';
+
+  @override
+  String get withdrawBucketSystem => 'เงินจากระบบ';
+
+  @override
+  String withdrawAvailable(Object amount) {
+    return 'ถอนได้ ฿$amount';
+  }
+
+  @override
+  String get withdrawBahtPrefix => '฿ ';
+
+  @override
+  String withdrawMinMaxHelper(Object min, Object available) {
+    return 'ขั้นต่ำ ฿$min · ถอนได้ ฿$available';
+  }
+
+  @override
+  String withdrawMinAmount(Object amount) {
+    return 'ขั้นต่ำ ฿$amount';
+  }
+
+  @override
+  String withdrawBucketInsufficient(Object amount) {
+    return 'ยอดในถังนี้ไม่พอ (฿$amount)';
+  }
+
+  @override
+  String get driverDashJobLaundry => 'ซักผ้า';
+
+  @override
+  String get driverDashQuickPerf => 'ผลงาน';
+
+  @override
+  String get driverDashQuickShift => 'กะงาน';
+
+  @override
+  String get driverDashServiceTypeSettings => 'ตั้งค่าประเภทงาน';
+
+  @override
+  String get driverDashEarnBreakdownFood => 'อาหาร';
+
+  @override
+  String get driverDashEarnBreakdownRide => 'เรียกรถ';
+
+  @override
+  String get driverDashEarnBreakdownParcel => 'พัสดุ';
+
+  @override
+  String driverDashEarnBreakdownEntry(Object type, Object amount) {
+    return '$type ฿$amount';
+  }
+
+  @override
+  String driverDashNoJobsInRadius(Object km) {
+    return 'ไม่มีงานในรัศมี $km กม.';
+  }
+
+  @override
+  String get driverDashPullToRefresh => 'ดึงหน้าจอลงเพื่อรีเฟรช';
+
+  @override
+  String get driverDashScheduledJobs => 'งานนัดหมาย';
+
+  @override
+  String get driverDashScheduledJobsEmpty => 'ไม่มีงานนัดหมาย';
+
+  @override
+  String get driverDashMonthJan => 'ม.ค.';
+
+  @override
+  String get driverDashMonthFeb => 'ก.พ.';
+
+  @override
+  String get driverDashMonthMar => 'มี.ค.';
+
+  @override
+  String get driverDashMonthApr => 'เม.ย.';
+
+  @override
+  String get driverDashMonthMay => 'พ.ค.';
+
+  @override
+  String get driverDashMonthJun => 'มิ.ย.';
+
+  @override
+  String get driverDashMonthJul => 'ก.ค.';
+
+  @override
+  String get driverDashMonthAug => 'ส.ค.';
+
+  @override
+  String get driverDashMonthSep => 'ก.ย.';
+
+  @override
+  String get driverDashMonthOct => 'ต.ค.';
+
+  @override
+  String get driverDashMonthNov => 'พ.ย.';
+
+  @override
+  String get driverDashMonthDec => 'ธ.ค.';
+
+  @override
+  String driverDashScheduledTime(Object day, Object month, Object year, Object hour, Object minute) {
+    return '$day $month $year $hour:$minute น.';
+  }
+
+  @override
+  String get driverNavLaundryArrivedPickup => 'ถึงจุดรับผ้า';
+
+  @override
+  String get driverNavLaundryPhotoPickup => 'ถ่ายรูปและรับผ้า';
+
+  @override
+  String get driverNavLaundryComplete => 'ส่งงานซักผ้าให้เสร็จ';
+
+  @override
+  String driverNavLaundryConfirmError(Object error) {
+    return 'ยืนยันรับผ้าไม่สำเร็จ: $error';
+  }
+
+  @override
+  String get driverNavLaundryEvidenceSaved => 'บันทึกหลักฐานรับผ้าแล้ว';
+
+  @override
+  String driverNavBahtPlus(Object amount) {
+    return '+฿$amount';
+  }
+
+  @override
+  String get driverNavStepAccept => 'รับงาน';
+
+  @override
+  String get driverNavStepArriveStore => 'มาถึงร้าน';
+
+  @override
+  String get driverNavStepPickupFood => 'รับอาหาร';
+
+  @override
+  String get driverNavStepDelivered => 'ส่งแล้ว';
+
+  @override
+  String get driverNavStepArrivePickup => 'มาถึงจุดรับ';
+
+  @override
+  String get driverNavStepDelivering => 'กำลังส่ง';
+
+  @override
+  String get driverNavStepDone => 'เสร็จสิ้น';
+
+  @override
+  String driverNavEtaMinutes(Object minutes) {
+    return '$minutes นาที';
+  }
+
+  @override
+  String get topupBeamFailed => 'การชำระเงินไม่สำเร็จ กรุณาสร้าง QR ใหม่';
+
+  @override
+  String get topupBeamExpired => 'QR หมดอายุแล้ว — ถ้าชำระแล้ว ระบบจะเติมเงินให้อัตโนมัติ ไม่ต้องจ่ายซ้ำ';
+
+  @override
+  String get topupBeamManualReview => 'ได้รับการชำระเงินแล้ว รอแอดมินตรวจสอบยอด';
+
+  @override
+  String get topupBeamNotFound => 'ยังไม่พบการชำระเงิน';
+
+  @override
+  String get topupBeamQrExpired => 'QR หมดอายุแล้ว';
+
+  @override
+  String topupBeamExpiresIn(Object time) {
+    return 'QR หมดอายุใน $time';
+  }
+
+  @override
+  String get topupBeamScanPrompt => 'สแกน QR PromptPay เพื่อชำระเงิน';
+
+  @override
+  String get topupBeamHowItWorks => 'ชำระผ่าน Beam — เงินเข้า Wallet อัตโนมัติ ไม่ต้องแนบสลิป';
+
+  @override
+  String get topupBeamPlayground => 'โหมดทดสอบ (Playground)';
+
+  @override
+  String get topupBeamQrMissing => 'ไม่พบรูป QR';
+
+  @override
+  String get topupBeamWaiting => 'รอการชำระเงิน...';
+
+  @override
+  String get topupBeamCheckStatus => 'ตรวจสอบสถานะ';
+
+  @override
+  String get topupBeamNewQr => 'สร้าง QR ใหม่';
+
+  @override
+  String get topupSlipAttachFirst => 'กรุณาแนบรูปสลิปก่อนยืนยันเติมเงิน';
+
+  @override
+  String get topupSlipVerifyFailed => 'ตรวจสลิปไม่สำเร็จ กรุณาเลือกสลิปใหม่ หรือติดต่อแอดมินหากโอนเงินแล้ว';
+
+  @override
+  String get topupSlipReasonFailed => 'สลิปนี้ไม่ผ่านการตรวจสอบอัตโนมัติ กรุณาเลือกสลิปโอนเงินจริงจากธนาคารแล้วลองใหม่';
+
+  @override
+  String get topupSlipReasonAmount => 'ยอดเงินในสลิปไม่ตรงกับยอดเติมเงิน กรุณาตรวจสอบยอดเงินแล้วลองใหม่';
+
+  @override
+  String get topupSlipReasonReceiver => 'บัญชีผู้รับในสลิปไม่ตรงกับบัญชีปลายทางของระบบ กรุณาตรวจสอบบัญชีปลายทาง';
+
+  @override
+  String get topupSlipReasonDuplicate => 'สลิปนี้ถูกใช้เติมเงินแล้ว กรุณาใช้สลิปใหม่';
+
+  @override
+  String get topupSlipReasonRate => 'ตรวจสลิปหลายครั้งเกินไป กรุณารอสักครู่แล้วลองใหม่';
+
+  @override
+  String get topupSlipReasonInvalidAmount => 'จำนวนเงินเติมไม่ถูกต้อง กรุณาสร้าง QR ใหม่';
+
+  @override
+  String get topupSlipReasonInvalidImage => 'ไฟล์สลิปไม่ถูกต้อง กรุณาเลือกไฟล์รูปภาพใหม่';
+
+  @override
+  String get topupSlipReasonFallback => 'ตรวจสลิปไม่ผ่าน กรุณาตรวจสอบสลิปแล้วลองใหม่';
+
+  @override
+  String get topupSlipHumanFraud => 'สลิปนี้ไม่ผ่านการตรวจสอบ กรุณาใช้สลิปโอนเงินจริงจากธนาคาร และตรวจสอบว่ายอดเงินกับบัญชีปลายทางถูกต้อง';
+
+  @override
+  String get topupWithdrawRequestError => 'ส่งคำขอถอนไม่สำเร็จ (ขั้นต่ำ ฿100 และต้องกรอกบัญชีให้ครบ)';
+
+  @override
+  String get topupSlipStepHint => 'โอนเงินตาม QR แล้วแนบรูปสลิป ระบบจะตรวจสลิปและเติมเงินให้อัตโนมัติ';
+
+  @override
+  String get topupSlipAutoDone => 'ตรวจสลิปและเติมเงินเข้ากระเป๋าแล้ว';
+
+  @override
+  String get topupSlipTopUpAgain => 'เติมเงินอีกครั้ง';
+
+  @override
+  String get topupSlipSelected => 'เลือกสลิปแล้ว';
+
+  @override
+  String get topupSlipAttachSlip => 'แนบสลิปโอนเงิน';
+
+  @override
+  String get topupSlipReady => 'พร้อมตรวจสอบสลิป';
+
+  @override
+  String get topupSlipPickHint => 'ถ่ายรูปหรือเลือกรูปสลิปหลังโอนตาม QR';
+
+  @override
+  String get topupSlipVerifyHint => 'ระบบจะตรวจยอดและป้องกันสลิปซ้ำก่อนเติมเงินเข้ากระเป๋า';
+
+  @override
+  String get topupSlipChange => 'เปลี่ยนสลิป';
+
+  @override
+  String get topupSlipChoose => 'เลือกรูปสลิป';
+
+  @override
+  String get topupSlipRemove => 'ลบสลิป';
+
+  @override
+  String get topupSlipChecking => 'กำลังตรวจสลิป...';
+
+  @override
+  String topupSlipCheckAndTopUp(Object amount) {
+    return 'ตรวจสลิปและเติมเงิน ฿$amount';
+  }
+
+  @override
+  String get topupStatusAwaiting => 'รอชำระเงิน';
+
+  @override
+  String get topupStatusQrExpired => 'QR หมดอายุ';
+
+  @override
+  String get topupStatusFailed => 'ชำระไม่สำเร็จ';
+
+  @override
+  String get driverNavProxLaundryPickup => 'จุดรับผ้า';
 }

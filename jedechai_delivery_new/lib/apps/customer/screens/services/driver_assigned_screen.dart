@@ -1,12 +1,13 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../theme/jdc_colors.dart';
+import '../../../../theme/jdc_layout.dart';
 import '../../../../common/models/booking.dart';
 import '../../../../common/utils/order_code_formatter.dart';
 
 /// Driver Assigned Screen
-/// 
+///
 /// Shows when a driver has accepted the booking
 class DriverAssignedScreen extends StatefulWidget {
   final Booking booking;
@@ -23,12 +24,12 @@ class DriverAssignedScreen extends StatefulWidget {
 class _DriverAssignedScreenState extends State<DriverAssignedScreen> {
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: jdc.paper,
       appBar: AppBar(
-        backgroundColor: AppTheme.primaryGreen,
-        foregroundColor: Colors.white,
+        backgroundColor: jdc.panel,
+        foregroundColor: jdc.onPanel,
         title: Text(AppLocalizations.of(context)!.driverAssignedTitle),
         leading: IconButton(
           icon: const Icon(Icons.close),
@@ -38,175 +39,175 @@ class _DriverAssignedScreenState extends State<DriverAssignedScreen> {
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            children: [
-              const Spacer(flex: 2),
-              
-              // Success icon
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryGreen,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primaryGreen.withValues(alpha: 0.3),
-                      blurRadius: 30,
-                      spreadRadius: 10,
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.check_circle,
-                  color: Colors.white,
-                  size: 60,
-                ),
-              ),
-              
-              const SizedBox(height: 40),
-              
-              // Success message
-              Text(
-                AppLocalizations.of(context)!.driverAssignedHeading,
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              
-              const SizedBox(height: 16),
-              
-              Text(
-                AppLocalizations.of(context)!.driverAssignedSubtitle,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                ),
-                textAlign: TextAlign.center,
-              ),
-              
-              const SizedBox(height: 8),
-              
-              // Booking ID
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'Booking ID: ${OrderCodeFormatter.formatByServiceType(widget.booking.id, serviceType: widget.booking.serviceType)}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ),
-              
-              const Spacer(flex: 2),
-              
-              // Driver info (placeholder)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.grey[50],
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[200]!),
-                ),
-                child: Column(
-                  children: [
-                    Row(
+        // จอเตี้ย (มือถือแนวนอน) Column + Spacer จะล้น ต้องเลื่อนได้
+        // ส่วนจอสูงยังดันเนื้อหาให้เต็มเหมือนเดิมด้วย minHeight + IntrinsicHeight
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Padding(
+                  padding: const EdgeInsets.all(JdcSpacing.xxl),
+                  child: JdcContentFrame(
+                    padded: false,
+                    child: Column(
                       children: [
-                        CircleAvatar(
-                          backgroundColor: AppTheme.primaryGreen,
-                          child: const Icon(
-                            Icons.person,
-                            color: Colors.white,
+                        const Spacer(flex: 2),
+
+                        // Success icon
+                        Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            color: jdc.cta,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: jdc.cta.withValues(alpha: 0.3),
+                                blurRadius: 30,
+                                spreadRadius: 10,
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.check_circle,
+                            color: jdc.onCta,
+                            size: 60,
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+
+                        const SizedBox(height: JdcSpacing.xxxl + JdcSpacing.sm),
+
+                        // Success message
+                        Text(
+                          AppLocalizations.of(context)!.driverAssignedHeading,
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: jdc.text,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+
+                        const SizedBox(height: JdcSpacing.lg),
+
+                        Text(
+                          AppLocalizations.of(context)!.driverAssignedSubtitle,
+                          style: TextStyle(fontSize: 16, color: jdc.muted),
+                          textAlign: TextAlign.center,
+                        ),
+
+                        const SizedBox(height: JdcSpacing.sm),
+
+                        // Booking ID
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: JdcSpacing.lg,
+                              vertical: JdcSpacing.sm),
+                          decoration: BoxDecoration(
+                            color: jdc.sunken,
+                            borderRadius: BorderRadius.circular(JdcRadius.chip),
+                            border: Border.all(color: jdc.line),
+                          ),
+                          child: Text(
+                            'Booking ID: ${OrderCodeFormatter.formatByServiceType(widget.booking.id, serviceType: widget.booking.serviceType)}',
+                            style: TextStyle(fontSize: 14, color: jdc.muted),
+                          ),
+                        ),
+
+                        const Spacer(flex: 2),
+
+                        // Driver info
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(JdcSpacing.xl),
+                          decoration: BoxDecoration(
+                            color: jdc.surface,
+                            borderRadius: BorderRadius.circular(JdcRadius.card),
+                            border: Border.all(color: jdc.line),
+                          ),
+                          child: Row(
                             children: [
-                              Text(
-                                widget.booking.driverName ?? AppLocalizations.of(context)!.driverAssignedOnTheWay,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                              CircleAvatar(
+                                backgroundColor: jdc.brandSoft,
+                                child:
+                                    Icon(Icons.person, color: jdc.brandOnSoft),
                               ),
-                              Text(
-                                widget.booking.driverPhone ?? AppLocalizations.of(context)!.driverAssignedEta,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[600],
+                              const SizedBox(width: JdcSpacing.lg),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      widget.booking.driverName ??
+                                          AppLocalizations.of(context)!
+                                              .driverAssignedOnTheWay,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: jdc.text,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Text(
+                                      widget.booking.driverPhone ??
+                                          AppLocalizations.of(context)!
+                                              .driverAssignedEta,
+                                      style: TextStyle(
+                                          fontSize: 14, color: jdc.muted),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
                         ),
+
+                        const SizedBox(height: JdcSpacing.xxl),
+
+                        // Action buttons
+                        Column(
+                          children: [
+                            SizedBox(
+                              width: double.infinity,
+                              height: JdcTouch.button,
+                              child: OutlinedButton.icon(
+                                onPressed: _showContactDialog,
+                                icon: const Icon(Icons.phone),
+                                label: Text(AppLocalizations.of(context)!
+                                    .driverAssignedContact),
+                                style: OutlinedButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(JdcRadius.field),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: JdcSpacing.md),
+                            SizedBox(
+                              width: double.infinity,
+                              child: TextButton(
+                                onPressed: _showCancelDialog,
+                                child: Text(
+                                  AppLocalizations.of(context)!
+                                      .driverAssignedCancelBooking,
+                                  style: TextStyle(
+                                      fontSize: 16, color: jdc.danger),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const Spacer(),
                       ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-              
-              const SizedBox(height: 24),
-              
-              // Action buttons
-              Column(
-                children: [
-                  // Contact driver button
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        _showContactDialog();
-                      },
-                      icon: const Icon(Icons.phone),
-                      label: Text(AppLocalizations.of(context)!.driverAssignedContact),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 12),
-                  
-                  // Cancel booking button
-                  SizedBox(
-                    width: double.infinity,
-                    child: TextButton(
-                      onPressed: () {
-                        _showCancelDialog();
-                      },
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      child: Text(
-                        AppLocalizations.of(context)!.driverAssignedCancelBooking,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.red,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              
-              const Spacer(),
-            ],
+            ),
           ),
         ),
       ),
@@ -227,7 +228,8 @@ class _DriverAssignedScreenState extends State<DriverAssignedScreen> {
               subtitle: Text(widget.booking.driverPhone ?? '-'),
               onTap: widget.booking.driverPhone != null
                   ? () async {
-                      final phone = widget.booking.driverPhone!.replaceAll(RegExp(r'[^0-9+]'), '');
+                      final phone = widget.booking.driverPhone!
+                          .replaceAll(RegExp(r'[^0-9+]'), '');
                       final uri = Uri.parse('tel:$phone');
                       if (await canLaunchUrl(uri)) {
                         await launchUrl(uri);
@@ -238,7 +240,8 @@ class _DriverAssignedScreenState extends State<DriverAssignedScreen> {
             ListTile(
               leading: const Icon(Icons.message),
               title: Text(AppLocalizations.of(context)!.driverAssignedMessage),
-              subtitle: Text(AppLocalizations.of(context)!.driverAssignedMessageSub),
+              subtitle:
+                  Text(AppLocalizations.of(context)!.driverAssignedMessageSub),
             ),
           ],
         ),
@@ -253,6 +256,7 @@ class _DriverAssignedScreenState extends State<DriverAssignedScreen> {
   }
 
   void _showCancelDialog() {
+    final jdc = JdcColors.of(context);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -269,7 +273,7 @@ class _DriverAssignedScreenState extends State<DriverAssignedScreen> {
               Navigator.of(context).popUntil((r) => r.isFirst);
             },
             style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
+              foregroundColor: jdc.danger,
             ),
             child: Text(AppLocalizations.of(context)!.driverAssignedCancel),
           ),

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+
+import '../../../../theme/jdc_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../common/models/coupon.dart';
 import '../../../../common/services/coupon_service.dart';
-import '../../../../theme/app_theme.dart';
 
 class MyCouponsScreen extends StatefulWidget {
   final bool isSelectingMode;
@@ -99,9 +100,9 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
         elevation: 0,
         bottom: TabBar(
           controller: _tabController,
-          labelColor: AppTheme.primaryGreen,
+          labelColor: JdcColors.of(context).cta,
           unselectedLabelColor: Colors.grey,
-          indicatorColor: AppTheme.primaryGreen,
+          indicatorColor: JdcColors.of(context).cta,
           tabs: [
             Tab(text: AppLocalizations.of(context)!.couponTabMine),
             Tab(text: AppLocalizations.of(context)!.couponTabDiscover),
@@ -238,7 +239,7 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
         break;
       default:
         icon = Icons.local_offer;
-        iconColor = AppTheme.primaryGreen;
+        iconColor = JdcColors.of(context).cta;
     }
 
     return Card(
@@ -278,13 +279,13 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryGreen.withValues(alpha: 0.12),
+                            color: JdcColors.of(context).cta.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: Text(
                             'x$quantity',
-                            style: const TextStyle(
-                              color: AppTheme.primaryGreen,
+                            style: TextStyle(
+                              color: JdcColors.of(context).cta,
                               fontWeight: FontWeight.w700,
                               fontSize: 12,
                             ),
@@ -325,7 +326,7 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
                     ? null
                     : () => _claimCoupon(coupon),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryGreen,
+                  backgroundColor: JdcColors.of(context).cta,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),

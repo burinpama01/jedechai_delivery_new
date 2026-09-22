@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JDC — แผน Implement UI Redesign (Flutter) v1</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light;
+  --paper:#f4f7f4;--surface:#ffffff;--sunken:#eef2ee;--line:#dbe4de;
+  --text:#0f3b33;--muted:#5c6f68;
+  --panel:#0f3b33;--on-panel:#ffffff;--panel-dim:#b7cfc8;
+  --brand:#e39c2e;--brand-soft:#fff3dc;--brand-line:#f0cf95;--cta:#8a5a0a;--link:#8a5a0a;
+  --green-ink:#2b6b2b;--green-soft:#e6f4e2;--green-line:#bfe0b6;
+  --teal-soft:#e2f1ef;--teal-ink:#16605a;
+  --danger-ink:#8f1c14;--danger-soft:#ffece9;--danger-line:#f0b3ab;
+  --sh:0 6px 18px rgba(12,44,37,.07);
+  --mono:ui-monospace,"Cascadia Mono","Consolas",monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:0 0 80px;font-family:"Noto Sans Thai",system-ui,sans-serif;color:var(--text);background:var(--paper);line-height:1.7;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:"IBM Plex Sans Thai","Noto Sans Thai",sans-serif;margin:0;line-height:1.35}
+header{background:linear-gradient(132deg,#0e382f 0%,#1d5f50 55%,#8a5a0a 160%);color:var(--on-panel);padding:44px 16px 38px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+header .wrap{padding:0}
+header h1{font-size:30px;font-weight:700}
+header p{margin:10px 0 0;color:var(--panel-dim);font-size:15px}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.meta span{padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.24);font-size:12px;font-weight:600}
+section{margin-top:40px}
+h2{font-size:21px;font-weight:700;padding-bottom:10px;border-bottom:2px solid var(--line);margin-bottom:18px}
+h2 .n{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:10px;background:var(--panel);color:var(--on-panel);font-size:15px;margin-right:10px;vertical-align:-6px}
+h3{font-size:16px;font-weight:700;margin:24px 0 10px}
+p{margin:0 0 12px}
+code{font-family:var(--mono);font-size:.88em;background:var(--sunken);padding:2px 6px;border-radius:6px;word-break:break-word}
+pre{background:var(--panel);color:#e9f3ef;padding:16px;border-radius:14px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.65}
+pre code{background:none;padding:0;color:inherit}
+table{width:100%;border-collapse:collapse;background:var(--surface);border-radius:14px;overflow:hidden;box-shadow:var(--sh);font-size:13.5px;margin:12px 0 18px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--sunken);font-weight:700;font-size:12.5px;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.mono,th.mono{font-family:var(--mono);font-size:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px;box-shadow:var(--sh);margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:var(--sh)}
+.stat b{display:block;font-family:"IBM Plex Sans Thai",sans-serif;font-size:24px;font-weight:700}
+.stat span{font-size:12px;color:var(--muted)}
+.tag{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:700;white-space:nowrap}
+.t-block{background:var(--danger-soft);color:var(--danger-ink);border:1px solid var(--danger-line)}
+.t-par{background:var(--green-soft);color:var(--green-ink);border:1px solid var(--green-line)}
+.t-qa{background:var(--teal-soft);color:var(--teal-ink)}
+.t-opt{background:var(--sunken);color:var(--muted)}
+.note{border-left:4px solid var(--brand);background:var(--brand-soft);padding:12px 16px;border-radius:0 12px 12px 0;margin:14px 0;font-size:14px}
+.warn{border-left:4px solid var(--danger-ink);background:var(--danger-soft);padding:12px 16px;border-radius:0 12px 12px 0;margin:14px 0;font-size:14px}
+ul,ol{margin:0 0 12px;padding-left:22px}
+li{margin-bottom:6px}
+.wave{border:1px solid var(--line);border-radius:16px;overflow:hidden;margin:18px 0;background:var(--surface);box-shadow:var(--sh)}
+.wave>h3{margin:0;padding:14px 18px;background:var(--panel);color:var(--on-panel);font-size:15px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.wave>h3 small{font-weight:500;color:var(--panel-dim);font-size:12.5px}
+.wave .body{padding:4px 18px 14px}
+.wave table{box-shadow:none;border:1px solid var(--line)}
+footer{margin-top:48px;padding-top:20px;border-top:2px solid var(--line);font-size:12.5px;color:var(--muted)}
+@media (max-width:640px){
+  header h1{font-size:23px}
+  table{display:block;overflow-x:auto;white-space:nowrap}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>แผน Implement UI Redesign ลงโค้ด Flutter</h1>
+    <p>ย้ายดีไซน์ 61 หน้าจากแคนวาส JDC Redesign เข้าสู่แอปจริง — รองรับทั้งโหมดสว่างและโหมดมืด และแบ่งงานให้เอเจนต์หลายตัวทำขนานกันได้</p>
+    <div class="meta">
+      <span>เวอร์ชัน v1 · 20 ก.ย. 2569</span>
+      <span>แอป 1.13.1+124</span>
+      <span>artboard 61 หน้า</span>
+      <span>หน้าจอโค้ด 61 ไฟล์</span>
+      <span>ทำขนานได้สูงสุด 5 เอเจนต์</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+<section>
+  <h2><span class="n">1</span>เป้าหมายและขอบเขต</h2>
+  <div class="card">
+    <h3 style="margin-top:0">เป้าหมาย</h3>
+    <ol>
+      <li>แอปทั้ง 3 role ใช้ชุดสีเดียวกันจากโลโก้ JDC (petrol green + ทอง) ทั้ง <b>โหมดสว่างและโหมดมืด</b></li>
+      <li>เลิกกระจายสีตามไฟล์ — ทุกสีมาจาก token กลางชุดเดียว แก้ที่เดียวเปลี่ยนทั้งแอป</li>
+      <li>หน้าจอ 61 หน้า หน้าตาตรงกับ artboard ที่อนุมัติแล้ว</li>
+    </ol>
+    <h3>อยู่ในขอบเขต</h3>
+    <ul>
+      <li><code>lib/theme/</code> — สร้าง token layer ใหม่ทั้งชุด</li>
+      <li><code>lib/apps/customer|merchant|driver/</code> — 61 หน้าจอ + widget ที่เกี่ยวข้อง</li>
+      <li><code>lib/common/widgets/</code>, <code>lib/common/screens/</code> — องค์ประกอบร่วม</li>
+    </ul>
+    <h3>อยู่นอกขอบเขต (เฟสนี้)</h3>
+    <ul>
+      <li><code>lib/apps/admin/</code> — มี <code>admin_theme.dart</code> ของตัวเอง แยกเฟสทีหลัง (ดู Wave 4)</li>
+      <li>8 หน้า <code>lib/common/</code> ที่ยังไม่มี artboard (แจ้งไว้แล้ว ถ้าจะทำต้องสั่งเพิ่ม)</li>
+      <li>งาน backend / Supabase / business logic — แผนนี้แตะเฉพาะชั้นนำเสนอ</li>
+    </ul>
+  </div>
+  <div class="note"><b>ไม่ต้องรอแคนวาสขึ้น artifact</b> — ไฟล์ดีไซน์ตัวจริงอยู่ที่ <code>Design/jdc-canvas/project/</code> ครบ 61 หน้าและตรวจแล้ว เอเจนต์อ่านจากไฟล์ได้ตรง ๆ ส่วนการ publish ขึ้น artifact เป็นปัญหาเครื่องมือคนละเรื่อง (ISSUE-20260920-001) ไม่บล็อกงานนี้</div>
+</section>
+
+<section>
+  <h2><span class="n">2</span>ข้อเท็จจริงจากโค้ดจริง (วัดเมื่อ 20 ก.ย. 2569)</h2>
+  <div class="grid">
+    <div class="stat"><b>263</b><span>จุดที่เรียก <code>AppTheme.primaryGreen</code></span></div>
+    <div class="stat"><b>179</b><span>จุดที่เรียก <code>AppTheme.accentOrange</code></span></div>
+    <div class="stat"><b>126</b><span>จุดที่เรียก <code>AppTheme.accentBlue</code></span></div>
+    <div class="stat"><b>182</b><span>สี hardcode <code>Color(0xFF…)</code> ใน 34 ไฟล์</span></div>
+    <div class="stat"><b>194</b><span>บรรทัดใน <code>app_theme.dart</code></span></div>
+    <div class="stat"><b>34</b><span>ไฟล์เทสต์ที่ต้องไม่พัง</span></div>
+  </div>
+  <table>
+    <tr><th>เรื่อง</th><th>สภาพปัจจุบัน</th><th>ผลต่อแผน</th></tr>
+    <tr><td>ชื่อ token ผิดความหมาย</td><td><code>AppTheme.primaryGreen = Color(0xFFC79A3B)</code> — ชื่อว่าเขียวแต่ค่าคือทอง</td><td>ห้าม rename ทันที (263 จุด) ให้ทำ alias ชี้ token ใหม่ก่อน แล้วค่อยย้ายทีละโฟลเดอร์</td></tr>
+    <tr><td>token ขัดกัน 3 ชุด</td><td><code>app_theme.dart</code> ทอง · <code>Design/design_system.html</code> navy · <code>theme_config.dart</code> เขียว Material</td><td>ยุบเหลือชุดเดียวจากแคนวาส</td></tr>
+    <tr><td><code>lib/common/config/theme_config.dart</code></td><td><b>ไม่มีการเรียกใช้เลย (0 จุด)</b> = dead code</td><td>ลบทิ้งใน Wave 3</td></tr>
+    <tr><td>โหมดมืด</td><td><code>main.dart</code> ใช้ <code>themeMode: ThemeMode.system</code> + <code>AppTheme.darkTheme</code> อยู่แล้ว</td><td><b>ต้องรองรับต่อ</b> ห้ามปิด — ดูหัวข้อ 6</td></tr>
+    <tr><td>ฟอนต์</td><td>ไม่มี <code>google_fonts</code> และไม่มี <code>assets/fonts/</code> — ดีไซน์ใช้ IBM Plex Sans Thai + Noto Sans Thai</td><td>ต้องตัดสินใจก่อน Wave 1 (TASK-0.2)</td></tr>
+    <tr><td>แผนที่หน้าจอ</td><td>artboard 61 ↔ ไฟล์ <code>.dart</code> 61 ไฟล์ จับคู่ครบ ไม่มีซ้ำ ไม่มีขาด</td><td>ไฟล์แมป: <code>Design/jdc-canvas/mapping.json</code></td></tr>
+  </table>
+</section>
+
+<section>
+  <h2><span class="n">3</span>สถาปัตยกรรม token 3 ชั้น</h2>
+  <p>หัวใจของการทำงานขนานคือ <b>Wave 0 ต้องปิดจบก่อน</b> แล้วหลังจากนั้นไม่มีใครแตะไฟล์ธีมอีก ทุกเอเจนต์แค่ "เรียกใช้" token</p>
+  <table>
+    <tr><th>ชั้น</th><th class="mono">ไฟล์</th><th>หน้าที่</th></tr>
+    <tr><td>1 — ค่าดิบ</td><td class="mono">lib/theme/jdc_palette.dart</td><td>ค่าสีตรงกับ CSS variable ในแคนวาส 1:1 แยก <code>light</code> / <code>dark</code> ห้ามมี logic</td></tr>
+    <tr><td>2 — ความหมาย</td><td class="mono">lib/theme/jdc_colors.dart</td><td><code>ThemeExtension&lt;JdcColors&gt;</code> ชื่อเชิงหน้าที่ (panel, brand, cta, link, …) + <code>lerp</code> + <code>copyWith</code></td></tr>
+    <tr><td>3 — ธีม</td><td class="mono">lib/theme/app_theme.dart</td><td>ประกอบ <code>ColorScheme</code> light/dark, ลงทะเบียน extension, เก็บ alias เดิมไว้ชั่วคราว</td></tr>
+  </table>
+
+  <h3>ตารางแมป CSS variable → ฟิลด์ Dart</h3>
+  <table>
+    <tr><th class="mono">CSS (แคนวาส)</th><th class="mono">Dart</th><th>ใช้กับ</th><th class="mono">light</th><th class="mono">dark</th></tr>
+    <tr><td class="mono">--paper</td><td class="mono">scaffoldBackground</td><td>พื้นหลัง Scaffold</td><td class="mono">#f4f7f4</td><td class="mono">#0b1a17</td></tr>
+    <tr><td class="mono">--surface</td><td class="mono">surface</td><td>พื้นการ์ด (ขาวล้วนในโหมดสว่าง)</td><td class="mono">#ffffff</td><td class="mono">#12241f</td></tr>
+    <tr><td class="mono">--sunken</td><td class="mono">sunken</td><td>พื้นช่องกรอก/ไอคอนกลม</td><td class="mono">#eef2ee</td><td class="mono">#0e1f1b</td></tr>
+    <tr><td class="mono">--line</td><td class="mono">line</td><td>เส้นขอบ/เส้นคั่น</td><td class="mono">#dbe4de</td><td class="mono">#24403a</td></tr>
+    <tr><td class="mono">--text / --muted</td><td class="mono">text / muted</td><td>ตัวอักษรหลัก/รอง</td><td class="mono">#0f3b33 / #5c6f68</td><td class="mono">#e8f1ed / #9cb1a9</td></tr>
+    <tr><td class="mono">--panel / --on-panel</td><td class="mono">panel / onPanel</td><td>แถบหัวเข้ม + ตัวอักษรบนนั้น</td><td class="mono">#0f3b33 / #ffffff</td><td class="mono">#16352e / #f2f8f5</td></tr>
+    <tr><td class="mono">--brand</td><td class="mono">brand</td><td>ทองสด <b>ใช้เป็นพื้นเท่านั้น</b></td><td class="mono">#e39c2e</td><td class="mono">#e0a53f</td></tr>
+    <tr><td class="mono">--cta / --on-cta</td><td class="mono">cta / onCta</td><td>ปุ่มหลัก</td><td class="mono">#8a5a0a / #ffffff</td><td class="mono">#a0690f / #ffffff</td></tr>
+    <tr><td class="mono">--link</td><td class="mono">link</td><td>ลิงก์ข้อความ</td><td class="mono">#8a5a0a</td><td class="mono">#edbb62</td></tr>
+    <tr><td class="mono">--green-ink / --green-soft</td><td class="mono">successInk / successSoft</td><td>สถานะสำเร็จ</td><td class="mono">#2b6b2b / #e6f4e2</td><td class="mono">#85cf82 / #14301c</td></tr>
+    <tr><td class="mono">--danger / --danger-soft</td><td class="mono">danger / dangerSoft</td><td>ยกเลิก/ลบ/เตือน</td><td class="mono">#b42318 / #ffece9</td><td class="mono">#ff8a7d / #351a17</td></tr>
+    <tr><td class="mono">--teal-soft / --teal-ink</td><td class="mono">infoSoft / infoInk</td><td>ป้ายข้อมูล</td><td class="mono">#e2f1ef / #16605a</td><td class="mono">#0f2a28 / #6fc3ba</td></tr>
+    <tr><td class="mono">--map-bg / --route</td><td class="mono">mapBg / route</td><td>แผนที่และเส้นทาง</td><td class="mono">#dfe7e2 / #8a5a0a</td><td class="mono">#17302a / #e0a53f</td></tr>
+    <tr><td class="mono">--hero / --hero2 / --hero3</td><td class="mono">heroGradient1..3</td><td>หัวเรื่องไล่สี 3 แบบ</td><td class="mono">gradient</td><td class="mono">gradient</td></tr>
+    <tr><td class="mono">--sh-card / --sh-float …</td><td class="mono">shadowCard / shadowFloat …</td><td>เงา 7 ระดับ</td><td class="mono">rgba เขียวเข้ม</td><td class="mono">rgba ดำ</td></tr>
+  </table>
+  <p>ค่าครบทั้งชุดคัดลอกได้จาก token block ใน artboard ไฟล์ไหนก็ได้ (ทุกไฟล์ใช้ชุดเดียวกัน) หรือจาก <code>Projects/jedechai_delivery_new/skills/jdc-design-canvas/SKILL.md</code> ข้อ 4</p>
+
+  <h3>วิธีเรียกใช้ในหน้าจอ</h3>
+  <pre><code>final jdc = Theme.of(context).extension&lt;JdcColors&gt;()!;
+
+Container(
+  decoration: BoxDecoration(
+    color: jdc.surface,
+    borderRadius: BorderRadius.circular(18),
+    border: Border.all(color: jdc.line),
+    boxShadow: jdc.shadowCard,
+  ),
+  child: Text('ยอดขายวันนี้', style: TextStyle(color: jdc.muted)),
+);</code></pre>
+  <div class="warn"><b>ห้ามเด็ดขาด</b> — เขียน <code>Color(0xFF…)</code> ในไฟล์หน้าจอ, ใช้ทองสด <code>brand</code> เป็นสีตัวอักษรบนพื้นขาว (ไม่ผ่าน contrast 4.5:1 ให้ใช้ <code>cta</code>/<code>link</code> แทน), และเขียน <code>Colors.white</code> / <code>Colors.black</code> ตรง ๆ เพราะจะพังในโหมดมืด</div>
+</section>
+
+<section>
+  <h2><span class="n">4</span>กฎการทำงานหลายเอเจนต์</h2>
+  <div class="card">
+    <ol>
+      <li><b>File ownership แบบผูกขาด</b> — แต่ละ task มีรายการไฟล์ของตัวเอง เอเจนต์แก้ได้เฉพาะไฟล์ในรายการนั้น ไฟล์นอกรายการห้ามแตะแม้แต่การจัด format</li>
+      <li><b>ไฟล์ธีมล็อกหลัง Wave 0</b> — <code>lib/theme/*</code> ห้ามแก้โดยเอเจนต์ใน Wave 1+ ถ้าขาด token ให้ <b>หยุดแล้วรายงาน</b> ไม่ใช่เพิ่มเอง (กันชนกันและกันสร้าง token ซ้ำ)</li>
+      <li><b>หนึ่ง task หนึ่ง worktree</b> — spawn ด้วย <code>isolation: "worktree"</code> แล้วรวมทีหลัง ลดโอกาส conflict</li>
+      <li><b>ห้าม</b> <code>flutter pub upgrade</code>, ห้ามแก้ <code>pubspec.yaml</code> (ยกเว้น TASK-0.2), ห้ามแตะ <code>.env</code>, ห้าม bump version รายタスク</li>
+      <li><b>bump version ครั้งเดียวตอนรวมงาน</b> — งานนี้เป็น minor: <code>1.13.1+124</code> → <code>1.14.0+125</code></li>
+      <li><b>เกณฑ์ส่งงาน</b> — <code>flutter analyze</code> ไม่มี error ใหม่ และ <code>flutter test</code> ผ่านครบ 34 ไฟล์ ก่อนบอกว่าเสร็จ</li>
+      <li><b>รายงานเป็นภาษาไทย</b> พร้อมรายการไฟล์ที่แก้ และจุดที่ตัดสินใจเองเพราะ artboard ไม่ได้ระบุ</li>
+      <li>งานที่กระทบโค้ดต้องผ่าน <code>code_reviewer</code> ก่อนปิด (Wave 3)</li>
+    </ol>
+  </div>
+  <h3>เอกสารอ้างอิงที่เอเจนต์ทุกตัวต้องได้รับ</h3>
+  <table>
+    <tr><th class="mono">path</th><th>ใช้ทำอะไร</th></tr>
+    <tr><td class="mono">Design/jdc-canvas/project/&lt;ชื่อ&gt;.dc.html</td><td>ดีไซน์ตัวจริงของหน้านั้น (HTML อ่านง่าย มี inline style ครบ)</td></tr>
+    <tr><td class="mono">Design/jdc-canvas/mapping.json</td><td>artboard ↔ ไฟล์ <code>.dart</code> 61 คู่</td></tr>
+    <tr><td class="mono">Design/jdc-canvas/preview/sheet.html</td><td>ดูภาพรวม 20 หน้าใหม่ โหมดสว่าง</td></tr>
+    <tr><td class="mono">Design/jdc-canvas/preview/sheet-dark.html</td><td>ชุดเดียวกันในโหมดมืด (ตรวจแล้วไม่มีหน้าไหนล้นกรอบ)</td></tr>
+    <tr><td class="mono">skills/jdc-design-canvas/SKILL.md</td><td>token block เต็มชุด + กฎสไตล์ (ใน Obsidian vault)</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2><span class="n">5</span>แผนงานแบ่งเป็น Wave</h2>
+
+  <div class="wave">
+    <h3>Wave 0 — รากฐาน <span class="tag t-block">ต้องเสร็จก่อน ห้ามขนาน</span> <small>1 เอเจนต์ · mobile_dev</small></h3>
+    <div class="body">
+      <table>
+        <tr><th>ID</th><th>งาน</th><th class="mono">ไฟล์ที่ครอบครอง</th><th>เกณฑ์ผ่าน</th></tr>
+        <tr>
+          <td class="mono">T0.1</td>
+          <td>สร้าง <code>jdc_palette.dart</code> + <code>jdc_colors.dart</code> (ThemeExtension) ครบทั้ง light/dark ตามตารางหัวข้อ 3</td>
+          <td class="mono">lib/theme/jdc_palette.dart<br>lib/theme/jdc_colors.dart</td>
+          <td>ทุก CSS var ในตารางมีฟิลด์ตรงกัน · มี <code>lerp</code> ครบทุกฟิลด์ · <code>flutter analyze</code> สะอาด</td>
+        </tr>
+        <tr>
+          <td class="mono">T0.2</td>
+          <td>ตัดสินใจและติดตั้งฟอนต์ IBM Plex Sans Thai (หัวเรื่อง) + Noto Sans Thai (เนื้อหา) — เลือกทางใดทางหนึ่ง: เพิ่ม <code>google_fonts</code> หรือ bundle ลง <code>assets/fonts/</code> (แนะนำ bundle เพราะแอปต้องใช้งานออฟไลน์ได้และคุมขนาดได้)</td>
+          <td class="mono">pubspec.yaml<br>assets/fonts/**</td>
+          <td>เปิดแอปแล้วเห็นฟอนต์ไทยถูกต้องทั้ง 2 ตระกูล · ขนาด APK เพิ่มไม่เกิน 2 MB</td>
+        </tr>
+        <tr>
+          <td class="mono">T0.3</td>
+          <td>เขียน <code>app_theme.dart</code> ใหม่: <code>ColorScheme</code> light/dark จาก palette, ลงทะเบียน <code>JdcColors</code>, กำหนด <code>textTheme</code> จากฟอนต์ใหม่, ตั้ง component theme (ปุ่มสูง ≥48, radius 14–18) และ <b>คง alias เดิม</b> <code>primaryGreen/accentOrange/accentBlue</code> ให้ชี้ token ใหม่พร้อม <code>@Deprecated</code></td>
+          <td class="mono">lib/theme/app_theme.dart</td>
+          <td>568 จุดที่เรียก alias ยังคอมไพล์ผ่าน · ไม่มีหน้าจอไหนพัง · <code>flutter test</code> ผ่าน</td>
+        </tr>
+        <tr>
+          <td class="mono">T0.4</td>
+          <td>ทำหน้า <b>Theme Gallery</b> สำหรับ debug (เข้าจาก route ลับ) แสดง token ทุกตัว + ปุ่มสลับ light/dark/system เพื่อให้ทุกเอเจนต์และ QA ใช้ตรวจ</td>
+          <td class="mono">lib/theme/theme_gallery_screen.dart<br>lib/main.dart (เฉพาะ route เดียว)</td>
+          <td>สลับโหมดแล้วสีเปลี่ยนครบทุก token ไม่มีตัวไหนค้าง</td>
+        </tr>
+      </table>
+      <div class="note">ส่งมอบ Wave 0 แล้วต้องให้ผู้ใช้ดูหน้า Theme Gallery ทั้ง 2 โหมดก่อนเปิด Wave 1 — ถ้า token ผิดตั้งแต่ตรงนี้ จะลามไป 61 หน้า</div>
+    </div>
+  </div>
+
+  <div class="wave">
+    <h3>Wave 1 — ย้ายหน้าจอ <span class="tag t-par">ขนานได้ 5 เอเจนต์</span> <small>mobile_dev ทั้งหมด · ไฟล์ไม่ทับกันเลย</small></h3>
+    <div class="body">
+      <p>ทุก task รูปแบบเดียวกัน: เปิด artboard ของหน้านั้น → แก้ไฟล์ <code>.dart</code> ให้ตรง → ลบสี hardcode ในไฟล์ที่ตัวเองครอบครอง → ตรวจทั้ง 2 โหมด</p>
+      <table>
+        <tr><th>ID</th><th>ขอบเขต</th><th>จำนวนหน้า</th><th class="mono">โฟลเดอร์ที่ครอบครอง</th><th>หมายเหตุ</th></tr>
+        <tr><td class="mono">T1.A</td><td>คนขับ</td><td>12</td><td class="mono">lib/apps/driver/**</td><td>เริ่มตัวนี้ก่อนเพื่อนได้เลย หน้าน้อย flow ตรง · <code>driver_dashboard_screen.dart</code> มีสี hardcode 13 จุด</td></tr>
+        <tr><td class="mono">T1.B</td><td>ร้านค้า</td><td>14</td><td class="mono">lib/apps/merchant/**</td><td>หน้าเมนู/ตัวเลือกเสริมมี list ซ้อนกันหลายชั้น ระวัง <code>ListView</code> ซ้อน</td></tr>
+        <tr><td class="mono">T1.C</td><td>ลูกค้า — อาหาร/สั่งซื้อ</td><td>12</td><td class="mono">lib/apps/customer/screens/services/** (food*, restaurant*, payment*, tracking*, driver_assigned*, waiting_for_driver*, rating*, cancellation*, customer_order_detail*, booking_confirmation*)</td><td>หน้าที่เยอะสุดและอยู่ใน flow เงิน ต้องไม่แตะ logic</td></tr>
+        <tr><td class="mono">T1.D</td><td>ลูกค้า — เดินทาง/บริการอื่น/แผนที่</td><td>11</td><td class="mono">lib/apps/customer/screens/ride/**<br>lib/apps/customer/screens/map_screen.dart<br>services/(ride*, parcel*, laundry*, delivery_map_picker*, saved_addresses*, help*, support_tickets*)</td><td>หน้าแผนที่ต้องใช้ <code>mapBg/route</code> และตรวจ Google Maps style ในโหมดมืดด้วย</td></tr>
+        <tr><td class="mono">T1.E</td><td>ลูกค้า — บัญชี/auth/หน้าแรก</td><td>12</td><td class="mono">lib/apps/customer/screens/auth/**<br>profile/**, rewards/**<br>customer_home_screen.dart, account_screen.dart, activity_screen.dart, customer_wallet_screen.dart, splash_screen.dart</td><td><code>landing_screen.dart</code> มีสี hardcode 10 จุด</td></tr>
+        <tr><td class="mono">T1.F</td><td>องค์ประกอบร่วม</td><td>—</td><td class="mono">lib/common/widgets/**<br>lib/common/screens/**</td><td>ทำคู่ขนานได้ แต่ถ้า widget ร่วมเปลี่ยน signature ต้องแจ้งทุก task ทันที</td></tr>
+      </table>
+      <div class="warn"><b>จุดชนที่ต้องระวัง</b> — ถ้า T1.A–T1.E พบว่าต้องแก้ widget ใน <code>lib/common/widgets/</code> ห้ามแก้เอง ให้ส่งคำขอไปที่ T1.F เจ้าของไฟล์ แล้วทำส่วนอื่นต่อระหว่างรอ</div>
+    </div>
+  </div>
+
+  <div class="wave">
+    <h3>Wave 2 — เก็บสีที่ยังหลงเหลือ <span class="tag t-par">ขนานได้ 2 เอเจนต์</span> <small>mobile_dev · หลัง Wave 1 ของโฟลเดอร์นั้นเสร็จ</small></h3>
+    <div class="body">
+      <table>
+        <tr><th>ID</th><th>งาน</th><th>เกณฑ์ผ่าน</th></tr>
+        <tr><td class="mono">T2.1</td><td>ไล่แทน alias <code>AppTheme.primaryGreen / accentOrange / accentBlue</code> (568 จุด) ด้วย token ที่ถูกต้องตามความหมาย ทีละโฟลเดอร์ role</td><td><code>grep -r "AppTheme\." lib/apps</code> เหลือ 0 จุดในโฟลเดอร์ที่รับผิดชอบ</td></tr>
+        <tr><td class="mono">T2.2</td><td>ลบ <code>lib/common/config/theme_config.dart</code> (dead code ยืนยันแล้ว 0 การใช้งาน) และลบ alias <code>@Deprecated</code> ใน <code>app_theme.dart</code> เมื่อ T2.1 จบครบทุก role</td><td>build ผ่าน · test ผ่าน · <code>grep -r "ThemeConfig" lib</code> = 0</td></tr>
+        <tr><td class="mono">T2.3</td><td>เก็บ <code>Color(0xFF…)</code> ที่เหลือทั้งหมดนอกไฟล์ palette</td><td><code>grep -r "Color(0xFF" lib --include=*.dart</code> เหลือเฉพาะ <code>lib/theme/jdc_palette.dart</code> และ <code>lib/apps/admin/theme/</code></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="wave">
+    <h3>Wave 3 — ตรวจและปิดงาน <span class="tag t-qa">ตามลำดับ</span> <small>qa_engineer → code_reviewer</small></h3>
+    <div class="body">
+      <table>
+        <tr><th>ID</th><th>งาน</th><th>ผู้รับผิดชอบ</th></tr>
+        <tr><td class="mono">T3.1</td><td>ไล่เปิดครบ 61 หน้าใน <b>โหมดสว่าง</b> เทียบกับ artboard ทีละหน้า บันทึกส่วนต่าง</td><td>qa_engineer</td></tr>
+        <tr><td class="mono">T3.2</td><td>ไล่เปิดครบ 61 หน้าใน <b>โหมดมืด</b> หาจุดที่ตัวอักษรจมพื้น พื้นขาวค้าง หรือเงาหาย</td><td>qa_engineer</td></tr>
+        <tr><td class="mono">T3.3</td><td>ตรวจ contrast ทุกคู่สีที่ใช้จริง ต้องผ่าน 4.5:1 (ตัวอักษรปกติ) และ 3:1 (ตัวใหญ่/ไอคอน) ทั้ง 2 โหมด</td><td>qa_engineer</td></tr>
+        <tr><td class="mono">T3.4</td><td>ตรวจ touch target ≥44px และ <code>Semantics</code>/label ของปุ่มไอคอน</td><td>qa_engineer</td></tr>
+        <tr><td class="mono">T3.5</td><td>เขียน widget test ของ <code>JdcColors</code>: ทุกฟิลด์ต้องมีค่าทั้ง 2 ธีม และ <code>lerp</code> ไม่คืน null</td><td>qa_engineer</td></tr>
+        <tr><td class="mono">T3.6</td><td>รีวิวโค้ดรวมทั้งชุด</td><td>code_reviewer</td></tr>
+        <tr><td class="mono">T3.7</td><td>bump <code>1.13.1+124</code> → <code>1.14.0+125</code> แล้ว commit</td><td>mobile_dev</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="wave">
+    <h3>Wave 4 — ส่วนขยาย <span class="tag t-opt">ยังไม่สั่ง</span></h3>
+    <div class="body">
+      <ul>
+        <li>ย้าย <code>lib/apps/admin/</code> (มี <code>admin_theme.dart</code> ของตัวเอง 16 จุดสี) มาใช้ token ร่วม</li>
+        <li>ทำ artboard เพิ่ม 8 หน้าใน <code>lib/common/</code> (notification center, chat, reviews, profile completion, pending approval/deletion, account suspended, profile) แล้วค่อยย้ายโค้ด</li>
+        <li>ปรับ <code>Design/design_system.html</code> (ชุด navy เก่า) ให้ตรงกับ token ใหม่ หรือลบทิ้ง</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">6</span>ยุทธศาสตร์โหมดมืด</h2>
+  <div class="card">
+    <p><b>ยืนยัน: ต้องรองรับโหมดมืดเต็มรูปแบบ</b> การที่แคนวาสล็อกไว้ที่โหมดสว่าง เป็นเพราะอยากรีวิวทีละโหมดเท่านั้น ชุดสีมืดมีครบอยู่แล้วใต้ <code>:root[data-theme="dark"]</code> ของทุก artboard</p>
+    <ol>
+      <li><code>main.dart</code> คง <code>themeMode: ThemeMode.system</code> ไว้เหมือนเดิม ไม่แตะ</li>
+      <li>ทุกค่าสีต้องผ่าน <code>JdcColors</code> เท่านั้น เพราะ extension จะสลับค่าตามธีมให้เอง — ถ้าเห็น <code>Colors.white</code> ที่ไหนแปลว่ายังไม่เสร็จ</li>
+      <li>สีที่ <b>ไม่กลับทิศ</b> ระหว่าง 2 โหมด (เช่น <code>green-fill</code>, <code>green-dot</code>) ให้คงค่าเดิมทั้งคู่ ตามที่แคนวาสทำไว้</li>
+      <li>ทองสด <code>brand</code> เป็นพื้นเท่านั้นทั้ง 2 โหมด · ตัวอักษรใช้ <code>cta</code> (สว่าง) / <code>link</code> (มืด)</li>
+      <li>แผนที่ Google Maps ต้องมี map style สำหรับโหมดมืดแยก ไม่งั้นจะสว่างโดดขึ้นมาหน้าเดียว (งานใน T1.D)</li>
+      <li>รูปภาพและโลโก้ที่มีพื้นขาวในตัวต้องเตรียมเวอร์ชันโหมดมืด หรือใส่พื้นรองให้</li>
+    </ol>
+    <p><b>วิธีตรวจ:</b> เปิด <code>Design/jdc-canvas/preview/sheet-dark.html</code> เทียบกับแอปจริงที่สลับเป็น dark ผ่านหน้า Theme Gallery (T0.4) — ชุด dark ตรวจแล้วไม่มีหน้าไหนเนื้อหาล้นกรอบ</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">7</span>แม่แบบคำสั่งสำหรับ spawn เอเจนต์</h2>
+  <pre><code>[TASK-ID] T1.A — ย้ายดีไซน์ใหม่ลงแอปคนขับ (12 หน้า)
+
+บริบท:
+- โปรเจกต์ Flutter: C:\Users\burin\jedechai_delivery_new\jedechai_delivery_new
+- Wave 0 เสร็จแล้ว: ใช้ token ผ่าน Theme.of(context).extension&lt;JdcColors&gt;()!
+- ดีไซน์ตัวจริง: Design/jdc-canvas/project/Driver-*.dc.html
+- ตารางจับคู่ artboard กับไฟล์ .dart: Design/jdc-canvas/mapping.json
+
+ไฟล์ที่คุณครอบครอง (แก้ได้เฉพาะในนี้):
+- lib/apps/driver/** ทั้งโฟลเดอร์
+
+สิ่งที่ต้องทำ:
+1. อ่าน artboard ของแต่ละหน้าก่อนแก้ไฟล์นั้น
+2. ปรับ layout/สี/ระยะ/ตัวอักษรให้ตรง artboard ทั้งโหมดสว่างและมืด
+3. ห้ามแก้ business logic, service, model, provider — แตะเฉพาะชั้น UI
+4. ห้ามเขียน Color(0xFF...), Colors.white, Colors.black
+5. ถ้า token ที่ต้องใช้ไม่มีใน JdcColors ให้หยุดและรายงาน ห้ามเพิ่ม token เอง
+6. ห้ามแก้ไฟล์นอกรายการข้างบน (รวมถึง lib/theme/** และ lib/common/**)
+
+เกณฑ์ปิดงาน:
+- flutter analyze ไม่มี error ใหม่
+- flutter test ผ่านครบ
+- grep "Color(0xFF" lib/apps/driver = 0
+- รายงานภาษาไทย: หน้าที่แก้, จุดที่ตัดสินใจเอง, จุดที่ artboard ไม่ครอบคลุม</code></pre>
+</section>
+
+<section>
+  <h2><span class="n">8</span>เกณฑ์ปิดงานทั้งโครงการ</h2>
+  <div class="card">
+    <ul>
+      <li>61 หน้าหน้าตาตรง artboard ทั้งโหมดสว่างและโหมดมืด</li>
+      <li><code>grep -r "Color(0xFF" lib --include=*.dart</code> เหลือเฉพาะ <code>lib/theme/jdc_palette.dart</code> (และ admin ที่ยังไม่อยู่ใน scope)</li>
+      <li><code>grep -r "AppTheme\.\(primaryGreen\|accentOrange\|accentBlue\)" lib</code> = 0</li>
+      <li><code>theme_config.dart</code> ถูกลบแล้ว</li>
+      <li><code>flutter analyze</code> สะอาด · <code>flutter test</code> ผ่านครบ 34 ไฟล์ + เทสต์ token ใหม่</li>
+      <li>contrast ผ่าน 4.5:1 ทุกคู่ที่ใช้จริง ทั้ง 2 โหมด</li>
+      <li>ผ่าน <code>code_reviewer</code> และไม่มี FAIL ค้าง</li>
+      <li>bump เป็น <code>1.14.0+125</code> และบันทึก log + decision ลง Obsidian</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">9</span>ความเสี่ยงและทางรับมือ</h2>
+  <table>
+    <tr><th>ความเสี่ยง</th><th>ผลกระทบ</th><th>ทางรับมือ</th></tr>
+    <tr><td>Wave 0 วาง token ผิด/ขาด</td><td>สูง — ลาม 61 หน้า</td><td>ให้ผู้ใช้ตรวจหน้า Theme Gallery ทั้ง 2 โหมดก่อนเปิด Wave 1</td></tr>
+    <tr><td>เอเจนต์แก้ไฟล์ทับกัน</td><td>กลาง — merge conflict เสียเวลา</td><td>file ownership ผูกขาด + worktree แยก + ธีมล็อกหลัง Wave 0</td></tr>
+    <tr><td>เอเจนต์เผลอแก้ business logic ขณะจัด UI</td><td>สูง — กระทบเงิน/ออเดอร์จริง</td><td>ระบุชัดในคำสั่งว่าแตะเฉพาะชั้น UI + <code>code_reviewer</code> ดู diff ทุกไฟล์</td></tr>
+    <tr><td>โหมดมืดตกสำรวจเพราะรีวิวแต่โหมดสว่าง</td><td>กลาง</td><td>T3.2 เป็น gate แยก ปิดงานไม่ได้ถ้าไม่ผ่าน</td></tr>
+    <tr><td>ฟอนต์ไทยทำ layout ขยับ (ความสูงบรรทัดต่างจากเดิม)</td><td>กลาง — ข้อความล้นกล่อง</td><td>ตัดสินฟอนต์ใน T0.2 ก่อนเริ่มหน้าจอ และตรวจหน้าที่ข้อความยาวก่อนเป็นอันดับแรก</td></tr>
+    <tr><td>artboard ไม่ครอบคลุมสถานะจริง (loading, error, empty, ข้อมูลยาวเกิน)</td><td>กลาง</td><td>ให้เอเจนต์ทำตามสไตล์ token แล้ว <b>รายงานทุกจุดที่ตัดสินใจเอง</b> เพื่อรวบมาเพิ่ม artboard ทีหลัง</td></tr>
+    <tr><td>publish แคนวาสขึ้น artifact ยังพัง</td><td>ต่ำ</td><td>ไม่บล็อกงานนี้ ไฟล์ดีไซน์อยู่ในเรปโปครบแล้ว</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2><span class="n">10</span>ลำดับการเดินงาน</h2>
+  <table>
+    <tr><th>ขั้น</th><th>ทำอะไร</th><th>ขนาน</th><th>ปลดล็อกอะไร</th></tr>
+    <tr><td>1</td><td>T0.1 → T0.2 → T0.3 → T0.4</td><td>ไม่ได้ (1 เอเจนต์)</td><td>ทุกอย่าง</td></tr>
+    <tr><td>2</td><td><b>ผู้ใช้ตรวจ Theme Gallery 2 โหมด</b></td><td>—</td><td>Wave 1</td></tr>
+    <tr><td>3</td><td>T1.A–T1.F</td><td>ได้ 5–6 เอเจนต์พร้อมกัน</td><td>Wave 2</td></tr>
+    <tr><td>4</td><td>T2.1–T2.3</td><td>ได้ 2 เอเจนต์</td><td>Wave 3</td></tr>
+    <tr><td>5</td><td>T3.1–T3.7</td><td>QA ขนานได้ 2 ตัว (สว่าง/มืด) แล้วค่อย review</td><td>ปิดงาน</td></tr>
+  </table>
+  <div class="note">ข้อเสนอเพื่อลดความเสี่ยง: ให้ <b>T1.A (คนขับ 12 หน้า) เดินก่อนตัวเดียว</b> จนจบและผ่านรีวิว แล้วค่อยปล่อย T1.B–T1.F พร้อมกัน จะได้เจอปัญหา token/ฟอนต์จากหน้าจริงก่อนที่เอเจนต์ 5 ตัวจะทำผิดแบบเดียวกันทั้งหมด</div>
+</section>
+
+<footer>
+  <p>JDC Delivery · แผน Implement UI Redesign v1 · 20 ก.ย. 2569 · อ้างอิงตัวเลขจากการวัดโค้ดจริงที่ commit <code>c9cf0e4</code> (แอป 1.13.1+124)</p>
+  <p>ไฟล์ที่เกี่ยวข้อง: <code>Design/jdc-canvas/</code> (ดีไซน์ 61 หน้า + mapping + preview) · <code>Projects/jedechai_delivery_new/skills/jdc-design-canvas/SKILL.md</code> (token block เต็ม) · <code>issue.md</code> ISSUE-20260920-001 (publish แคนวาสยังค้าง)</p>
+</footer>
+
+</div>
+</body>
+</html>

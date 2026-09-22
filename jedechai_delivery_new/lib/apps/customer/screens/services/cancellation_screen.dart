@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../theme/jdc_colors.dart';
+import '../../../../theme/jdc_layout.dart';
 import '../../../../common/models/booking.dart';
 import '../../../../common/services/booking_service.dart';
 import '../../../../common/services/supabase_service.dart';
@@ -86,75 +87,78 @@ class _CancellationScreenState extends State<CancellationScreen> {
   }
 
   Future<void> _confirmCancellation() async {
+    final jdc = JdcColors.of(context);
     if (_selectedReasonIndex == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(AppLocalizations.of(context)!.cancelSelectReason),
-            backgroundColor: Colors.red),
+            content:
+                Text(AppLocalizations.of(context)!.cancelSelectReason),
+            backgroundColor: jdc.danger),
       );
       return;
     }
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            const Icon(Icons.warning_amber_rounded,
-                color: Colors.red, size: 28),
-            const SizedBox(width: 8),
-            Text(AppLocalizations.of(context)!.cancelConfirmTitle),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(AppLocalizations.of(context)!.cancelConfirmBody),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.red.shade50,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.info_outline,
-                      color: Colors.red.shade700, size: 18),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      AppLocalizations.of(context)!
-                          .cancelReasonLabel(_getSelectedReasonText(context)),
-                      style:
-                          TextStyle(fontSize: 13, color: Colors.red.shade700),
+      builder: (ctx) {
+        final jdc2 = JdcColors.of(ctx);
+        return AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(JdcRadius.card)),
+          title: Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: jdc2.danger, size: 28),
+              const SizedBox(width: JdcSpacing.sm),
+              Text(AppLocalizations.of(context)!.cancelConfirmTitle),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(AppLocalizations.of(context)!.cancelConfirmBody),
+              const SizedBox(height: JdcSpacing.md),
+              Container(
+                padding: const EdgeInsets.all(JdcSpacing.md),
+                decoration: BoxDecoration(
+                  color: jdc2.dangerSoft,
+                  borderRadius: BorderRadius.circular(JdcRadius.small),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: jdc2.dangerInk, size: 18),
+                    const SizedBox(width: JdcSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        AppLocalizations.of(context)!
+                            .cancelReasonLabel(_getSelectedReasonText(context)),
+                        style: TextStyle(fontSize: 13, color: jdc2.dangerInk),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(AppLocalizations.of(context)!.cancelKeep,
+                  style: TextStyle(color: jdc2.muted)),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: jdc2.danger,
+                foregroundColor: jdc2.onCta,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(JdcRadius.small)),
+              ),
+              child: Text(AppLocalizations.of(context)!.cancelConfirmBtn),
             ),
           ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(AppLocalizations.of(context)!.cancelKeep,
-                style: const TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
-            ),
-            child: Text(AppLocalizations.of(context)!.cancelConfirmBtn),
-          ),
-        ],
-      ),
+        );
+      },
     );
 
     if (confirmed != true) return;
@@ -169,10 +173,11 @@ class _CancellationScreenState extends State<CancellationScreen> {
       );
 
       if (mounted) {
+        final jdc3 = JdcColors.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)!.cancelSuccess),
-            backgroundColor: AppTheme.primaryGreen,
+            backgroundColor: jdc3.cta,
           ),
         );
         Navigator.of(context).pop(true);
@@ -181,11 +186,12 @@ class _CancellationScreenState extends State<CancellationScreen> {
       debugLog('Error cancelling booking: $e');
       setState(() => _isCancelling = false);
       if (mounted) {
+        final jdc3 = JdcColors.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content:
-                  Text(AppLocalizations.of(context)!.cancelError(e.toString())),
-              backgroundColor: Colors.red),
+              content: Text(
+                  AppLocalizations.of(context)!.cancelError(e.toString())),
+              backgroundColor: jdc3.danger),
         );
       }
     }
@@ -193,8 +199,8 @@ class _CancellationScreenState extends State<CancellationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final jdc = JdcColors.of(context);
     final l10n = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
     final reasons = _getReasons(context);
     final serviceLabel = {
           'food': l10n.cancelServiceFood,
@@ -204,209 +210,205 @@ class _CancellationScreenState extends State<CancellationScreen> {
         l10n.cancelServiceDefault;
 
     return Scaffold(
+      backgroundColor: jdc.paper,
       appBar: AppBar(
         title: Text(l10n.cancelTitle),
-        backgroundColor: Colors.red.shade600,
-        foregroundColor: Colors.white,
+        backgroundColor: jdc.danger,
+        foregroundColor: jdc.onCta,
       ),
       body: Column(
         children: [
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ข้อมูลออเดอร์
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainer,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 8)
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.red.shade50,
-                            borderRadius: BorderRadius.circular(10),
+              padding: const EdgeInsets.all(JdcSpacing.xl),
+              child: JdcContentFrame(
+                padded: false,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ข้อมูลออเดอร์
+                    Container(
+                      padding: const EdgeInsets.all(JdcSpacing.lg),
+                      decoration: BoxDecoration(
+                        color: jdc.surface,
+                        borderRadius: BorderRadius.circular(JdcRadius.card),
+                        boxShadow: jdc.shadowCard,
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(JdcSpacing.md),
+                            decoration: BoxDecoration(
+                              color: jdc.dangerSoft,
+                              borderRadius:
+                                  BorderRadius.circular(JdcRadius.small),
+                            ),
+                            child: Icon(Icons.cancel_outlined,
+                                color: jdc.danger, size: 28),
                           ),
-                          child: Icon(Icons.cancel_outlined,
-                              color: Colors.red.shade600, size: 28),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(serviceLabel,
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: colorScheme.onSurface)),
-                              const SizedBox(height: 4),
-                              Text(
-                                  OrderCodeFormatter.formatByServiceType(
-                                    widget.booking.id,
-                                    serviceType: widget.booking.serviceType,
-                                  ),
-                                  style: TextStyle(
-                                      fontSize: 13,
-                                      color: colorScheme.onSurfaceVariant)),
-                            ],
-                          ),
-                        ),
-                        Text('฿${_displayAmount.ceil()}',
-                            style: TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.bold,
-                                color: colorScheme.onSurface)),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-                  Text(l10n.cancelReasonsTitle,
-                      style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.onSurface)),
-                  const SizedBox(height: 4),
-                  Text(l10n.cancelReasonsSubtitle,
-                      style: TextStyle(
-                          fontSize: 14,
-                          color: colorScheme.onSurfaceVariant)),
-                  const SizedBox(height: 16),
-
-                  // รายการเหตุผล
-                  ...List.generate(reasons.length, (i) {
-                    final reason = reasons[i];
-                    final isSelected = _selectedReasonIndex == i;
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: InkWell(
-                        onTap: () => setState(() => _selectedReasonIndex = i),
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 14),
-                          decoration: BoxDecoration(
-                            color:
-                                isSelected ? Colors.red.shade50 : colorScheme.surfaceContainer,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isSelected
-                                  ? Colors.red
-                                  : colorScheme.outlineVariant,
-                              width: isSelected ? 1.5 : 1,
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(serviceLabel,
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: jdc.text)),
+                                const SizedBox(height: JdcSpacing.xs),
+                                Text(
+                                    OrderCodeFormatter.formatByServiceType(
+                                      widget.booking.id,
+                                      serviceType: widget.booking.serviceType,
+                                    ),
+                                    style: TextStyle(
+                                        fontSize: 13, color: jdc.muted)),
+                              ],
                             ),
                           ),
-                          child: Row(
-                            children: [
-                              Icon(reason['icon'] as IconData,
-                                  color: isSelected ? Colors.red : colorScheme.onSurfaceVariant,
-                                  size: 22),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(reason['text'] as String,
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: isSelected
-                                          ? FontWeight.w600
-                                          : FontWeight.normal,
-                                      color: isSelected
-                                          ? Colors.red.shade700
-                                          : Theme.of(context)
-                                              .colorScheme
-                                              .onSurface,
-                                    )),
-                              ),
-                              Icon(
-                                isSelected
-                                    ? Icons.radio_button_checked
-                                    : Icons.radio_button_off,
-                                color: isSelected
-                                    ? Colors.red
-                                    : colorScheme.onSurfaceVariant,
-                                size: 22,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-
-                  // ช่องพิมพ์เหตุผลอื่น
-                  if (_selectedReasonIndex == reasons.length - 1) ...[
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _otherReasonController,
-                      maxLines: 3,
-                      maxLength: 300,
-                      style: TextStyle(color: colorScheme.onSurface),
-                      decoration: InputDecoration(
-                        hintText: l10n.cancelOtherHint,
-                        hintStyle:
-                            TextStyle(color: colorScheme.onSurfaceVariant),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                              const BorderSide(color: Colors.red, width: 1.5),
-                        ),
-                        filled: true,
-                        fillColor: colorScheme.surfaceContainerHighest,
-                        contentPadding: const EdgeInsets.all(14),
+                          Text('฿${_displayAmount.ceil()}',
+                              style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.bold,
+                                  color: jdc.text)),
+                        ],
                       ),
                     ),
+
+                    const SizedBox(height: JdcSpacing.xxl),
+                    Text(l10n.cancelReasonsTitle,
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: jdc.text)),
+                    const SizedBox(height: JdcSpacing.xs),
+                    Text(l10n.cancelReasonsSubtitle,
+                        style: TextStyle(fontSize: 14, color: jdc.muted)),
+                    const SizedBox(height: JdcSpacing.lg),
+
+                    // รายการเหตุผล
+                    ...List.generate(reasons.length, (i) {
+                      final reason = reasons[i];
+                      final isSelected = _selectedReasonIndex == i;
+                      return Padding(
+                        padding:
+                            const EdgeInsets.only(bottom: JdcSpacing.md),
+                        child: InkWell(
+                          onTap: () =>
+                              setState(() => _selectedReasonIndex = i),
+                          borderRadius:
+                              BorderRadius.circular(JdcRadius.small),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: JdcSpacing.lg,
+                                vertical: JdcSpacing.md),
+                            decoration: BoxDecoration(
+                              color: isSelected ? jdc.dangerSoft : jdc.surface,
+                              borderRadius:
+                                  BorderRadius.circular(JdcRadius.small),
+                              border: Border.all(
+                                color: isSelected ? jdc.danger : jdc.line,
+                                width: isSelected ? 1.5 : 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(reason['icon'] as IconData,
+                                    color: isSelected ? jdc.danger : jdc.muted,
+                                    size: 22),
+                                const SizedBox(width: JdcSpacing.md),
+                                Expanded(
+                                  child: Text(reason['text'] as String,
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: isSelected
+                                            ? FontWeight.w600
+                                            : FontWeight.normal,
+                                        color: isSelected
+                                            ? jdc.dangerInk
+                                            : jdc.text,
+                                      )),
+                                ),
+                                Icon(
+                                  isSelected
+                                      ? Icons.radio_button_checked
+                                      : Icons.radio_button_off,
+                                  color: isSelected ? jdc.danger : jdc.muted,
+                                  size: 22,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+
+                    // ช่องพิมพ์เหตุผลอื่น
+                    if (_selectedReasonIndex == reasons.length - 1) ...[
+                      const SizedBox(height: JdcSpacing.sm),
+                      TextField(
+                        controller: _otherReasonController,
+                        maxLines: 3,
+                        maxLength: 300,
+                        style: TextStyle(color: jdc.text),
+                        decoration: InputDecoration(
+                          hintText: l10n.cancelOtherHint,
+                          hintStyle: TextStyle(color: jdc.dim),
+                          border: OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.circular(JdcRadius.small)),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.circular(JdcRadius.small),
+                            borderSide:
+                                BorderSide(color: jdc.danger, width: 1.5),
+                          ),
+                          filled: true,
+                          fillColor: jdc.sunken,
+                          contentPadding: const EdgeInsets.all(14),
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),
 
           // ปุ่มยกเลิก
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(JdcSpacing.xl),
             decoration: BoxDecoration(
-              color: colorScheme.surface,
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, -2))
-              ],
+              color: jdc.surface,
+              boxShadow: jdc.shadowSheet,
             ),
             child: SafeArea(
-              child: SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _isCancelling ? null : _confirmCancellation,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
+              child: JdcContentFrame(
+                padded: false,
+                child: SizedBox(
+                  width: double.infinity,
+                  height: JdcTouch.button,
+                  child: ElevatedButton(
+                    onPressed: _isCancelling ? null : _confirmCancellation,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: jdc.danger,
+                      foregroundColor: jdc.onCta,
+                      shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(JdcRadius.field)),
+                    ),
+                    child: _isCancelling
+                        ? SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                                color: jdc.onCta, strokeWidth: 2.5),
+                          )
+                        : Text(l10n.cancelButton,
+                            style: const TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
-                  child: _isCancelling
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2.5),
-                        )
-                      : Text(l10n.cancelButton,
-                          style: const TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
               ),
             ),

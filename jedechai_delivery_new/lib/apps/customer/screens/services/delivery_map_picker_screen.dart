@@ -5,13 +5,15 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../../../common/config/env_config.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../theme/jdc_colors.dart';
+import '../../../../theme/jdc_layout.dart';
+import '../../../customer/map_dark_style.dart';
 import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 
 /// Delivery Map Picker Screen — หน้าปักหมุดเลือกตำแหน่งจัดส่ง
 ///
-/// ผู้ใช้สามารถลากแผนที่เพื่อเลื่อนหมุดไปยังตำแหน่งที่ต้องการ
-/// จะแสดงชื่อที่อยู่จาก Google Geocoding API
+/// UI ตาม Design: Customer-MapPicker.dc.html
+/// แผนที่เต็มจอ + หมุดตรงกลาง + ช่องค้นหาด้านบน + card ยืนยันตำแหน่งด้านล่าง
 class DeliveryMapPickerScreen extends StatefulWidget {
   final LatLng? initialPosition;
 
@@ -74,7 +76,6 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
 
   Future<void> _reverseGeocode(LatLng position) async {
     if (!mounted) return;
-    // Skip if position hasn't changed meaningfully (~50m threshold)
     if (_lastGeocodedPosition != null) {
       final dist = Geolocator.distanceBetween(
         _lastGeocodedPosition!.latitude,
@@ -101,9 +102,7 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
 
       if (data['status'] == 'OK' && (data['results'] as List).isNotEmpty) {
         final results = data['results'] as List;
-        // ใช้ผลลัพธ์แรกที่เป็นที่อยู่ที่อ่านง่าย
         String address = results[0]['formatted_address'] as String? ?? '';
-        // ตัดส่วนที่ไม่จำเป็นออก (เช่น รหัสไปรษณีย์ ประเทศ)
         if (address.isNotEmpty) {
           setState(() => _addressText = address);
         } else {
@@ -154,146 +153,309 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.mapPickerTitle),
-        backgroundColor: AppTheme.accentOrange,
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
+      backgroundColor: jdc.paper,
       body: _isLoadingLocation
-          ? const Center(
-              child: CircularProgressIndicator(color: AppTheme.accentOrange))
+          ? Center(child: CircularProgressIndicator(color: jdc.cta))
           : Stack(
               children: [
-                // Google Map
-                GoogleMap(
-                  initialCameraPosition: CameraPosition(
-                    target: _selectedPosition,
-                    zoom: 16,
+                // แผนที่เต็มจอ
+                Positioned.fill(
+                  child: GoogleMap(
+                    initialCameraPosition: CameraPosition(
+                      target: _selectedPosition,
+                      zoom: 16,
+                    ),
+                    onMapCreated: (controller) => _mapController = controller,
+                    onCameraMove: _onCameraMove,
+                    onCameraIdle: _onCameraIdle,
+                    myLocationEnabled: true,
+                    myLocationButtonEnabled: false,
+                    zoomControlsEnabled: false,
+                    mapToolbarEnabled: false,
+                    style: isDark ? kMapDarkStyle : null,
                   ),
-                  onMapCreated: (controller) => _mapController = controller,
-                  onCameraMove: _onCameraMove,
-                  onCameraIdle: _onCameraIdle,
-                  myLocationEnabled: true,
-                  myLocationButtonEnabled: true,
-                  zoomControlsEnabled: false,
-                  mapToolbarEnabled: false,
                 ),
 
-                // Center pin (fixed in the middle of the map)
+                // หมุดกลางแผนที่
                 Center(
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 36),
-                    child: Icon(
-                      Icons.location_pin,
-                      size: 48,
-                      color: Colors.red.shade700,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: jdc.cta,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(22),
+                              topRight: Radius.circular(22),
+                              bottomRight: Radius.circular(22),
+                              bottomLeft: Radius.circular(2),
+                            ),
+                            border: Border.all(
+                              color: jdc.surface,
+                              width: 3,
+                            ),
+                          ),
+                          child: Center(
+                            child: Container(
+                              width: 14,
+                              height: 14,
+                              decoration: BoxDecoration(
+                                color: jdc.surface,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Container(
+                          width: 10,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: jdc.text.withValues(alpha: 0.28),
+                            borderRadius: BorderRadius.circular(JdcRadius.chip),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
 
-                // Address card at the bottom
+                // toolbar ด้านบน — ย้อนกลับ + ช่องค้นหา
                 Positioned(
-                  left: 16,
-                  right: 16,
-                  bottom: 16,
-                  child: Column(
+                  top: MediaQuery.of(context).padding.top + JdcSpacing.lg,
+                  left: JdcSpacing.xl,
+                  right: JdcSpacing.xl,
+                  child: Row(
                     children: [
-                      // Address info
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: colorScheme.surface,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: colorScheme.shadow.withValues(alpha: 0.12),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
+                      GestureDetector(
+                        onTap: () => Navigator.maybePop(context),
+                        child: Container(
+                          width: JdcTouch.minTarget,
+                          height: JdcTouch.minTarget,
+                          decoration: BoxDecoration(
+                            color: jdc.surface,
+                            borderRadius: BorderRadius.circular(JdcRadius.small),
+                            boxShadow: [
+                              BoxShadow(
+                                color: jdc.text.withValues(alpha: 0.1),
+                                blurRadius: 10,
+                              ),
+                            ],
+                          ),
+                          child: Icon(Icons.chevron_left, color: jdc.text, size: 26),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.location_on,
-                                    color: Colors.red.shade700, size: 20),
-                                const SizedBox(width: 8),
-                                Text(
-                                  AppLocalizations.of(context)!
-                                      .mapPickerDeliveryLocation,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                    color: colorScheme.onSurface,
+                      ),
+                      const SizedBox(width: JdcSpacing.sm),
+                      Expanded(
+                        child: Container(
+                          height: JdcTouch.minTarget,
+                          padding: const EdgeInsets.symmetric(horizontal: JdcSpacing.lg),
+                          decoration: BoxDecoration(
+                            color: jdc.surface,
+                            borderRadius: BorderRadius.circular(JdcRadius.small),
+                            boxShadow: [
+                              BoxShadow(
+                                color: jdc.text.withValues(alpha: 0.1),
+                                blurRadius: 10,
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.search, color: jdc.muted, size: 18),
+                              const SizedBox(width: JdcSpacing.sm),
+                              Expanded(
+                                child: TextField(
+                                  style: TextStyle(fontSize: 13, color: jdc.text),
+                                  decoration: InputDecoration(
+                                    hintText: 'ค้นหาสถานที่หรือที่อยู่',
+                                    hintStyle: TextStyle(color: jdc.muted, fontSize: 13),
+                                    border: InputBorder.none,
+                                    isDense: true,
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            _isLoadingAddress
-                                ? Row(
-                                    children: [
-                                      SizedBox(
-                                        width: 14,
-                                        height: 14,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: colorScheme.onSurfaceVariant,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        AppLocalizations.of(context)!
-                                            .mapPickerSearching,
-                                        style: TextStyle(
-                                          color: colorScheme.onSurfaceVariant,
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                    ],
-                                  )
-                                : Text(
-                                    _addressText,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: colorScheme.onSurfaceVariant,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                            const SizedBox(height: 14),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                onPressed:
-                                    _isLoadingAddress ? null : _confirmLocation,
-                                icon: const Icon(Icons.check, size: 20),
-                                label: Text(
-                                    AppLocalizations.of(context)!
-                                        .mapPickerConfirm,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold)),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.accentOrange,
-                                  foregroundColor: Colors.white,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 14),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12)),
-                                  elevation: 0,
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ],
+                  ),
+                ),
+
+                // ปุ่มตำแหน่งปัจจุบัน
+                Positioned(
+                  right: JdcSpacing.xl,
+                  bottom: 220,
+                  child: GestureDetector(
+                    onTap: _getCurrentLocation,
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: jdc.surface,
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(
+                            color: jdc.text.withValues(alpha: 0.1),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: Icon(Icons.my_location, color: jdc.text, size: 22),
+                    ),
+                  ),
+                ),
+
+                // Card ยืนยันตำแหน่ง (bottom sheet)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    padding: EdgeInsets.fromLTRB(
+                      JdcSpacing.xl,
+                      JdcSpacing.xl,
+                      JdcSpacing.xl,
+                      JdcSpacing.xl + MediaQuery.of(context).padding.bottom,
+                    ),
+                    decoration: BoxDecoration(
+                      color: jdc.surface,
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(JdcRadius.sheet),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: jdc.text.withValues(alpha: 0.08),
+                          blurRadius: 24,
+                          offset: const Offset(0, -8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'ยืนยันตำแหน่ง',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: jdc.text,
+                          ),
+                        ),
+                        const SizedBox(height: JdcSpacing.md),
+                        Container(
+                          padding: const EdgeInsets.all(JdcSpacing.lg),
+                          decoration: BoxDecoration(
+                            color: jdc.paper,
+                            borderRadius: BorderRadius.circular(JdcRadius.card),
+                            border: Border.all(color: jdc.line),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.location_on, color: jdc.link, size: 20),
+                              const SizedBox(width: JdcSpacing.md),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (_isLoadingAddress) ...[
+                                      Row(
+                                        children: [
+                                          SizedBox(
+                                            width: 14,
+                                            height: 14,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: jdc.muted,
+                                            ),
+                                          ),
+                                          const SizedBox(width: JdcSpacing.sm),
+                                          Text(
+                                            l10n.mapPickerSearching,
+                                            style: TextStyle(color: jdc.muted, fontSize: 13),
+                                          ),
+                                        ],
+                                      ),
+                                    ] else ...[
+                                      Text(
+                                        _addressText.isNotEmpty
+                                            ? _addressText.split(',').first.trim()
+                                            : l10n.mapPickerDeliveryLocation,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w700,
+                                          color: jdc.text,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      if (_addressText.contains(','))
+                                        Text(
+                                          _addressText.substring(
+                                              _addressText.indexOf(',') + 1).trim(),
+                                          style: TextStyle(fontSize: 12, color: jdc.muted),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: JdcSpacing.lg),
+                        // ช่องรายละเอียดเพิ่มเติม
+                        TextField(
+                          decoration: InputDecoration(
+                            labelText: 'รายละเอียดเพิ่มเติม',
+                            hintText: 'บ้านเลขที่ ชั้น จุดสังเกต',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(JdcRadius.small),
+                              borderSide: BorderSide(color: jdc.line),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(JdcRadius.small),
+                              borderSide: BorderSide(color: jdc.line),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: JdcSpacing.lg,
+                              vertical: JdcSpacing.md,
+                            ),
+                          ),
+                          style: TextStyle(fontSize: 13, color: jdc.text),
+                        ),
+                        const SizedBox(height: JdcSpacing.lg),
+                        SizedBox(
+                          width: double.infinity,
+                          height: JdcTouch.button,
+                          child: ElevatedButton(
+                            onPressed: _isLoadingAddress ? null : _confirmLocation,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: jdc.cta,
+                              foregroundColor: jdc.onCta,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(JdcRadius.card),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: Text(
+                              l10n.mapPickerConfirm,
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

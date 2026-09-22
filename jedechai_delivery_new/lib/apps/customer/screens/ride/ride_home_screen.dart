@@ -1,5 +1,7 @@
 import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
+
+import '../../../../theme/jdc_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
@@ -7,7 +9,6 @@ import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'dart:convert';
-import '../../../../theme/app_theme.dart';
 import '../../../../common/services/auth_service.dart';
 import '../../../../common/services/booking_service.dart';
 import '../../../../common/services/fare_adjustment_service.dart';
@@ -519,7 +520,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
           _polylines.add(
             Polyline(
               polylineId: const PolylineId('route'),
-              color: AppTheme.primaryGreen,
+              color: JdcColors.of(context).cta,
               width: 5,
               points: polylineCoordinates,
             ),
@@ -671,12 +672,12 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.primaryGreen.withValues(alpha: 0.1)
+              ? JdcColors.of(context).cta.withValues(alpha: 0.1)
               : colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color:
-                isSelected ? AppTheme.primaryGreen : colorScheme.outlineVariant,
+                isSelected ? JdcColors.of(context).cta : colorScheme.outlineVariant,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -685,7 +686,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
             Icon(icon,
                 size: 22,
                 color: isSelected
-                    ? AppTheme.primaryGreen
+                    ? JdcColors.of(context).cta
                     : colorScheme.onSurfaceVariant),
             const SizedBox(width: 12),
             Text(label,
@@ -693,13 +694,13 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                   fontSize: 15,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   color: isSelected
-                      ? AppTheme.primaryGreen
+                      ? JdcColors.of(context).cta
                       : colorScheme.onSurface,
                 )),
             const Spacer(),
             if (isSelected)
-              const Icon(Icons.check_circle,
-                  color: AppTheme.primaryGreen, size: 22),
+              Icon(Icons.check_circle,
+                  color: JdcColors.of(context).cta, size: 22),
           ],
         ),
       ),
@@ -809,7 +810,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
       debugLog('Booking created successfully: ${booking.id}');
 
       if (!mounted) return;
-      _showMessage(l10n.rideSearchingDriver, AppTheme.primaryGreen);
+      _showMessage(l10n.rideSearchingDriver, JdcColors.of(context).cta);
 
       // Send notification to matching vehicle type drivers only
       await _notifyDriversAboutNewRide(booking, vehicleName, l10n: l10n);
@@ -1046,8 +1047,8 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.local_taxi,
-                            color: AppTheme.primaryGreen, size: 20),
+                        Icon(Icons.local_taxi,
+                            color: JdcColors.of(context).cta, size: 20),
                         const SizedBox(width: 8),
                         Text(
                           AppLocalizations.of(context)!.rideTitle,
@@ -1092,8 +1093,8 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                       Container(
                         width: 10,
                         height: 10,
-                        decoration: const BoxDecoration(
-                            color: AppTheme.primaryGreen,
+                        decoration: BoxDecoration(
+                            color: JdcColors.of(context).cta,
                             shape: BoxShape.circle),
                       ),
                       const SizedBox(width: 12),
@@ -1177,11 +1178,11 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                            color: JdcColors.of(context).cta.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(Icons.bookmark_outline,
-                              size: 20, color: AppTheme.primaryGreen),
+                          child: Icon(Icons.bookmark_outline,
+                              size: 20, color: JdcColors.of(context).cta),
                         ),
                       ),
                     ],
@@ -1264,7 +1265,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                                     color: !isAvailable
                                         ? colorScheme.surfaceContainerHighest
                                         : isSelected
-                                            ? AppTheme.primaryGreen
+                                            ? JdcColors.of(context).cta
                                                 .withValues(alpha: 0.1)
                                             : colorScheme.surfaceContainer,
                                     borderRadius: BorderRadius.circular(14),
@@ -1272,7 +1273,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                                       color: !isAvailable
                                           ? colorScheme.outlineVariant
                                           : isSelected
-                                              ? AppTheme.primaryGreen
+                                              ? JdcColors.of(context).cta
                                               : colorScheme.outlineVariant,
                                       width: isSelected && isAvailable ? 2 : 1,
                                     ),
@@ -1285,7 +1286,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                                           color: !isAvailable
                                               ? colorScheme.onSurfaceVariant
                                               : isSelected
-                                                  ? AppTheme.primaryGreen
+                                                  ? JdcColors.of(context).cta
                                                   : colorScheme
                                                       .onSurfaceVariant),
                                       const SizedBox(height: 4),
@@ -1301,7 +1302,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                                             color: !isAvailable
                                                 ? colorScheme.onSurfaceVariant
                                                 : isSelected
-                                                    ? AppTheme.primaryGreen
+                                                    ? JdcColors.of(context).cta
                                                     : colorScheme.onSurface,
                                           )),
                                       const SizedBox(height: 2),
@@ -1363,10 +1364,10 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                                               TextDecoration.lineThrough,
                                         )),
                                   Text('฿${_finalRidePrice.ceil()}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontSize: 20,
                                           fontWeight: FontWeight.bold,
-                                          color: AppTheme.primaryGreen)),
+                                          color: JdcColors.of(context).cta)),
                                 ],
                               ),
                             ],
@@ -1444,7 +1445,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
                               ? null
                               : _callDriver,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryGreen,
+                            backgroundColor: JdcColors.of(context).cta,
                             foregroundColor: Colors.white,
                             disabledBackgroundColor: colorScheme.outlineVariant,
                             padding: const EdgeInsets.symmetric(vertical: 16),

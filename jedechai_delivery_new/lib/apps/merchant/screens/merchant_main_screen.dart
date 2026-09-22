@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../theme/jdc_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../../theme/app_theme.dart';
 import '../../../common/screens/notification_center_screen.dart';
 import '../../../common/utils/profile_completion_policy.dart';
 import '../../../common/widgets/notification_badge_icon.dart';
@@ -163,7 +163,7 @@ class _MerchantMainScreenState extends State<MerchantMainScreen> {
             decoration: BoxDecoration(
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
+                  color: JdcColors.of(context).sunken,
                   blurRadius: 10,
                   offset: const Offset(0, -2),
                 ),
@@ -174,7 +174,7 @@ class _MerchantMainScreenState extends State<MerchantMainScreen> {
               onTap: (index) => setState(() => _currentIndex = index),
               type: BottomNavigationBarType.fixed,
               backgroundColor: colorScheme.surface,
-              selectedItemColor: AppTheme.accentOrange,
+              selectedItemColor: JdcColors.of(context).cta,
               unselectedItemColor: colorScheme.onSurfaceVariant,
               selectedLabelStyle:
                   const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),

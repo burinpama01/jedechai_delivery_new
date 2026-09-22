@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../theme/app_theme.dart';
+
+import '../../../../theme/jdc_colors.dart';
 import '../../../../common/services/auth_service.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -87,7 +88,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             child: ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryGreen,
+                backgroundColor: JdcColors.of(context).cta,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
@@ -112,8 +113,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        icon: const Icon(Icons.mark_email_read,
-            color: AppTheme.primaryGreen, size: 48),
+        icon: Icon(Icons.mark_email_read,
+            color: JdcColors.of(context).cta, size: 48),
         title: Text(
           l10n.forgotPasswordSuccessTitle,
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
@@ -140,7 +141,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryGreen,
+                backgroundColor: JdcColors.of(context).cta,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
@@ -164,7 +165,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.forgotPasswordTitle),
-        backgroundColor: AppTheme.primaryGreen,
+        backgroundColor: JdcColors.of(context).cta,
         foregroundColor: Colors.white,
       ),
       body: SafeArea(
@@ -182,10 +183,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const SizedBox(height: 32),
-                      const Icon(
+                      Icon(
                         Icons.lock_reset,
                         size: 80,
-                        color: AppTheme.primaryGreen,
+                        color: JdcColors.of(context).cta,
                       ),
                       const SizedBox(height: 24),
                       Text(
@@ -228,7 +229,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ElevatedButton(
                         onPressed: _isLoading ? null : _resetPassword,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryGreen,
+                          backgroundColor: JdcColors.of(context).cta,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(

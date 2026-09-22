@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>วิเคราะห์ระบบคูปอง — Coupon System Analysis v1</title>
+<style>
+  :root { --ink:#1a2332; --sub:#5a6a80; --line:#e3e8f0; --bg:#f7f9fc; --card:#ffffff;
+    --red:#c0392b; --red-bg:#fdecea; --amber:#b9770e; --amber-bg:#fef6e0;
+    --green:#1e8449; --green-bg:#e9f7ef; --blue:#1f618d; --blue-bg:#eaf2f8; }
+  * { box-sizing:border-box; }
+  body { font-family:'Segoe UI',Tahoma,'Noto Sans Thai',sans-serif; color:var(--ink);
+    background:var(--bg); margin:0; line-height:1.65; }
+  .wrap { max-width:1000px; margin:0 auto; padding:32px 20px 80px; }
+  header.hero { background:linear-gradient(135deg,#d35400,#c0392b); color:#fff;
+    border-radius:16px; padding:30px 32px; margin-bottom:26px; }
+  header.hero h1 { margin:0 0 8px; font-size:26px; }
+  header.hero p { margin:4px 0; opacity:.92; font-size:14px; }
+  h2 { font-size:20px; margin:40px 0 12px; padding-bottom:8px; border-bottom:2px solid var(--line); }
+  h3 { font-size:16px; margin:20px 0 8px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:18px 20px; margin:14px 0; }
+  table { width:100%; border-collapse:collapse; margin:12px 0; font-size:13.5px; }
+  th { background:#eef2f7; text-align:left; padding:9px 10px; border:1px solid var(--line); }
+  td { padding:8px 10px; border:1px solid var(--line); vertical-align:top; }
+  .tag { display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; font-weight:600; white-space:nowrap; }
+  .t-red { background:var(--red-bg); color:var(--red); }
+  .t-amber { background:var(--amber-bg); color:var(--amber); }
+  .t-green { background:var(--green-bg); color:var(--green); }
+  .t-blue { background:var(--blue-bg); color:var(--blue); }
+  code { background:#eef2f7; padding:1px 6px; border-radius:6px; font-size:12.5px;
+    font-family:Consolas,'Courier New',monospace; }
+  .money { font-family:Consolas,monospace; font-weight:600; }
+  .note { border-left:4px solid var(--blue); background:var(--blue-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  .danger { border-left:4px solid var(--red); background:var(--red-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  .ok { border-left:4px solid var(--green); background:var(--green-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  ul { margin:8px 0; padding-left:22px; } li { margin:5px 0; }
+  .small { color:var(--sub); font-size:12.5px; }
+  .flow { background:#0f1b2d; color:#d7e3f4; border-radius:12px; padding:14px 18px;
+    font-family:Consolas,monospace; font-size:12px; line-height:1.8; overflow-x:auto; white-space:pre; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>🎟️ วิเคราะห์ระบบคูปอง — ใช้จริง 10 ครั้ง พบปัญหาเงินจริง 3 เรื่อง + เครื่องไม้เครื่องมือที่ออกแบบไว้แต่ไม่เคยถูกใช้</h1>
+  <p>เวอร์ชัน 1 · 19 กันยายน 2569 · วิเคราะห์จากโค้ดทั้งเส้น (สร้าง → แจก → ใช้ → settle) + ข้อมูลจริง: คูปอง 7 ใบ, การใช้ 10 ครั้ง (6 ถูกยกเลิก), grant 13 รายการ</p>
+</header>
+
+<h2>1) สถาปัตยกรรมปัจจุบัน</h2>
+<div class="flow">วงจรคูปอง
+
+ แอดมิน/ร้านสร้าง ──► coupons (funding_source, discount_base, GP rates, stacking_group,
+                │     driver_compensation_policy … ครบเครื่องใน schema)
+                ├─ code_only ──► ลูกค้าพิมพ์โค้ดที่ checkout
+                ├─ claimable ──► claim_coupon RPC ──► user_coupons (claimed) ──► เลือกที่ checkout
+                └─ auto_grant ──► trigger (welcome/referral) ──► user_coupons อัตโนมัติ
+
+ ตอนสั่ง: client คำนวณส่วนลด (Coupon.calculateDiscount) ──► จ่ายลดราคาไปก่อน
+ หลังสร้าง booking: apply_coupon_atomic (FOR UPDATE + เช็ควัน/ลิมิต server) ──► coupon_usages + used_count
+
+ ⚠️ ตอนยกเลิกออเดอร์: ไม่มีอะไรแตะคูปองเลย — ใช้ไปแล้วหายถาวร</div>
+
+<h3>สิ่งที่ออกแบบ/ทำงานได้ดี</h3>
+<div class="ok">
+<ul>
+  <li><b>apply_coupon_atomic ป้องกัน race ได้จริง:</b> <code>FOR UPDATE</code> ล็อกแถว + ตรวจวันหมดอายุด้วย <code>now()</code> ฝั่ง server (กันนาฬิกาเครื่องปลอม) + ลิมิตรวม/รายคนแบบ atomic</li>
+  <li><b>RLS แน่นพอ:</b> ลูกค้าเห็นเฉพาะคูปอง active / ร้านจัดการได้เฉพาะของตัวเอง (<code>merchant_id = auth.uid()</code>) / ประวัติการใช้เห็นเฉพาะเจ้าของ+แอดมิน</li>
+  <li><b>โมเดลรองรับครบ:</b> 3 ประเภท (fixed/percentage/free_delivery) + เพดานส่วนลด + ฐานส่วนลด (subtotal/delivery_fee) + ขั้นต่ำ + เฉพาะร้าน/เฉพาะบริการ</li>
+  <li>คูปองระบบซ่อนรายละเอียดจากร้าน (<code>hideSystemCouponBreakdown</code>) ส่วนคูปองร้านฝังในโน้ตให้ร้านเห็น</li>
+</ul>
+</div>
+
+<h2>2) ปัญหาที่มีหลักฐานเกิดขึ้นจริงแล้ว</h2>
+
+<h3>C1 — ใครแบกส่วนลด: คำตอบจริงคือ "คนขับ" (ทั้งที่ DB บอกว่าร้านแบก) <span class="tag t-red">เกิดแล้ว · เงินจริง</span></h3>
+<div class="danger">
+ออเดอร์ 25 พ.ค. (Patty, เงินสด, ใช้ NEWUSER01 ส่งฟรี): อาหาร <span class="money">110</span> + ค่าส่ง <span class="money">25</span> − ส่วนลด <span class="money">25</span> → ลูกค้าจ่าย <span class="money">110</span>
+ระบบจองค่าจ้างคนขับ <span class="money">28</span> (ค่าส่ง 25 + GP 3) แต่เงินสดจริง: เก็บ 110 → จ่ายร้าน 98 → เหลือ <span class="money">12</span> − ถูกหักกระเป๋าฝั่งแอป 9 = เหลือ <span class="money">3</span>
+<b>คนขับขาดจริง 25 บาท = ค่าส่งทั้งก้อน</b> ทั้งที่คูปองระบุ <code>funding_source='merchant'</code> —
+เพราะ <b>ไม่มีโค้ดไหนอ่าน funding_source / merchant_gp_charge_rate / driver_compensation_policy เลย</b> (grep ทั้ง repo: มีแค่ model เก็บค่า ไม่มี settlement/ledger ใช้)
+นี่คือ G3 ในแผนรวม — ตอนนี้มีหลักฐานเกิดจริงแล้ว 4 ออเดอร์ที่ completed ด้วยคูปอง (10 ก.พ., 1 พ.ค., 25 พ.ค., 27 พ.ค.)
+</div>
+
+<h3>C2 — ยกเลิกออเดอร์แล้วคูปอง "ไหม้" ทันที <span class="tag t-red">เกิดแล้ว 6 จาก 10 ครั้ง</span></h3>
+<div class="danger">
+<code>cancel_wallet_booking_with_refund</code> ไม่แตะคูปองเลย (ตรวจ function จริงแล้ว): แถว <code>coupon_usages</code> ค้าง + <code>used_count</code> ไม่ลด + <code>per_user_limit</code> ถูกนับแล้ว
+ผลจริง: 6 ออเดอร์คูปองถูกยกเลิก → <b>ลูกค้า 6 คนใช้ NEWUSER01 (จำกัด 1 ครั้ง/คน) ไม่ได้อีกตลอดชีวิต</b> แม้สั่งไม่สำเร็จ
+ยิ่งถ้าคูปองแคมเปญหน้าใหญ่ + อัตรายกเลิกสูง = คูปองถูกเผาโดยออเดอร์ที่ไม่เกิดขึ้นจริง
+</div>
+
+<h3>C3 — จำนวนส่วนลดคำนวณฝั่ง client แล้ว "บอก" server ตรงๆ <span class="tag t-red">ช่องโหว่ integrity</span></h3>
+<div class="danger">
+<code>apply_coupon_atomic(p_discount_amount)</code> — server บันทึกจำนวนที่ client ส่งมาโดยไม่คำนวณซ้ำ
+สิ่งที่ RPC ตรวจ: active / วันที่ / ลิมิตรวม / ลิมิตรายคน — <b>ไม่ตรวจ</b>: จำนวนส่วนลด, ขั้นต่ำ, ประเภทบริการ, ร้านที่กำหนด (สี่อย่างนี้เช็คแค่ client)
+client ดัดแปลง (หรือแอปเวอร์ชันเก่า logic เก่า) ส่งส่วนลด ฿0.01 หรือเกินเพดานได้ — wallet payment RPC ฝั่งนี้ validate จาก server แล้ว แต่คูปองยังไม่
+</div>
+
+<h2>3) ปัญหารอง / ความเสี่ยง</h2>
+<table>
+<tr><th>#</th><th>ปัญหา</th><th>รายละเอียด</th><th>ระดับ</th></tr>
+<tr><td><b>C4</b></td><td>Timezone เพี้ยน 7 ชั่วโมงในการกรองรายการ</td>
+  <td><code>_bangkokNowIso()</code> สร้างเวลากรุงเทพแบบไม่มี offset → Postgres ตีความเป็น UTC → รายการ "คูปองที่เก็บได้/ใช้ได้" เพี้ยน 7 ชม. (โผล่ช้า 7 ชม. / หายเร็ว 7 ชม.) ฝั่ง RPC ใช้ now() ถูกต้อง — สองทางเลยไม่ตรงกัน; การเขียนวันที่ตอนสร้างคูปองก็ส่ง naive ISO เช่นกัน</td>
+  <td><span class="tag t-amber">กลาง</span></td></tr>
+<tr><td><b>C5</b></td><td>แจกแล้วไม่มีใครใช้</td>
+  <td>WELCOME20/REFERRER20 (auto_grant) แจกไป 13 สิทธิ์ ใช้จริง 0 ครั้ง — น่าสงสัย UX หน้า checkout ไม่ดัน wallet coupon ที่มีอยู่ / หรือหมดอายุก่อน</td>
+  <td><span class="tag t-amber">กลาง (growth)</span></td></tr>
+<tr><td><b>C6</b></td><td>เครื่องไม้เครื่องมือ "ออกแบบแล้วเงียบ"</td>
+  <td><code>stacking_group</code> (มีค่า 'New_user' แต่ไม่มีตัว enforce — UI จำกัด 1 คูปอง/ออเดอร์เอง), <code>driver_compensation_policy</code> (null ทุกใบ), <code>merchant_gp_*_rate</code> (NEWUSER01 ใส่ 0.2 แต่ไม่มีใครอ่าน)</td>
+  <td><span class="tag t-blue">บันทึกให้ทราบ</span></td></tr>
+<tr><td><b>C7</b></td><td>ออเดอร์ completed แต่ earnings = 0</td>
+  <td>ออเดอร์ 1 พ.ค. (ใช้คูปอง, เงินสด, completed) มี driver_earnings/app_earnings = 0 — settlement ไม่ถูกบันทึก (คลาสเดียวกับ G2: client ส่งค่ามา)</td>
+  <td><span class="tag t-amber">หลักฐานซ้ำของ G2</span></td></tr>
+</table>
+
+<h2>4) ข้อมูลจริงทั้งหมดในระบบ (ตรวจ 19 ก.ย.)</h2>
+<table>
+<tr><th>โค้ด</th><th>ชนิด</th><th>ค่า</th><th>ฐาน</th><th>ใครออกเงิน (ตาม DB)</th><th>การใช้จริง</th><th>สังเกต</th></tr>
+<tr><td>NEWUSER01</td><td>free_delivery</td><td>ค่าส่งฟรี</td><td>delivery_fee</td><td>merchant (+GP charge 20%)</td><td><b>9 ครั้ง</b> · 6 ถูกยกเลิก</td><td>ตัวเดียวที่มีการใช้จริง — คนขับแบกเองจริง (C1)</td></tr>
+<tr><td>JDCTEN</td><td>fixed</td><td>฿10</td><td>subtotal</td><td>platform</td><td>1 ครั้ง (ก.พ.)</td><td>หมดอายุ มี.ค. แล้ว</td></tr>
+<tr><td>NEWUSER2026</td><td>percentage</td><td>10% (สูงสุด ฿50)</td><td>subtotal</td><td>platform</td><td>0</td><td>หมดอายุ</td></tr>
+<tr><td>EACHOTHER</td><td>fixed</td><td>฿10</td><td>subtotal</td><td>merchant</td><td>0</td><td>คูปองร้าน หมดอายุ เม.ย.</td></tr>
+<tr><td>WELCOME20 / REFERRER20</td><td>fixed</td><td>฿20</td><td>subtotal</td><td>split</td><td>0 (แจก 13 สิทธิ์)</td><td>C5</td></tr>
+<tr><td>SORRY10</td><td>fixed</td><td>฿10</td><td>subtotal</td><td>platform</td><td>0</td><td>หมดอายุ ก.ค.</td></tr>
+</table>
+<p class="small">รวมส่วนลดที่ออกไปจริง ฿157 จาก 10 ออเดอร์ (4 completed / 6 cancelled)</p>
+
+<h2>5) วิธีแก้ — เสนอเพิ่มเข้าแผนรวม (ขยาย Phase 2/4)</h2>
+<div class="card">
+<ol>
+  <li><b>C2 (แก้ก่อน ง่ายและถูก):</b> ใน cancel RPC (ตัวเดียวกับที่จะแก้ F2 ใน Phase 2 อยู่แล้ว) — เมื่อยกเลิกออเดอร์ที่มี <code>coupon_usages</code>: ลบแถว usage + <code>used_count - 1</code> + คืนสถานะ <code>user_coupons</code> (claimed) — ออเดอร์ที่กลับมา completed ภายหลังจะได้คูปองคืนพร้อมใช้ใหม่</li>
+  <li><b>C3 (คู่กับ G2 ใน Phase 2):</b> ย้าย <code>calculateDiscount</code> ลง server — apply_coupon_atomic คำนวณจำนวนเองจาก coupon + booking (subtotal/delivery_fee/min_order/service/merchant ตรวจครบ) แทนการรับ p_discount_amount</li>
+  <li><b>C1 = G3 (Phase 4 แต่ยกระดับความเร่ง):</b> เลือกนโยบายแล้ว implement จริง — ตัวเลือกที่เป็นไปได้:
+    <ul>
+      <li><b>(ก) platform แบก:</b> หักมูลค่าส่วนลดออกจาก GP ระบบก่อนแบ่ง (เหมาะกับคูปอง platform เช่น WELCOME20)</li>
+      <li><b>(ข) merchant แบก:</b> ลด merchantReceives ลงเท่าส่วนลด (ตามที่ funding_source='merchant' เขียนไว้ — เหมาะกับ NEWUSER01/คูปองร้าน) แล้วคนขับได้ค่าจ้างครบตามจอง</li>
+      <li><b>(ค) ใช้ driver_compensation_policy ที่มีอยู่:</b> ตอน complete เติมกระเป๋าคนขับชดเชยเท่าส่วนลดโดยเด้งไปที่ funding_source ปลายทาง</li>
+    </ul></li>
+  <li><b>C4:</b> เปลี่ยนทุกจุดเปรียบเทียบวันที่คูปองให้เป็น timestamptz จริง (ส่ง Z/offset จาก client หรือย้ายการกรองไป RPC ที่ใช้ now()) — ทำคู่กับ Phase 1 ได้</li>
+  <li><b>C5:</b> หน้า checkout ดัน "คูปองของคุณ" ที่ claim ไว้ขึ้นมาก่อนช่องกรอกโค้ด + แจ้งเตือนก่อนหมดอายุ</li>
+</ol>
+</div>
+
+<div class="note"><b>สรุปหนึ่งบรรทัด:</b> ระบบคูปอง "กันไว้" ดี (atomic, RLS, ลิมิต) แต่สามฝั่งเงินยังไม่ปิด — ตอนนี้มีหลักฐานแล้วว่าคนขับจ่ายค่าส่งฟรีแทนร้านจริง 4 ออเดอร์ และคูปองไหม้จากการยกเลิก 6 ครั้ง · แนะนำเสริม C2/C3 เข้า Phase 2 ของแผนรวม และยก G3=C1 ขึ้นมาตัดสินใจนโยบายจริง<br><b>ที่มา:</b> coupon_service.dart · coupon.dart (calculateDiscount) · apply_coupon_atomic (20260516100500) · claim/wallet RPC · RLS policies · ข้อมูลจริง coupons 7 แถว + coupon_usages 10 แถว + user_coupons 27 แถว + ตัวเลข settlement ออเดอร์คูปองทุกใบ</div>
+
+</div>
+</body>
+</html>

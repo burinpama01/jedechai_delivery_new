@@ -1,7 +1,7 @@
 name: jedechai_delivery_new
 description: Super App for Food Delivery, Parcel Delivery, and Passenger Transport
 publish_to: 'none'
-version: 1.13.1+124
+version: 1.14.0+125
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -119,3 +119,20 @@ flutter:
   assets:
     - .env.client
     - assets/images/
+  fonts:
+    # ฟอนต์ตามดีไซน์ JDC (สัญญาอนุญาต OFL — สำเนาอยู่ใน assets/fonts/)
+    - family: IBMPlexSansThai
+      fonts:
+        - asset: assets/fonts/IBMPlexSansThai-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/IBMPlexSansThai-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/IBMPlexSansThai-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/IBMPlexSansThai-Bold.ttf
+          weight: 700
+    # Noto Sans Thai เผยแพร่เป็น variable font น้ำหนักคุมผ่าน FontVariation ในธีม
+    - family: NotoSansThai
+      fonts:
+        - asset: assets/fonts/NotoSansThai-Variable.ttf
+

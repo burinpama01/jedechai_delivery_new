@@ -1,0 +1,323 @@
+<title>Jedechai Valuation v1</title>
+<style>
+  :root{
+    --bg:#f7f7f5; --fg:#1c1c1a; --muted:#6b6b63; --line:#e0dfd8;
+    --card:#ffffff; --accent:#b8562f; --accent-soft:#fdf1ea;
+    --ok:#2f6b45; --warn:#9a6b1a; --bad:#a33a2e;
+    --band:#f0efe9;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#17171a; --fg:#eceae4; --muted:#9c9a92; --line:#33333a;
+      --card:#1f1f23; --accent:#e08a5f; --accent-soft:#2a201b;
+      --ok:#6cbf8a; --warn:#d8ab55; --bad:#e2796a; --band:#232329;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#17171a; --fg:#eceae4; --muted:#9c9a92; --line:#33333a;
+    --card:#1f1f23; --accent:#e08a5f; --accent-soft:#2a201b;
+    --ok:#6cbf8a; --warn:#d8ab55; --bad:#e2796a; --band:#232329;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family:"Sarabun","Noto Sans Thai",-apple-system,"Segoe UI",sans-serif;
+    line-height:1.75; font-size:16px;
+  }
+  .wrap{max-width:940px; margin:0 auto; padding:48px 24px 96px}
+  header{border-bottom:2px solid var(--fg); padding-bottom:20px; margin-bottom:40px}
+  .eyebrow{font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); font-weight:700}
+  h1{font-size:clamp(28px,5vw,40px); line-height:1.2; margin:8px 0 12px; letter-spacing:-.01em}
+  .sub{color:var(--muted); font-size:15px; margin:0}
+  h2{font-size:23px; margin:56px 0 16px; padding-top:20px; border-top:1px solid var(--line); letter-spacing:-.01em}
+  h3{font-size:17px; margin:28px 0 10px}
+  p{margin:0 0 14px}
+  .lead{font-size:17px; background:var(--accent-soft); border-left:3px solid var(--accent);
+        padding:18px 20px; border-radius:0 8px 8px 0; margin:0 0 8px}
+  .headline{display:flex; flex-wrap:wrap; gap:14px; margin:28px 0}
+  .hl{flex:1 1 220px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:18px 20px}
+  .hl .k{font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; font-weight:700}
+  .hl .v{font-size:26px; font-weight:700; margin:6px 0 2px; letter-spacing:-.02em}
+  .hl .n{font-size:13px; color:var(--muted)}
+  .scroll{overflow-x:auto; margin:18px 0; border:1px solid var(--line); border-radius:10px; background:var(--card)}
+  table{border-collapse:collapse; width:100%; min-width:560px; font-size:14.5px}
+  th,td{text-align:left; padding:11px 14px; border-bottom:1px solid var(--line); vertical-align:top}
+  th{background:var(--band); font-weight:700; font-size:13px; letter-spacing:.02em; white-space:nowrap}
+  tr:last-child td{border-bottom:none}
+  td.num,th.num{text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums}
+  .tag{display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; white-space:nowrap}
+  .t-ok{background:color-mix(in srgb,var(--ok) 15%,transparent); color:var(--ok)}
+  .t-warn{background:color-mix(in srgb,var(--warn) 18%,transparent); color:var(--warn)}
+  .t-bad{background:color-mix(in srgb,var(--bad) 15%,transparent); color:var(--bad)}
+  ul,ol{margin:0 0 16px; padding-left:22px}
+  li{margin-bottom:7px}
+  .note{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px 20px; margin:20px 0}
+  .note.warn{border-left:3px solid var(--warn)}
+  .note.bad{border-left:3px solid var(--bad)}
+  code{background:var(--band); padding:1px 6px; border-radius:4px; font-size:13.5px;
+       font-family:"Cascadia Code",Consolas,monospace}
+  .bar{display:flex; align-items:center; gap:10px; margin:8px 0}
+  .bar .lbl{flex:0 0 190px; font-size:14px}
+  .bar .track{flex:1; height:22px; background:var(--band); border-radius:4px; position:relative; min-width:120px}
+  .bar .fill{position:absolute; top:0; bottom:0; background:var(--accent); border-radius:4px; opacity:.75}
+  .bar .val{flex:0 0 130px; text-align:right; font-size:13.5px; font-variant-numeric:tabular-nums; color:var(--muted)}
+  footer{margin-top:64px; padding-top:20px; border-top:1px solid var(--line); color:var(--muted); font-size:13px}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">รายงานประเมินมูลค่าสินทรัพย์ซอฟต์แวร์</div>
+  <h1>Jedechai Delivery — ประเมินมูลค่าเพื่อขาย / ส่งต่อการบริหาร</h1>
+  <p class="sub">จัดทำ 14 สิงหาคม 2026 · อ้างอิงโค้ด ณ commit <code>1ba027c</code> (19 ก.ค. 2026) · app v1.10.1+118 · admin-web 1.6.1</p>
+</header>
+
+<p class="lead">
+<strong>สรุปตัวเลข:</strong> ตัวระบบ (source code + สถาปัตยกรรม + ฐานข้อมูล) มีต้นทุนสร้างใหม่ประมาณ
+<strong>2.0–3.2 ล้านบาท</strong> ถ้าจ้างทีมไทยทำตั้งแต่ต้น
+แต่ <em>ราคาขายจริง</em> ขึ้นกับว่ามี "ธุรกิจ" ติดมาด้วยหรือไม่ —
+ขายเฉพาะโค้ดตอนนี้ (ยังไม่ขึ้น Play Store, ยังไม่มี traction) ได้ราว <strong>450,000–1,100,000 บาท</strong>
+ถ้ามีร้าน/คนขับ/ออเดอร์เดินจริงแล้ว จะขยับเป็น <strong>1.5–4 ล้านบาท+</strong>
+</p>
+
+<div class="headline">
+  <div class="hl">
+    <div class="k">ต้นทุนสร้างใหม่</div>
+    <div class="v">2.0–3.2 ล.</div>
+    <div class="n">ทีมไทย 3.5 FTE × 8–10 เดือน</div>
+  </div>
+  <div class="hl">
+    <div class="k">ขายโค้ดตอนนี้</div>
+    <div class="v">0.45–1.1 ล.</div>
+    <div class="n">ไม่มี traction ติดมาด้วย</div>
+  </div>
+  <div class="hl">
+    <div class="k">ขายพร้อมธุรกิจ</div>
+    <div class="v">1.5–4 ล.+</div>
+    <div class="n">ขึ้นกับ GMV / จำนวนร้าน</div>
+  </div>
+</div>
+
+<h2>1. สินทรัพย์ที่นับได้จริง</h2>
+<p>ตัวเลขทั้งหมดนับจาก repo ตรง ไม่ได้ประมาณ</p>
+
+<div class="scroll">
+<table>
+<tr><th>ส่วน</th><th class="num">ไฟล์</th><th class="num">บรรทัด</th><th>รายละเอียด</th></tr>
+<tr><td><strong>Flutter app</strong></td><td class="num">207</td><td class="num">107,782</td><td>5 แอปในโค้ดเบสเดียว</td></tr>
+<tr><td>— Customer</td><td class="num">—</td><td class="num">25,813</td><td>สั่งอาหาร / เรียกรถ / ส่งพัสดุ / ซักผ้า</td></tr>
+<tr><td>— Common (shared)</td><td class="num">—</td><td class="num">23,353</td><td>services, models, widgets ใช้ร่วม</td></tr>
+<tr><td>— Driver</td><td class="num">—</td><td class="num">15,355</td><td>รับงาน, tracking, กะทำงาน, กระเป๋าเงิน</td></tr>
+<tr><td>— Merchant</td><td class="num">—</td><td class="num">13,206</td><td>จัดการเมนู/ออเดอร์/ยอดขาย</td></tr>
+<tr><td>— Admin + Landing</td><td class="num">—</td><td class="num">6,119</td><td>แอดมินในแอป + หน้าแรก</td></tr>
+<tr><td>— Theme / Utils / l10n</td><td class="num">—</td><td class="num">23,936</td><td>รองรับ 2 ภาษา (ไทย/อังกฤษ)</td></tr>
+<tr><td><strong>Admin Web</strong></td><td class="num">51</td><td class="num">22,011</td><td>30 หน้าจัดการหลังบ้าน</td></tr>
+<tr><td><strong>Supabase SQL</strong></td><td class="num">149</td><td class="num">16,637</td><td>~40 ตาราง, 73 RPC, 19 trigger, 181 RLS policy</td></tr>
+<tr><td><strong>Edge Functions</strong></td><td class="num">16</td><td class="num">6,851</td><td>15 ฟังก์ชัน (Deno/TS)</td></tr>
+<tr><td><strong>รวม</strong></td><td class="num">423</td><td class="num">~153,300</td><td>ระยะพัฒนา 21 ม.ค. – 19 ก.ค. 2026 (~6 เดือน, 149 commits)</td></tr>
+</table>
+</div>
+
+<h3>ฟีเจอร์ที่ทำให้ไม่ใช่ "แอปเดลิเวอรีทั่วไป"</h3>
+<ul>
+  <li><strong>4 บริการในระบบเดียว</strong> — อาหาร / เรียกรถ / ส่งพัสดุ / <em>ซักผ้า (มีระบบ quote + แชทต่อรองราคา)</em> ซึ่งของสำเร็จรูปในตลาดแทบไม่มี</li>
+  <li><strong>โมเดลหารายได้ครบวงจร</strong> — GP plans ต่อร้าน, platform fee, ค่าคอมคนขับ, wallet + เติมเงิน/ถอนเงิน, คูปอง, ระบบชวนเพื่อน (referral + reward)</li>
+  <li><strong>Local เฉพาะไทย</strong> — ตรวจสลิปโอนอัตโนมัติ (SLIP2GO), แจ้งเตือนแอดมินผ่าน LINE / Telegram, UI ภาษาไทยเต็มระบบ</li>
+  <li><strong>เชื่อม POS ภายนอก</strong> — <code>pos_connections</code> + webhook (StoreOS connect) รับเมนู/สถานะออเดอร์จากระบบร้าน</li>
+  <li><strong>ความปลอดภัยระดับ multi-tenant จริง</strong> — 181 RLS policies + งานเขียนสิทธิ์สูงบังคับผ่าน Edge Function <code>admin-actions</code> (ไม่มี service key ฝั่ง browser)</li>
+  <li><strong>ระบบแจ้งเตือนครบชั้น</strong> — FCM push, trigger ตามสถานะออเดอร์, outbox queue + pg_cron drain, delivery log ตรวจย้อนได้</li>
+</ul>
+
+<h2>2. วิธีที่ 1 — ต้นทุนสร้างใหม่ (Cost Approach)</h2>
+<p>คำถามคือ "ถ้าผู้ซื้อไม่ซื้อ แล้วจ้างทำเองใหม่ ต้องจ่ายเท่าไร" นี่คือ<em>เพดานบน</em>ที่ผู้ซื้อมีเหตุผลจะยอมจ่าย</p>
+
+<div class="scroll">
+<table>
+<tr><th>ตำแหน่ง</th><th class="num">FTE</th><th class="num">เดือน</th><th class="num">ค่าตัว/เดือน</th><th class="num">รวม</th></tr>
+<tr><td>Flutter dev (senior + mid)</td><td class="num">2.0</td><td class="num">9</td><td class="num">100,000</td><td class="num">1,800,000</td></tr>
+<tr><td>Backend / Supabase / SQL</td><td class="num">1.0</td><td class="num">9</td><td class="num">100,000</td><td class="num">900,000</td></tr>
+<tr><td>Web dev (admin dashboard)</td><td class="num">0.5</td><td class="num">9</td><td class="num">80,000</td><td class="num">360,000</td></tr>
+<tr><td>PM / QA / UX</td><td class="num">0.5</td><td class="num">9</td><td class="num">80,000</td><td class="num">360,000</td></tr>
+<tr><td colspan="4"><strong>รวมต้นทุนแรงงาน</strong></td><td class="num"><strong>3,420,000</strong></td></tr>
+</table>
+</div>
+
+<p>ปรับตามความเป็นจริง:</p>
+<div class="bar"><div class="lbl">ทำเอง / ฟรีแลนซ์ประหยัด</div><div class="track"><div class="fill" style="left:0;width:47%"></div></div><div class="val">1.6–2.0 ล.</div></div>
+<div class="bar"><div class="lbl">ทีมในบริษัท (in-house)</div><div class="track"><div class="fill" style="left:12%;width:53%"></div></div><div class="val">2.0–3.2 ล.</div></div>
+<div class="bar"><div class="lbl">จ้าง agency (มี margin)</div><div class="track"><div class="fill" style="left:35%;width:65%"></div></div><div class="val">3.5–5.5 ล.</div></div>
+
+<div class="note">
+<strong>ตัวเลขที่ผมใช้อ้างอิงต่อ: 2.0–3.2 ล้านบาท</strong> — เป็นช่วง in-house ที่สมเหตุสมผลที่สุดสำหรับตลาดไทยปี 2026
+และเป็นตัวเลขที่ผู้ซื้อฝั่งเทคจะเชื่อ (agency quote สูงเกินจนโดนต่อรองทิ้ง)
+</div>
+
+<h2>3. วิธีที่ 2 — ราคาตลาดตามสถานะธุรกิจ</h2>
+<p>นี่คือส่วนที่ทำให้ราคาต่างกันได้ 5–10 เท่า ผู้ซื้อไม่ได้ซื้อบรรทัดโค้ด เขาซื้อ "เวลาที่ประหยัดได้" หรือ "รายได้ที่ได้ทันที"</p>
+
+<div class="scroll">
+<table>
+<tr><th>สถานการณ์</th><th>เงื่อนไข</th><th class="num">ช่วงราคา (บาท)</th><th>ผู้ซื้อคือใคร</th></tr>
+<tr>
+  <td><strong>A. ขายโค้ดล้วน</strong><br><span class="tag t-warn">สถานะปัจจุบัน</span></td>
+  <td>ยังไม่ขึ้น Play Store, ไม่มีผู้ใช้จริง, ส่งมอบ source + DB schema + เอกสาร</td>
+  <td class="num">450,000 – 1,100,000</td>
+  <td>ผู้ประกอบการต่างจังหวัดที่อยากเปิดเดลิเวอรีเอง, agency ที่อยากได้ base</td>
+</tr>
+<tr>
+  <td><strong>B. ขายพร้อมระบบที่เดินแล้ว</strong></td>
+  <td>ขึ้นสโตร์แล้ว มีร้าน 20–50 ร้าน คนขับ 10–30 คน ออเดอร์ประจำ แต่กำไรยังบาง</td>
+  <td class="num">1,500,000 – 2,800,000</td>
+  <td>นักลงทุนท้องถิ่น, เจ้าของร้านอาหารรายใหญ่ในพื้นที่</td>
+</tr>
+<tr>
+  <td><strong>C. ขายเป็นธุรกิจ</strong></td>
+  <td>มี GMV ต่อเนื่อง กำไรสุทธิพิสูจน์ได้ ≥ 12 เดือน</td>
+  <td class="num">2–3.5 × กำไรสุทธิ/ปี</td>
+  <td>กลุ่มทุน, คู่แข่งที่อยากได้ตลาด</td>
+</tr>
+<tr>
+  <td><strong>D. ไม่ขายขาด — ทำ white-label</strong><br><span class="tag t-ok">ผลตอบแทนสูงสุด</span></td>
+  <td>ขายสิทธิ์ใช้งานต่อจังหวัด/ต่อเจ้า ไม่ผูกขาด</td>
+  <td class="num">150,000–400,000 /ราย<br>หรือ 25,000–60,000 /เดือน</td>
+  <td>ผู้ประกอบการหลายจังหวัด (ขายได้ซ้ำ)</td>
+</tr>
+</table>
+</div>
+
+<h3>ตัวอย่างคำนวณกรณี C (ให้เห็นภาพว่าต้องมี traction เท่าไรถึงจะคุ้มกว่าขายโค้ด)</h3>
+<p>สมมติ 100 ออเดอร์/วัน × ค่าเฉลี่ยบิล 350 บาท × ส่วนแบ่งแพลตฟอร์ม 20% = 7,000 บาท/วัน ≈ <strong>2.55 ล้านบาท/ปี</strong> (รายได้แพลตฟอร์ม)
+หักต้นทุนดำเนินงาน/การตลาด/ซัพพอร์ต เหลือกำไรสุทธิ ~25–30% ≈ <strong>640,000–765,000 บาท/ปี</strong>
+คูณ 2.5–3 เท่า → มูลค่ากิจการ <strong>1.6–2.3 ล้านบาท</strong> <em>บวก</em>มูลค่าโค้ด
+</p>
+<p class="sub">แปลว่า: ถ้ายังทำ traction ไม่ถึงราว 60–80 ออเดอร์/วัน การขายโค้ดล้วน (กรณี A) ตอนนี้ก็ไม่ได้เสียเปรียบมากนัก แต่ถ้าดันถึง 100+ ออเดอร์/วันได้ภายใน 6–12 เดือน มูลค่าจะขยับขึ้นเท่าตัว</p>
+
+<h2>4. สิ่งที่ทำให้ราคา "ขึ้น"</h2>
+<div class="scroll">
+<table>
+<tr><th>ปัจจัย</th><th>เหตุผลที่ผู้ซื้อยอมจ่ายเพิ่ม</th></tr>
+<tr><td>5 แอปในโค้ดเบสเดียว</td><td>ถ้าซื้อ script สำเร็จรูป มักได้แค่ customer+driver ต้องจ่ายเพิ่มสำหรับ merchant/admin</td></tr>
+<tr><td>ระบบซักผ้าพร้อม quote/แชท</td><td>เป็น vertical ที่ยังไม่มีเจ้าใหญ่ในไทยจับจริงจัง — เป็นจุดขายเฉพาะ</td></tr>
+<tr><td>โมเดลรายได้ทำเสร็จแล้ว</td><td>GP/fee/wallet/คูปอง = เปิดแล้วเก็บเงินได้เลย ไม่ต้องพัฒนาต่อ</td></tr>
+<tr><td>149 migrations เรียงลำดับ</td><td>ประวัติ schema ครบ ทีมใหม่ตามงานได้ ไม่ใช่ DB ที่คลิกมือ</td></tr>
+<tr><td>181 RLS policies</td><td>security model จริง ไม่ใช่เปิดสิทธิ์หมดแล้วกรองที่แอป</td></tr>
+<tr><td>เอกสารภาษาไทยเยอะ</td><td>มี <code>AGENTS.md</code>, plan/report ใน <code>Plan/</code>, README แต่ละส่วน — ลดเวลา onboarding ทีมใหม่มาก</td></tr>
+</table>
+</div>
+
+<h2>5. สิ่งที่ทำให้ราคา "ลง" — ต้องแก้ก่อนขาย</h2>
+<p>ถ้าผู้ซื้อมี technical DD (due diligence) เขาจะเจอสิ่งเหล่านี้และใช้ต่อรองราคา ผมเรียงตามผลกระทบต่อราคา</p>
+
+<div class="scroll">
+<table>
+<tr><th>ประเด็น</th><th>ระดับ</th><th>ผลต่อราคา</th><th>แก้อย่างไร</th></tr>
+<tr>
+  <td><strong>Service key ยังไม่ rotate</strong></td>
+  <td><span class="tag t-bad">critical</span></td>
+  <td>ปิดดีลไม่ได้จนกว่าจะแก้ — ส่งมอบระบบพร้อมคีย์ที่อาจรั่วคือความรับผิดทางกฎหมาย</td>
+  <td>rotate ทุกคีย์ (Supabase service key, FCM, SLIP2GO, LINE/Telegram token) + ตรวจ git history ว่าไม่เคย commit</td>
+</tr>
+<tr>
+  <td><strong>Bus factor = 1</strong></td>
+  <td><span class="tag t-bad">high</span></td>
+  <td>−15 ถึง −30%</td>
+  <td>เขียน runbook + วิดีโอเดินระบบ 2–3 ชม. + ระบุช่วง transition support (แนะนำ 30–60 วัน คิดค่าบริการแยก)</td>
+</tr>
+<tr>
+  <td><code>supabase db push</code> ใช้ไม่ได้ (migration history desync)</td>
+  <td><span class="tag t-bad">high</span></td>
+  <td>−10 ถึง −20%</td>
+  <td>repair migration history ให้ตรงกับ remote ก่อนส่งมอบ — ถ้าทีมใหม่ deploy ไม่ได้วันแรก ดีลพัง</td>
+</tr>
+<tr>
+  <td>ยังไม่ขึ้น Play Store (AAB target API 36 build แล้ว แต่ยังไม่ publish)</td>
+  <td><span class="tag t-warn">high</span></td>
+  <td>ตัดกรณี B/C ออกทั้งหมด</td>
+  <td>publish ก่อนกำหนด 31 ส.ค. 2026 — แม้เป็น closed testing ก็ยังดีกว่าไม่มี listing</td>
+</tr>
+<tr>
+  <td>iOS ยังไม่พร้อม (มี Xcode project แต่<strong>ไม่มี</strong> <code>GoogleService-Info.plist</code> → push ใช้ไม่ได้)</td>
+  <td><span class="tag t-warn">medium</span></td>
+  <td>−10%</td>
+  <td>แจ้งตรง ๆ ว่าเป็น Android-first และตี scope งาน iOS ให้ผู้ซื้อเห็น (ประมาณ 1.5–2.5 เดือน)</td>
+</tr>
+<tr>
+  <td>ไม่มี CI/CD, มีแค่ 8 smoke tests</td>
+  <td><span class="tag t-warn">medium</span></td>
+  <td>−5 ถึง −10%</td>
+  <td>ใส่ GitHub Actions แค่ <code>flutter analyze</code> + <code>flutter test</code> + build check ก็ช่วยภาพลักษณ์มาก</td>
+</tr>
+<tr>
+  <td><code>app.legacy.js</code> 7,415 บรรทัด ใน admin-web</td>
+  <td><span class="tag t-warn">medium</span></td>
+  <td>−5%</td>
+  <td>เป็นหนี้เทคนิคที่เห็นชัด — ระบุใน disclosure ว่าเหลือแค่ bootstrap/login/shell (ซึ่งจริง) จะดูดีกว่าปล่อยให้เขาไปเจอเอง</td>
+</tr>
+<tr>
+  <td>cron <code>auto-shop-schedule</code> ตายเงียบ (GUC หาย)</td>
+  <td><span class="tag t-warn">medium</span></td>
+  <td>ความน่าเชื่อถือ</td>
+  <td>แก้ + เพิ่ม alert เมื่อ cron fail — ผู้ซื้อกลัวที่สุดคือ "ระบบพังแบบไม่มีใครรู้"</td>
+</tr>
+<tr>
+  <td>ค่าใช้จ่ายบุคคลที่สามผูกติดมา</td>
+  <td><span class="tag t-warn">info</span></td>
+  <td>ต้องเปิดเผย</td>
+  <td>ทำตารางต้นทุนจริง/เดือน: Supabase, Google Maps API, Firebase, SLIP2GO, Netlify, Play Console</td>
+</tr>
+</table>
+</div>
+
+<div class="note bad">
+<strong>ข้อควรระวังเรื่องกฎหมาย/ข้อมูลส่วนบุคคล</strong> — ถ้ามีข้อมูลผู้ใช้จริงในระบบแล้ว การโอนกิจการต้องดู PDPA:
+ต้องมีฐานทางกฎหมายในการโอนข้อมูลลูกค้าไปยังผู้ควบคุมข้อมูลรายใหม่ และควรแจ้งผู้ใช้
+เรื่องนี้ควรปรึกษาทนายก่อนเซ็นสัญญา ผมไม่ใช่ที่ปรึกษากฎหมายและไม่ได้ให้คำแนะนำทางกฎหมาย
+</div>
+
+<h2>6. แพ็กเกจส่งมอบที่ควรเตรียม</h2>
+<p>ผู้ซื้อจ่ายแพงขึ้นเมื่อรู้สึกว่า "รับไปแล้วรันต่อได้เลย" ของ 9 อย่างนี้เพิ่มราคาได้จริงมากกว่าการเขียนโค้ดเพิ่ม</p>
+<ol>
+  <li><strong>Source code ครบทุกส่วน</strong> — Flutter app, admin-web, landing, supabase/ (migrations + functions), scripts/</li>
+  <li><strong>เอกสารสถาปัตยกรรม 1 หน้า</strong> — แผนภาพ: 5 แอป → Supabase (Auth/DB/Realtime/Storage) → Edge Functions → FCM/LINE/Telegram/SLIP2GO</li>
+  <li><strong>Runbook ปฏิบัติการ</strong> — deploy แอป, deploy admin-web (Netlify), deploy edge function (<em>ต้องระบุ <code>--no-verify-jwt</code> สำหรับ notify-admin-events</em>), รัน migration, ดู log, จัดการ cron</li>
+  <li><strong>เอกสาร DB</strong> — รายชื่อ ~40 ตาราง + 73 RPC พร้อมคำอธิบายสั้น ๆ ว่าอันไหนใช้ทำอะไร</li>
+  <li><strong>รายการบัญชี/บริการที่ต้องโอน</strong> — Supabase project, Firebase, Google Cloud (Maps billing), Play Console, Netlify, โดเมน, SLIP2GO, LINE OA, Telegram bot</li>
+  <li><strong>ตารางต้นทุนดำเนินงานจริง/เดือน</strong> — ตัวเลขจากบิลจริง ไม่ใช่ประมาณ</li>
+  <li><strong>คู่มือแอดมิน</strong> — วิธีอนุมัติร้าน/คนขับ, ตรวจสลิป, อนุมัติถอนเงิน, ตั้งค่า GP</li>
+  <li><strong>บันทึกความเสี่ยงที่รู้อยู่ (disclosure list)</strong> — เอาข้อ 5 ทั้งหมดใส่ให้ครบ การเปิดเผยเองช่วยรักษาราคาได้ดีกว่าให้เขาไปเจอเอง</li>
+  <li><strong>ข้อตกลง transition support</strong> — 30–60 วัน คิดแยกจากราคาขาย (แนะนำ 30,000–60,000 บาท/เดือน)</li>
+</ol>
+
+<h2>7. คำแนะนำเชิงกลยุทธ์</h2>
+
+<h3>ถ้าต้องการขายให้จบเร็ว (ภายใน 1–3 เดือน)</h3>
+<ul>
+  <li>ตั้งราคาตั้งต้น <strong>900,000 บาท</strong> ระบุชัดว่ารวมส่งมอบ + support 30 วัน</li>
+  <li>พื้นราคาที่ไม่ควรต่ำกว่า <strong>450,000 บาท</strong> (ต่ำกว่านี้เท่ากับขายแรงงาน 6 เดือนในราคาต่ำกว่าเงินเดือนตัวเอง)</li>
+  <li>ก่อนเปิดขาย <em>ต้อง</em>ทำ 3 อย่าง: rotate คีย์ทั้งหมด, ซ่อม migration history, publish Play Store (แม้ closed testing)</li>
+</ul>
+
+<h3>ถ้ารับความเสี่ยงได้อีก 6–12 เดือน (ผลตอบแทนสูงกว่ามาก)</h3>
+<ul>
+  <li>ดัน traction ให้ถึง ~100 ออเดอร์/วันในพื้นที่เดียว แล้วขายเป็นกิจการ → ขยับไป <strong>1.5–2.8 ล้าน</strong></li>
+  <li>หรือทำ white-label ขายสิทธิ์ต่อจังหวัด — ขายซ้ำได้ ไม่ต้องเสียสินทรัพย์ ผลตอบแทนสะสมมักสูงกว่าขายขาด</li>
+</ul>
+
+<h3>ถ้าเป้าหมายคือ "ส่งต่อให้คนอื่นบริหาร" (ไม่ขายขาด)</h3>
+<ul>
+  <li>โครงสร้างที่เหมาะสุด: คุณถือสิทธิ์ IP ไว้ + ให้สิทธิ์ใช้งาน (license) + ส่วนแบ่งรายได้ 10–20% หรือค่า license รายเดือน</li>
+  <li>ข้อดี: คุณไม่ต้องบริหารประจำวัน แต่ยังได้ upside ถ้าเขาทำสำเร็จ และได้ระบบคืนถ้าเขาเลิกทำ</li>
+  <li>สิ่งที่ต้องมีก่อน: runbook + เอกสาร (ข้อ 6) และ<em>ต้อง</em>แก้ bus factor ก่อน มิฉะนั้นคุณจะยังโดนตามแก้ระบบอยู่ดี</li>
+</ul>
+
+<div class="note warn">
+<strong>ข้อจำกัดของรายงานนี้</strong> — ผมประเมินจากโค้ดและสถาปัตยกรรมที่ตรวจได้จริงเท่านั้น
+ยัง<em>ไม่มี</em>ข้อมูล: จำนวนผู้ใช้จริง / ออเดอร์ต่อวัน / GMV / รายได้-กำไร / จำนวนร้านและคนขับที่ active / ต้นทุนจริงต่อเดือน
+ตัวเลขกรณี B และ C จะแม่นขึ้นมากถ้าให้ข้อมูลเหล่านี้ และรายงานนี้เป็นการวิเคราะห์มูลค่าสินทรัพย์ทางธุรกิจ
+ไม่ใช่คำแนะนำการลงทุนหรือการประเมินมูลค่าอย่างเป็นทางการโดยผู้ประเมินที่ได้รับใบอนุญาต
+</div>
+
+<footer>
+Jedechai Delivery — Project Valuation v1 · 14 สิงหาคม 2026<br>
+อ้างอิง: repo <code>C:\Users\burin\jedechai_delivery_new</code> · commit <code>1ba027c</code> · 423 ไฟล์ ~153,300 บรรทัด
+</footer>
+</div>

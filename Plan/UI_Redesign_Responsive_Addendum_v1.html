@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JDC — ภาคผนวก: รองรับทุกขนาดหน้าจอ (v1)</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light;--paper:#f4f7f4;--surface:#fff;--sunken:#eef2ee;--line:#dbe4de;--text:#0f3b33;--muted:#5c6f68;--panel:#0f3b33;--on-panel:#fff;--panel-dim:#b7cfc8;--brand:#e39c2e;--brand-soft:#fff3dc;--brand-line:#f0cf95;--cta:#8a5a0a;--danger-ink:#8f1c14;--danger-soft:#ffece9;--danger-line:#f0b3ab;--green-soft:#e6f4e2;--green-ink:#2b6b2b;--sh:0 6px 18px rgba(12,44,37,.07);--mono:ui-monospace,"Cascadia Mono",Consolas,monospace}
+*{box-sizing:border-box}
+body{margin:0;padding:0 0 72px;font-family:"Noto Sans Thai",system-ui,sans-serif;color:var(--text);background:var(--paper);line-height:1.7}
+h1,h2,h3{font-family:"IBM Plex Sans Thai","Noto Sans Thai",sans-serif;margin:0;line-height:1.35}
+header{background:linear-gradient(140deg,#0e382f 0%,#1a5548 70%);color:var(--on-panel);padding:38px 16px 32px}
+.wrap{max-width:980px;margin:0 auto;padding:0 16px}
+header .wrap{padding:0}
+header h1{font-size:26px;font-weight:700}
+header p{margin:10px 0 0;color:var(--panel-dim);font-size:14.5px}
+section{margin-top:36px}
+h2{font-size:19px;font-weight:700;padding-bottom:10px;border-bottom:2px solid var(--line);margin-bottom:16px}
+h3{font-size:15.5px;font-weight:700;margin:20px 0 8px}
+p{margin:0 0 12px}
+code{font-family:var(--mono);font-size:.88em;background:var(--sunken);padding:2px 6px;border-radius:6px}
+pre{background:var(--panel);color:#e9f3ef;padding:15px;border-radius:14px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.6}
+pre code{background:none;padding:0;color:inherit}
+table{width:100%;border-collapse:collapse;background:var(--surface);border-radius:14px;overflow:hidden;box-shadow:var(--sh);font-size:13.5px;margin:12px 0 18px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--sunken);font-weight:700;font-size:12.5px;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.mono{font-family:var(--mono);font-size:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px;box-shadow:var(--sh);margin:12px 0}
+.ok{border-left:4px solid var(--green-ink);background:var(--green-soft);padding:12px 16px;border-radius:0 12px 12px 0;margin:14px 0;font-size:14px}
+.warn{border-left:4px solid var(--danger-ink);background:var(--danger-soft);padding:12px 16px;border-radius:0 12px 12px 0;margin:14px 0;font-size:14px}
+.note{border-left:4px solid var(--brand);background:var(--brand-soft);padding:12px 16px;border-radius:0 12px 12px 0;margin:14px 0;font-size:14px}
+ul,ol{margin:0 0 12px;padding-left:22px}li{margin-bottom:6px}
+footer{margin-top:44px;padding-top:18px;border-top:2px solid var(--line);font-size:12.5px;color:var(--muted)}
+@media (max-width:640px){table{display:block;overflow-x:auto;white-space:nowrap}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>ภาคผนวก: รองรับทุกขนาดหน้าจอ</h1>
+    <p>ต่อจาก <b>แผน Implement UI Redesign v1</b> — ข้อกำหนดเพิ่มเติมที่เอเจนต์ทุกตัวใน Wave 1 ต้องทำตาม · 20 ก.ย. 2569</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+<section>
+  <h2>ปัญหาที่ต้องแก้</h2>
+  <p>artboard ทุกใบวาดบนกรอบ <b>390 × 844</b> ซึ่งเป็นมือถือขนาดกลาง ถ้าแปลงเป็นโค้ดแบบตรงตัวจะเจอ 3 อาการ</p>
+  <table>
+    <tr><th>อาการ</th><th>เกิดเมื่อ</th><th>ทางแก้ในโค้ด</th></tr>
+    <tr><td>เนื้อหาล้นจอ / RenderFlex overflow</td><td>จอเตี้ยกว่า 844 (เช่น 360×640) หรือผู้ใช้ตั้งฟอนต์ใหญ่</td><td>ห้ามใช้ <code>Column</code> ความสูงตายตัว ให้ห่อด้วย <code>SingleChildScrollView</code> / <code>CustomScrollView</code></td></tr>
+    <tr><td>องค์ประกอบยืดจนน่าเกลียด</td><td>แท็บเล็ต/จอพับ (≥600)</td><td>ห่อด้วย <code>JdcContentFrame</code> จำกัดความกว้างและจัดกลาง</td></tr>
+    <tr><td>ปุ่มล่างถูกคีย์บอร์ดทับ</td><td>หน้าที่มีช่องกรอก</td><td><code>resizeToAvoidBottomInset: true</code> + วางปุ่มใน <code>SafeArea</code> ไม่ผูกกับ <code>bottomNavigationBar</code></td></tr>
+  </table>
+  <div class="ok"><b>เครื่องมือพร้อมแล้วใน Wave 0</b> — <code>lib/theme/jdc_layout.dart</code> มี breakpoints, ระยะห่างมาตรฐาน, <code>JdcContentFrame</code> และตัวจำกัดการขยายตัวอักษร ติดตั้งใน <code>MaterialApp.builder</code> เรียบร้อย</div>
+</section>
+
+<section>
+  <h2>จุดตัดและค่าที่ใช้</h2>
+  <table>
+    <tr><th>ระดับ</th><th>ความกว้าง</th><th>ระยะขอบ</th><th>คอลัมน์กริด</th><th>ตัวอย่างอุปกรณ์</th></tr>
+    <tr><td class="mono">compact</td><td>&lt; 600</td><td>20</td><td>1</td><td>มือถือแนวตั้งทุกรุ่น</td></tr>
+    <tr><td class="mono">medium</td><td>600–839</td><td>24</td><td>2</td><td>มือถือแนวนอน · จอพับกางออก · แท็บเล็ต 8"</td></tr>
+    <tr><td class="mono">expanded</td><td>840–1199</td><td>32</td><td>3</td><td>iPad 11" · แท็บเล็ต Android ใหญ่</td></tr>
+    <tr><td class="mono">large</td><td>≥ 1200</td><td>32</td><td>4</td><td>เดสก์ท็อป · จอต่อพ่วง</td></tr>
+  </table>
+  <p>ความกว้างเนื้อหาสูงสุดบนจอใหญ่: <code>readableMaxWidth = 560</code> สำหรับรายการ/เนื้อหาทั่วไป และ <code>formMaxWidth = 480</code> สำหรับฟอร์ม</p>
+</section>
+
+<section>
+  <h2>สิ่งที่เอเจนต์ต้องทำทุกหน้า</h2>
+  <div class="card">
+    <ol>
+      <li>ใช้ <code>final jdc = JdcColors.of(context);</code> แล้วอ้าง token เท่านั้น</li>
+      <li>ระยะห่างใช้ <code>JdcSpacing</code> · มุมใช้ <code>JdcRadius</code> · ความสูงปุ่ม/ช่องกรอกใช้ <code>JdcTouch</code> — ห้ามใส่ตัวเลขดิบซ้ำ</li>
+      <li>เนื้อหาหลักห่อด้วย <code>JdcContentFrame</code> (จัดกลาง + จำกัดความกว้างบนจอใหญ่ + ใส่ระยะขอบตามขนาดจอให้เอง)</li>
+      <li>ทุกหน้าที่เนื้อหายาวกว่าหนึ่งจอต้องเลื่อนได้จริง ทดสอบที่ความสูง 640</li>
+      <li>ค่าที่ต่างกันตามขนาดจอให้ใช้ <code>jdcByWidth(context, compact: …, medium: …)</code> ห้ามเขียน <code>if (width &gt; 600)</code> เอง</li>
+      <li>รูปภาพใช้ <code>AspectRatio</code> หรือ <code>FittedBox</code> ไม่ใส่ <code>width/height</code> เป็นพิกเซลตายตัว</li>
+      <li>ข้อความที่อาจยาวเกิน (ชื่อร้าน ที่อยู่) ต้องมี <code>maxLines</code> + <code>overflow: TextOverflow.ellipsis</code></li>
+      <li>ห้ามอ่าน <code>MediaQuery.of(context).size</code> ตรง ๆ ให้ใช้ <code>context.windowClass</code> / <code>context.isCompact</code></li>
+    </ol>
+  </div>
+
+  <h3>โครงหน้าจอมาตรฐาน</h3>
+  <pre><code>@override
+Widget build(BuildContext context) {
+  final jdc = JdcColors.of(context);
+  return Scaffold(
+    backgroundColor: jdc.paper,
+    resizeToAvoidBottomInset: true,
+    body: SafeArea(
+      child: JdcContentFrame(
+        child: CustomScrollView(
+          slivers: [
+            // หัวเรื่อง / เนื้อหา
+          ],
+        ),
+      ),
+    ),
+    bottomNavigationBar: const MerchantBottomNav(current: 0),
+  );
+}</code></pre>
+  <div class="warn"><b>ห้าม</b> — <code>SizedBox(width: 390)</code>, <code>Container(height: 844)</code>, <code>Positioned</code> ด้วยพิกัดจาก artboard, <code>MediaQuery.of(context).size.width * 0.37</code> และอื่น ๆ ที่ผูกกับขนาดจอเฉพาะรุ่น</div>
+</section>
+
+<section>
+  <h2>เกณฑ์ตรวจเพิ่มใน Wave 3</h2>
+  <p>เพิ่มเข้าไปใน T3.1/T3.2 — ทุกหน้าต้องผ่านทั้ง 5 ขนาดนี้ ทั้งโหมดสว่างและมืด</p>
+  <table>
+    <tr><th>ขนาดทดสอบ</th><th>แทนอะไร</th><th>ต้องไม่เจอ</th></tr>
+    <tr><td class="mono">360 × 640</td><td>มือถือเล็ก/เก่า</td><td>overflow, ปุ่มโดนตัด</td></tr>
+    <tr><td class="mono">390 × 844</td><td>ขนาดที่ดีไซน์วาด (อ้างอิงหลัก)</td><td>ความต่างจาก artboard</td></tr>
+    <tr><td class="mono">430 × 932</td><td>มือถือใหญ่</td><td>ช่องว่างโหว่ผิดสัดส่วน</td></tr>
+    <tr><td class="mono">834 × 1112</td><td>แท็บเล็ต</td><td>เนื้อหายืดเต็มจอ, บรรทัดยาวเกินอ่าน</td></tr>
+    <tr><td class="mono">1440 × 900</td><td>เดสก์ท็อป/จอต่อพ่วง</td><td>layout พัง, องค์ประกอบลอยผิดที่</td></tr>
+  </table>
+  <p>เพิ่มอีก 2 กรณี: <b>ตัวอักษรใหญ่สุด</b> (ระบบจำกัดไว้ที่ 1.3 เท่าแล้ว) และ <b>เปิดคีย์บอร์ด</b> ในหน้าที่มีช่องกรอก</p>
+  <div class="note">เขียนเป็น widget test ได้เลยโดยตั้ง <code>tester.view.physicalSize</code> แล้ว <code>expect(tester.takeException(), isNull)</code> — แบบเดียวกับที่ <code>test/jdc_theme_test.dart</code> ทำกับหน้า Theme Gallery ไว้แล้ว</div>
+</section>
+
+<footer>
+  <p>ภาคผนวกของ <code>Plan/UI_Redesign_Implementation_Plan_v1.html</code> · เครื่องมือที่อ้างถึงอยู่ใน <code>lib/theme/jdc_layout.dart</code> (สร้างแล้วใน Wave 0)</p>
+</footer>
+
+</div>
+</body>
+</html>

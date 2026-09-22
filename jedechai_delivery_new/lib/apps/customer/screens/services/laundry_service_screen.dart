@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
+import '../../../../theme/jdc_colors.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -8,7 +10,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../common/services/laundry_service.dart';
 import '../../../../common/services/notification_sender.dart';
 import '../../../../common/services/supabase_service.dart';
-import '../../../../theme/app_theme.dart';
 import '../../../../utils/debug_logger.dart';
 
 class LaundryServiceScreen extends StatefulWidget {
@@ -632,10 +633,10 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+            color: JdcColors.of(context).cta.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(icon, color: AppTheme.primaryGreen),
+          child: Icon(icon, color: JdcColors.of(context).cta),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -710,12 +711,12 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                  color: JdcColors.of(context).cta.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.local_laundry_service_rounded,
-                  color: AppTheme.primaryGreen,
+                  color: JdcColors.of(context).cta,
                   size: 30,
                 ),
               ),
@@ -755,7 +756,7 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
                     ],
                     if (meta.isNotEmpty) ...[
                       const SizedBox(height: 8),
-                      _buildMetaChip(meta, AppTheme.primaryGreen),
+                      _buildMetaChip(meta, JdcColors.of(context).cta),
                     ],
                   ],
                 ),
@@ -780,14 +781,14 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.primaryGreen.withValues(alpha: 0.08),
+        color: JdcColors.of(context).cta.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
         border:
-            Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.18)),
+            Border.all(color: JdcColors.of(context).cta.withValues(alpha: 0.18)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.storefront_rounded, color: AppTheme.primaryGreen),
+          Icon(Icons.storefront_rounded, color: JdcColors.of(context).cta),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -871,12 +872,12 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFFBEB),
+                  color: JdcColors.of(context).brandSoft,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.inventory_2_rounded,
-                  color: Color(0xFFB7791F),
+                  color: JdcColors.of(context).brandOnSoft,
                 ),
               ),
               const SizedBox(width: 14),
@@ -906,7 +907,7 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
                     const SizedBox(height: 8),
                     _buildMetaChip(
                       _formatPackagePrice(price, unit),
-                      const Color(0xFFB7791F),
+                      JdcColors.of(context).brandOnSoft,
                     ),
                   ],
                 ),
@@ -933,13 +934,13 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBEB),
+        color: JdcColors.of(context).brandSoft,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF3D38A)),
+        border: Border.all(color: JdcColors.of(context).brandLine),
       ),
       child: Row(
         children: [
-          const Icon(Icons.inventory_2_rounded, color: Color(0xFFB7791F)),
+          Icon(Icons.inventory_2_rounded, color: JdcColors.of(context).brandOnSoft),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -1030,8 +1031,8 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.photo_camera_rounded,
-                  color: AppTheme.primaryGreen),
+              Icon(Icons.photo_camera_rounded,
+                  color: JdcColors.of(context).cta),
               const SizedBox(width: 8),
               const Expanded(
                 child: Text(
@@ -1135,7 +1136,7 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
                 Text(
                   quoteTotal > 0 ? '฿${quoteTotal.toStringAsFixed(0)}' : '-',
                   style: TextStyle(
-                    color: AppTheme.primaryGreen,
+                    color: JdcColors.of(context).cta,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -1537,12 +1538,12 @@ class _InfoPanel extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.primaryGreen.withValues(alpha: 0.08),
+        color: JdcColors.of(context).cta.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
-          Icon(icon, color: AppTheme.primaryGreen),
+          Icon(icon, color: JdcColors.of(context).cta),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

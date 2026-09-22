@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+
+import '../../theme/jdc_colors.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/debug_logger.dart';
 import '../services/auth_service.dart';
@@ -9,7 +11,6 @@ import '../services/storage_service.dart';
 import '../utils/profile_completion_policy.dart';
 import '../../l10n/app_localizations.dart';
 import 'app_network_image.dart';
-import '../../theme/app_theme.dart';
 
 /// หน้ากรอกข้อมูลโปรไฟล์หลังจากแอดมินอนุมัติ (ใช้ครั้งแรก)
 /// สำหรับคนขับ: ชื่อ, เบอร์โทร, ประเภทรถ, ทะเบียน, ข้อมูลธนาคาร
@@ -325,7 +326,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: Text(l10n.profileCompleteTitle(roleText)),
-        backgroundColor: AppTheme.primaryGreen,
+        backgroundColor: JdcColors.of(context).cta,
         foregroundColor: colorScheme.onPrimary,
         automaticallyImplyLeading: false,
         actions: [
@@ -368,7 +369,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                             child: Container(
                               height: 2,
                               color: isDone
-                                  ? AppTheme.primaryGreen
+                                  ? JdcColors.of(context).cta
                                   : colorScheme.outlineVariant,
                             ),
                           ),
@@ -379,7 +380,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                               CircleAvatar(
                                 radius: 16,
                                 backgroundColor: isActive
-                                    ? AppTheme.primaryGreen
+                                    ? JdcColors.of(context).cta
                                     : isDone
                                         ? colorScheme.primaryContainer
                                         : colorScheme.outlineVariant,
@@ -403,7 +404,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: isActive
-                                        ? AppTheme.primaryGreen
+                                        ? JdcColors.of(context).cta
                                         : colorScheme.onSurfaceVariant,
                                     fontWeight: isActive
                                         ? FontWeight.bold
@@ -417,7 +418,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                             child: Container(
                               height: 2,
                               color: isDone || isActive
-                                  ? AppTheme.primaryGreen
+                                  ? JdcColors.of(context).cta
                                   : colorScheme.outlineVariant,
                             ),
                           ),
@@ -472,7 +473,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                     child: ElevatedButton(
                       onPressed: _isSaving ? null : _onNext,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryGreen,
+                        backgroundColor: JdcColors.of(context).cta,
                         foregroundColor: colorScheme.onPrimary,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
@@ -752,11 +753,11 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color:
-                isSelected ? AppTheme.primaryGreen : colorScheme.outlineVariant,
+                isSelected ? JdcColors.of(context).cta : colorScheme.outlineVariant,
             width: isSelected ? 2 : 1,
           ),
           color: isSelected
-              ? AppTheme.primaryGreen.withValues(alpha: 0.06)
+              ? JdcColors.of(context).cta.withValues(alpha: 0.06)
               : colorScheme.surface,
         ),
         child: Row(
@@ -767,7 +768,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                   ? Icons.radio_button_checked
                   : Icons.radio_button_unchecked,
               color: isSelected
-                  ? AppTheme.primaryGreen
+                  ? JdcColors.of(context).cta
                   : colorScheme.onSurfaceVariant,
             ),
             const SizedBox(width: 12),
@@ -791,7 +792,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                             horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? AppTheme.primaryGreen
+                              ? JdcColors.of(context).cta
                               : colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -1017,11 +1018,11 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: hasFile ? AppTheme.primaryGreen : colorScheme.outlineVariant,
+            color: hasFile ? JdcColors.of(context).cta : colorScheme.outlineVariant,
             width: hasFile ? 2 : 1,
           ),
           color: hasFile
-              ? AppTheme.primaryGreen.withValues(alpha: 0.05)
+              ? JdcColors.of(context).cta.withValues(alpha: 0.05)
               : colorScheme.surface,
         ),
         child: Row(
@@ -1029,7 +1030,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
             Icon(
               icon,
               color: hasFile
-                  ? AppTheme.primaryGreen
+                  ? JdcColors.of(context).cta
                   : colorScheme.onSurfaceVariant,
               size: 28,
             ),
@@ -1042,7 +1043,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: hasFile
-                            ? AppTheme.primaryGreen
+                            ? JdcColors.of(context).cta
                             : colorScheme.onSurface,
                       )),
                   const SizedBox(height: 2),
@@ -1094,7 +1095,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
         ],
       ),
       selected: isSelected,
-      selectedColor: AppTheme.primaryGreen,
+      selectedColor: JdcColors.of(context).cta,
       labelStyle: TextStyle(
         color: isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
       ),
@@ -1179,7 +1180,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
         ],
       ),
       selected: isSelected,
-      selectedColor: AppTheme.primaryGreen,
+      selectedColor: JdcColors.of(context).cta,
       labelStyle: TextStyle(
         color: isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
       ),
@@ -1279,10 +1280,10 @@ class _StepCard extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                    color: JdcColors.of(context).cta.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Icon(icon, color: AppTheme.primaryGreen, size: 24),
+                  child: Icon(icon, color: JdcColors.of(context).cta, size: 24),
                 ),
                 const SizedBox(width: 14),
                 Expanded(

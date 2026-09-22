@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../../../theme/jdc_colors.dart';
 
 import '../../../common/services/gp_plan_service.dart';
-import '../../../theme/app_theme.dart';
 
 /// หน้าจอแพ็กเกจ GP ของร้าน — ดูแพ็กเกจปัจจุบัน และเปลี่ยนเองได้เดือนละ 1 ครั้ง
 class MerchantGpPlanScreen extends StatefulWidget {
@@ -136,7 +136,7 @@ class _MerchantGpPlanScreenState extends State<MerchantGpPlanScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(GpPlanService.errorMessage(e)),
-          backgroundColor: Colors.red,
+          backgroundColor: JdcColors.of(context).danger,
         ),
       );
       await _load();
@@ -207,7 +207,7 @@ class _MerchantGpPlanScreenState extends State<MerchantGpPlanScreen> {
       decoration: BoxDecoration(
         color: cs.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.5)),
+        border: Border.all(color: JdcColors.of(context).brandLine),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,16 +244,16 @@ class _MerchantGpPlanScreenState extends State<MerchantGpPlanScreen> {
           'หากต้องการเปลี่ยนแพ็กเกจ กรุณาติดต่อแอดมิน';
     } else if (s.blockedReason == 'cooldown') {
       icon = Icons.timer_outlined;
-      tone = Colors.orange;
+      tone = JdcColors.of(context).cta;
       final left = s.remainingCooldown() ?? Duration.zero;
       text = 'เปลี่ยนแพ็กเกจได้อีกครั้งใน ${formatGpCooldown(left)}';
     } else if (s.blockedReason == 'active_orders') {
       icon = Icons.receipt_long_outlined;
-      tone = Colors.orange;
+      tone = JdcColors.of(context).cta;
       text = 'มีออเดอร์ที่กำลังดำเนินการ — เปลี่ยนแพ็กเกจได้เมื่อออเดอร์เสร็จทั้งหมด';
     } else {
       icon = Icons.check_circle_outline;
-      tone = Colors.green;
+      tone = JdcColors.of(context).successInk;
       text = 'เปลี่ยนแพ็กเกจได้ตอนนี้ (เดือนละ 1 ครั้ง มีผลกับออเดอร์ใหม่ทันที)';
     }
 
@@ -289,7 +289,7 @@ class _MerchantGpPlanScreenState extends State<MerchantGpPlanScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: isCurrent ? AppTheme.primaryGreen : cs.outlineVariant,
+          color: isCurrent ? JdcColors.of(context).cta : cs.outlineVariant,
           width: isCurrent ? 2 : 1,
         ),
       ),
@@ -306,10 +306,10 @@ class _MerchantGpPlanScreenState extends State<MerchantGpPlanScreen> {
                   const SizedBox(height: 2),
                   Text(
                     'หักร้านค้า ${_pct(plan['gp_rate'] as num?)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryGreen,
+                      color: JdcColors.of(context).cta,
                     ),
                   ),
                   Text(

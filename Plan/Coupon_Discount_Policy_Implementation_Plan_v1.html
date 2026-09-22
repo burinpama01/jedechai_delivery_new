@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แผน implement นโยบายส่วนลดคูปอง — Coupon Discount Policy Plan v1</title>
+<style>
+  :root { --ink:#1a2332; --sub:#5a6a80; --line:#e3e8f0; --bg:#f7f9fc; --card:#ffffff;
+    --red:#c0392b; --red-bg:#fdecea; --amber:#b9770e; --amber-bg:#fef6e0;
+    --green:#1e8449; --green-bg:#e9f7ef; --blue:#1f618d; --blue-bg:#eaf2f8;
+    --purple:#6c3483; --purple-bg:#f4ecf9; }
+  * { box-sizing:border-box; }
+  body { font-family:'Segoe UI',Tahoma,'Noto Sans Thai',sans-serif; color:var(--ink);
+    background:var(--bg); margin:0; line-height:1.65; }
+  .wrap { max-width:1000px; margin:0 auto; padding:32px 20px 80px; }
+  header.hero { background:linear-gradient(135deg,#0e6655,#1f618d); color:#fff;
+    border-radius:16px; padding:30px 32px; margin-bottom:26px; }
+  header.hero h1 { margin:0 0 8px; font-size:25px; }
+  header.hero p { margin:4px 0; opacity:.92; font-size:14px; }
+  h2 { font-size:20px; margin:40px 0 12px; padding-bottom:8px; border-bottom:2px solid var(--line); }
+  h3 { font-size:16px; margin:20px 0 8px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:18px 20px; margin:14px 0; }
+  table { width:100%; border-collapse:collapse; margin:12px 0; font-size:13.5px; }
+  th { background:#eef2f7; text-align:left; padding:9px 10px; border:1px solid var(--line); }
+  td { padding:8px 10px; border:1px solid var(--line); vertical-align:top; }
+  .tag { display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; font-weight:600; white-space:nowrap; }
+  .t-red { background:var(--red-bg); color:var(--red); }
+  .t-amber { background:var(--amber-bg); color:var(--amber); }
+  .t-green { background:var(--green-bg); color:var(--green); }
+  .t-blue { background:var(--blue-bg); color:var(--blue); }
+  code { background:#eef2f7; padding:1px 6px; border-radius:6px; font-size:12.5px;
+    font-family:Consolas,'Courier New',monospace; }
+  .money { font-family:Consolas,monospace; font-weight:600; }
+  .decision { border-left:5px solid var(--purple); background:var(--purple-bg);
+    padding:14px 18px; border-radius:0 12px 12px 0; margin:16px 0; font-size:14.5px; }
+  .note { border-left:4px solid var(--blue); background:var(--blue-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  .danger { border-left:4px solid var(--red); background:var(--red-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  .ok { border-left:4px solid var(--green); background:var(--green-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  ul { margin:8px 0; padding-left:22px; } li { margin:5px 0; }
+  .small { color:var(--sub); font-size:12.5px; }
+  .step { border:1px solid var(--line); border-radius:12px; padding:14px 18px; margin:12px 0; background:#fff; }
+  .step h4 { margin:0 0 6px; font-size:14.5px; }
+  .flow { background:#0f1b2d; color:#d7e3f4; border-radius:12px; padding:14px 18px;
+    font-family:Consolas,monospace; font-size:12px; line-height:1.8; overflow-x:auto; white-space:pre; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>🎟️💸 แผน Implement นโยบายส่วนลดคูปอง — "คนขับไม่ขาดบาทเดียว"</h1>
+  <p>เวอร์ชัน 1 (Planning — รออนุมัติ) · 19 กันยายน 2569 · ต่อจาก docs/Coupon_System_Analysis_v1.html (C1–C4)</p>
+</header>
+
+<div class="decision">
+<b>📜 บันทึกการตัดสินใจของผู้ใช้ (19 ก.ย. 2569) — ใครแบกส่วนลด:</b><br>
+<b>"ระบบให้หักจากคนขับก่อนตาม flow เงินสด แล้วระบบเติมเงินส่วนลดเข้า wallet คนขับพร้อมแจ้งเตือน"</b><br>
+<span class="small">ตีความเชิงเทคนิค: การไหลของเงินสดเดิมไม่เปลี่ยน (คนขับเก็บยอดหักส่วนลด / จ่ายร้านเต็มตามโมเดล) แต่<b>ตอนจบงาน ระบบเครดิตเงิน = จำนวนส่วนลด เข้า wallet คนขับ</b> (ledger แยกชัดเจน) <b>+ แจ้งเตือนถึงคนขับ</b> — ผลสุทธิ: คนขับได้ค่าจ้างครบตามที่จองไว้เสมอ ส่วนลดตกที่ระบบ (platform)</span>
+</div>
+
+<h2>1) ขอบเขต</h2>
+<table>
+<tr><th>รวมในแผนนี้</th><th>ไม่รวม (ไปอยู่ที่ไหน)</th></tr>
+<tr><td>
+<b>A. ชดเชยส่วนลดเข้า wallet คนขับ + แจ้งเตือน</b> (C1/G3 ตามนโยบาย)<br>
+<b>B. คืนคูปองเมื่อยกเลิกออเดอร์</b> (C2)<br>
+<b>C. ย้ายการคำนวณส่วนลด/เงื่อนไขการใช้ มาเป็น server-side</b> (C3)<br>
+<b>D. แก้ timezone รายการคูปอง 7 ชม.</b> (C4)
+</td><td>
+· F2 cancel เซ็ต status_origin + G2 GP server-side → แผนรวม Phase 2 (ยังไม่เริ่ม)<br>
+· การเดินเงินของออเดอร์จ่ายผ่าน Wallet ฝั่งคนขับ (มีข้อสังเกตในข้อ 5)<br>
+· การบังคับใช้ funding_source รายใบ (v1 ระบบแบกทุกใบตามนโยบาย — สำรองไว้เป็น v2)<br>
+· stacking enforcement, UX ดันคูปองในกระเป๋า (C5/C6)
+</td></tr>
+</table>
+
+<h2>2) ภาพเงินก่อน/หลัง (ออเดอร์เงินสด + คูปอง ฿25)</h2>
+<table>
+<tr><th>ขั้นตอน</th><th>ปัจจุบัน (คนขับแบกเงียบๆ)</th><th>หลังแผนนี้</th></tr>
+<tr><td>ลูกค้าจ่ายเงินสด</td><td colspan="2" class="money">110 (อาหาร 110 + ค่าส่ง 25 − คูปอง 25)</td></tr>
+<tr><td>คนขับจ่ายร้าน</td><td colspan="2" class="money">98 (110 − GP 12)</td></tr>
+<tr><td>เงินสดคงเหลือในมือคนขับ</td><td colspan="2" class="money">12</td></tr>
+<tr><td>ตอน complete: ระบบหักค่าบริการ</td><td class="money">wallet −9</td><td class="money">wallet −9 (ไม่เปลี่ยน)</td></tr>
+<tr><td><b>ตอน complete: ชดเชยส่วนลด</b></td><td class="money">— (ไม่มี!)</td><td class="money"><b>wallet +25</b> (type=coupon_compensation)</td></tr>
+<tr><td>แจ้งเตือนคนขับ</td><td>—</td><td>"ระบบชดเชยส่วนลดคูปอง ฿25 ออเดอร์ FD-…"</td></tr>
+<tr><td><b>สุทธิคนขับ</b></td><td class="money" style="color:#c0392b">3 (ขาด 25)</td><td class="money" style="color:#1e8449">28 = ค่าจ้างที่จองพอดี ✓</td></tr>
+</table>
+
+<h2>3) การออกแบบเชิงเทคนิค</h2>
+
+<div class="step">
+<h4>A. ชดเชยส่วนลดตอน complete (แกนหลัก) — แก้ใน <code>complete_booking</code> ฝั่ง DB</h4>
+<ul>
+  <li><b>ที่ไหน:</b> ใน <code>public.complete_booking</code> หลังหัก commission สำเร็จ ก่อน UPDATE status (ธุรกรรมเดียวกัน — สำเร็จครบหรือ rollback ทั้งหมด)</li>
+  <li><b>เงื่อนไข:</b> <code>service_type='food'</code> + มีแถวใน <code>coupon_usages</code> ของ booking นี้ + <code>discount_amount &gt; 0</code> + <b>เฉพาะเงินสด/โอน</b> (<code>payment_method IN ('cash','transfer')</code>) — เหตุผล: คนขับแบกส่วนลดเฉพาะออเดอร์ที่ตัวเองเก็บเงินสด (ออเดอร์จ่าย Wallet ฝั่งคนขับไม่ได้เก็บเงิน — ดูข้อ 5 คำถามเปิด)</li>
+  <li><b>กลไก:</b> เรียก <code>wallet_topup(p_driver_id, v_discount, 'ชดเชยส่วนลดคูปอง ออเดอร์ FD-…', 'coupon_compensation', p_booking_id)</code> — RPC มีอยู่แล้ว รองรับ type + related_booking_id</li>
+  <li><b>Idempotency (กันเติมซ้ำ):</b> เช็คก่อนว่าไม่มี ledger <code>type='coupon_compensation' AND related_booking_id=</code> ตัวนี้อยู่แล้ว + ตัว status-guard เดิมของ complete_booking กัน double-complete อยู่แล้ว (เรียกซ้ำหลัง completed จะโดน invalid_status)</li>
+  <li><b>แจ้งเตือน:</b> INSERT ลง <code>notifications</code> ถึงคนขับ ตามแพทเทิร์นเดิม (FCM วิ่งตามระบบแจ้งเตือนปัจจุบัน):
+    <ul>
+      <li>type: <code>driver.coupon_compensated</code></li>
+      <li>หัว: "💵 ชดเชยส่วนลดคูปอง"</li>
+      <li>เนื้อ: "ระบบเติมเงินชดเชยส่วนลด ฿{amount} สำหรับออเดอร์ {FD-XXXXXXXX} เข้ากระเป๋าของคุณแล้ว"</li>
+      <li>data: <code>{booking_id, coupon_code, amount}</code> + screen โหมด wallet/รายได้</li>
+    </ul></li>
+  <li><b>ผู้ใช้เห็นตรงไหน:</b> กระเป๋าคนขับ (wallet screen) มีรายการ "ชดเชยส่วนลดคูปอง" + แจ้งเตือน + (option) แถวในหน้ารายได้รายวัน</li>
+</ul>
+</div>
+
+<div class="step">
+<h4>B. คืนคูปองเมื่อยกเลิก (C2) — แก้ใน <code>cancel_wallet_booking_with_refund</code> + <code>admin_force_cancel_booking_with_wallet_refund</code></h4>
+<ul>
+  <li>เมื่อยกเลิก booking ที่มี <code>coupon_usages</code>: <b>ลบแถว usage</b> + <code>used_count = used_count − 1</code> (ไม่ต่ำกว่า 0) + ถ้ามี <code>user_coupons.used_booking_id = bookingนี้</code> → คืน status='claimed', เคลียร์ used_booking_id/used_at</li>
+  <li>เหตุผลที่ "ลบ" ไม่ใช่ " flag": การนับ per_user_limit นับจากจำนวนแถว — ต้องลบจริงถึงจะคืนสิทธิ์ (ยอมรับว่าประวัติ "เคยใช้แล้วถูกยกเลิก" หาย — ดูได้จาก booking อยู่แล้ว)</li>
+  <li>หมายเหตุประสานงาน: แผนรวม Phase 2 (F2) จะแก้ฟังก์ชันเดียวกัน (เพิ่ม status_origin) — ถ้าทำพร้อมกันให้รวม migration เดียว ถ้าทำก่อนก็ไม่ชนกัน (คนละส่วนของ body)</li>
+</ul>
+</div>
+
+<div class="step">
+<h4>C. ย้ายการคำนวณส่วนลดขึ้น server (C3) — แก้ <code>apply_coupon_atomic</code></h4>
+<ul>
+  <li>เพิ่มพารามิเตอร์: <code>p_order_subtotal numeric, p_delivery_fee numeric, p_service_type text, p_merchant_id uuid</code> (signa เดิมคงไว้ไม่ได้เพราะมี parameter ใหม่ — ทำ DROP+CREATE แบบเดียวกับที่เคยทำกับ mark_food_ready_guarded แล้วแอปเรียกใหม่)</li>
+  <li>Server ตรวจเพิ่ม (ทุกข้อมาจาก booking จริงหรือที่ client ส่งแล้ว server เทียบกับ bookings row): service_type ตรง, merchant_id ตรง (ถ้าคูปองระบุร้าน), min_order ผ่าน, แล้ว<b>คำนวณ discount เอง</b>ตามสูตรเดียวกับ <code>Coupon.calculateDiscount</code>: base = discount_base('delivery_fee') ? delivery_fee : subtotal → percentage (เพดาน max) / fixed (ไม่เกิน base) / free_delivery (= delivery_fee)</li>
+  <li>บันทึก discount ที่ server คำนวณเท่านั้น — <code>p_discount_amount</code> จาก client ไม่ใช้แล้ว (แอปเดิมยังส่งมา → RPC ใหม่รับ signature เดิมแบบ optional ได้หรือแอปต้องอัปเดตพร้อมกัน — <b>เลือก: deploy RPC ที่รับ parameter ใหม่ทั้งหมด + แอปอัปเดตพร้อม release</b> เพราะ checkout เป็นจุดเดียวที่เรียก)</li>
+  <li>แอปเก่าช่วงเปลี่ยนผ่าน: ยังเรียก signature เก่าได้ → ให้ RPC คำนวณจาก booking row โดยตรงแทน (อ่าน price/delivery_fee จาก bookings — ไม่ต้องรับจาก client เลย) — <b>ตัดสินใจ design: อ่านจาก bookings ทั้งหมด = ไม่ต้องเพิ่ม parameter ไม่ต้องเปลี่ยนแอป</b> ✓ (แนะนำ)</li>
+</ul>
+</div>
+
+<div class="step">
+<h4>D. แก timezone (C4)</h4>
+<ul>
+  <li><code>getClaimableCoupons/getAvailableCoupons</code>: เลิกใช้ <code>_bangkokNowIso()</code> — เปลี่ยนเป็นกรองด้วย RPC เล็ก (<code>list_active_coupons</code> ใช้ now()) หรือส่ง timestamp แบบมี offset (UTC ISO) ให้ตรง semantics ของ timestamptz</li>
+  <li>ตรวจจุดเขียนวันที่ตอนสร้างคูปอง (แอดมิน/ร้าน) ให้ส่ง UTC เสมอ — คูปองเดิม 7 ใบมีค่าที่เขียนแบบ naive อยู่แล้ว → <b>script ปรับ data ครั้งเดียว +7 ชม. ให้เป็น UTC จริง</b> (จำนวนน้อย ตรวจทีละใบก่อน-หลัง)</li>
+</ul>
+</div>
+
+<h2>4) การดำเนินงานและเอกสาร</h2>
+<table>
+<tr><th>ลำดับ</th><th>งาน</th><th>ไฟล์/วัตถุ</th><th>ประเภท</th></tr>
+<tr><td>1</td><td>M-A ชดเชย + แจ้งเตือน (แกนหลัก)</td><td>migration: CREATE OR REPLACE complete_booking (+ ไม่แต้มโครงสร้าง ledger — ใช้ wallet_topup เดิม)</td><td>DB</td></tr>
+<tr><td>2</td><td>M-B คืนคูปองตอนยกเลิก</td><td>migration เดียวกับ 1 ได้: แก้ cancel RPC 2 ตัว</td><td>DB</td></tr>
+<tr><td>3</td><td>M-C server คำนวณส่วนลด</td><td>migration แยก: apply_coupon_atomic (อ่านจาก bookings — ไม่ต้องแก้แอป)</td><td>DB</td></tr>
+<tr><td>4</td><td>M-D + script ปรับข้อมูลวันที่</td><td>migration + script</td><td>DB + data</td></tr>
+<tr><td>5</td><td>แอป: หน้า wallet คนขับ label รายการใหม่ + (option) แถวรายได้</td><td>wallet screen / earnings</td><td>Flutter</td></tr>
+<tr><td>6</td><td>Tests + E2E + deploy + ทดสอบจริง</td><td>ดูข้อ 6</td><td>—</td></tr>
+</table>
+<p class="small">ลำดับ deploy: migration ทั้งหมดขึ้น production ก่อน → แล้ว release แอป (ข้อ 5) — RPC ใหม่ทั้งหมด backward-compatible กับแอปเดิม (complete_booking เพิ่ม behavior ภายใน, cancel เพิ่ม cleanup, apply_coupon_atomic คำนวณเอง = แอปเดิมได้ผลลัพธ์เดิมแต่ปลอดภัยขึ้น)</p>
+
+<h2>5) คำถามเปิด / จุดต้องยืนยันระหว่าง implement</h2>
+<div class="danger">
+<b>สำคัญที่สุด — ออเดอร์ "จ่ายผ่าน Wallet" คนขับได้เงินยังไง:</b> จากการอ่าน <code>complete_booking</code> ระบบมีแค่ "หัก commission จากกระเป๋าคนขับ" ไม่เห็นการ<b>เครดิต</b>ค่าจ้างคนขับสำหรับออเดอร์ที่ลูกค้าจ่าย wallet → ต้อง verify ก่อน implement ว่า wallet orders เครดิตคนขับตรงไหน ถ้าคนขับ wallet-order ได้เต็มจากระบบอยู่แล้ว → ไม่ต้องชดเชยใบนั้น (เงื่อนไข A ครอบคลุมแล้วด้วย cash/transfer-only) · ถ้ายังไม่มีใครเครดิต → เป็นหนี้เทคนิคที่ต้องแยกงาน (ไม่ขยาย scope แผนนี้)
+</div>
+<div class="note">
+<b>ยืนยันเบื้องต้นระหว่าง implement (เช็ค 5 นาที):</b> (1) booking เงินสดที่ complete แล้วทุกออเดอร์หัก commission จากกระเป๋าจริง (ledger 41 รายการยืนยันแนวนี้) (2) <code>wallet_topup</code> ใช้จาก SECURITY DEFINER ได้ (laundry_payout เคยใช้ pattern นี้แล้ว ✓) (3) การแจ้งเตือนใช้ trigger เดิมของ notifications → FCM อัตโนมัติ
+</div>
+
+<h2>6) แผนทดสอบ (TDD)</h2>
+<div class="card">
+<ul>
+  <li><b>Unit/smoke (เขียนก่อน — red):</b> migration มี wallet_topup('coupon_compensation') + notifications insert + cancel แก้ coupon_usages + apply_coupon_atomic คำนวณเอง (assert ไม่รับ p_discount_amount เป็นความจริงอีก)</li>
+  <li><b>E2E rollback (แพทเทิร์น 19 ก.ย.):</b> ใน transaction ที่ rollback:
+    <ol>
+      <li>สร้าง booking เงินสด + coupon_usages จำลอง → เรียก complete_booking → ต้องเห็น ledger +25 type=coupon_compensation + notifications 1 แถว + wallet balance คนขับบวกขึ้น 25</li>
+      <li>เรียก complete ซ้ำ → invalid_status (ไม่เติมซ้ำ)</li>
+      <li>ยกเลิกออเดอร์ที่มีคูปอง → coupon_usages หาย + used_count ลด + user_coupons คืน claimed</li>
+      <li>apply_coupon_atomic กับคูปอง percentage → discount ที่บันทึก = ผลคำนวณ server (ไม่ใช่ค่าที่ client อ้าง)</li>
+    </ol></li>
+  <li><b>ทดสอบจริงบน emulator หลัง deploy:</b> สั่งอาหารด้วยคูปองทดสอบ (สร้าง NEWUSER02) → คนขับจบงาน → เช็คกระเป๋า + แจ้งเตือน + ยอดรวมวัน = ค่าจ้างเต็ม</li>
+  <li><b>Regression:</b> ชุด node smoke เดิม + flutter analyze scoped + ห้ามมี fail ใหม่</li>
+</ul>
+</div>
+
+<h2>7) Rollback</h2>
+<ul>
+  <li>ทุกฟังก์ชันเป็น CREATE OR REPLACE → เก็บ def เดิมไว้ใน comment ของ migration แล้ว reverse ด้วยการ CREATE OR REPLACE กลับ</li>
+  <li>ledger/notifications ที่เกิดแล้วไม่ต้องลบ (เงินจริงเข้ากระเป๋า — ย้อนด้วย admin_adjustment เป็นรายกรณี)</li>
+  <li>สคริปต์ปรับวันที่คูปอง (+7 ชม.): เก็บค่าเดิมในตาราง backup ชั่วคราวก่อนรัน</li>
+</ul>
+
+<div class="ok"><b>ผลลัพธ์ที่คาดหวังเมื่อจบแผน:</b> คนขับไม่ขาดเงินจากคูปองอีก (มีหลักฐาน ledger + แจ้งเตือนทุกครั้ง) · ลูกค้าที่ยกเลิกได้คูปองคืน · จำนวนส่วนลดฝั่ง server คำนวณเดียว · รายการคูปองไม่เพี้ยน 7 ชม.</div>
+<div class="note"><b>สถานะ:</b> Planning — รออนุมัติ · ประเมิน: DB 4 ขั้น (รวมเป็น 1–2 ไฟล์ migration) + แอปเล็กน้อย (label) + tests · ทำต่อเนื่องจบใน 1 session ได้ · เชื่อมกับแผนรวม: ข้อ A ใช้จุดเดียวกับ G2 (complete_booking) — ถ้าทำแผนรวม Phase 2 พร้อมกันให้รวม migration</div>
+
+</div>
+</body>
+</html>

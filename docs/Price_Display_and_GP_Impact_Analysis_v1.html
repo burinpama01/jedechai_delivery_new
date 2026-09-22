@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ราคาต่างกัน 3 จอ + ผลกระทบ GP — รายงานวิเคราะห์ v1</title>
+<style>
+  :root { --ink:#1a2332; --sub:#5a6a80; --line:#e3e8f0; --bg:#f7f9fc; --card:#ffffff;
+    --red:#c0392b; --red-bg:#fdecea; --amber:#b9770e; --amber-bg:#fef6e0;
+    --green:#1e8449; --green-bg:#e9f7ef; --blue:#1f618d; --blue-bg:#eaf2f8; }
+  * { box-sizing:border-box; }
+  body { font-family:'Segoe UI',Tahoma,'Noto Sans Thai',sans-serif; color:var(--ink);
+    background:var(--bg); margin:0; line-height:1.65; }
+  .wrap { max-width:980px; margin:0 auto; padding:32px 20px 80px; }
+  header.hero { background:linear-gradient(135deg,#7d3c98,#1f618d); color:#fff;
+    border-radius:16px; padding:28px 30px; margin-bottom:28px; }
+  header.hero h1 { margin:0 0 6px; font-size:25px; }
+  header.hero p { margin:4px 0; opacity:.92; font-size:14px; }
+  h2 { font-size:20px; margin:38px 0 12px; padding-bottom:8px; border-bottom:2px solid var(--line); }
+  h3 { font-size:16px; margin:22px 0 8px; color:var(--blue); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:18px 20px; margin:14px 0; }
+  table { width:100%; border-collapse:collapse; margin:12px 0; font-size:13.5px; }
+  th { background:#eef2f7; text-align:left; padding:9px 10px; border:1px solid var(--line); }
+  td { padding:8px 10px; border:1px solid var(--line); vertical-align:top; }
+  .tag { display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; font-weight:600; white-space:nowrap; }
+  .t-red { background:var(--red-bg); color:var(--red); }
+  .t-amber { background:var(--amber-bg); color:var(--amber); }
+  .t-green { background:var(--green-bg); color:var(--green); }
+  .t-blue { background:var(--blue-bg); color:var(--blue); }
+  code { background:#eef2f7; padding:1px 6px; border-radius:6px; font-size:12.5px;
+    font-family:Consolas,'Courier New',monospace; }
+  .money { font-family:Consolas,monospace; font-weight:600; }
+  .note { border-left:4px solid var(--blue); background:var(--blue-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  .danger { border-left:4px solid var(--red); background:var(--red-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  .ok { border-left:4px solid var(--green); background:var(--green-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  .split { display:flex; gap:14px; flex-wrap:wrap; }
+  .split > div { flex:1 1 220px; }
+  .box { border-radius:12px; padding:14px 16px; border:1px solid var(--line); background:#fff; }
+  .box h4 { margin:0 0 6px; font-size:14px; }
+  .box .amt { font-size:22px; font-weight:800; font-family:Consolas,monospace; }
+  ul { margin:8px 0; padding-left:22px; } li { margin:4px 0; }
+  .small { color:var(--sub); font-size:12.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>💰 ราคาไม่ตรงกัน 3 จอ (ลูกค้า / ร้าน / คนขับ) + ผลกระทบ GP</h1>
+  <p>เวอร์ชัน 1 · 19 กันยายน 2569 · วิเคราะห์จากโค้ดทั้ง 3 ฝั่ง + ตัวเลขจริงจากออเดอร์ 8 ก.ย. และ 16 ก.ย. + wallet ledger จริง</p>
+</header>
+
+<h2>1) ข้อสรุปกระบวนการเงินของออเดอร์อาหาร 1 ใบ</h2>
+<div class="ok">
+<b>โมเดลถูกต้องและลงตัวทางบัญชี</b> — พิสูจน์ด้วยออเดอร์ 16 ก.ย. (FD-3957051E: อาหาร ฿40 + ค่าส่ง ฿5.79):
+เงินที่ลูกค้าจ่าย <span class="money">45.79</span> = ร้านได้ <span class="money">35.00</span> + ระบบได้ <span class="money">3.00</span> + คนขับได้ <span class="money">7.79</span> —
+ตรงกับ wallet ledger จริง (หักค่าบริการระบบ −3.00) และคอลัมน์ driver_earnings/app_earnings ครบทุกบาท
+</div>
+<div class="split">
+  <div class="box" style="border-top:4px solid #2980b9;"><h4>🙈 จอลูกค้าเห็น</h4><div class="amt">฿46</div><p class="small">ยอดที่ต้องจ่าย = อาหาร + ค่าส่ง − คูปอง (แสดง <code>ceil</code>) + สลายย่อย ฿40/฿6</p></div>
+  <div class="box" style="border-top:4px solid #e67e22;"><h4>🏪 จอร้านเห็น</h4><div class="amt">฿40 → ฿35</div><p class="small">ยอดอาหาร ฿40 และ "ที่ร้านจะได้รับ" ฿35 (หัก GP ฿5) · POS StoreOS เห็น total 45.79 + commission 5 แยกกัน</p></div>
+  <div class="box" style="border-top:4px solid #27ae60;"><h4>🛵 จอคนขับเห็น</h4><div class="amt">฿46 / ฿8</div><p class="small">"เก็บจากลูกค้า" ฿46 + ค่าอาหาร ฿40 + ค่าส่ง ฿6 · ค่าจ้างสุทธิ ฿7.79 (แสดง ฿8)</p></div>
+</div>
+<div class="note">
+<b>สรุปหัวใจ:</b> ทั้ง 3 จอ "ถูก" ตามบทบาทของตัวเอง — คนละจอโชว์คนละ "ชนิดของตัวเลข" (ยอดจ่าย / ยอดขาย / เงินเก็บ) ปัญหาที่ผู้ใช้รับรู้เป็น "ราคาไม่ตรงกัน" มาจาก <b>3 จุดไม่ตรงจริง</b> และ <b>3 ความเสี่ยง GP</b> ด้านล่าง
+</div>
+
+<h2>2) จุดที่ราคา "ไม่ตรงกันจริง" (display bug)</h2>
+<table>
+<tr><th>#</th><th>จุดไม่ตรง</th><th>ต้นเหตุในโค้ด</th><th>ตัวอย่างที่เห็นต่างกัน</th><th>ระดับ</th></tr>
+<tr><td><b>P1</b></td><td>ลูกค้ากับคนขับเห็นยอดรวมต่างกัน 1 บาท (ค่าส่งทศนิยม)</td>
+  <td>ฝั่งลูกค้าใช้ <code>.ceil()</code> (ปัดขึ้นเสมอ) — <code>customer_order_detail_screen</code>, <code>activity_screen</code> / ฝั่งคนขับใช้ <code>toStringAsFixed(0)</code> (ปัดโดยธรรมชาติ) — <code>driver_dashboard_screen</code></td>
+  <td>ค่าส่ง ฿5.49 → ลูกค้าเห็นรวม <b>฿46</b> (ceil 45.49) แต่การ์ดงานคนขับโชว์ <b>฿45</b></td>
+  <td><span class="tag t-red">แก้ง่าย-เห็นชัด</span></td></tr>
+<tr><td><b>P2</b></td><td>ค่าจ้างคนขับบนการ์ด (ปัด) ไม่เท่า statement wallet (ทศนิยม)</td>
+  <td>การ์ดงาน <code>toStringAsFixed(0)</code> แต่ ledger จริงเป็น 7.79 — คนขับทบยอด "วันนี้ได้ ฿8" กับยอดถอนได้จริงไม่ตรง</td>
+  <td>ค่าจ้าง ฿7.79 → การ์ด "฿8", กระเป๋า 7.79</td>
+  <td><span class="tag t-amber">กลาง</span></td></tr>
+<tr><td><b>P3</b></td><td>POS StoreOS ไม่เห็นส่วนลดคูปอง</td>
+  <td>webhook <code>order.created/order.status</code> ส่ง <code>total = price + delivery_fee</code> เท่านั้น ไม่มี field คูปอง</td>
+  <td>ออเดอร์มีคูปอง ฿10 → ลูกค้าจ่าย 35.79 แต่ POS โชว์ total 45.79</td>
+  <td><span class="tag t-amber">กลาง (ยังไม่มีออเดอร์คูปองจริงในระบบ)</span></td></tr>
+</table>
+
+<h2>3) ความเสี่ยงด้าน GP (โครงสร้าง — กระทบเงินจริง)</h2>
+
+<h3>G1 — GP ไม่ถูก snapshot ตอนสั่ง และ rate เปลี่ยนได้ตลอด <span class="tag t-red">พิสูจน์แล้วด้วยข้อมูลจริง</span></h3>
+<div class="danger">
+ออเดอร์ 8 ก.ย. (FD-F72643D1, อาหาร ฿79) settle ด้วย GP <b>5% / 20%</b> (ระบบ 4 + คนขับ 16 = ฿20)
+แต่ config ปัจจุบันของร้านเดียวกันคือ <b>2% / 8%</b> — เกิดจากร้านเปลี่ยนแพ็กเกจ GP ได้ตลอด (ฟีเจอร์ "เลือกแพ็กเกจ GP เอง" v1.10.0)
+และตัวเลข final คำนวณ ณ วันที่ complete ไม่ใช่วันที่สั่ง → <b>ตัวเลขที่ลูกค้า/ร้านเห็นตอนสั่ง อาจไม่ใช่ตัวเงินที่จบงาน</b>
+และไม่มี audit log การเปลี่ยน rate ให้ย้อนดูได้
+</div>
+
+<h3>G2 — ตัวเลข GP มาจาก "แอปคนขับคำนวณแล้วส่งมา" ไม่ใช่ server คำนวณเอง</h3>
+<div class="danger">
+<code>complete_booking</code> รับ <code>p_driver_earnings</code>/<code>p_app_earnings</code> จาก client แล้วบันทึกตรงๆ —
+ฝั่ง server มีฟังก์ชันคำนวณกลาง (<code>connect_merchant_gp_amount</code>) แต่ใช้เฉพาะ webhook StoreOS เท่านั้น
+ผลกระทบ: แอปคนขับเวอร์ชันเก่าที่ล็อกจิกเก่า/cache config เก่า หรือส่งเลขผิด → <b>ระบบจ่ายตามเลขนั้น</b> (ล่าสุดเคยแก้บั๊กส่ง <code>price</code> type ผิดใน webhook เดือน ก.ค. — ความเสี่ยงคลาสเดียวกัน)
+</div>
+
+<h3>G3 — คูปองระบบบนออเดอร์ "เงินสด": GP และยอดร้านคิดจากยอดเต็ม → คนขับรับภาระสด</h3>
+<div class="danger">
+โมเดลปัจจุบัน: GP = f(ยอดอาหาร<b>เต็ม</b>) และร้านได้ = ยอดเต็ม − GP (ไม่หักคูปอง ถ้าไม่ใช่คูปองที่ร้านสร้างเอง)
+แต่คนขับเก็บเงินสดจากลูกค้าแบบ<b>หักคูปองแล้ว</b> (<code>driverCashToCollect = customerPayable</code>)
+→ ออเดอร์เงินสด + คูปองระบบ: คนขับเก็บ 35.79 แต่ต้องจ่ายร้าน 35 + โดนหักกระเป๋า 3 = <b>ขาดทุนสด 2.21 ทันที</b>
+(ยังไม่เคยเกิดจริงเพราะยังไม่มีออเดอร์ food ที่ใช้คูปองในระบบ — ตรวจแล้วทุกออเดอร์ล่าสุด coupon = null — แต่กลไกพร้อมพังทันทีที่มีคูปองระบบ + เงินสด)
+</div>
+
+<h3>G4 — คอลัมน์เงินสรุปครึ่งๆ กลางๆ ใน DB</h3>
+<div class="note">
+<code>total_amount</code>, <code>platform_gp_amount</code>, <code>merchant_net_amount</code> = <b>0.00 ทุกออเดอร์ food</b> (เติมเฉพาะ laundry)
+ตัวเลขจริงของ food อยู่ใน <code>price</code>+<code>delivery_fee</code>+<code>driver_earnings</code>+<code>app_earnings</code>
+→ รายงาน/หน้า admin ที่อ่านคอลัมน์สรุปจะเห็น 0 (ต้องตรวจทุกจุดที่อ่าน 3 คอลัมน์นี้สำหรับ food)
+</div>
+
+<h2>4) ตาราง GP ที่ settle จริงล่าสุด (จาก DB)</h2>
+<table>
+<tr><th>ออเดอร์</th><th>วันที่</th><th>ร้าน</th><th>ยอดอาหาร</th><th>ค่าส่ง</th><th>GP ระบบ</th><th>GP คนขับ</th><th>ร้านได้</th><th>rate ปัจจุบันของร้าน</th></tr>
+<tr><td>FD-3957051E</td><td>16 ก.ย.</td><td>Each Other home &amp; cafe</td><td class="money">40</td><td class="money">5.79</td><td class="money">3</td><td class="money">2</td><td class="money">35</td><td>5% / 20% <span class="tag t-green">ตรง</span></td></tr>
+<tr><td>FD-F72643D1</td><td>8 ก.ย.</td><td>ก๋วยเตี๋ยวไก่มะระรสเด็ด</td><td class="money">79</td><td class="money">0</td><td class="money">4</td><td class="money">16</td><td class="money">59</td><td>2% / 8% <span class="tag t-red">ไม่ตรง (G1)</span></td></tr>
+<tr><td>FD-174CC484</td><td>16 ก.ค.</td><td>—</td><td class="money">50</td><td class="money">10</td><td class="money">4</td><td class="money">1</td><td class="money">45</td><td>—</td></tr>
+<tr><td>FD-10DB36A6</td><td>19 ก.ย.</td><td>Each Other II</td><td class="money">79</td><td class="money">0</td><td colspan="3">ยัง pending — จะ settle ตาม rate ณ วันที่จบ (เสี่ยง G1)</td><td>1% / 9%</td></tr>
+</table>
+<p class="small">GP ระบบ = app_earnings (รวมส่วนแบ่งค่าส่งถ้ามี) · GP คนขับ = driver_earnings − ค่าส่ง · ทุกตัวปัดขึ้นเป็นบาทเต็มต่มชิ้น (ceil) ตามสูตร <code>DriverAmountCalculator.foodOrderSettlement</code> และ <code>connect_merchant_gp_amount</code> ฝั่ง server (สูตรเดียวกัน)</p>
+
+<h2>5) ข้อเสนอแนะ (เรียงตามผลตอบแทน/ความเสี่ยง)</h2>
+<div class="card">
+<ol>
+  <li><b>แก้ P1 ทันที (เล็กมาก):</b> unify การปัด — ทุกจอใช้ <code>ceil</code> ตัวเดียวกัน (หรือแสดงทศนิยม 2 ตำแหน่งทุกจอ) + เพิ่ม helper เดียวใน <code>RoleAmountCalculator</code> ให้ทุกฝั่งเรียก ไม่คำนวณเองแยก</li>
+  <li><b>แก้ G2 (แนะนำอันดับ 2):</b> ย้ายการคำนวณ GP เป็น server-side authoritative — <code>complete_booking</code> คำนวณจาก <code>connect_merchant_gp_amount</code> เอง (มีอยู่แล้ว!) แล้วเก็บ client ส่งมาเป็น audit เท่านั้น</li>
+  <li><b>แก้ G1:</b> snapshot GP rate ลง booking ตอนสั่ง (คอลัมน์ gp_rate_at_order หรือเติม merchant_net_amount/platform_gp_amount ตอนสร้าง) + audit log การเปลี่ยน rate ร้าน</li>
+  <li><b>แก้ G3 ก่อนเปิดคูปองระบบจริงจัง:</b> กำหนดนโยบายว่าใครแบกคูปองระบบ (แนะนำ: หักออกจาก GP ระบบ หรือชดเชยกระเป๋าคนขับอัตโนมัติ) — อย่าปล่อยให้ตกที่คนขับเงินสดโดยปริยาย พร้อมส่ง coupon ไป StoreOS webhook (P3)</li>
+  <li><b>G4:</b> ตัดสินใจ schema — ให้ food เติม total_amount/platform_gp_amount/merchant_net_amount ตอน complete ให้เหมือน laundry เพื่อรายงานสมบูรณ์</li>
+</ol>
+</div>
+
+<div class="note"><b>ที่มา:</b> customer_order_detail_screen / activity_screen (ceil) · driver_dashboard_screen 2386/2479 (toStringAsFixed) · merchant order_detail (price + merchantReceives) · DriverAmountCalculator.foodOrderSettlement · RoleAmountCalculator · complete_booking signature · DB จริง: bookings 4 ออเดอร์ล่าสุด + wallet_transactions (−3.00) + profiles GP config 3 ร้าน</div>
+
+</div>
+</body>
+</html>

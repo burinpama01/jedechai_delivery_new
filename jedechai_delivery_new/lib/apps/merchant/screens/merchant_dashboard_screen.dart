@@ -9,12 +9,15 @@ import '../../../common/services/merchant_food_config_service.dart';
 import '../../../common/utils/driver_amount_calculator.dart';
 import '../../../common/utils/order_code_formatter.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../../theme/app_theme.dart';
+import '../../../theme/jdc_colors.dart';
+import '../../../theme/jdc_layout.dart';
 import 'order_detail_screen.dart';
 
-/// Merchant Sales Report Screen
+/// Merchant Sales Report Screen (JDC design)
 ///
-/// แสดงรายงานและประวัติการขาย พร้อมสรุปยอดขาย
+/// แสดงรายงานและประวัติการขาย พร้อมสรุปยอดขาย — โครงตาม artboard
+/// Merchant-Dashboard.dc.html: หัวเข้ม + สถิติ 3 ช่อง, ชิปช่วงเวลา,
+/// การ์ดกราฟ 7 วัน, การ์ด GP/ยอดโอน, เมนูขายดี และประวัติออเดอร์
 class MerchantDashboardScreen extends StatefulWidget {
   const MerchantDashboardScreen({super.key});
 
@@ -95,6 +98,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
   }
 
   Future<void> _pickCustomDateRange() async {
+    final jdc = JdcColors.of(context);
     final now = DateTime.now();
     final picked = await showDateRangePicker(
       context: context,
@@ -111,9 +115,9 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.light(
-              primary: AppTheme.accentOrange,
-              onPrimary: Colors.white,
-              surface: Colors.white,
+              primary: jdc.cta,
+              onPrimary: jdc.onCta,
+              surface: jdc.surface,
               onSurface: Theme.of(context).colorScheme.onSurface,
             ),
           ),
@@ -423,122 +427,253 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
     }
   }
 
-  Color _getStatusColor(String status) {
+  /// สีชิปสถานะตาม token ของ JDC — (พื้น, ตัวอักษร)
+  (Color, Color) _statusChipColors(String status, JdcColors jdc) {
     switch (status) {
       case 'completed':
-        return Colors.green;
+        return (jdc.successSoft, jdc.successInk);
       case 'cancelled':
-        return Colors.red;
+        return (jdc.dangerSoft, jdc.dangerInk);
       case 'preparing':
-        return Colors.orange;
+        return (jdc.brandSoft, jdc.brandOnSoft);
       case 'ready':
-        return Colors.blue;
-      case 'picked_up':
-        return Colors.indigo;
       case 'delivering':
-        return Colors.teal;
+        return (jdc.infoSoft, jdc.infoInk);
+      case 'picked_up':
+        return (jdc.brandSoft2, jdc.cta);
       default:
-        return Colors.grey;
+        return (jdc.sunken, jdc.muted);
     }
+  }
+
+  /// TextStyle พร้อม fontVariations คู่กันตามกฎดีไซน์
+  TextStyle _txt(
+    Color color,
+    double size, {
+    double w = 400,
+    double? height,
+    List<FontFeature>? fontFeatures,
+  }) {
+    return TextStyle(
+      color: color,
+      fontSize: size,
+      height: height,
+      fontWeight: FontWeight.values[(w.round() ~/ 100) - 1],
+      fontVariations: [FontVariation('wght', w)],
+      fontFeatures: fontFeatures,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.mchDashTitle),
-        backgroundColor: AppTheme.accentOrange,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.download),
-            onPressed: _exportCsv,
-            tooltip: 'Export CSV',
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadData,
-            tooltip: AppLocalizations.of(context)!.mchDashRefresh,
-          ),
-        ],
-      ),
+      backgroundColor: jdc.paper,
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                valueColor:
-                    AlwaysStoppedAnimation<Color>(AppTheme.accentOrange),
-              ),
-            )
+          ? Center(child: CircularProgressIndicator(color: jdc.cta))
           : _error != null
               ? _buildErrorState()
-              : RefreshIndicator(
-                  onRefresh: _loadData,
-                  color: AppTheme.accentOrange,
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
+              : Column(
+                  children: [
+                    _buildHeader(),
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: _loadData,
+                        color: jdc.cta,
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: JdcContentFrame(
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                top: JdcSpacing.lg,
+                                bottom: JdcSpacing.xxl,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Period Filter
+                                  _buildPeriodFilter(),
+
+                                  // Sales chart card
+                                  _buildSalesChart(),
+
+                                  // GP / payout cards
+                                  _buildPayoutCards(),
+
+                                  // Best sellers
+                                  _buildTopItemsSection(),
+
+                                  // Stats Grid
+                                  _buildStatsGrid(),
+
+                                  // Order History
+                                  _buildOrderHistorySection(),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+    );
+  }
+
+  /// ส่วนหัวสีเข้มตาม artboard Merchant-Dashboard —
+  /// ไทต์เติล + วันที่ + ไอคอนส่งออก/รีเฟรช + สถิติ 3 ช่องบนพื้น panel
+  /// (หน้านี้เป็นแท็บใน shell จึงไม่มีปุ่มย้อนกลับ)
+  Widget _buildHeader() {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final locale = Localizations.localeOf(context).toString();
+    final dateText = DateFormat.yMMMd(locale).format(DateTime.now());
+
+    return Container(
+      color: jdc.panel,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            JdcSpacing.xl, JdcSpacing.lg, JdcSpacing.xl, JdcSpacing.xl),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Period Filter
-                        _buildPeriodFilter(),
-
-                        // Revenue Summary Card
-                        _buildRevenueSummary(),
-
-                        _buildSalesChart(),
-
-                        _buildTopItemsSection(),
-
-                        // Stats Grid
-                        _buildStatsGrid(),
-
-                        // Order History
-                        _buildOrderHistorySection(),
-
-                        const SizedBox(height: 24),
+                        Text(
+                          l10n.mchDashTitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: _txt(jdc.onPanel, 18, w: 700),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          dateText,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: _txt(jdc.panelDim, 12),
+                        ),
                       ],
                     ),
                   ),
-                ),
+                  IconButton(
+                    tooltip: l10n.driverEarningsExportCsv,
+                    icon: Icon(Icons.download, color: jdc.onPanel),
+                    onPressed: _exportCsv,
+                  ),
+                  IconButton(
+                    tooltip: l10n.mchDashRefresh,
+                    icon: Icon(Icons.refresh, color: jdc.onPanel),
+                    onPressed: _loadData,
+                  ),
+                ],
+              ),
+              const SizedBox(height: JdcSpacing.xl),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildHeaderStatTile(
+                      // TODO(l10n): mchDashHeaderSales — "ยอดขาย{period}"
+                      'ยอดขาย${_periodLabels(context)[_selectedPeriod]}',
+                      _formatCurrency(_grossRevenue),
+                    ),
+                  ),                  const SizedBox(width: JdcSpacing.sm + 2),
+                  Expanded(
+                    child: _buildHeaderStatTile(
+                      // TODO(l10n): mchDashHeaderOrders — "ออเดอร์"
+                      'ออเดอร์',
+                      '$_totalOrders',
+                    ),
+                  ),
+                  const SizedBox(width: JdcSpacing.sm + 2),
+                  Expanded(
+                    child: _buildHeaderStatTile(
+                      // TODO(l10n): mchDashHeaderAvgPerBill — "เฉลี่ย/บิล"
+                      'เฉลี่ย/บิล',
+                      _formatCurrency(_avgOrderValue),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderStatTile(String label, String value) {
+    final jdc = JdcColors.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: JdcSpacing.md,
+        vertical: 11,
+      ),
+      decoration: BoxDecoration(
+        color: jdc.panelSoft,
+        borderRadius: BorderRadius.circular(JdcRadius.field),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: _txt(
+              jdc.onPanel,
+              18,
+              w: 700,
+              fontFeatures: [FontFeature.tabularFigures()],
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: _txt(jdc.panelDim, 11),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildErrorState() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(JdcSpacing.xxxl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
-            const SizedBox(height: 16),
-            Text(
-              AppLocalizations.of(context)!.mchDashLoadError,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
+            Icon(Icons.error_outline, size: 64, color: jdc.danger),
+            const SizedBox(height: JdcSpacing.lg),
+            Text(l10n.mchDashLoadError, style: _txt(jdc.text, 16, w: 700)),
+            const SizedBox(height: JdcSpacing.sm),
             Text(
               _error ?? '',
-              style:
-                  TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+              style: _txt(jdc.muted, 13),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: JdcSpacing.xl),
             ElevatedButton.icon(
               onPressed: _loadData,
               icon: const Icon(Icons.refresh),
-              label: Text(AppLocalizations.of(context)!.mchDashRetry),
+              label: Text(l10n.mchDashRetry),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accentOrange,
-                foregroundColor: Colors.white,
+                backgroundColor: jdc.cta,
+                foregroundColor: jdc.onCta,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(JdcRadius.field),
+                ),
               ),
             ),
           ],
@@ -547,222 +682,187 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
     );
   }
 
+  /// ชิปช่วงเวลาตาม artboard — ชิปที่เลือกพื้น panel ตัวอักษร onPanel
   Widget _buildPeriodFilter() {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      color: colorScheme.surface,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: List.generate(_periodLabels(context).length, (index) {
-                final isSelected = _selectedPeriod == index;
-                String chipLabel = _periodLabels(context)[index];
-                if (index == 4 && _customDateRange != null && isSelected) {
-                  final fmt = DateFormat('d/M/yy');
-                  chipLabel =
-                      '${fmt.format(_customDateRange!.start)} - ${fmt.format(_customDateRange!.end)}';
-                }
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    label: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (index == 4) ...[
-                          const Icon(Icons.calendar_today, size: 14),
-                          const SizedBox(width: 4),
-                        ],
-                        Text(chipLabel),
-                      ],
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final labels = _periodLabels(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: List.generate(labels.length, (index) {
+              final isSelected = _selectedPeriod == index;
+              String chipLabel = labels[index];
+              if (index == 4 && _customDateRange != null && isSelected) {
+                final fmt = DateFormat('d/M/yy');
+                chipLabel =
+                    '${fmt.format(_customDateRange!.start)} - ${fmt.format(_customDateRange!.end)}';
+              }
+              return Padding(
+                padding: const EdgeInsets.only(right: JdcSpacing.sm),
+                child: Material(
+                  color: isSelected ? jdc.panel : jdc.surface,
+                  shape: StadiumBorder(
+                    side: BorderSide(
+                      color: isSelected ? jdc.panel : jdc.line,
                     ),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      if (selected) {
-                        if (index == 4) {
-                          _pickCustomDateRange();
-                        } else {
-                          setState(() => _selectedPeriod = index);
-                          _loadData();
-                        }
+                  ),
+                  child: InkWell(
+                    customBorder: const StadiumBorder(),
+                    onTap: () {
+                      if (index == 4) {
+                        _pickCustomDateRange();
+                      } else {
+                        setState(() => _selectedPeriod = index);
+                        _loadData();
                       }
                     },
-                    selectedColor: AppTheme.accentOrange,
-                    labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : colorScheme.onSurface,
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.normal,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 9,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (index == 4) ...[
+                            Icon(
+                              Icons.calendar_today,
+                              size: 14,
+                              color: isSelected ? jdc.onPanel : jdc.muted,
+                            ),
+                            const SizedBox(width: 4),
+                          ],
+                          Text(
+                            chipLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: _txt(
+                              isSelected ? jdc.onPanel : jdc.muted,
+                              13,
+                              w: isSelected ? 700 : 600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    backgroundColor: colorScheme.surfaceContainerHighest,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20)),
                   ),
-                );
-              }),
-            ),
+                ),
+              );
+            }),
           ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              OutlinedButton.icon(
-                onPressed: _pickCustomDateRange,
-                icon: const Icon(Icons.date_range, size: 18),
-                label: Text(AppLocalizations.of(context)!.mchDashPickDateRange),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.accentOrange,
-                  side: const BorderSide(color: AppTheme.accentOrange),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        ),
+        const SizedBox(height: JdcSpacing.sm + 2),
+        Wrap(
+          spacing: JdcSpacing.sm,
+          runSpacing: JdcSpacing.sm,
+          children: [
+            OutlinedButton.icon(
+              onPressed: _pickCustomDateRange,
+              icon: const Icon(Icons.date_range, size: 18),
+              label: Text(l10n.mchDashPickDateRange),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: jdc.cta,
+                side: BorderSide(color: jdc.brandLine),
+                minimumSize: const Size(0, JdcTouch.minTarget),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(JdcRadius.chip),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: JdcSpacing.md,
+                  vertical: 0,
                 ),
               ),
-              if (_selectedPeriod == 4 && _customDateRange != null)
-                TextButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      _customDateRange = null;
-                      _selectedPeriod = 0;
-                    });
-                    _loadData();
-                  },
-                  icon: const Icon(Icons.clear, size: 18),
-                  label: Text(
-                      AppLocalizations.of(context)!.mchDashClearDateFilter),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+            ),
+            if (_selectedPeriod == 4 && _customDateRange != null)
+              TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _customDateRange = null;
+                    _selectedPeriod = 0;
+                  });
+                  _loadData();
+                },
+                icon: const Icon(Icons.clear, size: 18),
+                label: Text(l10n.mchDashClearDateFilter),
+                style: TextButton.styleFrom(
+                  foregroundColor: jdc.dangerInk,
+                  minimumSize: const Size(0, JdcTouch.minTarget),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(JdcRadius.chip),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: JdcSpacing.md,
+                    vertical: 0,
                   ),
                 ),
-            ],
-          ),
-        ],
-      ),
+              ),
+          ],
+        ),
+      ],
     );
   }
 
-  Widget _buildRevenueSummary() {
+  /// การ์ดกราฟยอดขาย 7 วันตาม artboard — หัวการ์ด (ชื่อ+ยอดรวม+ชิปเทียบช่วงก่อน)
+  /// ตามด้วยแท่งกราฟบนราง sunken ป้ายวันย่อทุกแท่ง
+  Widget _buildSalesChart() {
+    final jdc = JdcColors.of(context);
+    final locale = Localizations.localeOf(context).toString();
+    final maxRevenue = _salesChart.fold<double>(
+      0,
+      (max, point) => point.revenue > max ? point.revenue : max,
+    );
+    final weekTotal =
+        _salesChart.fold<double>(0, (sum, p) => sum + p.revenue);
+    final showDelta = _selectedPeriod != 3;
+
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.only(top: JdcSpacing.lg),
+      padding: const EdgeInsets.all(JdcSpacing.lg),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.accentOrange,
-            AppTheme.accentOrange.withValues(alpha: 0.8)
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.accentOrange.withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        color: jdc.surface,
+        borderRadius: BorderRadius.circular(JdcRadius.card),
+        border: Border.all(color: jdc.line),
+        boxShadow: jdc.shadowCard,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Icon(Icons.trending_up, color: Colors.white, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                AppLocalizations.of(context)!
-                    .mchDashNetRevenue(_periodLabels(context)[_selectedPeriod]),
-                style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.9), fontSize: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // TODO(l10n): mchDashSalesChartTitle — "ยอดขาย 7 วันล่าสุด"
+                    Text('ยอดขาย 7 วันล่าสุด', style: _txt(jdc.muted, 12)),
+                    const SizedBox(height: 2),
+                    Text(
+                      _formatCurrency(weekTotal),
+                      style: _txt(
+                        jdc.text,
+                        24,
+                        w: 700,
+                        fontFeatures: [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              if (showDelta) ...[
+                const SizedBox(width: JdcSpacing.sm + 2),
+                _buildDeltaPill(),
+              ],
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            _formatCurrency(_totalRevenue),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            AppLocalizations.of(context)!
-                .mchDashAvgPerOrder(_formatCurrency(_avgOrderValue)),
-            style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.85), fontSize: 13),
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _buildRevenuePill('Gross', _formatCurrency(_grossRevenue)),
-              _buildRevenuePill('GP', _formatCurrency(_systemGP)),
-              _buildRevenuePill(
-                'Vs previous',
-                '${_vsLastPeriod >= 0 ? '+' : ''}${_vsLastPeriod.toStringAsFixed(1)}%',
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRevenuePill(String label, String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-      ),
-      child: Text(
-        '$label: $value',
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSalesChart() {
-    final colorScheme = Theme.of(context).colorScheme;
-    final maxRevenue = _salesChart.fold<double>(
-      0,
-      (max, point) => point.revenue > max ? point.revenue : max,
-    );
-
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'ยอดขาย 7 วันล่าสุด',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 16),
+          const SizedBox(height: JdcSpacing.md + 2),
           SizedBox(
-            height: 150,
+            height: 100,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: _salesChart.map((point) {
@@ -771,46 +871,42 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
                 return Expanded(
                   child: Tooltip(
                     message:
-                        '${DateFormat('d/M').format(point.date)}\n${_formatCurrency(point.revenue)} (${point.orders} orders)',
+                        '${DateFormat('d/M', locale).format(point.date)}\n${_formatCurrency(point.revenue)} '
+                        // TODO(l10n): ใช้ key จำนวนออเดอร์ ({count} ออเดอร์)
+                        '(${point.orders} ออเดอร์)',
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: JdcSpacing.xs + 1),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          Text(
-                            point.revenue > 0
-                                ? _formatCurrency(point.revenue)
-                                : '-',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: colorScheme.onSurfaceVariant,
+                          Container(
+                            height: 78,
+                            decoration: BoxDecoration(
+                              color: jdc.sunken,
+                              borderRadius:
+                                  BorderRadius.circular(JdcRadius.small),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 6),
-                          Flexible(
+                            alignment: Alignment.bottomCenter,
                             child: FractionallySizedBox(
-                              heightFactor: ratio.clamp(0.04, 1.0),
-                              alignment: Alignment.bottomCenter,
+                              heightFactor: ratio.clamp(0.0, 1.0),
                               child: Container(
-                                width: double.infinity,
                                 decoration: BoxDecoration(
                                   color: point.revenue > 0
-                                      ? AppTheme.accentOrange
-                                      : colorScheme.outlineVariant,
-                                  borderRadius: BorderRadius.circular(6),
+                                      ? jdc.brand
+                                      : jdc.trackEmpty,
+                                  borderRadius:
+                                      BorderRadius.circular(JdcRadius.small),
                                 ),
                               ),
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: JdcSpacing.sm - 2),
                           Text(
-                            DateFormat('d/M').format(point.date),
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: colorScheme.onSurfaceVariant,
-                            ),
+                            DateFormat('E', locale).format(point.date),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: _txt(jdc.muted, 11),
                           ),
                         ],
                       ),
@@ -825,90 +921,210 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
     );
   }
 
-  Widget _buildTopItemsSection() {
-    final colorScheme = Theme.of(context).colorScheme;
-    if (_topItems.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
+  /// ชิปเทียบยอดกับช่วงก่อนหน้า — เขียวเมื่อเติบโต แดงเมื่อลดลง
+  Widget _buildDeltaPill() {
+    final jdc = JdcColors.of(context);
+    final up = _vsLastPeriod >= 0;
+    final fg = up ? jdc.successInk : jdc.dangerInk;
+    final bg = up ? jdc.successSoft : jdc.dangerSoft;
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: JdcSpacing.sm + 2,
+        vertical: JdcSpacing.xs + 2,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(JdcRadius.chip),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
+          Icon(up ? Icons.arrow_upward : Icons.arrow_downward,
+              size: 13, color: fg),
+          const SizedBox(width: JdcSpacing.xs + 1),
           Text(
-            'เมนูขายดี',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface,
-            ),
+            '${_vsLastPeriod >= 0 ? '+' : ''}${_vsLastPeriod.toStringAsFixed(1)}%',
+            style: _txt(fg, 12, w: 700, fontFeatures: [
+              FontFeature.tabularFigures(),
+            ]),
           ),
-          const SizedBox(height: 12),
-          ..._topItems.take(10).map((item) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      item.name,
-                      style: TextStyle(color: colorScheme.onSurface),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  Text(
-                    '${item.orderCount} orders',
-                    style: TextStyle(color: colorScheme.onSurfaceVariant),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    _formatCurrency(item.revenue),
-                    style: const TextStyle(
-                      color: AppTheme.accentOrange,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
         ],
       ),
     );
   }
 
-  Widget _buildStatsGrid() {
+  /// การ์ดคู่ "หัก GP" กับ "ยอดโอนเข้าร้าน" ตาม artboard
+  Widget _buildPayoutCards() {
+    final gpPct = ((_merchantSystemRate + _merchantDriverRate) * 100)
+        .toStringAsFixed(0);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.only(top: JdcSpacing.sm + 2),
       child: Row(
         children: [
           Expanded(
-              child: _buildStatCard(
-                  AppLocalizations.of(context)!.mchDashTotalOrders,
-                  '$_totalOrders',
-                  Icons.receipt_long,
-                  Colors.blue)),
-          const SizedBox(width: 10),
+            child: _buildPayoutCard(
+              // TODO(l10n): mchDashGpDeducted — "หัก GP {rate}%"
+              'หัก GP $gpPct%',
+              _formatCurrency(_systemGP),
+            ),
+          ),
+          const SizedBox(width: JdcSpacing.sm + 2),
           Expanded(
-              child: _buildStatCard(
-                  AppLocalizations.of(context)!.mchDashCompleted,
-                  '$_completedOrders',
-                  Icons.check_circle,
-                  Colors.green)),
-          const SizedBox(width: 10),
+            child: _buildPayoutCard(
+              // TODO(l10n): mchDashPayoutLabel — "ยอดโอนเข้าร้าน"
+              'ยอดโอนเข้าร้าน',
+              _formatCurrency(_totalRevenue),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPayoutCard(String label, String value) {
+    final jdc = JdcColors.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: JdcSpacing.md + 2,
+        vertical: 13,
+      ),
+      decoration: BoxDecoration(
+        color: jdc.surface,
+        borderRadius: BorderRadius.circular(JdcRadius.card),
+        border: Border.all(color: jdc.line),
+        boxShadow: jdc.shadowCard,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: _txt(jdc.muted, 12),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: _txt(
+              jdc.text,
+              17,
+              w: 700,
+              fontFeatures: [FontFeature.tabularFigures()],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopItemsSection() {
+    final jdc = JdcColors.of(context);
+    if (_topItems.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: JdcSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // TODO(l10n): mchDashTopItemsTitle — "เมนูขายดี"
+          Text('เมนูขายดี', style: _txt(jdc.text, 14, w: 700)),
+          const SizedBox(height: JdcSpacing.md),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: JdcSpacing.lg,
+              vertical: JdcSpacing.md + 2,
+            ),
+            decoration: BoxDecoration(
+              color: jdc.surface,
+              borderRadius: BorderRadius.circular(JdcRadius.card),
+              border: Border.all(color: jdc.line),
+              boxShadow: jdc.shadowCard,
+            ),
+            child: Column(
+              children: [
+                for (var i = 0; i < _topItems.take(10).length; i++) ...[
+                  if (i > 0) const SizedBox(height: JdcSpacing.md + 2),
+                  _buildTopItemRow(_topItems[i]),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopItemRow(_TopItemReport item) {
+    final jdc = JdcColors.of(context);
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: _txt(jdc.text, 14, w: 700),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                // TODO(l10n): mchDashOrderCount — "{count} ออเดอร์"
+                '${item.orderCount} ออเดอร์',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: _txt(jdc.muted, 12),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: JdcSpacing.md),
+        Text(
+          _formatCurrency(item.revenue),
+          style: _txt(jdc.text, 14, w: 700, fontFeatures: [
+            FontFeature.tabularFigures(),
+          ]),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatsGrid() {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    return Padding(
+      padding: const EdgeInsets.only(top: JdcSpacing.lg),
+      child: Row(
+        children: [
           Expanded(
-              child: _buildStatCard(
-                  AppLocalizations.of(context)!.mchDashCancelled,
-                  '$_cancelledOrders',
-                  Icons.cancel,
-                  Colors.red)),
+            child: _buildStatCard(
+                l10n.mchDashTotalOrders,
+                '$_totalOrders',
+                Icons.receipt_long,
+                jdc.infoInk),
+          ),
+          const SizedBox(width: JdcSpacing.sm + 2),
+          Expanded(
+            child: _buildStatCard(
+                l10n.mchDashCompleted,
+                '$_completedOrders',
+                Icons.check_circle,
+                jdc.successInk),
+          ),
+          const SizedBox(width: JdcSpacing.sm + 2),
+          Expanded(
+            child: _buildStatCard(
+                l10n.mchDashCancelled,
+                '$_cancelledOrders',
+                Icons.cancel,
+                jdc.dangerInk),
+          ),
         ],
       ),
     );
@@ -916,34 +1132,35 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
 
   Widget _buildStatCard(
       String title, String value, IconData icon, Color color) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(JdcSpacing.md + 2),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: jdc.surface,
+        borderRadius: BorderRadius.circular(JdcRadius.small),
+        border: Border.all(color: jdc.line),
+        boxShadow: jdc.shadowCard,
       ),
       child: Column(
         children: [
           Icon(icon, size: 24, color: color),
-          const SizedBox(height: 8),
+          const SizedBox(height: JdcSpacing.sm),
           Text(
             value,
-            style: TextStyle(
-                fontSize: 22, fontWeight: FontWeight.bold, color: color),
+            style: _txt(
+              color,
+              22,
+              w: 700,
+              fontFeatures: [FontFeature.tabularFigures()],
+            ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: JdcSpacing.xs),
           Text(
             title,
-            style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+            style: _txt(jdc.muted, 11),
             textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -951,41 +1168,33 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
   }
 
   Widget _buildOrderHistorySection() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(top: JdcSpacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            AppLocalizations.of(context)!.mchDashOrderHistory,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 12),
+          Text(l10n.mchDashOrderHistory, style: _txt(jdc.text, 14, w: 700)),
+          const SizedBox(height: JdcSpacing.md),
           if (_orderHistory.isEmpty)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(32),
+              padding: const EdgeInsets.all(JdcSpacing.xxxl),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainer,
-                borderRadius: BorderRadius.circular(12),
+                color: jdc.surface,
+                borderRadius: BorderRadius.circular(JdcRadius.card),
+                border: Border.all(color: jdc.line),
               ),
               child: Column(
                 children: [
                   Icon(
                     Icons.receipt_long,
                     size: 48,
-                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.45),
+                    color: jdc.dim,
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    AppLocalizations.of(context)!.mchDashNoOrders,
-                    style: TextStyle(color: colorScheme.onSurfaceVariant),
-                  ),
+                  const SizedBox(height: JdcSpacing.md),
+                  Text(l10n.mchDashNoOrders, style: _txt(jdc.muted, 13)),
                 ],
               ),
             )
@@ -1000,7 +1209,8 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
   }
 
   Widget _buildOrderCard(Map<String, dynamic> order) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final status = order['status'] as String? ?? 'unknown';
     final price = (order['price'] as num?)?.toDouble() ?? 0;
     final deliveryFee = (order['delivery_fee'] as num?)?.toDouble() ?? 0;
@@ -1019,6 +1229,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
     );
     final createdAt = _formatDate(order['created_at']);
     final notes = order['notes'] as String?;
+    final (chipBg, chipFg) = _statusChipColors(status, jdc);
 
     return InkWell(
       onTap: () {
@@ -1028,20 +1239,15 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
           ),
         );
       },
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(JdcRadius.card),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: JdcSpacing.md),
+        padding: const EdgeInsets.all(JdcSpacing.lg),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: jdc.surface,
+          borderRadius: BorderRadius.circular(JdcRadius.card),
+          border: Border.all(color: jdc.line),
+          boxShadow: jdc.shadowCard,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1049,86 +1255,97 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
             // Header row
             Row(
               children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(status).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    _getStatusText(status),
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: _getStatusColor(status),
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: JdcSpacing.sm + 2,
+                      vertical: JdcSpacing.xs + 1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: chipBg,
+                      borderRadius: BorderRadius.circular(JdcRadius.chip),
+                    ),
+                    child: Text(
+                      _getStatusText(status),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: _txt(chipFg, 11, w: 600),
                     ),
                   ),
                 ),
-                const Spacer(),
-                Text(
-                  '#$orderId',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.onSurfaceVariant,
-                    fontFamily: 'monospace',
+                const SizedBox(width: JdcSpacing.sm + 2),
+                Expanded(
+                  child: Text(
+                    '#$orderId',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
+                    style: _txt(jdc.muted, 12, fontFeatures: [
+                      FontFeature.tabularFigures(),
+                    ]),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: JdcSpacing.sm + 2),
 
             // Price and date
             Row(
               children: [
-                Text(
-                  _formatCurrency(displayAmount),
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
+                Flexible(
+                  child: Text(
+                    _formatCurrency(displayAmount),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: _txt(
+                      jdc.text,
+                      18,
+                      w: 700,
+                      fontFeatures: [FontFeature.tabularFigures()],
+                    ),
                   ),
                 ),
                 if (status == 'completed') ...[
-                  const SizedBox(width: 8),
-                  Text(
-                    AppLocalizations.of(context)!.orderDetailCompletionAfterGP(
-                      ((_merchantSystemRate + _merchantDriverRate) * 100)
-                          .toStringAsFixed(0),
-                    ),
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: colorScheme.onSurfaceVariant,
+                  const SizedBox(width: JdcSpacing.sm),
+                  Flexible(
+                    child: Text(
+                      l10n.orderDetailCompletionAfterGP(
+                        ((_merchantSystemRate + _merchantDriverRate) * 100)
+                            .toStringAsFixed(0),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: _txt(jdc.muted, 11),
                     ),
                   ),
                 ],
-                const Spacer(),
-                Icon(Icons.access_time,
-                    size: 14, color: colorScheme.onSurfaceVariant),
+                const SizedBox(width: JdcSpacing.sm),
+                Icon(Icons.access_time, size: 14, color: jdc.muted),
                 const SizedBox(width: 4),
-                Text(
-                  createdAt,
-                  style: TextStyle(
-                      fontSize: 12, color: colorScheme.onSurfaceVariant),
+                Flexible(
+                  child: Text(
+                    createdAt,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: _txt(jdc.muted, 12),
+                  ),
                 ),
               ],
             ),
 
             // Notes
             if (notes != null && notes.isNotEmpty) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: JdcSpacing.sm),
               Row(
                 children: [
-                  Icon(Icons.note,
-                      size: 14, color: colorScheme.onSurfaceVariant),
+                  Icon(Icons.note, size: 14, color: jdc.muted),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       notes,
-                      style: TextStyle(
-                          fontSize: 12, color: colorScheme.onSurfaceVariant),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
+                      style: _txt(jdc.muted, 12),
                     ),
                   ),
                 ],
@@ -1136,18 +1353,16 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
             ],
 
             // Tap hint
-            const SizedBox(height: 8),
+            const SizedBox(height: JdcSpacing.sm),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Text(AppLocalizations.of(context)!.mchDashViewDetail,
-                    style: TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.accentOrange,
-                        fontWeight: FontWeight.w500)),
+                Text(
+                  l10n.mchDashViewDetail,
+                  style: _txt(jdc.link, 12, w: 500),
+                ),
                 const SizedBox(width: 2),
-                Icon(Icons.chevron_right,
-                    size: 16, color: AppTheme.accentOrange),
+                Icon(Icons.chevron_right, size: 16, color: jdc.link),
               ],
             ),
           ],

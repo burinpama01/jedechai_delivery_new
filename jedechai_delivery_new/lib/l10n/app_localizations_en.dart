@@ -319,7 +319,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get foodHomeEmptySearch => 'No restaurants found';
 
   @override
-  String get foodHomeEmptyNoArea => 'No restaurants in your area yet';
+  String get foodHomeEmptyNoArea => 'No partner restaurants in your area yet';
 
   @override
   String get foodHomeEmptyNoneOpen => 'No restaurants currently open';
@@ -332,7 +332,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String foodHomeEmptyNoAreaHint(Object radius) {
-    return 'No open restaurants within $radius km';
+    return 'No partner restaurants within $radius km of you yet';
   }
 
   @override
@@ -351,6 +351,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get foodHomeEstTime => '20-30 min';
+
+  @override
+  String get foodHomeOpenNowTitle => 'Open now';
+
+  @override
+  String get foodHomeSeeAll => 'See all';
+
+  @override
+  String get foodHomeAllShopsTooltip => 'All restaurants';
+
+  @override
+  String foodHomeOpenUntil(Object time) {
+    return 'Open until $time';
+  }
+
+  @override
+  String get foodCategoryOther => 'Others';
+
+  @override
+  String get foodHomeFavoriteAdd => 'Add to favorites';
+
+  @override
+  String get foodHomeFavoriteRemove => 'Remove from favorites';
+
+  @override
+  String get foodHomeFavoriteError => 'Couldn\'t update favorites. Please try again.';
+
+  @override
+  String get foodHomeEmptyCategory => 'No open restaurants in this category right now';
+
+  @override
+  String get foodHomeEmptyCategoryHint => 'Try another category, or tap it again to see all restaurants';
 
   @override
   String get foodPromoCodeTitle => 'Promo Code';
@@ -5960,4 +5992,540 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rejectedDeletionBack => 'Back to login';
+
+  @override
+  String get driverServiceTypeTitle => 'Job types to accept';
+
+  @override
+  String get driverServiceTypeSubtitle => 'Choose which job types to accept (none selected = accept all)';
+
+  @override
+  String get driverServiceTypeFood => 'Food delivery';
+
+  @override
+  String get driverServiceTypeRide => 'Ride';
+
+  @override
+  String get driverServiceTypeParcel => 'Parcel delivery';
+
+  @override
+  String get driverServiceTypeLaundry => 'Laundry pickup & return';
+
+  @override
+  String get driverServiceTypeFoodDesc => 'Orders from restaurants in the system';
+
+  @override
+  String get driverServiceTypeRideDesc => 'Passenger transport';
+
+  @override
+  String get driverServiceTypeParcelDesc => 'Parcels up to 10 kg';
+
+  @override
+  String get driverServiceTypeLaundryDesc => 'Pick up laundry from customers and return it';
+
+  @override
+  String get driverServiceTypeSave => 'Save settings';
+
+  @override
+  String driverServiceTypeSaveError(Object error) {
+    return 'Save failed: $error';
+  }
+
+  @override
+  String driverProfileRatingJobs(Object rating, Object count) {
+    return '$rating · $count jobs';
+  }
+
+  @override
+  String driverJobBaht(Object amount) {
+    return '฿$amount';
+  }
+
+  @override
+  String driverJobBahtNeg(Object amount) {
+    return '-฿$amount';
+  }
+
+  @override
+  String driverEarningsBaht(Object amount) {
+    return '฿$amount';
+  }
+
+  @override
+  String driverEarningsBahtNeg(Object amount) {
+    return '-฿$amount';
+  }
+
+  @override
+  String get driverEarningsExportCsv => 'Export CSV';
+
+  @override
+  String get driverEarningsFilterFood => '🍔 Food';
+
+  @override
+  String get driverEarningsFilterRide => '🚗 Ride';
+
+  @override
+  String get driverEarningsFilterParcel => '📦 Parcel';
+
+  @override
+  String get driverEarningsWeekdayMon => 'M';
+
+  @override
+  String get driverEarningsWeekdayTue => 'T';
+
+  @override
+  String get driverEarningsWeekdayWed => 'W';
+
+  @override
+  String get driverEarningsWeekdayThu => 'Th';
+
+  @override
+  String get driverEarningsWeekdayFri => 'F';
+
+  @override
+  String get driverEarningsWeekdaySat => 'S';
+
+  @override
+  String get driverEarningsWeekdaySun => 'Su';
+
+  @override
+  String get driverEarningsWeeklyChartTitle => 'Earnings — last 7 days';
+
+  @override
+  String get driverEarningsCsvHeader => 'Date,Type,Status,Job ID,Driver Earnings,App Fee';
+
+  @override
+  String get driverEarningsCsvShareSubject => 'Driver earnings report';
+
+  @override
+  String driverEarningsExportError(Object error) {
+    return 'Export failed: $error';
+  }
+
+  @override
+  String get driverWalletBucketTopup => 'Self top-up';
+
+  @override
+  String get driverWalletBucketTopupHint => 'Min withdraw ฿100';
+
+  @override
+  String get driverWalletBucketSystem => 'From system';
+
+  @override
+  String get driverWalletBucketSystemHint => 'Rewards/compensation · Min withdraw ฿200';
+
+  @override
+  String get driverWalletTypeCouponCompensation => 'Coupon compensation';
+
+  @override
+  String get driverWalletTypeJobPayout => 'Order payment (customer paid via Wallet)';
+
+  @override
+  String get driverWalletTypeWithdrawalPending => 'Withdrawal (pending transfer)';
+
+  @override
+  String get driverWalletTypeRefund => 'Refund';
+
+  @override
+  String get driverPerfTitle => 'Stats & Rating';
+
+  @override
+  String driverPerfBadgeLevel(Object level) {
+    return 'Level $level';
+  }
+
+  @override
+  String get driverPerfAvgRating => 'Average customer rating';
+
+  @override
+  String get driverPerfOutOfFive => 'out of 5.0';
+
+  @override
+  String get driverPerfMaxLevel => 'Highest level reached';
+
+  @override
+  String driverPerfBadgeProgress(Object current, Object target) {
+    return 'Progress to next level $current / $target';
+  }
+
+  @override
+  String get driverPerfMetrics => 'Key metrics';
+
+  @override
+  String get driverPerfAcceptanceRate => 'Job acceptance rate';
+
+  @override
+  String get driverPerfTarget90 => 'Target 90%';
+
+  @override
+  String get driverPerfCompletionRate => 'Delivery success rate';
+
+  @override
+  String get driverPerfCompletionRateHint => 'Jobs delivered in full';
+
+  @override
+  String get driverPerfTotalCompleted => 'Total completed jobs';
+
+  @override
+  String get driverPerfTotalCompletedHint => 'Since you started';
+
+  @override
+  String driverPerfJobsCount(Object count) {
+    return '$count jobs';
+  }
+
+  @override
+  String get driverPerfLevel => 'Level';
+
+  @override
+  String driverShiftStartError(Object error) {
+    return 'Failed to start shift: $error';
+  }
+
+  @override
+  String driverShiftEndError(Object error) {
+    return 'Failed to end shift: $error';
+  }
+
+  @override
+  String get driverShiftTitle => 'Work Shift';
+
+  @override
+  String get driverShiftWeeklyHours => 'Last 7 days';
+
+  @override
+  String driverShiftHoursMinutes(Object hours, Object minutes) {
+    return '${hours}h ${minutes}m';
+  }
+
+  @override
+  String get driverShiftWeeklyShifts => 'Shifts (7d)';
+
+  @override
+  String get driverShiftWeeklyJobs => 'Jobs (7d)';
+
+  @override
+  String get driverShiftActive => 'Current shift';
+
+  @override
+  String get driverShiftNotStarted => 'No shift started';
+
+  @override
+  String get driverShiftActiveBadge => 'Active';
+
+  @override
+  String driverShiftStartedAt(Object time) {
+    return 'Started at $time';
+  }
+
+  @override
+  String get driverShiftEnd => 'End shift';
+
+  @override
+  String get driverShiftStart => 'Start shift';
+
+  @override
+  String get driverShiftHistoryTitle => 'Shift history (7 days)';
+
+  @override
+  String get driverShiftHistoryEmpty => 'No shift history yet';
+
+  @override
+  String driverShiftCardSummary(Object duration, Object jobs) {
+    return 'Duration $duration · $jobs jobs';
+  }
+
+  @override
+  String withdrawMinBucketError(Object amount, Object bucket) {
+    return 'Minimum withdrawal ฿$amount for $bucket';
+  }
+
+  @override
+  String get withdrawBucketTopup => 'Self top-up funds';
+
+  @override
+  String get withdrawBucketSystem => 'System funds';
+
+  @override
+  String withdrawAvailable(Object amount) {
+    return 'Withdrawable ฿$amount';
+  }
+
+  @override
+  String get withdrawBahtPrefix => '฿';
+
+  @override
+  String withdrawMinMaxHelper(Object min, Object available) {
+    return 'Min ฿$min · Available ฿$available';
+  }
+
+  @override
+  String withdrawMinAmount(Object amount) {
+    return 'Minimum ฿$amount';
+  }
+
+  @override
+  String withdrawBucketInsufficient(Object amount) {
+    return 'Not enough in this bucket (฿$amount)';
+  }
+
+  @override
+  String get driverDashJobLaundry => 'Laundry';
+
+  @override
+  String get driverDashQuickPerf => 'Performance';
+
+  @override
+  String get driverDashQuickShift => 'Shift';
+
+  @override
+  String get driverDashServiceTypeSettings => 'Job type settings';
+
+  @override
+  String get driverDashEarnBreakdownFood => 'Food';
+
+  @override
+  String get driverDashEarnBreakdownRide => 'Ride';
+
+  @override
+  String get driverDashEarnBreakdownParcel => 'Parcel';
+
+  @override
+  String driverDashEarnBreakdownEntry(Object type, Object amount) {
+    return '$type ฿$amount';
+  }
+
+  @override
+  String driverDashNoJobsInRadius(Object km) {
+    return 'No jobs within $km km';
+  }
+
+  @override
+  String get driverDashPullToRefresh => 'Pull down to refresh';
+
+  @override
+  String get driverDashScheduledJobs => 'Scheduled jobs';
+
+  @override
+  String get driverDashScheduledJobsEmpty => 'No scheduled jobs';
+
+  @override
+  String get driverDashMonthJan => 'Jan';
+
+  @override
+  String get driverDashMonthFeb => 'Feb';
+
+  @override
+  String get driverDashMonthMar => 'Mar';
+
+  @override
+  String get driverDashMonthApr => 'Apr';
+
+  @override
+  String get driverDashMonthMay => 'May';
+
+  @override
+  String get driverDashMonthJun => 'Jun';
+
+  @override
+  String get driverDashMonthJul => 'Jul';
+
+  @override
+  String get driverDashMonthAug => 'Aug';
+
+  @override
+  String get driverDashMonthSep => 'Sep';
+
+  @override
+  String get driverDashMonthOct => 'Oct';
+
+  @override
+  String get driverDashMonthNov => 'Nov';
+
+  @override
+  String get driverDashMonthDec => 'Dec';
+
+  @override
+  String driverDashScheduledTime(Object day, Object month, Object year, Object hour, Object minute) {
+    return '$day $month $year $hour:$minute';
+  }
+
+  @override
+  String get driverNavLaundryArrivedPickup => 'Arrive at laundry pickup';
+
+  @override
+  String get driverNavLaundryPhotoPickup => 'Take photo & pick up';
+
+  @override
+  String get driverNavLaundryComplete => 'Complete laundry job';
+
+  @override
+  String driverNavLaundryConfirmError(Object error) {
+    return 'Failed to confirm laundry pickup: $error';
+  }
+
+  @override
+  String get driverNavLaundryEvidenceSaved => 'Pickup evidence saved';
+
+  @override
+  String driverNavBahtPlus(Object amount) {
+    return '+฿$amount';
+  }
+
+  @override
+  String get driverNavStepAccept => 'Accepted';
+
+  @override
+  String get driverNavStepArriveStore => 'At store';
+
+  @override
+  String get driverNavStepPickupFood => 'Pick up food';
+
+  @override
+  String get driverNavStepDelivered => 'Delivered';
+
+  @override
+  String get driverNavStepArrivePickup => 'At pickup';
+
+  @override
+  String get driverNavStepDelivering => 'Delivering';
+
+  @override
+  String get driverNavStepDone => 'Completed';
+
+  @override
+  String driverNavEtaMinutes(Object minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get topupBeamFailed => 'Payment failed. Please generate a new QR code.';
+
+  @override
+  String get topupBeamExpired => 'QR expired — if you already paid, the system will top up automatically. Do not pay again.';
+
+  @override
+  String get topupBeamManualReview => 'Payment received. Waiting for admin to verify the amount.';
+
+  @override
+  String get topupBeamNotFound => 'No payment found yet.';
+
+  @override
+  String get topupBeamQrExpired => 'QR code has expired.';
+
+  @override
+  String topupBeamExpiresIn(Object time) {
+    return 'QR expires in $time';
+  }
+
+  @override
+  String get topupBeamScanPrompt => 'Scan the PromptPay QR to pay';
+
+  @override
+  String get topupBeamHowItWorks => 'Pay via Beam — money goes to your wallet automatically, no slip needed';
+
+  @override
+  String get topupBeamPlayground => 'Test mode (Playground)';
+
+  @override
+  String get topupBeamQrMissing => 'QR image not found';
+
+  @override
+  String get topupBeamWaiting => 'Waiting for payment...';
+
+  @override
+  String get topupBeamCheckStatus => 'Check status';
+
+  @override
+  String get topupBeamNewQr => 'Generate new QR';
+
+  @override
+  String get topupSlipAttachFirst => 'Please attach the slip before confirming the top-up';
+
+  @override
+  String get topupSlipVerifyFailed => 'Slip verification failed. Please choose a new slip, or contact admin if you already transferred.';
+
+  @override
+  String get topupSlipReasonFailed => 'This slip did not pass automatic verification. Please use a real bank transfer slip and try again.';
+
+  @override
+  String get topupSlipReasonAmount => 'The slip amount does not match the top-up amount. Please check and try again.';
+
+  @override
+  String get topupSlipReasonReceiver => 'The receiving account on the slip does not match the system\'s destination account.';
+
+  @override
+  String get topupSlipReasonDuplicate => 'This slip has already been used. Please use a new slip.';
+
+  @override
+  String get topupSlipReasonRate => 'Too many verification attempts. Please wait a moment and try again.';
+
+  @override
+  String get topupSlipReasonInvalidAmount => 'Invalid top-up amount. Please generate a new QR.';
+
+  @override
+  String get topupSlipReasonInvalidImage => 'Invalid slip file. Please choose a new image file.';
+
+  @override
+  String get topupSlipReasonFallback => 'Slip verification did not pass. Please check the slip and try again.';
+
+  @override
+  String get topupSlipHumanFraud => 'This slip did not pass verification. Please use a genuine bank transfer slip with the correct amount and destination account.';
+
+  @override
+  String get topupWithdrawRequestError => 'Could not submit withdrawal request (min ฿100 and complete bank details required)';
+
+  @override
+  String get topupSlipStepHint => 'Transfer via the QR, then attach the slip — the system will verify and top up automatically';
+
+  @override
+  String get topupSlipAutoDone => 'Slip verified and money added to your wallet';
+
+  @override
+  String get topupSlipTopUpAgain => 'Top up again';
+
+  @override
+  String get topupSlipSelected => 'Slip selected';
+
+  @override
+  String get topupSlipAttachSlip => 'Attach transfer slip';
+
+  @override
+  String get topupSlipReady => 'Ready for verification';
+
+  @override
+  String get topupSlipPickHint => 'Take or pick a slip photo after transferring via the QR';
+
+  @override
+  String get topupSlipVerifyHint => 'The system checks the amount and blocks duplicate slips before topping up';
+
+  @override
+  String get topupSlipChange => 'Change slip';
+
+  @override
+  String get topupSlipChoose => 'Choose slip photo';
+
+  @override
+  String get topupSlipRemove => 'Remove slip';
+
+  @override
+  String get topupSlipChecking => 'Verifying slip...';
+
+  @override
+  String topupSlipCheckAndTopUp(Object amount) {
+    return 'Verify slip & top up ฿$amount';
+  }
+
+  @override
+  String get topupStatusAwaiting => 'Awaiting payment';
+
+  @override
+  String get topupStatusQrExpired => 'QR expired';
+
+  @override
+  String get topupStatusFailed => 'Payment failed';
+
+  @override
+  String get driverNavProxLaundryPickup => 'Laundry pickup point';
 }

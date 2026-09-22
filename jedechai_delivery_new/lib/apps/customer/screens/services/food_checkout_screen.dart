@@ -9,7 +9,7 @@ import 'dart:convert';
 import '../../../../common/config/env_config.dart';
 import '../../../../common/services/geocoding_service.dart';
 import '../../../../common/services/notification_sender.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../theme/jdc_colors.dart';
 import '../../providers/cart_provider.dart';
 import 'delivery_map_picker_screen.dart';
 import '../../../../common/widgets/coupon_entry_widget.dart';
@@ -108,31 +108,31 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       borderRadius: BorderRadius.circular(12),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isSelected
-              ? Colors.orange.withValues(alpha: 0.08)
+              ? JdcColors.of(context).brand.withValues(alpha: 0.08)
               : colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color:
-                isSelected ? AppTheme.accentOrange : colorScheme.outlineVariant,
+                isSelected ? JdcColors.of(context).brand : colorScheme.outlineVariant,
           ),
         ),
         child: Row(
           children: [
             Icon(icon,
                 color: isSelected
-                    ? AppTheme.accentOrange
+                    ? JdcColors.of(context).brand
                     : colorScheme.onSurfaceVariant),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(label,
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 2),
+                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  SizedBox(height: 2),
                   Text(
                     subtitle,
                     style: TextStyle(
@@ -142,8 +142,8 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
               ),
             ),
             if (isSelected)
-              const Icon(Icons.check_circle,
-                  color: AppTheme.accentOrange, size: 20),
+              Icon(Icons.check_circle,
+                  color: JdcColors.of(context).brand, size: 20),
           ],
         ),
       ),
@@ -189,12 +189,12 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
     );
 
     if (selected
-        .isBefore(DateTime.now().toUtc().add(const Duration(minutes: 20)))) {
+        .isBefore(DateTime.now().toUtc().add(Duration(minutes: 20)))) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context)!.foodScheduleMinTime),
-          backgroundColor: Colors.orange,
+          backgroundColor: JdcColors.of(context).brand,
         ),
       );
       return;
@@ -441,10 +441,10 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         icon: Icon(Icons.warning_amber_rounded,
-            color: Colors.orange[700], size: 48),
+            color: JdcColors.of(context).brand, size: 48),
         title: Text(
           AppLocalizations.of(context)!.foodDistanceWarningTitle,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -454,20 +454,20 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                   _distanceKm.toStringAsFixed(1),
                   _maxDeliveryRadius.toStringAsFixed(0)),
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 15, height: 1.5),
+              style: TextStyle(fontSize: 15, height: 1.5),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.orange.withValues(alpha: 0.1),
+                color: JdcColors.of(context).brand.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
                 children: [
                   Icon(Icons.delivery_dining,
-                      color: Colors.orange[700], size: 24),
-                  const SizedBox(width: 10),
+                      color: JdcColors.of(context).brand, size: 24),
+                  SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       AppLocalizations.of(context)!.foodDistanceWarningFee(
@@ -475,7 +475,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Colors.orange[800],
+                        color: JdcColors.of(context).brand,
                       ),
                     ),
                   ),
@@ -491,8 +491,8 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
             child: ElevatedButton(
               onPressed: () => Navigator.of(ctx).pop(),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange[700],
-                foregroundColor: Colors.white,
+                backgroundColor: JdcColors.of(context).brand,
+                foregroundColor: JdcColors.of(context).surface,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -591,8 +591,8 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
           backgroundColor: colorScheme.surface,
           appBar: AppBar(
             title: Text(AppLocalizations.of(context)!.foodCheckoutTitle),
-            backgroundColor: AppTheme.accentOrange,
-            foregroundColor: Colors.white,
+            backgroundColor: JdcColors.of(context).brand,
+            foregroundColor: JdcColors.of(context).surface,
             elevation: 0,
           ),
           body: cart.isEmpty
@@ -623,16 +623,16 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                         child: Column(
                           children: [
                             _buildPrepTimeEstimate(cart),
-                            const SizedBox(height: 8),
+                            SizedBox(height: 8),
                             ...cart.items.map((item) {
                               return Padding(
                                 padding:
-                                    const EdgeInsets.symmetric(vertical: 4),
+                                    EdgeInsets.symmetric(vertical: 4),
                                 child: Row(
                                   children: [
                                     Text('${item.quantity}x',
                                         style: TextStyle(
-                                            color: AppTheme.accentOrange,
+                                            color: JdcColors.of(context).brand,
                                             fontWeight: FontWeight.bold)),
                                     const SizedBox(width: 8),
                                     Expanded(
@@ -764,21 +764,21 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                       ),
                       // ── สรุปราคา ──
                       _buildPriceSummary(cart),
-                      const SizedBox(height: 100),
+                      SizedBox(height: 100),
                     ],
                   ),
                 ),
           bottomNavigationBar: cart.isEmpty
               ? null
               : Container(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  padding: EdgeInsets.fromLTRB(16, 12, 16, 12),
                   decoration: BoxDecoration(
                     color: colorScheme.surfaceContainer,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
+                        color: JdcColors.of(context).text.withValues(alpha: 0.08),
                         blurRadius: 8,
-                        offset: const Offset(0, -2),
+                        offset: Offset(0, -2),
                       ),
                     ],
                   ),
@@ -790,19 +790,19 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                             ? null
                             : () => _placeOrder(context, cart),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.accentOrange,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: JdcColors.of(context).brand,
+                          foregroundColor: JdcColors.of(context).surface,
+                          padding: EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14)),
                           elevation: 0,
                         ),
                         child: _isPlacingOrder
-                            ? const SizedBox(
+                            ? SizedBox(
                                 height: 20,
                                 width: 20,
                                 child: CircularProgressIndicator(
-                                    strokeWidth: 2, color: Colors.white),
+                                    strokeWidth: 2, color: JdcColors.of(context).surface),
                               )
                             : Text(
                                 '${AppLocalizations.of(context)!.foodCheckoutConfirmButton} — ฿${_calculateFinalTotal(cart.subtotal, _deliveryFee).ceil()}',
@@ -838,7 +838,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
           isSelected: _deliveryMode == 'pin',
           onTap: _openMapPicker,
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         // ตัวเลือก 3: ที่อยู่ที่บันทึกไว้
         _buildAddressOption(
           icon: Icons.bookmark_outline,
@@ -849,25 +849,25 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         // แสดงที่อยู่ที่เลือก
         if ((_deliveryMode == 'pin' || _deliveryMode == 'saved') &&
             _customerAddress.isNotEmpty) ...[
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(10),
+            padding: EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.green.shade50,
+              color: JdcColors.of(context).successSoft,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.green.shade200),
+              border: Border.all(color: JdcColors.of(context).successSoft),
             ),
             child: Row(
               children: [
                 Icon(Icons.check_circle,
-                    size: 16, color: Colors.green.shade600),
-                const SizedBox(width: 8),
+                    size: 16, color: JdcColors.of(context).successInk),
+                SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     _customerAddress,
                     style:
-                        TextStyle(fontSize: 12, color: Colors.green.shade800),
+                        TextStyle(fontSize: 12, color: JdcColors.of(context).successInk),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -908,16 +908,16 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color:
-                isSelected ? AppTheme.accentOrange : colorScheme.outlineVariant,
+                isSelected ? JdcColors.of(context).brand : colorScheme.outlineVariant,
             width: isSelected ? 2 : 1,
           ),
           color: isSelected
-              ? AppTheme.accentOrange.withValues(alpha: 0.05)
+              ? JdcColors.of(context).brand.withValues(alpha: 0.05)
               : colorScheme.surfaceContainer,
         ),
         child: Row(
@@ -925,9 +925,9 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
             Icon(icon,
                 size: 20,
                 color: isSelected
-                    ? AppTheme.accentOrange
+                    ? JdcColors.of(context).brand
                     : colorScheme.onSurfaceVariant),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             Expanded(
               child: Text(
                 label,
@@ -935,13 +935,13 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                   fontSize: 14,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                   color: isSelected
-                      ? AppTheme.accentOrange
+                      ? JdcColors.of(context).brand
                       : colorScheme.onSurface,
                 ),
               ),
             ),
             if (isSelected)
-              Icon(Icons.check_circle, size: 20, color: AppTheme.accentOrange),
+              Icon(Icons.check_circle, size: 20, color: JdcColors.of(context).brand),
           ],
         ),
       ),
@@ -1010,18 +1010,18 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       0,
       (max, item) => item.prepTimeMinutes > max ? item.prepTimeMinutes : max,
     );
-    if (maxPrepTime <= 0) return const SizedBox.shrink();
+    if (maxPrepTime <= 0) return SizedBox.shrink();
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppTheme.accentOrange.withValues(alpha: 0.08),
+        color: JdcColors.of(context).brand.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         children: [
-          const Icon(Icons.timer_outlined, color: AppTheme.accentOrange),
+          Icon(Icons.timer_outlined, color: JdcColors.of(context).brand),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -1039,8 +1039,8 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       {required IconData icon, required String title, required Widget child}) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(16),
@@ -1050,7 +1050,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         children: [
           Row(
             children: [
-              Icon(icon, size: 20, color: AppTheme.accentOrange),
+              Icon(icon, size: 20, color: JdcColors.of(context).brand),
               const SizedBox(width: 8),
               Text(title,
                   style: const TextStyle(
@@ -1073,11 +1073,11 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       title: Row(
         children: [
           Icon(icon, size: 20, color: colorScheme.onSurfaceVariant),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Text(label),
         ],
       ),
-      activeColor: AppTheme.accentOrange,
+      activeColor: JdcColors.of(context).brand,
       contentPadding: EdgeInsets.zero,
       dense: true,
     );
@@ -1095,7 +1095,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                 fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
                 fontSize: isBold ? 16 : 14,
                 color: isGreen
-                    ? Colors.green[700]
+                    ? JdcColors.of(context).successInk
                     : (isBold ? null : colorScheme.onSurfaceVariant),
               )),
         ),
@@ -1104,8 +1104,8 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
               fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
               fontSize: isBold ? 18 : 14,
               color: isOrange
-                  ? AppTheme.accentOrange
-                  : (isGreen ? Colors.green[700] : null),
+                  ? JdcColors.of(context).brand
+                  : (isGreen ? JdcColors.of(context).successInk : null),
             )),
       ],
     );
@@ -1273,7 +1273,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            icon: const Icon(Icons.error_outline, color: Colors.red, size: 48),
+            icon: Icon(Icons.error_outline, color: JdcColors.of(context).danger, size: 48),
             title: Text(AppLocalizations.of(context)!.foodCheckoutFailedTitle),
             content: Text('$e'),
             actions: [

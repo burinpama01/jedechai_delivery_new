@@ -16,7 +16,8 @@ import '../../../../common/utils/platform_adaptive.dart';
 import '../../../../common/screens/profile_screen.dart';
 import '../../../../common/widgets/app_network_image.dart';
 import '../../../../common/widgets/language_switcher.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../theme/jdc_colors.dart';
+import '../../../../theme/jdc_layout.dart';
 import '../../../customer/screens/auth/login_screen.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -36,8 +37,23 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   String? _appVersion;
   int _versionTapCount = 0;
 
-  static const Color _accent = AppTheme.accentBlue;
-  static const List<Color> _gradient = [AppTheme.accentBlue, Color(0xFF1E3A8A)];
+  /// สร้าง TextStyle พร้อม fontVariations คู่กับ fontWeight ตามกฎดีไซน์ JDC
+  TextStyle _txt(
+    Color color,
+    double size, {
+    double w = 400,
+    double? height,
+    List<FontFeature>? fontFeatures,
+  }) {
+    return TextStyle(
+      color: color,
+      fontSize: size,
+      height: height,
+      fontWeight: FontWeight.values[(w.round() ~/ 100) - 1],
+      fontVariations: [FontVariation('wght', w)],
+      fontFeatures: fontFeatures,
+    );
+  }
 
   @override
   void initState() {
@@ -315,7 +331,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(l10n.accountUploadSuccess),
-              backgroundColor: Colors.green,
+              backgroundColor: context.jdc.successFill,
             ),
           );
         }
@@ -327,11 +343,21 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.accountUploadFailed(e.toString())),
-            backgroundColor: Colors.red,
+            backgroundColor: context.jdc.danger,
           ),
         );
       }
     }
+  }
+
+  /// คืน user id ปัจจุบัน หรือโยน error ที่ catch ด้านล่างจับได้
+  /// แทนการ force-unwrap ซึ่งจะ crash ทั้งหน้าเมื่อ session หมดอายุ
+  String _requireUserId() {
+    final id = AuthService.userId;
+    if (id == null || id.isEmpty) {
+      throw StateError('no-session');
+    }
+    return id;
   }
 
   Future<void> _editProfileField(String field) async {
@@ -341,14 +367,14 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
       if (result != null) {
         try {
           await _profileService.updateProfile(
-            userId: AuthService.userId!,
+            userId: _requireUserId(),
             vehicleType: result,
           );
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(AppLocalizations.of(context)!.drvProfileUpdateSuccess),
-                backgroundColor: Colors.green,
+                backgroundColor: context.jdc.successFill,
               ),
             );
           }
@@ -358,7 +384,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(AppLocalizations.of(context)!.drvProfileUpdateError(e.toString())),
-                backgroundColor: Colors.red,
+                backgroundColor: context.jdc.danger,
               ),
             );
           }
@@ -392,7 +418,9 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
               : TextInputType.text,
           decoration: InputDecoration(
             hintText: hint,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(JdcRadius.field),
+            ),
           ),
         ),
         actions: [
@@ -410,7 +438,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
     if (result != null && result.trim().isNotEmpty) {
       try {
         await _profileService.updateProfile(
-          userId: AuthService.userId!,
+          userId: _requireUserId(),
           fullName: field == 'full_name' ? result.trim() : null,
           phone: field == 'phone_number' ? result.trim() : null,
           licensePlate: field == 'license_plate' ? result.trim() : null,
@@ -420,7 +448,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(l10n.accountUpdateSuccess),
-              backgroundColor: Colors.green,
+              backgroundColor: context.jdc.successFill,
             ),
           );
         }
@@ -431,7 +459,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(l10n.accountUpdateFailed(e.toString())),
-              backgroundColor: Colors.red,
+              backgroundColor: context.jdc.danger,
             ),
           );
         }
@@ -442,18 +470,21 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   void _showDeleteAccountDialog() {
     final reasonController = TextEditingController();
     final l10n = AppLocalizations.of(context)!;
+    final jdc = JdcColors.of(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(JdcRadius.card),
+        ),
         icon: Icon(
           Icons.warning_amber_rounded,
-          color: Colors.red[700],
+          color: jdc.danger,
           size: 48,
         ),
         title: Text(
           l10n.accountDeleteDialogTitle,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: _txt(jdc.text, 18, w: 700),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -461,18 +492,18 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
             Text(
               l10n.accountDeleteDialogBody,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 14, height: 1.5),
+              style: _txt(jdc.text, 14, height: 1.5),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: JdcSpacing.lg),
             TextField(
               controller: reasonController,
               maxLines: 2,
               decoration: InputDecoration(
                 hintText: l10n.accountDeleteReasonHint,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(JdcRadius.small),
                 ),
-                contentPadding: const EdgeInsets.all(12),
+                contentPadding: const EdgeInsets.all(JdcSpacing.md),
               ),
             ),
           ],
@@ -489,10 +520,10 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
               await _submitDeleteAccount(reasonController.text.trim());
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+              backgroundColor: jdc.danger,
+              foregroundColor: jdc.onCta,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(JdcRadius.small),
               ),
             ),
             child: Text(l10n.accountDeleteConfirm),
@@ -514,7 +545,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.accountDeleteRequestSubmitFailed(e.toString())),
-            backgroundColor: Colors.red,
+            backgroundColor: context.jdc.danger,
           ),
         );
       }
@@ -540,7 +571,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
             },
             child: Text(
               l10n.accountLogout,
-              style: const TextStyle(color: Colors.red),
+              style: _txt(ctx.jdc.danger, 14, w: 600),
             ),
           ),
         ],
@@ -589,8 +620,8 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                     ? () => Navigator.of(ctx).pop(selected)
                     : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _accent,
-                  foregroundColor: Colors.white,
+                  backgroundColor: ctx.jdc.cta,
+                  foregroundColor: ctx.jdc.onCta,
                 ),
                 child: Text(AppLocalizations.of(context)!.drvProfileSave),
               ),
@@ -607,15 +638,19 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
     bool isSelected,
     VoidCallback onTap,
   ) {
+    final jdc = JdcColors.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(
+          horizontal: JdcSpacing.lg,
+          vertical: 14,
+        ),
         decoration: BoxDecoration(
-          color: isSelected ? _accent.withValues(alpha: 0.1) : Colors.grey[50],
-          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? jdc.brandSoft : jdc.sunken,
+          borderRadius: BorderRadius.circular(JdcRadius.small),
           border: Border.all(
-            color: isSelected ? _accent : Colors.grey[300]!,
+            color: isSelected ? jdc.brandLine : jdc.line,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -623,23 +658,22 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
           children: [
             Icon(
               icon,
-              color: isSelected ? _accent : Colors.grey[500],
+              color: isSelected ? jdc.brandOnSoft : jdc.muted,
               size: 28,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: JdcSpacing.md),
             Expanded(
               child: Text(
                 label,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected
-                      ? _accent
-                      : Theme.of(context).colorScheme.onSurface,
+                style: _txt(
+                  isSelected ? jdc.brandOnSoft : jdc.text,
+                  16,
+                  w: isSelected ? 700 : 400,
                 ),
               ),
             ),
-            if (isSelected) Icon(Icons.check_circle, color: _accent, size: 22),
+            if (isSelected)
+              Icon(Icons.check_circle, color: jdc.brandOnSoft, size: 22),
           ],
         ),
       ),
@@ -661,7 +695,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.accountUpdateFailed(e.toString())),
-            backgroundColor: Colors.red,
+            backgroundColor: context.jdc.danger,
           ),
         );
       }
@@ -681,60 +715,40 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final jdc = JdcColors.of(context);
     return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: Text(l10n.accountTitle),
-        backgroundColor: colorScheme.surface,
-        foregroundColor: colorScheme.onSurface,
-        elevation: 0,
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 8),
-            child: LanguageSwitcher(),
-          ),
-        ],
-      ),
+      backgroundColor: jdc.paper,
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(_accent),
-              ),
-            )
+          ? Center(child: CircularProgressIndicator(color: jdc.cta))
           : _error != null
               ? _buildError()
               : RefreshIndicator(
                   onRefresh: _fetchUserProfile,
-                  color: _accent,
+                  color: jdc.cta,
                   child: _buildContent(),
                 ),
     );
   }
 
   Widget _buildError() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(JdcSpacing.xxxl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
-            const SizedBox(height: 16),
-            Text(
-              l10n.accountErrorTitle,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
+            Icon(Icons.error_outline, size: 64, color: jdc.danger),
+            const SizedBox(height: JdcSpacing.lg),
+            Text(l10n.accountErrorTitle, style: _txt(jdc.text, 18, w: 700)),
+            const SizedBox(height: JdcSpacing.sm),
             Text(
               _error!,
-              style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+              style: _txt(jdc.muted, 13),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: JdcSpacing.xl),
             ElevatedButton.icon(
               onPressed: _fetchUserProfile,
               icon: Icon(
@@ -745,8 +759,12 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
               ),
               label: Text(l10n.accountRetry),
               style: ElevatedButton.styleFrom(
-                backgroundColor: _accent,
-                foregroundColor: Colors.white,
+                backgroundColor: jdc.cta,
+                foregroundColor: jdc.onCta,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(JdcRadius.field),
+                ),
               ),
             ),
           ],
@@ -756,22 +774,50 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   }
 
   Widget _buildContent() {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _buildProfileHeader(),
-        const SizedBox(height: 16),
-        _buildInfoCard(),
-        const SizedBox(height: 16),
-        _buildMenuCard(),
-        const SizedBox(height: 16),
-        _buildAppInfoCard(),
-        const SizedBox(height: 24),
-        _buildLogoutButton(),
-        const SizedBox(height: 12),
-        _buildDeleteAccountButton(),
-        const SizedBox(height: 32),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildProfileHeader(),
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: JdcBreakpoints.readableMaxWidth,
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        context.gutter,
+                        JdcSpacing.lg,
+                        context.gutter,
+                        JdcSpacing.xxxl,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildInfoCard(),
+                          const SizedBox(height: JdcSpacing.lg),
+                          _buildMenuCard(),
+                          const SizedBox(height: JdcSpacing.lg),
+                          _buildAppInfoCard(),
+                          const SizedBox(height: JdcSpacing.xxl),
+                          _buildLogoutButton(),
+                          const SizedBox(height: JdcSpacing.md),
+                          _buildDeleteAccountButton(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -779,107 +825,190 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   // Profile Header
   // ============================================================
 
+  /// ส่วนหัว hero สีเข้ม (hero2) ตาม artboard Driver-Profile —
+  /// อวตาร + ชื่อ + คะแนน/ยอดงาน (ถ้ามีข้อมูลจริง) + ประเภทรถ/ทะเบียน + ชิปบทบาท
   Widget _buildProfileHeader() {
+    final jdc = JdcColors.of(context);
     final avatarUrl = _userProfile?['avatar_url'] as String?;
     final hasAvatar = avatarUrl != null && avatarUrl.isNotEmpty;
     final l10n = AppLocalizations.of(context)!;
+    final fullName = (_userProfile?['full_name'] as String?)?.trim();
+    final rating = (_userProfile?['average_rating'] as num?)?.toDouble();
+    final totalJobs = (_userProfile?['total_completed_jobs'] as num?)?.toInt();
+    final vehicle = (_userProfile?['vehicle_type'] as String?)?.trim();
+    final plate = (_userProfile?['license_plate'] as String?)?.trim();
+    final vehicleParts =
+        [vehicle, plate].where((p) => p != null && p.isNotEmpty).toList();
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: _gradient,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          GestureDetector(
-            onTap: _pickAndUploadAvatar,
-            child: Stack(
-              children: [
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.15),
-                        blurRadius: 10,
-                      ),
-                    ],
-                  ),
-                  child: ClipOval(
-                    child: hasAvatar
-                        ? AppNetworkImage(
-                            imageUrl: avatarUrl,
-                            width: 80,
-                            height: 80,
-                            fit: BoxFit.cover,
-                            backgroundColor: Colors.white,
-                          )
-                        : const GrayscaleLogoPlaceholder(
-                            width: 80,
-                            height: 80,
-                            fit: BoxFit.contain,
-                            backgroundColor: Colors.white,
-                          ),
-                  ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(5),
-                    decoration: BoxDecoration(
-                      color: _accent,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                    child: Icon(
-                      PlatformAdaptive.icon(
-                        android: Icons.camera_alt,
-                        ios: CupertinoIcons.camera,
-                      ),
-                      size: 12,
-                      color: Colors.white,
+      decoration: BoxDecoration(gradient: jdc.hero2),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            JdcSpacing.xl, JdcSpacing.lg, JdcSpacing.xl, JdcSpacing.xl),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  if (Navigator.of(context).canPop()) ...[
+                    _buildBackButton(),
+                    const SizedBox(width: JdcSpacing.md),
+                  ],
+                  Expanded(
+                    child: Text(
+                      l10n.accountTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: _txt(jdc.onPanel, 18, w: 700),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            _userProfile?['full_name'] ?? l10n.accountRoleDriver,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              l10n.accountRoleDriver,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
+                  const LanguageSwitcher(),
+                ],
               ),
-            ),
+              const SizedBox(height: JdcSpacing.xl),
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: _pickAndUploadAvatar,
+                    child: Stack(
+                      children: [
+                        Container(
+                          width: 64,
+                          height: 64,
+                          decoration: BoxDecoration(
+                            color: jdc.panelSoft3,
+                            shape: BoxShape.circle,
+                            boxShadow: jdc.shadowFloat,
+                          ),
+                          child: ClipOval(
+                            child: hasAvatar
+                                ? AppNetworkImage(
+                                    imageUrl: avatarUrl,
+                                    width: 64,
+                                    height: 64,
+                                    fit: BoxFit.cover,
+                                    backgroundColor: jdc.surface,
+                                  )
+                                : GrayscaleLogoPlaceholder(
+                                    width: 64,
+                                    height: 64,
+                                    fit: BoxFit.contain,
+                                    backgroundColor: jdc.panelSoft3,
+                                  ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(5),
+                            decoration: BoxDecoration(
+                              color: jdc.cta,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: jdc.knob, width: 2),
+                            ),
+                            child: Icon(
+                              PlatformAdaptive.icon(
+                                android: Icons.camera_alt,
+                                ios: CupertinoIcons.camera,
+                              ),
+                              size: 12,
+                              color: jdc.onCta,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: JdcSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          (fullName != null && fullName.isNotEmpty)
+                              ? fullName
+                              : l10n.accountRoleDriver,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: _txt(jdc.onPanel, 18, w: 700),
+                        ),
+                        if (rating != null && rating > 0) ...[
+                          const SizedBox(height: JdcSpacing.xs),
+                          Row(
+                            children: [
+                              Icon(Icons.star, size: 13, color: jdc.brandHi),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  totalJobs != null
+                                      ? l10n.driverProfileRatingJobs(
+                                          rating.toStringAsFixed(2),
+                                          totalJobs.toString())
+                                      : rating.toStringAsFixed(2),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: _txt(jdc.brandHi, 12, w: 600),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        if (vehicleParts.isNotEmpty) ...[
+                          const SizedBox(height: JdcSpacing.xs),
+                          Text(
+                            vehicleParts.join(' · '),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: _txt(jdc.panelDim, 12),
+                          ),
+                        ],
+                        const SizedBox(height: JdcSpacing.sm),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 11,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: jdc.panelSoft,
+                            borderRadius: BorderRadius.circular(JdcRadius.chip),
+                          ),
+                          child: Text(
+                            l10n.accountRoleDriver,
+                            style: _txt(jdc.onPanel, 11, w: 700),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  /// ปุ่มย้อนกลับบนพื้น hero ตาม artboard (แสดงเฉพาะเมื่อ push เข้ามาเป็น route)
+  Widget _buildBackButton() {
+    final jdc = JdcColors.of(context);
+    return SizedBox(
+      width: JdcTouch.minTarget,
+      height: JdcTouch.minTarget,
+      child: Material(
+        color: jdc.panelSoft2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(JdcRadius.field),
+          side: BorderSide(color: jdc.panelLine),
+        ),
+        child: InkWell(
+          onTap: () => Navigator.of(context).maybePop(),
+          child: Icon(Icons.chevron_left, size: 20, color: jdc.onPanel),
+        ),
       ),
     );
   }
@@ -1013,7 +1142,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(l10n.accountOpenLinkFailed),
-              backgroundColor: Colors.red,
+              backgroundColor: context.jdc.danger,
             ),
           );
         }
@@ -1025,7 +1154,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.accountErrorGeneric(e.toString())),
-            backgroundColor: Colors.red,
+            backgroundColor: context.jdc.danger,
           ),
         );
       }
@@ -1037,39 +1166,28 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   // ============================================================
 
   Widget _buildAppInfoCard() {
+    final jdc = JdcColors.of(context);
     final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(JdcSpacing.lg),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: jdc.surface,
+        borderRadius: BorderRadius.circular(JdcRadius.card),
+        border: Border.all(color: jdc.line),
+        boxShadow: jdc.shadowCard,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             l10n.accountAppInfoTitle,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[500],
-            ),
+            style: _txt(jdc.muted, 13, w: 600),
           ),
           const SizedBox(height: 10),
           Row(
             children: [
-              Text(
-                l10n.accountVersionLabel,
-                style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-              ),
+              Text(l10n.accountVersionLabel, style: _txt(jdc.muted, 13)),
               const Spacer(),
               GestureDetector(
                 behavior: HitTestBehavior.opaque,
@@ -1078,7 +1196,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                   ScaffoldMessenger.of(context).clearSnackBars();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Debug: ${_versionTapCount}/7'),
+                      content: Text('Debug: $_versionTapCount/7'),
                       duration: const Duration(milliseconds: 700),
                     ),
                   );
@@ -1088,12 +1206,12 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                   }
                 },
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
-                  child: Text(
-                    _appVersion ?? l10n.accountLoading,
-                    style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 6,
+                    horizontal: 10,
                   ),
+                  child: Text(_appVersion ?? l10n.accountLoading,
+                      style: _txt(jdc.dim, 13)),
                 ),
               ),
             ],
@@ -1101,15 +1219,9 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
           const SizedBox(height: 6),
           Row(
             children: [
-              Text(
-                l10n.accountDevelopedByLabel,
-                style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-              ),
+              Text(l10n.accountDevelopedByLabel, style: _txt(jdc.muted, 13)),
               const Spacer(),
-              Text(
-                'Jedechai Team',
-                style: TextStyle(fontSize: 13, color: Colors.grey[500]),
-              ),
+              Text('Jedechai Team', style: _txt(jdc.dim, 13)),
             ],
           ),
         ],
@@ -1121,7 +1233,9 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   // Logout Button
   // ============================================================
 
+  /// ปุ่มออกจากระบบสไตล์ artboard — ขอบ danger-line พื้น surface ตัวอักษร danger
   Widget _buildLogoutButton() {
+    final jdc = JdcColors.of(context);
     final l10n = AppLocalizations.of(context)!;
     return SizedBox(
       width: double.infinity,
@@ -1134,16 +1248,15 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
           ),
           size: 20,
         ),
-        label: Text(
-          l10n.accountLogout,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-        ),
+        label: Text(l10n.accountLogout, style: _txt(jdc.danger, 14, w: 700)),
         style: OutlinedButton.styleFrom(
-          foregroundColor: Colors.red,
-          side: const BorderSide(color: Colors.red),
+          foregroundColor: jdc.danger,
+          backgroundColor: jdc.surface,
+          side: BorderSide(color: jdc.dangerLine),
+          minimumSize: const Size.fromHeight(50),
           padding: const EdgeInsets.symmetric(vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(JdcRadius.field),
           ),
         ),
       ),
@@ -1151,7 +1264,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   }
 
   Widget _buildDeleteAccountButton() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     final l10n = AppLocalizations.of(context)!;
     return SizedBox(
       width: double.infinity,
@@ -1164,9 +1277,9 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
           ),
           size: 20,
         ),
-        label: Text(l10n.accountDelete, style: const TextStyle(fontSize: 14)),
+        label: Text(l10n.accountDelete, style: _txt(jdc.muted, 14)),
         style: TextButton.styleFrom(
-          foregroundColor: colorScheme.onSurfaceVariant,
+          foregroundColor: jdc.muted,
           padding: const EdgeInsets.symmetric(vertical: 12),
         ),
       ),
@@ -1178,33 +1291,21 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   // ============================================================
 
   Widget _card({required String title, required List<Widget> children}) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(JdcSpacing.lg),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: jdc.surface,
+        borderRadius: BorderRadius.circular(JdcRadius.card),
+        border: Border.all(color: jdc.line),
+        boxShadow: jdc.shadowCard,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 12),
+          Text(title, style: _txt(jdc.text, 14, w: 700)),
+          const SizedBox(height: JdcSpacing.md),
           ...children,
         ],
       ),
@@ -1217,43 +1318,35 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
     String value,
     VoidCallback? onTap,
   ) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(JdcRadius.small),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
-                color: _accent.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(8),
+                color: jdc.brandSoft,
+                borderRadius: BorderRadius.circular(JdcRadius.small),
               ),
-              child: Icon(icon, color: _accent, size: 20),
+              child: Icon(icon, color: jdc.brandOnSoft, size: 19),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: JdcSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+                  Text(label, style: _txt(jdc.muted, 12)),
                   const SizedBox(height: 2),
                   Text(
                     value,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: colorScheme.onSurface,
-                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: _txt(jdc.text, 14, w: 600),
                   ),
                 ],
               ),
@@ -1264,7 +1357,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                   android: Icons.chevron_right,
                   ios: CupertinoIcons.chevron_forward,
                 ),
-                color: colorScheme.onSurfaceVariant,
+                color: jdc.muted,
                 size: 20,
               ),
           ],
@@ -1274,24 +1367,30 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   }
 
   Widget _menuItem(IconData icon, String label, VoidCallback onTap) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(JdcRadius.small),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: JdcSpacing.md),
         child: Row(
           children: [
-            Icon(icon, color: colorScheme.onSurfaceVariant, size: 22),
-            const SizedBox(width: 14),
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: jdc.sunken,
+                borderRadius: BorderRadius.circular(JdcRadius.small),
+              ),
+              child: Icon(icon, color: jdc.text, size: 19),
+            ),
+            const SizedBox(width: JdcSpacing.md),
             Expanded(
               child: Text(
                 label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: colorScheme.onSurface,
-                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: _txt(jdc.text, 14, w: 600),
               ),
             ),
             Icon(
@@ -1299,7 +1398,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                 android: Icons.chevron_right,
                 ios: CupertinoIcons.chevron_forward,
               ),
-              color: colorScheme.onSurfaceVariant,
+              color: jdc.muted,
               size: 20,
             ),
           ],
@@ -1309,10 +1408,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   }
 
   Widget _divider() {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Divider(
-      height: 1,
-      color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-    );
+    final jdc = JdcColors.of(context);
+    return Divider(height: 1, color: jdc.line);
   }
 }

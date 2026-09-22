@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+
+import '../../theme/jdc_colors.dart';
 import '../../apps/customer/screens/rewards/my_coupons_screen.dart';
 import '../models/coupon.dart';
 import '../services/coupon_service.dart';
-import '../../theme/app_theme.dart';
 
 /// Coupon Entry Widget
 ///
@@ -164,7 +165,7 @@ class _CouponEntryWidgetState extends State<CouponEntryWidget> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 2),
+                    borderSide: BorderSide(color: JdcColors.of(context).cta, width: 2),
                   ),
                   isDense: true,
                 ),
@@ -176,7 +177,7 @@ class _CouponEntryWidgetState extends State<CouponEntryWidget> {
               child: ElevatedButton(
                 onPressed: _isValidating ? null : _validateCoupon,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryGreen,
+                  backgroundColor: JdcColors.of(context).cta,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -218,13 +219,13 @@ class _CouponEntryWidgetState extends State<CouponEntryWidget> {
                 _validateCoupon();
               }
             },
-            icon: const Icon(Icons.account_balance_wallet, size: 20, color: AppTheme.primaryGreen),
-            label: const Text(
+            icon: Icon(Icons.account_balance_wallet, size: 20, color: JdcColors.of(context).cta),
+            label: Text(
               'เลือกจากคูปองของฉัน',
-              style: TextStyle(fontWeight: FontWeight.w600, color: AppTheme.primaryGreen),
+              style: TextStyle(fontWeight: FontWeight.w600, color: JdcColors.of(context).cta),
             ),
             style: OutlinedButton.styleFrom(
-              side: BorderSide(color: AppTheme.primaryGreen.withOpacity(0.5)),
+              side: BorderSide(color: JdcColors.of(context).cta.withOpacity(0.5)),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -240,21 +241,21 @@ class _CouponEntryWidgetState extends State<CouponEntryWidget> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppTheme.primaryGreen.withValues(alpha: 0.08),
+        color: JdcColors.of(context).cta.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.3)),
+        border: Border.all(color: JdcColors.of(context).cta.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppTheme.primaryGreen.withValues(alpha: 0.15),
+              color: JdcColors.of(context).cta.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.local_offer,
-              color: AppTheme.primaryGreen,
+              color: JdcColors.of(context).cta,
               size: 20,
             ),
           ),
@@ -267,10 +268,10 @@ class _CouponEntryWidgetState extends State<CouponEntryWidget> {
                   children: [
                     Text(
                       hideBreakdown ? 'ใช้คูปองแล้ว' : _appliedCoupon!.code,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
-                        color: AppTheme.primaryGreen,
+                        color: JdcColors.of(context).cta,
                       ),
                     ),
                     if (!hideBreakdown) ...[
@@ -278,7 +279,7 @@ class _CouponEntryWidgetState extends State<CouponEntryWidget> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryGreen,
+                          color: JdcColors.of(context).cta,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(

@@ -13,7 +13,7 @@ import '../../../common/services/notification_sender.dart';
 import '../../../common/services/admin_line_notification_service.dart';
 import '../../../common/services/image_picker_service.dart';
 import '../../../common/widgets/app_network_image.dart';
-import '../../../theme/app_theme.dart';
+import '../../../theme/jdc_layout.dart';
 import '../../../utils/debug_logger.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -79,10 +79,65 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
     super.dispose();
   }
 
-  Future<void> _loadTopupMode() async {
-    final mode = await BeamTopupService.fetchTopupMode();
-    if (mounted) setState(() => _topupMode = mode);
+  /// fontVariations คู่กับ fontWeight ตามกฎธีม (NotoSansThai เป็น variable font)
+  static List<FontVariation> _w(FontWeight weight) => [
+        FontVariation(
+          'wght',
+          weight == FontWeight.w700
+              ? 700
+              : weight == FontWeight.w600
+                  ? 600
+                  : weight == FontWeight.w500
+                      ? 500
+                      : 400,
+        ),
+      ];
+
+  /// ตัวเลขเงินสไตล์ display ตาม artboard (`.dsp` = IBM Plex Sans Thai)
+  TextStyle _money({double size = 14, Color? color}) {
+    final jdc = context.jdc;
+    return TextStyle(
+      fontFamily: 'IBMPlexSansThai',
+      fontSize: size,
+      fontWeight: FontWeight.w700,
+      fontVariations: _w(FontWeight.w700),
+      color: color ?? jdc.text,
+    );
   }
+
+  /// กรอบ input มาตรฐาน JDC (radius 14 / เส้น line)
+  OutlineInputBorder _fieldBorder() {
+    final jdc = context.jdc;
+    return OutlineInputBorder(
+      borderRadius: BorderRadius.circular(JdcRadius.field),
+      borderSide: BorderSide(color: jdc.line),
+    );
+  }
+
+  /// กรอบการ์ดเนื้อหามาตรฐาน JDC (surface / line / radius 18 / sh-card)
+  BoxDecoration _cardDecoration() {
+    final jdc = context.jdc;
+    return BoxDecoration(
+      color: jdc.surface,
+      borderRadius: BorderRadius.circular(JdcRadius.card),
+      border: Border.all(color: jdc.line),
+      boxShadow: jdc.shadowCard,
+    );
+  }
+
+  Future<void> _loadTopupMode() async {
+    try {
+      final mode = await BeamTopupService.fetchTopupMode();
+      if (mounted) setState(() => _topupMode = mode);
+    } catch (e) {
+      // โหลดโหมดไม่สำเร็จ (offline/สภาพแวดล้อม test) — คง default admin_approve
+      debugLog('⚠️ loadTopupMode failed: $e');
+    }
+  }
+
+  /// l10n ของหน้านี้ — สำหรับ method ที่ไม่มี context เป็นพารามิเตอร์
+  /// (ใช้ตอนที่ widget ยัง mounted เท่านั้น)
+  AppLocalizations get _l10n => AppLocalizations.of(context)!;
 
   // ══════════════════════════════════════════
   // Beam Checkout Flow (QR PromptPay อัตโนมัติ)
@@ -148,21 +203,21 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
         case 'failed':
           _stopBeamTimers();
           setState(() => _beamStatusMessage =
-              'การชำระเงินไม่สำเร็จ กรุณาสร้าง QR ใหม่');
+              _l10n.topupBeamFailed);
           break;
         case 'expired':
           _stopBeamTimers();
           setState(() => _beamStatusMessage =
-              'QR หมดอายุแล้ว — ถ้าชำระแล้ว ระบบจะเติมเงินให้อัตโนมัติ ไม่ต้องจ่ายซ้ำ');
+              _l10n.topupBeamExpired);
           break;
         case 'manual_review':
           _stopBeamTimers();
           setState(() => _beamStatusMessage =
-              'ได้รับการชำระเงินแล้ว รอแอดมินตรวจสอบยอด');
+              _l10n.topupBeamManualReview);
           break;
         default:
           if (manual) {
-            setState(() => _beamStatusMessage = 'ยังไม่พบการชำระเงิน');
+            setState(() => _beamStatusMessage = _l10n.topupBeamNotFound);
           }
       }
     } catch (e) {
@@ -177,27 +232,31 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
     final exp = _beamCharge?.expiresAt;
     if (exp == null) return '';
     final left = exp.difference(DateTime.now());
-    if (left.isNegative) return 'QR หมดอายุแล้ว';
+    if (left.isNegative) return _l10n.topupBeamQrExpired;
     final m = left.inMinutes.toString().padLeft(2, '0');
     final sec = left.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return 'QR หมดอายุใน $m:$sec';
+    return _l10n.topupBeamExpiresIn('$m:$sec');
   }
 
   Widget _buildBeamPaymentSection() {
+    final jdc = context.jdc;
     final charge = _beamCharge!;
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Container(
+      decoration: _cardDecoration(),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(JdcSpacing.lg),
         child: Column(
           children: [
-            const Text('สแกน QR PromptPay เพื่อชำระเงิน',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(_l10n.topupBeamScanPrompt,
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    fontVariations: _w(FontWeight.w700),
+                    color: jdc.text)),
             const SizedBox(height: 4),
             Text(
-              'ชำระผ่าน Beam — เงินเข้า Wallet อัตโนมัติ ไม่ต้องแนบสลิป',
-              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              _l10n.topupBeamHowItWorks,
+              style: TextStyle(fontSize: 13, color: jdc.muted),
               textAlign: TextAlign.center,
             ),
             if (charge.isPlayground) ...[
@@ -206,11 +265,15 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
+                  color: jdc.brandSoft,
+                  borderRadius: BorderRadius.circular(JdcRadius.small),
                 ),
-                child: const Text('โหมดทดสอบ (Playground)',
-                    style: TextStyle(fontSize: 12, color: Colors.orange)),
+                child: Text(_l10n.topupBeamPlayground,
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: jdc.brandOnSoft,
+                        fontWeight: FontWeight.w600,
+                        fontVariations: _w(FontWeight.w600))),
               ),
             ],
             const SizedBox(height: 16),
@@ -218,47 +281,48 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
               width: 260,
               height: 260,
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[200]!),
+                color: jdc.knob,
+                borderRadius: BorderRadius.circular(JdcRadius.small),
+                border: Border.all(color: jdc.line),
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(JdcRadius.small),
                 child: charge.qrImageBytes != null
                     ? Image.memory(charge.qrImageBytes!, fit: BoxFit.contain)
-                    : const Center(child: Text('ไม่พบรูป QR')),
+                    : Center(
+                        child: Text(_l10n.topupBeamQrMissing,
+                            style: TextStyle(color: jdc.muted))),
               ),
             ),
             const SizedBox(height: 12),
             Text(
               AppLocalizations.of(context)!
                   .topupAmount(charge.amount.toStringAsFixed(0)),
-              style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.accentBlue),
+              style: _money(size: 20, color: jdc.cta),
             ),
             const SizedBox(height: 6),
             Text(_beamCountdownText(),
-                style: TextStyle(fontSize: 13, color: Colors.grey[600])),
+                style: TextStyle(fontSize: 13, color: jdc.muted)),
             const SizedBox(height: 12),
             if (_beamStatusMessage != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Text(_beamStatusMessage!,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.orange)),
+                    style: TextStyle(color: jdc.brandOnSoft)),
               )
             else
-              const Row(
+              Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   SizedBox(
                       width: 16,
                       height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2)),
-                  SizedBox(width: 8),
-                  Text('รอการชำระเงิน...'),
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: jdc.cta)),
+                  const SizedBox(width: 8),
+                  Text(_l10n.topupBeamWaiting,
+                      style: TextStyle(color: jdc.muted)),
                 ],
               ),
             const SizedBox(height: 12),
@@ -269,14 +333,26 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                     onPressed: _isCheckingStatus
                         ? null
                         : () => _pollBeamStatus(manual: true),
-                    child: const Text('ตรวจสอบสถานะ'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: jdc.cta,
+                      side: BorderSide(color: jdc.brandLine),
+                      minimumSize: Size(double.infinity, JdcTouch.field),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(JdcRadius.field),
+                      ),
+                    ),
+                    child: Text(_l10n.topupBeamCheckStatus),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: TextButton(
                     onPressed: () => setState(_resetBeamState),
-                    child: const Text('สร้าง QR ใหม่'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: jdc.cta,
+                      minimumSize: Size(double.infinity, JdcTouch.field),
+                    ),
+                    child: Text(_l10n.topupBeamNewQr),
                   ),
                 ),
               ],
@@ -446,7 +522,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
     if (userId == null) return;
     final slipFile = _selectedSlipFile;
     if (slipFile == null) {
-      _showErrorDialog('กรุณาแนบรูปสลิปก่อนยืนยันเติมเงิน');
+      _showErrorDialog(_l10n.topupSlipAttachFirst);
       return;
     }
 
@@ -486,7 +562,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
         return;
       }
 
-      final message = _formatTopupVerificationResult(result);
+      final message = _formatTopupVerificationResult(_l10n, result);
       if (mounted) {
         setState(() => _isCheckingStatus = false);
         _showErrorDialog(message);
@@ -532,66 +608,69 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
       final details = error.details;
       if (details is Map) {
         return _formatTopupVerificationResult(
+          _l10n,
           Map<String, dynamic>.from(details),
         );
       }
 
-      final message = _humanizeSlipVerificationMessage(details?.toString());
+      final message = _humanizeSlipVerificationMessage(_l10n, details?.toString());
       if (message != null) return message;
     }
 
-    final message = _humanizeSlipVerificationMessage(error.toString());
+    final message = _humanizeSlipVerificationMessage(_l10n, error.toString());
     return message ??
-        'ตรวจสลิปไม่สำเร็จ กรุณาเลือกสลิปใหม่ หรือติดต่อแอดมินหากโอนเงินแล้ว';
+        _l10n.topupSlipVerifyFailed;
   }
 
-  String _formatTopupVerificationResult(Map<String, dynamic> result) {
+  String _formatTopupVerificationResult(
+      AppLocalizations l10n, Map<String, dynamic> result) {
     final reason = result['reason']?.toString();
     final message = result['message']?.toString();
 
     switch (reason) {
       case 'slip2go_failed':
-        return 'สลิปนี้ไม่ผ่านการตรวจสอบอัตโนมัติ กรุณาเลือกสลิปโอนเงินจริงจากธนาคารแล้วลองใหม่';
+        return l10n.topupSlipReasonFailed;
       case 'amountMismatch':
-        return 'ยอดเงินในสลิปไม่ตรงกับยอดเติมเงิน กรุณาตรวจสอบยอดเงินแล้วลองใหม่';
+        return l10n.topupSlipReasonAmount;
       case 'receiverMismatch':
-        return 'บัญชีผู้รับในสลิปไม่ตรงกับบัญชีปลายทางของระบบ กรุณาตรวจสอบบัญชีปลายทาง';
+        return l10n.topupSlipReasonReceiver;
       case 'duplicateSlip':
-        return 'สลิปนี้ถูกใช้เติมเงินแล้ว กรุณาใช้สลิปใหม่';
+        return l10n.topupSlipReasonDuplicate;
       case 'rateLimited':
-        return 'ตรวจสลิปหลายครั้งเกินไป กรุณารอสักครู่แล้วลองใหม่';
+        return l10n.topupSlipReasonRate;
       case 'invalidAmount':
-        return 'จำนวนเงินเติมไม่ถูกต้อง กรุณาสร้าง QR ใหม่';
+        return l10n.topupSlipReasonInvalidAmount;
       case 'invalidImage':
-        return 'ไฟล์สลิปไม่ถูกต้อง กรุณาเลือกไฟล์รูปภาพใหม่';
+        return l10n.topupSlipReasonInvalidImage;
     }
 
-    return _humanizeSlipVerificationMessage(message) ??
-        'ตรวจสลิปไม่ผ่าน กรุณาตรวจสอบสลิปแล้วลองใหม่';
+    return _humanizeSlipVerificationMessage(l10n, message) ??
+        l10n.topupSlipReasonFallback;
   }
 
-  String? _humanizeSlipVerificationMessage(String? rawMessage) {
+  String? _humanizeSlipVerificationMessage(
+      AppLocalizations l10n, String? rawMessage) {
     final normalized = rawMessage?.trim();
     if (normalized == null || normalized.isEmpty) return null;
 
     final lower = normalized.toLowerCase();
     if (lower.contains('functionexception')) {
       if (lower.contains('fraud') || lower.contains('unprocessable entity')) {
-        return 'สลิปนี้ไม่ผ่านการตรวจสอบ กรุณาใช้สลิปโอนเงินจริงจากธนาคาร และตรวจสอบว่ายอดเงินกับบัญชีปลายทางถูกต้อง';
+        return l10n.topupSlipHumanFraud;
       }
       return null;
     }
     if (lower.contains('fraud') || lower.contains('unprocessable entity')) {
-      return 'สลิปนี้ไม่ผ่านการตรวจสอบ กรุณาใช้สลิปโอนเงินจริงจากธนาคาร และตรวจสอบว่ายอดเงินกับบัญชีปลายทางถูกต้อง';
+      return l10n.topupSlipHumanFraud;
     }
     if (lower.contains('duplicate')) {
-      return 'สลิปนี้ถูกใช้เติมเงินแล้ว กรุณาใช้สลิปใหม่';
+      return l10n.topupSlipReasonDuplicate;
     }
     if (lower.contains('amount')) {
-      return 'ยอดเงินในสลิปไม่ตรงกับยอดเติมเงิน กรุณาตรวจสอบยอดเงินแล้วลองใหม่';
+      return l10n.topupSlipReasonAmount;
     }
     if (lower.contains('receiver') || lower.contains('account')) {
-      return 'บัญชีผู้รับในสลิปไม่ตรงกับบัญชีปลายทางของระบบ กรุณาตรวจสอบบัญชีปลายทาง';
+      return l10n.topupSlipReasonReceiver;
     }
 
     return normalized;
@@ -702,31 +781,42 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        icon: const Icon(Icons.error_outline, color: Colors.red, size: 48),
-        title: Text(AppLocalizations.of(context)!.topupErrorTitle,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        content: Text(message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 15, height: 1.5)),
-        actionsAlignment: MainAxisAlignment.center,
-        actions: [
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accentBlue,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-              ),
-              child: Text(AppLocalizations.of(context)!.topupOk),
-            ),
+      builder: (ctx) {
+        final jdc = ctx.jdc;
+        return AlertDialog(
+          backgroundColor: jdc.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(JdcRadius.card),
+            side: BorderSide(color: jdc.line),
           ),
-        ],
-      ),
+          icon: Icon(Icons.error_outline, color: jdc.danger, size: 48),
+          title: Text(AppLocalizations.of(context)!.topupErrorTitle,
+              style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontVariations: _w(FontWeight.w700),
+                  fontSize: 18,
+                  color: jdc.text)),
+          content: Text(message,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 15, height: 1.5, color: jdc.text)),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: jdc.cta,
+                  foregroundColor: jdc.onCta,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(JdcRadius.small)),
+                ),
+                child: Text(AppLocalizations.of(context)!.topupOk),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -734,37 +824,48 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        icon: const Icon(Icons.hourglass_top, color: Colors.orange, size: 48),
-        title: Text(AppLocalizations.of(context)!.topupRequestSentTitle,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        content: Text(
-          AppLocalizations.of(context)!
-              .topupRequestSentBody(_selectedAmount.toStringAsFixed(0)),
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 15, height: 1.5),
-        ),
-        actionsAlignment: MainAxisAlignment.center,
-        actions: [
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                Navigator.of(context).pop(true);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accentBlue,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-              ),
-              child: Text(AppLocalizations.of(context)!.topupOk),
-            ),
+      builder: (ctx) {
+        final jdc = ctx.jdc;
+        return AlertDialog(
+          backgroundColor: jdc.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(JdcRadius.card),
+            side: BorderSide(color: jdc.line),
           ),
-        ],
-      ),
+          icon: Icon(Icons.hourglass_top, color: jdc.brandOnSoft, size: 48),
+          title: Text(AppLocalizations.of(context)!.topupRequestSentTitle,
+              style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontVariations: _w(FontWeight.w700),
+                  fontSize: 18,
+                  color: jdc.text)),
+          content: Text(
+            AppLocalizations.of(context)!
+                .topupRequestSentBody(_selectedAmount.toStringAsFixed(0)),
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 15, height: 1.5, color: jdc.text),
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  Navigator.of(context).pop(true);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: jdc.cta,
+                  foregroundColor: jdc.onCta,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(JdcRadius.small)),
+                ),
+                child: Text(AppLocalizations.of(context)!.topupOk),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -772,38 +873,48 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        icon: const Icon(Icons.check_circle,
-            color: AppTheme.accentBlue, size: 48),
-        title: Text(AppLocalizations.of(context)!.topupSuccessTitle,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        content: Text(
-          AppLocalizations.of(context)!
-              .topupSuccessBody(_selectedAmount.toStringAsFixed(0)),
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 15, height: 1.5),
-        ),
-        actionsAlignment: MainAxisAlignment.center,
-        actions: [
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                Navigator.of(context).pop(true);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accentBlue,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-              ),
-              child: Text(AppLocalizations.of(context)!.topupOk),
-            ),
+      builder: (ctx) {
+        final jdc = ctx.jdc;
+        return AlertDialog(
+          backgroundColor: jdc.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(JdcRadius.card),
+            side: BorderSide(color: jdc.line),
           ),
-        ],
-      ),
+          icon: Icon(Icons.check_circle, color: jdc.successInk, size: 48),
+          title: Text(AppLocalizations.of(context)!.topupSuccessTitle,
+              style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontVariations: _w(FontWeight.w700),
+                  fontSize: 18,
+                  color: jdc.text)),
+          content: Text(
+            AppLocalizations.of(context)!
+                .topupSuccessBody(_selectedAmount.toStringAsFixed(0)),
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 15, height: 1.5, color: jdc.text),
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  Navigator.of(context).pop(true);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: jdc.cta,
+                  foregroundColor: jdc.onCta,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(JdcRadius.small)),
+                ),
+                child: Text(AppLocalizations.of(context)!.topupOk),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -819,107 +930,137 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
 
     final result = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(AppLocalizations.of(context)!.topupWithdrawTitle,
-            style: const TextStyle(fontWeight: FontWeight.bold)),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                  AppLocalizations.of(context)!.topupWithdrawBalance(
-                      NumberFormat('#,##0.00').format(_currentBalance)),
-                  style: TextStyle(color: Colors.grey[600], fontSize: 14)),
-              const SizedBox(height: 16),
-              TextField(
-                controller: withdrawController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText:
-                      AppLocalizations.of(context)!.topupWithdrawAmountLabel,
-                  prefixText: '฿ ',
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: bankNameController,
-                decoration: InputDecoration(
-                  labelText:
-                      AppLocalizations.of(context)!.topupWithdrawBankName,
-                  hintText: AppLocalizations.of(context)!.topupWithdrawBankHint,
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: accountNumController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText:
-                      AppLocalizations.of(context)!.topupWithdrawAccountNum,
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: accountNameController,
-                decoration: InputDecoration(
-                  labelText:
-                      AppLocalizations.of(context)!.topupWithdrawAccountName,
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-            ],
+      builder: (ctx) {
+        final jdc = ctx.jdc;
+        return AlertDialog(
+          backgroundColor: jdc.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(JdcRadius.card),
+            side: BorderSide(color: jdc.line),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(AppLocalizations.of(context)!.topupWithdrawCancel),
+          title: Text(AppLocalizations.of(context)!.topupWithdrawTitle,
+              style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontVariations: _w(FontWeight.w700),
+                  color: jdc.text)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                    AppLocalizations.of(context)!.topupWithdrawBalance(
+                        NumberFormat('#,##0.00').format(_currentBalance)),
+                    style: TextStyle(color: jdc.muted, fontSize: 14)),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: withdrawController,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(color: jdc.text),
+                  decoration: InputDecoration(
+                    labelText:
+                        AppLocalizations.of(context)!.topupWithdrawAmountLabel,
+                    labelStyle: TextStyle(color: jdc.muted),
+                    prefixText: '฿ ',
+                    filled: true,
+                    fillColor: jdc.sunken,
+                    border: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(JdcRadius.field)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: bankNameController,
+                  style: TextStyle(color: jdc.text),
+                  decoration: InputDecoration(
+                    labelText:
+                        AppLocalizations.of(context)!.topupWithdrawBankName,
+                    labelStyle: TextStyle(color: jdc.muted),
+                    hintText: AppLocalizations.of(context)!.topupWithdrawBankHint,
+                    filled: true,
+                    fillColor: jdc.sunken,
+                    border: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(JdcRadius.field)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: accountNumController,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(color: jdc.text),
+                  decoration: InputDecoration(
+                    labelText:
+                        AppLocalizations.of(context)!.topupWithdrawAccountNum,
+                    labelStyle: TextStyle(color: jdc.muted),
+                    filled: true,
+                    fillColor: jdc.sunken,
+                    border: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(JdcRadius.field)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: accountNameController,
+                  style: TextStyle(color: jdc.text),
+                  decoration: InputDecoration(
+                    labelText:
+                        AppLocalizations.of(context)!.topupWithdrawAccountName,
+                    labelStyle: TextStyle(color: jdc.muted),
+                    filled: true,
+                    fillColor: jdc.sunken,
+                    border: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(JdcRadius.field)),
+                  ),
+                ),
+              ],
+            ),
           ),
-          ElevatedButton(
-            onPressed: _isWithdrawing
-                ? null
-                : () async {
-                    final l10n = AppLocalizations.of(context)!;
-                    final amount =
-                        double.tryParse(withdrawController.text) ?? 0;
-                    if (amount <= 0) {
-                      ScaffoldMessenger.of(ctx).showSnackBar(
-                        SnackBar(
-                            content: Text(l10n.topupWithdrawAmountRequired),
-                            backgroundColor: Colors.red),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(AppLocalizations.of(context)!.topupWithdrawCancel,
+                  style: TextStyle(color: jdc.muted)),
+            ),
+            ElevatedButton(
+              onPressed: _isWithdrawing
+                  ? null
+                  : () async {
+                      final l10n = AppLocalizations.of(context)!;
+                      final amount =
+                          double.tryParse(withdrawController.text) ?? 0;
+                      if (amount <= 0) {
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                            SnackBar(
+                                content: Text(l10n.topupWithdrawAmountRequired),
+                                backgroundColor: jdc.danger),
                       );
-                      return;
-                    }
-                    if (amount > _currentBalance) {
-                      ScaffoldMessenger.of(ctx).showSnackBar(
-                        SnackBar(
-                            content:
-                                Text(l10n.topupWithdrawInsufficientBalance),
-                            backgroundColor: Colors.red),
-                      );
-                      return;
-                    }
-                    if (bankNameController.text.trim().isEmpty ||
-                        accountNumController.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(ctx).showSnackBar(
-                        SnackBar(
-                            content: Text(l10n.topupWithdrawBankRequired),
-                            backgroundColor: Colors.red),
-                      );
-                      return;
-                    }
-                    final userId = AuthService.userId;
-                    if (userId == null) return;
-                    _isWithdrawing = true;
-                    try {
+                        return;
+                      }
+                      if (amount > _currentBalance) {
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          SnackBar(
+                              content:
+                                  Text(l10n.topupWithdrawInsufficientBalance),
+                              backgroundColor: jdc.danger),
+                        );
+                        return;
+                      }
+                      if (bankNameController.text.trim().isEmpty ||
+                          accountNumController.text.trim().isEmpty) {
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          SnackBar(
+                              content: Text(l10n.topupWithdrawBankRequired),
+                              backgroundColor: jdc.danger),
+                        );
+                        return;
+                      }
+                      final userId = AuthService.userId;
+                      if (userId == null) return;
+                      _isWithdrawing = true;
+                      try {
                       // ถอนผ่าน RPC create_wallet_withdrawal_request (หักเงิน + ledger แบบ atomic ฝั่ง server)
                       final ok = await WithdrawalService().createWithdrawalRequest(
                         amount: amount,
@@ -929,7 +1070,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                       );
                       if (!ok) {
                         throw Exception(
-                            'ส่งคำขอถอนไม่สำเร็จ (ขั้นต่ำ ฿100 และต้องกรอกบัญชีให้ครบ)');
+                            _l10n.topupWithdrawRequestError);
                       }
                       if (ctx.mounted) Navigator.of(ctx).pop(true);
                     } catch (e) {
@@ -939,21 +1080,22 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                           SnackBar(
                               content:
                                   Text(l10n.topupWithdrawError(e.toString())),
-                              backgroundColor: Colors.red),
+                              backgroundColor: jdc.danger),
                         );
                       }
                     } finally {
                       _isWithdrawing = false;
                     }
                   },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
-              foregroundColor: Colors.white,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: jdc.cta,
+                foregroundColor: jdc.onCta,
+              ),
+              child: Text(AppLocalizations.of(context)!.topupWithdrawSubmit),
             ),
-            child: Text(AppLocalizations.of(context)!.topupWithdrawSubmit),
-          ),
-        ],
-      ),
+          ],
+        );
+      },
     );
 
     if (result == true && mounted) {
@@ -1005,98 +1147,130 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final jdc = context.jdc;
     final bool hasQR = _qrImageUrl != null &&
         _qrImageUrl!.isNotEmpty &&
         !_requestSent &&
         !_autoTopupCompleted;
 
     return Scaffold(
+      backgroundColor: jdc.paper,
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.topupTitle),
-        backgroundColor: AppTheme.accentBlue,
-        foregroundColor: Colors.white,
+        backgroundColor: jdc.surface,
+        foregroundColor: jdc.text,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        shape: Border(bottom: BorderSide(color: jdc.line)),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              AppLocalizations.of(context)!.topupTitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: 'IBMPlexSansThai',
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                fontVariations: _w(FontWeight.w700),
+                color: jdc.text,
+              ),
+            ),
+            Text(
+              AppLocalizations.of(context)!
+                  .topupWithdrawBalance(NumberFormat('#,##0.00').format(_currentBalance)),
+              style: TextStyle(fontSize: 12, color: jdc.muted),
+            ),
+          ],
+        ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: jdc.cta))
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildBalanceCard(),
-                  const SizedBox(height: 20),
-                  _buildAmountSection(),
-                  const SizedBox(height: 20),
-                  if (_autoTopupCompleted) ...[
-                    _buildAutoTopupCompletedCard(),
-                  ] else if (_beamCharge != null) ...[
-                    _buildBeamPaymentSection(),
-                  ] else if (_requestSent) ...[
-                    _buildRequestSentCard(),
-                  ] else if (hasQR) ...[
-                    _buildQRSection(),
+              padding: const EdgeInsets.all(JdcSpacing.lg),
+              child: JdcContentFrame(
+                maxWidth: JdcBreakpoints.formMaxWidth,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildBalanceCard(),
+                    const SizedBox(height: JdcSpacing.xl),
+                    _buildAmountSection(),
+                    const SizedBox(height: JdcSpacing.xl),
+                    if (_autoTopupCompleted) ...[
+                      _buildAutoTopupCompletedCard(),
+                    ] else if (_beamCharge != null) ...[
+                      _buildBeamPaymentSection(),
+                    ] else if (_requestSent) ...[
+                      _buildRequestSentCard(),
+                    ] else if (hasQR) ...[
+                      _buildQRSection(),
+                      const SizedBox(height: 16),
+                      _buildSlipUploadSection(),
+                      const SizedBox(height: 16),
+                      _buildConfirmTransferButton(),
+                    ] else ...[
+                      _buildGenerateQRButton(),
+                    ],
                     const SizedBox(height: 16),
-                    _buildSlipUploadSection(),
-                    const SizedBox(height: 16),
-                    _buildConfirmTransferButton(),
-                  ] else ...[
-                    _buildGenerateQRButton(),
-                  ],
-                  const SizedBox(height: 16),
-                  // ปุ่มถอนเงิน
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: OutlinedButton.icon(
-                      onPressed: _showWithdrawDialog,
-                      icon: const Icon(Icons.account_balance,
-                          color: Colors.orange),
-                      label: Text(
-                          AppLocalizations.of(context)!.topupWithdrawBtn,
-                          style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.orange)),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.orange, width: 2),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14)),
+                    // ปุ่มถอนเงิน
+                    SizedBox(
+                      width: double.infinity,
+                      height: JdcTouch.button,
+                      child: OutlinedButton.icon(
+                        onPressed: _showWithdrawDialog,
+                        icon: Icon(Icons.account_balance, color: jdc.cta),
+                        label: Text(
+                            AppLocalizations.of(context)!.topupWithdrawBtn,
+                            style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                fontVariations: _w(FontWeight.w700),
+                                color: jdc.cta)),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: jdc.brandLine, width: 1.5),
+                          shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(JdcRadius.card)),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  // ประวัติถอนเงิน
-                  _buildWithdrawalHistorySection(),
-                  const SizedBox(height: 24),
-                  // ประวัติเติมเงิน
-                  _buildHistorySection(),
-                  const SizedBox(height: 30),
-                ],
+                    const SizedBox(height: JdcSpacing.xxl),
+                    // ประวัติถอนเงิน
+                    _buildWithdrawalHistorySection(),
+                    const SizedBox(height: JdcSpacing.xxl),
+                    // ประวัติเติมเงิน
+                    _buildHistorySection(),
+                    const SizedBox(height: JdcSpacing.xxxl),
+                  ],
+                ),
               ),
             ),
     );
   }
 
   Widget _buildBalanceCard() {
+    final jdc = context.jdc;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(JdcSpacing.xl),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF4CAF50), Color(0xFF2E7D32)],
-        ),
-        borderRadius: BorderRadius.circular(16),
+        gradient: jdc.hero2,
+        borderRadius: BorderRadius.circular(JdcRadius.card),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(AppLocalizations.of(context)!.walletBalance,
-              style: const TextStyle(color: Colors.white70, fontSize: 14)),
-          const SizedBox(height: 4),
+              style: TextStyle(
+                  fontSize: 14,
+                  color: jdc.panelDim,
+                  fontWeight: FontWeight.w500,
+                  fontVariations: _w(FontWeight.w500))),
+          const SizedBox(height: JdcSpacing.xs),
           Text(
             '฿${NumberFormat('#,##0.00').format(_currentBalance)}',
-            style: const TextStyle(
-                color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+            style: _money(size: 30, color: jdc.onPanel),
           ),
         ],
       ),
@@ -1104,18 +1278,20 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
   }
 
   Widget _buildAmountSection() {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    final jdc = context.jdc;
+    return Container(
+      decoration: _cardDecoration(),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(JdcSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(AppLocalizations.of(context)!.topupSelectAmount,
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    fontVariations: _w(FontWeight.w700),
+                    color: jdc.text)),
             const SizedBox(height: 12),
             Wrap(
               spacing: 10,
@@ -1125,25 +1301,24 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                 return GestureDetector(
                   onTap: () => _selectAmount(amount),
                   child: Container(
+                    constraints: const BoxConstraints(minHeight: JdcTouch.button),
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 12),
+                    alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color:
-                          isSelected ? AppTheme.accentBlue : Colors.grey[100],
-                      borderRadius: BorderRadius.circular(10),
+                      color: isSelected ? jdc.brandSoft : jdc.surface,
+                      borderRadius: BorderRadius.circular(JdcRadius.field),
                       border: Border.all(
-                        color: isSelected
-                            ? AppTheme.accentBlue
-                            : Colors.grey[300]!,
+                        color: isSelected ? jdc.brandLine : jdc.line,
                       ),
                     ),
                     child: Text(
                       '฿${amount.toStringAsFixed(0)}',
                       style: TextStyle(
-                        color:
-                            isSelected ? Colors.white : colorScheme.onSurface,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                        color: isSelected ? jdc.brandOnSoft : jdc.text,
+                        fontWeight: FontWeight.w700,
+                        fontVariations: _w(FontWeight.w700),
+                        fontSize: 15,
                       ),
                     ),
                   ),
@@ -1155,13 +1330,16 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
               controller: _amountController,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: false),
+              style: TextStyle(color: jdc.text),
               decoration: InputDecoration(
                 labelText: AppLocalizations.of(context)!.topupCustomAmount,
+                labelStyle: TextStyle(color: jdc.muted),
                 prefixText: '฿ ',
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                prefixStyle: _money(size: 16),
                 filled: true,
-                fillColor: Colors.grey[50],
+                fillColor: jdc.sunken,
+                border: _fieldBorder(),
+                enabledBorder: _fieldBorder(),
               ),
               onChanged: (value) {
                 final amount = double.tryParse(value) ?? 0;
@@ -1184,36 +1362,40 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
   }
 
   Widget _buildQRSection() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    final jdc = context.jdc;
+    return Container(
+      decoration: _cardDecoration(),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(JdcSpacing.lg),
         child: Column(
           children: [
             Text(AppLocalizations.of(context)!.topupScanQR,
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    fontVariations: _w(FontWeight.w700),
+                    color: jdc.text)),
             const SizedBox(height: 4),
             Text(
               AppLocalizations.of(context)!.topupManualScanDesc,
-              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 13, color: jdc.muted),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             Container(
               width: 260,
               height: 260,
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[200]!),
+                color: jdc.knob,
+                borderRadius: BorderRadius.circular(JdcRadius.small),
+                border: Border.all(color: jdc.line),
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(JdcRadius.small),
                 child: AppNetworkImage(
                   imageUrl: _qrImageUrl,
                   fit: BoxFit.contain,
-                  backgroundColor: Colors.white,
+                  backgroundColor: jdc.knob,
                 ),
               ),
             ),
@@ -1221,16 +1403,13 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
             Text(
               AppLocalizations.of(context)!
                   .topupAmount(_selectedAmount.toStringAsFixed(0)),
-              style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.accentBlue),
+              style: _money(size: 20, color: jdc.cta),
             ),
             const SizedBox(height: 6),
             const SizedBox(height: 8),
             Text(
-              'โอนเงินตาม QR แล้วแนบรูปสลิป ระบบจะตรวจสลิปและเติมเงินให้อัตโนมัติ',
-              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+              _l10n.topupSlipStepHint,
+              style: TextStyle(fontSize: 12, color: jdc.muted),
               textAlign: TextAlign.center,
             ),
           ],
@@ -1240,23 +1419,26 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
   }
 
   Widget _buildRequestSentCard() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    final jdc = context.jdc;
+    return Container(
+      decoration: _cardDecoration(),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(JdcSpacing.xxl),
         child: Column(
           children: [
-            const Icon(Icons.hourglass_top, color: Colors.orange, size: 48),
+            Icon(Icons.hourglass_top, color: jdc.brandOnSoft, size: 48),
             const SizedBox(height: 12),
             Text(AppLocalizations.of(context)!.topupRequestSentCard,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    fontVariations: _w(FontWeight.w700),
+                    color: jdc.text)),
             const SizedBox(height: 8),
             Text(
               AppLocalizations.of(context)!
                   .topupRequestSentCardBody(_selectedAmount.toStringAsFixed(0)),
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 14, color: jdc.muted),
               textAlign: TextAlign.center,
             ),
           ],
@@ -1266,35 +1448,39 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
   }
 
   Widget _buildAutoTopupCompletedCard() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    final jdc = context.jdc;
+    return Container(
+      decoration: _cardDecoration(),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(JdcSpacing.xxl),
         child: Column(
           children: [
-            const Icon(Icons.check_circle,
-                color: AppTheme.accentBlue, size: 56),
+            Icon(Icons.check_circle, color: jdc.successInk, size: 56),
             const SizedBox(height: 12),
             Text(
               AppLocalizations.of(context)!.topupSuccessTitle,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.accentBlue,
+                fontWeight: FontWeight.w700,
+                fontVariations: _w(FontWeight.w700),
+                color: jdc.successInk,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               AppLocalizations.of(context)!
                   .topupSuccessBody(_selectedAmount.toStringAsFixed(0)),
-              style: TextStyle(fontSize: 15, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 15, color: jdc.muted),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 4),
             Text(
-              'ตรวจสลิปและเติมเงินเข้ากระเป๋าแล้ว',
-              style: TextStyle(fontSize: 12, color: Colors.blue[400]),
+              _l10n.topupSlipAutoDone,
+              style: TextStyle(
+                  fontSize: 12,
+                  color: jdc.link,
+                  fontWeight: FontWeight.w500,
+                  fontVariations: _w(FontWeight.w500)),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -1309,8 +1495,8 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                 });
               },
               icon: const Icon(Icons.add_circle_outline, size: 18),
-              label: const Text('เติมเงินอีกครั้ง'),
-              style: TextButton.styleFrom(foregroundColor: Colors.grey[600]),
+              label: Text(_l10n.topupSlipTopUpAgain),
+              style: TextButton.styleFrom(foregroundColor: jdc.cta),
             ),
           ],
         ),
@@ -1319,13 +1505,13 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
   }
 
   Widget _buildSlipUploadSection() {
+    final jdc = context.jdc;
     final hasSlip = _selectedSlipFile != null;
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Container(
+      decoration: _cardDecoration(),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(JdcSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1335,12 +1521,12 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: hasSlip ? Colors.green[50] : Colors.blue[50],
-                    borderRadius: BorderRadius.circular(12),
+                    color: hasSlip ? jdc.successSoft : jdc.infoSoft,
+                    borderRadius: BorderRadius.circular(JdcRadius.small),
                   ),
                   child: Icon(
                     hasSlip ? Icons.check_circle : Icons.receipt_long,
-                    color: hasSlip ? Colors.green[600] : Colors.blue[600],
+                    color: hasSlip ? jdc.successInk : jdc.infoInk,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -1349,20 +1535,22 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        hasSlip ? 'เลือกสลิปแล้ว' : 'แนบสลิปโอนเงิน',
-                        style: const TextStyle(
+                        hasSlip ? _l10n.topupSlipSelected : _l10n.topupSlipAttachSlip,
+                        style: TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w700,
+                          fontVariations: _w(FontWeight.w700),
+                          color: jdc.text,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         hasSlip
-                            ? (_selectedSlipFileName ?? 'พร้อมตรวจสอบสลิป')
-                            : 'ถ่ายรูปหรือเลือกรูปสลิปหลังโอนตาม QR',
+                            ? (_selectedSlipFileName ?? _l10n.topupSlipReady)
+                            : _l10n.topupSlipPickHint,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey[600],
+                          color: jdc.muted,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -1374,10 +1562,10 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'ระบบจะตรวจยอดและป้องกันสลิปซ้ำก่อนเติมเงินเข้ากระเป๋า',
+              _l10n.topupSlipVerifyHint,
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey[500],
+                color: jdc.muted,
                 height: 1.45,
               ),
             ),
@@ -1389,12 +1577,12 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                     onPressed: _isCheckingStatus ? null : _pickSlipImage,
                     icon:
                         Icon(hasSlip ? Icons.sync : Icons.add_photo_alternate),
-                    label: Text(hasSlip ? 'เปลี่ยนสลิป' : 'เลือกรูปสลิป'),
+                    label: Text(hasSlip ? _l10n.topupSlipChange : _l10n.topupSlipChoose),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppTheme.accentBlue,
-                      side: const BorderSide(color: AppTheme.accentBlue),
+                      foregroundColor: jdc.cta,
+                      side: BorderSide(color: jdc.brandLine),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(JdcRadius.field),
                       ),
                     ),
                   ),
@@ -1411,8 +1599,8 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                             });
                           },
                     icon: const Icon(Icons.close),
-                    color: Colors.grey[600],
-                    tooltip: 'ลบสลิป',
+                    color: jdc.muted,
+                    tooltip: _l10n.topupSlipRemove,
                   ),
                 ],
               ],
@@ -1424,64 +1612,79 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
   }
 
   Widget _buildGenerateQRButton() {
+    final jdc = context.jdc;
     return SizedBox(
       width: double.infinity,
-      height: 54,
+      height: JdcTouch.button,
       child: ElevatedButton.icon(
         onPressed: _isGenerating ? null : _generateQR,
         icon: _isGenerating
-            ? const SizedBox(
+            ? SizedBox(
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
-                    strokeWidth: 2, color: Colors.white))
+                    strokeWidth: 2, color: jdc.onCta))
             : const Icon(Icons.qr_code),
         label: Text(
           _isGenerating
               ? AppLocalizations.of(context)!.topupGeneratingQR
               : AppLocalizations.of(context)!.topupPayPromptPay,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            fontVariations: _w(FontWeight.w700),
+            color: jdc.onCta,
+          ),
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.accentBlue,
-          foregroundColor: Colors.white,
+          backgroundColor: jdc.cta,
+          foregroundColor: jdc.onCta,
+          disabledBackgroundColor: jdc.cta.withValues(alpha: 0.6),
+          disabledForegroundColor: jdc.onCta,
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          elevation: 3,
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(JdcRadius.card)),
+          elevation: 0,
         ),
       ),
     );
   }
 
   Widget _buildConfirmTransferButton() {
+    final jdc = context.jdc;
     return Column(
       children: [
         SizedBox(
           width: double.infinity,
-          height: 54,
+          height: JdcTouch.button,
           child: ElevatedButton.icon(
             onPressed: _isCheckingStatus || _selectedSlipFile == null
                 ? null
                 : _submitTopUpRequest,
             icon: _isCheckingStatus
-                ? const SizedBox(
+                ? SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white))
+                        strokeWidth: 2, color: jdc.onCta))
                 : const Icon(Icons.receipt_long),
             label: Text(
               _isCheckingStatus
-                  ? 'กำลังตรวจสลิป...'
-                  : 'ตรวจสลิปและเติมเงิน ฿${_selectedAmount.toStringAsFixed(0)}',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ? _l10n.topupSlipChecking
+                  : _l10n.topupSlipCheckAndTopUp(_selectedAmount.toStringAsFixed(0)),
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  fontVariations: _w(FontWeight.w700),
+                  color: jdc.onCta),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1565C0),
-              foregroundColor: Colors.white,
+              backgroundColor: jdc.cta,
+              foregroundColor: jdc.onCta,
+              disabledBackgroundColor: jdc.cta.withValues(alpha: 0.6),
+              disabledForegroundColor: jdc.onCta,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
-              elevation: 3,
+                  borderRadius: BorderRadius.circular(JdcRadius.card)),
+              elevation: 0,
             ),
           ),
         ),
@@ -1498,13 +1701,14 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
           },
           icon: const Icon(Icons.replay, size: 18),
           label: Text(AppLocalizations.of(context)!.topupGenerateNewQR),
-          style: TextButton.styleFrom(foregroundColor: Colors.grey[600]),
+          style: TextButton.styleFrom(foregroundColor: jdc.muted),
         ),
       ],
     );
   }
 
   Widget _buildWithdrawalHistorySection() {
+    final jdc = context.jdc;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1512,17 +1716,20 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(AppLocalizations.of(context)!.topupWithdrawHistoryTitle,
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    fontVariations: _w(FontWeight.w700),
+                    color: jdc.text)),
             if (_isLoadingHistory)
-              const SizedBox(
+              SizedBox(
                 width: 16,
                 height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
+                child: CircularProgressIndicator(strokeWidth: 2, color: jdc.cta),
               )
             else
               IconButton(
-                icon: const Icon(Icons.refresh, size: 20),
+                icon: Icon(Icons.refresh, size: 20, color: jdc.link),
                 onPressed: _loadHistory,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
@@ -1531,16 +1738,14 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
         ),
         const SizedBox(height: 8),
         if (_withdrawalHistory.isEmpty && !_isLoadingHistory)
-          Card(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Center(
-                child: Text(
-                    AppLocalizations.of(context)!.topupWithdrawHistoryEmpty,
-                    style: const TextStyle(color: Colors.grey, fontSize: 14)),
-              ),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(JdcSpacing.xxl),
+            decoration: _cardDecoration(),
+            child: Center(
+              child: Text(
+                  AppLocalizations.of(context)!.topupWithdrawHistoryEmpty,
+                  style: TextStyle(color: jdc.muted, fontSize: 14)),
             ),
           )
         else
@@ -1554,12 +1759,12 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
             final bankName = r['bank_name'] as String? ?? '-';
             final accountNum = r['account_number'] as String? ?? '-';
             final statusColor = status == 'completed'
-                ? Colors.green
+                ? jdc.successInk
                 : status == 'rejected'
-                    ? Colors.red
+                    ? jdc.dangerInk
                     : status == 'cancelled'
-                        ? Colors.grey
-                        : Colors.orange;
+                        ? jdc.muted
+                        : jdc.brandOnSoft;
             final statusText = status == 'completed'
                 ? AppLocalizations.of(context)!.topupStatusCompleted
                 : status == 'rejected'
@@ -1575,32 +1780,33 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                         ? Icons.block
                         : Icons.hourglass_top;
 
-            return Card(
-              margin: const EdgeInsets.only(bottom: 8),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+            return Container(
+              margin: const EdgeInsets.only(bottom: JdcSpacing.sm),
+              decoration: BoxDecoration(
+                color: jdc.surface,
+                borderRadius: BorderRadius.circular(JdcRadius.small),
+                border: Border.all(color: jdc.line),
+              ),
               child: ListTile(
                 leading: Icon(statusIcon, color: statusColor, size: 28),
                 title: Text('-฿${NumberFormat('#,##0').format(amount)}',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Colors.red)),
+                    style: _money(size: 16, color: jdc.dangerInk)),
                 subtitle: Text('$bankName $accountNum\n$createdAt',
-                    style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+                    style: TextStyle(color: jdc.muted, fontSize: 12)),
                 isThreeLine: true,
                 trailing: Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(JdcRadius.chip),
                   ),
                   child: Text(statusText,
                       style: TextStyle(
                           color: statusColor,
                           fontSize: 12,
-                          fontWeight: FontWeight.w600)),
+                          fontWeight: FontWeight.w600,
+                          fontVariations: _w(FontWeight.w600))),
                 ),
               ),
             );
@@ -1610,6 +1816,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
   }
 
   Widget _buildHistorySection() {
+    final jdc = context.jdc;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1617,17 +1824,20 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(AppLocalizations.of(context)!.topupHistoryTitle,
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    fontVariations: _w(FontWeight.w700),
+                    color: jdc.text)),
             if (_isLoadingHistory)
-              const SizedBox(
+              SizedBox(
                 width: 16,
                 height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
+                child: CircularProgressIndicator(strokeWidth: 2, color: jdc.cta),
               )
             else
               IconButton(
-                icon: const Icon(Icons.refresh, size: 20),
+                icon: Icon(Icons.refresh, size: 20, color: jdc.link),
                 onPressed: _loadHistory,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
@@ -1636,15 +1846,13 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
         ),
         const SizedBox(height: 8),
         if (_topupHistory.isEmpty && !_isLoadingHistory)
-          Card(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Center(
-                child: Text(AppLocalizations.of(context)!.topupHistoryEmpty,
-                    style: const TextStyle(color: Colors.grey, fontSize: 14)),
-              ),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(JdcSpacing.xxl),
+            decoration: _cardDecoration(),
+            child: Center(
+              child: Text(AppLocalizations.of(context)!.topupHistoryEmpty,
+                  style: TextStyle(color: jdc.muted, fontSize: 14)),
             ),
           )
         else
@@ -1658,22 +1866,22 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
             // สถานะจาก Beam: awaiting_payment / expired / failed
             final isBeamClosed = status == 'expired' || status == 'failed';
             final statusColor = status == 'completed'
-                ? Colors.green
+                ? jdc.successInk
                 : status == 'rejected'
-                    ? Colors.red
+                    ? jdc.dangerInk
                     : isBeamClosed
-                        ? Colors.grey
-                        : Colors.orange;
+                        ? jdc.muted
+                        : jdc.brandOnSoft;
             final statusText = status == 'completed'
                 ? AppLocalizations.of(context)!.topupStatusApproved
                 : status == 'rejected'
                     ? AppLocalizations.of(context)!.topupStatusRejected
                     : status == 'awaiting_payment'
-                        ? 'รอชำระเงิน'
+                        ? AppLocalizations.of(context)!.topupStatusAwaiting
                         : status == 'expired'
-                            ? 'QR หมดอายุ'
+                            ? AppLocalizations.of(context)!.topupStatusQrExpired
                             : status == 'failed'
-                                ? 'ชำระไม่สำเร็จ'
+                                ? AppLocalizations.of(context)!.topupStatusFailed
                                 : AppLocalizations.of(context)!
                                     .topupStatusPending;
             final statusIcon = status == 'completed'
@@ -1684,29 +1892,32 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                         ? Icons.remove_circle_outline
                         : Icons.hourglass_top;
 
-            return Card(
-              margin: const EdgeInsets.only(bottom: 8),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+            return Container(
+              margin: const EdgeInsets.only(bottom: JdcSpacing.sm),
+              decoration: BoxDecoration(
+                color: jdc.surface,
+                borderRadius: BorderRadius.circular(JdcRadius.small),
+                border: Border.all(color: jdc.line),
+              ),
               child: ListTile(
                 leading: Icon(statusIcon, color: statusColor, size: 28),
                 title: Text('฿${NumberFormat('#,##0').format(amount)}',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 16)),
+                    style: _money(size: 16)),
                 subtitle: Text(createdAt,
-                    style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+                    style: TextStyle(color: jdc.muted, fontSize: 12)),
                 trailing: Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(JdcRadius.chip),
                   ),
                   child: Text(statusText,
                       style: TextStyle(
                           color: statusColor,
                           fontSize: 12,
-                          fontWeight: FontWeight.w600)),
+                          fontWeight: FontWeight.w600,
+                          fontVariations: _w(FontWeight.w600))),
                 ),
               ),
             );

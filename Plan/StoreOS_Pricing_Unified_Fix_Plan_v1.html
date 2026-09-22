@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แผนรวม: แก้ StoreOS Sync + ราคา/GP — Unified Fix Plan v1</title>
+<style>
+  :root { --ink:#1a2332; --sub:#5a6a80; --line:#e3e8f0; --bg:#f7f9fc; --card:#ffffff;
+    --red:#c0392b; --red-bg:#fdecea; --amber:#b9770e; --amber-bg:#fef6e0;
+    --green:#1e8449; --green-bg:#e9f7ef; --blue:#1f618d; --blue-bg:#eaf2f8;
+    --purple:#6c3483; --purple-bg:#f4ecf9; }
+  * { box-sizing:border-box; }
+  body { font-family:'Segoe UI',Tahoma,'Noto Sans Thai',sans-serif; color:var(--ink);
+    background:var(--bg); margin:0; line-height:1.65; }
+  .wrap { max-width:1000px; margin:0 auto; padding:32px 20px 80px; }
+  header.hero { background:linear-gradient(135deg,#145a8a,#6c3483); color:#fff;
+    border-radius:16px; padding:30px 32px; margin-bottom:26px; }
+  header.hero h1 { margin:0 0 8px; font-size:26px; }
+  header.hero p { margin:4px 0; opacity:.92; font-size:14px; }
+  h2 { font-size:20px; margin:40px 0 12px; padding-bottom:8px; border-bottom:2px solid var(--line); }
+  h3 { font-size:16px; margin:20px 0 8px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:18px 20px; margin:14px 0; }
+  table { width:100%; border-collapse:collapse; margin:12px 0; font-size:13.5px; }
+  th { background:#eef2f7; text-align:left; padding:9px 10px; border:1px solid var(--line); }
+  td { padding:8px 10px; border:1px solid var(--line); vertical-align:top; }
+  .tag { display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; font-weight:600; white-space:nowrap; }
+  .t-red { background:var(--red-bg); color:var(--red); }
+  .t-amber { background:var(--amber-bg); color:var(--amber); }
+  .t-green { background:var(--green-bg); color:var(--green); }
+  .t-blue { background:var(--blue-bg); color:var(--blue); }
+  .t-purple { background:var(--purple-bg); color:var(--purple); }
+  .t-grey { background:#eef1f5; color:#5a6a80; }
+  code { background:#eef2f7; padding:1px 6px; border-radius:6px; font-size:12.5px;
+    font-family:Consolas,'Courier New',monospace; }
+  .phase { border-radius:14px; padding:20px 22px; margin:18px 0; border:1px solid var(--line);
+    background:#fff; border-left:6px solid var(--blue); }
+  .phase.p1 { border-left-color:#16a085; } .phase.p2 { border-left-color:#c0392b; }
+  .phase.p3 { border-left-color:#b9770e; } .phase.p4 { border-left-color:#6c3483; }
+  .phase h3 { margin-top:0; font-size:17px; }
+  .meta { font-size:12.5px; color:var(--sub); margin:4px 0 10px; }
+  ul { margin:8px 0; padding-left:22px; } li { margin:5px 0; }
+  .note { border-left:4px solid var(--blue); background:var(--blue-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  .ok { border-left:4px solid var(--green); background:var(--green-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  .danger { border-left:4px solid var(--red); background:var(--red-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  .small { color:var(--sub); font-size:12.5px; }
+  .flow { background:#0f1b2d; color:#d7e3f4; border-radius:12px; padding:14px 18px;
+    font-family:Consolas,monospace; font-size:12px; line-height:1.8; overflow-x:auto; white-space:pre; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>🧭 แผนรวม: StoreOS Sync + ราคา/GP — Unified Fix Plan</h1>
+  <p>เวอร์ชัน 1 (Planning) · 19 กันยายน 2569 · รวมจากรายงานวิเคราะห์ 2 ฉบับ:
+    <b>StoreOS_Trigger_Impact_Analysis_v1</b> + <b>Price_Display_and_GP_Impact_Analysis_v1</b> (docs/)</p>
+  <p>เป้าหมาย: ราคาทุกจอตรงกัน · เงิน/GP คำนวณฝั่ง server ถูกคนเดียว · ทุกการเปลี่ยนสถานะถึง POS ครบ · ตรวจสอบย้อนหลังได้</p>
+</header>
+
+<h2>0) สถานะที่แก้แล้ว (บริบท — ทำเสร็จวันที่ 19 ก.ย. แล้ว)</h2>
+<div class="ok">
+<ul>
+  <li>✅ <b>Realtime publication</b> — <code>bookings</code> เข้า <code>supabase_realtime</code> (migration 20260919230000, deploy แล้ว) → ออเดอร์ใหม่ขึ้นหน้าแรกทันที + ทุกหน้า live</li>
+  <li>✅ <b>Trigger StoreOS search_path</b> — แก้ 42883 hmac (migration 20260919231000, deploy แล้ว) → ยกเลิกออเดอร์/แอดมิน force-cancel ใช้ได้</li>
+  <li>✅ <b>Dark mode หน้ายกเลิก + resume-refresh หน้าแรก</b> — commit <code>09c79d1</code> push แล้ว รอ build 1.10.1+118</li>
+</ul>
+</div>
+
+<h2>1) ทะเบียนปัญหารวม (จากทั้งสองรายงาน)</h2>
+<table>
+<tr><th>ID</th><th>ปัญหา</th><th>ระดับ</th><th>แหล่ง</th><th>รวมไว้ใน Phase</th></tr>
+<tr><td><b>P1</b></td><td>ยอดรวมลูกค้า vs คนขับต่างกัน 1 บาท (ceil vs toStringAsFixed)</td><td><span class="tag t-red">สูง-เห็นชัด</span></td><td>ราคา/GP</td><td><b>Phase 1</b></td></tr>
+<tr><td><b>P2</b></td><td>ค่าจ้างบนการ์ด (ปัด) ไม่เท่ากระเป๋าจริง (ทศนิยม)</td><td><span class="tag t-amber">กลาง</span></td><td>ราคา/GP</td><td><b>Phase 1</b></td></tr>
+<tr><td><b>F2</b></td><td>ยกเลิกแล้ว POS ไม่รู้ (cancel RPC ไม่เซ็ต status_origin → echo ถูก block)</td><td><span class="tag t-red">สูง</span></td><td>StoreOS</td><td><b>Phase 2</b></td></tr>
+<tr><td><b>G2</b></td><td>GP คำนวณจาก client ส่งมา — server ไม่ authoritative</td><td><span class="tag t-red">สูง</span></td><td>ราคา/GP</td><td><b>Phase 2</b></td></tr>
+<tr><td><b>G1</b></td><td>GP rate เปลี่ยนได้ตลอด ไม่ snapshot ตอนสั่ง (พิสูจน์แล้ว: ออเดอร์ 8 ก.ย. settle 5%/20% ปัจจุบัน 2%/8%)</td><td><span class="tag t-red">สูง</span></td><td>ราคา/GP</td><td><b>Phase 3</b></td></tr>
+<tr><td><b>G4</b></td><td>total_amount / platform_gp_amount / merchant_net_amount = 0 ทุก food order</td><td><span class="tag t-amber">กลาง</span></td><td>ราคา/GP</td><td><b>Phase 3</b></td></tr>
+<tr><td><b>P3</b></td><td>webhook ไม่ส่ง coupon → POS โชว์ยอดสูงกว่าที่ลูกค้าจ่าย</td><td><span class="tag t-amber">กลาง</span></td><td>ทั้งสอง</td><td><b>Phase 3</b></td></tr>
+<tr><td><b>G3</b></td><td>คูปองระบบ + เงินสด → คนขับขาดสดเท่าส่วนลด (ยังไม่มีออเดอร์คูปองจริง)</td><td><span class="tag t-red">สูงเมื่อเปิดคูปอง</span></td><td>ราคา/GP</td><td><b>Phase 4</b> (ต้องตัดสินใจนโยบาย)</td></tr>
+<tr><td><b>F4</b></td><td>Outbound webhook fire-and-forget ไม่มี retry/delivery log</td><td><span class="tag t-amber">กลาง</span></td><td>StoreOS</td><td><b>Phase 4</b></td></tr>
+<tr><td><b>F5</b></td><td>Connection system-wide → push ออเดอร์ทุกร้านไป POS</td><td><span class="tag t-amber">กลาง</span></td><td>StoreOS</td><td><b>Phase 4</b></td></tr>
+<tr><td><b>F8</b></td><td>เปิด/ปิดร้านสองทาง last-write-wins</td><td><span class="tag t-grey">ต่ำ</span></td><td>StoreOS</td><td><b>Phase 4</b></td></tr>
+<tr><td><b>F3</b></td><td>รับออเดอร์ใหม่ทาง POS ไม่ได้ (ไม่มี inbound order.created)</td><td><span class="tag t-blue">feature ใหม่</span></td><td>StoreOS</td><td><b>แผนแยก</b> (ไม่รวมในนี้)</td></tr>
+</table>
+
+<div class="flow">ลำดับ dependency หลัก:
+
+ Phase 1 (จอ) ──ไม่ขัดกับใคร ทำได้ทันที──► release ถัดไป
+ Phase 2 (เงิน) ──► F2 ต้องมาก่อน G2 จะ audit ครบ (cancel ก็ต้องหัก GP ถูก)
+ Phase 3 (ข้อมูล) ──► G1 snapshot ใช้ประโยชน์จาก G2 (server คำนวณ) + P3 ใช้ field จาก G4
+ Phase 4 (นโยบาย/ขยาย) ──► G3 ต้องตัดสินใจธุรกิจก่อน implement</div>
+
+<h2>2) แผนตาม Phase</h2>
+
+<div class="phase p1">
+<h3>Phase 1 — ราคาทุกจอตรงกัน (P1, P2) · งานเล็ก เห็นผลทันที · ไม่ต้องมี migration</h3>
+<p class="meta">รถที่ไปถึงมือผู้ใช้: release ถัดไป (bump version ตามกฎ repo)</p>
+<ul>
+  <li><b>สร้าง helper เดียว:</b> เพิ่ม <code>RoleAmountCalculator.ceilBaht(double)</code> (+ optional <code>formatBaht()</code> แสดงทศนิยมเมื่อ &lt; จำนวนเต็ม) ให้เป็นจุดปัดเงินเดียวของทั้งแอป</li>
+  <li><b>ฝั่งลูกค้า:</b> <code>customer_order_detail_screen</code>, <code>activity_screen</code> เปลี่ยน <code>.ceil()</code> ตรงๆ → helper (ไม่เปลี่ยนพฤติกรรมปัจจุบัน แค่รวมจุด)</li>
+  <li><b>ฝั่งคนขับ:</b> <code>driver_dashboard_screen</code> เปลี่ยน <code>toStringAsFixed(0)</code> ของเงินทั้งหมด (ยอดเก็บ/ค่าอาหาร/ค่าส่ง/ค่าจ้าง) → helper — <b>จุดที่ทำให้เห็นต่างกัน 1 บาท</b></li>
+  <li><b>ฝั่งร้าน:</b> ตรวจ <code>merchant order_detail/orders</code> ใช้ helper เดียวกัน</li>
+  <li><b>กันถอยหลัง:</b> smoke test ห้ามพบ <code>toStringAsFixed(0)</code> กับตัวแปรเงินบนหน้า order ของ 3 ฝั่ง + unit test helper</li>
+  <li><b>Verify:</b> unit test + smoke + scoped analyze + ทดสอบมือบน emulator (ออเดอร์ค่าส่งทศนิยม เช่น 5.49) เทียบ 3 จอต้องเห็นยอดเดียวกัน</li>
+</ul>
+</div>
+
+<div class="phase p2">
+<h3>Phase 2 — เงินปลอดภัย + สถานะถึง POS ครบ (F2, G2) · มี migration · deploy server ก่อน app</h3>
+<p class="meta">ระดับ: สูงสุดของแผน — ทั้งสองข้อมีหลักฐานเกิดจริงแล้ว</p>
+<ul>
+  <li><b>M2.1 (F2):</b> migration ใหม่ <code>CREATE OR REPLACE cancel_wallet_booking_with_refund</code> + <code>admin_force_cancel_booking_with_wallet_refund</code> — เพิ่ม <code>status_origin = 'jdc'</code> ใน UPDATE สถานะ (ดึง body ปัจจุบันจาก DB มาแก้ ห้ามเขียนใหม่จากความจำ)
+    <ul><li>ผล: ทุกการยกเลิกจาก JDC บอก POS เสมอ แม้ status ล่าสุดมาจาก POS</li></ul></li>
+  <li><b>M2.2 (G2):</b> migration แก้ <code>complete_booking</code> — คำนวณ <code>app_earnings/driver_earnings</code> จาก <code>connect_merchant_gp_amount</code> (มีอยู่แล้ว, สูตรเดียวกับ webhook) แบบ authoritative; ค่าที่ client ส่งมาเก็บไว้เทียบ (เช่น <code>details->>'client_claimed_earnings'</code>) กรณีต่างกัน log ใน <code>notes</code>/audit — <b>ไม่ห้าม</b> transaction เสร็จงานแต่เงินใช้เลข server</li>
+  <li><b>Deploy order:</b> M2.1 → M2.2 → แล้วค่อย release แอป (แอปเก่ายังส่ง p_earnings มา — RPC ใหม่รองรับ/ignore ได้ จึงไม่ break แอปเดิม)</li>
+  <li><b>Verify:</b> E2E rollback simulation แบบที่ใช้วันนี้ — (ก) cancel ออเดอร์ origin='storeos' แล้วเช็ค webhook order.status ถูกคิว (pg_net) (ข) complete ออเดอร์จริงใน txn แล้วเทียบ earnings server vs client ต้องตรงสูตร + smoke tests</li>
+  <li><b>Rollback:</b> เก็บ function defs เดิมไว้ใน comment migration / สามารถ CREATE OR REPLACE กลับ</li>
+</ul>
+</div>
+
+<div class="phase p3">
+<h3>Phase 3 — ข้อมูลครบ ตรวจสอบย้อนหลังได้ (G1, G4, P3) · มี migration + backfill เลือกได้</h3>
+<ul>
+  <li><b>M3.1 (G1):</b> เพิ่มคอลัมน์ snapshot บน bookings: <code>gp_system_rate_at_order</code>, <code>gp_driver_rate_at_order</code> + trigger BEFORE INSERT (food) กรอกจาก profiles อัตโนมัติ — <b>immunity ต่อแอปเวอร์ชันเก่า</b>เพราะทำที่ DB
+    <ul><li>พร้อม audit: trigger บน profiles เมื่อแก้ 3 คอลัมน์ GP → บันทึกลง <code>gp_rate_audit</code> (เก่า/ใหม่/ใคร/เมื่อไร)</li></ul></li>
+  <li><b>M3.2 (G4):</b> <code>complete_booking</code> (จาก Phase 2) เติม <code>total_amount = price + delivery_fee − coupon</code>, <code>platform_gp_amount</code>, <code>merchant_net_amount</code> ให้ food เหมือน laundry + script backfill ออเดอร์เก่า (optional ทำเฉพาะ completed)</li>
+  <li><b>M3.3 (P3):</b> trigger StoreOS outbound เพิ่ม field <code>coupon_discount</code> + <code>net_total</code> (อ่านจาก coupon_usages ตอนสร้าง event) — ประสานกับฝั่ง StoreOS รับ field ใหม่ (ไม่ breaking — เพิ่ม field)</li>
+  <li><b>Verify:</b> สั่งออเดอร์ทดสอบ → เช็ค snapshot ถูกกรอก แม้สั่งจากแอปเก่า / เปลี่ยน rate ร้านกลางทาง → complete แล้วตัวเงินใช้ rate ณ วันสั่ง ตามนโยบายที่เลือก (ดูหมายเหตุ)</li>
+</ul>
+<div class="note"><b>การตัดสินใจที่ต้องมีเจ้าของ (ก่อน implement M3.1):</b> ตอน complete จะใช้ rate ณ <b>วันสั่ง</b> (แนะนำ — ล็อกตามที่คุยตอนสั่ง) หรือ ณ <b>วันจบ</b> (สถานะปัจจุบัน)? — แนะนำวันสั่ง แล้ว snapshot คอลัมน์ใหม่จะเป็น source ของ complete_booking ใน Phase 2</div>
+</div>
+
+<div class="phase p4">
+<h3>Phase 4 — นโยบายธุรกิจ + ความทนทาน (G3, F4, F5, F8) · แยกย่อยตามความพร้อม</h3>
+<ul>
+  <li><b>G3 (ก่อนเปิดคูปองระบบจริง):</b> ตัดสินใจ "ใครแบกส่วนลด" — ตัวเลือก: (ก) หักจาก GP ระบบ (แนะนำ — platform เป็นคนออกคูปอง) (ข) ชดเชยกระเป๋าคนขับอัตโนมัติตอน complete (ค) ร้านแบก (ใช้ path <code>applyMerchantCreatedDiscount</code> เดิม) → implement ใน M2.2/M3.2 พร้อม test สถานการณ์เงินสด+คูปอง</li>
+  <li><b>F4:</b> ตาราง <code>pos_outbound_events</code> (event_id, topic, booking_id, queued_at, สถานะจาก pg_net) + หน้า admin ดู "event ล่าสุดไป StoreOS" — ไม่ทำ retry engine ในรอบนี้ แค่มองเห็น</li>
+  <li><b>F5:</b> เพิ่มตาราง mapping ร้าน JDC ↔ StoreOS + trigger outbound push เฉพาะร้านลงทะเบียน — ทำเมื่อมีร้านเข้าใช้จริง &gt; 1–2 ร้าน</li>
+  <li><b>F8:</b> เพิ่ม field <code>shop_status_source</code> + แสดง toast ในแอป merchant เมื่อ POS เปลี่ยนสถานะ (optional)</li>
+  <li><b>F3 (รับออเดอร์ทาง POS):</b> เป็น feature ใหม่ — ทำแผนแยกเมื่อธุรกิจยืนยัน need</li>
+</ul>
+</div>
+
+<h2>3) ตารางสรุปการดำเนินงาน</h2>
+<table>
+<tr><th>Phase</th><th>งาน</th><th>ไฟล์/วัตถุ</th><th>Migration</th><th>ต้อง deploy อะไรก่อน</th><th>ขนาด</th></tr>
+<tr><td><b>1</b></td><td>ปัดเงินรวมศูนย์ 3 ฝั่ง (P1,P2)</td><td>role_amount_calculator + หน้าจอ customer/driver/merchant</td><td>—</td><td>—</td><td><span class="tag t-green">S</span></td></tr>
+<tr><td><b>2</b></td><td>cancel เซ็ต origin (F2) + GP server-side (G2)</td><td>2 RPC functions</td><td>✔ 1 ไฟล์ (2 fn)</td><td>server ก่อน app</td><td><span class="tag t-amber">M</span></td></tr>
+<tr><td><b>3</b></td><td>snapshot rate + audit (G1) + คอลัมน์สรุป (G4) + coupon ใน webhook (P3)</td><td>bookings cols + trigger audit + outbound trigger</td><td>✔ 1–2 ไฟล์</td><td>หลัง Phase 2</td><td><span class="tag t-amber">M</span></td></tr>
+<tr><td><b>4</b></td><td>นโยบายคูปอง (G3) + delivery log (F4) + per-merchant (F5) + shop status (F8)</td><td>หลายส่วน แยกทีละงาน</td><td>ตามงาน</td><td>แยกตามงาน</td><td><span class="tag t-grey">M–L</span></td></tr>
+</table>
+
+<h2>4) แผน verify รวม (ทุก phase)</h2>
+<div class="card">
+<ul>
+  <li><b>ทุก migration:</b> สมมติฐานทดสอบแบบ E2E rollback transaction (แพทเทิร์นเดียวกับที่ใช้ 19 ก.ย. — จริง ปลอดภัย ไม่แต้มข้อมูล) + <code>supabase migration repair</code> + ยืนยัน marker บน remote</li>
+  <li><b>ทุกงาน:</b> TDD — เขียน smoke/unit test ก่อน (red) → implement → green → scoped analyze → รวม suite เดิมต้องไม่มี fail ใหม่</li>
+  <li><b>Phase 1:</b> ทดสอบ 3 จอบน emulator ด้วยค่าส่งทศนิยม (5.49) — ยอดต้องตรงกันทุกจอ</li>
+  <li><b>Phase 2–3:</b> สถานการณ์จำลอง: สั่งแบบแอป → POS กด preparing → ลูกค้ายกเลิก → <b>POS ต้องได้รับ cancelled</b> และ เปลี่ยน rate ร้านกลางทาง → complete → ตัวเงินใช้ rate ที่ snapshot ไว้</li>
+  <li><b>กฎ release:</b> bump version ทุกครั้งที่แก้ app / deploy server ก่อน release app เสมอ (RPC ใหม่ต้อง tolerate แอปเก่า)</li>
+</ul>
+</div>
+
+<div class="note"><b>ที่มาทั้งหมด:</b> docs/StoreOS_Trigger_Impact_Analysis_v1.html · docs/Price_Display_and_GP_Impact_Analysis_v1.html · E2E verify 19 ก.ย. · ข้อมูลจริงจาก production (ออเดอร์ 8/16/19 ก.ย., wallet ledger, GP config 3 ร้าน)<br>
+สถานะแผน: <b>Planning — รออนุมัติ</b> · เริ่มแนะนำ Phase 1 → 2 ต่อเนื่องกันได้ใน session เดียว</div>
+
+</div>
+</body>
+</html>

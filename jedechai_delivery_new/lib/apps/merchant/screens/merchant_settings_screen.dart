@@ -7,7 +7,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:jedechai_delivery_new/theme/app_theme.dart';
 import '../../../common/services/auth_service.dart';
 import '../../../common/services/profile_service.dart';
 import '../../../common/services/image_picker_service.dart';
@@ -20,6 +19,8 @@ import '../../../common/widgets/language_switcher.dart';
 import '../../../common/widgets/reviews_screen.dart';
 import '../../customer/screens/auth/login_screen.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../theme/jdc_colors.dart';
+import '../../../theme/jdc_layout.dart';
 import 'merchant_coupon_management_screen.dart';
 import 'merchant_gp_plan_screen.dart';
 import 'profile/edit_merchant_profile_screen.dart';
@@ -40,11 +41,26 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
   String? _appVersion;
   int _versionTapCount = 0;
 
-  static const Color _accent = AppTheme.accentOrange;
-  static const List<Color> _gradient = [
-    AppTheme.accentOrange,
-    Color(0xFFE65100),
-  ];
+  /// สีเน้น/กราเดียนต์ของหน้า — ผูกกับ token ของธีมแทนสี hardcode เดิม
+  Color get _accent => context.jdc.cta;
+  List<Color> get _gradient => context.jdc.hero2.colors;
+
+  /// สร้าง TextStyle พร้อม fontVariations คู่กับ fontWeight ตามกฎดีไซน์ JDC
+  TextStyle _txt(
+    Color color,
+    double? size, {
+    double w = 400,
+    double? height,
+  }) {
+    return TextStyle(
+      color: color,
+      fontSize: size,
+      height: height,
+      fontWeight: FontWeight.values[(w.round() ~/ 100) - 1],
+      fontVariations: [FontVariation('wght', w)],
+    );
+  }
+
   static const List<String> _weekdayKeys = [
     'mon',
     'tue',
@@ -345,10 +361,11 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
         await _fetchUserProfile();
         if (mounted) {
           final l10n = AppLocalizations.of(context)!;
+          final jdc = JdcColors.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(l10n.accountUploadSuccess),
-              backgroundColor: Colors.green,
+              backgroundColor: jdc.successFill,
             ),
           );
         }
@@ -357,10 +374,11 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
       debugLog('❌ Error uploading avatar: $e');
       if (mounted) {
         final l10n = AppLocalizations.of(context)!;
+        final jdc = JdcColors.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.accountUploadFailed(e.toString())),
-            backgroundColor: Colors.red,
+            backgroundColor: jdc.danger,
           ),
         );
       }
@@ -415,10 +433,11 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
         );
         if (mounted) {
           final l10n = AppLocalizations.of(context)!;
+          final jdc = JdcColors.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(l10n.accountUpdateSuccess),
-              backgroundColor: Colors.green,
+              backgroundColor: jdc.successFill,
             ),
           );
         }
@@ -426,10 +445,11 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
       } catch (e) {
         if (mounted) {
           final l10n = AppLocalizations.of(context)!;
+          final jdc = JdcColors.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(l10n.accountUpdateFailed(e.toString())),
-              backgroundColor: Colors.red,
+              backgroundColor: jdc.danger,
             ),
           );
         }
@@ -440,18 +460,20 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
   void _showDeleteAccountDialog() {
     final reasonController = TextEditingController();
     final l10n = AppLocalizations.of(context)!;
+    final jdc = JdcColors.of(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(JdcRadius.card)),
         icon: Icon(
           Icons.warning_amber_rounded,
-          color: Colors.red[700],
+          color: jdc.danger,
           size: 48,
         ),
         title: Text(
           l10n.accountDeleteDialogTitle,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: _txt(jdc.text, null, w: 700),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -459,18 +481,18 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             Text(
               l10n.accountDeleteDialogBody,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 14, height: 1.5),
+              style: _txt(jdc.muted, 14, height: 1.5),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: JdcSpacing.lg),
             TextField(
               controller: reasonController,
               maxLines: 2,
               decoration: InputDecoration(
                 hintText: l10n.accountDeleteReasonHint,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(JdcRadius.small),
                 ),
-                contentPadding: const EdgeInsets.all(12),
+                contentPadding: const EdgeInsets.all(JdcSpacing.md),
               ),
             ),
           ],
@@ -487,10 +509,10 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
               await _submitDeleteAccount(reasonController.text.trim());
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+              backgroundColor: jdc.danger,
+              foregroundColor: jdc.onCta,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(JdcRadius.small),
               ),
             ),
             child: Text(l10n.accountDeleteConfirm),
@@ -509,10 +531,11 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
     } catch (e) {
       if (mounted) {
         final l10n = AppLocalizations.of(context)!;
+        final jdc = JdcColors.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.accountDeleteRequestSubmitFailed(e.toString())),
-            backgroundColor: Colors.red,
+            backgroundColor: jdc.danger,
           ),
         );
       }
@@ -521,6 +544,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
 
   void _showLogoutConfirmation() {
     final l10n = AppLocalizations.of(context)!;
+    final jdc = JdcColors.of(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -538,7 +562,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             },
             child: Text(
               l10n.accountLogout,
-              style: const TextStyle(color: Colors.red),
+              style: TextStyle(color: jdc.danger),
             ),
           ),
         ],
@@ -558,10 +582,11 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
     } catch (e) {
       if (mounted) {
         final l10n = AppLocalizations.of(context)!;
+        final jdc = JdcColors.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.accountUpdateFailed(e.toString())),
-            backgroundColor: Colors.red,
+            backgroundColor: jdc.danger,
           ),
         );
       }
@@ -586,15 +611,38 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     final l10n = AppLocalizations.of(context)!;
+    final shopName = _userProfile?['full_name'] as String?;
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: jdc.paper,
       appBar: AppBar(
-        title: Text(l10n.accountTitle),
-        backgroundColor: colorScheme.surface,
-        foregroundColor: colorScheme.onSurface,
+        title: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.accountTitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: _txt(jdc.text, 17, w: 700),
+            ),
+            if (shopName != null && shopName.isNotEmpty)
+              Text(
+                shopName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: _txt(jdc.muted, 12),
+              ),
+          ],
+        ),
+        backgroundColor: jdc.surface,
+        foregroundColor: jdc.text,
         elevation: 0,
+        shape: Border(
+          bottom: BorderSide(color: jdc.line),
+        ),
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 8),
@@ -603,51 +651,48 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(_accent),
-              ),
+          ? Center(
+              child: CircularProgressIndicator(color: jdc.cta),
             )
           : _error != null
               ? _buildError()
               : RefreshIndicator(
                   onRefresh: _fetchUserProfile,
-                  color: _accent,
+                  color: jdc.cta,
                   child: _buildContent(),
                 ),
     );
   }
 
   Widget _buildError() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(JdcSpacing.xxxl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
-            const SizedBox(height: 16),
+            Icon(Icons.error_outline, size: 64, color: jdc.danger),
+            const SizedBox(height: JdcSpacing.lg),
             Text(
               l10n.accountErrorTitle,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: _txt(jdc.text, 18, w: 700),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: JdcSpacing.sm),
             Text(
               _error!,
-              style:
-                  TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+              style: _txt(jdc.muted, 13),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: JdcSpacing.xl),
             ElevatedButton.icon(
               onPressed: _fetchUserProfile,
               icon: const Icon(Icons.refresh),
               label: Text(l10n.accountRetry),
               style: ElevatedButton.styleFrom(
-                backgroundColor: _accent,
-                foregroundColor: Colors.white,
+                backgroundColor: jdc.cta,
+                foregroundColor: jdc.onCta,
               ),
             ),
           ],
@@ -660,26 +705,36 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
     final approvalStatus = _userProfile?['approval_status'] as String?;
     final showPendingBanner = approvalStatus != null && approvalStatus != 'approved';
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(
+        top: JdcSpacing.md,
+        bottom: JdcSpacing.xl,
+      ),
       children: [
-        if (showPendingBanner) ...[
-          _buildPendingApprovalBanner(),
-          const SizedBox(height: 16),
-        ],
-        _buildProfileHeader(),
-        const SizedBox(height: 16),
-        _buildInfoCard(),
-        const SizedBox(height: 16),
-        _buildStoreOsConnectCard(),
-        const SizedBox(height: 16),
-        _buildMenuCard(),
-        const SizedBox(height: 16),
-        _buildAppInfoCard(),
-        const SizedBox(height: 24),
-        _buildLogoutButton(),
-        const SizedBox(height: 12),
-        _buildDeleteAccountButton(),
-        const SizedBox(height: 32),
+        JdcContentFrame(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (showPendingBanner) ...[
+                _buildPendingApprovalBanner(),
+                const SizedBox(height: JdcSpacing.md),
+              ],
+              _buildProfileHeader(),
+              const SizedBox(height: JdcSpacing.md),
+              _buildInfoCard(),
+              const SizedBox(height: JdcSpacing.md),
+              _buildStoreOsConnectCard(),
+              const SizedBox(height: JdcSpacing.md),
+              _buildMenuCard(),
+              const SizedBox(height: JdcSpacing.md),
+              _buildAppInfoCard(),
+              const SizedBox(height: JdcSpacing.xxl),
+              _buildLogoutButton(),
+              const SizedBox(height: JdcSpacing.md),
+              _buildDeleteAccountButton(),
+              const SizedBox(height: JdcSpacing.xxxl),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -690,40 +745,33 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
 
   /// ป้ายเตือน: ร้านยังไม่ผ่านการอนุมัติจากแอดมิน — ยังไม่แสดงต่อลูกค้า
   Widget _buildPendingApprovalBanner() {
+    final jdc = JdcColors.of(context);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(JdcSpacing.lg),
       decoration: BoxDecoration(
-        color: Colors.amber.shade50,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.amber.shade300),
+        color: jdc.brandSoft,
+        borderRadius: BorderRadius.circular(JdcRadius.field),
+        border: Border.all(color: jdc.brandLine),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.hourglass_top, color: Colors.amber.shade800, size: 26),
-          const SizedBox(width: 12),
+          Icon(Icons.hourglass_top, color: jdc.brandOnSoft, size: 26),
+          const SizedBox(width: JdcSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'ร้านค้ารอการอนุมัติจากแอดมิน',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: Colors.amber.shade900,
-                  ),
+                  style: _txt(jdc.brandOnSoft, 14, w: 700),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: JdcSpacing.xs),
                 Text(
                   'คุณสามารถกรอกข้อมูลร้านและเพิ่มเมนูได้เลย '
                   'แต่ร้านของคุณจะยังไม่แสดงให้ลูกค้าเห็นจนกว่าจะได้รับการอนุมัติ',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    height: 1.45,
-                    color: Colors.amber.shade900,
-                  ),
+                  style: _txt(jdc.brandOnSoft, 12.5, height: 1.45),
                 ),
               ],
             ),
@@ -765,11 +813,11 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: JdcColors.of(context).onPanel,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.15),
+                        color: JdcColors.of(context).shadowCard.first.color,
                         blurRadius: 10,
                       ),
                     ],
@@ -781,13 +829,13 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                             width: 80,
                             height: 80,
                             fit: BoxFit.cover,
-                            backgroundColor: Colors.white,
+                            backgroundColor: JdcColors.of(context).knob,
                           )
-                        : const GrayscaleLogoPlaceholder(
+                        : GrayscaleLogoPlaceholder(
                             width: 80,
                             height: 80,
                             fit: BoxFit.contain,
-                            backgroundColor: Colors.white,
+                            backgroundColor: JdcColors.of(context).knob,
                           ),
                   ),
                 ),
@@ -799,7 +847,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                     decoration: BoxDecoration(
                       color: _accent,
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
+                      border: Border.all(color: JdcColors.of(context).panelLine, width: 2),
                     ),
                     child: Icon(
                       PlatformAdaptive.icon(
@@ -807,7 +855,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                         ios: CupertinoIcons.camera,
                       ),
                       size: 12,
-                      color: Colors.white,
+                      color: JdcColors.of(context).onPanel,
                     ),
                   ),
                 ),
@@ -818,24 +866,24 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
           Text(
             _userProfile?['full_name'] ??
                 AppLocalizations.of(context)!.accountRoleMerchant,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: JdcColors.of(context).onPanel,
             ),
           ),
           const SizedBox(height: 4),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
+              color: JdcColors.of(context).panelLine,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
               AppLocalizations.of(context)!.accountRoleMerchant,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: Colors.white,
+                color: JdcColors.of(context).onPanel,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -1040,9 +1088,9 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
               final value = text.isEmpty ? 0.0 : (double.tryParse(text) ?? -1);
               if (value < 0) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
+                  SnackBar(
                     content: Text('กรุณาใส่จำนวนเงินที่ถูกต้อง'),
-                    backgroundColor: Colors.red,
+                    backgroundColor: JdcColors.of(context).danger,
                   ),
                 );
                 return;
@@ -1051,7 +1099,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: _accent,
-              foregroundColor: Colors.white,
+              foregroundColor: JdcColors.of(context).onCta,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -1074,7 +1122,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
               content: Text(result <= 0
                   ? 'ยกเลิกยอดสั่งซื้อขั้นต่ำแล้ว'
                   : 'ตั้งยอดสั่งซื้อขั้นต่ำ ${_formatMinOrderText(result)} แล้ว'),
-              backgroundColor: Colors.green,
+              backgroundColor: JdcColors.of(context).successFill,
             ),
           );
         }
@@ -1085,7 +1133,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             SnackBar(
               content: Text(
                   AppLocalizations.of(context)!.mchSetSaveFailed(e.toString())),
-              backgroundColor: Colors.red,
+              backgroundColor: JdcColors.of(context).danger,
             ),
           );
         }
@@ -1186,14 +1234,14 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                   ),
                   const Divider(),
                   ListTile(
-                    leading: Icon(Icons.nights_stay, color: Colors.indigo[400]),
+                    leading: Icon(Icons.nights_stay, color: JdcColors.of(context).infoInk),
                     title: Text(AppLocalizations.of(context)!.mchSetCloseTime),
                     trailing: Text(
                       formatTime(selectedClose),
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.indigo[400],
+                        color: JdcColors.of(context).infoInk,
                       ),
                     ),
                     onTap: () async {
@@ -1234,7 +1282,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                           fontWeight: FontWeight.w600,
                         ),
                         side: BorderSide(
-                          color: isSelected ? _accent : Colors.grey.shade300,
+                          color: isSelected ? _accent : JdcColors.of(context).line,
                         ),
                         onSelected: (selected) {
                           setDialogState(() {
@@ -1283,7 +1331,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                         if (states.contains(WidgetState.selected)) {
                           return _accent.withValues(alpha: 0.18);
                         }
-                        return Colors.white;
+                        return JdcColors.of(context).surface;
                       }),
                       side: WidgetStateProperty.resolveWith<BorderSide?>((
                         states,
@@ -1291,7 +1339,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                         if (states.contains(WidgetState.selected)) {
                           return BorderSide(color: _accent);
                         }
-                        return BorderSide(color: Colors.grey.shade300);
+                        return BorderSide(color: JdcColors.of(context).line);
                       }),
                       foregroundColor: WidgetStateProperty.resolveWith<Color?>((
                         states,
@@ -1323,7 +1371,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                               .mchSetAutoScheduleOnDesc
                           : AppLocalizations.of(context)!
                               .mchSetAutoScheduleOffDesc,
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      style: TextStyle(fontSize: 12, color: JdcColors.of(context).muted),
                     ),
                     onChanged: (value) {
                       setDialogState(() {
@@ -1345,7 +1393,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                         SnackBar(
                           content: Text(AppLocalizations.of(context)!
                               .mchSetSelectAtLeast1Day),
-                          backgroundColor: Colors.red,
+                          backgroundColor: JdcColors.of(context).danger,
                         ),
                       );
                       return;
@@ -1354,7 +1402,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _accent,
-                    foregroundColor: Colors.white,
+                    foregroundColor: JdcColors.of(context).onCta,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -1394,7 +1442,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                 AppLocalizations.of(context)!.mchSetShopHoursSaved(openStr,
                     closeStr, _formatOpenDaysText(selectedDays.toList())),
               ),
-              backgroundColor: Colors.green,
+              backgroundColor: JdcColors.of(context).successFill,
             ),
           );
         }
@@ -1405,7 +1453,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             SnackBar(
               content: Text(
                   AppLocalizations.of(context)!.mchSetSaveFailed(e.toString())),
-              backgroundColor: Colors.red,
+              backgroundColor: JdcColors.of(context).danger,
             ),
           );
         }
@@ -1450,7 +1498,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                   color: _accent.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.key_outlined,
                   color: _accent,
                   size: 20,
@@ -1638,7 +1686,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(l10n.accountOpenLinkFailed),
-              backgroundColor: Colors.red,
+              backgroundColor: JdcColors.of(context).danger,
             ),
           );
         }
@@ -1650,7 +1698,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.accountErrorGeneric(e.toString())),
-            backgroundColor: Colors.red,
+            backgroundColor: JdcColors.of(context).danger,
           ),
         );
       }
@@ -1666,11 +1714,11 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: JdcColors.of(context).surface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: JdcColors.of(context).sunken,
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -1684,7 +1732,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: Colors.grey[500],
+              color: JdcColors.of(context).dim,
             ),
           ),
           const SizedBox(height: 10),
@@ -1692,7 +1740,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             children: [
               Text(
                 AppLocalizations.of(context)!.accountVersionLabel,
-                style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 13, color: JdcColors.of(context).muted),
               ),
               const Spacer(),
               GestureDetector(
@@ -1716,7 +1764,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                       const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
                   child: Text(
                     _appVersion ?? AppLocalizations.of(context)!.accountLoading,
-                    style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+                    style: TextStyle(fontSize: 13, color: JdcColors.of(context).dim),
                   ),
                 ),
               ),
@@ -1725,14 +1773,20 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
           const SizedBox(height: 6),
           Row(
             children: [
-              Text(
-                AppLocalizations.of(context)!.accountDevelopedByLabel,
-                style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              // ป้ายภาษาไทยยาวกว่าที่ว่างบนจอ 360 ต้องยอมย่อแทนการดันจนล้น
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(context)!.accountDevelopedByLabel,
+                  style:
+                      TextStyle(fontSize: 13, color: JdcColors.of(context).muted),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               Text(
                 'Jedechai Team',
-                style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+                style: TextStyle(fontSize: 13, color: JdcColors.of(context).dim),
               ),
             ],
           ),
@@ -1763,8 +1817,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
         ),
         style: OutlinedButton.styleFrom(
-          foregroundColor: Colors.red,
-          side: const BorderSide(color: Colors.red),
+          foregroundColor: JdcColors.of(context).dangerInk,
+          side: BorderSide(color: JdcColors.of(context).danger),
           padding: const EdgeInsets.symmetric(vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -1789,7 +1843,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
         ),
         label: Text(l10n.accountDelete, style: const TextStyle(fontSize: 14)),
         style: TextButton.styleFrom(
-          foregroundColor: Colors.grey[500],
+          foregroundColor: JdcColors.of(context).dim,
           padding: const EdgeInsets.symmetric(vertical: 12),
         ),
       ),
@@ -1810,7 +1864,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: JdcColors.of(context).sunken,
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

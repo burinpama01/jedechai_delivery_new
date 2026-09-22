@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Implementation Plan — Jedechai AI Roadmap v1</title>
+  <style>
+    :root {
+      --ink:#14213d; --muted:#667085; --paper:#f5f7fb; --surface:#fff; --line:#d9e1eb;
+      --orange:#f28c28; --orange-dark:#9c4809; --blue:#2367d1; --green:#16794a;
+      --amber:#9a5b00; --red:#b42318; --violet:#6941c6; --soft-blue:#eaf2ff;
+      --soft-green:#e9f7ef; --soft-amber:#fff4da; --soft-red:#ffebe9; --shadow:0 12px 34px rgba(20,33,61,.09);
+    }
+    *{box-sizing:border-box} html{scroll-behavior:smooth}
+    body{margin:0;background:linear-gradient(135deg,#fff8ed 0%,var(--paper) 38%,#edf4ff 100%);color:var(--ink);font-family:"Noto Sans Thai","Leelawadee UI",Tahoma,sans-serif;line-height:1.62}
+    a{color:var(--blue)} code,pre{font-family:Consolas,"Courier New",monospace}
+    .layout{display:grid;grid-template-columns:280px minmax(0,1fr);max-width:1500px;margin:auto}
+    aside{position:sticky;top:0;height:100vh;padding:28px 22px;background:#101b34;color:#dce6f7;overflow:auto}
+    aside strong{display:block;color:#fff;font-size:1.1rem;margin-bottom:20px} aside a{display:block;color:#cbd6e7;text-decoration:none;padding:8px 10px;border-radius:8px;font-size:.9rem}
+    aside a:hover{color:#fff;background:rgba(255,255,255,.08)}
+    main{min-width:0;padding:38px clamp(22px,4vw,64px) 90px}
+    .hero{padding:42px;border-radius:24px;color:#fff;background:linear-gradient(120deg,#14213d 0%,#263b68 64%,#9c4809 100%);box-shadow:var(--shadow)}
+    .eyebrow{font-weight:900;letter-spacing:.09em;text-transform:uppercase;color:#ffd3a6}.hero h1{font-size:clamp(2rem,4.6vw,4rem);line-height:1.08;margin:10px 0 14px}.hero p{max-width:900px;font-size:1.06rem}
+    .chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:20px}.chip,.tag{display:inline-flex;align-items:center;border-radius:999px;padding:6px 10px;font-size:.8rem;font-weight:900}
+    .chip{border:1px solid rgba(255,255,255,.24);background:rgba(255,255,255,.12)}
+    .tag.blue{background:var(--soft-blue);color:var(--blue)}.tag.green{background:var(--soft-green);color:var(--green)}.tag.amber{background:var(--soft-amber);color:var(--amber)}.tag.red{background:var(--soft-red);color:var(--red)}
+    h2{margin:58px 0 16px;font-size:1.85rem;line-height:1.25} h3{margin:28px 0 10px;font-size:1.28rem} h4{margin:22px 0 8px}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}.card{grid-column:span 4;padding:20px;background:var(--surface);border:1px solid var(--line);border-radius:15px;box-shadow:0 6px 22px rgba(20,33,61,.05)}.half{grid-column:span 6}.wide{grid-column:span 12}
+    .metric{font-size:2rem;font-weight:950;color:var(--orange-dark)}.muted{color:var(--muted)}
+    .callout{padding:17px 19px;border-left:5px solid var(--blue);border-radius:0 12px 12px 0;background:var(--soft-blue)}.callout.warn{border-color:var(--amber);background:var(--soft-amber)}.callout.danger{border-color:var(--red);background:var(--soft-red)}
+    .flow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:18px;background:#fff;border:1px solid var(--line);border-radius:14px}.flow span{padding:9px 12px;border-radius:9px;background:#eef2f7;font-weight:800}.flow b{color:var(--orange-dark)}
+    table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}th,td{padding:12px 13px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}th{background:#eef2f7;color:#465266;font-size:.8rem;letter-spacing:.04em;text-transform:uppercase}tr:last-child td{border-bottom:0}
+    pre{overflow:auto;padding:18px;border-radius:12px;color:#eaf1ff;background:#101b34;font-size:.84rem;line-height:1.58;white-space:pre}
+    .task{margin:24px 0;padding:25px;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 7px 24px rgba(20,33,61,.05)}.task h3{margin-top:0}.task-head{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.num{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;color:#fff;background:var(--ink);font-weight:950}.checks{list-style:none;padding:0}.checks li{position:relative;padding:8px 8px 8px 33px;border-bottom:1px dashed #e5eaf0}.checks li:last-child{border:0}.checks li:before{content:"□";position:absolute;left:5px;top:6px;color:var(--blue);font-size:1.18rem;font-weight:900}
+    .gate{display:grid;grid-template-columns:70px 1fr;gap:16px;padding:17px 0;border-bottom:1px solid var(--line)}.gate:last-child{border:0}.gate strong{display:grid;place-items:center;height:42px;border-radius:10px;color:#fff;background:var(--violet)}
+    .wire{display:grid;grid-template-columns:220px 1fr;min-height:350px;background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden}.wire nav{padding:20px;color:#fff;background:var(--ink)}.wire nav div{padding:8px;margin:7px 0;border-radius:8px}.wire nav .active{background:rgba(242,140,40,.25);color:#ffd3a6}.wire section{padding:23px}.row{display:grid;grid-template-columns:28px 1.4fr .6fr 1fr .7fr;gap:10px;padding:12px 0;align-items:center;border-bottom:1px solid var(--line)}.bar{height:8px;border-radius:999px;background:#e8edf3}.bar i{display:block;height:100%;width:94%;border-radius:inherit;background:var(--green)}.bar.low i{width:58%;background:var(--amber)}
+    .footer-note{margin-top:50px;padding:22px;border-radius:16px;color:#fff;background:#14213d}
+    @media(max-width:960px){.layout{display:block}aside{display:none}.card,.half{grid-column:span 12}.wire{grid-template-columns:1fr}.wire nav{display:none}}
+    @media(max-width:650px){main{padding:14px 10px 60px}.hero{padding:27px 20px}.row{grid-template-columns:26px 1fr .6fr}.row>:nth-child(4),.row>:nth-child(5){display:none}th,td{padding:10px 8px;font-size:.87rem}}
+    @media print{body{background:#fff}.layout{display:block}aside{display:none}main{padding:0}.hero,.task,.card{box-shadow:none}.task{break-inside:avoid}}
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <strong>AI Roadmap v1</strong>
+    <a href="#summary">สรุปผู้บริหาร</a><a href="#baseline">หลักฐานระบบเดิม</a><a href="#scope">ขอบเขต</a><a href="#architecture">สถาปัตยกรรม</a><a href="#contracts">Data/API Contract</a><a href="#files">File Map</a><a href="#phase-a">Phase A · Merchant AI</a><a href="#phase-b">Phase B · Admin AI</a><a href="#phase-c">Phase C · Revenue AI</a><a href="#tests">Verification Matrix</a><a href="#release">Release Gates</a><a href="#risks">ความเสี่ยง</a>
+  </aside>
+  <main>
+    <header class="hero" id="summary">
+      <div class="eyebrow">Jedechai Delivery · Implementation Plan</div>
+      <h1>AI Roadmap v1</h1>
+      <p><strong>เป้าหมาย:</strong> ลดงานร้านค้า → ลดงานแอดมิน → เพิ่มยอดขาย โดยเริ่มจาก “ถ่ายรูปป้ายเมนูแล้วสร้างรายการแบบร่าง” และยึดหลัก AI เสนอ คนตรวจ ระบบเดิมเป็นผู้บันทึก</p>
+      <p><strong>Architecture:</strong> Flutter/Admin Web เรียก Supabase Edge Functions ผ่าน JWT; ไฟล์ต้นฉบับอยู่ใน private storage; provider adapter คืน structured JSON; draft และ usage ถูกควบคุมด้วย RLS, budget, retention และ audit ก่อน commit แบบ transaction ลงข้อมูลจริง</p>
+      <p><strong>Tech stack:</strong> Flutter, Supabase PostgreSQL/RLS/Storage/Edge Functions, Deno/TypeScript, Vanilla JavaScript Admin Web, Node/Dart/Deno tests</p>
+      <div class="chips"><span class="chip">Status: PLAN-ONLY</span><span class="chip">Version: v1</span><span class="chip">Date: 31 Aug 2026</span><span class="chip">NO MIGRATION · NO DEPLOY</span></div>
+    </header>
+
+    <div class="callout warn" style="margin-top:22px"><strong>คำสั่งสำหรับ agentic workers:</strong> เมื่อได้รับอนุมัติให้ implement ให้ใช้ <code>superpowers:subagent-driven-development</code> หรือ <code>superpowers:executing-plans</code> ทำทีละ task พร้อม checkpoint ห้ามตีความการอนุมัติเอกสารนี้เป็นสิทธิ์รัน migration, ตั้ง secret หรือ deploy production</div>
+
+    <h2 id="baseline">1. หลักฐานและจุดเชื่อมของระบบเดิม</h2>
+    <table>
+      <thead><tr><th>ความสามารถเดิม</th><th>Source seam ที่ยืนยัน</th><th>การใช้ในแผน</th></tr></thead>
+      <tbody>
+        <tr><td>รายการเมนูร้าน</td><td><code>jedechai_delivery_new/lib/apps/merchant/screens/menu_management_screen.dart</code></td><td>เพิ่มปุ่ม “สแกนเมนูด้วย AI” และกลับมา refresh หลัง commit</td></tr>
+        <tr><td>สร้าง/แก้เมนู</td><td><code>.../menu/merchant_add_edit_menu_screen.dart</code> เขียน <code>menu_items</code> และอัปโหลดรูปผ่าน <code>StorageService</code></td><td>ใช้ contract เดิมของ name, price, description, category, category_id, is_available</td></tr>
+        <tr><td>รูปภาพ</td><td><code>jedechai_delivery_new/lib/common/services/image_picker_service.dart</code> และ <code>storage_service.dart</code></td><td>reuse การเลือกกล้อง/แกลเลอรี แต่เพิ่ม private upload path สำหรับรูปป้าย</td></tr>
+        <tr><td>หมวดหมู่ร้าน</td><td><code>supabase/migrations/20260507114000_merchant_menu_improvements.sql</code></td><td>AI แนะนำ category text; การผูก category_id ต้องตรงรายการของร้านเท่านั้น</td></tr>
+        <tr><td>Edge Function auth</td><td><code>supabase/functions/_shared/admin-auth.ts</code></td><td>reuse CORS/JSON response; merchant function ต้องตรวจ JWT และ ownership แยกจาก admin helper</td></tr>
+        <tr><td>Admin Web modular pages</td><td><code>admin-web/src/main.js</code>, <code>src/pages/index.js</code>, <code>src/router/meta.js</code></td><td>เพิ่มหน้า AI Operations โดยไม่ย้อนกลับไปแก้ legacy renderer</td></tr>
+      </tbody>
+    </table>
+    <div class="callout danger" style="margin-top:16px"><strong>Baseline gate:</strong> ก่อน implement ต้องรัน test ปัจจุบันใหม่และแยก pre-existing failures ออกจาก regression ของ AI; ห้ามอ้างผลเก่าหรือถือว่า Graphify เป็นหลักฐาน runtime</div>
+
+    <h2 id="scope">2. ขอบเขตและลำดับส่งมอบ</h2>
+    <div class="grid">
+      <article class="card"><span class="tag green">Phase A · P0</span><h3>Merchant AI</h3><p>นำเข้าป้ายเมนู, ตรวจ/แก้ draft, commit รายการที่เลือก, usage/budget/retention และ beta ด้วย feature flag</p></article>
+      <article class="card"><span class="tag blue">Phase B · P1</span><h3>Admin AI</h3><p>สรุป Ticket/เหตุการณ์และเสนอการจัดประเภทแบบ read-only ไม่มีคำสั่งการเงินหรือบัญชี</p></article>
+      <article class="card"><span class="tag amber">Phase C · P2</span><h3>Revenue AI</h3><p>candidate rules + AI reranking + A/B test โดยส่วนลดและ eligibility มาจาก deterministic business rules</p></article>
+    </div>
+    <h3>Out of scope ของ v1</h3>
+    <ul><li>บันทึกเมนูหรือเปลี่ยนราคาโดยไม่ยืนยัน</li><li>คืนเงิน ปรับ Wallet ระงับบัญชี ยกเลิกออเดอร์ หรือเปลี่ยนสิทธิ์ด้วย AI</li><li>voice agent, chatbot ที่ตอบลูกค้าอัตโนมัติ และ autonomous promotion</li><li>production secret, migration, deploy, model contract ระยะยาว และ vendor lock-in</li></ul>
+
+    <h2 id="architecture">3. Target Architecture</h2>
+    <div class="flow"><span>Merchant App</span><b>→</b><span>Private Storage</span><b>→</b><span>AI Edge Function</span><b>→</b><span>Provider Adapter</span><b>→</b><span>Draft + Confidence</span><b>→</b><span>Human Review</span><b>→</b><span>Atomic Commit RPC</span></div>
+    <div class="grid" style="margin-top:16px">
+      <article class="card half"><h3>Trust boundaries</h3><ul><li>Mobile ไม่มี provider API key หรือ service-role key</li><li>Function ตรวจ JWT, merchant ownership, object prefix และ request budget</li><li>ข้อความในภาพถือเป็นข้อมูล ไม่ใช่คำสั่ง prompt</li><li>provider response ต้องผ่าน strict schema ก่อน insert draft</li></ul></article>
+      <article class="card half"><h3>Failure behavior</h3><ul><li>provider timeout → job เป็น <code>failed_retryable</code>; เมนูเดิมไม่เปลี่ยน</li><li>บางรูปอ่านไม่ได้ → คืนผลบางส่วนพร้อม warning</li><li>commit ซ้ำ → คืนผลเดิมจาก idempotency guard</li><li>budget เกิน → block ก่อนเรียก provider และบันทึก usage event</li></ul></article>
+    </div>
+
+    <h3>Reference UI</h3>
+    <div class="wire">
+      <nav><strong>Jedechai Merchant</strong><div>ภาพรวม</div><div>ออเดอร์</div><div class="active">เมนู · AI Import</div><div>คูปอง</div><div>ตั้งค่า</div></nav>
+      <section><span class="tag blue">พร้อมตรวจ 20 รายการ</span><h3>ตรวจเมนูก่อนบันทึก</h3><p class="muted">เลือกเฉพาะรายการที่ถูกต้อง ข้อมูลเตือนต้องแก้ก่อนยืนยัน</p><div class="row"><strong>✓</strong><strong>กะเพราหมูกรอบ</strong><strong>฿65</strong><span>อาหารตามสั่ง</span><div class="bar"><i></i></div></div><div class="row"><strong>✓</strong><strong>ข้าวผัดทะเล</strong><strong>฿80</strong><span>อาหารจานเดียว</span><div class="bar"><i></i></div></div><div class="row"><strong>!</strong><strong>ต้มยำรวมมิตร</strong><strong>฿1?0</strong><span>ต้ม / แกง</span><div class="bar low"><i></i></div></div><p><strong>Primary action:</strong> ยืนยัน 18 รายการ · <strong>Secondary:</strong> แก้รายการเตือน</p></section>
+    </div>
+    <p>UI tokens, responsive rules และข้อความสถานะอยู่ที่ <a href="../Design/design_system.html">Design/design_system.html</a></p>
+
+    <h2 id="contracts">4. Data และ API Contract</h2>
+    <h3>4.1 ตารางและ storage</h3>
+    <table>
+      <thead><tr><th>Resource</th><th>หน้าที่</th><th>Security</th></tr></thead>
+      <tbody>
+        <tr><td><code>ai_feature_config</code></td><td>enabled, daily_limit_per_actor, max_images, max_cost_thb, retention_hours, rollout_percent ต่อ feature</td><td>อ่าน/เขียนผ่าน service role; admin action ต้องผ่าน admin auth</td></tr>
+        <tr><td><code>ai_menu_import_jobs</code></td><td>เจ้าของงาน สถานะ image_count idempotency_key provider/model cost error และ expires_at</td><td>merchant เห็นงานของตน; function ตรวจ owner ซ้ำ</td></tr>
+        <tr><td><code>ai_menu_import_drafts</code></td><td>name, price, category, description, options, confidence, warnings, accepted, committed_menu_item_id</td><td>สิทธิ์ผ่าน parent job; service role เป็นผู้ insert</td></tr>
+        <tr><td><code>ai_usage_events</code></td><td>feature, actor, provider/model, units, cost, latency, status, request_id</td><td>ไม่มี public/authenticated select; admin function อ่านแบบ aggregate</td></tr>
+        <tr><td><code>ai-import-source</code></td><td>private bucket path <code>{merchantId}/{jobId}/{uuid}.webp</code></td><td>owner upload/read เฉพาะ prefix; lifecycle cleanup 24 ชั่วโมง</td></tr>
+      </tbody>
+    </table>
+
+    <h3>4.2 Provider-neutral types</h3>
+    <pre>export type ConfidenceLevel = "high" | "review" | "unreadable";
+
+export interface AiMenuDraftItem {
+  sourceIndex: number;
+  name: string;
+  price: number | null;
+  categoryName: string | null;
+  description: string | null;
+  options: Array&lt;{ name: string; priceDelta: number }&gt;;
+  confidence: { name: number; price: number; category: number };
+  level: ConfidenceLevel;
+  warnings: string[];
+}
+
+export interface MenuExtractionProvider {
+  extract(input: {
+    images: Uint8Array[];
+    locale: "th-TH";
+    requestId: string;
+  }): Promise&lt;{ items: AiMenuDraftItem[]; usage: ProviderUsage }&gt;;
+}</pre>
+
+    <h3>4.3 Edge Function request/response</h3>
+    <pre>POST /functions/v1/ai-menu-import
+Authorization: Bearer &lt;merchant JWT&gt;
+Content-Type: application/json
+
+{
+  "jobId": "uuid",
+  "locale": "th-TH"
+}
+
+200
+{
+  "jobId": "uuid",
+  "status": "ready_for_review",
+  "summary": { "total": 20, "review": 3, "unreadable": 1 }
+}
+
+POST /rest/v1/rpc/commit_ai_menu_import
+{
+  "p_job_id": "uuid",
+  "p_selected_draft_ids": ["uuid", "uuid"]
+}
+
+200
+{ "inserted": 18, "skippedDuplicates": 2, "menuItemIds": ["uuid"] }</pre>
+    <p><strong>State machine:</strong> <code>created → uploaded → processing → ready_for_review → committing → committed</code>; failure ใช้ <code>failed_retryable</code>, <code>failed_terminal</code>, <code>expired</code> และ <code>cancelled</code></p>
+
+    <h2 id="files">5. File Map</h2>
+    <table>
+      <thead><tr><th>Action</th><th>Path</th><th>Responsibility</th></tr></thead>
+      <tbody>
+        <tr><td>Create</td><td><code>supabase/migrations/20260831090000_ai_menu_import_foundation.sql</code></td><td>tables, indexes, RLS, bucket, commit RPC, cleanup function</td></tr>
+        <tr><td>Create</td><td><code>supabase/functions/_shared/ai-types.ts</code></td><td>strict provider-neutral types และ validation</td></tr>
+        <tr><td>Create</td><td><code>supabase/functions/_shared/ai-provider.ts</code></td><td>provider adapter, timeout, normalized usage และ error mapping</td></tr>
+        <tr><td>Create</td><td><code>supabase/functions/ai-menu-import/index.ts</code></td><td>merchant auth, ownership, budget, download, extraction, draft persistence</td></tr>
+        <tr><td>Create</td><td><code>supabase/functions/ai-menu-import/index.test.ts</code></td><td>Deno unit tests สำหรับ auth/schema/provider failures</td></tr>
+        <tr><td>Create</td><td><code>test/ai-menu-import-smoke.test.js</code></td><td>migration/RLS/function/UI source contract guard</td></tr>
+        <tr><td>Create</td><td><code>jedechai_delivery_new/lib/common/models/ai_menu_import.dart</code></td><td>job/draft/result immutable models</td></tr>
+        <tr><td>Create</td><td><code>jedechai_delivery_new/lib/common/services/ai_menu_import_service.dart</code></td><td>create/upload/process/review/commit API</td></tr>
+        <tr><td>Create</td><td><code>jedechai_delivery_new/lib/apps/merchant/screens/menu/merchant_ai_menu_import_screen.dart</code></td><td>เลือกภาพ, upload progress, background-safe job state</td></tr>
+        <tr><td>Create</td><td><code>jedechai_delivery_new/lib/apps/merchant/screens/menu/merchant_ai_menu_review_screen.dart</code></td><td>แก้ draft, warnings, selection, confirm</td></tr>
+        <tr><td>Modify</td><td><code>jedechai_delivery_new/lib/apps/merchant/screens/menu_management_screen.dart</code></td><td>entry point และ refresh หลัง commit</td></tr>
+        <tr><td>Create</td><td><code>jedechai_delivery_new/test/ai_menu_import_service_test.dart</code></td><td>service state/error/idempotency tests</td></tr>
+        <tr><td>Create</td><td><code>jedechai_delivery_new/test/merchant_ai_menu_review_screen_widget_test.dart</code></td><td>widget validation, state preservation, accessibility</td></tr>
+        <tr><td>Create</td><td><code>supabase/migrations/20260831091000_ai_admin_assist.sql</code></td><td>admin assist audit/feedback schema</td></tr>
+        <tr><td>Create</td><td><code>supabase/functions/ai-admin-assist/index.ts</code></td><td>admin-only read/summarize/classify endpoint</td></tr>
+        <tr><td>Create</td><td><code>admin-web/src/pages/aiAssistPage.js</code></td><td>operations dashboard, summary, feedback, usage</td></tr>
+        <tr><td>Modify</td><td><code>admin-web/src/main.js</code>, <code>src/pages/index.js</code>, <code>src/router/meta.js</code></td><td>register modular AI page</td></tr>
+        <tr><td>Create</td><td><code>supabase/migrations/20260831092000_ai_revenue_experiments.sql</code></td><td>experiment assignment/exposure/outcome audit</td></tr>
+        <tr><td>Create</td><td><code>supabase/functions/ai-menu-recommendations/index.ts</code></td><td>rule-based candidates + optional AI rerank</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="phase-a">6. Phase A — Merchant AI</h2>
+    <article class="task">
+      <div class="task-head"><span class="num">A0</span><div><h3>Baseline และ provider benchmark</h3><span class="tag red">Gate before code</span></div></div>
+      <p><strong>Files:</strong> create <code>docs/ai/menu-import-benchmark-v1.md</code>, create <code>test/fixtures/ai-menu-import/manifest.json</code>; ห้ามใส่รูป/ข้อมูลร้านจริงที่ไม่มีสิทธิ์ใช้งานลง Git</p>
+      <ul class="checks"><li>รัน <code>node --test</code>, Flutter tests และ scoped analyze; บันทึก pass/fail แยกจาก AI work</li><li>จัดชุดประเมิน 50 ภาพ/อย่างน้อย 500 menu lines ครอบคลุมไทย/อังกฤษ แสงน้อย เอียง glare ราคา 40.-, 40/50, 1?0 และข้อความหลายคอลัมน์</li><li>เทียบ provider ที่รองรับ vision structured output อย่างน้อย 2 รายจาก official docs ณ วันที่ลงมือ</li><li>คำนวณ exact name accuracy, exact price accuracy, hallucinated/missed items, p95 latency และ cost/import</li><li>เลือก provider เมื่อ name ≥95%, price ≥98%, hallucination+miss ≤2%, p95 ≤60s และเป้าหมาย cost ≤5 บาท/import</li></ul>
+      <pre>Run: node --test
+Expected: baseline result captured; existing failures are named and not attributed to AI.
+
+Run: C:\flutter\bin\flutter.bat test
+Expected: baseline pass/fail captured before new files are added.</pre>
+    </article>
+
+    <article class="task">
+      <div class="task-head"><span class="num">A1</span><div><h3>TDD data foundation, RLS และ atomic commit</h3><span class="tag amber">Local migration only</span></div></div>
+      <p><strong>Files:</strong> create <code>test/ai-menu-import-smoke.test.js</code> และ <code>supabase/migrations/20260831090000_ai_menu_import_foundation.sql</code></p>
+      <ul class="checks"><li>เขียน RED tests ยืนยัน tables/check constraints/indexes/RLS/private bucket/owner policies และไม่มี public usage read</li><li>เพิ่ม unique <code>(merchant_id, idempotency_key)</code>, indexes <code>(merchant_id,status,created_at desc)</code> และ <code>(job_id,position)</code></li><li>เพิ่ม <code>commit_ai_menu_import</code> แบบ <code>security definer</code> พร้อม <code>set search_path = ''</code>, ตรวจ <code>auth.uid()</code>, lock job, validate price &gt; 0, trim name, skip normalized duplicate และเขียน committed_menu_item_id</li><li>เพิ่ม cleanup function ให้ expire job และลบ storage objects ที่เกิน retention โดย task scheduling/deploy อยู่หลัง production approval</li><li>รัน RED แล้ว GREEN; migration ต้องไม่แตะข้อมูล menu_items เดิม</li></ul>
+      <pre>Run: node --test test\ai-menu-import-smoke.test.js
+Expected before SQL: FAIL because ai_menu_import_jobs is absent.
+Expected after SQL: PASS for schema, RLS, bucket, RPC and no-direct-AI-write guards.
+
+Run: supabase db push --dry-run --include-all
+Expected: migration appears in dry-run only; do not apply.</pre>
+    </article>
+
+    <article class="task">
+      <div class="task-head"><span class="num">A2</span><div><h3>Provider adapter และ Edge Function</h3><span class="tag blue">Server boundary</span></div></div>
+      <p><strong>Files:</strong> create <code>supabase/functions/_shared/ai-types.ts</code>, <code>ai-provider.ts</code>, <code>ai-menu-import/index.ts</code>, <code>index.test.ts</code></p>
+      <ul class="checks"><li>เขียน failing Deno tests สำหรับ missing JWT, wrong merchant, bad object prefix, disabled feature, budget exceeded, provider timeout, invalid schema และ partial result</li><li>สร้าง <code>MenuExtractionProvider</code> adapter; provider secret อ่านจาก <code>Deno.env</code> เท่านั้น</li><li>validate output ด้วย explicit checks: non-empty name ≤160 chars, finite price 0.01–1,000,000, confidence 0–1, options ≤50</li><li>download เฉพาะ private objects ที่อยู่ใต้ <code>{auth.uid()}/{jobId}/</code>; จำกัด 1–5 รูปและขนาดรวมตาม config</li><li>ใช้ request id, timeout, retry เฉพาะ transient error, usage insert ใน finally path และไม่ log raw image/customer text</li><li>persist drafts หลัง validation สำเร็จ; provider failure ต้องไม่สร้าง menu_items</li></ul>
+      <pre>Run: deno test supabase/functions/ai-menu-import/index.test.ts
+Expected: all auth, ownership, schema, timeout and budget cases PASS.
+
+Run: deno check supabase/functions/ai-menu-import/index.ts
+Expected: exit 0. If Deno is unavailable, mark BLOCKED; do not substitute Node syntax check.</pre>
+    </article>
+
+    <article class="task">
+      <div class="task-head"><span class="num">A3</span><div><h3>Flutter import/review flow</h3><span class="tag green">Human review</span></div></div>
+      <p><strong>Files:</strong> create model/service/import/review files จาก File Map; modify <code>menu_management_screen.dart</code></p>
+      <ul class="checks"><li>เขียน service tests ก่อน: create job, upload 1–5 compressed images, resume job, map warnings, retry, cancel, idempotent commit</li><li>เขียน widget tests ก่อน: เลือกรายการ, ราคา null/invalid block, confidence warning, edit inline, select all valid, back/return preserves draft, double-submit disabled</li><li>เพิ่ม secondary action “สแกนเมนูด้วย AI” ในหน้าเมนู โดยปุ่มเพิ่มเมนูเดิมยังอยู่เป็น primary fallback</li><li>reuse <code>ImagePickerService</code>; compress/strip metadata ก่อน upload; ห้ามขอ permission ใหม่เกิน camera/photo ที่ flow ใช้อยู่</li><li>เก็บ job id และ UI selection state ระหว่าง navigation; refresh menu list เฉพาะหลัง RPC commit สำเร็จ</li><li>แสดง explicit states uploading/processing/review/failed/budget-blocked/committed ตาม design system</li></ul>
+      <pre>Run: C:\flutter\bin\flutter.bat test test\ai_menu_import_service_test.dart test\merchant_ai_menu_review_screen_widget_test.dart
+Expected: all new service and widget tests PASS.
+
+Run: C:\flutter\bin\flutter.bat analyze --no-fatal-infos lib\common\models\ai_menu_import.dart lib\common\services\ai_menu_import_service.dart lib\apps\merchant\screens\menu
+Expected: 0 errors and 0 warnings.</pre>
+    </article>
+
+    <article class="task">
+      <div class="task-head"><span class="num">A4</span><div><h3>Phase A hardening, version และ beta readiness</h3><span class="tag red">Reviewer required</span></div></div>
+      <ul class="checks"><li>เพิ่ม cross-merchant RLS tests, prompt-injection image cases, oversized/corrupt file, replay/idempotency, retention cleanup และ cost circuit-breaker tests</li><li>ตรวจ privacy: raw images not logged, objects private, deletion evidence, provider retention setting และ Data safety impact</li><li>ก่อน build/commit ให้ bump Flutter <code>pubspec.yaml</code> ตาม patch/minor ที่ผู้ใช้อนุมัติและเพิ่ม build number</li><li>รัน code_reviewer ด้วย Mandatory Context Package; แก้ Critical/Major แล้ว re-review</li><li>สร้าง staging UAT checklist 10 ภาพ/ร้าน × 5 ร้าน; เก็บ accuracy/time/edit-rate/cost แบบไม่ปน production metrics</li><li>ยังไม่ deploy: ขอ approval แยกสำหรับ secret, migration, Edge Function และ beta rollout</li></ul>
+      <pre>Run: node --test test\ai-menu-import-smoke.test.js
+Run: C:\flutter\bin\flutter.bat test
+Run: C:\flutter\bin\flutter.bat analyze --no-fatal-infos
+Expected: AI tests PASS; full-suite deltas are explained; reviewer has no open Critical/Major finding.</pre>
+    </article>
+
+    <h2 id="phase-b">7. Phase B — Admin AI</h2>
+    <article class="task">
+      <div class="task-head"><span class="num">B1</span><div><h3>Read-only Admin Assist</h3><span class="tag blue">Start after Phase A beta</span></div></div>
+      <p><strong>Files:</strong> create <code>20260831091000_ai_admin_assist.sql</code>, <code>ai-admin-assist/index.ts</code>, <code>admin-web/src/pages/aiAssistPage.js</code>; modify modular page registration files</p>
+      <ul class="checks"><li>กำหนด inputs แบบ allowlist: ticket/event id, sanitized timeline, allowed fields; ไม่ส่ง wallet balance, secret, raw payment evidence หรือข้อมูลเกินความจำเป็น</li><li>output มี summary, category, priority suggestion, evidenceRefs และ confidence; ทุก evidence ref ต้องชี้ record ที่แอดมินมีสิทธิ์เปิด</li><li>function ใช้ <code>requireAdmin</code>; ไม่มี action endpoint สำหรับ refund, wallet, cancel, suspend, role หรือ outbound message</li><li>หน้า Admin แสดง AI label, evidence, copy summary และ feedback helpful/not helpful; ห้ามมีปุ่ม “ดำเนินการทั้งหมด”</li><li>เพิ่ม tests สำหรับ non-admin deny, missing evidence, prompt injection ใน ticket, PII redaction และ audit event</li><li>ก่อน build/commit ให้ bump <code>admin-web/package.json</code>; code review และ staging UAT เป็น gate</li></ul>
+      <pre>Run: deno test supabase/functions/ai-admin-assist/index.test.ts
+Run: node --check admin-web\src\pages\aiAssistPage.js
+Run: node --test test\ai-admin-assist-smoke.test.js
+Expected: auth/evidence/safety tests PASS and page syntax exits 0.</pre>
+      <p><strong>KPI:</strong> ลด median triage time ≥30%, category accuracy ≥85%, evidence coverage 100%, autonomous sensitive actions = 0</p>
+    </article>
+
+    <h2 id="phase-c">8. Phase C — Revenue AI</h2>
+    <article class="task">
+      <div class="task-head"><span class="num">C1</span><div><h3>Experiment-safe recommendations</h3><span class="tag amber">Start after Phase B KPI review</span></div></div>
+      <p><strong>Files:</strong> create <code>20260831092000_ai_revenue_experiments.sql</code>, <code>ai-menu-recommendations/index.ts</code>, recommendation tests และ customer UI integration file ที่ trace จาก current source ก่อนแก้</p>
+      <ul class="checks"><li>สร้าง deterministic eligible candidates จากร้านเปิด, menu available, stock/business rules, distance และ valid promotion ก่อน AI</li><li>AI ทำได้เฉพาะ rerank candidate ids; item id ที่อยู่นอก allowlist ต้องถูกทิ้ง</li><li>กำหนด stable experiment assignment, exposure event ก่อน outcome, control group และ guardrail cancellation/refund/complaint</li><li>ห้าม AI สร้างราคา/ส่วนลด; promotion id ต้องมาจาก active server-side rules</li><li>เพิ่ม tests สำหรับ closed store, unavailable item, cross-merchant mix, cold start, repeated exposure, opt-out และ rollback flag</li><li>review privacy/consent และขออนุมัติทดลอง 5% แยกจากการ deploy infrastructure</li></ul>
+      <pre>Run: deno test supabase/functions/ai-menu-recommendations/index.test.ts
+Run: node --test test\ai-recommendations-experiment-smoke.test.js
+Expected: eligibility, allowlist, assignment, exposure and rollback tests PASS.</pre>
+      <p><strong>Success gate:</strong> conversion/order value/repeat rate ดีขึ้นอย่างมีนัยสำคัญเชิงธุรกิจ โดย cancellation, refund และ complaint ไม่แย่กว่า control ตาม guardrail ที่อนุมัติก่อนเริ่มทดลอง</p>
+    </article>
+
+    <h2 id="tests">9. Verification Matrix</h2>
+    <table>
+      <thead><tr><th>ชั้น</th><th>หลักฐานขั้นต่ำ</th><th>ไม่สามารถแทนได้ด้วย</th></tr></thead>
+      <tbody>
+        <tr><td>Unit</td><td>Dart/Deno tests สำหรับ parser, schema, state, provider error</td><td>source-inspection smoke อย่างเดียว</td></tr>
+        <tr><td>Database</td><td>local/staging migration, RLS cross-tenant, atomic RPC, idempotency</td><td>SQL text scan หรือ dry-run อย่างเดียว</td></tr>
+        <tr><td>Integration</td><td>Flutter → Storage → Function → Draft → RPC ด้วย test project</td><td>mock provider ทุกชั้น</td></tr>
+        <tr><td>Visual/UX</td><td>mobile/desktop, loading/error/low confidence, back navigation, accessibility</td><td>widget test อย่างเดียว</td></tr>
+        <tr><td>Real device</td><td>Android/iOS กล้องจริง, แสงน้อย, network ช้า, resume app</td><td>build success หรือ emulator อย่างเดียว</td></tr>
+        <tr><td>Business</td><td>accuracy, edit rate, time saved, cost/import, beta feedback</td><td>model benchmark อย่างเดียว</td></tr>
+        <tr><td>Production</td><td>feature flag telemetry, cost alert, retention evidence, rollback drill</td><td>staging UAT</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="release">10. Release Gates และ Approval Boundary</h2>
+    <div class="card wide">
+      <div class="gate"><strong>G0</strong><div><b>Baseline refreshed</b><br><span class="muted">tests, git state, current migrations, provider docs และ compliance state</span></div></div>
+      <div class="gate"><strong>G1</strong><div><b>Provider benchmark approved</b><br><span class="muted">accuracy/latency/cost/retention ผ่านเกณฑ์ Phase A</span></div></div>
+      <div class="gate"><strong>G2</strong><div><b>Local implementation + review passed</b><br><span class="muted">TDD, RLS, security, reviewer Critical/Major = 0</span></div></div>
+      <div class="gate"><strong>G3</strong><div><b>ขออนุมัติ migration และ secrets แยก</b><br><span class="muted">ยืนยัน project ref, backup, impact, secret ownership และ rollback ก่อน action</span></div></div>
+      <div class="gate"><strong>G4</strong><div><b>Staging UAT passed</b><br><span class="muted">ร้านทดสอบ 5 ร้าน, accuracy/cost/privacy evidence และ real-device evidence</span></div></div>
+      <div class="gate"><strong>G5</strong><div><b>Compliance approved</b><br><span class="muted">Privacy Policy, Data safety, provider terms และ image retention</span></div></div>
+      <div class="gate"><strong>G6</strong><div><b>ขออนุมัติ production deploy แยก</b><br><span class="muted">deploy function/app ไม่รวมอยู่ในการอนุมัติ migration</span></div></div>
+      <div class="gate"><strong>G7</strong><div><b>Progressive rollout</b><br><span class="muted">5% → 25% → 100%; stop เมื่อ cost/error/complaint guardrail เกินค่า</span></div></div>
+    </div>
+
+    <h2 id="risks">11. ความเสี่ยงและวิธีควบคุม</h2>
+    <table>
+      <thead><tr><th>Risk</th><th>Impact</th><th>Control</th></tr></thead>
+      <tbody>
+        <tr><td>อ่านราคาไทยผิด</td><td>ร้านขายผิดราคา</td><td>exact-price benchmark, low-confidence block, human confirmation, no auto-publish</td></tr>
+        <tr><td>Prompt injection ในภาพ/Ticket</td><td>model ทำตามข้อความอันตราย</td><td>treat content as data, strict output schema, no tool/action access</td></tr>
+        <tr><td>ข้อมูลข้ามร้าน</td><td>privacy/security incident</td><td>JWT + owner check + RLS + storage prefix + cross-tenant tests</td></tr>
+        <tr><td>ค่าใช้จ่ายพุ่ง</td><td>margin เสีย</td><td>daily budget, max images, usage ledger, circuit breaker, cheaper first pass</td></tr>
+        <tr><td>Vendor lock-in</td><td>เปลี่ยน provider ยาก</td><td>provider-neutral interface, normalized schema/error/usage, benchmark rerun</td></tr>
+        <tr><td>รูปค้างเกินกำหนด</td><td>compliance risk</td><td>private bucket, expires_at, scheduled cleanup, deletion evidence alert</td></tr>
+        <tr><td>AI recommendation ทำให้ metric ดีปลอม</td><td>เพิ่มยอดแต่เพิ่มยกเลิก/ร้องเรียน</td><td>control group, stable assignment และ guardrail outcomes</td></tr>
+      </tbody>
+    </table>
+
+    <h2>12. Done Criteria</h2>
+    <ul class="checks"><li>Phase A ทำงานครบกับ staging project และไม่มี direct AI write สู่ menu_items</li><li>accuracy/time/cost/privacy KPIs มีหลักฐาน ไม่ใช่การประมาณ</li><li>test, analyze, Deno check, RLS/integration และ real-device gates ผ่านหรือระบุ blocker ชัดเจน</li><li>code_reviewer ไม่มี Critical/Major ค้าง</li><li>version bump เกิดก่อน build/commit ของแต่ละแอปตามกฎโปรเจกต์</li><li>Obsidian log/current/index/issue อัปเดตตามผลจริงของแต่ละ phase</li><li>migration, secret, deploy และ rollout มี approval แยก พร้อม rollback</li></ul>
+
+    <div class="footer-note"><strong>สถานะเอกสาร:</strong> Implementation Plan v1 สร้างเสร็จแล้ว แต่ runtime implementation, provider selection, migration, build, commit และ deployment ยังไม่เริ่ม เอกสารนี้ห้ามใช้แทน production authorization</div>
+  </main>
+</div>
+</body>
+</html>

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+
+import '../../../../theme/jdc_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../common/services/referral_service.dart';
 import '../../../../common/services/notification_service.dart';
 import '../../../../common/services/auth_service.dart';
-import '../../../../theme/app_theme.dart';
 
 class ReferralScreen extends StatefulWidget {
   const ReferralScreen({Key? key}) : super(key: key);
@@ -141,7 +142,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.referralTitle,
             style: const TextStyle(color: Colors.white)),
-        backgroundColor: AppTheme.primaryGreen,
+        backgroundColor: JdcColors.of(context).cta,
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -162,7 +163,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
   Widget _buildHeroSection() {
     return Container(
       width: double.infinity,
-      color: AppTheme.primaryGreen,
+      color: JdcColors.of(context).cta,
       padding: const EdgeInsets.only(bottom: 32, left: 24, right: 24),
       child: Column(
         children: [
@@ -224,25 +225,25 @@ class _ReferralScreenState extends State<ReferralScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: AppTheme.primaryGreen.withOpacity(0.1),
+                color: JdcColors.of(context).cta.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
                 border:
-                    Border.all(color: AppTheme.primaryGreen.withOpacity(0.3)),
+                    Border.all(color: JdcColors.of(context).cta.withOpacity(0.3)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     myReferralCode,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryGreen,
+                      color: JdcColors.of(context).cta,
                       letterSpacing: 2,
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.copy, color: AppTheme.primaryGreen),
+                    icon: Icon(Icons.copy, color: JdcColors.of(context).cta),
                     onPressed: _copyToClipboard,
                     constraints: const BoxConstraints(),
                     padding: EdgeInsets.zero,
@@ -258,7 +259,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                 icon: const Icon(Icons.share),
                 label: Text(AppLocalizations.of(context)!.referralShareButton),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryGreen,
+                  backgroundColor: JdcColors.of(context).cta,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -314,11 +315,11 @@ class _ReferralScreenState extends State<ReferralScreen> {
                         horizontal: 16, vertical: 12),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
+                      borderSide: BorderSide(color: JdcColors.of(context).line),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
+                      borderSide: BorderSide(color: JdcColors.of(context).line),
                     ),
                   ),
                 ),
@@ -327,7 +328,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
               ElevatedButton(
                 onPressed: _isLoading ? null : _submitCode,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryGreen,
+                  backgroundColor: JdcColors.of(context).cta,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                   shape: RoundedRectangleBorder(
@@ -491,8 +492,8 @@ class _ReferralScreenState extends State<ReferralScreen> {
           Container(
             width: 28,
             height: 28,
-            decoration: const BoxDecoration(
-              color: AppTheme.primaryGreen,
+            decoration: BoxDecoration(
+              color: JdcColors.of(context).cta,
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -516,7 +517,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                 const SizedBox(height: 4),
                 Text(
                   desc,
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                  style: TextStyle(color: JdcColors.of(context).muted, fontSize: 14),
                 ),
               ],
             ),

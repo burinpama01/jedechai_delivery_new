@@ -1,4 +1,6 @@
 ﻿import 'package:flutter/material.dart';
+
+import '../../../../theme/jdc_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import '../../../../common/widgets/app_network_image.dart';
@@ -6,7 +8,6 @@ import '../../../../common/widgets/language_switcher.dart';
 import '../../../../common/services/auth_service.dart';
 import '../../../../common/services/system_config_service.dart';
 import '../../../../common/services/referral_service.dart';
-import '../../../../theme/app_theme.dart';
 import '../../../../l10n/app_localizations.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
@@ -77,7 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.loginSuccessSnack),
-            backgroundColor: AppTheme.primaryGreen,
+            backgroundColor: JdcColors.of(context).cta,
           ),
         );
         
@@ -142,7 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryGreen,
+                backgroundColor: JdcColors.of(context).cta,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -219,7 +220,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: 100,
                     height: 100,
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                      color: JdcColors.of(context).cta.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(25),
                     ),
                     child: ClipRRect(
@@ -229,7 +230,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: 100,
                         height: 100,
                         fit: BoxFit.contain,
-                        backgroundColor: AppTheme.primaryGreen,
+                        backgroundColor: JdcColors.of(context).cta,
                       ),
                     ),
                   ),

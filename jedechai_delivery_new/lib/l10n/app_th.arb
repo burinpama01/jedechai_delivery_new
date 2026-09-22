@@ -5,9 +5,7 @@
   "useSystemLanguage": "ใช้ภาษาระบบ",
   "thai": "ไทย",
   "english": "อังกฤษ",
-
   "commonOk": "ตกลง",
-
   "loginWelcomeTitle": "ยินดีต้อนรับ",
   "loginWelcomeSubtitle": "เข้าสู่ระบบเพื่อเริ่มใช้งาน",
   "loginEmailLabel": "อีเมล",
@@ -19,12 +17,10 @@
   "loginSuccessSnack": "เข้าสู่ระบบสำเร็จ",
   "loginBackPressToExit": "กดอีกครั้งเพื่อออกจากแอป",
   "loginErrorDialogTitle": "เข้าสู่ระบบไม่สำเร็จ",
-
   "loginValidationEmailRequired": "กรุณากรอกอีเมล",
   "loginValidationEmailInvalid": "อีเมลไม่ถูกต้อง",
   "loginValidationPasswordRequired": "กรุณากรอกรหัสผ่าน",
   "loginValidationPasswordMinLength": "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร",
-
   "loginErrorInvalidCredentials": "อีเมลหรือรหัสผ่านไม่ถูกต้อง\nกรุณาตรวจสอบแล้วลองใหม่อีกครั้ง",
   "loginErrorEmailNotConfirmed": "อีเมลยังไม่ได้ยืนยัน\nกรุณาตรวจสอบอีเมลของคุณ",
   "loginErrorUserNotFound": "ไม่พบบัญชีผู้ใช้นี้\nกรุณาสมัครสมาชิกก่อน",
@@ -32,7 +28,6 @@
   "loginErrorCannotConnect": "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้\nกรุณาตรวจสอบอินเทอร์เน็ตของคุณ",
   "loginErrorNetwork": "เกิดปัญหาด้านเครือข่าย\nกรุณาลองใหม่อีกครั้ง",
   "loginErrorGeneric": "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",
-
   "registerTitle": "สมัครสมาชิก",
   "registerHeader": "สร้างบัญชีใหม่",
   "registerSubheader": "กรุณากรอกข้อมูลเพื่อสมัครสมาชิก",
@@ -47,7 +42,6 @@
   "registerButton": "สมัครสมาชิก",
   "registerHaveAccountPrefix": "มีบัญชีแล้ว? ",
   "registerGoToLogin": "เข้าสู่ระบบ",
-
   "registerValidationFullNameRequired": "กรุณากรอกชื่อ-นามสกุล",
   "registerValidationShopNameRequired": "กรุณากรอกชื่อร้าน",
   "registerValidationPhoneRequired": "กรุณากรอกเบอร์โทรศัพท์",
@@ -58,7 +52,6 @@
   "registerValidationPasswordMinLength": "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร",
   "registerValidationConfirmPasswordRequired": "กรุณายืนยันรหัสผ่าน",
   "registerValidationPasswordMismatch": "รหัสผ่านไม่ตรงกัน",
-
   "registerErrorDialogTitle": "สมัครไม่สำเร็จ",
   "registerErrorPasswordMismatch": "รหัสผ่านไม่ตรงกัน\nกรุณาตรวจสอบแล้วลองใหม่",
   "registerErrorPhoneUsed": "เบอร์โทรศัพท์นี้ถูกใช้งานแล้ว\nกรุณาใช้เบอร์โทรอื่นหรือเข้าสู่ระบบ",
@@ -69,11 +62,9 @@
   "registerErrorCannotConnect": "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้\nกรุณาตรวจสอบอินเทอร์เน็ตของคุณ",
   "registerErrorTooManyRequests": "คุณลองบ่อยเกินไป\nกรุณารอสักครู่แล้วลองใหม่",
   "registerErrorGeneric": "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",
-
   "registerSuccessTitle": "สมัครสำเร็จ!",
   "registerSuccessBody": "ลงทะเบียนเรียบร้อยแล้ว\nกรุณาเข้าสู่ระบบเพื่อเริ่มใช้งาน",
   "registerSuccessGoToLogin": "เข้าสู่ระบบ",
-
   "forgotPasswordTitle": "ลืมรหัสผ่าน",
   "forgotPasswordHeader": "ลืมรหัสผ่าน?",
   "forgotPasswordSubheader": "กรุณากรอกอีเมลของคุณเพื่อรับลิงก์รีเซ็ตรหัส",
@@ -82,7 +73,6 @@
   "forgotPasswordEmailInvalid": "กรุณากรอกอีเมลที่ถูกต้อง",
   "forgotPasswordSubmit": "ส่งอีเมลรีเซ็ตรหัส",
   "forgotPasswordBackToLogin": "กลับไปหน้าเข้าสู่ระบบ",
-
   "forgotPasswordErrorDialogTitle": "ส่งอีเมลไม่สำเร็จ",
   "forgotPasswordSuccessTitle": "ส่งอีเมลสำเร็จ!",
   "forgotPasswordSuccessBody": "ลิงก์รีเซ็ตรหัสผ่านถูกส่งไปที่\n{email}\n\nกรุณาตรวจสอบอีเมลของคุณ",
@@ -98,54 +88,88 @@
     }
   },
   "forgotPasswordSuccessGoToLogin": "กลับไปเข้าสู่ระบบ",
-
   "forgotPasswordErrorUserNotFound": "ไม่พบบัญชีที่ใช้อีเมลนี้\nกรุณาตรวจสอบอีเมลของคุณ",
   "forgotPasswordErrorTooManyRequests": "คุณส่งคำขอบ่อยเกินไป\nกรุณารอสักครู่แล้วลองใหม่",
   "forgotPasswordErrorCannotConnect": "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้\nกรุณาตรวจสอบอินเทอร์เน็ตของคุณ",
   "forgotPasswordErrorGeneric": "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",
-
   "foodCategoryAll": "ทั้งหมด",
   "foodCategoryMadeToOrder": "อาหารตามสั่ง",
   "foodCategoryNoodles": "ก๋วยเตี๋ยว",
   "foodCategoryDrinks": "เครื่องดื่ม",
   "foodCategoryDesserts": "ของหวาน",
   "foodCategoryFastFood": "ฟาสต์ฟู้ด",
-
   "foodHomeTitle": "สั่งอาหาร",
   "foodHomeSearchHint": "ค้นหาร้านอาหาร...",
   "foodHomeTopSelling": "สินค้าขายดี",
   "foodHomeTopCount": "Top {count}",
-  "@foodHomeTopCount": { "placeholders": { "count": {} } },
+  "@foodHomeTopCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "foodHomeSoldCount": "{count} ขายแล้ว",
-  "@foodHomeSoldCount": { "placeholders": { "count": {} } },
+  "@foodHomeSoldCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "foodHomeNearbyTitle": "ร้านอาหารใกล้คุณ",
   "foodHomeRestaurantCount": "{count} ร้าน",
-  "@foodHomeRestaurantCount": { "placeholders": { "count": {} } },
+  "@foodHomeRestaurantCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "foodHomeLoading": "กำลังโหลดร้านอาหาร...",
   "foodHomeErrorTitle": "ไม่สามารถโหลดข้อมูลได้",
   "foodHomeErrorSubtitle": "กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต",
   "foodHomeRetry": "ลองใหม่",
   "foodHomeEmptySearch": "ไม่พบร้านอาหารที่ค้นหา",
-  "foodHomeEmptyNoArea": "ในพื้นที่ของคุณยังไม่มีร้านอาหาร",
+  "foodHomeEmptyNoArea": "ในพื้นที่ของคุณยังไม่มีร้านอาหารเข้าร่วม",
   "foodHomeEmptyNoneOpen": "ไม่มีร้านอาหารเปิดให้บริการ",
   "foodHomeEmptyNoLocation": "กรุณาเปิดใช้งานตำแหน่งเพื่อดูร้านอาหารในบริเวณใกล้เคียง",
   "foodHomeEmptySearchHint": "ลองค้นหาด้วยคำอื่น",
-  "foodHomeEmptyNoAreaHint": "ไม่พบร้านอาหารที่เปิดอยู่ภายในรัศมี {radius} กม.",
-  "@foodHomeEmptyNoAreaHint": { "placeholders": { "radius": {} } },
+  "foodHomeEmptyNoAreaHint": "ยังไม่มีร้านอาหารเข้าร่วมภายในรัศมี {radius} กม. จากตำแหน่งของคุณ",
+  "@foodHomeEmptyNoAreaHint": {
+    "placeholders": {
+      "radius": {}
+    }
+  },
   "foodHomeEmptyTryLater": "กรุณาลองใหม่ภายหลัง",
   "foodHomeRestaurantDefault": "ร้านอาหาร",
   "foodHomeOpenBadge": "เปิด",
   "foodHomeDistanceKm": "{km} กม.",
-  "@foodHomeDistanceKm": { "placeholders": { "km": {} } },
+  "@foodHomeDistanceKm": {
+    "placeholders": {
+      "km": {}
+    }
+  },
   "foodHomeEstTime": "20-30 นาที",
-
+  "foodHomeOpenNowTitle": "ร้านเปิดอยู่ตอนนี้",
+  "foodHomeSeeAll": "ดูทั้งหมด",
+  "foodHomeAllShopsTooltip": "ดูร้านทั้งหมด",
+  "foodHomeOpenUntil": "เปิดถึง {time}",
+  "@foodHomeOpenUntil": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "foodCategoryOther": "อื่นๆ",
+  "foodHomeFavoriteAdd": "เพิ่มเป็นร้านโปรด",
+  "foodHomeFavoriteRemove": "เอาออกจากร้านโปรด",
+  "foodHomeFavoriteError": "อัปเดตร้านโปรดไม่สำเร็จ ลองใหม่อีกครั้ง",
+  "foodHomeEmptyCategory": "ยังไม่มีร้านในหมวดนี้ที่เปิดอยู่ตอนนี้",
+  "foodHomeEmptyCategoryHint": "ลองเลือกหมวดอื่น หรือแตะหมวดเดิมอีกครั้งเพื่อดูร้านทั้งหมด",
   "foodPromoCodeTitle": "โค้ดส่วนลด",
   "foodPromoCodeHint": "นำโค้ดนี้ไปใช้ตอนสั่งซื้อเพื่อรับส่วนลด",
   "foodPromoCodeCopied": "คัดลอกโค้ด \"{code}\" แล้ว",
-  "@foodPromoCodeCopied": { "placeholders": { "code": {} } },
+  "@foodPromoCodeCopied": {
+    "placeholders": {
+      "code": {}
+    }
+  },
   "foodPromoCodeClose": "ปิด",
   "foodPromoCodeCopy": "คัดลอกโค้ด",
-
   "foodCartViewCart": "ดูตะกร้า",
   "foodCartTitle": "ตะกร้าของคุณ",
   "foodCartClear": "ล้าง",
@@ -155,13 +179,16 @@
   "foodCartDeliveryCalcLater": "คำนวณเมื่อสั่ง",
   "foodCartTotal": "รวมทั้งหมด",
   "foodCartOrderButton": "สั่งอาหาร",
-
   "foodCheckoutTitle": "ยืนยันคำสั่งซื้อ",
   "foodCheckoutRestaurant": "ร้านอาหาร",
   "foodCheckoutDeliveryAddress": "ที่อยู่จัดส่ง",
   "foodCheckoutCurrentLocation": "ตำแหน่งปัจจุบัน",
   "foodCheckoutItemsTitle": "รายการอาหาร ({count} รายการ)",
-  "@foodCheckoutItemsTitle": { "placeholders": { "count": {} } },
+  "@foodCheckoutItemsTitle": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "foodCheckoutNoteTitle": "หมายเหตุถึงร้าน",
   "foodCheckoutNoteHint": "เช่น ไม่ใส่ผัก, เผ็ดน้อย...",
   "foodCheckoutPaymentTitle": "วิธีชำระเงิน",
@@ -173,59 +200,103 @@
   "foodCheckoutLoginRequired": "กรุณาเข้าสู่ระบบ",
   "foodCheckoutCreateFailed": "ไม่สามารถสร้างออเดอร์ได้",
   "foodCheckoutOrderFailed": "ไม่สามารถสั่งอาหารได้: {error}",
-  "@foodCheckoutOrderFailed": { "placeholders": { "error": {} } },
+  "@foodCheckoutOrderFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
   "foodCheckoutNotifTitle": "🍔 มีออเดอร์ใหม่!",
   "foodCheckoutNotifBody": "มีลูกค้าสั่งอาหาร ฿{amount} กรุณายืนยันออเดอร์",
-  "@foodCheckoutNotifBody": { "placeholders": { "amount": {} } },
+  "@foodCheckoutNotifBody": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
   "foodPrepTimeEstimate": "ร้านใช้เวลาเตรียมอาหารประมาณ {minutes} นาที",
-  "@foodPrepTimeEstimate": { "placeholders": { "minutes": {} } },
-
+  "@foodPrepTimeEstimate": {
+    "placeholders": {
+      "minutes": {}
+    }
+  },
   "foodScheduleTitle": "เวลาจัดส่ง",
   "foodScheduleNow": "จัดส่งทันที",
   "foodScheduleNowDesc": "ร้านจะเริ่มเตรียมอาหารทันทีหลังยืนยันออเดอร์",
   "foodScheduleLater": "ตั้งเวลาจัดส่ง",
   "foodScheduleLaterDesc": "เลือกวันและเวลาที่ต้องการรับอาหาร",
   "foodScheduleLaterSet": "กำหนดไว้: {dateTime}",
-  "@foodScheduleLaterSet": { "placeholders": { "dateTime": {} } },
+  "@foodScheduleLaterSet": {
+    "placeholders": {
+      "dateTime": {}
+    }
+  },
   "foodSchedulePickDate": "เลือกวันที่จัดส่ง",
   "foodSchedulePickTime": "เลือกเวลาจัดส่ง",
   "foodScheduleMinTime": "กรุณาเลือกเวลาอย่างน้อย 20 นาทีจากเวลาปัจจุบัน",
   "foodScheduleRequired": "กรุณาเลือกวันเวลาจัดส่ง",
-
   "foodDistanceWarningTitle": "อยู่นอกระยะทางที่กำหนด",
   "foodDistanceWarningBody": "ตำแหน่งจัดส่งของคุณอยู่ห่างจากร้านค้า {distance} กม.\nซึ่งเกินระยะเริ่มต้นที่กำหนดไว้ {maxRadius} กม.",
-  "@foodDistanceWarningBody": { "placeholders": { "distance": {}, "maxRadius": {} } },
+  "@foodDistanceWarningBody": {
+    "placeholders": {
+      "distance": {},
+      "maxRadius": {}
+    }
+  },
   "foodDistanceWarningFee": "ค่าส่งจะคิดตามระยะทางจริง: ฿{fee}",
-  "@foodDistanceWarningFee": { "placeholders": { "fee": {} } },
+  "@foodDistanceWarningFee": {
+    "placeholders": {
+      "fee": {}
+    }
+  },
   "foodDistanceWarningOk": "รับทราบ",
-
   "foodAddressCurrentLocation": "ตำแหน่งปัจจุบัน",
   "foodAddressPinOnMap": "ปักหมุดบนแผนที่",
   "foodAddressSaved": "ที่อยู่ที่บันทึกไว้",
   "foodAddressDistance": "ระยะทาง: {km} กม.",
-  "@foodAddressDistance": { "placeholders": { "km": {} } },
+  "@foodAddressDistance": {
+    "placeholders": {
+      "km": {}
+    }
+  },
   "foodAddressUnknown": "ตำแหน่งปัจจุบัน (ไม่สามารถระบุได้)",
-
   "foodDeliveryFeeWithDist": "ค่าจัดส่ง ({km} กม.)",
-  "@foodDeliveryFeeWithDist": { "placeholders": { "km": {} } },
+  "@foodDeliveryFeeWithDist": {
+    "placeholders": {
+      "km": {}
+    }
+  },
   "foodCalculating": "กำลังคำนวณ...",
   "foodCouponDiscount": "ส่วนลดจากคูปอง",
-
   "foodCheckoutLocationRequired": "ไม่สามารถระบุตำแหน่งจัดส่งได้ กรุณาเลือกตำแหน่ง",
   "foodCheckoutNoResponse": "ไม่ได้รับข้อมูลออเดอร์จากเซิร์ฟเวอร์",
   "foodCheckoutFailedTitle": "สั่งอาหารไม่สำเร็จ",
   "foodCheckoutSuccessScheduled": "ตั้งเวลาสั่งอาหารสำเร็จ ({dateTime})",
-  "@foodCheckoutSuccessScheduled": { "placeholders": { "dateTime": {} } },
+  "@foodCheckoutSuccessScheduled": {
+    "placeholders": {
+      "dateTime": {}
+    }
+  },
   "foodCheckoutSuccessNow": "สั่งอาหารสำเร็จ! รอร้านค้ายืนยัน",
   "foodCheckoutNotifScheduledBody": "มีลูกค้าสั่งอาหารล่วงหน้า ฿{amount} เวลา {dateTime}",
-  "@foodCheckoutNotifScheduledBody": { "placeholders": { "amount": {}, "dateTime": {} } },
-
+  "@foodCheckoutNotifScheduledBody": {
+    "placeholders": {
+      "amount": {},
+      "dateTime": {}
+    }
+  },
   "orderDetailScreenTitle": "รายละเอียดออเดอร์",
   "orderDetailCancel": "ยกเลิก",
   "orderDetailOrderId": "ออเดอร์ {code}",
-  "@orderDetailOrderId": { "placeholders": { "code": {} } },
+  "@orderDetailOrderId": {
+    "placeholders": {
+      "code": {}
+    }
+  },
   "orderDetailOrderedAt": "สั่งเมื่อ: {dateTime}",
-  "@orderDetailOrderedAt": { "placeholders": { "dateTime": {} } },
+  "@orderDetailOrderedAt": {
+    "placeholders": {
+      "dateTime": {}
+    }
+  },
   "orderDetailLocationTitle": "สถานที่",
   "orderDetailPickup": "จุดรับ",
   "orderDetailDestination": "จุดหมายปลายทาง",
@@ -235,12 +306,20 @@
   "orderDetailChat": "แชท",
   "orderDetailCall": "โทร",
   "orderDetailCannotCall": "ไม่สามารถโทรไปที่ {phone} ได้",
-  "@orderDetailCannotCall": { "placeholders": { "phone": {} } },
+  "@orderDetailCannotCall": {
+    "placeholders": {
+      "phone": {}
+    }
+  },
   "orderDetailItemsTitle": "รายการอาหาร",
   "orderDetailNoItems": "ไม่พบรายการอาหาร",
   "orderDetailItemUnnamed": "ไม่ระบุชื่อ",
   "orderDetailQuantity": "จำนวน: {qty}",
-  "@orderDetailQuantity": { "placeholders": { "qty": {} } },
+  "@orderDetailQuantity": {
+    "placeholders": {
+      "qty": {}
+    }
+  },
   "orderDetailOptionsLabel": "เพิ่มเติม:",
   "orderDetailOptionDefault": "ตัวเลือก",
   "orderDetailAddressUnknown": "ไม่ระบุที่อยู่",
@@ -250,25 +329,33 @@
   "orderDetailDeliveryFee": "ค่าจัดส่ง",
   "orderDetailCouponDiscount": "ส่วนลดจากคูปอง",
   "orderDetailCouponDiscountCode": "ส่วนลดคูปอง ({code})",
-  "@orderDetailCouponDiscountCode": { "placeholders": { "code": {} } },
+  "@orderDetailCouponDiscountCode": {
+    "placeholders": {
+      "code": {}
+    }
+  },
   "orderDetailDistance": "ระยะทาง",
   "orderDetailDistanceKm": "{km} กม.",
-  "@orderDetailDistanceKm": { "placeholders": { "km": {} } },
+  "@orderDetailDistanceKm": {
+    "placeholders": {
+      "km": {}
+    }
+  },
   "orderDetailTotal": "รวมทั้งหมด",
   "orderDetailServiceRide": "บริการรถส่ง",
   "orderDetailServiceFood": "สั่งอาหาร",
   "orderDetailServiceParcel": "ส่งพัสดุ",
-  "orderDetailStatusPending": "รอดำเนินการ",
+  "orderDetailStatusPending": "รอการยืนยัน",
   "orderDetailStatusPendingMerchant": "รอร้านค้ายืนยัน",
   "orderDetailStatusPreparing": "กำลังเตรียมอาหาร",
   "orderDetailStatusReady": "อาหารพร้อมรับ",
-  "orderDetailStatusDriverAccepted": "คนขับรับออเดอร์แล้ว",
+  "orderDetailStatusDriverAccepted": "คนขับรับงานแล้ว",
   "orderDetailStatusConfirmed": "ยืนยันแล้ว",
   "orderDetailStatusArrived": "ถึงจุดรับแล้ว",
-  "orderDetailStatusPickingUp": "กำลังรับอาหาร",
-  "orderDetailStatusInTransit": "กำลังจัดส่ง",
+  "orderDetailStatusPickingUp": "คนขับกำลังรับออเดอร์",
+  "orderDetailStatusInTransit": "กำลังส่งอาหาร",
   "orderDetailStatusCompleted": "เสร็จสิ้น",
-  "orderDetailStatusCancelled": "ยกเลิก",
+  "orderDetailStatusCancelled": "ถูกปฏิเสธ",
   "orderDetailCancelledTitle": "ร้านค้าปฏิเสธออเดอร์",
   "orderDetailCancelledBody": "ขออภัย ร้านค้าไม่สามารถรับออเดอร์ของคุณได้ในขณะนี้",
   "orderDetailOrderNumber": "หมายเลขออเดอร์",
@@ -282,9 +369,18 @@
   "orderDetailTotalAmount": "ยอดเงินทั้งหมด",
   "orderDetailIncludingDelivery": "รวมค่าจัดส่ง",
   "orderDetailCouponUsed": "ใช้คูปอง {code} ลด ฿{amount}",
-  "@orderDetailCouponUsed": { "placeholders": { "code": {}, "amount": {} } },
+  "@orderDetailCouponUsed": {
+    "placeholders": {
+      "code": {},
+      "amount": {}
+    }
+  },
   "orderDetailCouponUsedNoCode": "ใช้คูปอง ลด ฿{amount}",
-  "@orderDetailCouponUsedNoCode": { "placeholders": { "amount": {} } },
+  "@orderDetailCouponUsedNoCode": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
   "orderDetailCancelConfirmTitle": "ยืนยันการยกเลิกออเดอร์",
   "orderDetailCancelConfirmBody": "คุณต้องการยกเลิกออเดอร์นี้ใช่หรือไม่?",
   "orderDetailCancelNote": "หมายเหตุ: ไม่สามารถยกเลิกออเดอร์ที่กำลังดำเนินการได้",
@@ -293,8 +389,11 @@
   "orderDetailCancelling": "กำลังยกเลิกออเดอร์...",
   "orderDetailCancelSuccess": "ออเดอร์ถูกยกเลิกเรียบร้อยแล้ว",
   "orderDetailCancelError": "ไม่สามารถยกเลิกออเดอร์ได้: {error}",
-  "@orderDetailCancelError": { "placeholders": { "error": {} } },
-
+  "@orderDetailCancelError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
   "driverDashTitle": "แดชบอร์ดคนขับ",
   "driverDashOnline": "ออนไลน์",
   "driverDashOffline": "ออฟไลน์",
@@ -315,7 +414,12 @@
   "driverDashNoJobsHint": "งานใหม่จะปรากฏที่นี่ทันที",
   "driverDashRefresh": "รีเฟรช",
   "driverDashNewJob": "🚨 งานใหม่! {type} - {status}",
-  "@driverDashNewJob": { "placeholders": { "type": {}, "status": {} } },
+  "@driverDashNewJob": {
+    "placeholders": {
+      "type": {},
+      "status": {}
+    }
+  },
   "driverDashViewJob": "ดูงาน",
   "driverDashJobFood": "ส่งอาหาร",
   "driverDashJobRide": "รับส่งผู้โดยสาร",
@@ -335,14 +439,22 @@
   "driverDashAccepted": "รับงานแล้ว! กำลังนำทาง...",
   "driverDashErrorTitle": "เกิดข้อผิดพลาด",
   "driverDashNavError": "ไม่สามารถเปิดหน้านำทางได้: {error}",
-  "@driverDashNavError": { "placeholders": { "error": {} } },
+  "@driverDashNavError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
   "driverDashInsufficientBalance": "ยอดเงินไม่เพียงพอ",
   "driverDashClose": "ปิด",
   "driverDashTopUp": "เติมเงิน",
   "driverDashCannotAccept": "ไม่สามารถรับงานได้",
   "driverDashOk": "ตกลง",
   "driverDashErrorGeneric": "เกิดข้อผิดพลาด: {error}",
-  "@driverDashErrorGeneric": { "placeholders": { "error": {} } },
+  "@driverDashErrorGeneric": {
+    "placeholders": {
+      "error": {}
+    }
+  },
   "driverDashPickupRestaurant": "ร้านอาหาร",
   "driverDashPickupPoint": "จุดรับ",
   "driverDashPickupFoodFallback": "ตำแหน่งร้านอาหาร",
@@ -351,11 +463,23 @@
   "driverDashDestPoint": "จุดหมาย",
   "driverDashDestFallback": "จุดหมายปลายทาง",
   "driverDashScheduledFrom": "งานนัดเวลา: รับได้ตั้งแต่ {dateTime}",
-  "@driverDashScheduledFrom": { "placeholders": { "dateTime": {} } },
+  "@driverDashScheduledFrom": {
+    "placeholders": {
+      "dateTime": {}
+    }
+  },
   "driverDashScheduledAt": "งานนัดเวลา: {dateTime}",
-  "@driverDashScheduledAt": { "placeholders": { "dateTime": {} } },
+  "@driverDashScheduledAt": {
+    "placeholders": {
+      "dateTime": {}
+    }
+  },
   "driverDashAcceptAt": "รับได้เวลา {dateTime}",
-  "@driverDashAcceptAt": { "placeholders": { "dateTime": {} } },
+  "@driverDashAcceptAt": {
+    "placeholders": {
+      "dateTime": {}
+    }
+  },
   "driverDashAcceptParcel": "รับงานส่งพัสดุ",
   "driverDashAcceptRide": "รับงานนี้",
   "driverDashAcceptFood": "รับออเดอร์อาหาร",
@@ -364,43 +488,87 @@
   "driverDashGoToNav": "ไปยังหน้านำทาง",
   "driverDashNavigating": "กำลังไปยังหน้านำทาง...",
   "driverDashCannotNav": "ไม่สามารถนำทางได้: {error}",
-  "@driverDashCannotNav": { "placeholders": { "error": {} } },
+  "@driverDashCannotNav": {
+    "placeholders": {
+      "error": {}
+    }
+  },
   "driverDashCollectCustomer": "เก็บเงินลูกค้า",
   "driverDashFoodCost": "ค่าอาหาร",
   "driverDashDeliveryFee": "ค่าส่ง",
   "driverDashDistance": "ระยะทาง",
   "driverDashDistanceKm": "{km} กม.",
-  "@driverDashDistanceKm": { "placeholders": { "km": {} } },
+  "@driverDashDistanceKm": {
+    "placeholders": {
+      "km": {}
+    }
+  },
   "driverDashCouponDiscount": "ส่วนลดจากคูปอง -฿{amount}",
-  "@driverDashCouponDiscount": { "placeholders": { "amount": {} } },
+  "@driverDashCouponDiscount": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
   "driverDashCouponDiscountCode": "ส่วนลดคูปอง -฿{amount}",
-  "@driverDashCouponDiscountCode": { "placeholders": { "amount": {} } },
+  "@driverDashCouponDiscountCode": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
   "driverDashTimeJustNow": "เมื่อสักครู่",
   "driverDashTimeMinutes": "{min} นาทีที่แล้ว",
-  "@driverDashTimeMinutes": { "placeholders": { "min": {} } },
+  "@driverDashTimeMinutes": {
+    "placeholders": {
+      "min": {}
+    }
+  },
   "driverDashTimeHours": "{hours} ชั่วโมงที่แล้ว",
-  "@driverDashTimeHours": { "placeholders": { "hours": {} } },
+  "@driverDashTimeHours": {
+    "placeholders": {
+      "hours": {}
+    }
+  },
   "driverDashTimeDays": "{days} วันที่แล้ว",
-  "@driverDashTimeDays": { "placeholders": { "days": {} } },
+  "@driverDashTimeDays": {
+    "placeholders": {
+      "days": {}
+    }
+  },
   "driverDashVehicleMotorcycle": "มอเตอร์ไซค์",
   "driverDashVehicleCar": "รถยนต์",
   "driverDashNotifFoodTitle": "🍔 คนขับรับออเดอร์แล้ว!",
   "driverDashNotifFoodBody": "คนขับ {name} กำลังมารับอาหารของคุณ",
-  "@driverDashNotifFoodBody": { "placeholders": { "name": {} } },
+  "@driverDashNotifFoodBody": {
+    "placeholders": {
+      "name": {}
+    }
+  },
   "driverDashNotifFoodBodyDefault": "คนขับกำลังมารับอาหารของคุณ",
   "driverDashNotifParcelTitle": "📦 คนขับรับพัสดุแล้ว!",
   "driverDashNotifParcelBody": "คนขับ {name} กำลังมารับพัสดุของคุณ",
-  "@driverDashNotifParcelBody": { "placeholders": { "name": {} } },
+  "@driverDashNotifParcelBody": {
+    "placeholders": {
+      "name": {}
+    }
+  },
   "driverDashNotifParcelBodyDefault": "คนขับกำลังมารับพัสดุของคุณ",
   "driverDashNotifRideTitle": "🚗 คนขับรับทริปแล้ว!",
   "driverDashNotifRideBody": "คนขับ {name} กำลังมารับคุณ",
-  "@driverDashNotifRideBody": { "placeholders": { "name": {} } },
+  "@driverDashNotifRideBody": {
+    "placeholders": {
+      "name": {}
+    }
+  },
   "driverDashNotifRideBodyDefault": "คนขับกำลังมารับคุณ",
   "driverDashNotifMerchantTitle": "🚗 คนขับรับออเดอร์แล้ว!",
   "driverDashNotifMerchantBody": "คนขับ {name} กำลังมารับอาหารออเดอร์ {code}",
-  "@driverDashNotifMerchantBody": { "placeholders": { "name": {}, "code": {} } },
+  "@driverDashNotifMerchantBody": {
+    "placeholders": {
+      "name": {},
+      "code": {}
+    }
+  },
   "driverDashNotifMerchantBodyDefault": "คนขับกำลังมารับอาหารออเดอร์ของคุณ",
-
   "driverNavCustomerDefault": "ลูกค้า",
   "driverNavPhoneUnknown": "ไม่ระบุ",
   "driverNavMerchantDefault": "ร้านค้า",
@@ -426,10 +594,18 @@
   "driverNavCancelConfirm": "ยืนยันยกเลิก",
   "driverNavCancelNotifTitle": "❌ คนขับยกเลิกงาน",
   "driverNavCancelNotifBody": "เหตุผล: {reason}",
-  "@driverNavCancelNotifBody": { "placeholders": { "reason": {} } },
+  "@driverNavCancelNotifBody": {
+    "placeholders": {
+      "reason": {}
+    }
+  },
   "driverNavCancelSuccess": "ยกเลิกงานเรียบร้อยแล้ว",
   "driverNavCancelError": "ไม่สามารถยกเลิกงาน: {error}",
-  "@driverNavCancelError": { "placeholders": { "error": {} } },
+  "@driverNavCancelError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
   "driverNavMarkerPickup": "จุดรับ",
   "driverNavMarkerPickupFallback": "ตำแหน่งรับ",
   "driverNavMarkerDest": "จุดหมาย",
@@ -443,7 +619,11 @@
   "driverNavBookingNotFound": "ไม่พบการจอง กรุณารีเฟรชและลองใหม่",
   "driverNavDriverInvalid": "ข้อมูลคนขับไม่ถูกต้อง กรุณาออกจากระบบและเข้าสู่ระบบใหม่",
   "driverNavStatusUpdateError": "ไม่สามารถอัพเดตสถานะ: {error}",
-  "@driverNavStatusUpdateError": { "placeholders": { "error": {} } },
+  "@driverNavStatusUpdateError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
   "driverNavCannotOpenMaps": "ไม่สามารถเปิด Google Maps ได้",
   "driverNavMapsError": "เกิดข้อผิดพลาดในการเปิดแผนที่นำทาง",
   "driverNavFoodArrivedMerchant": "ถึงร้านแล้ว",
@@ -460,16 +640,29 @@
   "driverNavUpdateStatus": "อัพเดตสถานะ",
   "driverNavWaitMerchantReady": "กรุณารอร้านค้ากดอาหารพร้อมก่อน",
   "driverNavInvalidStatus": "สถานะไม่ถูกต้อง: {status}",
-  "@driverNavInvalidStatus": { "placeholders": { "status": {} } },
+  "@driverNavInvalidStatus": {
+    "placeholders": {
+      "status": {}
+    }
+  },
   "driverNavProxCustomerDest": "จุดหมายลูกค้า",
   "driverNavProxMerchant": "ร้านค้า",
   "driverNavProxRidePickup": "จุดรับผู้โดยสาร",
   "driverNavProxParcelPickup": "จุดรับพัสดุ",
   "driverNavTooFarTitle": "อยู่ไกลเกินไป",
   "driverNavTooFarBody": "กรุณาเข้าใกล้จุดหมายมากขึ้น\n\nระยะทางปัจจุบัน: {current} เมตร\nระยะทางที่อนุญาต: {allowed} เมตร",
-  "@driverNavTooFarBody": { "placeholders": { "current": {}, "allowed": {} } },
+  "@driverNavTooFarBody": {
+    "placeholders": {
+      "current": {},
+      "allowed": {}
+    }
+  },
   "driverNavCannotCheckLocation": "ไม่สามารถตรวจสอบตำแหน่ง: {error}",
-  "@driverNavCannotCheckLocation": { "placeholders": { "error": {} } },
+  "@driverNavCannotCheckLocation": {
+    "placeholders": {
+      "error": {}
+    }
+  },
   "driverNavChatError": "ไม่สามารถเปิดแชทได้",
   "driverNavChatRoomError": "ไม่สามารถเปิดห้องแชทได้",
   "driverNavChatOpenError": "เกิดข้อผิดพลาดในการเปิดแชท",
@@ -525,14 +718,22 @@
   "driverNavNotifCompleted": "งานเสร็จสมบูรณ์แล้ว",
   "driverNavNotifCancelled": "งานถูกยกเลิก",
   "driverNavNotifStatusUpdate": "สถานะงานอัปเดตเป็น {status}",
-  "@driverNavNotifStatusUpdate": { "placeholders": { "status": {} } },
+  "@driverNavNotifStatusUpdate": {
+    "placeholders": {
+      "status": {}
+    }
+  },
   "driverNavMerchantArrivedTitle": "คนขับถึงร้านแล้ว",
   "driverNavMerchantArrivedBody": "คนขับมาถึงร้านแล้ว กรุณาเตรียมส่งมอบอาหาร",
   "driverNavPaymentTitle": "💰 จ่ายเงินร้านค้าสำเร็จ",
   "driverNavPaymentBody": "รับอาหารจากร้านค้าเรียบร้อย\nกรุณาส่งอาหารให้ลูกค้าต่อ",
   "driverNavPaymentSales": "ยอดขาย",
   "driverNavPaymentDeduction": "หักร้าน ({percent}%)",
-  "@driverNavPaymentDeduction": { "placeholders": { "percent": {} } },
+  "@driverNavPaymentDeduction": {
+    "placeholders": {
+      "percent": {}
+    }
+  },
   "driverNavPaymentToMerchant": "จ่ายร้านค้า",
   "driverNavPaymentDeliver": "ส่งอาหารให้ลูกค้า",
   "driverNavCompletionTitle": "🎉 งานเสร็จสมบูรณ์!",
@@ -542,7 +743,11 @@
   "driverNavCompletionDeliveryFee": "  ค่าส่ง",
   "driverNavCompletionCouponPlatform": "  ส่วนลดจากคูปอง",
   "driverNavCompletionCouponCode": "  ส่วนลดคูปอง ({code})",
-  "@driverNavCompletionCouponCode": { "placeholders": { "code": {} } },
+  "@driverNavCompletionCouponCode": {
+    "placeholders": {
+      "code": {}
+    }
+  },
   "driverNavCompletionCoupon": "  ส่วนลดคูปอง",
   "driverNavCompletionServiceFee": "ค่าบริการระบบ",
   "driverNavCompletionNetEarnings": "รายได้สุทธิ",
@@ -551,11 +756,14 @@
   "driverNavFinCardFoodCost": "ค่าอาหาร",
   "driverNavFinCardDeliveryFee": "ค่าส่ง",
   "driverNavFinCardPayMerchant": "จ่ายร้านค้า",
-
   "walletTitle": "กระเป๋าเงิน",
   "walletBalance": "ยอดเงินคงเหลือ",
   "walletBalanceBaht": "{amount} บาท",
-  "@walletBalanceBaht": { "placeholders": { "amount": {} } },
+  "@walletBalanceBaht": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
   "walletTopUp": "เติมเงิน",
   "walletTransactionHistory": "ประวัติการทำรายการ",
   "walletLoadError": "เกิดข้อผิดพลาดในการโหลดข้อมูล",
@@ -567,20 +775,39 @@
   "walletTypeJobIncome": "รายได้จากงาน",
   "walletTypePenalty": "ค่าปรับ",
   "walletToday": "วันนี้ {time}",
-  "@walletToday": { "placeholders": { "time": {} } },
+  "@walletToday": {
+    "placeholders": {
+      "time": {}
+    }
+  },
   "walletYesterday": "เมื่อวาน {time}",
-  "@walletYesterday": { "placeholders": { "time": {} } },
-
+  "@walletYesterday": {
+    "placeholders": {
+      "time": {}
+    }
+  },
   "topupTitle": "เติมเงิน / ถอนเงิน",
   "topupMinAmountError": "กรุณาระบุจำนวนเงินอย่างน้อย {amount} บาท",
-  "@topupMinAmountError": { "placeholders": { "amount": {} } },
+  "@topupMinAmountError": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
   "topupMaxAmountError": "จำนวนเงินเกินวงเงินต่อครั้ง (สูงสุด ฿{amount})",
-  "@topupMaxAmountError": { "placeholders": { "amount": {} } },
+  "@topupMaxAmountError": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
   "topupOmiseSourceError": "ไม่สามารถสร้าง PromptPay Source ได้\nกรุณาตรวจสอบ Omise Key ใน .env",
   "topupOmiseChargeError": "ไม่สามารถสร้าง Charge ได้\nกรุณาตรวจสอบ Omise Secret Key",
   "topupOmiseQRError": "ไม่พบ QR Code ใน Charge response\nกรุณาลองใหม่",
   "topupOmiseError": "เกิดข้อผิดพลาด Omise: {error}",
-  "@topupOmiseError": { "placeholders": { "error": {} } },
+  "@topupOmiseError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
   "topupQRExpired": "QR Code หมดอายุ กรุณาสร้างใหม่",
   "topupPaymentFailed": "การชำระเงินล้มเหลว กรุณาลองใหม่",
   "topupCreditError": "ชำระเงินสำเร็จแล้ว แต่ไม่สามารถเติมเงินเข้ากระเป๋าได้\nกรุณาติดต่อ Admin พร้อมหลักฐานการโอน",
@@ -588,7 +815,11 @@
   "topupPromptPayNotSet": "ระบบยังไม่ได้ตั้งค่าเลข PromptPay\nกรุณาติดต่อ Admin เพื่อตั้งค่า",
   "topupPromptPayInvalid": "เลข PromptPay ในระบบไม่ถูกต้อง\nกรุณาติดต่อ Admin",
   "topupLocalError": "เกิดข้อผิดพลาด: {error}",
-  "@topupLocalError": { "placeholders": { "error": {} } },
+  "@topupLocalError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
   "topupDirectError": "ไม่สามารถเติมเงินเข้ากระเป๋าได้\nกรุณาติดต่อ Admin",
   "topupDirectGenericError": "เกิดข้อผิดพลาดในการเติมเงิน\nกรุณาติดต่อ Admin",
   "topupDriverDefault": "คนขับ",
@@ -596,13 +827,25 @@
   "topupOk": "ตกลง",
   "topupRequestSentTitle": "ส่งคำขอเติมเงินแล้ว",
   "topupRequestSentBody": "คำขอเติมเงิน ฿{amount} ถูกส่งแล้ว\nรอ Admin ตรวจสอบและยืนยัน",
-  "@topupRequestSentBody": { "placeholders": { "amount": {} } },
+  "@topupRequestSentBody": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
   "topupSuccessTitle": "เติมเงินสำเร็จ!",
   "topupSuccessBody": "เติมเงิน ฿{amount} เข้ากระเป๋าเรียบร้อยแล้ว",
-  "@topupSuccessBody": { "placeholders": { "amount": {} } },
+  "@topupSuccessBody": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
   "topupWithdrawTitle": "ถอนเงิน",
   "topupWithdrawBalance": "ยอดคงเหลือ: ฿{amount}",
-  "@topupWithdrawBalance": { "placeholders": { "amount": {} } },
+  "@topupWithdrawBalance": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
   "topupWithdrawAmountLabel": "จำนวนเงินที่ต้องการถอน",
   "topupWithdrawBankName": "ชื่อธนาคาร",
   "topupWithdrawBankHint": "เช่น กสิกรไทย, ไทยพาณิชย์",
@@ -613,7 +856,11 @@
   "topupWithdrawInsufficientBalance": "ยอดเงินไม่เพียงพอ",
   "topupWithdrawBankRequired": "กรุณากรอกข้อมูลธนาคาร",
   "topupWithdrawError": "เกิดข้อผิดพลาด: {error}",
-  "@topupWithdrawError": { "placeholders": { "error": {} } },
+  "@topupWithdrawError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
   "topupWithdrawSubmit": "ส่งคำขอถอนเงิน",
   "topupWithdrawBtn": "ถอนเงิน",
   "topupWithdrawHistoryTitle": "ประวัติถอนเงิน",
@@ -631,38 +878,61 @@
   "topupOmiseScanDesc": "สแกน QR ผ่านแอปธนาคาร — ระบบตรวจยอดอัตโนมัติ",
   "topupManualScanDesc": "โอนเงินผ่าน PromptPay แล้วกดยืนยัน",
   "topupAmount": "จำนวนเงิน: ฿{amount}",
-  "@topupAmount": { "placeholders": { "amount": {} } },
+  "@topupAmount": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
   "topupOmiseAutoDesc": "สแกน QR โอนเงิน — ระบบจะตรวจยอดให้อัตโนมัติ",
   "topupManualConfirmDesc": "สแกน QR โอนเงินแล้วกด \"แจ้งโอนเงิน\" ด้านล่าง",
   "topupRequestSentCard": "คำขอเติมเงินถูกส่งแล้ว",
   "topupRequestSentCardBody": "จำนวน ฿{amount} — รอ Admin ตรวจสอบและยืนยัน",
-  "@topupRequestSentCardBody": { "placeholders": { "amount": {} } },
+  "@topupRequestSentCardBody": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
   "topupCheckingPayment": "กำลังตรวจสอบการชำระเงิน...",
   "topupAutoCheckDesc": "ระบบจะตรวจยอดอัตโนมัติทุก 5 วินาที\nเมื่อชำระเงินสำเร็จจะเติมเงินเข้ากระเป๋าทันที",
   "topupCancelNewQR": "ยกเลิก / สร้าง QR ใหม่",
   "topupOmiseSuccessTitle": "ชำระเงินสำเร็จ!",
   "topupOmiseSuccessBody": "เติมเงิน ฿{amount} เข้ากระเป๋าเรียบร้อยแล้ว",
-  "@topupOmiseSuccessBody": { "placeholders": { "amount": {} } },
+  "@topupOmiseSuccessBody": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
   "topupOmiseAutoVerified": "ตรวจยอดอัตโนมัติผ่าน Omise",
   "topupGeneratingQR": "กำลังสร้าง QR...",
   "topupPayPromptPay": "ชำระเงินด้วย PromptPay",
   "topupSending": "กำลังส่ง...",
   "topupConfirmTransfer": "แจ้งโอนเงิน ฿{amount}",
-  "@topupConfirmTransfer": { "placeholders": { "amount": {} } },
+  "@topupConfirmTransfer": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
   "topupGenerateNewQR": "สร้าง QR ใหม่",
-
   "withdrawTitle": "ถอนเงิน",
   "withdrawBalance": "ยอดเงินคงเหลือ",
   "withdrawAmountRequired": "กรุณาระบุจำนวนเงินที่ต้องการถอน",
   "withdrawInsufficientBalance": "ยอดเงินไม่เพียงพอ\nคงเหลือ: ฿{amount}",
-  "@withdrawInsufficientBalance": { "placeholders": { "amount": {} } },
+  "@withdrawInsufficientBalance": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
   "withdrawFailed": "ไม่สามารถแจ้งถอนเงินได้\nกรุณาลองใหม่อีกครั้ง",
   "withdrawGenericError": "เกิดข้อผิดพลาด\nกรุณาลองใหม่อีกครั้ง",
   "withdrawErrorTitle": "เกิดข้อผิดพลาด",
   "withdrawOk": "ตกลง",
   "withdrawSuccessTitle": "แจ้งถอนเงินสำเร็จ",
   "withdrawSuccessBody": "ระบบได้รับคำขอถอนเงิน ฿{amount} แล้ว\n\nAdmin จะตรวจสอบและโอนเงินภายใน 1-3 วันทำการ",
-  "@withdrawSuccessBody": { "placeholders": { "amount": {} } },
+  "@withdrawSuccessBody": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
   "withdrawAmountSectionTitle": "จำนวนเงินที่ต้องการถอน",
   "withdrawAmountLabel": "จำนวนเงิน (บาท)",
   "withdrawMinHelper": "ขั้นต่ำ ฿100",
@@ -694,26 +964,21 @@
   "withdrawBankTisco": "ธนาคารทิสโก้",
   "withdrawBankUOB": "ธนาคารยูโอบี",
   "withdrawBankLH": "ธนาคารแลนด์ แอนด์ เฮ้าส์",
-
   "accountTitle": "บัญชี",
   "accountErrorTitle": "โหลดข้อมูลไม่สำเร็จ",
   "accountRetry": "ลองใหม่",
-
   "accountPersonalInfoTitle": "ข้อมูลส่วนตัว",
   "accountMenuTitle": "เมนู",
   "accountAppInfoTitle": "ข้อมูลแอป",
-
   "accountLogout": "ออกจากระบบ",
   "accountLogoutDialogTitle": "ออกจากระบบ",
   "accountLogoutDialogBody": "คุณต้องการออกจากระบบใช่หรือไม่?",
   "accountCancel": "ยกเลิก",
-
   "accountDelete": "ลบบัญชี",
   "accountDeleteDialogTitle": "ลบบัญชีผู้ใช้",
   "accountDeleteDialogBody": "เมื่อยืนยันแล้ว คำขอจะถูกส่งไปยังแอดมินเพื่ออนุมัติ\nระหว่างรออนุมัติจะไม่สามารถใช้งานบัญชีได้",
   "accountDeleteReasonHint": "เหตุผลในการลบบัญชี (ไม่บังคับ)",
   "accountDeleteConfirm": "ยืนยันลบบัญชี",
-
   "accountUploadingImage": "กำลังอัพโหลดรูปภาพ...",
   "accountUploadSuccess": "อัพโหลดรูปโปรไฟล์สำเร็จ!",
   "accountUploadFailed": "อัพโหลดรูปไม่สำเร็จ: {error}",
@@ -729,7 +994,6 @@
       "error": {}
     }
   },
-
   "accountOpenLinkFailed": "ไม่สามารถเปิดลิงก์ได้",
   "accountErrorGeneric": "เกิดข้อผิดพลาด: {error}",
   "@accountErrorGeneric": {
@@ -737,13 +1001,11 @@
       "error": {}
     }
   },
-
   "accountInfoTitle": "ข้อมูล",
   "accountInfoName": "ชื่อ",
   "accountInfoPhone": "เบอร์โทร",
   "accountInfoEmail": "อีเมล",
   "accountNotSet": "ยังไม่ได้ตั้งค่า",
-
   "accountMenuEditProfile": "แก้ไขโปรไฟล์",
   "accountMenuCoupons": "คูปองของฉัน",
   "accountMenuReferral": "ชวนเพื่อน",
@@ -751,17 +1013,13 @@
   "accountMenuNotifications": "การแจ้งเตือน",
   "accountMenuPrivacyPolicy": "นโยบายความเป็นส่วนตัว",
   "accountFeatureComingSoon": "ฟีเจอร์นี้จะมาในเวอร์ชันถัดไป",
-
   "merchantMenuEditShop": "แก้ไขข้อมูลร้าน",
   "merchantMenuCoupons": "คูปองร้านค้า",
-
   "accountRoleCustomer": "ลูกค้า",
   "accountRoleMerchant": "ร้านค้า",
   "accountRoleDriver": "คนขับ",
-
   "driverInfoVehicleType": "ประเภทรถ",
   "driverInfoLicensePlate": "ทะเบียนรถ",
-
   "profileEditTitle": "แก้ไขโปรไฟล์",
   "profileLoadFailedTitle": "โหลดโปรไฟล์ไม่สำเร็จ",
   "profileLoadFailedBody": "ไม่สามารถโหลดข้อมูลโปรไฟล์ได้: {error}",
@@ -785,13 +1043,11 @@
   "profileUploadingImage": "กำลังอัพโหลดรูปภาพ...",
   "profileVehicleMotorcycle": "มอเตอร์ไซค์",
   "profileVehicleCar": "รถยนต์",
-
   "profileFullNameLabel": "ชื่อ-นามสกุล",
   "profileFullNameRequired": "กรุณากรอกชื่อ-นามสกุล",
   "profilePhoneLabel": "เบอร์โทรศัพท์",
   "profilePhoneRequired": "กรุณากรอกเบอร์โทรศัพท์",
   "profileLicensePlateRequired": "กรุณากรอกทะเบียนรถ",
-
   "profileShopNameLabel": "ชื่อร้าน",
   "profileShopNameHint": "กรอกชื่อร้านค้า",
   "profileShopNameRequired": "กรุณากรอกชื่อร้าน",
@@ -801,7 +1057,6 @@
   "profileShopPhoneLabel": "เบอร์โทรร้าน",
   "profileShopPhoneHint": "กรอกเบอร์โทรศัพท์ร้าน",
   "profileShopPhoneRequired": "กรุณากรอกเบอร์โทรศัพท์ร้าน",
-
   "accountVersionLabel": "เวอร์ชัน",
   "accountDevelopedByLabel": "พัฒนาโดย",
   "accountLoading": "กำลังโหลด...",
@@ -811,7 +1066,6 @@
       "error": {}
     }
   },
-
   "merchantCloseShopTitle": "ปิดร้าน?",
   "merchantCloseShopBody": "เมื่อกดปิดร้านเอง จะปิดการใช้งาน เปิด-ปิด ร้านอัตโนมัติ\nสามารถเปิดใช้งานฟีเจอร์นี้ได้ที่หน้าตั้งค่า",
   "merchantCloseShopCancel": "ยกเลิก",
@@ -958,7 +1212,6 @@
   },
   "merchantViewHistory": "ดูประวัติออเดอร์",
   "merchantViewActive": "ดูออเดอร์ที่กำลังดำเนินการ",
-
   "orderDetailTitle": "ออเดอร์ {code}",
   "@orderDetailTitle": {
     "placeholders": {
@@ -1007,12 +1260,6 @@
   "orderDetailPaymentCash": "เงินสด",
   "orderDetailPaymentTransfer": "โอนเงิน",
   "orderDetailDistanceLabel": "ระยะทาง",
-  "orderDetailDistanceKm": "{km} กม.",
-  "@orderDetailDistanceKm": {
-    "placeholders": {
-      "km": {}
-    }
-  },
   "orderDetailScheduled": "นัดหมาย",
   "orderDetailPriceBreakdown": "รายละเอียดราคา",
   "orderDetailSalesAmount": "ยอดขาย",
@@ -1026,16 +1273,7 @@
   "orderDetailDeliveryAddress": "ที่อยู่จัดส่ง",
   "orderDetailCustomerNote": "หมายเหตุจากลูกค้า",
   "orderDetailFoodItems": "รายการอาหาร",
-  "orderDetailNoItems": "ไม่พบรายการอาหาร",
-  "orderDetailItemUnnamed": "ไม่ระบุชื่อ",
-  "orderDetailQuantity": "จำนวน: {qty}",
-  "@orderDetailQuantity": {
-    "placeholders": {
-      "qty": {}
-    }
-  },
   "orderDetailOptions": "เพิ่มเติม:",
-  "orderDetailOptionDefault": "ตัวเลือก",
   "orderDetailDeclineBtn": "ปฏิเสธออเดอร์",
   "orderDetailAcceptBtn": "รับออเดอร์",
   "orderDetailWaitingDriver": "รอคนขับรับงาน",
@@ -1047,15 +1285,8 @@
       "status": {}
     }
   },
-  "orderDetailStatusPending": "รอการยืนยัน",
-  "orderDetailStatusPreparing": "กำลังเตรียมอาหาร",
-  "orderDetailStatusDriverAccepted": "คนขับรับงานแล้ว",
   "orderDetailStatusArrivedMerchant": "คนขับถึงร้านแล้ว",
   "orderDetailStatusReadyPickup": "อาหารพร้อมส่ง",
-  "orderDetailStatusPickingUp": "คนขับกำลังรับออเดอร์",
-  "orderDetailStatusInTransit": "กำลังส่งอาหาร",
-  "orderDetailStatusCancelled": "ถูกปฏิเสธ",
-  "orderDetailStatusCompleted": "เสร็จสิ้น",
   "orderDetailStatusUnknown": "ไม่ทราบสถานะ",
   "orderDetailCompletionTitle": "✅ ออเดอร์สำเร็จ",
   "orderDetailCompletionBody": "คนขับได้รับอาหารและกำลังเดินทางไปส่งลูกค้า",
@@ -1073,7 +1304,6 @@
   "orderDetailItemNotSpecified": "ไม่ระบุ",
   "orderDetailNotifRejectTitle": "❌ ร้านค้าปฏิเสธออเดอร์",
   "orderDetailNotifRejectBody": "ขออภัย ร้านค้าไม่สามารถรับออเดอร์ของคุณได้ในขณะนี้",
-
   "customerHomeOk": "ตกลง",
   "customerHomeGreeting": "สวัสดี",
   "customerHomeNoNewNotifications": "ยังไม่มีการแจ้งเตือนใหม่",
@@ -1149,7 +1379,6 @@
   "customerHomeStatusCancelled": "ยกเลิก",
   "customerHomeAddressNotSpecified": "ไม่ระบุที่อยู่",
   "customerHomeCurrentLocation": "ตำแหน่งปัจจุบัน",
-
   "rideStatusTitle": "สถานะการเดินทาง",
   "rideStatusDriver": "คนขับ",
   "rideStatusCannotCall": "ไม่สามารถโทรไปที่ {phone} ได้",
@@ -1263,7 +1492,6 @@
       "error": {}
     }
   },
-
   "activityTitle": "ประวัติการใช้งาน",
   "activityPaymentCash": "เงินสด",
   "activityPaymentTransfer": "โอนเงิน",
@@ -1369,7 +1597,6 @@
       "amount": {}
     }
   },
-
   "parcelTitle": "ส่งพัสดุ",
   "parcelHeaderTitle": "บริการส่งพัสดุ",
   "parcelHeaderSubtitle": "ส่งของถึงที่ รวดเร็ว ปลอดภัย",
@@ -1480,7 +1707,6 @@
     }
   },
   "parcelBookButton": "จองส่งพัสดุ",
-
   "waitingSearchingDriver": "กำลังค้นหาคนขับ...",
   "waitingPriceUpdated": "ราคาอัปเดตใหม่",
   "waitingPriceAdjustedBody": "ราคาถูกปรับใหม่เนื่องจากคนขับที่รับงานอยู่เกินระยะที่กำหนด\n\nราคาเดิม: ฿{oldPrice}\nราคาใหม่: ฿{newPrice}\n\nต้องการดำเนินการต่อหรือไม่?",
@@ -1572,7 +1798,6 @@
       "status": {}
     }
   },
-
   "restCategoryOther": "อื่นๆ",
   "restDeliveryTime": "20-30 นาที",
   "restDeliveryFee": "ค่าส่ง ฿15",
@@ -1615,7 +1840,6 @@
   },
   "restItemNoName": "ไม่ระบุชื่อ",
   "restMustSelectOption": "ต้องเลือกตัวเลือก",
-
   "ratingPleaseRateDriver": "กรุณาให้คะแนนคนขับ",
   "ratingPleaseRateMerchant": "กรุณาให้คะแนนร้านค้า",
   "ratingUserNotFound": "ไม่พบข้อมูลผู้ใช้",
@@ -1642,7 +1866,6 @@
   "ratingLabel3": "ปานกลาง",
   "ratingLabel4": "ดี",
   "ratingLabel5": "ยอดเยี่ยม",
-
   "cancelReasonWaitTooLong": "รอนานเกินไป",
   "cancelReasonChangedMind": "เปลี่ยนใจ ไม่ต้องการแล้ว",
   "cancelReasonWrongAddress": "ใส่ที่อยู่ผิด",
@@ -1676,7 +1899,6 @@
   "cancelReasonsSubtitle": "กรุณาเลือกเหตุผลเพื่อช่วยเราปรับปรุงบริการ",
   "cancelOtherHint": "โปรดระบุเหตุผล...",
   "cancelButton": "ยกเลิกออเดอร์",
-
   "addrLabelHome": "บ้าน",
   "addrLabelWork": "ที่ทำงาน",
   "addrLabelOther": "อื่นๆ",
@@ -1713,7 +1935,6 @@
       "name": {}
     }
   },
-
   "confirmServiceFood": "สั่งอาหาร",
   "confirmServiceRide": "เรียกรถ",
   "confirmServiceParcel": "ส่งพัสดุ",
@@ -1742,7 +1963,6 @@
   "confirmCash": "เงินสด",
   "confirmTrackOrder": "ติดตามออเดอร์",
   "confirmBackToHome": "กลับหน้าหลัก",
-
   "foodDetAddedToCart": "เพิ่ม {name} ลงตะกร้าแล้ว",
   "@foodDetAddedToCart": {
     "placeholders": {
@@ -1768,7 +1988,6 @@
       "price": {}
     }
   },
-
   "foodDefaultNote": "สั่งอาหารจาก {merchant}",
   "@foodDefaultNote": {
     "placeholders": {
@@ -1782,7 +2001,6 @@
       "amount": {}
     }
   },
-
   "trackPickup": "จุดรับ",
   "trackDestination": "จุดส่ง",
   "trackNotSpecified": "ไม่ระบุ",
@@ -1810,7 +2028,6 @@
   "trackTimelinePickingUp": "กำลังรับสินค้า",
   "trackTimelineInTransit": "กำลังจัดส่ง",
   "trackTimelineCompleted": "จัดส่งสำเร็จ",
-
   "helpTitle": "ช่วยเหลือ",
   "helpCenterTitle": "ศูนย์ช่วยเหลือ",
   "helpCenterSubtitle": "พร้อมช่วยเหลือคุณตลอด 24 ชั่วโมง",
@@ -1831,7 +2048,6 @@
   "helpFaq5A": "กรุณาแจ้งปัญหาผ่านปุ่ม \"รายงานปัญหา\" พร้อมแนบรูปถ่ายและรายละเอียด ทีมงานจะประสานงานกับร้านค้าเพื่อแก้ไขให้",
   "helpFaq6Q": "สมัครเป็นคนขับได้อย่างไร?",
   "helpFaq6A": "ลงทะเบียนผ่านแอปโดยเลือก role เป็น \"คนขับ\" จากนั้นกรอกข้อมูลส่วนตัว ใบขับขี่ และรอการอนุมัติจากแอดมิน",
-
   "payTitle": "การชำระเงิน",
   "payCash": "เงินสด",
   "payCashSubtitle": "ชำระเงินสดกับคนขับ",
@@ -1858,7 +2074,6 @@
   "payTotalAmount": "ยอดรวมทั้งหมด",
   "payFoodCost": "ค่าอาหาร",
   "payDeliveryFee": "ค่าส่ง",
-
   "ticketTitle": "แจ้งปัญหา / ร้องเรียน",
   "ticketCatLostItem": "ของหาย",
   "ticketCatWrongOrder": "อาหาร/สินค้าผิด",
@@ -1877,7 +2092,6 @@
   "ticketFab": "แจ้งปัญหา",
   "ticketEmptyTitle": "ยังไม่มีรายการแจ้งปัญหา",
   "ticketEmptySubtitle": "หากพบปัญหากดปุ่ม \"แจ้งปัญหา\" ด้านล่าง",
-
   "mapPickerTitle": "เลือกตำแหน่งจัดส่ง",
   "mapPickerLoadingAddress": "กำลังโหลดที่อยู่...",
   "mapPickerSearching": "กำลังค้นหาที่อยู่...",
@@ -1890,7 +2104,6 @@
       "lng": {}
     }
   },
-
   "foodSvcTitle": "สั่งอาหาร",
   "foodSvcLoadError": "ไม่สามารถโหลดรายชื่อร้านอาหารได้: {error}",
   "@foodSvcLoadError": {
@@ -1904,7 +2117,6 @@
   "foodSvcRestaurantFallback": "ร้านอาหาร",
   "foodSvcNotSpecified": "ไม่ระบุ",
   "foodSvcOpen": "เปิด",
-
   "accountEditName": "แก้ไขชื่อ",
   "accountEditPhone": "แก้ไขเบอร์โทร",
   "accountEditNameHint": "กรอกชื่อ-นามสกุล",
@@ -1919,7 +2131,6 @@
     }
   },
   "accountUserFallback": "ผู้ใช้",
-
   "couponScreenTitle": "คูปองของฉัน",
   "couponTabMine": "คูปองของฉัน",
   "couponTabDiscover": "เก็บคูปองเพิ่ม",
@@ -1949,7 +2160,6 @@
       "time": {}
     }
   },
-
   "referralTitle": "ชวนเพื่อนรับรางวัล",
   "referralHeroTitle": "ชวนเพื่อนใช้แอป\nรับคูปองทั้งคู่!",
   "referralHeroSubtitle": "รับคูปองส่วนลด 20 บาท ทันที\nเมื่อเพื่อนของคุณสั่งอาหารครั้งแรกสำเร็จ",
@@ -1971,7 +2181,6 @@
   "referralStep2Desc": "เพื่อนสมัครและสั่งอาหารสำเร็จเป็นครั้งแรก",
   "referralStep3Title": "รับคูปองส่วนลด!",
   "referralStep3Desc": "คุณจะได้คูปองส่วนลดส่งตรงเข้ากระเป๋าทันที",
-
   "driverAssignedTitle": "คนขับรับงานแล้ว",
   "driverAssignedHeading": "คนขับรับงานแล้ว!",
   "driverAssignedSubtitle": "คนขับกำลังเดินทางมาหาคุณ",
@@ -1988,7 +2197,6 @@
   "driverAssignedCancelBody": "คุณแน่ใจว่าต้องการยกเลิกการจองนี้?",
   "driverAssignedNo": "ไม่",
   "driverAssignedCancel": "ยกเลิก",
-
   "mapSvcRide": "เรียกรถ",
   "mapSvcFood": "สั่งอาหาร",
   "mapSvcParcel": "ส่งของ",
@@ -2018,7 +2226,6 @@
       "error": {}
     }
   },
-
   "rideTitle": "เรียกรถ",
   "rideMotorcycle": "มอเตอร์ไซค์",
   "rideCar": "รถยนต์",
@@ -2092,7 +2299,6 @@
   },
   "rideNotifPickupFallback": "จุดเริ่มต้น",
   "rideNotifDestFallback": "จุดหมาย",
-
   "drvProfileEditName": "แก้ไขชื่อ",
   "drvProfileEditPhone": "แก้ไขเบอร์โทร",
   "drvProfileEditPlate": "แก้ไขทะเบียนรถ",
@@ -2111,7 +2317,6 @@
   "drvProfileSelectVehicle": "เลือกประเภทรถ",
   "drvProfileMotorcycle": "มอเตอร์ไซค์",
   "drvProfileCar": "รถยนต์",
-
   "earnTitle": "รายได้",
   "earnWalletTooltip": "กระเป๋าเงิน",
   "earnRefresh": "รีเฟรช",
@@ -2166,7 +2371,6 @@
   "earnCouponDiscount": "ส่วนลดจากคูปอง",
   "earnOpenDetailError": "ไม่สามารถเปิดรายละเอียดงานได้",
   "earnUserNotFound": "ไม่พบข้อมูลผู้ใช้",
-
   "jobDetailTitle": "รายละเอียดการให้บริการ",
   "jobDetailNoRoute": "ไม่มีข้อมูลเส้นทาง",
   "jobDetailPickupFallback": "จุดรับ",
@@ -2203,7 +2407,6 @@
   "jobDetailDeliveryFee": "  ค่าส่ง",
   "jobDetailCashCollection": "รายการชำระเงินสด",
   "jobDetailCollectFromCustomer": "ยอดที่ต้องเก็บจากลูกค้า",
-
   "parcelConfirmPickupTitle": "ยืนยันรับพัสดุ",
   "parcelConfirmDeliveryTitle": "ยืนยันส่งพัสดุ",
   "parcelConfirmPhotoRequired": "กรุณาถ่ายรูปยืนยัน",
@@ -2244,13 +2447,11 @@
   "parcelDeliveryNoteTitle": "หมายเหตุการส่ง",
   "parcelDeliveryNoteSubtitle": "(ถ้ามี) เช่น ไม่มีคนรับ, ฝากไว้หน้าบ้าน",
   "parcelDeliveryNoteHint": "หมายเหตุการส่ง (ถ้ามี)",
-
   "merchantNavOrders": "ออเดอร์",
   "merchantNavMenu": "เมนู",
   "merchantNavReport": "รายงาน",
   "merchantNavAccount": "บัญชี",
   "merchantPressBackAgain": "กดอีกครั้งเพื่อออกจากแอป",
-
   "mchSetShopInfoTitle": "ข้อมูลร้านค้า",
   "mchSetShopName": "ชื่อร้าน",
   "mchSetPhone": "เบอร์โทร",
@@ -2311,7 +2512,6 @@
   "mchSetWeekFri": "ศ",
   "mchSetWeekSat": "ส",
   "mchSetWeekSun": "อา",
-
   "mchDashTitle": "รายงานการขาย",
   "mchDashRefresh": "รีเฟรช",
   "mchDashLoadError": "ไม่สามารถโหลดข้อมูลได้",
@@ -2348,7 +2548,6 @@
   "mchDashStatusPickedUp": "ไรเดอร์รับแล้ว",
   "mchDashStatusDelivering": "กำลังจัดส่ง",
   "mchDashUserNotFound": "ไม่พบข้อมูลผู้ใช้",
-
   "menuMgmtTitle": "จัดการเมนู",
   "menuMgmtOptionTooltip": "จัดการตัวเลือก",
   "menuMgmtError": "เกิดข้อผิดพลาด",
@@ -2390,7 +2589,6 @@
     }
   },
   "menuMgmtUserNotFound": "ไม่พบข้อมูลผู้ใช้",
-
   "menuEditTitleEdit": "แก้ไขเมนู",
   "menuEditTitleAdd": "เพิ่มเมนูใหม่",
   "menuEditBtnUpdate": "อัปเดตเมนู",
@@ -2446,7 +2644,6 @@
   "menuEditCatIsaan": "อาหารอีสาน",
   "menuEditCatSnacks": "ของทานเล่น",
   "menuEditCatOther": "อื่นๆ",
-
   "optGroupEditTitle": "แก้ไขกลุ่มตัวเลือก",
   "optGroupCreateTitle": "สร้างกลุ่มตัวเลือก",
   "optGroupBtnUpdate": "อัปเดตกลุ่มตัวเลือก",
@@ -2482,7 +2679,6 @@
   "optGroupMinMaxError": "ค่าต่ำสุดต้องไม่ต่ำกว่า 0 และค่าสูงสุดต้องไม่ต่ำกว่า 1",
   "optGroupMinGtMaxError": "ค่าต่ำสุดต้องไม่มากกว่าค่าสูงสุด",
   "optGroupSaveError": "ไม่สามารถบันทึกกลุ่มตัวเลือกได้",
-
   "optLibTitle": "จัดการตัวเลือกอาหาร",
   "optLibRetry": "ลองใหม่",
   "optLibEmpty": "ยังไม่มีกลุ่มตัวเลือก",
@@ -2542,7 +2738,6 @@
     }
   },
   "optLibShowFirst3": "แสดง 3 รายการแรก",
-
   "menuEditAddOptionGroup": "เพิ่มกลุ่มตัวเลือก",
   "menuEditSelectOptionGroups": "เลือกกลุ่มตัวเลือก",
   "menuEditSaveSelection": "บันทึกการเลือก",
@@ -2556,7 +2751,6 @@
       "count": {}
     }
   },
-
   "couponAdminDialogTitle": "สร้างคูปองร้าน (แอดมิน)",
   "couponCreateSuccess": "สร้างคูปองร้านค้าสำเร็จ",
   "couponCreateFailed": "สร้างคูปองไม่สำเร็จ",
@@ -2611,7 +2805,6 @@
   },
   "couponPickEndDate": "เลือกวันหมดอายุ",
   "couponCreateBtn": "สร้างคูปอง",
-
   "editProfileTitle": "แก้ไขข้อมูลร้าน",
   "editProfileTapPhoto": "แตะเพื่อเปลี่ยนรูปร้าน",
   "editProfileShopName": "ชื่อร้าน",
@@ -2641,7 +2834,6 @@
   "editProfileDayFri": "ศ",
   "editProfileDaySat": "ส",
   "editProfileDaySun": "อา",
-
   "profileCompleteRoleDriver": "คนขับ",
   "profileCompleteRoleMerchant": "ร้านค้า",
   "profileCompleteTitle": "กรอกข้อมูล{role}",
@@ -2667,14 +2859,12 @@
       "items": {}
     }
   },
-
   "profileCompleteStepPersonalTitle": "ข้อมูลส่วนตัว",
   "profileCompleteStepPersonalSubtitle": "กรุณากรอกข้อมูลของคุณ",
   "profileCompleteFullNameLabel": "ชื่อ-นามสกุล",
   "profileCompleteFullNameRequired": "กรุณากรอกชื่อ",
   "profileCompletePhoneLabel": "เบอร์โทรศัพท์",
   "profileCompletePhoneRequired": "กรุณากรอกเบอร์โทร",
-
   "profileCompleteStepVehicleTitle": "ข้อมูลรถ",
   "profileCompleteStepVehicleSubtitle": "กรุณาเลือกประเภทรถและกรอกทะเบียน",
   "profileCompleteVehicleTypeLabel": "ประเภทรถ",
@@ -2682,7 +2872,6 @@
   "profileCompleteVehicleCar": "รถยนต์",
   "profileCompletePlateLabel": "เลขทะเบียนรถ",
   "profileCompletePlateRequired": "กรุณากรอกทะเบียน",
-
   "profileCompleteStepDocsTitle": "อัปโหลดเอกสาร",
   "profileCompleteStepDocsSubtitle": "กรุณาถ่ายรูปเอกสารของคุณ",
   "profileCompleteDocIdCard": "รูปบัตรประชาชน",
@@ -2692,26 +2881,22 @@
   "profileCompleteDocsHint": "* กรุณาอัปโหลดเอกสารทั้ง 4 รายการ",
   "profileCompleteDocSelected": "เลือกรูปแล้ว ✓",
   "profileCompleteDocTapToPick": "แตะเพื่อถ่ายรูปหรือเลือกจากแกลเลอรี",
-
   "profileCompleteStepMerchantTitle": "ข้อมูลร้านค้า",
   "profileCompleteStepMerchantSubtitle": "กรุณากรอกข้อมูลร้านค้าของคุณ",
   "profileCompleteMerchantNameLabel": "ชื่อร้านค้า / เจ้าของ",
   "profileCompleteAddressLabel": "ที่อยู่ร้าน",
   "profileCompleteAddressRequired": "กรุณากรอกที่อยู่",
-
   "profileCompleteStepBankTitle": "ข้อมูลธนาคาร",
   "profileCompleteStepBankSubtitle": "สำหรับรับเงินจากระบบ (ไม่บังคับ)",
   "profileCompleteBankNameLabel": "ชื่อธนาคาร",
   "profileCompleteBankNameHint": "เช่น กสิกรไทย, ไทยพาณิชย์",
   "profileCompleteBankAccountNumberLabel": "เลขบัญชี",
   "profileCompleteBankAccountNameLabel": "ชื่อบัญชี",
-
   "imagePickerChooseImage": "เลือกรูปภาพ",
   "imagePickerTakePhoto": "ถ่ายรูป",
   "imagePickerTakePhotoSubtitle": "ใช้กล้องถ่ายรูปใหม่",
   "imagePickerPickGallery": "เลือกจากแกลเลอรี",
   "imagePickerPickGallerySubtitle": "เลือกรูปจากอัลบั้ม",
-
   "landingLogin": "เข้าสู่ระบบ",
   "landingStart": "เริ่มใช้งาน",
   "landingHeadline": "บริการเรียกรถ\nส่งอาหาร & พัสดุ",
@@ -2740,7 +2925,6 @@
   "landingHowStep4Desc": "คนขับรับงานและมาหาคุณ",
   "landingDriverCtaTitle": "สมัครเป็นคนขับ Jedechai",
   "landingDriverCtaSubtitle": "สร้างรายได้เสริม ทำงานอิสระ เลือกเวลาเอง",
-
   "topupAdminPushTitle": "💰 คำขอเติมเงินใหม่",
   "topupAdminPushBody": "{driverName} แจ้งเติมเงิน ฿{amount} — รอการอนุมัติ",
   "@topupAdminPushBody": {
@@ -2784,12 +2968,322 @@
       "accountNumber": {}
     }
   },
-
   "pendingDeletionTitle": "กำลังดำเนินการลบบัญชี",
   "pendingDeletionBody": "คำขอลบบัญชีของคุณถูกส่งไปยังแอดมินแล้ว\nกรุณารอการตรวจสอบและอนุมัติ",
   "pendingDeletionWaiting": "ระหว่างรอการอนุมัติ\nจะไม่สามารถใช้งานบัญชีนี้ได้",
   "pendingDeletionLogout": "ออกจากระบบ",
   "rejectedDeletionTitle": "คำขอลบบัญชีถูกปฏิเสธ",
   "rejectedDeletionBody": "คำขอลบบัญชีของคุณไม่ได้รับการอนุมัติ\nคุณสามารถเข้าสู่ระบบและใช้งานได้ตามปกติ",
-  "rejectedDeletionBack": "กลับสู่หน้าล็อกอิน"
+  "rejectedDeletionBack": "กลับสู่หน้าล็อกอิน",
+  "driverServiceTypeTitle": "ประเภทงานที่รับ",
+  "driverServiceTypeSubtitle": "เลือกประเภทงานที่ต้องการรับ (ไม่เลือก = รับทั้งหมด)",
+  "driverServiceTypeFood": "ส่งอาหาร",
+  "driverServiceTypeRide": "เรียกรถ",
+  "driverServiceTypeParcel": "ส่งพัสดุ",
+  "driverServiceTypeLaundry": "รับส่งผ้าซักรีด",
+  "driverServiceTypeFoodDesc": "ออเดอร์จากร้านในระบบ",
+  "driverServiceTypeRideDesc": "รับส่งผู้โดยสาร",
+  "driverServiceTypeParcelDesc": "พัสดุขนาดไม่เกิน 10 กก.",
+  "driverServiceTypeLaundryDesc": "รับผ้าจากลูกค้าไปร้าน และส่งคืน",
+  "driverServiceTypeSave": "บันทึกการตั้งค่า",
+  "driverServiceTypeSaveError": "บันทึกไม่สำเร็จ: {error}",
+  "@driverServiceTypeSaveError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "driverProfileRatingJobs": "{rating} · {count} งาน",
+  "@driverProfileRatingJobs": {
+    "placeholders": {
+      "rating": {},
+      "count": {}
+    }
+  },
+  "driverJobBaht": "฿ {amount}",
+  "@driverJobBaht": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "driverJobBahtNeg": "-฿ {amount}",
+  "@driverJobBahtNeg": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "driverEarningsBaht": "฿{amount}",
+  "@driverEarningsBaht": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "driverEarningsBahtNeg": "-฿{amount}",
+  "@driverEarningsBahtNeg": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "driverEarningsExportCsv": "ส่งออก CSV",
+  "driverEarningsFilterFood": "🍔 อาหาร",
+  "driverEarningsFilterRide": "🚗 รับส่ง",
+  "driverEarningsFilterParcel": "📦 พัสดุ",
+  "driverEarningsWeekdayMon": "จ",
+  "driverEarningsWeekdayTue": "อ",
+  "driverEarningsWeekdayWed": "พ",
+  "driverEarningsWeekdayThu": "พฤ",
+  "driverEarningsWeekdayFri": "ศ",
+  "driverEarningsWeekdaySat": "ส",
+  "driverEarningsWeekdaySun": "อา",
+  "driverEarningsWeeklyChartTitle": "รายได้ 7 วันที่ผ่านมา",
+  "driverEarningsCsvHeader": "วันที่,ประเภท,สถานะ,รหัสงาน,รายได้คนขับ,ค่าธรรมเนียม App",
+  "driverEarningsCsvShareSubject": "รายงานรายได้คนขับ",
+  "driverEarningsExportError": "ส่งออกไม่สำเร็จ: {error}",
+  "@driverEarningsExportError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "driverWalletBucketTopup": "เติมเอง",
+  "driverWalletBucketTopupHint": "ถอนขั้นต่ำ ฿100",
+  "driverWalletBucketSystem": "จากระบบ",
+  "driverWalletBucketSystemHint": "รางวัล/ชดเชย · ถอนขั้นต่ำ ฿200",
+  "driverWalletTypeCouponCompensation": "ชดเชยส่วนลดคูปอง",
+  "driverWalletTypeJobPayout": "รับค่าออเดอร์ (ลูกค้าจ่ายผ่าน Wallet)",
+  "driverWalletTypeWithdrawalPending": "ถอนเงิน (รอโอน)",
+  "driverWalletTypeRefund": "คืนเงิน",
+  "driverPerfTitle": "สถิติและคะแนน",
+  "driverPerfBadgeLevel": "ระดับ {level}",
+  "@driverPerfBadgeLevel": {
+    "placeholders": {
+      "level": {}
+    }
+  },
+  "driverPerfAvgRating": "คะแนนเฉลี่ยจากลูกค้า",
+  "driverPerfOutOfFive": "จากคะแนนเต็ม 5.0",
+  "driverPerfMaxLevel": "ระดับสูงสุดแล้ว",
+  "driverPerfBadgeProgress": "คืบหน้าสู่ระดับถัดไป {current} / {target}",
+  "@driverPerfBadgeProgress": {
+    "placeholders": {
+      "current": {},
+      "target": {}
+    }
+  },
+  "driverPerfMetrics": "ตัวชี้วัด",
+  "driverPerfAcceptanceRate": "อัตราการรับงาน",
+  "driverPerfTarget90": "เป้าหมาย 90%",
+  "driverPerfCompletionRate": "อัตราการส่งสำเร็จ",
+  "driverPerfCompletionRateHint": "งานที่ส่งถึงผู้รับครบถ้วน",
+  "driverPerfTotalCompleted": "งานสำเร็จทั้งหมด",
+  "driverPerfTotalCompletedHint": "สะสมตั้งแต่เริ่มทำงาน",
+  "driverPerfJobsCount": "{count} งาน",
+  "@driverPerfJobsCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "driverPerfLevel": "ระดับ",
+  "driverShiftStartError": "เริ่มกะไม่สำเร็จ: {error}",
+  "@driverShiftStartError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "driverShiftEndError": "หยุดกะไม่สำเร็จ: {error}",
+  "@driverShiftEndError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "driverShiftTitle": "กะทำงาน",
+  "driverShiftWeeklyHours": "วิ่งสะสม 7 วัน",
+  "driverShiftHoursMinutes": "{hours} ชม. {minutes} นาที",
+  "@driverShiftHoursMinutes": {
+    "placeholders": {
+      "hours": {},
+      "minutes": {}
+    }
+  },
+  "driverShiftWeeklyShifts": "กะ 7 วัน",
+  "driverShiftWeeklyJobs": "งาน 7 วัน",
+  "driverShiftActive": "กะปัจจุบัน",
+  "driverShiftNotStarted": "ยังไม่ได้เริ่มกะ",
+  "driverShiftActiveBadge": "กำลังทำงาน",
+  "driverShiftStartedAt": "เริ่มเมื่อ {time}",
+  "@driverShiftStartedAt": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "driverShiftEnd": "หยุดกะ",
+  "driverShiftStart": "เริ่มกะ",
+  "driverShiftHistoryTitle": "ประวัติกะ 7 วัน",
+  "driverShiftHistoryEmpty": "ยังไม่มีประวัติกะ",
+  "driverShiftCardSummary": "ระยะเวลา {duration} · งาน {jobs} ครั้ง",
+  "@driverShiftCardSummary": {
+    "placeholders": {
+      "duration": {},
+      "jobs": {}
+    }
+  },
+  "withdrawMinBucketError": "ถอนขั้นต่ำ ฿{amount} สำหรับ{bucket}",
+  "@withdrawMinBucketError": {
+    "placeholders": {
+      "amount": {},
+      "bucket": {}
+    }
+  },
+  "withdrawBucketTopup": "เงินที่เติมเอง",
+  "withdrawBucketSystem": "เงินจากระบบ",
+  "withdrawAvailable": "ถอนได้ ฿{amount}",
+  "@withdrawAvailable": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "withdrawBahtPrefix": "฿ ",
+  "withdrawMinMaxHelper": "ขั้นต่ำ ฿{min} · ถอนได้ ฿{available}",
+  "@withdrawMinMaxHelper": {
+    "placeholders": {
+      "min": {},
+      "available": {}
+    }
+  },
+  "withdrawMinAmount": "ขั้นต่ำ ฿{amount}",
+  "@withdrawMinAmount": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "withdrawBucketInsufficient": "ยอดในถังนี้ไม่พอ (฿{amount})",
+  "@withdrawBucketInsufficient": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "driverDashJobLaundry": "ซักผ้า",
+  "driverDashQuickPerf": "ผลงาน",
+  "driverDashQuickShift": "กะงาน",
+  "driverDashServiceTypeSettings": "ตั้งค่าประเภทงาน",
+  "driverDashEarnBreakdownFood": "อาหาร",
+  "driverDashEarnBreakdownRide": "เรียกรถ",
+  "driverDashEarnBreakdownParcel": "พัสดุ",
+  "driverDashEarnBreakdownEntry": "{type} ฿{amount}",
+  "@driverDashEarnBreakdownEntry": {
+    "placeholders": {
+      "type": {},
+      "amount": {}
+    }
+  },
+  "driverDashNoJobsInRadius": "ไม่มีงานในรัศมี {km} กม.",
+  "@driverDashNoJobsInRadius": {
+    "placeholders": {
+      "km": {}
+    }
+  },
+  "driverDashPullToRefresh": "ดึงหน้าจอลงเพื่อรีเฟรช",
+  "driverDashScheduledJobs": "งานนัดหมาย",
+  "driverDashScheduledJobsEmpty": "ไม่มีงานนัดหมาย",
+  "driverDashMonthJan": "ม.ค.",
+  "driverDashMonthFeb": "ก.พ.",
+  "driverDashMonthMar": "มี.ค.",
+  "driverDashMonthApr": "เม.ย.",
+  "driverDashMonthMay": "พ.ค.",
+  "driverDashMonthJun": "มิ.ย.",
+  "driverDashMonthJul": "ก.ค.",
+  "driverDashMonthAug": "ส.ค.",
+  "driverDashMonthSep": "ก.ย.",
+  "driverDashMonthOct": "ต.ค.",
+  "driverDashMonthNov": "พ.ย.",
+  "driverDashMonthDec": "ธ.ค.",
+  "driverDashScheduledTime": "{day} {month} {year} {hour}:{minute} น.",
+  "@driverDashScheduledTime": {
+    "placeholders": {
+      "day": {},
+      "month": {},
+      "year": {},
+      "hour": {},
+      "minute": {}
+    }
+  },
+  "driverNavLaundryArrivedPickup": "ถึงจุดรับผ้า",
+  "driverNavLaundryPhotoPickup": "ถ่ายรูปและรับผ้า",
+  "driverNavLaundryComplete": "ส่งงานซักผ้าให้เสร็จ",
+  "driverNavLaundryConfirmError": "ยืนยันรับผ้าไม่สำเร็จ: {error}",
+  "@driverNavLaundryConfirmError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "driverNavLaundryEvidenceSaved": "บันทึกหลักฐานรับผ้าแล้ว",
+  "driverNavBahtPlus": "+฿{amount}",
+  "@driverNavBahtPlus": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "driverNavStepAccept": "รับงาน",
+  "driverNavStepArriveStore": "มาถึงร้าน",
+  "driverNavStepPickupFood": "รับอาหาร",
+  "driverNavStepDelivered": "ส่งแล้ว",
+  "driverNavStepArrivePickup": "มาถึงจุดรับ",
+  "driverNavStepDelivering": "กำลังส่ง",
+  "driverNavStepDone": "เสร็จสิ้น",
+  "driverNavEtaMinutes": "{minutes} นาที",
+  "@driverNavEtaMinutes": {
+    "placeholders": {
+      "minutes": {}
+    }
+  },
+  "topupBeamFailed": "การชำระเงินไม่สำเร็จ กรุณาสร้าง QR ใหม่",
+  "topupBeamExpired": "QR หมดอายุแล้ว — ถ้าชำระแล้ว ระบบจะเติมเงินให้อัตโนมัติ ไม่ต้องจ่ายซ้ำ",
+  "topupBeamManualReview": "ได้รับการชำระเงินแล้ว รอแอดมินตรวจสอบยอด",
+  "topupBeamNotFound": "ยังไม่พบการชำระเงิน",
+  "topupBeamQrExpired": "QR หมดอายุแล้ว",
+  "topupBeamExpiresIn": "QR หมดอายุใน {time}",
+  "@topupBeamExpiresIn": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "topupBeamScanPrompt": "สแกน QR PromptPay เพื่อชำระเงิน",
+  "topupBeamHowItWorks": "ชำระผ่าน Beam — เงินเข้า Wallet อัตโนมัติ ไม่ต้องแนบสลิป",
+  "topupBeamPlayground": "โหมดทดสอบ (Playground)",
+  "topupBeamQrMissing": "ไม่พบรูป QR",
+  "topupBeamWaiting": "รอการชำระเงิน...",
+  "topupBeamCheckStatus": "ตรวจสอบสถานะ",
+  "topupBeamNewQr": "สร้าง QR ใหม่",
+  "topupSlipAttachFirst": "กรุณาแนบรูปสลิปก่อนยืนยันเติมเงิน",
+  "topupSlipVerifyFailed": "ตรวจสลิปไม่สำเร็จ กรุณาเลือกสลิปใหม่ หรือติดต่อแอดมินหากโอนเงินแล้ว",
+  "topupSlipReasonFailed": "สลิปนี้ไม่ผ่านการตรวจสอบอัตโนมัติ กรุณาเลือกสลิปโอนเงินจริงจากธนาคารแล้วลองใหม่",
+  "topupSlipReasonAmount": "ยอดเงินในสลิปไม่ตรงกับยอดเติมเงิน กรุณาตรวจสอบยอดเงินแล้วลองใหม่",
+  "topupSlipReasonReceiver": "บัญชีผู้รับในสลิปไม่ตรงกับบัญชีปลายทางของระบบ กรุณาตรวจสอบบัญชีปลายทาง",
+  "topupSlipReasonDuplicate": "สลิปนี้ถูกใช้เติมเงินแล้ว กรุณาใช้สลิปใหม่",
+  "topupSlipReasonRate": "ตรวจสลิปหลายครั้งเกินไป กรุณารอสักครู่แล้วลองใหม่",
+  "topupSlipReasonInvalidAmount": "จำนวนเงินเติมไม่ถูกต้อง กรุณาสร้าง QR ใหม่",
+  "topupSlipReasonInvalidImage": "ไฟล์สลิปไม่ถูกต้อง กรุณาเลือกไฟล์รูปภาพใหม่",
+  "topupSlipReasonFallback": "ตรวจสลิปไม่ผ่าน กรุณาตรวจสอบสลิปแล้วลองใหม่",
+  "topupSlipHumanFraud": "สลิปนี้ไม่ผ่านการตรวจสอบ กรุณาใช้สลิปโอนเงินจริงจากธนาคาร และตรวจสอบว่ายอดเงินกับบัญชีปลายทางถูกต้อง",
+  "topupWithdrawRequestError": "ส่งคำขอถอนไม่สำเร็จ (ขั้นต่ำ ฿100 และต้องกรอกบัญชีให้ครบ)",
+  "topupSlipStepHint": "โอนเงินตาม QR แล้วแนบรูปสลิป ระบบจะตรวจสลิปและเติมเงินให้อัตโนมัติ",
+  "topupSlipAutoDone": "ตรวจสลิปและเติมเงินเข้ากระเป๋าแล้ว",
+  "topupSlipTopUpAgain": "เติมเงินอีกครั้ง",
+  "topupSlipSelected": "เลือกสลิปแล้ว",
+  "topupSlipAttachSlip": "แนบสลิปโอนเงิน",
+  "topupSlipReady": "พร้อมตรวจสอบสลิป",
+  "topupSlipPickHint": "ถ่ายรูปหรือเลือกรูปสลิปหลังโอนตาม QR",
+  "topupSlipVerifyHint": "ระบบจะตรวจยอดและป้องกันสลิปซ้ำก่อนเติมเงินเข้ากระเป๋า",
+  "topupSlipChange": "เปลี่ยนสลิป",
+  "topupSlipChoose": "เลือกรูปสลิป",
+  "topupSlipRemove": "ลบสลิป",
+  "topupSlipChecking": "กำลังตรวจสลิป...",
+  "topupSlipCheckAndTopUp": "ตรวจสลิปและเติมเงิน ฿{amount}",
+  "@topupSlipCheckAndTopUp": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "topupStatusAwaiting": "รอชำระเงิน",
+  "topupStatusQrExpired": "QR หมดอายุ",
+  "topupStatusFailed": "ชำระไม่สำเร็จ",
+  "driverNavProxLaundryPickup": "จุดรับผ้า"
 }

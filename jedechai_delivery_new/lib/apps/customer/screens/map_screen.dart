@@ -5,7 +5,8 @@ import 'package:geolocator/geolocator.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../common/services/auth_service.dart';
 import '../../../common/widgets/location_disclosure_dialog.dart';
-import '../../../theme/app_theme.dart';
+import '../../../theme/jdc_colors.dart';
+import '../../customer/map_dark_style.dart';
 import 'services/ride_service_screen.dart';
 import 'services/food_service_screen.dart';
 import 'services/parcel_service_screen.dart';
@@ -35,24 +36,25 @@ class _MapScreenState extends State<MapScreen> {
   );
 
   List<Map<String, dynamic>> _getServices(BuildContext context) {
+    final jdc = JdcColors.of(context);
     final l10n = AppLocalizations.of(context)!;
     return [
       {
         'title': l10n.mapSvcRide,
         'icon': Icons.motorcycle,
-        'color': AppTheme.primaryGreen,
+        'color': jdc.cta,
         'screen': const RideServiceScreen(),
       },
       {
         'title': l10n.mapSvcFood,
         'icon': Icons.fastfood,
-        'color': AppTheme.accentOrange,
+        'color': jdc.brand,
         'screen': FoodServiceScreen(),
       },
       {
         'title': l10n.mapSvcParcel,
         'icon': Icons.local_shipping,
-        'color': AppTheme.accentBlue,
+        'color': jdc.infoInk,
         'screen': const ParcelServiceScreen(),
       },
     ];
@@ -256,14 +258,15 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final userEmail = AuthService.userEmail ?? AppLocalizations.of(context)!.mapUserFallback;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('JDC Delivery'),
-        backgroundColor: AppTheme.primaryGreen,
-        foregroundColor: colorScheme.onPrimary,
+        backgroundColor: jdc.panel,
+        foregroundColor: jdc.onPanel,
         actions: [
           // User info
           Padding(
@@ -307,24 +310,24 @@ class _MapScreenState extends State<MapScreen> {
                   )
                 : _initialPosition,
             myLocationEnabled: true,
-            myLocationButtonEnabled: false, // Disable default button, we'll add custom
-            zoomControlsEnabled: false, // Disable default controls, we'll add custom
+            myLocationButtonEnabled: false,
+            zoomControlsEnabled: false,
             mapType: _mapType,
             compassEnabled: true,
             trafficEnabled: false,
             buildingsEnabled: true,
-            // Add padding to prevent Google logo from being hidden
+            style: isDark ? kMapDarkStyle : null,
             padding: const EdgeInsets.only(bottom: 120),
           ),
           
           // Loading indicators
           if (!_isMapReady)
-            const Center(
+            Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryGreen),
+                valueColor: AlwaysStoppedAnimation<Color>(jdc.cta),
               ),
             ),
-          
+
           // Location loading indicator
           if (_isLoadingLocation)
             Positioned(
@@ -336,12 +339,12 @@ class _MapScreenState extends State<MapScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const SizedBox(
+                      SizedBox(
                         width: 16,
                         height: 16,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryGreen),
+                          valueColor: AlwaysStoppedAnimation<Color>(jdc.cta),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -351,7 +354,7 @@ class _MapScreenState extends State<MapScreen> {
                 ),
               ),
             ),
-          
+
           // Layer 2: Map controls overlay
           if (_isMapReady)
             Positioned(
@@ -364,25 +367,25 @@ class _MapScreenState extends State<MapScreen> {
                     heroTag: "mapType",
                     mini: true,
                     onPressed: _toggleMapType,
-                    backgroundColor: colorScheme.surface,
-                    child: const Icon(Icons.layers, color: AppTheme.primaryGreen),
+                    backgroundColor: jdc.surface,
+                    child: Icon(Icons.layers, color: jdc.cta),
                   ),
                   const SizedBox(height: 8),
                   FloatingActionButton(
                     heroTag: "currentLocation",
                     mini: true,
                     onPressed: _currentPosition != null ? _moveToCurrentLocation : _determinePosition,
-                    backgroundColor: colorScheme.surface,
+                    backgroundColor: jdc.surface,
                     child: _isLoadingLocation
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 16,
                             height: 16,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryGreen),
+                              valueColor: AlwaysStoppedAnimation<Color>(jdc.cta),
                             ),
                           )
-                        : const Icon(Icons.my_location, color: AppTheme.primaryGreen),
+                        : Icon(Icons.my_location, color: jdc.cta),
                   ),
                 ],
               ),
@@ -392,20 +395,19 @@ class _MapScreenState extends State<MapScreen> {
           if (_isMapReady)
             Positioned(
               right: 16,
-              bottom: 160, // Above service menu (120px + 40px margin)
+              bottom: 160,
               child: FloatingActionButton(
                 heroTag: "centerLocation",
                 onPressed: _currentPosition != null ? _moveToCurrentLocation : _determinePosition,
-                backgroundColor: AppTheme.primaryGreen,
-                foregroundColor: colorScheme.onPrimary,
+                backgroundColor: jdc.cta,
+                foregroundColor: jdc.onCta,
                 child: _isLoadingLocation
                     ? SizedBox(
                         width: 24,
                         height: 24,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(colorScheme.onPrimary),
+                          valueColor: AlwaysStoppedAnimation<Color>(jdc.onCta),
                         ),
                       )
                     : const Icon(Icons.gps_fixed),

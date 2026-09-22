@@ -1,12 +1,13 @@
 import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
-import 'package:jedechai_delivery_new/theme/app_theme.dart';
+import '../../../theme/jdc_layout.dart';
 import 'dart:async';
 import 'package:geolocator/geolocator.dart';
 import '../../../common/services/services.dart';
 import '../../../common/models/models.dart';
 import '../../../common/utils/order_code_formatter.dart';
 import '../../../common/widgets/location_disclosure_dialog.dart';
+import '../../../common/widgets/app_network_image.dart';
 import '../../../common/services/driver_foreground_service.dart';
 import '../../../common/utils/driver_job_visibility_policy.dart';
 import '../../../common/utils/notification_payload_policy.dart';
@@ -760,15 +761,16 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     debugLog('📢 Sending notification for new job: ${job.id}');
 
     // Show local notification
+    final jdc = context.jdc;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(AppLocalizations.of(context)!.driverDashNewJob(
             _getJobTypeText(job.serviceType), _getJobStatusText(job.status))),
-        backgroundColor: Colors.green,
+        backgroundColor: jdc.successFill,
         duration: const Duration(seconds: 5),
         action: SnackBarAction(
           label: AppLocalizations.of(context)!.driverDashViewJob,
-          textColor: Colors.white,
+          textColor: jdc.onCta,
           onPressed: () {
             // Scroll to top or refresh
             _manualRefresh();
@@ -793,7 +795,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       case 'parcel':
         return l10n.driverDashJobParcel;
       case 'laundry':
-        return 'ซักผ้า';
+        return l10n.driverDashJobLaundry;
       default:
         return l10n.driverDashJobGeneral;
     }
@@ -866,7 +868,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           SnackBar(
             content: Text(AppLocalizations.of(context)!
                 .driverDashErrorGeneric(e.toString())),
-            backgroundColor: Colors.red,
+            backgroundColor: context.jdc.danger,
             duration: const Duration(seconds: 3),
           ),
         );
@@ -899,7 +901,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context)!.driverDashMustOnline),
-          backgroundColor: Colors.orange,
+          backgroundColor: context.jdc.brandOnSoft,
           duration: const Duration(seconds: 3),
         ),
       );
@@ -946,7 +948,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)!.driverDashAccepted),
-            backgroundColor: const Color(0xFF3B82F6),
+            backgroundColor: context.jdc.successFill,
             duration: const Duration(seconds: 2),
           ),
         );
@@ -977,8 +979,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           showDialog(
             context: context,
             builder: (ctx) => AlertDialog(
-              icon: const Icon(Icons.account_balance_wallet,
-                  color: Colors.orange, size: 48),
+              icon: Icon(Icons.account_balance_wallet,
+                  color: context.jdc.brandOnSoft, size: 48),
               title: Text(
                   AppLocalizations.of(context)!.driverDashInsufficientBalance),
               content: Text(e.toString()),
@@ -996,10 +998,6 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                       ),
                     );
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    foregroundColor: Colors.white,
-                  ),
                   child: Text(AppLocalizations.of(context)!.driverDashTopUp),
                 ),
               ],
@@ -1020,7 +1018,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        icon: const Icon(Icons.error_outline, color: Colors.red, size: 48),
+        icon: Icon(Icons.error_outline, color: context.jdc.danger, size: 48),
         title: Text(title),
         content: Text(message),
         actions: [
@@ -1035,410 +1033,511 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = context.jdc;
     return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.driverDashTitle),
-        backgroundColor: const Color(0xFF1E3A8A), // Deep blue
-        foregroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-            child: InkWell(
-              onTap: _toggleOnlineStatus,
-              borderRadius: BorderRadius.circular(999),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: _isOnline
-                      ? Colors.green.withValues(alpha: 0.22)
-                      : Colors.white.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: _isOnline
-                        ? Colors.greenAccent.withValues(alpha: 0.8)
-                        : Colors.white.withValues(alpha: 0.35),
-                    width: 1.5,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    AnimatedBuilder(
-                      animation: _pulseAnim,
-                      builder: (_, __) => Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color:
-                              _isOnline ? Colors.greenAccent : Colors.white54,
-                          shape: BoxShape.circle,
-                          boxShadow: _isOnline
-                              ? [
-                                  BoxShadow(
-                                    color: Colors.greenAccent.withValues(
-                                        alpha: _pulseAnim.value * 0.8),
-                                    blurRadius: 4 + _pulseAnim.value * 6,
-                                    spreadRadius: _pulseAnim.value,
-                                  ),
-                                ]
-                              : null,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      _isOnline
-                          ? AppLocalizations.of(context)!.driverDashOnline
-                          : AppLocalizations.of(context)!.driverDashOffline,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: _isOnline ? Colors.greenAccent : Colors.white70,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          // Service type settings button
-          IconButton(
-            icon: const Icon(Icons.tune_rounded),
-            tooltip: 'ตั้งค่าประเภทงาน',
-            onPressed: () async {
-              final updated = await showModalBottomSheet<List<String>?>(
-                context: context,
-                isScrollControlled: true,
-                builder: (_) => DriverServiceTypeSettings(
-                  initialServiceTypes: _acceptedServiceTypes,
-                  driverId: AuthService.userId ?? '',
-                ),
-              );
-              if (updated != null) {
-                setState(() =>
-                    _acceptedServiceTypes = updated.isEmpty ? null : updated);
-              }
-            },
-          ),
-          // Profile button
-          IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () async {
-              // Navigate to driver profile screen
-              await Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const DriverProfileScreen(),
-                ),
-              );
-
-              if (mounted) {
-                await _loadDriverProfile();
-              }
-            },
-            tooltip: AppLocalizations.of(context)!.driverDashProfile,
-          ),
-          // Logout button
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _logout,
-            tooltip: AppLocalizations.of(context)!.driverDashLogout,
-          ),
-        ],
-      ),
+      backgroundColor: jdc.paper,
       body: _isLoading
-          ? const Center(
+          ? Center(
               child: CircularProgressIndicator(
-                valueColor:
-                    AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6)), // Blue
+                valueColor: AlwaysStoppedAnimation<Color>(jdc.cta),
               ),
             )
-          : RefreshIndicator(
-              onRefresh: _manualRefresh,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildCompactDriverHeader(),
-                    const SizedBox(height: 14),
-
-                    // Quick action row: Performance & Shift
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) =>
-                                        const DriverPerformanceScreen())),
-                            icon: const Icon(Icons.insights, size: 16),
-                            label: const Text('ผลงาน',
-                                style: TextStyle(fontSize: 12)),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppTheme.accentBlue,
-                              side: BorderSide(
-                                  color: AppTheme.accentBlue
-                                      .withValues(alpha: 0.4)),
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8)),
+          : SafeArea(
+              bottom: false,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildHeroHeader(),
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: _manualRefresh,
+                      color: jdc.cta,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: JdcContentFrame(
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                              top: JdcSpacing.lg,
+                              bottom: JdcSpacing.xxl,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildQuickActionRow(),
+                                const SizedBox(height: JdcSpacing.lg),
+                                _buildJobFeedHeader(),
+                                const SizedBox(height: JdcSpacing.lg),
+                                _buildJobFeed(),
+                                _buildScheduledJobsSection(),
+                              ],
                             ),
                           ),
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => const DriverShiftScreen())),
-                            icon: const Icon(Icons.schedule, size: 16),
-                            label: const Text('กะงาน',
-                                style: TextStyle(fontSize: 12)),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.green[700],
-                              side: BorderSide(
-                                  color: Colors.green.withValues(alpha: 0.4)),
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8)),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                    const SizedBox(height: 14),
-
-                    // Job Feed Section
-                    Row(
-                      children: [
-                        Text(
-                          AppLocalizations.of(context)!.driverDashJobList,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            _isRefreshing
-                                ? AppLocalizations.of(context)!
-                                    .driverDashRefreshing
-                                : AppLocalizations.of(context)!
-                                    .driverDashRealtime,
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.blue,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    _buildJobFeed(),
-                    _buildScheduledJobsSection(),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
     );
   }
 
-  Widget _buildCompactDriverHeader() {
+  /// หัวข้อ "รายการงาน" + chip สถานะเรียลไทม์/กำลังรีเฟรช
+  Widget _buildJobFeedHeader() {
+    final jdc = context.jdc;
+    final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
+    final refreshing = _isRefreshing || _jobStreamConnecting;
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            l10n.driverDashJobList,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: textTheme.headlineMedium,
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(
+              horizontal: JdcSpacing.sm, vertical: JdcSpacing.xs),
+          decoration: BoxDecoration(
+            color: refreshing ? jdc.infoSoft : jdc.successSoft,
+            borderRadius: BorderRadius.circular(JdcRadius.small),
+          ),
+          child: Text(
+            refreshing ? l10n.driverDashRefreshing : l10n.driverDashRealtime,
+            style: textTheme.labelMedium
+                ?.copyWith(color: refreshing ? jdc.infoInk : jdc.successInk),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// แถวปุ่มลัด: ผลงาน / กะงาน
+  Widget _buildQuickActionRow() {
+    final jdc = context.jdc;
+    final l10n = AppLocalizations.of(context)!;
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => const DriverPerformanceScreen()),
+            ),
+            icon: Icon(Icons.insights, size: 16, color: jdc.infoInk),
+            label: Text(l10n.driverDashQuickPerf),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: jdc.infoInk,
+              side: BorderSide(color: jdc.line),
+              padding: const EdgeInsets.symmetric(horizontal: JdcSpacing.sm),
+            ),
+          ),
+        ),
+        const SizedBox(width: JdcSpacing.md),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const DriverShiftScreen()),
+            ),
+            icon: Icon(Icons.schedule, size: 16, color: jdc.successInk),
+            label: Text(l10n.driverDashQuickShift),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: jdc.successInk,
+              side: BorderSide(color: jdc.successLine),
+              padding: const EdgeInsets.symmetric(horizontal: JdcSpacing.sm),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// หัว hero2 เขียวเข้ม — avatar + ชื่อ + ปุ่ม action, สวิตช์ออนไลน์ และสถิติ 3 ช่อง
+  Widget _buildHeroHeader() {
     final driverName = _driverProfile?['full_name'] ??
         AppLocalizations.of(context)!.driverDashDriverDefault;
     final vehicle =
         _displayVehicleType(_driverProfile?['vehicle_type'] as String?);
+    final l10n = AppLocalizations.of(context)!;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1E3A8A), Color(0xFF3B82F6)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+      padding: const EdgeInsets.fromLTRB(
+          JdcSpacing.xl, JdcSpacing.lg, JdcSpacing.xl, JdcSpacing.xl),
+      decoration: BoxDecoration(gradient: context.jdc.hero2),
+      child: JdcContentFrame(
+        padded: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                _buildHeroAvatar(),
+                const SizedBox(width: JdcSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        driverName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(color: context.jdc.onPanel),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        vehicle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: context.jdc.brandHi,
+                          fontWeight: FontWeight.w600,
+                          fontVariations: const [
+                            FontVariation('wght', 600),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                ..._heroActionButtons(),
+              ],
+            ),
+            const SizedBox(height: JdcSpacing.lg),
+            _buildOnlineSwitch(),
+            const SizedBox(height: JdcSpacing.lg),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildHeroStat(
+                    '${_availableJobs.length}',
+                    l10n.driverDashPendingJobs,
+                  ),
+                ),
+                const SizedBox(width: JdcSpacing.md),
+                Expanded(
+                  child: _buildHeroStat(
+                    '$_todayCompletedJobs',
+                    l10n.driverDashCompletedToday,
+                  ),
+                ),
+                const SizedBox(width: JdcSpacing.md),
+                Expanded(
+                  child: _buildHeroStat(
+                    l10n.driverEarningsBaht(
+                        RoleAmountCalculator.formatMoney(_todayEarnings)),
+                    l10n.driverDashEarningsToday,
+                  ),
+                ),
+              ],
+            ),
+            if (_earningsByType.isNotEmpty) ...[
+              const SizedBox(height: JdcSpacing.md),
+              _buildEarningsBreakdown(),
+            ],
+          ],
         ),
-        borderRadius: BorderRadius.circular(14),
       ),
-      child: Column(
-        children: [
-          Row(
+    );
+  }
+
+  /// Avatar มุมซ้ายบน — ใช้รูปโปรไฟล์จริงเมื่อมี avatar_url
+  /// ถ้าไม่มีใช้โลโก้ระบบสีเทา
+  Widget _buildHeroAvatar() {
+    final jdc = context.jdc;
+    final avatarUrl = _driverProfile?['avatar_url'] as String?;
+    final hasAvatar = avatarUrl != null && avatarUrl.isNotEmpty;
+    return Container(
+      width: 42,
+      height: 42,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: jdc.panelSoft3,
+        shape: BoxShape.circle,
+        border: Border.all(color: jdc.panelLine),
+      ),
+      child: ClipOval(
+        child: hasAvatar
+            ? AppNetworkImage(
+                imageUrl: avatarUrl,
+                width: 42,
+                height: 42,
+                fit: BoxFit.cover,
+                backgroundColor: jdc.panelSoft3,
+              )
+            // ไม่มีรูป: โลโก้ระบบสีเทา (มาตรฐานทุกช่องรูป ห้ามใช้ตัวย่อ)
+            : GrayscaleLogoPlaceholder(
+                width: 42,
+                height: 42,
+                padding: const EdgeInsets.all(4),
+                backgroundColor: jdc.surface,
+              ),
+      ),
+    );
+  }
+
+  /// ปุ่มบน hero: ตั้งค่าประเภทงาน / โปรไฟล์ / ออกจากระบบ
+  List<Widget> _heroActionButtons() {
+    final jdc = context.jdc;
+    final l10n = AppLocalizations.of(context)!;
+
+    Widget action(IconData icon, String tooltip, VoidCallback onTap) {
+      return Padding(
+        padding: const EdgeInsets.only(left: JdcSpacing.sm),
+        child: Tooltip(
+          message: tooltip,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(JdcRadius.field),
+            child: Container(
+              width: JdcTouch.minTarget,
+              height: JdcTouch.minTarget,
+              decoration: BoxDecoration(
+                color: jdc.panelSoft2,
+                borderRadius: BorderRadius.circular(JdcRadius.field),
+                border: Border.all(color: jdc.panelLine),
+              ),
+              child: Icon(icon, size: 20, color: jdc.onPanel),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return [
+      // Service type settings button
+      action(Icons.tune_rounded, l10n.driverDashServiceTypeSettings, () async {
+        final updated = await showModalBottomSheet<List<String>?>(
+          context: context,
+          isScrollControlled: true,
+          builder: (_) => DriverServiceTypeSettings(
+            initialServiceTypes: _acceptedServiceTypes,
+            driverId: AuthService.userId ?? '',
+          ),
+        );
+        if (updated != null) {
+          setState(
+              () => _acceptedServiceTypes = updated.isEmpty ? null : updated);
+        }
+      }),
+      // Profile button
+      action(Icons.person, l10n.driverDashProfile, () async {
+        // Navigate to driver profile screen
+        await Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const DriverProfileScreen(),
+          ),
+        );
+
+        if (mounted) {
+          await _loadDriverProfile();
+        }
+      }),
+      // Logout button
+      action(Icons.logout, l10n.driverDashLogout, _logout),
+    ];
+  }
+
+  /// แผงสวิตช์ออนไลน์/ออฟไลน์ บนพื้น successPanel ขอบ successPanelLine
+  Widget _buildOnlineSwitch() {
+    final jdc = context.jdc;
+    final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
+
+    final String subtitle;
+    if (!_isOnline) {
+      subtitle = l10n.driverDashOfflineHint;
+    } else if (_jobStreamConnecting) {
+      subtitle = l10n.driverDashRefreshing;
+    } else {
+      subtitle = l10n.driverDashRealtime;
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _toggleOnlineStatus,
+        borderRadius: BorderRadius.circular(JdcRadius.card),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+              horizontal: JdcSpacing.lg, vertical: JdcSpacing.md),
+          decoration: BoxDecoration(
+            color: _isOnline ? jdc.successPanel : jdc.panelSoft,
+            borderRadius: BorderRadius.circular(JdcRadius.card),
+            border: Border.all(
+                color: _isOnline ? jdc.successPanelLine : jdc.panelLine),
+          ),
+          child: Row(
             children: [
-              const Icon(Icons.work_outline, color: Colors.white, size: 22),
-              const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      driverName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    Row(
+                      children: [
+                        AnimatedBuilder(
+                          animation: _pulseAnim,
+                          builder: (_, __) => Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: _isOnline ? jdc.successDot : jdc.panelDim,
+                              shape: BoxShape.circle,
+                              boxShadow: _isOnline
+                                  ? [
+                                      BoxShadow(
+                                        color: jdc.successDot.withValues(
+                                            alpha: _pulseAnim.value * 0.8),
+                                        blurRadius: 4 + _pulseAnim.value * 6,
+                                        spreadRadius: _pulseAnim.value,
+                                      ),
+                                    ]
+                                  : null,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            _isOnline
+                                ? l10n.driverDashOnline
+                                : l10n.driverDashOffline,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: textTheme.titleMedium
+                                ?.copyWith(color: jdc.onPanel),
+                          ),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 2),
                     Text(
-                      vehicle,
+                      subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontSize: 11,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: _isOnline ? jdc.successOnPanel : jdc.panelDim,
                       ),
                     ),
                   ],
                 ),
               ),
-              InkWell(
-                borderRadius: BorderRadius.circular(999),
-                onTap: () async {
-                  await Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const DriverProfileScreen(),
-                    ),
-                  );
-                  if (mounted) {
-                    await _loadDriverProfile();
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
-                    shape: BoxShape.circle,
+              const SizedBox(width: JdcSpacing.md),
+              // สวิตช์เลื่อนออนไลน์/ออฟไลน์
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOut,
+                width: 54,
+                height: JdcSpacing.xxxl,
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  color: _isOnline ? jdc.successFill : jdc.trackEmpty,
+                  borderRadius: BorderRadius.circular(JdcRadius.chip),
+                ),
+                child: AnimatedAlign(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOut,
+                  alignment:
+                      _isOnline ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    width: 26,
+                    height: 26,
+                    decoration:
+                        BoxDecoration(color: jdc.knob, shape: BoxShape.circle),
                   ),
-                  child:
-                      const Icon(Icons.person, color: Colors.white, size: 18),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _buildQuickStat(
-                  AppLocalizations.of(context)!.driverDashPendingJobs,
-                  '${_availableJobs.length}',
-                  Icons.pending_actions,
-                  Colors.white,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildQuickStat(
-                  AppLocalizations.of(context)!.driverDashCompletedToday,
-                  '$_todayCompletedJobs',
-                  Icons.check_circle,
-                  Colors.white,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildQuickStat(
-                  AppLocalizations.of(context)!.driverDashEarningsToday,
-                  '฿${RoleAmountCalculator.formatMoney(_todayEarnings)}',
-                  Icons.payments,
-                  Colors.white,
-                ),
-              ),
-            ],
-          ),
-          if (_earningsByType.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            _buildEarningsBreakdown(),
-          ],
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildEarningsBreakdown() {
-    const typeInfo = {
-      'food': ('🍔', 'อาหาร'),
-      'ride': ('🚗', 'เรียกรถ'),
-      'parcel': ('📦', 'พัสดุ'),
+    final l10n = AppLocalizations.of(context)!;
+    final typeInfo = {
+      'food': ('🍔', l10n.driverDashEarnBreakdownFood),
+      'ride': ('🚗', l10n.driverDashEarnBreakdownRide),
+      'parcel': ('📦', l10n.driverDashEarnBreakdownParcel),
     };
     final entries = _earningsByType.entries.where((e) => e.value > 0).toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: entries.map((e) {
-          final info = typeInfo[e.key] ?? ('•', e.key);
-          return Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(info.$1, style: const TextStyle(fontSize: 12)),
-              const SizedBox(width: 4),
-              Text(
-                '${info.$2} ฿${RoleAmountCalculator.formatMoney(e.value)}',
-                style: const TextStyle(
-                    fontSize: 11,
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w500),
+    final children = <Widget>[];
+    for (var i = 0; i < entries.length; i++) {
+      final e = entries[i];
+      if (i > 0) children.add(const SizedBox(width: JdcSpacing.lg));
+      final info = typeInfo[e.key] ?? ('•', e.key);
+      children.add(
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(info.$1, style: const TextStyle(fontSize: 12)),
+            const SizedBox(width: JdcSpacing.xs),
+            Text(
+              l10n.driverDashEarnBreakdownEntry(
+                  info.$2, RoleAmountCalculator.formatMoney(e.value)),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontSize: 11,
+                color: context.jdc.panelDim,
+                fontWeight: FontWeight.w500,
+                fontVariations: const [FontVariation('wght', 500)],
               ),
-            ],
-          );
-        }).toList(),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+          horizontal: JdcSpacing.md, vertical: JdcSpacing.sm),
+      decoration: BoxDecoration(
+        color: context.jdc.panelSoft2,
+        borderRadius: BorderRadius.circular(JdcRadius.small),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(children: children),
       ),
     );
   }
 
-  Widget _buildQuickStat(
-      String title, String value, IconData icon, Color color) {
+  /// ช่องสถิติบนพื้น panelSoft ใน hero
+  Widget _buildHeroStat(String value, String label) {
+    final jdc = context.jdc;
+    final textTheme = Theme.of(context).textTheme;
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(JdcSpacing.md),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        color: jdc.panelSoft,
+        borderRadius: BorderRadius.circular(JdcRadius.field),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            color: color,
-            size: 20,
-          ),
-          const SizedBox(height: 4),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: textTheme.headlineSmall?.copyWith(color: jdc.onPanel),
           ),
+          const SizedBox(height: 2),
           Text(
-            title,
-            style: TextStyle(
-              fontSize: 10,
-              color: color.withValues(alpha: 0.8),
-            ),
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: textTheme.labelSmall?.copyWith(color: jdc.panelDim),
           ),
         ],
       ),
@@ -1453,12 +1552,13 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     });
 
     // Show feedback
+    final jdc = context.jdc;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(_isOnline
             ? AppLocalizations.of(context)!.driverDashNowOnline
             : AppLocalizations.of(context)!.driverDashNowOffline),
-        backgroundColor: _isOnline ? Colors.green : Colors.grey,
+        backgroundColor: _isOnline ? jdc.successFill : jdc.dim,
         duration: const Duration(seconds: 2),
       ),
     );
@@ -1483,29 +1583,34 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   }
 
   Widget _buildJobFeed() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = context.jdc;
+    final textTheme = Theme.of(context).textTheme;
     // Using state directly — subscription managed explicitly (ISSUE-039)
     if (_jobStreamError != null) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 64, color: Colors.red),
-            const SizedBox(height: 16),
-            Text(
-              'Error: $_jobStreamError',
-              style: const TextStyle(fontSize: 16, color: Colors.red),
-              textAlign: TextAlign.center,
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(JdcSpacing.lg),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 64, color: jdc.danger),
+              const SizedBox(height: JdcSpacing.lg),
+              Text(
+                'Error: $_jobStreamError',
+                style: textTheme.bodyLarge?.copyWith(color: jdc.danger),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       );
     }
 
     if (_jobStreamConnecting && _availableJobs.isEmpty) {
       return const Center(
-        child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6)),
+        child: Padding(
+          padding: EdgeInsets.all(JdcSpacing.xxxl),
+          child: CircularProgressIndicator(),
         ),
       );
     }
@@ -1516,89 +1621,66 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     if (jobs.isEmpty) {
       final isOfflineEmpty = !_isOnline;
       return Container(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(JdcSpacing.xxxl),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withValues(alpha: 0.1),
-              blurRadius: 4,
-              spreadRadius: 1,
-            ),
-          ],
+          color: jdc.surface,
+          borderRadius: BorderRadius.circular(JdcRadius.card),
+          border: Border.all(color: jdc.line),
+          boxShadow: jdc.shadowCard,
         ),
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(JdcSpacing.xxl),
               decoration: BoxDecoration(
-                color: isOfflineEmpty
-                    ? const Color(0xFFF3F4F6)
-                    : const Color(0xFFEFF6FF),
+                color: isOfflineEmpty ? jdc.sunken : jdc.infoSoft,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 isOfflineEmpty ? Icons.wifi_off : Icons.search_off_rounded,
                 size: 64,
-                color: isOfflineEmpty ? Colors.grey : Colors.grey.shade400,
+                color: jdc.muted,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: JdcSpacing.sm + 2),
             Text(
               isOfflineEmpty
                   ? AppLocalizations.of(context)!.driverDashOfflineTitle
                   : AppLocalizations.of(context)!.driverDashNoJobs,
-              style: TextStyle(
-                fontSize: 20,
-                color: colorScheme.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
+              style: textTheme.headlineMedium,
+              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: JdcSpacing.sm),
             Text(
               isOfflineEmpty
                   ? AppLocalizations.of(context)!.driverDashOfflineHint
-                  : 'ไม่มีงานในรัศมี ${_driverOrderDetectionRadiusKm.toStringAsFixed(0)} กม.',
-              style: TextStyle(
-                fontSize: 14,
-                color: colorScheme.onSurfaceVariant,
-              ),
+                  : AppLocalizations.of(context)!.driverDashNoJobsInRadius(
+                      _driverOrderDetectionRadiusKm.toStringAsFixed(0)),
+              style: textTheme.bodyMedium?.copyWith(color: jdc.muted),
               textAlign: TextAlign.center,
             ),
             if (!isOfflineEmpty && !_isRefreshing) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: JdcSpacing.xs + 2),
               Text(
-                'ดึงหน้าจอลงเพื่อรีเฟรช',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade400,
-                ),
+                AppLocalizations.of(context)!.driverDashPullToRefresh,
+                style:
+                    textTheme.bodySmall?.copyWith(fontSize: 13, color: jdc.dim),
               ),
             ],
-            const SizedBox(height: 20),
+            const SizedBox(height: JdcSpacing.xl),
             ElevatedButton.icon(
               onPressed: _isRefreshing ? null : _manualRefresh,
               icon: _isRefreshing
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        valueColor: AlwaysStoppedAnimation<Color>(jdc.onCta),
                       ),
                     )
                   : const Icon(Icons.refresh),
               label: Text(AppLocalizations.of(context)!.driverDashRefresh),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF3B82F6), // Blue
-                foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
             ),
           ],
         ),
@@ -1610,256 +1692,204 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     );
   }
 
+  /// การ์ดงานใหม่ — ขอบ brand 2px เงา shadowBrandLg หัวการ์ดเป็นแถบ panel
   Widget _buildJobCard(Booking job) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = context.jdc;
+    final textTheme = Theme.of(context).textTheme;
     // Calculate time elapsed
     final now = DateTime.now();
     final jobTime = job.createdAt;
     final difference = now.difference(jobTime);
     final timeAgo = _formatTimeAgo(difference);
 
-    // Get service icon and color
+    // Get service icon
     final serviceIcon = _getServiceIcon(job.serviceType);
-    final serviceColor = _getServiceColor(job.serviceType);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: JdcSpacing.md),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
-            blurRadius: 4,
-            spreadRadius: 1,
+        color: jdc.surface,
+        borderRadius: BorderRadius.circular(JdcRadius.card),
+        border: Border.all(color: jdc.brand, width: 2),
+        boxShadow: jdc.shadowBrandLg,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // แถบหัวการ์ด: ประเภทงาน + เวลาที่ผ่านมา
+          Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: JdcSpacing.lg, vertical: JdcSpacing.md),
+            color: jdc.panel,
+            child: Row(
+              children: [
+                Icon(serviceIcon, size: 16, color: jdc.onPanel),
+                const SizedBox(width: JdcSpacing.sm),
+                Expanded(
+                  child: Text(
+                    _getJobTypeText(job.serviceType),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.titleMedium
+                        ?.copyWith(fontSize: 13, color: jdc.onPanel),
+                  ),
+                ),
+                Text(
+                  timeAgo,
+                  style: textTheme.titleMedium?.copyWith(color: jdc.brandHi),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(JdcSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // สรุปเงิน
+                _buildFinancialSummary(job),
+                const SizedBox(height: JdcSpacing.md),
+
+                // แบนเนอร์งานนัดหมาย (ถ้ามี)
+                if (job.scheduledAt != null) ...[
+                  _buildScheduledBanner(job),
+                  const SizedBox(height: JdcSpacing.md),
+                ],
+
+                // จุดรับ-จุดส่ง
+                _buildRouteSummary(job),
+
+                const SizedBox(height: JdcSpacing.lg),
+
+                // ปุ่มรับงาน / สถานะ
+                _buildActionButtons(job),
+              ],
+            ),
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Row 1: Header
-            Row(
-              children: [
-                // Service Icon
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: serviceColor.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    serviceIcon,
-                    color: serviceColor,
-                    size: 19,
-                  ),
-                ),
-                const SizedBox(width: 10),
+    );
+  }
 
-                // Center: Service Name with Type
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _getJobTypeText(job.serviceType),
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: serviceColor,
-                        ),
-                      ),
-                      Text(
-                        _getServiceLabel(job.serviceType),
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Right: Time elapsed
-                Text(
-                  timeAgo,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 10),
-
-            if (job.scheduledAt != null) ...[
-              Container(
-                width: double.infinity,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.amber.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.amber.shade300),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.schedule, size: 18, color: Colors.orange),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        job.scheduledAt!.isAfter(DateTime.now())
-                            ? AppLocalizations.of(context)!
-                                .driverDashScheduledFrom(
-                                    _formatScheduledDateTime(job.scheduledAt!))
-                            : AppLocalizations.of(context)!
-                                .driverDashScheduledAt(
-                                    _formatScheduledDateTime(job.scheduledAt!)),
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-            ],
-
-            // Row 2: Financial Details
-            _buildFinancialSummary(job),
-
-            const SizedBox(height: 10),
-
-            // Row 3: Route Details (Step-like UI)
-            Column(
-              children: [
-                // Start Point
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 16,
-                      height: 16,
-                      decoration: BoxDecoration(
-                        color: Colors.green,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            job.serviceType == 'food'
-                                ? AppLocalizations.of(context)!
-                                    .driverDashPickupRestaurant
-                                : AppLocalizations.of(context)!
-                                    .driverDashPickupPoint,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: colorScheme.onSurfaceVariant,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            job.serviceType == 'food'
-                                ? (job.pickupAddress ??
-                                    AppLocalizations.of(context)!
-                                        .driverDashPickupFoodFallback)
-                                : (job.pickupAddress ??
-                                    AppLocalizations.of(context)!
-                                        .driverDashPickupRideFallback),
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: colorScheme.onSurface,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-
-                // Vertical Line
-                Padding(
-                  padding: const EdgeInsets.only(left: 7),
-                  child: Container(
-                    width: 2,
-                    height: 14,
-                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.35),
-                  ),
-                ),
-
-                // End Point
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 16,
-                      height: 16,
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            job.serviceType == 'food'
-                                ? AppLocalizations.of(context)!
-                                    .driverDashDestCustomer
-                                : AppLocalizations.of(context)!
-                                    .driverDashDestPoint,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: colorScheme.onSurfaceVariant,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            job.destinationAddress ??
-                                AppLocalizations.of(context)!
-                                    .driverDashDestFallback,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: colorScheme.onSurface,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 10),
-
-            // Row 4: Accept Button or Status
-            _buildActionButtons(job),
-          ],
-        ),
+  /// แบนเนอร์แจ้งเวลานัดหมายของงาน (ถ้ามี)
+  Widget _buildScheduledBanner(Booking job) {
+    final jdc = context.jdc;
+    final textTheme = Theme.of(context).textTheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+          horizontal: JdcSpacing.md, vertical: JdcSpacing.sm),
+      decoration: BoxDecoration(
+        color: jdc.brandSoft,
+        borderRadius: BorderRadius.circular(JdcRadius.small),
+        border: Border.all(color: jdc.brandLine),
       ),
+      child: Row(
+        children: [
+          Icon(Icons.schedule, size: 18, color: jdc.brandOnSoft),
+          const SizedBox(width: JdcSpacing.sm),
+          Expanded(
+            child: Text(
+              job.scheduledAt!.isAfter(DateTime.now())
+                  ? AppLocalizations.of(context)!.driverDashScheduledFrom(
+                      _formatScheduledDateTime(job.scheduledAt!))
+                  : AppLocalizations.of(context)!.driverDashScheduledAt(
+                      _formatScheduledDateTime(job.scheduledAt!)),
+              style: textTheme.labelMedium,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// ลิสต์จุดรับ-จุดส่ง — วงกลมขอบ cta / เส้น line / ปลายทางสี่เหลี่ยม panel
+  Widget _buildRouteSummary(Booking job) {
+    final l10n = AppLocalizations.of(context)!;
+    final pickupLabel = job.serviceType == 'food'
+        ? l10n.driverDashPickupRestaurant
+        : l10n.driverDashPickupPoint;
+    final destLabel = job.serviceType == 'food'
+        ? l10n.driverDashDestCustomer
+        : l10n.driverDashDestPoint;
+    final pickupAddress = job.serviceType == 'food'
+        ? (job.pickupAddress ?? l10n.driverDashPickupFoodFallback)
+        : (job.pickupAddress ?? l10n.driverDashPickupRideFallback);
+    final destAddress = job.destinationAddress ?? l10n.driverDashDestFallback;
+
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // คอลัมน์หมุดจุดรับ-จุดส่ง
+          SizedBox(
+            width: 14,
+            child: Column(
+              children: [
+                Container(
+                  width: JdcSpacing.md,
+                  height: JdcSpacing.md,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: context.jdc.cta, width: 3),
+                  ),
+                ),
+                Expanded(
+                  child: Center(
+                    child: Container(
+                      width: 2,
+                      color: context.jdc.line,
+                    ),
+                  ),
+                ),
+                Container(
+                  width: JdcSpacing.md,
+                  height: JdcSpacing.md,
+                  decoration: BoxDecoration(
+                    color: context.jdc.panel,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: JdcSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildRouteStop(pickupLabel, pickupAddress),
+                const SizedBox(height: JdcSpacing.sm),
+                _buildRouteStop(destLabel, destAddress),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// จุดแวะหนึ่งจุด (ป้ายกำกับ + ที่อยู่)
+  Widget _buildRouteStop(String label, String address) {
+    final textTheme = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: textTheme.labelSmall,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          address,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: textTheme.titleSmall,
+        ),
+      ],
     );
   }
 
@@ -1883,19 +1913,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         }
         return SizedBox(
           width: double.infinity,
-          height: 50,
           child: ElevatedButton(
             onPressed: (_isAcceptingJob || isScheduledLocked)
                 ? null
                 : () => _acceptJob(job.id),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF3B82F6),
-              foregroundColor: Colors.white,
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
             child: Text(
               isScheduledLocked
                   ? AppLocalizations.of(context)!.driverDashAcceptAt(
@@ -1903,10 +1924,6 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                   : (job.serviceType == 'parcel'
                       ? AppLocalizations.of(context)!.driverDashAcceptParcel
                       : AppLocalizations.of(context)!.driverDashAcceptRide),
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-              ),
             ),
           ),
         );
@@ -1942,28 +1959,15 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   Widget _buildAcceptFoodButton(Booking job, bool isScheduledLocked) {
     return SizedBox(
       width: double.infinity,
-      height: 50,
       child: ElevatedButton(
         onPressed: (_isAcceptingJob || isScheduledLocked)
             ? null
             : () => _acceptJob(job.id),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF3B82F6),
-          foregroundColor: Colors.white,
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
         child: Text(
           isScheduledLocked
-              ? AppLocalizations.of(context)!
-                  .driverDashAcceptAt(_formatScheduledDateTime(job.scheduledAt!))
+              ? AppLocalizations.of(context)!.driverDashAcceptAt(
+                  _formatScheduledDateTime(job.scheduledAt!))
               : AppLocalizations.of(context)!.driverDashAcceptFood,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
         ),
       ),
     );
@@ -1971,65 +1975,47 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
 
   /// การ์ด "งานที่ทำค้างอยู่" + ปุ่มไปหน้า nav — เฉพาะงานที่คนขับรับแล้ว
   Widget _buildResumeNavCard(Booking job) {
+    final jdc = context.jdc;
+    final textTheme = Theme.of(context).textTheme;
     return Column(
       children: [
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(JdcSpacing.lg),
           decoration: BoxDecoration(
-            color: Colors.blue[50],
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.blue[200]!),
+            color: jdc.infoSoft,
+            borderRadius: BorderRadius.circular(JdcRadius.small),
+            border: Border.all(color: jdc.line),
           ),
           child: Column(
             children: [
               Icon(
                 Icons.check_circle,
-                color: Colors.blue[600],
+                color: jdc.infoInk,
                 size: 32,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: JdcSpacing.sm),
               Text(
                 AppLocalizations.of(context)!.driverDashIncompleteJob,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue[700],
-                ),
+                style: textTheme.titleMedium?.copyWith(color: jdc.infoInk),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: JdcSpacing.xs),
               Text(
                 AppLocalizations.of(context)!.driverDashInProgress,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.blue[600],
-                ),
+                style: textTheme.bodyMedium?.copyWith(color: jdc.infoInk),
                 textAlign: TextAlign.center,
               ),
             ],
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: JdcSpacing.md),
         SizedBox(
           width: double.infinity,
-          height: 50,
           child: ElevatedButton(
             onPressed: () => _navigateToPickup(job.id),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF3B82F6), // Blue
-              foregroundColor: Colors.white,
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
             child: Text(
               AppLocalizations.of(context)!.driverDashGoToNav,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
             ),
           ),
         ),
@@ -2044,7 +2030,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context)!.driverDashNavigating),
-          backgroundColor: const Color(0xFF10B981), // Green
+          backgroundColor: context.jdc.successFill,
           duration: const Duration(seconds: 2),
         ),
       );
@@ -2115,18 +2101,37 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     }
   }
 
-  Color _getServiceColor(String serviceType) {
+  /// สีตัวอักษร/ไอคอนประจำประเภทงาน (โทนเข้ม อ่านบนพื้นสว่างได้)
+  Color _getServiceInkColor(String serviceType) {
+    final jdc = context.jdc;
     switch (serviceType.toLowerCase()) {
       case 'ride':
       case 'taxi':
-        return Colors.blue;
+        return jdc.infoInk;
       case 'delivery':
       case 'parcel':
-        return Colors.orange;
+        return jdc.brandOnSoft;
       case 'food':
-        return Colors.red;
+        return jdc.danger;
       default:
-        return Colors.green;
+        return jdc.successInk;
+    }
+  }
+
+  /// สีพื้นอ่อนประจำประเภทงาน (สำหรับวงกลมไอคอน)
+  Color _getServiceSoftColor(String serviceType) {
+    final jdc = context.jdc;
+    switch (serviceType.toLowerCase()) {
+      case 'ride':
+      case 'taxi':
+        return jdc.infoSoft;
+      case 'delivery':
+      case 'parcel':
+        return jdc.brandSoft;
+      case 'food':
+        return jdc.dangerSoft;
+      default:
+        return jdc.successSoft;
     }
   }
 
@@ -2344,217 +2349,137 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   }
 
   /// สร้างส่วนแสดงรายละเอียดการเงินของงาน
+  /// (จำนวนเงินใหญ่ทางซ้าย + chip ระยะทางทางขวา ตาม artboard)
   Widget _buildFinancialSummary(Booking job) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = context.jdc;
+    final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
     final couponDiscount = _couponDiscountByBookingId[job.id] ?? 0.0;
     final couponCode = _couponCodeByBookingId[job.id];
     final normalizedCouponCode = couponCode?.trim().toUpperCase();
     final hideCouponBreakdown = Coupon.isSystemCouponCode(normalizedCouponCode);
 
-    if (job.serviceType == 'food') {
-      // Food: แสดง ค่าอาหาร + ค่าส่ง - คูปอง = เก็บลูกค้า
-      final foodPrice = job.price;
-      final deliveryFee = job.deliveryFee ?? 0;
-      final gross = foodPrice + deliveryFee;
-      final totalCollect =
-          (gross - couponDiscount) < 0 ? 0.0 : (gross - couponDiscount);
+    final isFood = job.serviceType == 'food';
+    final foodPrice = job.price;
+    final deliveryFee = job.deliveryFee ?? 0;
+    final baseAmount = isFood ? (foodPrice + deliveryFee) : job.price;
+    final collect =
+        (baseAmount - couponDiscount) < 0 ? 0.0 : (baseAmount - couponDiscount);
+    final distanceText =
+        l10n.driverDashDistanceKm(job.distanceKm.toStringAsFixed(1));
 
-      return Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.65),
-          ),
-        ),
-        child: Column(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            // เก็บลูกค้า (ตัวใหญ่)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  AppLocalizations.of(context)!.driverDashCollectCustomer,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-                Text(
-                  RoleAmountCalculator.formatBahtCeil(totalCollect),
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green[700],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            // รายละเอียด
-            Row(
-              children: [
-                Expanded(
-                  child: _buildMiniDetail(
-                      AppLocalizations.of(context)!.driverDashFoodCost,
-                      RoleAmountCalculator.formatBahtCeil(foodPrice),
-                      Colors.orange),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildMiniDetail(
-                      AppLocalizations.of(context)!.driverDashDeliveryFee,
-                      RoleAmountCalculator.formatBahtCeil(deliveryFee),
-                      Colors.blue),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildMiniDetail(
-                      AppLocalizations.of(context)!.driverDashDistance,
-                      AppLocalizations.of(context)!.driverDashDistanceKm(
-                          job.distanceKm.toStringAsFixed(1)),
-                      Colors.grey),
-                ),
-              ],
-            ),
-            if (couponDiscount > 0) ...[
-              const SizedBox(height: 6),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.local_offer, size: 14, color: Colors.green[600]),
-                  const SizedBox(width: 4),
+                  Text(l10n.driverDashCollectCustomer,
+                      style: textTheme.bodySmall),
                   Text(
-                    hideCouponBreakdown
-                        ? AppLocalizations.of(context)!
-                            .driverDashCouponDiscount(
-                                RoleAmountCalculator.ceilBaht(couponDiscount).toString())
-                        : AppLocalizations.of(context)!
-                            .driverDashCouponDiscountCode(
-                                RoleAmountCalculator.ceilBaht(couponDiscount).toString()),
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.green[700]),
+                    RoleAmountCalculator.formatBahtCeil(collect),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.displayLarge,
                   ),
                 ],
               ),
-            ],
+            ),
+            const SizedBox(width: JdcSpacing.sm),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: JdcSpacing.md, vertical: JdcSpacing.xs),
+              decoration: BoxDecoration(
+                color: jdc.sunken,
+                borderRadius: BorderRadius.circular(JdcRadius.chip),
+              ),
+              child: Text(
+                distanceText,
+                style: textTheme.labelMedium,
+              ),
+            ),
           ],
         ),
-      );
-    } else {
-      // Ride/Parcel: แสดง ค่าบริการ - คูปอง + ระยะทาง
-      final netCollect =
-          (job.price - couponDiscount) < 0 ? 0.0 : (job.price - couponDiscount);
-      return Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.65),
-          ),
-        ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        AppLocalizations.of(context)!.driverDashCollectCustomer,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                      Text(
-                        RoleAmountCalculator.formatBahtCeil(netCollect),
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green[700],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainer,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    AppLocalizations.of(context)!.driverDashDistanceKm(
-                        job.distanceKm.toStringAsFixed(1)),
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            if (couponDiscount > 0)
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Icon(Icons.local_offer, size: 14, color: Colors.green[600]),
-                    const SizedBox(width: 4),
-                    Text(
-                      hideCouponBreakdown
-                          ? AppLocalizations.of(context)!
-                              .driverDashCouponDiscount(
-                                  RoleAmountCalculator.ceilBaht(couponDiscount).toString())
-                          : AppLocalizations.of(context)!
-                              .driverDashCouponDiscountCode(
-                                  RoleAmountCalculator.ceilBaht(couponDiscount).toString()),
-                      style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.green[700]),
-                    ),
-                  ],
+        if (isFood) ...[
+          const SizedBox(height: JdcSpacing.sm),
+          Row(
+            children: [
+              Expanded(
+                child: _buildMiniDetail(
+                  l10n.driverDashFoodCost,
+                  RoleAmountCalculator.formatBahtCeil(foodPrice),
                 ),
               ),
-          ],
-        ),
-      );
-    }
+              const SizedBox(width: JdcSpacing.sm),
+              Expanded(
+                child: _buildMiniDetail(
+                  l10n.driverDashDeliveryFee,
+                  RoleAmountCalculator.formatBahtCeil(deliveryFee),
+                ),
+              ),
+              const SizedBox(width: JdcSpacing.sm),
+              Expanded(
+                child: _buildMiniDetail(
+                  l10n.driverDashDistance,
+                  distanceText,
+                ),
+              ),
+            ],
+          ),
+        ],
+        if (couponDiscount > 0) ...[
+          const SizedBox(height: JdcSpacing.sm),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Icon(Icons.local_offer, size: 14, color: jdc.successInk),
+              const SizedBox(width: JdcSpacing.xs),
+              Expanded(
+                child: Text(
+                  hideCouponBreakdown
+                      ? AppLocalizations.of(context)!.driverDashCouponDiscount(
+                          RoleAmountCalculator.ceilBaht(couponDiscount)
+                              .toString())
+                      : AppLocalizations.of(context)!
+                          .driverDashCouponDiscountCode(
+                              RoleAmountCalculator.ceilBaht(couponDiscount)
+                                  .toString()),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.right,
+                  style: textTheme.labelMedium?.copyWith(color: jdc.successInk),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
   }
 
   /// Mini detail widget สำหรับแสดงรายละเอียดย่อย
-  Widget _buildMiniDetail(String label, String value, Color color) {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _buildMiniDetail(String label, String value) {
+    final textTheme = Theme.of(context).textTheme;
     return Column(
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 11,
-            color: colorScheme.onSurfaceVariant,
-          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: textTheme.labelSmall,
         ),
         const SizedBox(height: 2),
         Text(
           value,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: textTheme.titleSmall,
         ),
       ],
     );
@@ -2589,68 +2514,69 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       if (mounted) {
         setState(() => _scheduledJobsLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text(e.toString()), backgroundColor: context.jdc.danger),
         );
       }
     }
   }
 
   Widget _buildScheduledJobsSection() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = context.jdc;
+    final l10n = AppLocalizations.of(context)!;
+    final textTheme = Theme.of(context).textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 20),
+        const SizedBox(height: JdcSpacing.xl),
         Row(
           children: [
-            Text(
-              'งานนัดหมาย',
-              style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface),
+            Expanded(
+              child: Text(
+                l10n.driverDashScheduledJobs,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: textTheme.headlineMedium,
+              ),
             ),
-            const SizedBox(width: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: JdcSpacing.sm, vertical: JdcSpacing.xs),
               decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
+                color: jdc.infoSoft,
+                borderRadius: BorderRadius.circular(JdcRadius.small),
               ),
               child: Text(
                 '${_scheduledJobs.length}',
-                style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.orange,
-                    fontWeight: FontWeight.w600),
+                style: textTheme.labelMedium?.copyWith(color: jdc.infoInk),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: JdcSpacing.md),
         if (_scheduledJobsLoading)
-          const Center(
-              child: Padding(
-            padding: EdgeInsets.all(24),
-            child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6))),
-          ))
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(JdcSpacing.xxl),
+              child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(context.jdc.cta)),
+            ),
+          )
         else if (_scheduledJobs.isEmpty)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(JdcSpacing.xxl),
             decoration: BoxDecoration(
-              color: colorScheme.surfaceContainer,
-              borderRadius: BorderRadius.circular(12),
+              color: jdc.surface,
+              borderRadius: BorderRadius.circular(JdcRadius.card),
+              border: Border.all(color: jdc.line),
             ),
             child: Column(
               children: [
-                Icon(Icons.event_available,
-                    size: 40,
-                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4)),
-                const SizedBox(height: 8),
-                Text('ไม่มีงานนัดหมาย',
-                    style: TextStyle(color: colorScheme.onSurfaceVariant)),
+                Icon(Icons.event_available, size: 40, color: jdc.muted),
+                const SizedBox(height: JdcSpacing.sm),
+                Text(l10n.driverDashScheduledJobsEmpty,
+                    style: textTheme.bodyMedium?.copyWith(color: jdc.muted)),
               ],
             ),
           )
@@ -2662,9 +2588,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   }
 
   Widget _buildScheduledJobCard(Booking job) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = context.jdc;
+    final textTheme = Theme.of(context).textTheme;
     final serviceIcon = _getServiceIcon(job.serviceType);
-    final serviceColor = _getServiceColor(job.serviceType);
+    final serviceInk = _getServiceInkColor(job.serviceType);
+    final serviceSoft = _getServiceSoftColor(job.serviceType);
     final scheduledAt = job.scheduledAt;
     final couponDiscount = _couponDiscountByBookingId[job.id] ?? 0.0;
     final displayAmount = RoleAmountCalculator.netDisplayTotalForService(
@@ -2677,42 +2605,42 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     String scheduledText = '-';
     if (scheduledAt != null) {
       final local = AppTime.toBangkok(scheduledAt);
-      final thaiMonths = [
+      final l10n = AppLocalizations.of(context)!;
+      // ชื่อเดือนย่อตาม locale (ไทย = ม.ค.…ธ.ค., อังกฤษ = Jan…Dec) —
+      // index 0 เว้นว่างเพราะ DateTime.month เริ่มนับที่ 1
+      final localizedMonths = [
         '',
-        'ม.ค.',
-        'ก.พ.',
-        'มี.ค.',
-        'เม.ย.',
-        'พ.ค.',
-        'มิ.ย.',
-        'ก.ค.',
-        'ส.ค.',
-        'ก.ย.',
-        'ต.ค.',
-        'พ.ย.',
-        'ธ.ค.'
+        l10n.driverDashMonthJan,
+        l10n.driverDashMonthFeb,
+        l10n.driverDashMonthMar,
+        l10n.driverDashMonthApr,
+        l10n.driverDashMonthMay,
+        l10n.driverDashMonthJun,
+        l10n.driverDashMonthJul,
+        l10n.driverDashMonthAug,
+        l10n.driverDashMonthSep,
+        l10n.driverDashMonthOct,
+        l10n.driverDashMonthNov,
+        l10n.driverDashMonthDec,
       ];
       final day = local.day;
-      final month = thaiMonths[local.month];
+      final month = localizedMonths[local.month];
+      // ปี พ.ศ. (+543) ตามพฤติกรรมเดิม — known gap: โหมดอังกฤษยังแสดง พ.ศ.
       final year = local.year + 543;
       final hour = local.hour.toString().padLeft(2, '0');
       final minute = local.minute.toString().padLeft(2, '0');
-      scheduledText = '$day $month $year $hour:$minute น.';
+      scheduledText = l10n.driverDashScheduledTime(
+          day.toString(), month, year.toString(), hour, minute);
     }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: JdcSpacing.md),
+      padding: const EdgeInsets.all(JdcSpacing.md),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.amber.shade300.withValues(alpha: 0.5)),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 4,
-              offset: const Offset(0, 2))
-        ],
+        color: jdc.surface,
+        borderRadius: BorderRadius.circular(JdcRadius.card),
+        border: Border.all(color: jdc.line),
+        boxShadow: jdc.shadowCard,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2720,33 +2648,36 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(JdcSpacing.xs + 2),
                 decoration: BoxDecoration(
-                  color: serviceColor.withValues(alpha: 0.1),
+                  color: serviceSoft,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(serviceIcon, color: serviceColor, size: 18),
+                child: Icon(serviceIcon, color: serviceInk, size: 18),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: JdcSpacing.sm),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(_getServiceLabel(job.serviceType),
-                        style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: colorScheme.onSurface)),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.titleSmall),
+                    const SizedBox(height: 2),
                     Row(
                       children: [
-                        const Icon(Icons.schedule,
-                            size: 12, color: Colors.orange),
-                        const SizedBox(width: 4),
-                        Text(scheduledText,
-                            style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.orange)),
+                        Icon(Icons.schedule, size: 12, color: jdc.infoInk),
+                        const SizedBox(width: JdcSpacing.xs),
+                        Expanded(
+                          child: Text(
+                            scheduledText,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: textTheme.labelSmall
+                                ?.copyWith(color: jdc.infoInk),
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -2754,25 +2685,20 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               ),
               Text(
                 RoleAmountCalculator.formatBahtCeil(displayAmount),
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green[700]),
+                style: textTheme.headlineSmall?.copyWith(color: jdc.successInk),
               ),
             ],
           ),
           if (job.pickupAddress != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: JdcSpacing.sm),
             Row(
               children: [
-                Icon(Icons.location_on_outlined,
-                    size: 14, color: colorScheme.onSurfaceVariant),
-                const SizedBox(width: 4),
+                Icon(Icons.location_on_outlined, size: 14, color: jdc.muted),
+                const SizedBox(width: JdcSpacing.xs),
                 Expanded(
                   child: Text(
                     job.pickupAddress ?? '-',
-                    style: TextStyle(
-                        fontSize: 12, color: colorScheme.onSurfaceVariant),
+                    style: textTheme.bodySmall,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

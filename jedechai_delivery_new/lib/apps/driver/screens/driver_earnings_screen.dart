@@ -1,7 +1,7 @@
 ﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:jedechai_delivery_new/theme/app_theme.dart';
+import 'package:jedechai_delivery_new/theme/jdc_layout.dart';
 import 'package:intl/intl.dart';
 import '../../../l10n/app_localizations.dart';
 import 'driver_wallet_screen.dart';
@@ -67,6 +67,32 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
     _loadData();
   }
 
+  /// fontVariations คู่กับ fontWeight ตามกฎธีม (NotoSansThai เป็น variable font)
+  static List<FontVariation> _w(FontWeight weight) => [
+        FontVariation(
+          'wght',
+          weight == FontWeight.w700
+              ? 700
+              : weight == FontWeight.w600
+                  ? 600
+                  : weight == FontWeight.w500
+                      ? 500
+                      : 400,
+        ),
+      ];
+
+  /// ตัวเลขเงินสไตล์ display ตาม artboard (`.dsp` = IBM Plex Sans Thai)
+  TextStyle _money({double size = 14, Color? color}) {
+    final jdc = context.jdc;
+    return TextStyle(
+      fontFamily: 'IBMPlexSansThai',
+      fontSize: size,
+      fontWeight: FontWeight.w700,
+      fontVariations: _w(FontWeight.w700),
+      color: color ?? jdc.text,
+    );
+  }
+
   DateTime _getStartDate() {
     final now = DateTime.now();
     switch (_selectedPeriod) {
@@ -98,12 +124,13 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
       ),
       locale: const Locale('th', 'TH'),
       builder: (context, child) {
+        final jdc = context.jdc;
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.light(
-              primary: AppTheme.accentBlue,
-              onPrimary: Colors.white,
-              surface: Colors.white,
+              primary: jdc.cta,
+              onPrimary: jdc.onCta,
+              surface: jdc.surface,
               onSurface: Theme.of(context).colorScheme.onSurface,
             ),
           ),
@@ -397,7 +424,8 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
   }
 
   String _formatCurrency(double amount) {
-    return '฿${NumberFormat('#,##0.00').format(amount)}';
+    return AppLocalizations.of(context)!
+        .driverEarningsBaht(NumberFormat('#,##0.00').format(amount));
   }
 
   String _formatDate(String? dateStr) {
@@ -419,12 +447,13 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
   }
 
   Color _getStatusColor(String status) {
+    final jdc = context.jdc;
     switch (status) {
-      case 'completed': return Colors.green;
-      case 'cancelled': return Colors.red;
-      case 'picked_up': return Colors.indigo;
-      case 'delivering': return Colors.teal;
-      default: return Colors.grey;
+      case 'completed': return jdc.successInk;
+      case 'cancelled': return jdc.dangerInk;
+      case 'picked_up': return jdc.infoInk;
+      case 'delivering': return jdc.infoInk;
+      default: return jdc.muted;
     }
   }
 
@@ -439,31 +468,42 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = context.jdc;
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: jdc.paper,
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.earnTitle),
-        backgroundColor: AppTheme.accentBlue,
-        foregroundColor: Colors.white,
+        title: Text(AppLocalizations.of(context)!.earnTitle,
+            style: TextStyle(
+              fontFamily: 'IBMPlexSansThai',
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              fontVariations: _w(FontWeight.w700),
+              color: jdc.text,
+            )),
+        backgroundColor: jdc.surface,
+        foregroundColor: jdc.text,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        shape: Border(bottom: BorderSide(color: jdc.line)),
+        iconTheme: IconThemeData(color: jdc.text),
+        actionsIconTheme: IconThemeData(color: jdc.text),
         actions: [
           IconButton(
             icon: const Icon(Icons.account_balance_wallet),
             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DriverWalletScreen())),
             tooltip: AppLocalizations.of(context)!.earnWalletTooltip,
           ),
-          IconButton(icon: const Icon(Icons.download), onPressed: _exportCsv, tooltip: 'ส่งออก CSV'),
+          IconButton(icon: const Icon(Icons.download), onPressed: _exportCsv, tooltip: AppLocalizations.of(context)!.driverEarningsExportCsv),
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData, tooltip: AppLocalizations.of(context)!.earnRefresh),
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accentBlue)))
+          ? Center(child: CircularProgressIndicator(color: jdc.cta))
           : _error != null
               ? _buildErrorState()
               : RefreshIndicator(
                   onRefresh: _loadData,
-                  color: AppTheme.accentBlue,
+                  color: jdc.cta,
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     child: Column(
@@ -486,23 +526,34 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
   }
 
   Widget _buildErrorState() {
+    final jdc = context.jdc;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(JdcSpacing.xxxl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+            Icon(Icons.error_outline, size: 64, color: jdc.danger),
             const SizedBox(height: 16),
-            Text(AppLocalizations.of(context)!.earnLoadError, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.earnLoadError,
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    fontVariations: _w(FontWeight.w700),
+                    color: jdc.text)),
             const SizedBox(height: 8),
-            Text(_error ?? '', style: TextStyle(color: Colors.grey[500], fontSize: 13), textAlign: TextAlign.center),
+            Text(_error ?? '',
+                style: TextStyle(color: jdc.muted, fontSize: 13),
+                textAlign: TextAlign.center),
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: _loadData,
               icon: const Icon(Icons.refresh),
               label: Text(AppLocalizations.of(context)!.earnRetry),
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentBlue, foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: jdc.cta,
+                foregroundColor: jdc.onCta,
+              ),
             ),
           ],
         ),
@@ -515,10 +566,10 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
   // ============================================================
 
   Widget _buildPeriodFilter() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = context.jdc;
     return Container(
-      color: colorScheme.surfaceContainer,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      color: jdc.sunken,
+      padding: const EdgeInsets.symmetric(horizontal: JdcSpacing.lg, vertical: JdcSpacing.md),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
@@ -553,13 +604,15 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                     }
                   }
                 },
-                selectedColor: AppTheme.accentBlue,
+                selectedColor: jdc.cta,
                 labelStyle: TextStyle(
-                  color: isSelected ? Colors.white : colorScheme.onSurface,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  color: isSelected ? jdc.onCta : jdc.text,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  fontVariations: _w(isSelected ? FontWeight.w600 : FontWeight.w400),
                 ),
-                backgroundColor: colorScheme.surfaceContainerHighest,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                backgroundColor: jdc.surface,
+                side: BorderSide(color: isSelected ? jdc.cta : jdc.line),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(JdcRadius.chip)),
               ),
             );
           }),
@@ -573,39 +626,41 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
   // ============================================================
 
   Widget _buildRevenueSummary() {
+    final jdc = context.jdc;
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(24),
+      margin: EdgeInsets.fromLTRB(context.gutter, JdcSpacing.lg, context.gutter, 0),
+      padding: const EdgeInsets.all(JdcSpacing.xl),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppTheme.accentBlue, AppTheme.accentBlue.withValues(alpha: 0.8)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: AppTheme.accentBlue.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 6)),
-        ],
+        gradient: jdc.hero2,
+        borderRadius: BorderRadius.circular(JdcRadius.card),
+        boxShadow: jdc.shadowCard,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.trending_up, color: Colors.white, size: 20),
+              Icon(Icons.trending_up, color: jdc.onPanel, size: 20),
               const SizedBox(width: 8),
-              Text(AppLocalizations.of(context)!.earnRevenueLabel(_getPeriodLabels(context)[_selectedPeriod]), style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 14)),
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(context)!.earnRevenueLabel(_getPeriodLabels(context)[_selectedPeriod]),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: jdc.panelDim, fontSize: 14),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
           Text(
             _formatCurrency(_totalEarnings),
-            style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+            style: _money(size: 32, color: jdc.onPanel),
           ),
           const SizedBox(height: 8),
           Text(
             AppLocalizations.of(context)!.earnAvgPerJob(_formatCurrency(_avgEarnings)),
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 13),
+            style: TextStyle(color: jdc.panelDim, fontSize: 13),
           ),
         ],
       ),
@@ -617,41 +672,44 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
   // ============================================================
 
   Widget _buildStatsGrid() {
+    final jdc = context.jdc;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.symmetric(horizontal: context.gutter),
       child: Row(
         children: [
-          Expanded(child: _buildStatCard(AppLocalizations.of(context)!.earnTotalJobs, '$_totalJobs', Icons.work, Colors.blue)),
+          Expanded(child: _buildStatCard(AppLocalizations.of(context)!.earnTotalJobs, '$_totalJobs', Icons.work, jdc.infoInk)),
           const SizedBox(width: 10),
-          Expanded(child: _buildStatCard(AppLocalizations.of(context)!.earnCompleted, '$_completedJobs', Icons.check_circle, Colors.green)),
+          Expanded(child: _buildStatCard(AppLocalizations.of(context)!.earnCompleted, '$_completedJobs', Icons.check_circle, jdc.successInk)),
           const SizedBox(width: 10),
-          Expanded(child: _buildStatCard(AppLocalizations.of(context)!.earnCancelled, '$_cancelledJobs', Icons.cancel, Colors.red)),
+          Expanded(child: _buildStatCard(AppLocalizations.of(context)!.earnCancelled, '$_cancelledJobs', Icons.cancel, jdc.dangerInk)),
         ],
       ),
     );
   }
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = context.jdc;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 2)),
-        ],
+        color: jdc.surface,
+        borderRadius: BorderRadius.circular(JdcRadius.small),
+        border: Border.all(color: jdc.line),
+        boxShadow: jdc.shadowCard,
       ),
       child: Column(
         children: [
           Icon(icon, size: 24, color: color),
           const SizedBox(height: 8),
-          Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: color)),
+          Text(value,
+              style: _money(size: 22, color: color)),
           const SizedBox(height: 4),
           Text(
             title,
-            style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+            style: TextStyle(fontSize: 11, color: jdc.muted),
             textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -663,21 +721,26 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
   // ============================================================
 
   Widget _buildWalletCard() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = context.jdc;
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.symmetric(horizontal: context.gutter, vertical: 8),
+      padding: const EdgeInsets.all(JdcSpacing.lg),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2))],
+        color: jdc.surface,
+        borderRadius: BorderRadius.circular(JdcRadius.card),
+        border: Border.all(color: jdc.line),
+        boxShadow: jdc.shadowCard,
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: Colors.blue[50], borderRadius: BorderRadius.circular(10)),
-            child: Icon(Icons.account_balance_wallet, color: Colors.blue[600], size: 24),
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: jdc.brandSoft,
+              borderRadius: BorderRadius.circular(JdcRadius.small),
+            ),
+            child: Icon(Icons.account_balance_wallet, color: jdc.brandOnSoft, size: 22),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -686,29 +749,35 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
               children: [
                 Text(
                   AppLocalizations.of(context)!.earnWalletTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurface,
+                    fontVariations: _w(FontWeight.w600),
+                    color: jdc.muted,
                   ),
                 ),
                 const SizedBox(height: 2),
                 FutureBuilder<double>(
-                  future: WalletService().getBalance(AuthService.userId!),
+                  // session อาจหมดอายุหลังหน้าโหลดเสร็จ ถ้า force-unwrap จะ crash กลางหน้า
+                  future: WalletService().getBalance(AuthService.userId ?? ''),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return Text(
                         AppLocalizations.of(context)!.earnWalletLoading,
                         style: TextStyle(
                           fontSize: 12,
-                          color: colorScheme.onSurfaceVariant,
+                          color: jdc.muted,
                         ),
                       );
                     }
                     final balance = snapshot.data ?? 0.0;
                     return Text(
                       AppLocalizations.of(context)!.earnWalletBaht(balance.toStringAsFixed(2)),
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: balance >= 50 ? Colors.green : Colors.orange),
+                      style: _money(
+                          size: 20,
+                          color: balance >= 50 ? jdc.successInk : jdc.brandOnSoft),
                     );
                   },
                 ),
@@ -717,7 +786,12 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DriverWalletScreen())),
-            child: Text(AppLocalizations.of(context)!.earnViewAll, style: TextStyle(color: Colors.blue[600], fontSize: 13)),
+            child: Text(AppLocalizations.of(context)!.earnViewAll,
+                style: TextStyle(
+                    color: jdc.link,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    fontVariations: _w(FontWeight.w600))),
           ),
         ],
       ),
@@ -729,9 +803,9 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
   // ============================================================
 
   Widget _buildJobHistorySection() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = context.jdc;
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(context.gutter),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -739,30 +813,32 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
             AppLocalizations.of(context)!.earnJobHistory,
             style: TextStyle(
               fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface,
+              fontWeight: FontWeight.w700,
+              fontVariations: _w(FontWeight.w700),
+              color: jdc.text,
             ),
           ),
           const SizedBox(height: 12),
           if (_jobHistory.isEmpty)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(32),
+              padding: const EdgeInsets.all(JdcSpacing.xxxl),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainer,
-                borderRadius: BorderRadius.circular(12),
+                color: jdc.surface,
+                borderRadius: BorderRadius.circular(JdcRadius.card),
+                border: Border.all(color: jdc.line),
               ),
               child: Column(
                 children: [
                   Icon(
                     Icons.work_outline,
                     size: 48,
-                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.45),
+                    color: jdc.muted.withValues(alpha: 0.7),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     AppLocalizations.of(context)!.earnNoJobs,
-                    style: TextStyle(color: colorScheme.onSurfaceVariant),
+                    style: TextStyle(color: jdc.muted),
                   ),
                 ],
               ),
@@ -775,7 +851,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
   }
 
   Widget _buildJobCard(Map<String, dynamic> job) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = context.jdc;
     final status = job['status'] as String? ?? 'unknown';
     final driverEarnings = status == 'completed'
         ? _driverEarningsForJob(
@@ -812,135 +888,170 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
       netCollect = 0.0;
     }
 
+    final statusColor = _getStatusColor(status);
+
     return GestureDetector(
       onTap: () => _showJobDetail(job),
       child: Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 4, offset: const Offset(0, 2))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header row
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: _getStatusColor(status).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  _getStatusText(status),
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _getStatusColor(status)),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '${_getServiceIcon(serviceType)} ${serviceType == 'ride' ? AppLocalizations.of(context)!.earnSvcRide : serviceType == 'food' ? AppLocalizations.of(context)!.earnSvcFood : serviceType == 'parcel' ? AppLocalizations.of(context)!.earnSvcParcel : AppLocalizations.of(context)!.earnSvcOther}',
-                style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
-              ),
-              const Spacer(),
-              Text(
-                jobId,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colorScheme.onSurfaceVariant,
-                  fontFamily: 'monospace',
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-
-          // Earnings and date
-          Row(
-            children: [
-              Text(
-                _formatCurrency(driverEarnings),
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.accentBlue),
-              ),
-              if (appEarnings > 0) ...[
-                const SizedBox(width: 8),
-                Text(AppLocalizations.of(context)!.earnAppFee(_formatCurrency(appEarnings)), style: TextStyle(fontSize: 12, color: Colors.red[400])),
-              ],
-              const Spacer(),
-              Icon(Icons.access_time, size: 14, color: colorScheme.onSurfaceVariant),
-              const SizedBox(width: 4),
-              Text(
-                createdAt,
-                style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
-              ),
-            ],
-          ),
-
-          // Route info
-          if (job['pickup_address'] != null || job['destination_address'] != null) ...[
-            const SizedBox(height: 8),
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(JdcSpacing.lg),
+        decoration: BoxDecoration(
+          color: jdc.surface,
+          borderRadius: BorderRadius.circular(JdcRadius.card),
+          border: Border.all(color: jdc.line),
+          boxShadow: jdc.shadowCard,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header row
             Row(
               children: [
-                Icon(
-                  Icons.location_on_outlined,
-                  size: 14,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: 4),
-                Expanded(
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(JdcRadius.small),
+                  ),
                   child: Text(
-                    '${job['pickup_address'] ?? '?'} → ${job['destination_address'] ?? '?'}',
-                    style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                    _getStatusText(status),
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        fontVariations: _w(FontWeight.w600),
+                        color: statusColor),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    '${_getServiceIcon(serviceType)} ${serviceType == 'ride' ? AppLocalizations.of(context)!.earnSvcRide : serviceType == 'food' ? AppLocalizations.of(context)!.earnSvcFood : serviceType == 'parcel' ? AppLocalizations.of(context)!.earnSvcParcel : AppLocalizations.of(context)!.earnSvcOther}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 12, color: jdc.muted),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  jobId,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: jdc.muted,
+                    fontFamily: 'monospace',
                   ),
                 ),
               ],
             ),
-          ],
-
-          if (booking != null && status == 'completed') ...[
             const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(AppLocalizations.of(context)!.earnCollectCustomer, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
-                      Text(
-                        _formatCurrency(netCollect),
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: colorScheme.onSurface),
-                      ),
-                    ],
+
+            // Earnings and date
+            Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    _formatCurrency(driverEarnings),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: _money(size: 18, color: jdc.cta),
                   ),
-                  if (couponDiscount > 0) ...[
-                    const SizedBox(height: 4),
+                ),
+                if (appEarnings > 0) ...[
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                        AppLocalizations.of(context)!.earnAppFee(_formatCurrency(appEarnings)),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 12, color: jdc.dangerInk)),
+                  ),
+                ],
+                const SizedBox(width: 8),
+                Icon(Icons.access_time, size: 14, color: jdc.muted),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    createdAt,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 12, color: jdc.muted),
+                  ),
+                ),
+              ],
+            ),
+
+            // Route info
+            if (job['pickup_address'] != null || job['destination_address'] != null) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(
+                    Icons.location_on_outlined,
+                    size: 14,
+                    color: jdc.muted,
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      '${job['pickup_address'] ?? '?'} → ${job['destination_address'] ?? '?'}',
+                      style: TextStyle(fontSize: 12, color: jdc.muted),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+
+            if (booking != null && status == 'completed') ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: jdc.sunken,
+                  borderRadius: BorderRadius.circular(JdcRadius.small),
+                ),
+                child: Column(
+                  children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(AppLocalizations.of(context)!.earnCouponDiscount, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
+                        Text(AppLocalizations.of(context)!.earnCollectCustomer,
+                            style: TextStyle(fontSize: 12, color: jdc.muted)),
                         Text(
-                          '-${_formatCurrency(couponDiscount)}',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.green[700]),
+                          _formatCurrency(netCollect),
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              fontVariations: _w(FontWeight.w700),
+                              color: jdc.text),
                         ),
                       ],
                     ),
+                    if (couponDiscount > 0) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(AppLocalizations.of(context)!.earnCouponDiscount,
+                              style: TextStyle(fontSize: 12, color: jdc.muted)),
+                          Text(
+                            '-${_formatCurrency(couponDiscount)}',
+                            style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                fontVariations: _w(FontWeight.w600),
+                                color: jdc.successInk),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
-    ),
     );
   }
 
@@ -966,12 +1077,18 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
   // ============================================================
 
   Widget _buildServiceTypeFilter() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = context.jdc;
+    final l10n = AppLocalizations.of(context)!;
     final types = <String?>[null, 'food', 'ride', 'parcel'];
-    const labels = ['ทั้งหมด', '🍔 อาหาร', '🚗 รับส่ง', '📦 พัสดุ'];
+    final labels = [
+      l10n.activityFilterAll,
+      l10n.driverEarningsFilterFood,
+      l10n.driverEarningsFilterRide,
+      l10n.driverEarningsFilterParcel,
+    ];
     return Container(
-      color: colorScheme.surfaceContainer,
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      color: jdc.sunken,
+      padding: const EdgeInsets.fromLTRB(JdcSpacing.lg, 0, JdcSpacing.lg, 10),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
@@ -986,14 +1103,16 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                   setState(() => _selectedServiceType = types[i]);
                   _loadData();
                 },
-                selectedColor: AppTheme.accentBlue,
+                selectedColor: jdc.cta,
                 labelStyle: TextStyle(
-                  color: isSelected ? Colors.white : colorScheme.onSurface,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  color: isSelected ? jdc.onCta : jdc.text,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  fontVariations: _w(isSelected ? FontWeight.w600 : FontWeight.w400),
                   fontSize: 13,
                 ),
-                backgroundColor: colorScheme.surfaceContainerHighest,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                backgroundColor: jdc.surface,
+                side: BorderSide(color: isSelected ? jdc.cta : jdc.line),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(JdcRadius.chip)),
               ),
             );
           }),
@@ -1007,13 +1126,22 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
   // ============================================================
 
   Widget _buildWeeklyChart() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = context.jdc;
+    final l10n = AppLocalizations.of(context)!;
     final now = DateTime.now();
     final days = List.generate(
       7,
       (i) => DateTime(now.year, now.month, now.day).subtract(Duration(days: 6 - i)),
     );
-    const dayLabels = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'];
+    final dayLabels = [
+      l10n.driverEarningsWeekdayMon,
+      l10n.driverEarningsWeekdayTue,
+      l10n.driverEarningsWeekdayWed,
+      l10n.driverEarningsWeekdayThu,
+      l10n.driverEarningsWeekdayFri,
+      l10n.driverEarningsWeekdaySat,
+      l10n.driverEarningsWeekdaySun,
+    ];
 
     final values = days.map((d) {
       final key = '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
@@ -1023,25 +1151,30 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
     final maxVal = values.fold(0.0, (a, b) => a > b ? a : b);
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.fromLTRB(context.gutter, JdcSpacing.md, context.gutter, 0),
+      padding: const EdgeInsets.all(JdcSpacing.lg),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2)),
-        ],
+        color: jdc.surface,
+        borderRadius: BorderRadius.circular(JdcRadius.card),
+        border: Border.all(color: jdc.line),
+        boxShadow: jdc.shadowCard,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'รายได้ 7 วันที่ผ่านมา',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colorScheme.onSurface),
+            l10n.driverEarningsWeeklyChartTitle,
+            style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                fontVariations: _w(FontWeight.w600),
+                color: jdc.text),
           ),
           const SizedBox(height: 12),
+          // สูง 132 พอสำหรับ label บน (~13) + gap 2 + แท่งสูงสุด 88 + gap 4 +
+          // label วัน (~15) — เดิม 120 ทำให้ล้น 5px เมื่อมีข้อมูลจริง
           SizedBox(
-            height: 120,
+            height: 132,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: List.generate(7, (i) {
@@ -1056,16 +1189,14 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                       if (val > 0)
                         Text(
                           val >= 1000 ? '${(val / 1000).toStringAsFixed(1)}k' : val.toInt().toString(),
-                          style: TextStyle(fontSize: 9, color: colorScheme.onSurfaceVariant),
+                          style: TextStyle(fontSize: 9, color: jdc.muted),
                         ),
                       const SizedBox(height: 2),
                       Container(
                         height: barHeight,
                         margin: const EdgeInsets.symmetric(horizontal: 3),
                         decoration: BoxDecoration(
-                          color: isToday
-                              ? AppTheme.accentBlue
-                              : AppTheme.accentBlue.withValues(alpha: 0.38),
+                          color: isToday ? jdc.brand : jdc.trackEmpty,
                           borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
                         ),
                       ),
@@ -1074,8 +1205,9 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                         dayLabels[dayOfWeek],
                         style: TextStyle(
                           fontSize: 11,
-                          fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-                          color: isToday ? AppTheme.accentBlue : colorScheme.onSurfaceVariant,
+                          fontWeight: isToday ? FontWeight.w700 : FontWeight.w400,
+                          fontVariations: _w(isToday ? FontWeight.w700 : FontWeight.w400),
+                          color: isToday ? jdc.cta : jdc.muted,
                         ),
                       ),
                     ],
@@ -1094,9 +1226,10 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
   // ============================================================
 
   Future<void> _exportCsv() async {
+    final l10n = AppLocalizations.of(context)!;
     try {
       final buf = StringBuffer();
-      buf.writeln('วันที่,ประเภท,สถานะ,รหัสงาน,รายได้คนขับ,ค่าธรรมเนียม App');
+      buf.writeln(l10n.driverEarningsCsvHeader);
       for (final job in _jobHistory) {
         final status = job['status']?.toString() ?? '';
         final serviceType = job['service_type']?.toString() ?? '';
@@ -1121,11 +1254,11 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
       final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/driver_earnings_${DateTime.now().millisecondsSinceEpoch}.csv');
       await file.writeAsString(buf.toString(), flush: true);
-      await Share.shareXFiles([XFile(file.path)], subject: 'รายงานรายได้คนขับ');
+      await Share.shareXFiles([XFile(file.path)], subject: l10n.driverEarningsCsvShareSubject);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('ส่งออกไม่สำเร็จ: $e')),
+          SnackBar(content: Text(l10n.driverEarningsExportError(e.toString()))),
         );
       }
     }

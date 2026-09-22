@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แผนโปรโมชั่นชวนรับ Wallet v2 — บันทึกคำตัดสินใจ + ขั้นบันไดรางวัล</title>
+<style>
+  :root { --ink:#1a2332; --sub:#5a6a80; --line:#e3e8f0; --bg:#f7f9fc; --card:#ffffff;
+    --red:#c0392b; --red-bg:#fdecea; --amber:#b9770e; --amber-bg:#fef6e0;
+    --green:#1e8449; --green-bg:#e9f7ef; --blue:#1f618d; --blue-bg:#eaf2f8;
+    --purple:#6c3483; --purple-bg:#f4ecf9; }
+  * { box-sizing:border-box; }
+  body { font-family:'Segoe UI',Tahoma,'Noto Sans Thai',sans-serif; color:var(--ink);
+    background:var(--bg); margin:0; line-height:1.65; }
+  .wrap { max-width:1020px; margin:0 auto; padding:32px 20px 80px; }
+  header.hero { background:linear-gradient(135deg,#8e44ad,#c0392b); color:#fff;
+    border-radius:16px; padding:30px 32px; margin-bottom:26px; }
+  header.hero h1 { margin:0 0 8px; font-size:25px; }
+  header.hero p { margin:4px 0; opacity:.92; font-size:14px; }
+  h2 { font-size:20px; margin:40px 0 12px; padding-bottom:8px; border-bottom:2px solid var(--line); }
+  h3 { font-size:16px; margin:20px 0 8px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:18px 20px; margin:14px 0; }
+  table { width:100%; border-collapse:collapse; margin:12px 0; font-size:13.5px; }
+  th { background:#eef2f7; text-align:left; padding:9px 10px; border:1px solid var(--line); }
+  td { padding:8px 10px; border:1px solid var(--line); vertical-align:top; }
+  .tag { display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; font-weight:600; white-space:nowrap; }
+  .t-red { background:var(--red-bg); color:var(--red); }
+  .t-amber { background:var(--amber-bg); color:var(--amber); }
+  .t-green { background:var(--green-bg); color:var(--green); }
+  .t-blue { background:var(--blue-bg); color:var(--blue); }
+  .t-purple { background:var(--purple-bg); color:var(--purple); }
+  code { background:#eef2f7; padding:1px 6px; border-radius:6px; font-size:12.5px;
+    font-family:Consolas,'Courier New',monospace; }
+  .money { font-family:Consolas,monospace; font-weight:600; }
+  .decision { border-left:5px solid var(--purple); background:var(--purple-bg);
+    padding:14px 18px; border-radius:0 12px 12px 0; margin:16px 0; font-size:14.5px; }
+  .note { border-left:4px solid var(--blue); background:var(--blue-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  .danger { border-left:4px solid var(--red); background:var(--red-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  .ok { border-left:4px solid var(--green); background:var(--green-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  ul { margin:8px 0; padding-left:22px; } li { margin:5px 0; }
+  .small { color:var(--sub); font-size:12.5px; }
+  .flow { background:#0f1b2d; color:#d7e3f4; border-radius:12px; padding:14px 18px;
+    font-family:Consolas,monospace; font-size:12px; line-height:1.8; overflow-x:auto; white-space:pre; }
+  .phase { border-radius:14px; padding:20px 22px; margin:18px 0; border:1px solid var(--line);
+    background:#fff; border-left:6px solid var(--purple); }
+  .ladder { display:flex; gap:12px; flex-wrap:wrap; margin:14px 0; }
+  .rung { flex:1 1 180px; border-radius:12px; padding:14px 16px; border:1px solid var(--line);
+    background:#fff; text-align:center; }
+  .rung .lv { font-size:12px; color:var(--sub); font-weight:600; }
+  .rung .amt { font-size:24px; font-weight:800; font-family:Consolas,monospace; color:#6c3483; }
+  .rung .rng { font-size:12px; color:var(--sub); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>🎁🪜 แผนโปรโมชั่น "ชวนเพื่อน รับเงินเข้า Wallet" v2 — พร้อมขั้นบันไดรางวัล</h1>
+  <p>เวอร์ชัน 2 (Planning — ตอบคำถามเปิ่าครบแล้ว รออนุมัติเริ่ม implement) · 19 กันยายน 2569</p>
+  <p>แทนที่ v1 (เก็บ v1 ไว้เป็นประวัติ) · ต่อยอด referral_codes / referrals / referral_rewards / wallets / withdrawal_requests ที่มีอยู่</p>
+</header>
+
+<div class="decision">
+<b>📜 บันทึกการตัดสินใจของผู้ใช้ (19 ก.ย. — ตอบคำถามเปิ่าทั้ง 5 ข้อของ v1):</b>
+<ol>
+  <li><b>จำนวนเงินรางวัล:</b> แอดมินตั้งค่าได้ทุกตัว · <b>ค่าเริ่มต้น ฿20</b> ต่อรางวัล</li>
+  <li><b>การใช้จ่าย:</b> <b>หักถังระบบก่อน</b> (เงินระบบแจกถูกใช้ก่อน คงเงินที่ผู้ใช้เติมเองไว้ทีหลัง)</li>
+  <li><b>การถอน:</b> <b>เติมเองก็ถอนได้ ขั้นต่ำ ฿100</b> · ถังระบบ (รางวัล) ถอนได้ขั้นต่ำ ฿200 (ตาม requirement เดิม)</li>
+  <li><b>ระบบขั้นบันได:</b> ทำ — ผู้ชวนยิ่งสำเร็จมาก ยิ่งรับรางวัลต่อรายสูงขึ้น</li>
+  <li><b>การถอนจริง:</b> <b>แอดมินอนุมัติ manual เท่านั้น</b> (ไม่ผูกพร้อมเพย์อัตโนมัติใน v1)</li>
+</ol>
+</div>
+
+<h2>1) สรุปสิ่งที่เปลี่ยนจาก v1</h2>
+<table>
+<tr><th>หัวข้อ</th><th>v1</th><th>v2 (ตามคำตัดสินใจ)</th></tr>
+<tr><td>จำนวนเงินรางวัล</td><td>คำถามเปิด</td><td>แอดมินตั้งได้ · default ฿20 ทุกตัว · <b>+ คูณด้วยขั้นบันได</b></td></tr>
+<tr><td>ลำดับหักเงินตอนใช้จ่าย</td><td>แนะนำหักถังเติมก่อน</td><td><b>หักถังระบบก่อน</b> → ที่เหลือจากถังเติม</td></tr>
+<tr><td>การถอน</td><td>เฉพาะถังระบบ (min 200)</td><td><b>ถอนได้ทั้งสองถัง</b>: ถังเติม min <b>฿100</b> · ถังระบบ min <b>฿200</b> (แอดมินแก้ได้)</td></tr>
+<tr><td>ขั้นบันไดรางวัล</td><td>ไม่มี</td><td><b>เพิ่มใหม่</b> — รางวัลต่อรายขยับตามจำนวนชวนสำเร็จสะสม</td></tr>
+<tr><td>การอนุมัติถอน</td><td>คำถามเปิด</td><td>Manual ผ่าน admin-web เท่านั้น + กลไก hold เงินระหว่างรออนุมัติ</td></tr>
+</table>
+
+<h2>2) การออกแบบที่อัปเดต</h2>
+
+<h3>2.1 ถังเงิน + กติกาหัก/ถอน (แก้ไขจาก v1)</h3>
+<div class="flow">wallets:  balance (ยอดรวม — เดิม)  +  balance_system (ถัง "จากระบบ" — คอลัมน์ใหม่)
+          ถังเติม = balance − balance_system (computed ไม่ต้องมีคอลัมน์)
+
+เติมเข้าถังไหน (ตาม type ของ ledger):
+  ถังเติม:  topup, refund
+  ถังระบบ:  referral_reward, coupon_compensation, laundry_payout, job_payout,
+            admin_adjustment (เมื่อแอดมินกดให้เป็นรางวัล)
+
+ใช้จ่าย (จ่ายออเดอร์/ค่าคอมมิชชัน): หัก balance_system ก่อน → ส่วนที่เหลือหักจากถังเติม
+  (ตามคำตัดสินใจข้อ 2 "หักระบบก่อน")
+
+ถอน (แอดมินอนุมัติ manual เท่านั้น):
+  ผู้ใช้เลือกถังที่จะถอน → ระบบ hold เงินทันที (withdrawal_hold)
+    · ถังเติม:  min ฿100 (withdrawal_min_topup)
+    · ถังระบบ:  min ฿200 (withdrawal_min_system)
+  แอดมินอนุมัติ → hold แปลงเป็น deduction จริง (withdrawal_paid)
+  แอดมินปฏิเสธ → คืนเงิน (withdrawal_release) + แจ้งเตือน
+  ⇒ ระหว่างรออนุมัติเงินถูกล็อก กันใช้จายไปก่อนแล้วยอดไม่พอตอนโอน</div>
+
+<h3>2.2 ขั้นบันไดรางวัล (ใหม่ — ตามคำตัดสินใจข้อ 4)</h3>
+<div class="card">
+<p><b>กติกา:</b> นับจาก <b>จำนวน "การชวนสำเร็จ" สะสมรวมทุกสถานการณ์</b> ของผู้ชวน (นับจาก referral_rewards ที่จ่ายแล้ว) — รางวัลของรายปัจจุบันคำนวณจากขั้นที่รายนี้ทำให้ถึง (เช่น รายสำเร็จที่ 6 = ขั้น 2) · รางวัลฝั่ง "ผู้ถูกชวน" (คนขับใหม่ใน S3) เป็นฐานตรง ไม่เข้าขั้นบันได</p>
+<div class="ladder">
+  <div class="rung"><div class="lv">ขั้น 1 · เริ่มต้น</div><div class="amt">฿20</div><div class="rng">สำเร็จรายที่ 1–5</div></div>
+  <div class="rung"><div class="lv">ขั้น 2</div><div class="amt">฿25</div><div class="rng">สำเร็จรายที่ 6–15</div></div>
+  <div class="rung"><div class="lv">ขั้น 3</div><div class="amt">฿30</div><div class="rng">สำเร็จรายที่ 16+</div></div>
+</div>
+<p class="small">ค่า default ข้างต้น (ฐาน ฿20 × ขั้น 1.0 / 1.25 / 1.5) เก็บใน system_config เป็น JSON <code>referral_reward_tiers</code> — แอดมินแก้จำนวนเงินต่อขั้น/ช่วงได้เอง · บันทึกทุกการจ่าย: ใช้ขั้นไหน ยอดฐานเท่าไร คูณเท่าไร (เก็บใน referral_rewards สำหรับ audit)</p>
+</div>
+
+<h3>2.3 ตารางเงินรางวัลทั้งหมด (default — แอดมินแก้ได้ทุกตัว)</h3>
+<table>
+<tr><th>รายการ</th><th>ค่าเริ่มต้น</th><th>config key</th></tr>
+<tr><td>ฐานรางวัล S1 คนขับชวนร้าน (อนุมัติร้านสำเร็จ)</td><td class="money">฿20 × ขั้นบันได</td><td><code>referral_reward_base_driver_invite_merchant</code></td></tr>
+<tr><td>ฐานรางวัล S2 ลูกค้าชวนร้าน (อนุมัติร้านสำเร็จ)</td><td class="money">฿20 × ขั้นบันได</td><td><code>referral_reward_base_customer_invite_merchant</code></td></tr>
+<tr><td>ฐานรางวัล S3 ผู้ชวน (คนขับใหม่ออเดอร์แรก completed)</td><td class="money">฿20 × ขั้นบันได</td><td><code>referral_reward_base_driver_invite_driver_referrer</code></td></tr>
+<tr><td>รางวัล S3 คนขับใหม่ (ฝั่งผู้ถูกชวน — ตรง ไม่คูณขั้น)</td><td class="money">฿20</td><td><code>referral_reward_base_driver_invite_driver_newdriver</code></td></tr>
+<tr><td>ขั้นบันได (ช่วง + ตัวคูณ)</td><td>1–5 ×1.0 / 6–15 ×1.25 / 16+ ×1.5</td><td><code>referral_reward_tiers</code> (JSON)</td></tr>
+<tr><td>แคปรายเดือนก่อนเข้าโหมดแอดมิน review</td><td>20 ราย/เดือน</td><td><code>referral_max_rewards_per_month</code></td></tr>
+<tr><td>ถอนขั้นต่ำ — ถังเติม</td><td class="money">฿100</td><td><code>withdrawal_min_topup</code></td></tr>
+<tr><td>ถอนขั้นต่ำ — ถังระบบ</td><td class="money">฿200</td><td><code>withdrawal_min_system</code></td></tr>
+</table>
+
+<h3>2.4 สถานการณ์จ่ายเงิน (คงเดิมจาก v1)</h3>
+<table>
+<tr><th>สถานการณ์</th><th>เงื่อนไขจ่าย</th><th>ผู้รับ + จำนวน</th></tr>
+<tr><td><b>S1</b> คนขับชวนร้าน</td><td>ร้านสมัครด้วยโค้ด → แอดมินอนุมัติ (profiles.approval_status → approved)</td><td>คนขับผู้ชวน = ฐาน × ขั้นบันไดของเขา</td></tr>
+<tr><td><b>S2</b> ลูกค้าชวนร้าน</td><td>เหมือน S1</td><td>ลูกค้าผู้ชวน = ฐาน × ขั้นบันไดของเขา</td></tr>
+<tr><td><b>S3</b> คนขับชวนคนขับ</td><td>คนขับใหม่สมัครด้วยโค้ด → ออเดอร์แรกในฐานะ driver completed</td><td>ผู้ชวน = ฐาน × ขั้นบันได + คนขับใหม่ = ฐานตรง</td></tr>
+</table>
+<p class="small">กันโกง/กันจ่ายซ้ำ (คงเดิม): unique (referral_id, beneficiary, reward_type) · ตรวจ role ตอนจ่าย · referrer ≠ referee · เกินแคป → status pending_review ให้แอดมินกด · S3 นับเฉพาะ completed แรกจริง · ทุกการจ่าย + แจ้งเตือน "🎉 ได้รับเงินรางวัล ฿XX จากการชวน…"</p>
+
+<h2>3) งานตามลำดับ (อัปเดต)</h2>
+
+<div class="phase">
+<h3>Phase 0 — ต้องทำก่อนเปิดโปรโมชั่น (คงเดิมจาก v1 — สรุป)</h3>
+<ul>
+  <li><b>P0-1 (W2):</b> DROP policy เขียนตรงบน wallets/wallet_transactions <span class="tag t-red">ต้องทำ</span></li>
+  <li><b>P0-2 (W4):</b> ย้อนเงินทดสอบ admin_adjustment +฿977,620 — <b>ถ้าไม่ทำ ฿1 ล้านจะกลายเป็นถังระบบ "ถอนได้" ทันที</b> <span class="tag t-red">ต้องทำ</span></li>
+  <li><b>P0-3 (W3):</b> ซ่อม 3 กระเป๋า balance≠ledger ก่อนตั้งค่าถังเริ่มต้น <span class="tag t-amber">ควรทำ</span></li>
+  <li><b>P0-4 (W5):</b> E2E flow ถอนเดิม 1 รอบ <span class="tag t-amber">ควรทำ</span></li>
+</ul>
+</div>
+
+<div class="phase">
+<h3>Phase 1 — Migration (รวบเป็น 1–2 ไฟล์)</h3>
+<ul>
+  <li><code>wallets.balance_system</code> + script ตั้งค่าเริ่มต้นจากการจัดประเภท ledger (หลัง P0-2/P0-3)</li>
+  <li>RPC wallet: <code>wallet_topup</code> แยกถังตาม type · <code>wallet_deduct</code> หักระบบก่อน · <b>ใหม่:</b> <code>wallet_withdraw_request(user, amount, source_bucket)</code> — ตรวจขั้นต่ำตามถัง + hold เงินทันที · <code>admin_withdraw_decide(request_id, approve/reject)</code> — แปลง hold เป็น paid หรือคืนเงิน (service_role เท่านั้น)</li>
+  <li><code>referrals.scenario</code> + backfill + unique บน referral_rewards (เพิ่มคอลัมน์ tier/amount ที่ใช้จ่ายจริง)</li>
+  <li>system_config ทั้ง 8 คีย์ตามตาราง 2.3 + RPC <code>apply_referral_code</code></li>
+  <li>Trigger จ่าย S1/S2 (บน profiles ตอนอนุมัติร้าน) + S3 (ขยายบน bookings) — คำนวณขั้นบันไดตอนจ่าย + idempotent + แจ้งเตือน</li>
+</ul>
+</div>
+
+<div class="phase">
+<h3>Phase 2 — แอป (Flutter)</h3>
+<ul>
+  <li>หน้าแชร์โค้ด (ทุก role): โค้ด + กติกา 3 สถานการณ์ + <b>ขั้นบันไดปัจจุบัน + "อีก X รายถึงขั้นถัดไป" + ตารางขั้น</b> + ประวัติรางวัลที่ได้รับ</li>
+  <li>สมัคร/เติมโปรไฟล์ (merchant ขั้น 1 + driver): ช่อง "โค้ดผู้ชวน"</li>
+  <li>Wallet screen: ยอดรวมใหญ่ + แยก 2 ถัง + <b>ปุ่มถอนต่อถัง (เลือกถัง → ขั้นต่ำต่างกัน 100/200)</b> + สถานะคำขอถอน (รออนุมัติ/สำเร็จ/ถูกปฏิเสธ)</li>
+  <li>แจ้งเตือน: referral_reward / withdrawal_result (อนุมัติ/ปฏิเสธ)</li>
+</ul>
+</div>
+
+<div class="phase">
+<h3>Phase 3 — Admin-web</h3>
+<ul>
+  <li>หน้า "Referral payouts": จ่ายแล้ว/ค้าง review (เกินแคป)/สรุปรายผู้ชวน + <b>ขั้นบันไดปัจจุบันของแต่ละคน</b></li>
+  <li>Settings: แก้ได้ครบ — ฐานรางวัล 4 ตัว / ขั้นบันได / แคป / ขั้นต่ำถอน 2 ถัง</li>
+  <li>หน้าถอน (เดิม เสริม): โชว์ถังต้นทาง + ยอดคงเหลือแยกถังของผู้ขอ + ปุ่มอนุมัติ/ปฏิเสธ (manual เท่านั้น)</li>
+</ul>
+</div>
+
+<h2>4) แผนทดสอบ (อัปเดตตามกติกาใหม่)</h2>
+<ul>
+  <li><b>Unit/smoke:</b> marker migration ทั้งหมด + กติกา RPC (หักระบบก่อน / hold ตอนขอถอน / ขั้นต่ำตามถัง / คำนวณขั้นบันไดถูกช่วง)</li>
+  <li><b>E2E rollback (แพทเทิร์น 19 ก.ย.):</b>
+    (1) S1 จ่าย ฿20 ขั้น 1 → ผู้ชวนชนะรายที่ 6 → จ่าย ฿25 ขั้น 2 ✓
+    (2) จ่ายซ้ำ = ไม่จ่าย · (3) S3 จ่ายสองกระเป๋า (ผู้ชวน ×ขั้น + คนใหม่ตรง)
+    (4) ถอนถังเติม 150 จากถัง 80 → ปฏิเสธ (ต่ำกว่า min 100 และยอดไม่พอ) · ถอนถังระบบ 150 → ปฏิเสธ (ต่ำกว่า 200) · ถอน 250 → hold สำเร็จ
+    (5) อนุมัติ → paid / ปฏิเสธ → เงินคืน + แจ้งเตือน
+    (6) ใช้จ่ายจากกระเป๋า 2 ถัง → หักถังระบบก่อน ถังเติมคงเดิม</li>
+  <li><b>ทดสอบจริงหลัง deploy:</b> ครบ 3 สถานการณ์ + ขั้นบันไดขยับ + ถอน 2 ถัง + แอดมิน manual ครบวง</li>
+</ul>
+
+<h2>5) Deploy + Rollback (คงเดิม + เพิ่ม)</h2>
+<ul>
+  <li>Phase 0 → migration → admin-web → แอป · RPC ทั้งหมด backward-compatible</li>
+  <li>ปิดกั้นการจ่ายชั่วคราวได้ตลอดเวลา: <code>referral_max_rewards_per_month=0</code> (ไม่ต้อง rollback โค้ด)</li>
+  <li>Rollback: CREATE OR REPLACE กลับ (เก็บ def เดิมใน comment) · เงินที่จ่าย/ถอนแล้วมี audit ครบ ไม่ย้อนอัตโนมัติ</li>
+</ul>
+
+<div class="ok"><b>สถานะ:</b> Planning — <b>ตัดสินใจครบแล้ว ไม่มีคำถามเปิ่าคงเหลือ</b> · พร้อมเริ่มได้ทันทีเมื่ออนุมัติ (แนะนำลำดับ: Phase 0 สั้นๆ ก่อน → migration) · จุดแก้ RPC wallet สามารถรวมกับแผนคูปอง (coupon_compensation) เป็น migration เดียวกันได้</div>
+<div class="note"><b>เอกสารที่เกี่ยวข้อง:</b> v1 (ฉบับก่อน — เก็บไว้เป็นประวัติ) · docs/Wallet_System_Analysis_v1.html (Phase 0 มาจากที่นี่) · docs/Coupon_System_Analysis_v1.html · Plan/Coupon_Discount_Policy_Implementation_Plan_v1.html</div>
+
+</div>
+</body>
+</html>

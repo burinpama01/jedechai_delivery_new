@@ -1,0 +1,606 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Main.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · หน้าแรก",
+      "w": 390,
+      "x": 0,
+      "y": 0,
+      "is_interactive": true
+    },
+    "Customer-FoodHome.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · อาหาร",
+      "w": 390,
+      "x": 470,
+      "y": 0,
+      "is_interactive": true
+    },
+    "Customer-FoodService.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · ร้านทั้งหมด",
+      "w": 390,
+      "x": 940,
+      "y": 0,
+      "is_interactive": true
+    },
+    "Customer-Restaurant.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · หน้าร้าน + เมนู",
+      "w": 390,
+      "x": 1410,
+      "y": 0,
+      "is_interactive": true
+    },
+    "Customer-FoodDetails.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · รายละเอียดเมนู",
+      "w": 390,
+      "x": 1880,
+      "y": 0,
+      "is_interactive": true
+    },
+    "Customer-Checkout.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · ยืนยันคำสั่งซื้อ",
+      "w": 390,
+      "x": 2350,
+      "y": 0,
+      "is_interactive": true
+    },
+    "Customer-Payment.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · ชำระเงิน",
+      "w": 390,
+      "x": 0,
+      "y": 1100,
+      "is_interactive": true
+    },
+    "Customer-WaitingDriver.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · กำลังหาคนขับ",
+      "w": 390,
+      "x": 470,
+      "y": 1100,
+      "is_interactive": true
+    },
+    "Customer-DriverAssigned.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · ได้คนขับแล้ว",
+      "w": 390,
+      "x": 940,
+      "y": 1100,
+      "is_interactive": true
+    },
+    "Customer-Tracking.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · ติดตามออเดอร์",
+      "w": 390,
+      "x": 1410,
+      "y": 1100,
+      "is_interactive": true
+    },
+    "Customer-OrderDetail.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · รายละเอียดคำสั่งซื้อ",
+      "w": 390,
+      "x": 1880,
+      "y": 1100,
+      "is_interactive": true
+    },
+    "Customer-Rating.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · ให้คะแนน",
+      "w": 390,
+      "x": 2350,
+      "y": 1100,
+      "is_interactive": true
+    },
+    "Customer-Cancellation.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · ยกเลิกคำสั่งซื้อ",
+      "w": 390,
+      "x": 0,
+      "y": 2200,
+      "is_interactive": true
+    },
+    "Customer-RideHome.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · เรียกรถ",
+      "w": 390,
+      "x": 470,
+      "y": 2200,
+      "is_interactive": true
+    },
+    "Customer-RideService.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · ยืนยันเรียกรถ",
+      "w": 390,
+      "x": 940,
+      "y": 2200,
+      "is_interactive": true
+    },
+    "Customer-RideStatus.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · สถานะการเดินทาง",
+      "w": 390,
+      "x": 1410,
+      "y": 2200,
+      "is_interactive": true
+    },
+    "Customer-MapPicker.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · ปักหมุดที่อยู่",
+      "w": 390,
+      "x": 1880,
+      "y": 2200,
+      "is_interactive": true
+    },
+    "Customer-Map.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · แผนที่",
+      "w": 390,
+      "x": 2350,
+      "y": 2200,
+      "is_interactive": true
+    },
+    "Customer-BookingConfirm.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · ยืนยันการจอง",
+      "w": 390,
+      "x": 0,
+      "y": 3300,
+      "is_interactive": true
+    },
+    "Customer-Parcel.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · ส่งพัสดุ",
+      "w": 390,
+      "x": 470,
+      "y": 3300,
+      "is_interactive": true
+    },
+    "Customer-Laundry.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · ซักรีด",
+      "w": 390,
+      "x": 940,
+      "y": 3300,
+      "is_interactive": true
+    },
+    "Customer-Activity.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · กิจกรรม",
+      "w": 390,
+      "x": 1410,
+      "y": 3300,
+      "is_interactive": true
+    },
+    "Customer-Account.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · บัญชี",
+      "w": 390,
+      "x": 1880,
+      "y": 3300,
+      "is_interactive": true
+    },
+    "Customer-Profile.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · โปรไฟล์",
+      "w": 390,
+      "x": 2350,
+      "y": 3300,
+      "is_interactive": true
+    },
+    "Customer-Wallet.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · กระเป๋าเงิน",
+      "w": 390,
+      "x": 0,
+      "y": 4400,
+      "is_interactive": true
+    },
+    "Customer-Coupons.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · คูปองของฉัน",
+      "w": 390,
+      "x": 470,
+      "y": 4400,
+      "is_interactive": true
+    },
+    "Customer-Referral.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · ชวนเพื่อน",
+      "w": 390,
+      "x": 940,
+      "y": 4400,
+      "is_interactive": true
+    },
+    "Customer-SavedAddresses.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · ที่อยู่ที่บันทึกไว้",
+      "w": 390,
+      "x": 1410,
+      "y": 4400,
+      "is_interactive": true
+    },
+    "Customer-Help.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · ช่วยเหลือ",
+      "w": 390,
+      "x": 1880,
+      "y": 4400,
+      "is_interactive": true
+    },
+    "Customer-SupportTickets.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · แจ้งปัญหา",
+      "w": 390,
+      "x": 2350,
+      "y": 4400,
+      "is_interactive": true
+    },
+    "Customer-Splash.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · เปิดแอป",
+      "w": 390,
+      "x": 0,
+      "y": 5500
+    },
+    "Customer-AuthLanding.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · เริ่มต้นใช้งาน",
+      "w": 390,
+      "x": 470,
+      "y": 5500,
+      "is_interactive": true
+    },
+    "Customer-Login.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · เข้าสู่ระบบ",
+      "w": 390,
+      "x": 940,
+      "y": 5500,
+      "is_interactive": true
+    },
+    "Customer-Register.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · สมัครสมาชิก",
+      "w": 390,
+      "x": 1410,
+      "y": 5500,
+      "is_interactive": true
+    },
+    "Customer-ForgotPassword.dc.html": {
+      "h": 844,
+      "title": "ลูกค้า · ลืมรหัสผ่าน",
+      "w": 390,
+      "x": 1880,
+      "y": 5500,
+      "is_interactive": true
+    },
+    "Merchant-Orders.dc.html": {
+      "h": 844,
+      "title": "ร้านค้า · ออเดอร์เข้า",
+      "w": 390,
+      "x": 0,
+      "y": 6900,
+      "is_interactive": true
+    },
+    "Merchant-OrderDetail.dc.html": {
+      "h": 844,
+      "title": "ร้านค้า · รายละเอียดออเดอร์",
+      "w": 390,
+      "x": 470,
+      "y": 6900,
+      "is_interactive": true
+    },
+    "Merchant-Menu.dc.html": {
+      "h": 844,
+      "title": "ร้านค้า · จัดการเมนู",
+      "w": 390,
+      "x": 1880,
+      "y": 6900,
+      "is_interactive": true
+    },
+    "Driver-Home.dc.html": {
+      "h": 844,
+      "title": "คนขับ · หน้าแรก + งานเข้า",
+      "w": 390,
+      "x": 0,
+      "y": 10500,
+      "is_interactive": true
+    },
+    "Driver-Job.dc.html": {
+      "h": 844,
+      "title": "คนขับ · งานปัจจุบัน",
+      "w": 390,
+      "x": 470,
+      "y": 10500,
+      "is_interactive": true
+    },
+    "Driver-Earnings.dc.html": {
+      "h": 844,
+      "title": "คนขับ · รายได้ + กระเป๋าเงิน",
+      "w": 390,
+      "x": 2350,
+      "y": 10500,
+      "is_interactive": true
+    },
+    "Merchant-Dashboard.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 940,
+      "y": 6900,
+      "title": "ร้านค้า · แดชบอร์ด",
+      "is_interactive": true
+    },
+    "Merchant-Laundry.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 1410,
+      "y": 6900,
+      "title": "ร้านค้า · งานซักรีด",
+      "is_interactive": true
+    },
+    "Merchant-AddEditMenu.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 2350,
+      "y": 6900,
+      "title": "ร้านค้า · เพิ่ม/แก้ไขเมนู",
+      "is_interactive": true
+    },
+    "Merchant-MenuCategories.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 0,
+      "y": 8000,
+      "title": "ร้านค้า · หมวดหมู่เมนู",
+      "is_interactive": true
+    },
+    "Merchant-OptionLibrary.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 470,
+      "y": 8000,
+      "title": "ร้านค้า · คลังตัวเลือกเสริม",
+      "is_interactive": true
+    },
+    "Merchant-OptionGroup.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 940,
+      "y": 8000,
+      "title": "ร้านค้า · กลุ่มตัวเลือก",
+      "is_interactive": true
+    },
+    "Merchant-Coupons.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 1410,
+      "y": 8000,
+      "title": "ร้านค้า · คูปองร้าน",
+      "is_interactive": true
+    },
+    "Merchant-GpPlan.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 1880,
+      "y": 8000,
+      "title": "ร้านค้า · แผน GP",
+      "is_interactive": true
+    },
+    "Merchant-Settings.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 2350,
+      "y": 8000,
+      "title": "ร้านค้า · ตั้งค่าร้าน",
+      "is_interactive": true
+    },
+    "Merchant-Profile.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 0,
+      "y": 9100,
+      "title": "ร้านค้า · โปรไฟล์ร้าน",
+      "is_interactive": true
+    },
+    "Merchant-EditProfile.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 470,
+      "y": 9100,
+      "title": "ร้านค้า · แก้ไขโปรไฟล์ร้าน",
+      "is_interactive": true
+    },
+    "Driver-Navigation.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 940,
+      "y": 10500,
+      "title": "คนขับ · นำทาง",
+      "is_interactive": true
+    },
+    "Driver-ParcelConfirm.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 1410,
+      "y": 10500,
+      "title": "คนขับ · ยืนยันส่งพัสดุ",
+      "is_interactive": true
+    },
+    "Driver-Shift.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 1880,
+      "y": 10500,
+      "title": "คนขับ · กะทำงาน",
+      "is_interactive": true
+    },
+    "Driver-Performance.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 0,
+      "y": 11600,
+      "title": "คนขับ · สถิติและคะแนน",
+      "is_interactive": true
+    },
+    "Driver-Wallet.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 470,
+      "y": 11600,
+      "title": "คนขับ · กระเป๋าเงิน",
+      "is_interactive": true
+    },
+    "Driver-WalletTopup.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 940,
+      "y": 11600,
+      "title": "คนขับ · เติมเงิน",
+      "is_interactive": true
+    },
+    "Driver-WalletWithdraw.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 1410,
+      "y": 11600,
+      "title": "คนขับ · ถอนเงิน",
+      "is_interactive": true
+    },
+    "Driver-ServiceTypes.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 1880,
+      "y": 11600,
+      "title": "คนขับ · ประเภทงานที่รับ",
+      "is_interactive": true
+    },
+    "Driver-Profile.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 2350,
+      "y": 11600,
+      "title": "คนขับ · โปรไฟล์",
+      "is_interactive": true
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-09-20T12:00:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "row-customer": {
+      "kind": "title1",
+      "maxW": 2740,
+      "text": "ลูกค้า — Customer App",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "row-driver": {
+      "kind": "title1",
+      "maxW": 2740,
+      "text": "คนขับ — Driver App",
+      "w": 240,
+      "x": 0,
+      "y": 10200
+    },
+    "row-merchant": {
+      "kind": "title1",
+      "maxW": 2740,
+      "text": "ร้านค้า — Merchant App",
+      "w": 240,
+      "x": 0,
+      "y": 6600
+    },
+    "tokens": {
+      "color": "green",
+      "text": "โทนสีจากโลโก้ JDC (เขียว–ทอง–teal) รองรับ light/dark\n\nทุกสีเป็น CSS variable บน :root ของแต่ละ artboard ตอนนี้ล็อกไว้ที่โหมดสว่าง ชุดสีมืดยังอยู่ใต้ :root[data-theme=\"dark\"] รอเปิดใช้\n\nLight — surface ขาว #ffffff (ตามที่ขอ) · paper #f4f7f4 · text/panel #0f3b33 · line #dbe4de\nDark — paper #0b1a17 · surface #12241f · panel #16352e · text #e8f1ed\n\nทอง: fill #e39c2e / ปุ่ม+ลิงก์ #8a5a0a (light) #edbb62 (dark) — ทองสดใช้เป็นพื้นเท่านั้น ไม่ใช้เป็นตัวอักษรบนพื้นขาว เพราะไม่ผ่าน 4.5:1\nเขียว #2b6b2b/#85cf82 · teal #16605a/#6fc3ba · danger #8f1c14/#ff9a8e\n\nตัวอักษร: IBM Plex Sans Thai (หัวเรื่อง) + Noto Sans Thai (เนื้อหา)\nRadius 12–18px · ปุ่มสูง ≥44px",
+      "w": 360,
+      "x": 2830,
+      "y": 0
+    },
+    "progress": {
+      "color": "teal",
+      "w": 360,
+      "x": 2830,
+      "y": 620,
+      "text": "ความคืบหน้า\n\nหน้าจริงในโค้ด 61 หน้า (customer 36 · merchant 15 · driver 13 ไฟล์ ลบ main-shell 3)\n\nทำครบแล้ว 61 / 61 หน้า\n\nลูกค้า 36 · ร้านค้า 14 · คนขับ 12 — ลิงก์ระหว่างหน้าเชื่อมครบแล้ว เหลือเฉพาะปุ่ม action (โทร พิมพ์ใบออเดอร์ เอกสารคนขับ) ที่ยังเป็น placeholder"
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Customer-FoodHome.dc.html",
+    "Customer-FoodService.dc.html",
+    "Customer-Restaurant.dc.html",
+    "Customer-FoodDetails.dc.html",
+    "Customer-Checkout.dc.html",
+    "Customer-Payment.dc.html",
+    "Customer-WaitingDriver.dc.html",
+    "Customer-DriverAssigned.dc.html",
+    "Customer-Tracking.dc.html",
+    "Customer-OrderDetail.dc.html",
+    "Customer-Rating.dc.html",
+    "Customer-Cancellation.dc.html",
+    "Customer-RideHome.dc.html",
+    "Customer-RideService.dc.html",
+    "Customer-RideStatus.dc.html",
+    "Customer-MapPicker.dc.html",
+    "Customer-Map.dc.html",
+    "Customer-BookingConfirm.dc.html",
+    "Customer-Parcel.dc.html",
+    "Customer-Laundry.dc.html",
+    "Customer-Activity.dc.html",
+    "Customer-Account.dc.html",
+    "Customer-Profile.dc.html",
+    "Customer-Wallet.dc.html",
+    "Customer-Coupons.dc.html",
+    "Customer-Referral.dc.html",
+    "Customer-SavedAddresses.dc.html",
+    "Customer-Help.dc.html",
+    "Customer-SupportTickets.dc.html",
+    "Customer-Splash.dc.html",
+    "Customer-AuthLanding.dc.html",
+    "Customer-Login.dc.html",
+    "Customer-Register.dc.html",
+    "Customer-ForgotPassword.dc.html",
+    "Merchant-Orders.dc.html",
+    "Merchant-OrderDetail.dc.html",
+    "Merchant-Menu.dc.html",
+    "Driver-Home.dc.html",
+    "Driver-Job.dc.html",
+    "Driver-Earnings.dc.html",
+    "Merchant-Dashboard.dc.html",
+    "Merchant-Laundry.dc.html",
+    "Merchant-AddEditMenu.dc.html",
+    "Merchant-MenuCategories.dc.html",
+    "Merchant-OptionLibrary.dc.html",
+    "Merchant-OptionGroup.dc.html",
+    "Merchant-Coupons.dc.html",
+    "Merchant-GpPlan.dc.html",
+    "Merchant-Settings.dc.html",
+    "Merchant-Profile.dc.html",
+    "Merchant-EditProfile.dc.html",
+    "Driver-Navigation.dc.html",
+    "Driver-ParcelConfirm.dc.html",
+    "Driver-Shift.dc.html",
+    "Driver-Performance.dc.html",
+    "Driver-Wallet.dc.html",
+    "Driver-WalletTopup.dc.html",
+    "Driver-WalletWithdraw.dc.html",
+    "Driver-ServiceTypes.dc.html",
+    "Driver-Profile.dc.html"
+  ],
+  "pages": [],
+  "title": "JDC Redesign — ลูกค้า/ร้านค้า/คนขับ"
+}

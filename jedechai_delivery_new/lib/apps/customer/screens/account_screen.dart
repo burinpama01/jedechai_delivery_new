@@ -2,6 +2,8 @@ import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+import '../../../theme/jdc_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -16,7 +18,6 @@ import '../../../common/utils/platform_adaptive.dart';
 import '../../../common/screens/profile_screen.dart';
 import '../../../common/widgets/app_network_image.dart';
 import '../../../common/widgets/language_switcher.dart';
-import '../../../theme/app_theme.dart';
 import '../../../l10n/app_localizations.dart';
 import 'auth/login_screen.dart';
 import 'rewards/my_coupons_screen.dart';
@@ -40,8 +41,11 @@ class _AccountScreenState extends State<AccountScreen> {
   String? _appVersion;
   int _versionTapCount = 0;
 
-  static const Color _accent = AppTheme.accentBlue;
-  static const List<Color> _gradient = [AppTheme.accentBlue, Color(0xFF1E3A8A)];
+  // อ่านจาก context ตอน build เพื่อให้สลับตามโหมดสว่าง/มืดได้
+  // (static field ใช้ context ไม่ได้)
+  Color get _accent => JdcColors.of(context).infoInk;
+  List<Color> get _gradient =>
+      [JdcColors.of(context).infoInk, JdcColors.of(context).panel];
 
   @override
   void initState() {
@@ -333,7 +337,7 @@ class _AccountScreenState extends State<AccountScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.accountUploadFailed(e.toString())),
-            backgroundColor: Colors.red,
+            backgroundColor: JdcColors.of(context).danger,
           ),
         );
       }
@@ -396,7 +400,7 @@ class _AccountScreenState extends State<AccountScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(l10n.accountEditError(e.toString())),
-              backgroundColor: Colors.red,
+              backgroundColor: JdcColors.of(context).danger,
             ),
           );
         }
@@ -413,7 +417,7 @@ class _AccountScreenState extends State<AccountScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         icon: Icon(
           Icons.warning_amber_rounded,
-          color: Colors.red[700],
+          color: JdcColors.of(context).dangerInk,
           size: 48,
         ),
         title: Text(
@@ -454,7 +458,7 @@ class _AccountScreenState extends State<AccountScreen> {
               await _submitDeleteAccount(reasonController.text.trim());
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: JdcColors.of(context).danger,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -490,7 +494,7 @@ class _AccountScreenState extends State<AccountScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.accountDeleteRequestSubmitFailed(e.toString())),
-            backgroundColor: Colors.red,
+            backgroundColor: JdcColors.of(context).danger,
           ),
         );
       }
@@ -516,7 +520,7 @@ class _AccountScreenState extends State<AccountScreen> {
             },
             child: Text(
               l10n.accountLogout,
-              style: const TextStyle(color: Colors.red),
+              style: TextStyle(color: JdcColors.of(context).danger),
             ),
           ),
         ],
@@ -539,7 +543,7 @@ class _AccountScreenState extends State<AccountScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.accountUpdateFailed(e.toString())),
-            backgroundColor: Colors.red,
+            backgroundColor: JdcColors.of(context).danger,
           ),
         );
       }
@@ -557,7 +561,7 @@ class _AccountScreenState extends State<AccountScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(l10n.accountOpenLinkFailed),
-              backgroundColor: Colors.red,
+              backgroundColor: JdcColors.of(context).danger,
             ),
           );
         }
@@ -569,7 +573,7 @@ class _AccountScreenState extends State<AccountScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.accountErrorGeneric(e.toString())),
-            backgroundColor: Colors.red,
+            backgroundColor: JdcColors.of(context).danger,
           ),
         );
       }
@@ -606,7 +610,7 @@ class _AccountScreenState extends State<AccountScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(
+          ? Center(
               child: CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(_accent),
               ),
@@ -630,7 +634,7 @@ class _AccountScreenState extends State<AccountScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+            Icon(Icons.error_outline, size: 64, color: JdcColors.of(context).danger),
             const SizedBox(height: 16),
             Text(
               l10n.accountErrorTitle,
@@ -1035,8 +1039,8 @@ class _AccountScreenState extends State<AccountScreen> {
           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
         ),
         style: OutlinedButton.styleFrom(
-          foregroundColor: Colors.red,
-          side: const BorderSide(color: Colors.red),
+          foregroundColor: JdcColors.of(context).danger,
+          side: BorderSide(color: JdcColors.of(context).danger),
           padding: const EdgeInsets.symmetric(vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

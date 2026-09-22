@@ -3,7 +3,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../common/models/saved_address.dart';
 import '../../../../common/services/address_service.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../theme/jdc_colors.dart';
+import '../../../../theme/jdc_layout.dart';
 import 'delivery_map_picker_screen.dart';
 
 /// Saved Addresses Screen
@@ -52,29 +53,6 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
         return Icons.work_rounded;
       default:
         return Icons.location_on_rounded;
-    }
-  }
-
-  Color _colorForLabel(String label) {
-    switch (label) {
-      case 'home':
-        return Colors.blue;
-      case 'work':
-        return Colors.orange;
-      default:
-        return AppTheme.primaryGreen;
-    }
-  }
-
-  String _displayLabel(String label) {
-    final l10n = AppLocalizations.of(context)!;
-    switch (label) {
-      case 'home':
-        return l10n.addrLabelHome;
-      case 'work':
-        return l10n.addrLabelWork;
-      default:
-        return l10n.addrLabelOther;
     }
   }
 
@@ -163,99 +141,94 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                     const SizedBox(height: 12),
 
                     // Map pin picker button
-                    InkWell(
-                      onTap: () async {
-                        final mapResult = await Navigator.of(context)
-                            .push<Map<String, dynamic>>(
-                          MaterialPageRoute(
-                            builder: (_) => DeliveryMapPickerScreen(
-                              initialPosition:
-                                  pickedLat != null && pickedLng != null
-                                      ? LatLng(pickedLat!, pickedLng!)
-                                      : null,
-                            ),
-                          ),
-                        );
-                        if (mapResult != null) {
-                          setDialogState(() {
-                            pickedLat = mapResult['lat'] as double;
-                            pickedLng = mapResult['lng'] as double;
-                            pickedAddress =
-                                mapResult['address'] as String? ?? '';
-                            if (addressController.text.isEmpty) {
-                              addressController.text = pickedAddress;
-                            }
-                          });
-                        }
-                      },
-                      borderRadius: BorderRadius.circular(10),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 14),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: pickedLat != null
-                                ? AppTheme.primaryGreen
-                                : Colors.grey.shade300,
-                            width: pickedLat != null ? 2 : 1,
-                          ),
-                          color: pickedLat != null
-                              ? AppTheme.primaryGreen.withValues(alpha: 0.05)
-                              : Colors.grey.shade50,
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              pickedLat != null
-                                  ? Icons.check_circle
-                                  : Icons.pin_drop,
-                              color: pickedLat != null
-                                  ? AppTheme.primaryGreen
-                                  : Colors.grey,
-                              size: 22,
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    pickedLat != null
-                                        ? AppLocalizations.of(context)!
-                                            .addrPinPlaced
-                                        : AppLocalizations.of(context)!
-                                            .addrPinOnMap,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
-                                      color: pickedLat != null
-                                          ? AppTheme.primaryGreen
-                                          : Theme.of(context)
-                                              .colorScheme
-                                              .onSurfaceVariant,
-                                    ),
-                                  ),
-                                  if (pickedLat != null)
-                                    Text(
-                                      pickedAddress.isNotEmpty
-                                          ? pickedAddress
-                                          : '${pickedLat!.toStringAsFixed(5)}, ${pickedLng!.toStringAsFixed(5)}',
-                                      style: TextStyle(
-                                          fontSize: 11,
-                                          color: Colors.grey[500]),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                ],
+                    Builder(builder: (context) {
+                      final jdc2 = JdcColors.of(context);
+                      return InkWell(
+                        onTap: () async {
+                          final mapResult = await Navigator.of(context)
+                              .push<Map<String, dynamic>>(
+                            MaterialPageRoute(
+                              builder: (_) => DeliveryMapPickerScreen(
+                                initialPosition:
+                                    pickedLat != null && pickedLng != null
+                                        ? LatLng(pickedLat!, pickedLng!)
+                                        : null,
                               ),
                             ),
-                            Icon(Icons.chevron_right, color: Colors.grey[400]),
-                          ],
+                          );
+                          if (mapResult != null) {
+                            setDialogState(() {
+                              pickedLat = mapResult['lat'] as double;
+                              pickedLng = mapResult['lng'] as double;
+                              pickedAddress =
+                                  mapResult['address'] as String? ?? '';
+                              if (addressController.text.isEmpty) {
+                                addressController.text = pickedAddress;
+                              }
+                            });
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(JdcRadius.small),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: JdcSpacing.md, vertical: JdcSpacing.lg),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(JdcRadius.small),
+                            border: Border.all(
+                              color: pickedLat != null ? jdc2.cta : jdc2.line,
+                              width: pickedLat != null ? 2 : 1,
+                            ),
+                            color: pickedLat != null ? jdc2.brandSoft : jdc2.paper,
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                pickedLat != null
+                                    ? Icons.check_circle
+                                    : Icons.pin_drop,
+                                color: pickedLat != null ? jdc2.cta : jdc2.muted,
+                                size: 22,
+                              ),
+                              const SizedBox(width: JdcSpacing.sm),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      pickedLat != null
+                                          ? AppLocalizations.of(context)!
+                                              .addrPinPlaced
+                                          : AppLocalizations.of(context)!
+                                              .addrPinOnMap,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                        color: pickedLat != null
+                                            ? jdc2.cta
+                                            : jdc2.muted,
+                                      ),
+                                    ),
+                                    if (pickedLat != null)
+                                      Text(
+                                        pickedAddress.isNotEmpty
+                                            ? pickedAddress
+                                            : '${pickedLat!.toStringAsFixed(5)}, ${pickedLng!.toStringAsFixed(5)}',
+                                        style: TextStyle(
+                                            fontSize: 11,
+                                            color: jdc2.dim),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              Icon(Icons.chevron_right, color: jdc2.muted),
+                            ],
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    }),
                     const SizedBox(height: 12),
 
                     // Address
@@ -319,7 +292,8 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                     if (context.mounted) Navigator.pop(context, true);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryGreen,
+                    backgroundColor: JdcColors.of(context).cta,
+                    foregroundColor: JdcColors.of(context).onCta,
                   ),
                   child: Text(AppLocalizations.of(context)!.addrSave),
                 ),
@@ -345,16 +319,15 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
     String selected,
     ValueChanged<String> onSelected,
   ) {
+    final jdc = JdcColors.of(context);
     final isSelected = value == selected;
     return ChoiceChip(
-      avatar:
-          Icon(icon, size: 18, color: isSelected ? Colors.white : Colors.grey),
+      avatar: Icon(icon, size: 18, color: isSelected ? jdc.onCta : jdc.muted),
       label: Text(label),
       selected: isSelected,
-      selectedColor: _colorForLabel(value),
+      selectedColor: jdc.cta,
       labelStyle: TextStyle(
-        color:
-            isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
+        color: isSelected ? jdc.onCta : jdc.text,
         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
       ),
       onSelected: (_) => onSelected(value),
@@ -390,82 +363,6 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.pickMode
-            ? AppLocalizations.of(context)!.addrPickTitle
-            : AppLocalizations.of(context)!.addrBookTitle),
-        backgroundColor: AppTheme.primaryGreen,
-        foregroundColor: Colors.white,
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _addresses.isEmpty
-              ? _buildEmptyState()
-              : _buildAddressList(),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddEditDialog(),
-        icon: const Icon(Icons.add),
-        label: Text(AppLocalizations.of(context)!.addrAddButton),
-        backgroundColor: AppTheme.primaryGreen,
-        foregroundColor: Colors.white,
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.location_off_rounded,
-            size: 80,
-            color: Colors.grey[300],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            AppLocalizations.of(context)!.addrEmptyTitle,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[600],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            AppLocalizations.of(context)!.addrEmptySubtitle,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[500],
-            ),
-          ),
-          const SizedBox(height: 24),
-          // Quick add buttons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildQuickAddButton(
-                  'home',
-                  AppLocalizations.of(context)!.addrLabelHome,
-                  Icons.home_rounded,
-                  Colors.blue),
-              const SizedBox(width: 16),
-              _buildQuickAddButton(
-                  'work',
-                  AppLocalizations.of(context)!.addrLabelWork,
-                  Icons.work_rounded,
-                  Colors.orange),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildQuickAddButton(
       String label, String name, IconData icon, Color color) {
     return OutlinedButton.icon(
@@ -478,8 +375,93 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
       style: OutlinedButton.styleFrom(
         foregroundColor: color,
         side: BorderSide(color: color),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        padding: const EdgeInsets.symmetric(horizontal: JdcSpacing.xl, vertical: JdcSpacing.md),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(JdcRadius.small)),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final jdc = JdcColors.of(context);
+    return Scaffold(
+      backgroundColor: jdc.paper,
+      appBar: AppBar(
+        title: Text(widget.pickMode
+            ? AppLocalizations.of(context)!.addrPickTitle
+            : AppLocalizations.of(context)!.addrBookTitle),
+        backgroundColor: jdc.surface,
+        foregroundColor: jdc.text,
+        shape: Border(bottom: BorderSide(color: jdc.line)),
+        iconTheme: IconThemeData(color: jdc.text),
+      ),
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator(color: jdc.cta))
+          : _addresses.isEmpty
+              ? _buildEmptyState()
+              : _buildAddressList(),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showAddEditDialog(),
+        icon: const Icon(Icons.add),
+        label: Text(AppLocalizations.of(context)!.addrAddButton),
+        backgroundColor: jdc.cta,
+        foregroundColor: jdc.onCta,
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    final jdc = JdcColors.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(JdcSpacing.xl),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.location_off_rounded,
+              size: 80,
+              color: jdc.offTrack,
+            ),
+            const SizedBox(height: JdcSpacing.lg),
+            Text(
+              AppLocalizations.of(context)!.addrEmptyTitle,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: jdc.muted,
+              ),
+            ),
+            const SizedBox(height: JdcSpacing.sm),
+            Text(
+              AppLocalizations.of(context)!.addrEmptySubtitle,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: jdc.dim,
+              ),
+            ),
+            const SizedBox(height: JdcSpacing.xxl),
+            // ปุ่มลัดสองปุ่มยาวเกินจอแคบ ใช้ Wrap ให้ตกบรรทัดแทนการล้น
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: JdcSpacing.lg,
+              runSpacing: JdcSpacing.md,
+              children: [
+                _buildQuickAddButton(
+                    'home',
+                    AppLocalizations.of(context)!.addrLabelHome,
+                    Icons.home_rounded,
+                    jdc.infoInk),
+                _buildQuickAddButton(
+                    'work',
+                    AppLocalizations.of(context)!.addrLabelWork,
+                    Icons.work_rounded,
+                    jdc.brand),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -488,7 +470,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
     return RefreshIndicator(
       onRefresh: _loadAddresses,
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(JdcSpacing.lg),
         itemCount: _addresses.length,
         itemBuilder: (context, index) {
           final addr = _addresses[index];
@@ -499,98 +481,110 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
   }
 
   Widget _buildAddressCard(SavedAddress addr) {
-    final color = _colorForLabel(addr.label);
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 2,
+    final jdc = JdcColors.of(context);
+    final isDefault = addr.label == 'home';
+    return Container(
+      margin: const EdgeInsets.only(bottom: JdcSpacing.md),
+      decoration: BoxDecoration(
+        color: jdc.surface,
+        borderRadius: BorderRadius.circular(JdcRadius.card),
+        border: Border.all(color: isDefault ? jdc.brandLine : jdc.line, width: isDefault ? 2 : 1),
+      ),
       child: InkWell(
         onTap: widget.pickMode
             ? () => Navigator.pop(context, addr)
             : () => _showAddEditDialog(existing: addr),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(JdcRadius.card),
         child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
+          padding: const EdgeInsets.all(JdcSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Icon
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(_iconForLabel(addr.label), color: color, size: 28),
-              ),
-              const SizedBox(width: 16),
-
-              // Info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          addr.name,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            _displayLabel(addr.label),
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: color,
-                            ),
-                          ),
-                        ),
-                      ],
+              Row(
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: isDefault ? jdc.brandSoft : jdc.sunken,
+                      borderRadius: BorderRadius.circular(11),
                     ),
-                    const SizedBox(height: 4),
+                    child: Icon(
+                      _iconForLabel(addr.label),
+                      color: isDefault ? jdc.brandOnSoft : jdc.muted,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: JdcSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      addr.name,
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: jdc.text),
+                    ),
+                  ),
+                  if (isDefault)
                     Text(
-                      addr.address,
+                      'ค่าเริ่มต้น',
                       style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[600],
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: jdc.brandOnSoft),
                     ),
-                    if (addr.note != null && addr.note!.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        '📝 ${addr.note}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[500],
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
+                ],
               ),
-
-              // Actions
-              if (!widget.pickMode)
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.red),
-                  onPressed: () => _deleteAddress(addr),
-                )
-              else
-                Icon(Icons.chevron_right, color: Colors.grey[400]),
+              const SizedBox(height: JdcSpacing.sm),
+              Text(
+                addr.address,
+                style: TextStyle(fontSize: 13, color: jdc.muted, height: 1.6),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (addr.note != null && addr.note!.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  addr.note!,
+                  style: TextStyle(fontSize: 12, color: jdc.dim),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+              const SizedBox(height: JdcSpacing.sm),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => _showAddEditDialog(existing: addr),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: jdc.text,
+                        side: BorderSide(color: jdc.line),
+                        minimumSize: const Size(0, JdcTouch.minTarget),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(JdcRadius.small)),
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: Text('แก้ไข',
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: jdc.text)),
+                    ),
+                  ),
+                  const SizedBox(width: JdcSpacing.sm),
+                  if (!widget.pickMode)
+                    OutlinedButton(
+                      onPressed: () => _deleteAddress(addr),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: jdc.dangerInk,
+                        side: BorderSide(color: jdc.dangerLine),
+                        minimumSize: const Size(92, JdcTouch.minTarget),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(JdcRadius.small)),
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: Text('ลบ',
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: jdc.dangerInk)),
+                    )
+                  else
+                    Icon(Icons.chevron_right, color: jdc.muted),
+                ],
+              ),
             ],
           ),
         ),

@@ -1,9 +1,10 @@
 ﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
+
+import '../../../theme/jdc_colors.dart';
 import '../../../common/widgets/app_network_image.dart';
 import '../../../common/services/auth_service.dart';
 import '../../../common/services/system_config_service.dart';
-import '../../../theme/app_theme.dart';
 
 /// Splash Screen
 /// Checks authentication status and navigates accordingly
@@ -54,7 +55,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.primaryGreen,
+      backgroundColor: JdcColors.of(context).cta,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

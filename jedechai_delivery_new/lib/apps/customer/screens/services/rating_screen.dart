@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../theme/jdc_colors.dart';
+import '../../../../theme/jdc_layout.dart';
 import '../../../../common/models/booking.dart';
 import '../../../../common/services/auth_service.dart';
 import '../../../../common/utils/order_code_formatter.dart';
@@ -41,20 +42,22 @@ class _RatingScreenState extends State<RatingScreen> {
   }
 
   Future<void> _submitRating() async {
+    final jdc = JdcColors.of(context);
     if (_hasDriver && _driverRating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(AppLocalizations.of(context)!.ratingPleaseRateDriver),
-            backgroundColor: Colors.red),
+            content:
+                Text(AppLocalizations.of(context)!.ratingPleaseRateDriver),
+            backgroundColor: jdc.danger),
       );
       return;
     }
     if (_isFood && _merchantRating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content:
-                Text(AppLocalizations.of(context)!.ratingPleaseRateMerchant),
-            backgroundColor: Colors.red),
+            content: Text(
+                AppLocalizations.of(context)!.ratingPleaseRateMerchant),
+            backgroundColor: jdc.danger),
       );
       return;
     }
@@ -108,11 +111,12 @@ class _RatingScreenState extends State<RatingScreen> {
       debugLog('❌ Error submitting rating: $e');
       setState(() => _isSubmitting = false);
       if (mounted) {
+        final jdc2 = JdcColors.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content:
-                  Text(AppLocalizations.of(context)!.ratingError(e.toString())),
-              backgroundColor: Colors.red),
+              content: Text(
+                  AppLocalizations.of(context)!.ratingError(e.toString())),
+              backgroundColor: jdc2.danger),
         );
       }
     }
@@ -120,29 +124,32 @@ class _RatingScreenState extends State<RatingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final jdc = JdcColors.of(context);
     if (_submitted) {
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: jdc.paper,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(JdcSpacing.xxl),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                  color: jdc.successSoft,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.check_circle,
-                    size: 80, color: AppTheme.primaryGreen),
+                child:
+                    Icon(Icons.check_circle, size: 80, color: jdc.successInk),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: JdcSpacing.xxl),
               Text(AppLocalizations.of(context)!.ratingThankYou,
-                  style: const TextStyle(
-                      fontSize: 22, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
+                  style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: jdc.text)),
+              const SizedBox(height: JdcSpacing.sm),
               Text(AppLocalizations.of(context)!.ratingFeedbackHelps,
-                  style: const TextStyle(fontSize: 16, color: Colors.grey)),
+                  style: TextStyle(fontSize: 16, color: jdc.muted)),
             ],
           ),
         ),
@@ -150,90 +157,96 @@ class _RatingScreenState extends State<RatingScreen> {
     }
 
     return Scaffold(
+      backgroundColor: jdc.paper,
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.ratingTitle),
-        backgroundColor: AppTheme.primaryGreen,
-        foregroundColor: Colors.white,
+        backgroundColor: jdc.panel,
+        foregroundColor: jdc.onPanel,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ข้อมูลออเดอร์
-            _buildOrderSummaryCard(),
-            const SizedBox(height: 24),
+        padding: const EdgeInsets.all(JdcSpacing.xl),
+        child: JdcContentFrame(
+          padded: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ข้อมูลออเดอร์
+              _buildOrderSummaryCard(),
+              const SizedBox(height: JdcSpacing.xxl),
 
-            // ให้คะแนนคนขับ
-            _buildRatingSection(
-              title: AppLocalizations.of(context)!.ratingRateDriver,
-              icon: Icons.delivery_dining,
-              rating: _driverRating,
-              onRatingChanged: (r) => setState(() => _driverRating = r),
-              controller: _driverCommentController,
-              hintText: AppLocalizations.of(context)!.ratingDriverHint,
-            ),
-
-            // ให้คะแนนร้านค้า (เฉพาะ food)
-            if (_isFood) ...[
-              const SizedBox(height: 24),
+              // ให้คะแนนคนขับ
               _buildRatingSection(
-                title: AppLocalizations.of(context)!.ratingRateMerchant,
-                icon: Icons.store,
-                rating: _merchantRating,
-                onRatingChanged: (r) => setState(() => _merchantRating = r),
-                controller: _merchantCommentController,
-                hintText: AppLocalizations.of(context)!.ratingMerchantHint,
+                title: AppLocalizations.of(context)!.ratingRateDriver,
+                icon: Icons.delivery_dining,
+                rating: _driverRating,
+                onRatingChanged: (r) => setState(() => _driverRating = r),
+                controller: _driverCommentController,
+                hintText: AppLocalizations.of(context)!.ratingDriverHint,
+              ),
+
+              // ให้คะแนนร้านค้า (เฉพาะ food)
+              if (_isFood) ...[
+                const SizedBox(height: JdcSpacing.xxl),
+                _buildRatingSection(
+                  title: AppLocalizations.of(context)!.ratingRateMerchant,
+                  icon: Icons.store,
+                  rating: _merchantRating,
+                  onRatingChanged: (r) => setState(() => _merchantRating = r),
+                  controller: _merchantCommentController,
+                  hintText: AppLocalizations.of(context)!.ratingMerchantHint,
+                ),
+              ],
+
+              const SizedBox(height: JdcSpacing.xxxl),
+
+              // ปุ่มส่ง
+              SizedBox(
+                width: double.infinity,
+                height: JdcTouch.button,
+                child: ElevatedButton(
+                  onPressed: _isSubmitting ? null : _submitRating,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: jdc.cta,
+                    foregroundColor: jdc.onCta,
+                    shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(JdcRadius.field)),
+                  ),
+                  child: _isSubmitting
+                      ? SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                              color: jdc.onCta, strokeWidth: 2.5),
+                        )
+                      : Text(AppLocalizations.of(context)!.ratingSubmit,
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
+                ),
+              ),
+
+              const SizedBox(height: JdcSpacing.md),
+
+              // ปุ่มข้าม
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: _isSubmitting
+                      ? null
+                      : () => Navigator.of(context).pop(false),
+                  child: Text(AppLocalizations.of(context)!.ratingSkip,
+                      style: TextStyle(color: jdc.muted, fontSize: 16)),
+                ),
               ),
             ],
-
-            const SizedBox(height: 32),
-
-            // ปุ่มส่ง
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
-                onPressed: _isSubmitting ? null : _submitRating,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryGreen,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                ),
-                child: _isSubmitting
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2.5),
-                      )
-                    : Text(AppLocalizations.of(context)!.ratingSubmit,
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // ปุ่มข้าม
-            SizedBox(
-              width: double.infinity,
-              child: TextButton(
-                onPressed: _isSubmitting
-                    ? null
-                    : () => Navigator.of(context).pop(false),
-                child: Text(AppLocalizations.of(context)!.ratingSkip,
-                    style: const TextStyle(color: Colors.grey, fontSize: 16)),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildOrderSummaryCard() {
+    final jdc = JdcColors.of(context);
     final l10n = AppLocalizations.of(context)!;
     final serviceLabel = {
           'food': l10n.ratingServiceFood,
@@ -250,23 +263,21 @@ class _RatingScreenState extends State<RatingScreen> {
         Icons.receipt;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(JdcSpacing.lg),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)
-        ],
+        color: jdc.surface,
+        borderRadius: BorderRadius.circular(JdcRadius.card),
+        boxShadow: jdc.shadowCard,
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(JdcSpacing.md),
             decoration: BoxDecoration(
-              color: AppTheme.primaryGreen.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
+              color: jdc.brandSoft,
+              borderRadius: BorderRadius.circular(JdcRadius.small),
             ),
-            child: Icon(serviceIcon, color: AppTheme.primaryGreen, size: 28),
+            child: Icon(serviceIcon, color: jdc.brandOnSoft, size: 28),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -274,23 +285,25 @@ class _RatingScreenState extends State<RatingScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(serviceLabel,
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: jdc.text)),
+                const SizedBox(height: JdcSpacing.xs),
                 Text(
                     OrderCodeFormatter.formatByServiceType(
                       widget.booking.id,
                       serviceType: widget.booking.serviceType,
                     ),
-                    style: const TextStyle(fontSize: 13, color: Colors.grey)),
+                    style: TextStyle(fontSize: 13, color: jdc.muted)),
               ],
             ),
           ),
           Text('฿${widget.booking.totalAmount.ceil()}',
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryGreen)),
+                  color: jdc.cta)),
         ],
       ),
     );
@@ -304,6 +317,7 @@ class _RatingScreenState extends State<RatingScreen> {
     required TextEditingController controller,
     required String hintText,
   }) {
+    final jdc = JdcColors.of(context);
     final l10n = AppLocalizations.of(context)!;
     final ratingLabels = [
       '',
@@ -314,27 +328,27 @@ class _RatingScreenState extends State<RatingScreen> {
       l10n.ratingLabel5
     ];
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(JdcSpacing.xl),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)
-        ],
+        color: jdc.surface,
+        borderRadius: BorderRadius.circular(JdcRadius.card),
+        boxShadow: jdc.shadowCard,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, color: AppTheme.primaryGreen, size: 22),
-              const SizedBox(width: 8),
+              Icon(icon, color: jdc.cta, size: 22),
+              const SizedBox(width: JdcSpacing.sm),
               Text(title,
-                  style: const TextStyle(
-                      fontSize: 17, fontWeight: FontWeight.bold)),
+                  style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: jdc.text)),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: JdcSpacing.lg),
           // ดาว
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -349,27 +363,25 @@ class _RatingScreenState extends State<RatingScreen> {
                         ? Icons.star_rounded
                         : Icons.star_outline_rounded,
                     size: 44,
-                    color: starIndex <= rating
-                        ? const Color(0xFFFFB800)
-                        : Colors.grey.shade300,
+                    color: starIndex <= rating ? jdc.brandHi : jdc.line,
                   ),
                 ),
               );
             }),
           ),
           if (rating > 0) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: JdcSpacing.sm),
             Center(
               child: Text(ratingLabels[rating],
                   style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: rating >= 4
-                          ? AppTheme.primaryGreen
-                          : (rating >= 3 ? Colors.orange : Colors.red))),
+                          ? jdc.successInk
+                          : (rating >= 3 ? jdc.brand : jdc.danger))),
             ),
           ],
-          const SizedBox(height: 16),
+          const SizedBox(height: JdcSpacing.lg),
           // ช่องความคิดเห็น
           TextField(
             controller: controller,
@@ -377,20 +389,19 @@ class _RatingScreenState extends State<RatingScreen> {
             maxLength: 500,
             decoration: InputDecoration(
               hintText: hintText,
-              hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              hintStyle: TextStyle(color: jdc.dim, fontSize: 14),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(JdcRadius.small)),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade200),
+                borderRadius: BorderRadius.circular(JdcRadius.small),
+                borderSide: BorderSide(color: jdc.line),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
+                borderRadius: BorderRadius.circular(JdcRadius.small),
+                borderSide: BorderSide(color: jdc.brand, width: 1.5),
               ),
               filled: true,
-              fillColor: Colors.grey.shade50,
+              fillColor: jdc.sunken,
               contentPadding: const EdgeInsets.all(14),
             ),
           ),

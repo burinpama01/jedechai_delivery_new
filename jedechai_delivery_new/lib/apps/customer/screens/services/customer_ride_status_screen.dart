@@ -1,5 +1,7 @@
 ﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
+
+import '../../../../theme/jdc_colors.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../../l10n/app_localizations.dart';
 import 'package:geolocator/geolocator.dart';
@@ -7,7 +9,6 @@ import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
-import '../../../../theme/app_theme.dart';
 import '../../../../common/models/booking.dart';
 import '../../../../common/services/booking_service.dart';
 import '../../../../common/services/supabase_service.dart';
@@ -551,7 +552,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
               _polylines.add(
                 Polyline(
                   polylineId: const PolylineId('route'),
-                  color: AppTheme.primaryGreen,
+                  color: JdcColors.of(context).cta,
                   width: 5,
                   points: polylineCoordinates,
                 ),
@@ -643,7 +644,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
       child: Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: AppTheme.primaryGreen,
+        backgroundColor: JdcColors.of(context).cta,
         foregroundColor: Colors.white,
         title: Text(AppLocalizations.of(context)!.rideStatusTitle),
         leading: IconButton(
@@ -750,7 +751,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                           Row(
                             children: [
                               CircleAvatar(
-                                backgroundColor: AppTheme.primaryGreen,
+                                backgroundColor: JdcColors.of(context).cta,
                                 child: const Icon(
                                   Icons.person,
                                   color: Colors.white,
@@ -815,7 +816,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                                   icon: const Icon(Icons.chat, size: 18),
                                   label: Text(AppLocalizations.of(context)!.rideStatusChat),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppTheme.accentBlue,
+                                    backgroundColor: JdcColors.of(context).infoInk,
                                     foregroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                     padding: const EdgeInsets.symmetric(vertical: 10),
@@ -865,10 +866,10 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                               Text(AppLocalizations.of(context)!.rideStatusGrandTotal, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                               Text(
                                 '฿${totalAmount.ceil()}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 18,
-                                  color: AppTheme.primaryGreen,
+                                  color: JdcColors.of(context).cta,
                                 ),
                               ),
                             ],
@@ -894,10 +895,10 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                               Text(AppLocalizations.of(context)!.rideStatusServiceFee, style: const TextStyle(fontWeight: FontWeight.bold)),
                               Text(
                                 '฿${totalAmount.ceil()}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 18,
-                                  color: AppTheme.primaryGreen,
+                                  color: JdcColors.of(context).cta,
                                 ),
                               ),
                             ],
@@ -962,9 +963,9 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
       case 'ready_for_pickup':
         return Colors.green;
       case 'picking_up_order':
-        return Colors.teal;
+        return JdcColors.of(context).successInk;
       case 'in_transit':
-        return Colors.purple;
+        return JdcColors.of(context).infoInk;
       case 'completed':
         return Colors.green;
       default:
@@ -1109,15 +1110,15 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                color: JdcColors.of(context).cta.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.check_circle, color: AppTheme.primaryGreen, size: 48),
+              child: Icon(Icons.check_circle, color: JdcColors.of(context).cta, size: 48),
             ),
             const SizedBox(height: 16),
             Text(
               isFood ? AppLocalizations.of(context)!.rideStatusDeliverySuccess : AppLocalizations.of(context)!.rideStatusTripSuccess,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen),
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: JdcColors.of(context).cta),
               textAlign: TextAlign.center,
             ),
           ],
@@ -1175,7 +1176,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [AppTheme.primaryGreen, AppTheme.primaryGreen.withValues(alpha: 0.8)],
+                    colors: [JdcColors.of(context).cta, JdcColors.of(context).cta.withValues(alpha: 0.8)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -1259,7 +1260,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryGreen,
+                backgroundColor: JdcColors.of(context).cta,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

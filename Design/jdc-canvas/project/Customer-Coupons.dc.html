@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>ลูกค้า — คูปองของฉัน</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@500;600;700&amp;family=Noto+Sans+Thai:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light;
+  --paper:#f4f7f4;--surface:#ffffff;--sunken:#eef2ee;--line:#dbe4de;
+  --text:#0f3b33;--muted:#5c6f68;--dim:#66736d;
+  --panel:#0f3b33;--on-panel:#ffffff;--panel-dim:#b7cfc8;
+  --panel-soft:rgba(255,255,255,.10);--panel-soft2:rgba(255,255,255,.12);--panel-soft3:rgba(255,255,255,.14);--panel-line:rgba(255,255,255,.24);--bar-dim:rgba(255,255,255,.26);
+  --brand:#e39c2e;--brand-hi:#f3c06a;--cta:#8a5a0a;--on-cta:#ffffff;--link:#8a5a0a;--link-hover:#6d4708;
+  --brand-soft:#fff3dc;--brand-soft2:#fffaf0;--brand-line:#f0cf95;--brand-on-soft:#8a5a0a;
+  --green-ink:#2b6b2b;--green-soft:#e6f4e2;--green-line:#bfe0b6;--green-fill:#2e7d43;--green-dot:#5fcf7a;--green-on-panel:#a8e0b4;--green-panel:rgba(46,125,67,.30);--green-panel-line:rgba(95,207,122,.45);
+  --teal-soft:#e2f1ef;--teal-ink:#16605a;
+  --danger:#b42318;--danger-ink:#8f1c14;--danger-soft:#ffece9;--danger-line:#f0b3ab;
+  --off-track:#c3ccc6;--knob:#ffffff;--track-empty:#e1e8e3;
+  --map-bg:#dfe7e2;--map-grid:#d4ded8;--map-road:#ffffff;--route:#8a5a0a;
+  --hero:linear-gradient(132deg,#0e382f 0%,#1d5f50 55%,#8a5a0a 150%);
+  --hero2:linear-gradient(140deg,#0e382f 0%,#1a5548 70%);
+  --hero3:linear-gradient(140deg,#0e382f 0%,#20655a 55%,#8a5a0a 140%);
+  --sh-card:0 6px 18px rgba(12,44,37,.07);--sh-raise:0 12px 30px rgba(12,44,37,.10);--sh-float:0 6px 16px rgba(12,44,37,.16);--sh-deep:0 10px 24px rgba(12,44,37,.30);--sh-sheet:0 -10px 30px rgba(12,44,37,.08);--sh-brand:0 10px 26px rgba(227,156,46,.22);--sh-brand-lg:0 14px 34px rgba(227,156,46,.26);
+}
+/* โหมดมืด: ตอนนี้ปิดการสลับอัตโนมัติไว้ เปิดได้โดยใส่ data-theme="dark" ที่ :root */
+:root[data-theme="dark"]{
+  --paper:#0b1a17;--surface:#12241f;--sunken:#0e1f1b;--line:#24403a;
+  --text:#e8f1ed;--muted:#9cb1a9;--dim:#8fa39c;
+  --panel:#16352e;--on-panel:#f2f8f5;--panel-dim:#9ab6ae;
+  --panel-soft:rgba(255,255,255,.08);--panel-soft2:rgba(255,255,255,.10);--panel-soft3:rgba(255,255,255,.12);--panel-line:rgba(255,255,255,.18);--bar-dim:rgba(255,255,255,.24);
+  --brand:#e0a53f;--brand-hi:#f3c06a;--cta:#a0690f;--on-cta:#ffffff;--link:#edbb62;--link-hover:#f6d493;
+  --brand-soft:#2a2114;--brand-soft2:#241d12;--brand-line:#4a3a1c;--brand-on-soft:#edbb62;
+  --green-ink:#85cf82;--green-soft:#14301c;--green-line:#26512a;--green-fill:#2e7d43;--green-dot:#5fcf7a;--green-on-panel:#a8e0b4;--green-panel:rgba(46,125,67,.32);--green-panel-line:rgba(95,207,122,.40);
+  --teal-soft:#0f2a28;--teal-ink:#6fc3ba;
+  --danger:#ff8a7d;--danger-ink:#ff9a8e;--danger-soft:#351a17;--danger-line:#55302b;
+  --off-track:#3a4d47;--knob:#f2f8f5;--track-empty:#24403a;
+  --map-bg:#17302a;--map-grid:#1e3b34;--map-road:#25453d;--route:#e0a53f;
+  --hero:linear-gradient(132deg,#0a2621 0%,#134137 55%,#5e3f0b 150%);
+  --hero2:linear-gradient(140deg,#0a2621 0%,#123b33 70%);
+  --hero3:linear-gradient(140deg,#0a2621 0%,#154439 55%,#5e3f0b 140%);
+  --sh-card:0 6px 18px rgba(0,0,0,.40);--sh-raise:0 12px 30px rgba(0,0,0,.45);--sh-float:0 6px 16px rgba(0,0,0,.45);--sh-deep:0 10px 24px rgba(0,0,0,.55);--sh-sheet:0 -10px 30px rgba(0,0,0,.40);--sh-brand:0 10px 26px rgba(0,0,0,.45);--sh-brand-lg:0 14px 34px rgba(0,0,0,.50);
+}
+body{margin:0;font-family:"Noto Sans Thai",system-ui,sans-serif;color:var(--text);background:var(--paper);-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:"IBM Plex Sans Thai","Noto Sans Thai",sans-serif;margin:0}
+.dsp{font-family:"IBM Plex Sans Thai","Noto Sans Thai",sans-serif}
+button{font-family:inherit;cursor:pointer}
+input{font-family:inherit}
+a{color:var(--link);text-decoration:none}
+a:hover{color:var(--link-hover)}
+.vh{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--paper); overflow: hidden;">
+
+  <div style="flex-shrink: 0; padding: 16px 20px 12px; background: var(--surface); border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 14px;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <a href="Customer-Account.dc.html" aria-label="ย้อนกลับ" style="width: 44px; height: 44px; margin-left: -10px; border-radius: 14px; color: var(--text); display: flex; align-items: center; justify-content: center;">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg>
+      </a>
+      <h1 style="flex-grow: 1; font-size: 18px; font-weight: 700;">คูปองของฉัน</h1>
+    </div>
+    <label for="code" class="vh">กรอกโค้ดคูปอง</label>
+    <div style="display: flex; gap: 8px;">
+      <input id="code" type="text" placeholder="กรอกโค้ดคูปอง" style="flex-grow: 1; min-width: 0; min-height: 46px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--paper); font-size: 14px; color: var(--text); outline: none;">
+      <button type="button" style="min-height: 46px; padding: 0 18px; border-radius: 12px; border: 0; background: var(--panel); color: var(--on-panel); font-size: 14px; font-weight: 700;">ใช้โค้ด</button>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <span style="padding: 8px 14px; border-radius: 999px; background: var(--panel); color: var(--on-panel); font-size: 13px; font-weight: 700;">ใช้ได้ 3</span>
+      <span style="padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); font-size: 13px; font-weight: 600;">ใช้แล้ว</span>
+      <span style="padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); font-size: 13px; font-weight: 600;">หมดอายุ</span>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; padding: 16px 20px 0; display: flex; flex-direction: column; gap: 12px; overflow: hidden;">
+    <sc-for list="{{coupons}}" as="c" hint-placeholder-count="4">
+      <div style="display: flex; border-radius: 16px; background: var(--surface); border: 1px solid {{c.line}}; overflow: hidden;">
+        <span style="width: 86px; flex-shrink: 0; padding: 14px 8px; background: {{c.bg}}; color: {{c.fg}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-align: center;">
+          <span class="dsp" style="font-size: 19px; font-weight: 700;">{{c.value}}</span>
+          <span style="font-size: 10px; font-weight: 700;">{{c.unit}}</span>
+        </span>
+        <span style="flex-grow: 1; padding: 13px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 700;">{{c.name}}</span>
+          <span style="font-size: 12px; color: var(--muted);">{{c.cond}}</span>
+          <span style="font-size: 11px; font-weight: 700; color: {{c.fg}};">{{c.expiry}}</span>
+        </span>
+      </div>
+    </sc-for>
+
+    <div style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 16px; background: var(--green-soft); border: 1px solid var(--green-line);">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--green-ink); flex-shrink: 0;" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"></circle><path d="M3 19c.7-3.2 3.2-4.9 6-4.9s5.3 1.7 6 4.9"></path><path d="M17 8.5h4"></path><path d="M19 6.5v4"></path></svg>
+      <span style="flex-grow: 1; font-size: 13px; font-weight: 600; color: var(--green-ink);">ชวนเพื่อนรับคูปองเพิ่ม</span>
+      <a href="Customer-Referral.dc.html" style="font-size: 12px; font-weight: 700; color: var(--green-ink);">ไปชวน</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const gold = { bg: 'var(--brand-soft)', fg: 'var(--brand-on-soft)', line: 'var(--brand-line)' };
+    const green = { bg: 'var(--green-soft)', fg: 'var(--green-ink)', line: 'var(--green-line)' };
+    const teal = { bg: 'var(--teal-soft)', fg: 'var(--teal-ink)', line: 'var(--line)' };
+    return {
+      coupons: [
+        { value: '฿15', unit: 'ลดค่าส่ง', name: 'JDC15 · ส่งฟรีค่าส่ง', cond: 'อาหาร · ขั้นต่ำ ฿100', expiry: 'ใช้ได้ถึง 30 ก.ย. 2569', ...gold },
+        { value: '฿50', unit: 'ส่วนลด', name: 'NEWJDC50 · ลูกค้าใหม่', cond: 'อาหาร · ขั้นต่ำ ฿200', expiry: 'ใช้ได้ถึง 15 ต.ค. 2569', ...green },
+        { value: '20%', unit: 'ส่วนลด', name: 'RIDE20 · ลดค่าโดยสาร', cond: 'เรียกรถ · ลดสูงสุด ฿40', expiry: 'ใช้ได้ถึง 5 ต.ค. 2569', ...teal }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

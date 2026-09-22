@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+
+import '../../theme/jdc_colors.dart';
 import '../models/chat_message.dart';
 import '../services/chat_service.dart';
 import '../services/auth_service.dart';
 import '../utils/app_time.dart';
 import '../utils/order_code_formatter.dart';
 import 'app_network_image.dart';
-import '../../theme/app_theme.dart';
 
 /// Chat Screen
 ///
@@ -105,11 +106,11 @@ class _ChatScreenState extends State<ChatScreen> {
               radius: 18,
               backgroundColor: isSupport
                   ? Colors.blue.withValues(alpha: 0.2)
-                  : AppTheme.primaryGreen.withValues(alpha: 0.2),
+                  : JdcColors.of(context).cta.withValues(alpha: 0.2),
               child: Icon(
                 isSupport ? Icons.support_agent : Icons.person,
                 size: 20,
-                color: isSupport ? Colors.blue : AppTheme.primaryGreen,
+                color: isSupport ? Colors.blue : JdcColors.of(context).cta,
               ),
             ),
             const SizedBox(width: 10),
@@ -135,7 +136,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ],
         ),
-        backgroundColor: isSupport ? Colors.blue[700] : AppTheme.primaryGreen,
+        backgroundColor: isSupport ? Colors.blue[700] : JdcColors.of(context).cta,
         foregroundColor: Colors.white,
       ),
       body: Column(
@@ -262,7 +263,7 @@ class _ChatScreenState extends State<ChatScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: isMe
-              ? AppTheme.primaryGreen
+              ? JdcColors.of(context).cta
               : colorScheme.surfaceContainer,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
@@ -367,7 +368,7 @@ class _ChatScreenState extends State<ChatScreen> {
       case 'merchant':
         return Colors.orange[700]!;
       default:
-        return AppTheme.primaryGreen;
+        return JdcColors.of(context).cta;
     }
   }
 
@@ -420,8 +421,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
           // Send button
           Container(
-            decoration: const BoxDecoration(
-              color: AppTheme.primaryGreen,
+            decoration: BoxDecoration(
+              color: JdcColors.of(context).cta,
               shape: BoxShape.circle,
             ),
             child: IconButton(

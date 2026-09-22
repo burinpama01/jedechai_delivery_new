@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../common/utils/order_code_formatter.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../../theme/app_theme.dart';
+import '../../../theme/jdc_colors.dart';
+import '../../../theme/jdc_layout.dart';
 
 class MerchantOrderCard extends StatelessWidget {
   const MerchantOrderCard({
@@ -20,7 +21,7 @@ class MerchantOrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     final status = order['status'] as String? ?? '';
     final price = order['price'] is int
         ? (order['price'] as int).toDouble()
@@ -40,78 +41,66 @@ class MerchantOrderCard extends StatelessWidget {
 
     final createdAt = DateTime.parse(createdAtStr).toLocal();
     final isNewOrder = status == 'pending_merchant' || status == 'pending';
-    final statusColor = _getStatusColor(context, status);
+
+    // ออเดอร์ใหม่ = การ์ดทอง (brand-line + shadow-brand) ตาม artboard
+    // ออเดอร์อื่น = การ์ดพื้น surface ขอบ line เงาการ์ดปกติ
+    final accentFg = isNewOrder ? jdc.brandOnSoft : jdc.text;
+    final headerBg = isNewOrder ? jdc.brandSoft : jdc.sunken;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
+        margin: const EdgeInsets.only(bottom: JdcSpacing.lg),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(16),
-          border: isNewOrder
-              ? Border.all(
-                  color: colorScheme.error.withValues(alpha: 0.4),
-                  width: 2,
-                )
-              : null,
-          boxShadow: [
-            BoxShadow(
-              color: (isNewOrder ? colorScheme.error : colorScheme.shadow)
-                  .withValues(alpha: 0.08),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          color: jdc.surface,
+          borderRadius: BorderRadius.circular(JdcRadius.card),
+          border: Border.all(
+            color: isNewOrder ? jdc.brandLine : jdc.line,
+          ),
+          boxShadow: isNewOrder ? jdc.shadowBrand : jdc.shadowCard,
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
           children: [
+            // แถบหัวการ์ด: สถานะ + รหัสออเดอร์
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: isNewOrder
-                      ? [
-                          colorScheme.error,
-                          colorScheme.error.withValues(alpha: 0.7),
-                        ]
-                      : [statusColor, statusColor.withValues(alpha: 0.7)],
-                ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: JdcSpacing.lg,
+                vertical: JdcSpacing.sm + 2,
               ),
+              color: headerBg,
               child: Row(
                 children: [
                   Icon(
-                    isNewOrder
-                        ? Icons.notifications_active
-                        : _getStatusIcon(status),
-                    color: colorScheme.onPrimary,
-                    size: 18,
+                    isNewOrder ? Icons.timer_outlined : _getStatusIcon(status),
+                    color: isNewOrder ? jdc.brandOnSoft : jdc.muted,
+                    size: 17,
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    statusTextBuilder(status),
-                    style: TextStyle(
-                      color: colorScheme.onPrimary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
+                  const SizedBox(width: JdcSpacing.sm - 1),
+                  Expanded(
+                    child: Text(
+                      statusTextBuilder(status),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: _jt(fontSize: 12, color: accentFg, weight: 700),
                     ),
                   ),
-                  const Spacer(),
                   Text(
                     OrderCodeFormatter.format(order['id']?.toString()),
-                    style: TextStyle(
-                      color: colorScheme.onPrimary.withValues(alpha: 0.85),
+                    style: _jt(
                       fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                      color: isNewOrder
+                          ? jdc.brandOnSoft
+                          : jdc.muted.withValues(alpha: 0.85),
+                      weight: 700,
                     ),
                   ),
                 ],
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(JdcSpacing.lg),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -119,25 +108,28 @@ class MerchantOrderCard extends StatelessWidget {
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
+                          horizontal: JdcSpacing.md,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
-                          color: AppTheme.accentOrange.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
+                          color: jdc.brandSoft,
+                          borderRadius:
+                              BorderRadius.circular(JdcRadius.small),
                         ),
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.receipt_long,
                               size: 16,
-                              color: AppTheme.accentOrange,
+                              color: jdc.brandOnSoft,
                             ),
                             const SizedBox(width: 6),
                             Text(
                               '฿${price.toStringAsFixed(0)}',
-                              style: const TextStyle(
+                              style: _jt(
                                 fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.accentOrange,
+                                color: jdc.brandOnSoft,
+                                weight: 700,
                               ),
                             ),
                           ],
@@ -147,7 +139,7 @@ class MerchantOrderCard extends StatelessWidget {
                       Icon(
                         Icons.access_time_rounded,
                         size: 14,
-                        color: colorScheme.onSurfaceVariant,
+                        color: jdc.muted,
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -155,23 +147,20 @@ class MerchantOrderCard extends StatelessWidget {
                           context,
                           DateTime.now().difference(createdAt),
                         ),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
+                        style: _jt(fontSize: 12, color: jdc.muted),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: JdcSpacing.md),
                   if (scheduledAt != null) ...[
                     _ScheduledOrderBanner(scheduledAt: scheduledAt),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: JdcSpacing.md),
                   ],
                   _AddressDistanceBlock(
                     address: order['destination_address'],
                     distanceKm: distanceKm,
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: JdcSpacing.md),
                   _OrderActionStatus(
                     status: status,
                     orderId: order['id']?.toString() ?? '',
@@ -194,23 +183,24 @@ class _ScheduledOrderBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     final localizations = AppLocalizations.of(context)!;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: JdcSpacing.sm,
+        vertical: JdcSpacing.sm,
+      ),
       decoration: BoxDecoration(
-        color: colorScheme.tertiaryContainer.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: colorScheme.tertiary.withValues(alpha: 0.4),
-        ),
+        color: jdc.infoSoft,
+        borderRadius: BorderRadius.circular(JdcRadius.small),
+        border: Border.all(color: jdc.line),
       ),
       child: Row(
         children: [
-          Icon(Icons.schedule, size: 16, color: colorScheme.tertiary),
-          const SizedBox(width: 8),
+          Icon(Icons.schedule, size: 16, color: jdc.infoInk),
+          const SizedBox(width: JdcSpacing.sm),
           Expanded(
             child: Text(
               scheduledAt.isAfter(DateTime.now())
@@ -219,11 +209,7 @@ class _ScheduledOrderBanner extends StatelessWidget {
                   : localizations.merchantPickupTime(
                       _formatDateTime(scheduledAt),
                     ),
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: colorScheme.onSurface,
-              ),
+              style: _jt(fontSize: 12, color: jdc.infoInk, weight: 600),
             ),
           ),
         ],
@@ -243,13 +229,13 @@ class _AddressDistanceBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
 
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(JdcSpacing.sm),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(10),
+        color: jdc.sunken,
+        borderRadius: BorderRadius.circular(JdcRadius.small),
       ),
       child: Column(
         children: [
@@ -259,17 +245,16 @@ class _AddressDistanceBlock extends StatelessWidget {
                 width: 24,
                 height: 24,
                 decoration: BoxDecoration(
-                  color: colorScheme.errorContainer.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(6),
+                  color: jdc.dangerSoft,
+                  borderRadius: BorderRadius.circular(JdcRadius.small),
                 ),
-                child:
-                    Icon(Icons.location_on, size: 14, color: colorScheme.error),
+                child: Icon(Icons.location_on, size: 14, color: jdc.danger),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: JdcSpacing.sm),
               Expanded(
                 child: Text(
                   _formatAddress(context, address),
-                  style: TextStyle(fontSize: 12, color: colorScheme.onSurface),
+                  style: _jt(fontSize: 12, color: jdc.text),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -284,23 +269,21 @@ class _AddressDistanceBlock extends StatelessWidget {
                   width: 24,
                   height: 24,
                   decoration: BoxDecoration(
-                    color:
-                        colorScheme.secondaryContainer.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(6),
+                    color: jdc.infoSoft,
+                    borderRadius: BorderRadius.circular(JdcRadius.small),
                   ),
                   child: Icon(
                     Icons.straighten,
                     size: 14,
-                    color: colorScheme.secondary,
+                    color: jdc.infoInk,
                   ),
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  AppLocalizations.of(context)!
-                      .merchantDistance(distanceKm.toStringAsFixed(1)),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.onSurfaceVariant,
+                const SizedBox(width: JdcSpacing.sm),
+                Expanded(
+                  child: Text(
+                    AppLocalizations.of(context)!
+                        .merchantDistance(distanceKm.toStringAsFixed(1)),
+                    style: _jt(fontSize: 12, color: jdc.muted),
                   ),
                 ),
               ],
@@ -325,7 +308,7 @@ class _OrderActionStatus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     final localizations = AppLocalizations.of(context)!;
 
     switch (status) {
@@ -338,19 +321,19 @@ class _OrderActionStatus extends StatelessWidget {
                 onPressed:
                     orderId.isEmpty ? null : () => onAcceptOrder(orderId),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accentBlue,
-                  foregroundColor: colorScheme.onPrimary,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  backgroundColor: jdc.cta,
+                  foregroundColor: jdc.onCta,
+                  disabledBackgroundColor: jdc.offTrack,
+                  disabledForegroundColor: jdc.onCta,
+                  minimumSize: Size.fromHeight(JdcTouch.field),
+                  padding: const EdgeInsets.symmetric(vertical: JdcSpacing.md),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(JdcRadius.field),
                   ),
                 ),
                 child: Text(
                   localizations.merchantAcceptOrder,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: _jt(fontSize: 14, color: jdc.onCta, weight: 700),
                 ),
               ),
             ),
@@ -359,64 +342,72 @@ class _OrderActionStatus extends StatelessWidget {
       case 'preparing':
         return _StatusInfoBox(
           icon: Icons.restaurant,
-          color: colorScheme.secondary,
-          backgroundColor: colorScheme.secondaryContainer,
+          fg: jdc.infoInk,
+          bg: jdc.infoSoft,
+          border: jdc.line,
           title: localizations.merchantPreparingFood,
           subtitle: localizations.merchantTapForDetails,
         );
       case 'driver_accepted':
         return _StatusInfoBox(
           icon: Icons.person,
-          color: colorScheme.primary,
-          backgroundColor: colorScheme.primaryContainer,
+          fg: jdc.successInk,
+          bg: jdc.successSoft,
+          border: jdc.successLine,
           title: localizations.merchantDriverAcceptedCard,
           subtitle: localizations.merchantCookingFood,
         );
       case 'matched':
         return _StatusInfoBox(
           icon: Icons.check_circle,
-          color: colorScheme.secondary,
-          backgroundColor: colorScheme.secondaryContainer,
+          fg: jdc.successInk,
+          bg: jdc.successSoft,
+          border: jdc.successLine,
           title: localizations.merchantDriverMatchedCard,
           subtitle: localizations.merchantTapForDetails,
         );
       case 'traveling_to_merchant':
         return _StatusInfoBox(
           icon: Icons.directions_car,
-          color: colorScheme.tertiary,
-          backgroundColor: colorScheme.tertiaryContainer,
+          fg: jdc.infoInk,
+          bg: jdc.infoSoft,
+          border: jdc.line,
           title: localizations.merchantDriverTravelingToShop,
           subtitle: localizations.merchantPrepareFood,
         );
       case 'arrived_at_merchant':
         return _StatusInfoBox(
           icon: Icons.store,
-          color: colorScheme.tertiary,
-          backgroundColor: colorScheme.tertiaryContainer,
+          fg: jdc.successInk,
+          bg: jdc.successSoft,
+          border: jdc.successLine,
           title: localizations.merchantDriverArrivedCard,
           subtitle: localizations.merchantTapForDetails,
         );
       case 'picking_up_order':
         return _StatusInfoBox(
           icon: Icons.delivery_dining,
-          color: colorScheme.secondary,
-          backgroundColor: colorScheme.secondaryContainer,
+          fg: jdc.successInk,
+          bg: jdc.successSoft,
+          border: jdc.successLine,
           title: localizations.merchantDriverPickingUpCard,
           subtitle: localizations.merchantDeliveringToCustomer,
         );
       case 'in_transit':
         return _StatusInfoBox(
           icon: Icons.local_shipping,
-          color: colorScheme.primary,
-          backgroundColor: colorScheme.primaryContainer,
+          fg: jdc.infoInk,
+          bg: jdc.infoSoft,
+          border: jdc.line,
           title: localizations.merchantDelivering,
           subtitle: localizations.merchantOrderEnRoute,
         );
       case 'ready_for_pickup':
         return _StatusInfoBox(
           icon: Icons.delivery_dining,
-          color: colorScheme.secondary,
-          backgroundColor: colorScheme.secondaryContainer,
+          fg: jdc.successInk,
+          bg: jdc.successSoft,
+          border: jdc.successLine,
           title: localizations.merchantDriverPickedUpCard,
           subtitle: localizations.merchantOrderDoneForMerchant,
         );
@@ -429,15 +420,17 @@ class _OrderActionStatus extends StatelessWidget {
 class _StatusInfoBox extends StatelessWidget {
   const _StatusInfoBox({
     required this.icon,
-    required this.color,
-    required this.backgroundColor,
+    required this.fg,
+    required this.bg,
+    required this.border,
     required this.title,
     required this.subtitle,
   });
 
   final IconData icon;
-  final Color color;
-  final Color backgroundColor;
+  final Color fg;
+  final Color bg;
+  final Color border;
   final String title;
   final String subtitle;
 
@@ -445,29 +438,25 @@ class _StatusInfoBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(JdcSpacing.lg),
       decoration: BoxDecoration(
-        color: backgroundColor.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.35)),
+        color: bg,
+        borderRadius: BorderRadius.circular(JdcRadius.small),
+        border: Border.all(color: border),
       ),
       child: Column(
         children: [
-          Icon(icon, color: color, size: 32),
-          const SizedBox(height: 8),
+          Icon(icon, color: fg, size: 28),
+          const SizedBox(height: JdcSpacing.sm),
           Text(
             title,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+            style: _jt(fontSize: 15, color: fg, weight: 700),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 4),
           Text(
             subtitle,
-            style: TextStyle(fontSize: 14, color: color),
+            style: _jt(fontSize: 13, color: fg),
             textAlign: TextAlign.center,
           ),
         ],
@@ -500,27 +489,6 @@ IconData _getStatusIcon(String status) {
       return Icons.cancel;
     default:
       return Icons.receipt_long;
-  }
-}
-
-Color _getStatusColor(BuildContext context, String status) {
-  final colorScheme = Theme.of(context).colorScheme;
-  switch (status) {
-    case 'pending_merchant':
-      return colorScheme.error;
-    case 'pending':
-      return colorScheme.tertiary;
-    case 'preparing':
-      return colorScheme.primary;
-    case 'ready_for_pickup':
-    case 'driver_accepted':
-    case 'matched':
-    case 'arrived_at_merchant':
-    case 'completed':
-      return colorScheme.secondary;
-    case 'cancelled':
-    default:
-      return colorScheme.outline;
   }
 }
 
@@ -563,4 +531,31 @@ String _formatDateTime(DateTime dateTime) {
   final hour = local.hour.toString().padLeft(2, '0');
   final minute = local.minute.toString().padLeft(2, '0');
   return '$day/$month/$year $hour:$minute';
+}
+
+/// TextStyle มาตรฐานของกลุ่มหน้าออเดอร์ — ผูก fontWeight กับ fontVariations
+/// ให้คู่กันเสมอตามธีม JDC
+TextStyle _jt({
+  double? fontSize,
+  Color? color,
+  double weight = 400,
+  double? height,
+  double? letterSpacing,
+}) {
+  const weightMap = <int, FontWeight>{
+    400: FontWeight.w400,
+    500: FontWeight.w500,
+    600: FontWeight.w600,
+    700: FontWeight.w700,
+    800: FontWeight.w800,
+    900: FontWeight.w900,
+  };
+  return TextStyle(
+    fontSize: fontSize,
+    color: color,
+    height: height,
+    letterSpacing: letterSpacing,
+    fontWeight: weightMap[weight.round()] ?? FontWeight.w400,
+    fontVariations: [FontVariation('wght', weight)],
+  );
 }

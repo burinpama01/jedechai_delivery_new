@@ -6,7 +6,7 @@ import '../../../common/services/menu_option_service.dart';
 import '../../../common/widgets/menu_option_selector.dart';
 import '../../../common/models/menu_item.dart';
 import '../../../common/widgets/app_network_image.dart';
-import '../../../theme/app_theme.dart';
+import '../../../theme/jdc_colors.dart';
 
 class FoodDetailsScreen extends StatefulWidget {
   final MenuItem menuItem;
@@ -174,8 +174,8 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
       Navigator.of(context).pop(cartItem);
       messenger.showSnackBar(SnackBar(
         content: Text(addedMsg),
-        backgroundColor: Colors.green,
-        duration: const Duration(seconds: 2),
+        backgroundColor: JdcColors.of(context).successInk,
+        duration: Duration(seconds: 2),
       ));
     } catch (e) {
       debugLog('❌ Error adding to cart: $e');
@@ -183,7 +183,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)!.foodDetAddFailed(e.toString())),
-            backgroundColor: Colors.red,
+            backgroundColor: JdcColors.of(context).danger,
           ),
         );
       }
@@ -421,7 +421,7 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
             child: Row(
               children: [
                 Icon(Icons.refresh, color: colorScheme.onSurfaceVariant),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     AppLocalizations.of(context)!.foodDetLoadingOptions,
@@ -431,12 +431,12 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(
+                SizedBox(
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accentOrange),
+                    valueColor: AlwaysStoppedAnimation<Color>(JdcColors.of(context).brand),
                   ),
                 ),
               ],

@@ -1,9 +1,10 @@
 ﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
+
+import '../../../../theme/jdc_colors.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../common/services/auth_service.dart';
 import '../../../../common/widgets/language_switcher.dart';
-import '../../../../theme/app_theme.dart';
 import '../../../../l10n/app_localizations.dart';
 import 'login_screen.dart';
 
@@ -35,19 +36,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
       'value': 'customer',
       'label': l10n.accountRoleCustomer,
       'icon': Icons.person,
-      'color': AppTheme.primaryGreen,
+      'color': JdcColors.of(context).cta,
     },
     {
       'value': 'driver',
       'label': l10n.accountRoleDriver,
       'icon': Icons.local_taxi,
-      'color': AppTheme.accentBlue,
+      'color': JdcColors.of(context).infoInk,
     },
     {
       'value': 'merchant',
       'label': l10n.accountRoleMerchant,
       'icon': Icons.store,
-      'color': AppTheme.accentOrange,
+      'color': JdcColors.of(context).brand,
     },
   ];
 
@@ -204,7 +205,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryGreen,
+                backgroundColor: JdcColors.of(context).cta,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -225,7 +226,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        icon: const Icon(Icons.check_circle, color: AppTheme.primaryGreen, size: 48),
+        icon: Icon(Icons.check_circle, color: JdcColors.of(context).cta, size: 48),
         title: Text(
           l10n.registerSuccessTitle,
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
@@ -249,7 +250,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryGreen,
+                backgroundColor: JdcColors.of(context).cta,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -520,8 +521,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 16),
 
               // Login Link
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              // ใช้ Wrap ให้ตกบรรทัดได้เมื่อข้อความสองส่วนรวมกันยาวเกินจอ
+              Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Text(
                     l10n.registerHaveAccountPrefix,

@@ -5,7 +5,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../common/utils/shop_schedule.dart';
 import '../../../../common/services/system_config_service.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../theme/jdc_colors.dart';
+import '../../../../theme/jdc_layout.dart';
 import 'restaurant_detail_screen.dart';
 
 /// Food Service Screen
@@ -101,51 +102,50 @@ class _FoodServiceScreenState extends State<FoodServiceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final jdc = JdcColors.of(context);
     return Scaffold(
+      backgroundColor: jdc.paper,
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.foodSvcTitle),
-        backgroundColor: AppTheme.accentOrange,
-        foregroundColor: Colors.white,
+        backgroundColor: jdc.panel,
+        foregroundColor: jdc.onPanel,
       ),
       body: RefreshIndicator(
         onRefresh: _fetchRestaurants,
-        child: _buildBody(),
+        child: _buildBody(context),
       ),
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(BuildContext context) {
+    final jdc = JdcColors.of(context);
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
+      return Center(
+        child: CircularProgressIndicator(color: jdc.brand),
       );
     }
 
     if (_error != null) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.grey[400],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              AppLocalizations.of(context)!.foodSvcLoadError(_error!),
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: JdcSpacing.xl),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 64, color: jdc.dim),
+              const SizedBox(height: JdcSpacing.lg),
+              Text(
+                AppLocalizations.of(context)!.foodSvcLoadError(_error!),
+                style: TextStyle(fontSize: 16, color: jdc.muted),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _fetchRestaurants,
-              child: Text(AppLocalizations.of(context)!.foodSvcRetry),
-            ),
-          ],
+              const SizedBox(height: JdcSpacing.lg),
+              ElevatedButton(
+                onPressed: _fetchRestaurants,
+                child: Text(AppLocalizations.of(context)!.foodSvcRetry),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -155,20 +155,13 @@ class _FoodServiceScreenState extends State<FoodServiceScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.restaurant_outlined,
-              size: 64,
-              color: Colors.grey[400],
-            ),
-            const SizedBox(height: 16),
+            Icon(Icons.restaurant_outlined, size: 64, color: jdc.dim),
+            const SizedBox(height: JdcSpacing.lg),
             Text(
               AppLocalizations.of(context)!.foodSvcEmpty,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 16, color: jdc.muted),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: JdcSpacing.lg),
             ElevatedButton(
               onPressed: _fetchRestaurants,
               child: Text(AppLocalizations.of(context)!.foodSvcRefresh),
@@ -179,7 +172,7 @@ class _FoodServiceScreenState extends State<FoodServiceScreen> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(JdcSpacing.lg),
       itemCount: _restaurants.length,
       itemBuilder: (context, index) {
         final restaurant = _restaurants[index];
@@ -214,72 +207,74 @@ class RestaurantCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final jdc = JdcColors.of(context);
     final l10n = AppLocalizations.of(context)!;
     final name = restaurant['full_name'] ?? l10n.foodSvcRestaurantFallback;
     final phone = restaurant['phone_number'] ?? l10n.foodSvcNotSpecified;
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: JdcSpacing.lg),
       elevation: 2,
+      color: jdc.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(JdcRadius.card),
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(JdcRadius.card),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(JdcSpacing.lg),
           child: Row(
             children: [
               Container(
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                  color: AppTheme.accentOrange.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  color: jdc.brandSoft,
+                  borderRadius: BorderRadius.circular(JdcRadius.small),
                 ),
                 child: Icon(
                   Icons.restaurant,
-                  color: AppTheme.accentOrange,
+                  color: jdc.brandOnSoft,
                   size: 30,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: JdcSpacing.lg),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        color: jdc.text,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: JdcSpacing.xs),
                     Text(
                       phone,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 14, color: jdc.muted),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: JdcSpacing.xs),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                        horizontal: JdcSpacing.sm,
+                        vertical: JdcSpacing.xs,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.green.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(20),
+                        color: jdc.successSoft,
+                        borderRadius: BorderRadius.circular(JdcRadius.chip),
                       ),
                       child: Text(
-                        AppLocalizations.of(context)!.foodSvcOpen,
-                        style: const TextStyle(
+                        l10n.foodSvcOpen,
+                        style: TextStyle(
                           fontSize: 12,
-                          color: Colors.green,
-                          fontWeight: FontWeight.w500,
+                          color: jdc.successInk,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -288,8 +283,8 @@ class RestaurantCard extends StatelessWidget {
               ),
               Icon(
                 Icons.arrow_forward_ios,
-                color: Colors.grey[400],
-                size: 20,
+                color: jdc.dim,
+                size: 18,
               ),
             ],
           ),

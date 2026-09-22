@@ -1,31 +1,45 @@
-﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
+import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
 import '../../../../common/services/menu_option_service.dart';
 import '../../../../common/models/menu_option.dart';
 import '../../../../l10n/app_localizations.dart';
 import 'merchant_option_group_detail_screen.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../theme/jdc_colors.dart';
+import '../../../../theme/jdc_layout.dart';
 
 /// Merchant Option Library Screen
-/// 
+///
 /// Allows merchants to manage their reusable option groups
 /// Features: List, Create, Edit, Delete option groups
 class MerchantOptionLibraryScreen extends StatefulWidget {
   final String merchantId;
 
   const MerchantOptionLibraryScreen({
-    Key? key,
+    super.key,
     required this.merchantId,
-  }) : super(key: key);
+  });
 
   @override
-  State<MerchantOptionLibraryScreen> createState() => _MerchantOptionLibraryScreenState();
+  State<MerchantOptionLibraryScreen> createState() =>
+      _MerchantOptionLibraryScreenState();
 }
 
-class _MerchantOptionLibraryScreenState extends State<MerchantOptionLibraryScreen> {
+class _MerchantOptionLibraryScreenState
+    extends State<MerchantOptionLibraryScreen> {
   List<MenuOptionGroup> _optionGroups = [];
   bool _isLoading = true;
   String? _error;
+
+  /// สร้าง TextStyle พร้อม fontVariations คู่กับ fontWeight ตามกฎดีไซน์
+  TextStyle _txt(Color color, double size, {double w = 400, double? height}) {
+    return TextStyle(
+      color: color,
+      fontSize: size,
+      height: height,
+      fontWeight: FontWeight.values[(w.round() ~/ 100) - 1],
+      fontVariations: [FontVariation('wght', w)],
+    );
+  }
 
   @override
   void initState() {
@@ -40,8 +54,9 @@ class _MerchantOptionLibraryScreenState extends State<MerchantOptionLibraryScree
         _error = null;
       });
 
-      final groups = await MenuOptionService().getOptionGroupsForMerchant(widget.merchantId);
-      
+      final groups =
+          await MenuOptionService().getOptionGroupsForMerchant(widget.merchantId);
+
       if (mounted) {
         setState(() {
           _optionGroups = groups;
@@ -64,12 +79,13 @@ class _MerchantOptionLibraryScreenState extends State<MerchantOptionLibraryScree
 
     try {
       await MenuOptionService().deleteOptionGroup(group.id);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.optLibDeleteSuccess(group.name)),
-            backgroundColor: Colors.green,
+            content: Text(AppLocalizations.of(context)!
+                .optLibDeleteSuccess(group.name)),
+            backgroundColor: JdcColors.of(context).successFill,
           ),
         );
         _loadOptionGroups();
@@ -78,8 +94,9 @@ class _MerchantOptionLibraryScreenState extends State<MerchantOptionLibraryScree
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.optLibDeleteFailed(e.toString())),
-            backgroundColor: Colors.red,
+            content: Text(
+                AppLocalizations.of(context)!.optLibDeleteFailed(e.toString())),
+            backgroundColor: JdcColors.of(context).danger,
           ),
         );
       }
@@ -87,42 +104,43 @@ class _MerchantOptionLibraryScreenState extends State<MerchantOptionLibraryScree
   }
 
   Future<bool> _showDeleteConfirmation(MenuOptionGroup group) async {
+    final jdc = JdcColors.of(context);
     return await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.optLibDeleteConfirmTitle),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(AppLocalizations.of(context)!.optLibDeleteConfirmBody(group.name)),
-            const SizedBox(height: 8),
-            if (group.options != null && group.options!.isNotEmpty)
-              Text(
-                AppLocalizations.of(context)!.optLibDeleteNote(group.options!.length.toString()),
-                style: TextStyle(
-                  color: Colors.orange.shade700,
-                  fontSize: 12,
-                ),
-              ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(AppLocalizations.of(context)!.optLibCancel),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(AppLocalizations.of(context)!.optLibDeleteConfirmTitle),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(AppLocalizations.of(context)!
+                    .optLibDeleteConfirmBody(group.name)),
+                const SizedBox(height: 8),
+                if (group.options != null && group.options!.isNotEmpty)
+                  Text(
+                    AppLocalizations.of(context)!.optLibDeleteNote(
+                        group.options!.length.toString()),
+                    style: _txt(jdc.dangerInk, 12),
+                  ),
+              ],
             ),
-            child: Text(AppLocalizations.of(context)!.optLibDeleteBtn),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(AppLocalizations.of(context)!.optLibCancel),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: jdc.danger,
+                  foregroundColor: jdc.dangerSoft,
+                ),
+                child: Text(AppLocalizations.of(context)!.optLibDeleteBtn),
+              ),
+            ],
           ),
-        ],
-      ),
-    ) ?? false;
+        ) ??
+        false;
   }
 
   void _navigateToDetailScreen({MenuOptionGroup? group}) {
@@ -139,117 +157,168 @@ class _MerchantOptionLibraryScreenState extends State<MerchantOptionLibraryScree
     } else {
       debugLog('➕ Create mode - New group');
     }
-    
-    Navigator.of(context).push(
+
+    Navigator.of(context)
+        .push(
       MaterialPageRoute(
         builder: (context) => MerchantOptionGroupDetailScreen(
           merchantId: widget.merchantId,
           group: group,
         ),
       ),
-    ).then((_) => _loadOptionGroups());
+    )
+        .then((_) => _loadOptionGroups());
   }
 
   @override
   Widget build(BuildContext context) {
+    final jdc = JdcColors.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.optLibTitle),
-        backgroundColor: AppTheme.accentOrange,
-        foregroundColor: Colors.white,
-        elevation: 0,
+      backgroundColor: jdc.paper,
+      body: Column(
+        children: [
+          _buildHeader(),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _loadOptionGroups,
+              color: jdc.cta,
+              child: _buildBody(),
+            ),
+          ),
+          _buildBottomBar(),
+        ],
       ),
-      body: _buildBody(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _navigateToDetailScreen(),
-        backgroundColor: AppTheme.accentOrange,
-        child: const Icon(Icons.add, color: Colors.white),
+    );
+  }
+
+  /// แถบหัวเรื่องตาม artboard Merchant-OptionLibrary —
+  /// พื้น surface + เส้นแบ่งล่าง + ปุ่มย้อนกลับ 44x44 + ไทต์เติล 17px + คำโปรย
+  Widget _buildHeader() {
+    final jdc = JdcColors.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: jdc.surface,
+        border: Border(bottom: BorderSide(color: jdc.line)),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+              JdcSpacing.lg, JdcSpacing.lg, JdcSpacing.lg, JdcSpacing.md),
+          child: Row(
+            children: [
+              _buildBackButton(),
+              const SizedBox(width: JdcSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context)!.optLibTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: _txt(jdc.text, 17, w: 700),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'สร้างครั้งเดียว ใช้ซ้ำได้ทุกเมนู',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: _txt(jdc.muted, 12),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBackButton() {
+    final jdc = JdcColors.of(context);
+    return SizedBox(
+      width: JdcTouch.minTarget,
+      height: JdcTouch.minTarget,
+      child: Material(
+        color: jdc.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(JdcRadius.field),
+          side: BorderSide(color: jdc.line),
+        ),
+        child: InkWell(
+          onTap: () => Navigator.of(context).maybePop(),
+          child: Icon(Icons.chevron_left, size: 20, color: jdc.text),
+        ),
       ),
     );
   }
 
   Widget _buildBody() {
+    final jdc = JdcColors.of(context);
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return Center(child: CircularProgressIndicator(color: jdc.cta));
     }
 
     if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.grey[400],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              _error!,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
+      return JdcContentFrame(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 64, color: jdc.danger),
+              const SizedBox(height: JdcSpacing.lg),
+              Text(
+                _error!,
+                style: _txt(jdc.muted, 16),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loadOptionGroups,
-              child: Text(AppLocalizations.of(context)!.optLibRetry),
-            ),
-          ],
+              const SizedBox(height: JdcSpacing.lg),
+              _buildCtaButton(
+                onPressed: _loadOptionGroups,
+                label: AppLocalizations.of(context)!.optLibRetry,
+              ),
+            ],
+          ),
         ),
       );
     }
 
     if (_optionGroups.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.category,
-              size: 64,
-              color: Colors.grey[400],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              AppLocalizations.of(context)!.optLibEmpty,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
+      return JdcContentFrame(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.category_outlined, size: 64, color: jdc.dim),
+              const SizedBox(height: JdcSpacing.lg),
+              Text(
+                AppLocalizations.of(context)!.optLibEmpty,
+                style: _txt(jdc.text, 16, w: 600),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              AppLocalizations.of(context)!.optLibEmptyHint,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[500],
+              const SizedBox(height: JdcSpacing.sm),
+              Text(
+                AppLocalizations.of(context)!.optLibEmptyHint,
+                style: _txt(jdc.muted, 14),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () => _navigateToDetailScreen(),
-              icon: const Icon(Icons.add),
-              label: Text(AppLocalizations.of(context)!.optLibCreateNew),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accentOrange,
-                foregroundColor: Colors.white,
+              const SizedBox(height: JdcSpacing.lg),
+              _buildCtaButton(
+                onPressed: () => _navigateToDetailScreen(),
+                icon: Icons.add,
+                label: AppLocalizations.of(context)!.optLibCreateNew,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: _loadOptionGroups,
+    return JdcContentFrame(
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.only(top: JdcSpacing.md, bottom: JdcSpacing.xl),
+        physics: const AlwaysScrollableScrollPhysics(),
         itemCount: _optionGroups.length,
         itemBuilder: (context, index) {
           final group = _optionGroups[index];
@@ -262,25 +331,93 @@ class _MerchantOptionLibraryScreenState extends State<MerchantOptionLibraryScree
       ),
     );
   }
+
+  Widget _buildCtaButton({
+    required VoidCallback onPressed,
+    required String label,
+    IconData? icon,
+  }) {
+    final jdc = JdcColors.of(context);
+    return SizedBox(
+      height: JdcTouch.button,
+      child: FilledButton.icon(
+        onPressed: onPressed,
+        icon: icon != null ? Icon(icon, size: 19, color: jdc.onCta) : null,
+        label: Text(label, style: _txt(jdc.onCta, 15, w: 700)),
+        style: FilledButton.styleFrom(
+          backgroundColor: jdc.cta,
+          foregroundColor: jdc.onCta,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(JdcRadius.card),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// แถบล่าง — ปุ่มสร้างกลุ่มตัวเลือก (cta) ตาม artboard แทน FAB เดิม
+  Widget _buildBottomBar() {
+    final jdc = JdcColors.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: jdc.surface,
+        border: Border(top: BorderSide(color: jdc.line)),
+        boxShadow: jdc.shadowSheet,
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+              JdcSpacing.xl, JdcSpacing.md, JdcSpacing.xl, JdcSpacing.xl),
+          child: SizedBox(
+            width: double.infinity,
+            height: JdcTouch.button,
+            child: Material(
+              color: jdc.cta,
+              borderRadius: BorderRadius.circular(JdcRadius.card),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(JdcRadius.card),
+                onTap: () => _navigateToDetailScreen(),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.add, size: 19, color: jdc.onCta),
+                    const SizedBox(width: JdcSpacing.sm),
+                    Text(
+                      AppLocalizations.of(context)!.optGroupBtnCreate,
+                      style: _txt(jdc.onCta, 15, w: 700),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
+/// การ์ดกลุ่มตัวเลือกตาม artboard Merchant-OptionLibrary —
+/// radius 18 + ขอบ line + เงา card, แถวบนชื่อกลุ่ม + กติกาการเลือก + chevron,
+/// แถวล่างสรุปรายชื่อตัวเลือกคั่น " · " พร้อมราคาเพิ่มจากข้อมูลจริง
 class OptionGroupCard extends StatelessWidget {
   final MenuOptionGroup group;
   final VoidCallback onTap;
   final VoidCallback onDelete;
 
   const OptionGroupCard({
-    Key? key,
+    super.key,
     required this.group,
     required this.onTap,
     required this.onDelete,
-  }) : super(key: key);
+  });
 
   String _getSelectionText(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final min = group.minSelection;
     final max = group.maxSelection;
-    
+
     if (min == 0 && max == 1) {
       return l10n.optLibSelectMax1;
     } else if (min == 0 && max > 1) {
@@ -292,26 +429,31 @@ class OptionGroupCard extends StatelessWidget {
     }
   }
 
+  /// สรุปรายชื่อตัวเลือกเป็นบรรทัดเดียว เช่น "ไข่ดาว +฿10 · ไข่เจียว +฿15"
+  String _buildOptionsSummary() {
+    final options = group.options ?? const <MenuOption>[];
+    return options
+        .map((o) => o.price > 0 ? '${o.name} +฿${o.price}' : o.name)
+        .join(' · ');
+  }
+
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final optionCount = group.options?.length ?? 0;
-    
-    return Card(
-      elevation: 4,
-      margin: const EdgeInsets.only(bottom: 16),
+    final jdc = JdcColors.of(context);
+    return Container(
+      margin: const EdgeInsets.only(bottom: JdcSpacing.md),
       child: Dismissible(
         key: Key(group.id),
         direction: DismissDirection.endToStart,
         background: Container(
-          color: Colors.red,
           alignment: Alignment.centerRight,
-          padding: const EdgeInsets.only(right: 20),
-          child: const Icon(
-            Icons.delete,
-            color: Colors.white,
-            size: 24,
+          padding: const EdgeInsets.only(right: JdcSpacing.xl),
+          decoration: BoxDecoration(
+            color: jdc.dangerSoft,
+            borderRadius: BorderRadius.circular(JdcRadius.card),
+            border: Border.all(color: jdc.dangerLine),
           ),
+          child: Icon(Icons.delete, color: jdc.danger, size: 24),
         ),
         confirmDismiss: (direction) async {
           if (direction == DismissDirection.endToStart) {
@@ -320,139 +462,59 @@ class OptionGroupCard extends StatelessWidget {
           }
           return false;
         },
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Row(
-                  children: [
-                    // Icon
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: AppTheme.accentOrange.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        _getGroupIcon(),
-                        color: AppTheme.accentOrange,
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    
-                    // Group info
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            group.name,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _getSelectionText(context),
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    
-                    // Arrow
-                    Icon(
-                      Icons.arrow_forward_ios,
-                      size: 16,
-                      color: Colors.grey[400],
-                    ),
-                  ],
-                ),
-                
-                // Options preview
-                if (optionCount > 0) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+        child: Material(
+          color: jdc.surface,
+          borderRadius: BorderRadius.circular(JdcRadius.card),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(JdcRadius.card),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: JdcSpacing.lg, vertical: JdcSpacing.md + 2),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(JdcRadius.card),
+                border: Border.all(color: jdc.line),
+                boxShadow: jdc.shadowCard,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              AppLocalizations.of(context)!.optLibOptionCount(optionCount.toString()),
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: colorScheme.onSurfaceVariant,
-                              ),
+                              group.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: _cardTxt(jdc.text, 14, w: 700),
                             ),
-                            const Spacer(),
-                            if (optionCount > 3)
-                              Text(
-                                AppLocalizations.of(context)!.optLibShowFirst3,
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.grey[500],
-                                ),
-                              ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _getSelectionText(context),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: _cardTxt(jdc.muted, 12),
+                            ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        ...group.options!.take(3).map((option) => Padding(
-                          padding: const EdgeInsets.only(bottom: 4),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 4,
-                                height: 4,
-                                decoration: BoxDecoration(
-                                  color: AppTheme.accentOrange,
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  option.name,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ),
-                              if (option.price > 0)
-                                Text(
-                                  '+฿${option.price}',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: AppTheme.accentOrange,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        )),
-                      ],
-                    ),
+                      ),
+                      Icon(Icons.chevron_right, size: 18, color: jdc.muted),
+                    ],
                   ),
+                  if ((group.options?.isNotEmpty) ?? false) ...[
+                    const SizedBox(height: JdcSpacing.sm),
+                    Text(
+                      _buildOptionsSummary(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: _cardTxt(jdc.dim, 12, height: 1.5),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
@@ -460,13 +522,15 @@ class OptionGroupCard extends StatelessWidget {
     );
   }
 
-  IconData _getGroupIcon() {
-    final name = group.name.toLowerCase();
-    if (name.contains('หวาน') || name.contains('sweet')) return Icons.cake;
-    if (name.contains('เผ็ด') || name.contains('spicy')) return Icons.local_fire_department;
-    if (name.contains('ท็อปปิ้ง') || name.contains('topping')) return Icons.add_circle;
-    if (name.contains('ขนาด') || name.contains('size')) return Icons.straighten;
-    if (name.contains('เนื้อ') || name.contains('meat')) return Icons.lunch_dining;
-    return Icons.category;
+  /// TextStyle ของการ์ด แยกจาก state หลัก — ใส่ fontVariations คู่กับ fontWeight
+  TextStyle _cardTxt(Color color, double size,
+      {double w = 400, double? height}) {
+    return TextStyle(
+      color: color,
+      fontSize: size,
+      height: height,
+      fontWeight: FontWeight.values[(w.round() ~/ 100) - 1],
+      fontVariations: [FontVariation('wght', w)],
+    );
   }
 }

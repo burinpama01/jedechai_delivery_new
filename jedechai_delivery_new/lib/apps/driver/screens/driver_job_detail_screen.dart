@@ -12,7 +12,8 @@ import '../../../common/utils/order_code_formatter.dart';
 import '../../../common/services/supabase_service.dart';
 import '../../../common/services/system_config_service.dart';
 import '../../../common/services/merchant_food_config_service.dart';
-import '../../../theme/app_theme.dart';
+import '../../../theme/jdc_colors.dart';
+import '../../../theme/jdc_layout.dart';
 import '../../../utils/debug_logger.dart';
 
 /// Driver Job Detail Screen — Grab-style
@@ -178,6 +179,7 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
 
   Future<void> _fetchRoute() async {
     final b = widget.booking;
+    final jdc = JdcColors.of(context);
     try {
       final polylinePoints = PolylinePoints();
       final result = await polylinePoints.getRouteBetweenCoordinates(
@@ -193,7 +195,7 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
           _polylines.clear();
           _polylines.add(Polyline(
             polylineId: const PolylineId('route'),
-            color: const Color(0xFF1E88E5),
+            color: jdc.route,
             width: 5,
             points: result.points.map((p) => LatLng(p.latitude, p.longitude)).toList(),
           ));
@@ -204,7 +206,7 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
           _polylines.clear();
           _polylines.add(Polyline(
             polylineId: const PolylineId('route'),
-            color: Colors.grey,
+            color: jdc.offTrack,
             width: 3,
             patterns: [PatternItem.dash(12), PatternItem.gap(6)],
             points: [LatLng(b.originLat, b.originLng), LatLng(b.destLat, b.destLng)],
@@ -219,7 +221,7 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
           _polylines.clear();
           _polylines.add(Polyline(
             polylineId: const PolylineId('route'),
-            color: const Color(0xFF1E88E5),
+            color: jdc.route,
             width: 4,
             patterns: [PatternItem.dash(16), PatternItem.gap(8)],
             points: [
@@ -275,10 +277,9 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     final b = widget.booking;
     final isFood = b.serviceType == 'food';
-    final grossCollect = DriverAmountCalculator.grossCollect(b);
     final totalCollect = DriverAmountCalculator.netCollect(
       booking: b,
       couponDiscountAmount: _couponDiscount,
@@ -306,13 +307,21 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
             : l10n.jobDetailParcel;
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: jdc.paper,
       appBar: AppBar(
-        backgroundColor: AppTheme.accentBlue,
-        foregroundColor: Colors.white,
+        backgroundColor: jdc.panel,
+        foregroundColor: jdc.onPanel,
         elevation: 0,
         centerTitle: true,
-        title: Text(l10n.jobDetailTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+        title: Text(
+          l10n.jobDetailTitle,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: jdc.onPanel,
+            fontVariations: const [FontVariation('wght', 600)],
+          ),
+        ),
       ),
       body: Column(
         children: [
@@ -361,14 +370,14 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
           else
             Container(
               height: 120,
-              color: const Color(0xFF1A1A2E),
+              color: jdc.panel,
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.map_outlined, color: Colors.white24, size: 40),
+                    Icon(Icons.map_outlined, color: jdc.panelDim, size: 40),
                     const SizedBox(height: 8),
-                    Text(l10n.jobDetailNoRoute, style: const TextStyle(color: Colors.white38, fontSize: 12)),
+                    Text(l10n.jobDetailNoRoute, style: TextStyle(color: jdc.panelDim, fontSize: 12)),
                   ],
                 ),
               ),
@@ -378,26 +387,28 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: colorScheme.surface,
+                color: jdc.surface,
                 borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(24),
-                  topRight: Radius.circular(24),
+                  topLeft: Radius.circular(JdcRadius.sheet),
+                  topRight: Radius.circular(JdcRadius.sheet),
                 ),
+                boxShadow: jdc.shadowSheet,
               ),
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+                padding: const EdgeInsets.fromLTRB(
+                    JdcSpacing.lg, JdcSpacing.xl, JdcSpacing.lg, JdcSpacing.xxl),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // ── Date & Order ID ──
                     Row(
                       children: [
-                        Icon(Icons.calendar_today, size: 14, color: colorScheme.onSurfaceVariant),
+                        Icon(Icons.calendar_today, size: 14, color: jdc.muted),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
                             _serviceDateTimeSummary(),
-                            style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                            style: TextStyle(fontSize: 12, color: jdc.muted),
                           ),
                         ),
                         Text(
@@ -405,38 +416,38 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
                             b.id,
                             serviceType: b.serviceType,
                           ),
-                          style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant, fontFamily: 'monospace'),
+                          style: TextStyle(fontSize: 11, color: jdc.muted, fontFamily: 'monospace'),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: JdcSpacing.md),
 
                     // ── Origin / Destination ──
                     _buildAddressRow(
                       icon: Icons.circle,
-                      iconColor: AppTheme.accentBlue,
+                      iconColor: jdc.cta,
                       iconSize: 12,
                       text: b.pickupAddress ?? l10n.jobDetailPickupFallback,
                     ),
                     Padding(
                       padding: const EdgeInsets.only(left: 5),
-                      child: Container(width: 2, height: 20, color: Colors.grey[300]),
+                      child: Container(width: 2, height: 20, color: jdc.line),
                     ),
                     _buildAddressRow(
                       icon: Icons.circle,
-                      iconColor: Colors.red,
+                      iconColor: jdc.danger,
                       iconSize: 12,
                       text: b.destinationAddress ?? l10n.jobDetailDestFallback,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: JdcSpacing.lg),
 
                     // ── Info Chips Row ──
                     Container(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
-                        color: colorScheme.surfaceContainer,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: colorScheme.outlineVariant),
+                        color: jdc.paper,
+                        borderRadius: BorderRadius.circular(JdcRadius.small),
+                        border: Border.all(color: jdc.line),
                       ),
                       child: Row(
                         children: [
@@ -450,48 +461,41 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: JdcSpacing.xl),
 
                     // ── Net Earnings ──
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(JdcSpacing.xl),
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [AppTheme.accentBlue, AppTheme.accentBlue.withValues(alpha: 0.8)],
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.accentBlue.withValues(alpha: 0.3),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                        gradient: jdc.hero3,
+                        borderRadius: BorderRadius.circular(JdcRadius.card),
+                        boxShadow: jdc.shadowBrandLg,
                       ),
                       child: Column(
                         children: [
-                          Text(l10n.jobDetailNetEarnings, style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                          Text(l10n.jobDetailNetEarnings, style: TextStyle(color: jdc.panelDim, fontSize: 14)),
                           const SizedBox(height: 4),
                           Text(
-                            '฿ ${netEarnings.ceil()}',
-                            style: const TextStyle(
-                              color: Colors.white,
+                            l10n.driverJobBaht(netEarnings.ceil().toString()),
+                            style: TextStyle(
+                              color: jdc.onPanel,
                               fontSize: 36,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 1.2,
+                              fontVariations: const [FontVariation('wght', 700)],
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: JdcSpacing.xl),
 
                     // ── Earnings Breakdown ──
                     _sectionCard(
                       title: l10n.jobDetailEarningsBreakdown,
                       children: [
-                        _earningsRow(l10n.jobDetailTripFare, '฿ ${totalCollect.ceil()}', colorScheme.onSurface, isBold: true),
+                        _earningsRow(l10n.jobDetailTripFare, l10n.driverJobBaht(totalCollect.ceil().toString()), jdc.text, isBold: true),
                         if (_couponDiscount > 0)
                           _earningsRow(
                             hideCouponBreakdown
@@ -499,27 +503,27 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
                                 : (_couponCode != null && _couponCode!.isNotEmpty
                                     ? l10n.jobDetailCouponDiscountCode(_couponCode!)
                                     : l10n.jobDetailCouponDiscountGeneric),
-                            '-฿ ${_couponDiscount.ceil()}',
-                            Colors.green.shade600,
+                            l10n.driverJobBahtNeg(_couponDiscount.ceil().toString()),
+                            jdc.successInk,
                           ),
-                        _earningsRow(l10n.jobDetailPlatformFee, '-฿ ${commission.ceil()}', Colors.red.shade400),
+                        _earningsRow(l10n.jobDetailPlatformFee, l10n.driverJobBahtNeg(commission.ceil().toString()), jdc.dangerInk),
                         const Divider(height: 20),
-                        _earningsRow(l10n.jobDetailNetEarnings, '฿ ${netEarnings.ceil()}', AppTheme.accentBlue, isBold: true),
+                        _earningsRow(l10n.jobDetailNetEarnings, l10n.driverJobBaht(netEarnings.ceil().toString()), jdc.cta, isBold: true),
                         if (isFood) ...[
                           const SizedBox(height: 8),
-                          _earningsRow(l10n.jobDetailFoodCost, '฿ ${b.price.ceil()}', colorScheme.onSurfaceVariant),
-                          _earningsRow(l10n.jobDetailDeliveryFee, '฿ ${(b.deliveryFee ?? 0).ceil()}', colorScheme.onSurfaceVariant),
+                          _earningsRow(l10n.jobDetailFoodCost, l10n.driverJobBaht(b.price.ceil().toString()), jdc.muted),
+                          _earningsRow(l10n.jobDetailDeliveryFee, l10n.driverJobBaht((b.deliveryFee ?? 0).ceil().toString()), jdc.muted),
                         ],
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: JdcSpacing.lg),
 
                     // ── Cash Collection ──
                     if ((b.paymentMethod ?? 'cash') == 'cash')
                       _sectionCard(
                         title: l10n.jobDetailCashCollection,
                         children: [
-                          _earningsRow(l10n.jobDetailCollectFromCustomer, '฿ ${totalCollect.ceil()}', colorScheme.onSurface, isBold: true),
+                          _earningsRow(l10n.jobDetailCollectFromCustomer, l10n.driverJobBaht(totalCollect.ceil().toString()), jdc.text, isBold: true),
                           if (_couponDiscount > 0)
                             _earningsRow(
                               hideCouponBreakdown
@@ -528,13 +532,13 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
                                           _couponCode!.isNotEmpty
                                       ? l10n.jobDetailCouponDiscountCode(_couponCode!)
                                       : l10n.jobDetailCouponDiscountGeneric),
-                              '-฿ ${_couponDiscount.ceil()}',
-                              Colors.green.shade600,
+                              l10n.driverJobBahtNeg(_couponDiscount.ceil().toString()),
+                              jdc.successInk,
                             ),
                           if (isFood) ...[
                             const SizedBox(height: 8),
-                            _earningsRow(l10n.jobDetailFoodCost, '฿ ${b.price.ceil()}', colorScheme.onSurfaceVariant),
-                            _earningsRow(l10n.jobDetailDeliveryFee, '฿ ${(b.deliveryFee ?? 0).ceil()}', colorScheme.onSurfaceVariant),
+                            _earningsRow(l10n.jobDetailFoodCost, l10n.driverJobBaht(b.price.ceil().toString()), jdc.muted),
+                            _earningsRow(l10n.jobDetailDeliveryFee, l10n.driverJobBaht((b.deliveryFee ?? 0).ceil().toString()), jdc.muted),
                           ],
                         ],
                       ),
@@ -549,7 +553,7 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
   }
 
   Widget _buildAddressRow({required IconData icon, required Color iconColor, required double iconSize, required String text}) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return Row(
       children: [
         Icon(icon, color: iconColor, size: iconSize),
@@ -557,7 +561,12 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
         Expanded(
           child: Text(
             text,
-            style: TextStyle(fontSize: 14, color: colorScheme.onSurface, fontWeight: FontWeight.w500),
+            style: TextStyle(
+              fontSize: 14,
+              color: jdc.text,
+              fontWeight: FontWeight.w500,
+              fontVariations: const [FontVariation('wght', 500)],
+            ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -567,15 +576,20 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
   }
 
   Widget _buildInfoChip(String label, IconData icon) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return Expanded(
       child: Column(
         children: [
-          Icon(icon, size: 16, color: colorScheme.onSurfaceVariant),
+          Icon(icon, size: 16, color: jdc.muted),
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(fontSize: 11, color: colorScheme.onSurface, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              fontSize: 11,
+              color: jdc.text,
+              fontWeight: FontWeight.w600,
+              fontVariations: const [FontVariation('wght', 600)],
+            ),
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -586,24 +600,33 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
   }
 
   Widget _chipDivider() {
-    return Container(width: 1, height: 30, color: Colors.grey[200]);
+    final jdc = JdcColors.of(context);
+    return Container(width: 1, height: 30, color: jdc.line);
   }
 
   Widget _sectionCard({required String title, required List<Widget> children}) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(JdcSpacing.lg),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.outlineVariant),
+        color: jdc.paper,
+        borderRadius: BorderRadius.circular(JdcRadius.small),
+        border: Border.all(color: jdc.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
-          const SizedBox(height: 12),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: jdc.text,
+              fontVariations: const [FontVariation('wght', 700)],
+            ),
+          ),
+          const SizedBox(height: JdcSpacing.md),
           ...children,
         ],
       ),
@@ -616,8 +639,24 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 13, color: color, fontWeight: isBold ? FontWeight.w600 : FontWeight.normal)),
-          Text(value, style: TextStyle(fontSize: isBold ? 16 : 14, color: color, fontWeight: isBold ? FontWeight.bold : FontWeight.w500)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              color: color,
+              fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
+              fontVariations: [FontVariation('wght', isBold ? 600 : 400)],
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: isBold ? 16 : 14,
+              color: color,
+              fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
+              fontVariations: [FontVariation('wght', isBold ? 700 : 500)],
+            ),
+          ),
         ],
       ),
     );

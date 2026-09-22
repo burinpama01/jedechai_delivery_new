@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>ร้านค้า — แดชบอร์ด</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@500;600;700&amp;family=Noto+Sans+Thai:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light;
+  --paper:#f4f7f4;--surface:#ffffff;--sunken:#eef2ee;--line:#dbe4de;
+  --text:#0f3b33;--muted:#5c6f68;--dim:#66736d;
+  --panel:#0f3b33;--on-panel:#ffffff;--panel-dim:#b7cfc8;
+  --panel-soft:rgba(255,255,255,.10);--panel-soft2:rgba(255,255,255,.12);--panel-soft3:rgba(255,255,255,.14);--panel-line:rgba(255,255,255,.24);--bar-dim:rgba(255,255,255,.26);
+  --brand:#e39c2e;--brand-hi:#f3c06a;--cta:#8a5a0a;--on-cta:#ffffff;--link:#8a5a0a;--link-hover:#6d4708;
+  --brand-soft:#fff3dc;--brand-soft2:#fffaf0;--brand-line:#f0cf95;--brand-on-soft:#8a5a0a;
+  --green-ink:#2b6b2b;--green-soft:#e6f4e2;--green-line:#bfe0b6;--green-fill:#2e7d43;--green-dot:#5fcf7a;--green-on-panel:#a8e0b4;--green-panel:rgba(46,125,67,.30);--green-panel-line:rgba(95,207,122,.45);
+  --teal-soft:#e2f1ef;--teal-ink:#16605a;
+  --danger:#b42318;--danger-ink:#8f1c14;--danger-soft:#ffece9;--danger-line:#f0b3ab;
+  --off-track:#c3ccc6;--knob:#ffffff;--track-empty:#e1e8e3;
+  --map-bg:#dfe7e2;--map-grid:#d4ded8;--map-road:#ffffff;--route:#8a5a0a;
+  --hero:linear-gradient(132deg,#0e382f 0%,#1d5f50 55%,#8a5a0a 150%);
+  --hero2:linear-gradient(140deg,#0e382f 0%,#1a5548 70%);
+  --hero3:linear-gradient(140deg,#0e382f 0%,#20655a 55%,#8a5a0a 140%);
+  --sh-card:0 6px 18px rgba(12,44,37,.07);--sh-raise:0 12px 30px rgba(12,44,37,.10);--sh-float:0 6px 16px rgba(12,44,37,.16);--sh-deep:0 10px 24px rgba(12,44,37,.30);--sh-sheet:0 -10px 30px rgba(12,44,37,.08);--sh-brand:0 10px 26px rgba(227,156,46,.22);--sh-brand-lg:0 14px 34px rgba(227,156,46,.26);
+}
+/* โหมดมืด: ตอนนี้ปิดการสลับอัตโนมัติไว้ เปิดได้โดยใส่ data-theme="dark" ที่ :root */
+:root[data-theme="dark"]{
+  --paper:#0b1a17;--surface:#12241f;--sunken:#0e1f1b;--line:#24403a;
+  --text:#e8f1ed;--muted:#9cb1a9;--dim:#8fa39c;
+  --panel:#16352e;--on-panel:#f2f8f5;--panel-dim:#9ab6ae;
+  --panel-soft:rgba(255,255,255,.08);--panel-soft2:rgba(255,255,255,.10);--panel-soft3:rgba(255,255,255,.12);--panel-line:rgba(255,255,255,.18);--bar-dim:rgba(255,255,255,.24);
+  --brand:#e0a53f;--brand-hi:#f3c06a;--cta:#a0690f;--on-cta:#ffffff;--link:#edbb62;--link-hover:#f6d493;
+  --brand-soft:#2a2114;--brand-soft2:#241d12;--brand-line:#4a3a1c;--brand-on-soft:#edbb62;
+  --green-ink:#85cf82;--green-soft:#14301c;--green-line:#26512a;--green-fill:#2e7d43;--green-dot:#5fcf7a;--green-on-panel:#a8e0b4;--green-panel:rgba(46,125,67,.32);--green-panel-line:rgba(95,207,122,.40);
+  --teal-soft:#0f2a28;--teal-ink:#6fc3ba;
+  --danger:#ff8a7d;--danger-ink:#ff9a8e;--danger-soft:#351a17;--danger-line:#55302b;
+  --off-track:#3a4d47;--knob:#f2f8f5;--track-empty:#24403a;
+  --map-bg:#17302a;--map-grid:#1e3b34;--map-road:#25453d;--route:#e0a53f;
+  --hero:linear-gradient(132deg,#0a2621 0%,#134137 55%,#5e3f0b 150%);
+  --hero2:linear-gradient(140deg,#0a2621 0%,#123b33 70%);
+  --hero3:linear-gradient(140deg,#0a2621 0%,#154439 55%,#5e3f0b 140%);
+  --sh-card:0 6px 18px rgba(0,0,0,.40);--sh-raise:0 12px 30px rgba(0,0,0,.45);--sh-float:0 6px 16px rgba(0,0,0,.45);--sh-deep:0 10px 24px rgba(0,0,0,.55);--sh-sheet:0 -10px 30px rgba(0,0,0,.40);--sh-brand:0 10px 26px rgba(0,0,0,.45);--sh-brand-lg:0 14px 34px rgba(0,0,0,.50);
+}
+body{margin:0;font-family:"Noto Sans Thai",system-ui,sans-serif;color:var(--text);background:var(--paper);-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:"IBM Plex Sans Thai","Noto Sans Thai",sans-serif;margin:0}
+.dsp{font-family:"IBM Plex Sans Thai","Noto Sans Thai",sans-serif}
+button{font-family:inherit;cursor:pointer}
+input,textarea,select{font-family:inherit}
+a{color:var(--link);text-decoration:none}
+a:hover{color:var(--link-hover)}
+.vh{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--paper); overflow: hidden;">
+  <div style="flex-shrink: 0; padding: 18px 20px 20px; background: var(--panel); color: var(--on-panel); display: flex; flex-direction: column; gap: 16px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <a href="Merchant-Orders.dc.html" aria-label="ย้อนกลับ" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px; border: 1px solid var(--panel-line); background: var(--panel-soft2); color: var(--on-panel); display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--on-panel);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+      <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+        <h1 class="dsp" style="font-size: 18px; font-weight: 700;">แดชบอร์ดร้าน</h1>
+        <span style="font-size: 12px; color: var(--panel-dim);">ครัวป้าน้อย · 20 ก.ย. 2569</span>
+      </span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;">
+      <div style="padding: 11px 12px; border-radius: 14px; background: var(--panel-soft); display: flex; flex-direction: column; gap: 2px;">
+        <span class="dsp" style="font-size: 18px; font-weight: 700;">฿6,420</span>
+        <span style="font-size: 11px; color: var(--panel-dim);">ยอดขายวันนี้</span>
+      </div>
+      <div style="padding: 11px 12px; border-radius: 14px; background: var(--panel-soft); display: flex; flex-direction: column; gap: 2px;">
+        <span class="dsp" style="font-size: 18px; font-weight: 700;">38</span>
+        <span style="font-size: 11px; color: var(--panel-dim);">ออเดอร์</span>
+      </div>
+      <div style="padding: 11px 12px; border-radius: 14px; background: var(--panel-soft); display: flex; flex-direction: column; gap: 2px;">
+        <span class="dsp" style="font-size: 18px; font-weight: 700;">฿169</span>
+        <span style="font-size: 11px; color: var(--panel-dim);">เฉลี่ย/บิล</span>
+      </div>
+    </div>
+  </div>
+  <div style="flex-grow: 1; min-height: 0; overflow: hidden; padding: 14px 20px 18px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="display: flex; gap: 8px;">
+      <span style="padding: 9px 14px; border-radius: 999px; background: var(--panel); color: var(--on-panel); font-size: 13px; font-weight: 700;">7 วัน</span>
+      <span style="padding: 9px 14px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); font-size: 13px; font-weight: 600;">30 วัน</span>
+      <span style="padding: 9px 14px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); font-size: 13px; font-weight: 600;">เดือนนี้</span>
+    </div>
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 16px; display: flex; flex-direction: column; gap: 14px;">
+      <div style="display: flex; align-items: flex-end; gap: 10px;">
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+          <span style="font-size: 12px; color: var(--muted);">ยอดขาย 7 วัน</span>
+          <span class="dsp" style="font-size: 24px; font-weight: 700;">฿41,260</span>
+        </span>
+        <span style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 10px; border-radius: 999px; background: var(--green-soft); color: var(--green-ink); font-size: 12px; font-weight: 700;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--green-ink);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"></path><path d="m6 11 6-6 6 6"></path></svg>12%</span>
+      </div>
+      <div style="display: flex; align-items: flex-end; gap: 8px;">
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex-grow: 1;">
+          <span style="width: 100%; height: 78px; border-radius: 8px; background: var(--sunken); display: flex; align-items: flex-end; overflow: hidden;"><span style="width: 100%; height: 58%; background: var(--brand); border-radius: 8px;"></span></span>
+          <span style="font-size: 11px; color: var(--muted);">จ</span>
+        </span>
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex-grow: 1;">
+          <span style="width: 100%; height: 78px; border-radius: 8px; background: var(--sunken); display: flex; align-items: flex-end; overflow: hidden;"><span style="width: 100%; height: 72%; background: var(--brand); border-radius: 8px;"></span></span>
+          <span style="font-size: 11px; color: var(--muted);">อ</span>
+        </span>
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex-grow: 1;">
+          <span style="width: 100%; height: 78px; border-radius: 8px; background: var(--sunken); display: flex; align-items: flex-end; overflow: hidden;"><span style="width: 100%; height: 64%; background: var(--brand); border-radius: 8px;"></span></span>
+          <span style="font-size: 11px; color: var(--muted);">พ</span>
+        </span>
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex-grow: 1;">
+          <span style="width: 100%; height: 78px; border-radius: 8px; background: var(--sunken); display: flex; align-items: flex-end; overflow: hidden;"><span style="width: 100%; height: 88%; background: var(--brand); border-radius: 8px;"></span></span>
+          <span style="font-size: 11px; color: var(--muted);">พฤ</span>
+        </span>
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex-grow: 1;">
+          <span style="width: 100%; height: 78px; border-radius: 8px; background: var(--sunken); display: flex; align-items: flex-end; overflow: hidden;"><span style="width: 100%; height: 100%; background: var(--brand); border-radius: 8px;"></span></span>
+          <span style="font-size: 11px; color: var(--muted);">ศ</span>
+        </span>
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex-grow: 1;">
+          <span style="width: 100%; height: 78px; border-radius: 8px; background: var(--sunken); display: flex; align-items: flex-end; overflow: hidden;"><span style="width: 100%; height: 94%; background: var(--brand); border-radius: 8px;"></span></span>
+          <span style="font-size: 11px; color: var(--muted);">ส</span>
+        </span>
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex-grow: 1;">
+          <span style="width: 100%; height: 78px; border-radius: 8px; background: var(--sunken); display: flex; align-items: flex-end; overflow: hidden;"><span style="width: 100%; height: 46%; background: var(--brand); border-radius: 8px;"></span></span>
+          <span style="font-size: 11px; color: var(--muted);">อา</span>
+        </span>
+      </div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+      <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 13px 14px; display: flex; flex-direction: column; gap: 3px;">
+        <span style="font-size: 12px; color: var(--muted);">หัก GP 18%</span>
+        <span class="dsp" style="font-size: 17px; font-weight: 700;">฿7,427</span>
+      </div>
+      <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 13px 14px; display: flex; flex-direction: column; gap: 3px;">
+        <span style="font-size: 12px; color: var(--muted);">ยอดโอนเข้าร้าน</span>
+        <span class="dsp" style="font-size: 17px; font-weight: 700;">฿33,833</span>
+      </div>
+
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; padding-top: 2px;">
+      <h2 class="dsp" style="flex-grow: 1; font-size: 14px; font-weight: 700;">เมนูขายดี</h2>
+      <a href="Merchant-Menu.dc.html" style="min-height: 44px; display: inline-flex; align-items: center; font-size: 12px; font-weight: 700;">จัดการเมนู</a>
+    </div>
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: flex; flex-direction: column; gap: 14px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 700;">ข้าวกะเพราหมูสับ</span>
+          <span style="font-size: 12px; color: var(--muted);">42 จาน</span>
+        </span>
+        <span class="dsp" style="font-size: 14px; font-weight: 700;">฿2,730</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 700;">ชาเย็นสูตรร้าน</span>
+          <span style="font-size: 12px; color: var(--muted);">31 แก้ว</span>
+        </span>
+        <span class="dsp" style="font-size: 14px; font-weight: 700;">฿1,085</span>
+      </div>
+    </div>
+  </div>
+  <nav style="flex-shrink: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 8px 8px 18px; background: var(--surface); border-top: 1px solid var(--line);">
+    <a href="Merchant-Orders.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--muted); font-size: 10px; font-weight: 600;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h12v17l-3-1.8-3 1.8-3-1.8-3 1.8z"></path><path d="M9.5 9h5"></path><path d="M9.5 13h5"></path></svg>ออเดอร์</a>
+    <a href="Merchant-Laundry.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--muted); font-size: 10px; font-weight: 600;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2.6"></rect><circle cx="12" cy="14" r="3.9"></circle></svg>ซักผ้า</a>
+    <a href="Merchant-Menu.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--muted); font-size: 10px; font-weight: 600;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5v17"></path><path d="M4 3.5v5a2 2 0 0 0 4 0v-5"></path><path d="M16.5 3.5c-1.6 1-2.5 2.8-2.5 5s1 3 2.5 3H18V3.5z"></path><path d="M18 11.5v9"></path></svg>เมนู</a>
+    <span aria-current="page" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--link); font-size: 10px; font-weight: 700;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--link);" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V12"></path><path d="M12 20V5"></path><path d="M19 20v-6"></path></svg>รายงาน</span>
+    <a href="Merchant-Profile.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--muted); font-size: 10px; font-weight: 600;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"></circle><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"></path></svg>บัญชี</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

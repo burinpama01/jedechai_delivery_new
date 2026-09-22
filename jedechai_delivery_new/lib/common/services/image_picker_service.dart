@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
+import '../../theme/jdc_colors.dart';
 import '../../l10n/app_localizations.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
@@ -61,7 +63,7 @@ class ImagePickerService {
               const SizedBox(height: 16),
               ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: Color(0xFF4CAF50),
+                  backgroundColor: JdcColors.of(context).successFill,
                   child: Icon(
                     PlatformAdaptive.icon(
                       android: Icons.camera_alt,
@@ -76,7 +78,7 @@ class ImagePickerService {
               ),
               ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: Color(0xFF2196F3),
+                  backgroundColor: JdcColors.of(context).infoInk,
                   child: Icon(
                     PlatformAdaptive.icon(
                       android: Icons.photo_library,

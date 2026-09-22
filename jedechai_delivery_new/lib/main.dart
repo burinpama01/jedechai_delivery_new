@@ -14,6 +14,8 @@ import 'common/services/services.dart';
 import 'common/services/mock_auth_service.dart';
 import 'utils/auth_helper.dart';
 import 'theme/app_theme.dart';
+import 'theme/jdc_layout.dart';
+import 'theme/theme_gallery_screen.dart';
 import 'common/widgets/auth_gate.dart';
 import 'common/widgets/app_update_guard.dart';
 import 'common/screens/notification_center_screen.dart';
@@ -108,6 +110,7 @@ class _MyAppState extends State<MyApp> {
             debugShowCheckedModeBanner: false,
             navigatorKey: AppNavigationService.navigatorKey,
             restorationScopeId: 'app',
+            builder: jdcTextScaleGuard,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: ThemeMode.system,
@@ -117,6 +120,7 @@ class _MyAppState extends State<MyApp> {
             home: const AppUpdateGuard(child: AuthGate()),
             routes: {
               '/landing': (context) => const PublicLandingScreen(),
+              '/dev/theme': (context) => const ThemeGalleryScreen(),
               '/login': (context) => const LoginScreen(),
               '/map': (context) => const MapScreen(),
               '/driver_dashboard': (context) => const DriverDashboardScreen(),

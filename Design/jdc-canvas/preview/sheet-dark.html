@@ -1,0 +1,1432 @@
+<!doctype html><html lang="th" data-theme="dark"><head><meta charset="utf-8"><title>JDC — 20 artboard ใหม่ (โหมดมืด)</title><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@500;600;700&amp;family=Noto+Sans+Thai:wght@400;500;600&amp;display=swap" rel="stylesheet"><style>
+:root{color-scheme:light;
+  --paper:#f4f7f4;--surface:#ffffff;--sunken:#eef2ee;--line:#dbe4de;
+  --text:#0f3b33;--muted:#5c6f68;--dim:#66736d;
+  --panel:#0f3b33;--on-panel:#ffffff;--panel-dim:#b7cfc8;
+  --panel-soft:rgba(255,255,255,.10);--panel-soft2:rgba(255,255,255,.12);--panel-soft3:rgba(255,255,255,.14);--panel-line:rgba(255,255,255,.24);--bar-dim:rgba(255,255,255,.26);
+  --brand:#e39c2e;--brand-hi:#f3c06a;--cta:#8a5a0a;--on-cta:#ffffff;--link:#8a5a0a;--link-hover:#6d4708;
+  --brand-soft:#fff3dc;--brand-soft2:#fffaf0;--brand-line:#f0cf95;--brand-on-soft:#8a5a0a;
+  --green-ink:#2b6b2b;--green-soft:#e6f4e2;--green-line:#bfe0b6;--green-fill:#2e7d43;--green-dot:#5fcf7a;--green-on-panel:#a8e0b4;--green-panel:rgba(46,125,67,.30);--green-panel-line:rgba(95,207,122,.45);
+  --teal-soft:#e2f1ef;--teal-ink:#16605a;
+  --danger:#b42318;--danger-ink:#8f1c14;--danger-soft:#ffece9;--danger-line:#f0b3ab;
+  --off-track:#c3ccc6;--knob:#ffffff;--track-empty:#e1e8e3;
+  --map-bg:#dfe7e2;--map-grid:#d4ded8;--map-road:#ffffff;--route:#8a5a0a;
+  --hero:linear-gradient(132deg,#0e382f 0%,#1d5f50 55%,#8a5a0a 150%);
+  --hero2:linear-gradient(140deg,#0e382f 0%,#1a5548 70%);
+  --hero3:linear-gradient(140deg,#0e382f 0%,#20655a 55%,#8a5a0a 140%);
+  --sh-card:0 6px 18px rgba(12,44,37,.07);--sh-raise:0 12px 30px rgba(12,44,37,.10);--sh-float:0 6px 16px rgba(12,44,37,.16);--sh-deep:0 10px 24px rgba(12,44,37,.30);--sh-sheet:0 -10px 30px rgba(12,44,37,.08);--sh-brand:0 10px 26px rgba(227,156,46,.22);--sh-brand-lg:0 14px 34px rgba(227,156,46,.26);
+}
+/* โหมดมืด: ตอนนี้ปิดการสลับอัตโนมัติไว้ เปิดได้โดยใส่ data-theme="dark" ที่ :root */
+:root[data-theme="dark"]{
+  --paper:#0b1a17;--surface:#12241f;--sunken:#0e1f1b;--line:#24403a;
+  --text:#e8f1ed;--muted:#9cb1a9;--dim:#8fa39c;
+  --panel:#16352e;--on-panel:#f2f8f5;--panel-dim:#9ab6ae;
+  --panel-soft:rgba(255,255,255,.08);--panel-soft2:rgba(255,255,255,.10);--panel-soft3:rgba(255,255,255,.12);--panel-line:rgba(255,255,255,.18);--bar-dim:rgba(255,255,255,.24);
+  --brand:#e0a53f;--brand-hi:#f3c06a;--cta:#a0690f;--on-cta:#ffffff;--link:#edbb62;--link-hover:#f6d493;
+  --brand-soft:#2a2114;--brand-soft2:#241d12;--brand-line:#4a3a1c;--brand-on-soft:#edbb62;
+  --green-ink:#85cf82;--green-soft:#14301c;--green-line:#26512a;--green-fill:#2e7d43;--green-dot:#5fcf7a;--green-on-panel:#a8e0b4;--green-panel:rgba(46,125,67,.32);--green-panel-line:rgba(95,207,122,.40);
+  --teal-soft:#0f2a28;--teal-ink:#6fc3ba;
+  --danger:#ff8a7d;--danger-ink:#ff9a8e;--danger-soft:#351a17;--danger-line:#55302b;
+  --off-track:#3a4d47;--knob:#f2f8f5;--track-empty:#24403a;
+  --map-bg:#17302a;--map-grid:#1e3b34;--map-road:#25453d;--route:#e0a53f;
+  --hero:linear-gradient(132deg,#0a2621 0%,#134137 55%,#5e3f0b 150%);
+  --hero2:linear-gradient(140deg,#0a2621 0%,#123b33 70%);
+  --hero3:linear-gradient(140deg,#0a2621 0%,#154439 55%,#5e3f0b 140%);
+  --sh-card:0 6px 18px rgba(0,0,0,.40);--sh-raise:0 12px 30px rgba(0,0,0,.45);--sh-float:0 6px 16px rgba(0,0,0,.45);--sh-deep:0 10px 24px rgba(0,0,0,.55);--sh-sheet:0 -10px 30px rgba(0,0,0,.40);--sh-brand:0 10px 26px rgba(0,0,0,.45);--sh-brand-lg:0 14px 34px rgba(0,0,0,.50);
+}
+body{margin:0;font-family:"Noto Sans Thai",system-ui,sans-serif;color:var(--text);background:var(--paper);-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:"IBM Plex Sans Thai","Noto Sans Thai",sans-serif;margin:0}
+.dsp{font-family:"IBM Plex Sans Thai","Noto Sans Thai",sans-serif}
+button{font-family:inherit;cursor:pointer}
+input,textarea,select{font-family:inherit}
+a{color:var(--link);text-decoration:none}
+a:hover{color:var(--link-hover)}
+.vh{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+</style><style>body{margin:0;padding:28px;background:#05100e;display:grid;grid-template-columns:repeat(4,390px);gap:28px;justify-content:center}</style></head><body>
+<figure style="margin:0;display:flex;flex-direction:column;gap:10px;align-items:center"><div style="border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35)"><div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--paper); overflow: hidden;">
+  <div style="flex-shrink: 0; padding: 18px 20px 20px; background: var(--panel); color: var(--on-panel); display: flex; flex-direction: column; gap: 16px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <a href="Merchant-Orders.dc.html" aria-label="ย้อนกลับ" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px; border: 1px solid var(--panel-line); background: var(--panel-soft2); color: var(--on-panel); display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--on-panel);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+      <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+        <h1 class="dsp" style="font-size: 18px; font-weight: 700;">แดชบอร์ดร้าน</h1>
+        <span style="font-size: 12px; color: var(--panel-dim);">ครัวป้าน้อย · 20 ก.ย. 2569</span>
+      </span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;">
+      <div style="padding: 11px 12px; border-radius: 14px; background: var(--panel-soft); display: flex; flex-direction: column; gap: 2px;">
+        <span class="dsp" style="font-size: 18px; font-weight: 700;">฿6,420</span>
+        <span style="font-size: 11px; color: var(--panel-dim);">ยอดขายวันนี้</span>
+      </div>
+      <div style="padding: 11px 12px; border-radius: 14px; background: var(--panel-soft); display: flex; flex-direction: column; gap: 2px;">
+        <span class="dsp" style="font-size: 18px; font-weight: 700;">38</span>
+        <span style="font-size: 11px; color: var(--panel-dim);">ออเดอร์</span>
+      </div>
+      <div style="padding: 11px 12px; border-radius: 14px; background: var(--panel-soft); display: flex; flex-direction: column; gap: 2px;">
+        <span class="dsp" style="font-size: 18px; font-weight: 700;">฿169</span>
+        <span style="font-size: 11px; color: var(--panel-dim);">เฉลี่ย/บิล</span>
+      </div>
+    </div>
+  </div>
+  <div style="flex-grow: 1; min-height: 0; overflow: hidden; padding: 14px 20px 18px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="display: flex; gap: 8px;">
+      <span style="padding: 9px 14px; border-radius: 999px; background: var(--panel); color: var(--on-panel); font-size: 13px; font-weight: 700;">7 วัน</span>
+      <span style="padding: 9px 14px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); font-size: 13px; font-weight: 600;">30 วัน</span>
+      <span style="padding: 9px 14px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); font-size: 13px; font-weight: 600;">เดือนนี้</span>
+    </div>
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 16px; display: flex; flex-direction: column; gap: 14px;">
+      <div style="display: flex; align-items: flex-end; gap: 10px;">
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+          <span style="font-size: 12px; color: var(--muted);">ยอดขาย 7 วัน</span>
+          <span class="dsp" style="font-size: 24px; font-weight: 700;">฿41,260</span>
+        </span>
+        <span style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 10px; border-radius: 999px; background: var(--green-soft); color: var(--green-ink); font-size: 12px; font-weight: 700;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--green-ink);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"></path><path d="m6 11 6-6 6 6"></path></svg>12%</span>
+      </div>
+      <div style="display: flex; align-items: flex-end; gap: 8px;">
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex-grow: 1;">
+          <span style="width: 100%; height: 78px; border-radius: 8px; background: var(--sunken); display: flex; align-items: flex-end; overflow: hidden;"><span style="width: 100%; height: 58%; background: var(--brand); border-radius: 8px;"></span></span>
+          <span style="font-size: 11px; color: var(--muted);">จ</span>
+        </span>
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex-grow: 1;">
+          <span style="width: 100%; height: 78px; border-radius: 8px; background: var(--sunken); display: flex; align-items: flex-end; overflow: hidden;"><span style="width: 100%; height: 72%; background: var(--brand); border-radius: 8px;"></span></span>
+          <span style="font-size: 11px; color: var(--muted);">อ</span>
+        </span>
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex-grow: 1;">
+          <span style="width: 100%; height: 78px; border-radius: 8px; background: var(--sunken); display: flex; align-items: flex-end; overflow: hidden;"><span style="width: 100%; height: 64%; background: var(--brand); border-radius: 8px;"></span></span>
+          <span style="font-size: 11px; color: var(--muted);">พ</span>
+        </span>
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex-grow: 1;">
+          <span style="width: 100%; height: 78px; border-radius: 8px; background: var(--sunken); display: flex; align-items: flex-end; overflow: hidden;"><span style="width: 100%; height: 88%; background: var(--brand); border-radius: 8px;"></span></span>
+          <span style="font-size: 11px; color: var(--muted);">พฤ</span>
+        </span>
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex-grow: 1;">
+          <span style="width: 100%; height: 78px; border-radius: 8px; background: var(--sunken); display: flex; align-items: flex-end; overflow: hidden;"><span style="width: 100%; height: 100%; background: var(--brand); border-radius: 8px;"></span></span>
+          <span style="font-size: 11px; color: var(--muted);">ศ</span>
+        </span>
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex-grow: 1;">
+          <span style="width: 100%; height: 78px; border-radius: 8px; background: var(--sunken); display: flex; align-items: flex-end; overflow: hidden;"><span style="width: 100%; height: 94%; background: var(--brand); border-radius: 8px;"></span></span>
+          <span style="font-size: 11px; color: var(--muted);">ส</span>
+        </span>
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex-grow: 1;">
+          <span style="width: 100%; height: 78px; border-radius: 8px; background: var(--sunken); display: flex; align-items: flex-end; overflow: hidden;"><span style="width: 100%; height: 46%; background: var(--brand); border-radius: 8px;"></span></span>
+          <span style="font-size: 11px; color: var(--muted);">อา</span>
+        </span>
+      </div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+      <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 13px 14px; display: flex; flex-direction: column; gap: 3px;">
+        <span style="font-size: 12px; color: var(--muted);">หัก GP 18%</span>
+        <span class="dsp" style="font-size: 17px; font-weight: 700;">฿7,427</span>
+      </div>
+      <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 13px 14px; display: flex; flex-direction: column; gap: 3px;">
+        <span style="font-size: 12px; color: var(--muted);">ยอดโอนเข้าร้าน</span>
+        <span class="dsp" style="font-size: 17px; font-weight: 700;">฿33,833</span>
+      </div>
+
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; padding-top: 2px;">
+      <h2 class="dsp" style="flex-grow: 1; font-size: 14px; font-weight: 700;">เมนูขายดี</h2>
+      <a href="Merchant-Menu.dc.html" style="min-height: 44px; display: inline-flex; align-items: center; font-size: 12px; font-weight: 700;">จัดการเมนู</a>
+    </div>
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: flex; flex-direction: column; gap: 14px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 700;">ข้าวกะเพราหมูสับ</span>
+          <span style="font-size: 12px; color: var(--muted);">42 จาน</span>
+        </span>
+        <span class="dsp" style="font-size: 14px; font-weight: 700;">฿2,730</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 700;">ชาเย็นสูตรร้าน</span>
+          <span style="font-size: 12px; color: var(--muted);">31 แก้ว</span>
+        </span>
+        <span class="dsp" style="font-size: 14px; font-weight: 700;">฿1,085</span>
+      </div>
+    </div>
+  </div>
+  <nav style="flex-shrink: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 8px 8px 18px; background: var(--surface); border-top: 1px solid var(--line);">
+    <a href="Merchant-Orders.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--muted); font-size: 10px; font-weight: 600;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h12v17l-3-1.8-3 1.8-3-1.8-3 1.8z"></path><path d="M9.5 9h5"></path><path d="M9.5 13h5"></path></svg>ออเดอร์</a>
+    <a href="Merchant-Laundry.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--muted); font-size: 10px; font-weight: 600;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2.6"></rect><circle cx="12" cy="14" r="3.9"></circle></svg>ซักผ้า</a>
+    <a href="Merchant-Menu.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--muted); font-size: 10px; font-weight: 600;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5v17"></path><path d="M4 3.5v5a2 2 0 0 0 4 0v-5"></path><path d="M16.5 3.5c-1.6 1-2.5 2.8-2.5 5s1 3 2.5 3H18V3.5z"></path><path d="M18 11.5v9"></path></svg>เมนู</a>
+    <span aria-current="page" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--link); font-size: 10px; font-weight: 700;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--link);" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V12"></path><path d="M12 20V5"></path><path d="M19 20v-6"></path></svg>รายงาน</span>
+    <a href="Merchant-Profile.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--muted); font-size: 10px; font-weight: 600;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"></circle><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"></path></svg>บัญชี</a>
+  </nav>
+</div></div><figcaption style="font:600 13px system-ui;color:#fff">Merchant-Dashboard</figcaption></figure>
+<figure style="margin:0;display:flex;flex-direction:column;gap:10px;align-items:center"><div style="border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35)"><div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--paper); overflow: hidden;">
+  <div style="flex-shrink: 0; padding: 18px 20px 20px; background: var(--panel); color: var(--on-panel); display: flex; flex-direction: column; gap: 16px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <a href="Merchant-Orders.dc.html" aria-label="ย้อนกลับ" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px; border: 1px solid var(--panel-line); background: var(--panel-soft2); color: var(--on-panel); display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--on-panel);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+      <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+        <h1 class="dsp" style="font-size: 18px; font-weight: 700;">งานซักรีด</h1>
+        <span style="font-size: 12px; color: var(--panel-dim);">ครัวป้าน้อย · ซักรีดบ้านสวน</span>
+      </span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;">
+      <div style="padding: 11px 12px; border-radius: 14px; background: var(--panel-soft); display: flex; flex-direction: column; gap: 2px;">
+        <span class="dsp" style="font-size: 18px; font-weight: 700;">3</span>
+        <span style="font-size: 11px; color: var(--panel-dim);">งานค้าง</span>
+      </div>
+      <div style="padding: 11px 12px; border-radius: 14px; background: var(--panel-soft); display: flex; flex-direction: column; gap: 2px;">
+        <span class="dsp" style="font-size: 18px; font-weight: 700;">1</span>
+        <span style="font-size: 11px; color: var(--panel-dim);">รอเสนอราคา</span>
+      </div>
+      <div style="padding: 11px 12px; border-radius: 14px; background: var(--panel-soft); display: flex; flex-direction: column; gap: 2px;">
+        <span class="dsp" style="font-size: 18px; font-weight: 700;">฿1,480</span>
+        <span style="font-size: 11px; color: var(--panel-dim);">ยอดสัปดาห์นี้</span>
+      </div>
+    </div>
+  </div>
+  <div style="flex-grow: 1; min-height: 0; overflow: hidden; padding: 14px 20px 18px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="display: flex; gap: 8px;">
+      <span style="padding: 9px 14px; border-radius: 999px; background: var(--panel); color: var(--on-panel); font-size: 13px; font-weight: 700;">ทั้งหมด 3</span>
+      <span style="padding: 9px 14px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); font-size: 13px; font-weight: 600;">รอเสนอราคา 1</span>
+      <span style="padding: 9px 14px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); font-size: 13px; font-weight: 600;">เสร็จแล้ว</span>
+    </div>
+    <div style="display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 16px; background: var(--brand-soft); border: 1px solid var(--brand-line);">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--brand-on-soft);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 7.6V12l3 1.8"></path></svg>
+      <span style="font-size: 12px; color: var(--brand-on-soft); line-height: 1.5;">ใบเสนอราคาหมดอายุใน 2 ชั่วโมง ถ้าลูกค้ายังไม่ตอบรับ งานจะถูกยกเลิกอัตโนมัติ</span>
+    </div>
+    <a href="Merchant-OrderDetail.dc.html" style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; color: var(--text);">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="dsp" style="flex-grow: 1; font-size: 14px; font-weight: 700;">#JD-2836</span>
+        <span style="padding: 5px 10px; border-radius: 999px; background: var(--brand-soft); color: var(--brand-on-soft); font-size: 11px; font-weight: 700;">รอเสนอราคา</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+          <span style="font-size: 13px;">ผ้า 12 ชิ้น · ซักอบพับ</span>
+          <span style="font-size: 12px; color: var(--muted);">รับผ้าแล้ว 13:20</span>
+        </span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+      </div>
+    </a>
+    <a href="Merchant-OrderDetail.dc.html" style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; color: var(--text);">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="dsp" style="flex-grow: 1; font-size: 14px; font-weight: 700;">#JD-2831</span>
+        <span style="padding: 5px 10px; border-radius: 999px; background: var(--teal-soft); color: var(--teal-ink); font-size: 11px; font-weight: 700;">กำลังซัก</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+          <span style="font-size: 13px;">ผ้า 8 ชิ้น · ซักแห้ง</span>
+          <span style="font-size: 12px; color: var(--muted);">ตกลงราคา ฿420</span>
+        </span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+      </div>
+    </a>
+    <a href="Merchant-OrderDetail.dc.html" style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; color: var(--text);">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="dsp" style="flex-grow: 1; font-size: 14px; font-weight: 700;">#JD-2827</span>
+        <span style="padding: 5px 10px; border-radius: 999px; background: var(--green-soft); color: var(--green-ink); font-size: 11px; font-weight: 700;">พร้อมส่งคืน</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+          <span style="font-size: 13px;">ผ้า 15 ชิ้น · ซักอบพับ</span>
+          <span style="font-size: 12px; color: var(--muted);">ตกลงราคา ฿560</span>
+        </span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+      </div>
+    </a>
+  </div>
+  <nav style="flex-shrink: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 8px 8px 18px; background: var(--surface); border-top: 1px solid var(--line);">
+    <a href="Merchant-Orders.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--muted); font-size: 10px; font-weight: 600;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h12v17l-3-1.8-3 1.8-3-1.8-3 1.8z"></path><path d="M9.5 9h5"></path><path d="M9.5 13h5"></path></svg>ออเดอร์</a>
+    <span aria-current="page" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--link); font-size: 10px; font-weight: 700;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--link);" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2.6"></rect><circle cx="12" cy="14" r="3.9"></circle></svg>ซักผ้า</span>
+    <a href="Merchant-Menu.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--muted); font-size: 10px; font-weight: 600;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5v17"></path><path d="M4 3.5v5a2 2 0 0 0 4 0v-5"></path><path d="M16.5 3.5c-1.6 1-2.5 2.8-2.5 5s1 3 2.5 3H18V3.5z"></path><path d="M18 11.5v9"></path></svg>เมนู</a>
+    <a href="Merchant-Dashboard.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--muted); font-size: 10px; font-weight: 600;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V12"></path><path d="M12 20V5"></path><path d="M19 20v-6"></path></svg>รายงาน</a>
+    <a href="Merchant-Profile.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--muted); font-size: 10px; font-weight: 600;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"></circle><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"></path></svg>บัญชี</a>
+  </nav>
+</div></div><figcaption style="font:600 13px system-ui;color:#fff">Merchant-Laundry</figcaption></figure>
+<figure style="margin:0;display:flex;flex-direction:column;gap:10px;align-items:center"><div style="border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35)"><div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--paper); overflow: hidden;">
+  <div style="flex-shrink: 0; display: flex; align-items: center; gap: 12px; padding: 16px 16px 14px; background: var(--surface); border-bottom: 1px solid var(--line);">
+    <a href="Merchant-Menu.dc.html" aria-label="ย้อนกลับ" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px; border: 1px solid var(--line); color: var(--text); display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+    <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+      <h1 class="dsp" style="font-size: 17px; font-weight: 700;">แก้ไขเมนู</h1>
+      <span style="font-size: 12px; color: var(--muted);">ข้าวกะเพราหมูสับ</span>
+    </span>
+    <button type="button" style="min-height: 44px; padding: 0 14px; border-radius: 14px; border: 1px solid var(--danger-line); background: var(--surface); color: var(--danger); font-size: 13px; font-weight: 700;">ลบ</button>
+  </div>
+  <div style="flex-grow: 1; min-height: 0; overflow: hidden; padding: 14px 20px 18px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <span style="width: 64px; height: 64px; flex-shrink: 0; border-radius: 16px; background: var(--sunken); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 8.5h3l1.3-2h6.4l1.3 2h3v10h-15z"></path><circle cx="12" cy="13" r="3.3"></circle></svg></span>
+      <span style="display: flex; flex-direction: column; gap: 8px; min-width: 0;">
+        <span style="font-size: 12px; color: var(--muted); line-height: 1.5;">รูปสี่เหลี่ยมจัตุรัส อย่างน้อย 800×800 px</span>
+        <button type="button" style="min-height: 44px; padding: 0 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 13px; font-weight: 700;">เปลี่ยนรูป</button>
+      </span>
+    </div>
+    <label for="name" style="display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 12px; font-weight: 600; color: var(--muted);">ชื่อเมนู</span>
+      <input id="name" type="text" value="ข้าวกะเพราหมูสับ" style="min-height: 48px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 14px; padding: 0 14px;">
+    </label>
+    <label for="desc" style="display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 12px; font-weight: 600; color: var(--muted);">รายละเอียด</span>
+      <textarea id="desc" rows="2" data-trim="1" style="border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 14px; padding: 10px 14px; resize: none;">หมูสับผัดกะเพราไฟแรง เสิร์ฟพร้อมข้าวสวยร้อน</textarea>
+    </label>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+    <label for="price" style="display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 12px; font-weight: 600; color: var(--muted);">ราคา (บาท)</span>
+      <input id="price" type="number" value="65" style="min-height: 48px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 14px; padding: 0 14px;">
+    </label>
+    <label for="prep" style="display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 12px; font-weight: 600; color: var(--muted);">เวลาเตรียม (นาที)</span>
+      <input id="prep" type="number" value="15" style="min-height: 48px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 14px; padding: 0 14px;">
+    </label>
+    </div>
+    <label for="cat" style="display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 12px; font-weight: 600; color: var(--muted);">หมวดหมู่</span>
+      <select id="cat" style="min-height: 48px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 14px; padding: 0 12px;">
+        <option selected>อาหารตามสั่ง</option>
+        <option>ก๋วยเตี๋ยว</option>
+        <option>เครื่องดื่ม</option>
+        <option>ของหวาน</option>
+        <option>ฟาสต์ฟู้ด</option>
+        <option>อื่นๆ</option>
+      </select>
+    </label>
+    <div style="display: flex; align-items: center; gap: 10px; padding-top: 2px;">
+      <h2 class="dsp" style="flex-grow: 1; font-size: 14px; font-weight: 700;">กลุ่มตัวเลือกเสริม</h2>
+      <a href="Merchant-OptionLibrary.dc.html" style="min-height: 44px; display: inline-flex; align-items: center; font-size: 12px; font-weight: 700;">เพิ่มจากคลัง</a>
+    </div>
+    <a href="Merchant-OptionGroup.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); color: var(--text);">
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">ระดับความเผ็ด</span>
+        <span style="font-size: 12px; color: var(--muted);">เลือก 1 อย่าง · บังคับเลือก</span>
+      </span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+    </a>
+    <button type="button" role="switch" aria-checked="true" style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); color: var(--text); text-align: left;">
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">เปิดขายเมนูนี้</span>
+        <span style="font-size: 12px; color: var(--muted);">ปิดชั่วคราวเมื่อของหมด</span>
+      </span>
+      <span style="width: 50px; height: 30px; border-radius: 999px; background: var(--green-fill); padding: 3px; display: flex; justify-content: flex-end; align-items: center; flex-shrink: 0;"><span style="width: 24px; height: 24px; border-radius: 999px; background: var(--knob);"></span></span>
+    </button>
+  </div>
+  <div style="flex-shrink: 0; padding: 12px 20px 20px; background: var(--surface); border-top: 1px solid var(--line); box-shadow: var(--sh-sheet); display: flex; flex-direction: column; gap: 10px;">
+    <a href="Merchant-Menu.dc.html" style="min-height: 52px; border-radius: 16px; background: var(--cta); color: var(--on-cta); font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center;">บันทึกเมนู</a>
+  </div>
+</div></div><figcaption style="font:600 13px system-ui;color:#fff">Merchant-AddEditMenu</figcaption></figure>
+<figure style="margin:0;display:flex;flex-direction:column;gap:10px;align-items:center"><div style="border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35)"><div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--paper); overflow: hidden;">
+  <div style="flex-shrink: 0; display: flex; align-items: center; gap: 12px; padding: 16px 16px 14px; background: var(--surface); border-bottom: 1px solid var(--line);">
+    <a href="Merchant-Menu.dc.html" aria-label="ย้อนกลับ" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px; border: 1px solid var(--line); color: var(--text); display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+    <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+      <h1 class="dsp" style="font-size: 17px; font-weight: 700;">หมวดหมู่เมนู</h1>
+      <span style="font-size: 12px; color: var(--muted);">ลากเพื่อจัดลำดับที่ลูกค้าเห็น</span>
+    </span>
+    
+  </div>
+  <div style="flex-grow: 1; min-height: 0; overflow: hidden; padding: 14px 20px 18px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line);">
+      <span aria-hidden="true" style="display: flex; flex-direction: column; gap: 3px; flex-shrink: 0;"><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span></span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">อาหารตามสั่ง</span>
+        <span style="font-size: 12px; color: var(--muted);">18 เมนู</span>
+      </span>
+      <button type="button" aria-label="แก้ไขหมวด อาหารตามสั่ง" style="width: 44px; height: 44px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 18 9 9 18H5.5v-3.5z"></path><path d="M13 7 16.5 10.5"></path></svg></button>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line);">
+      <span aria-hidden="true" style="display: flex; flex-direction: column; gap: 3px; flex-shrink: 0;"><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span></span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">ก๋วยเตี๋ยว</span>
+        <span style="font-size: 12px; color: var(--muted);">6 เมนู</span>
+      </span>
+      <button type="button" aria-label="แก้ไขหมวด ก๋วยเตี๋ยว" style="width: 44px; height: 44px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 18 9 9 18H5.5v-3.5z"></path><path d="M13 7 16.5 10.5"></path></svg></button>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line);">
+      <span aria-hidden="true" style="display: flex; flex-direction: column; gap: 3px; flex-shrink: 0;"><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span></span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">เครื่องดื่ม</span>
+        <span style="font-size: 12px; color: var(--muted);">11 เมนู</span>
+      </span>
+      <button type="button" aria-label="แก้ไขหมวด เครื่องดื่ม" style="width: 44px; height: 44px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 18 9 9 18H5.5v-3.5z"></path><path d="M13 7 16.5 10.5"></path></svg></button>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line);">
+      <span aria-hidden="true" style="display: flex; flex-direction: column; gap: 3px; flex-shrink: 0;"><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span></span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">ของหวาน</span>
+        <span style="font-size: 12px; color: var(--muted);">4 เมนู</span>
+      </span>
+      <button type="button" aria-label="แก้ไขหมวด ของหวาน" style="width: 44px; height: 44px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 18 9 9 18H5.5v-3.5z"></path><path d="M13 7 16.5 10.5"></path></svg></button>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line);">
+      <span aria-hidden="true" style="display: flex; flex-direction: column; gap: 3px; flex-shrink: 0;"><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span></span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">ฟาสต์ฟู้ด</span>
+        <span style="font-size: 12px; color: var(--muted);">3 เมนู</span>
+      </span>
+      <button type="button" aria-label="แก้ไขหมวด ฟาสต์ฟู้ด" style="width: 44px; height: 44px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 18 9 9 18H5.5v-3.5z"></path><path d="M13 7 16.5 10.5"></path></svg></button>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line);">
+      <span aria-hidden="true" style="display: flex; flex-direction: column; gap: 3px; flex-shrink: 0;"><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span></span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">อื่นๆ</span>
+        <span style="font-size: 12px; color: var(--muted);">2 เมนู</span>
+      </span>
+      <button type="button" aria-label="แก้ไขหมวด อื่นๆ" style="width: 44px; height: 44px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 18 9 9 18H5.5v-3.5z"></path><path d="M13 7 16.5 10.5"></path></svg></button>
+    </div>
+  </div>
+  <div style="flex-shrink: 0; padding: 12px 20px 20px; background: var(--surface); border-top: 1px solid var(--line); box-shadow: var(--sh-sheet); display: flex; flex-direction: column; gap: 10px;">
+    <button type="button" style="min-height: 52px; border-radius: 16px; border: 0; background: var(--cta); color: var(--on-cta); font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--on-cta);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>เพิ่มหมวดหมู่</button>
+  </div>
+</div></div><figcaption style="font:600 13px system-ui;color:#fff">Merchant-MenuCategories</figcaption></figure>
+<figure style="margin:0;display:flex;flex-direction:column;gap:10px;align-items:center"><div style="border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35)"><div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--paper); overflow: hidden;">
+  <div style="flex-shrink: 0; display: flex; align-items: center; gap: 12px; padding: 16px 16px 14px; background: var(--surface); border-bottom: 1px solid var(--line);">
+    <a href="Merchant-Menu.dc.html" aria-label="ย้อนกลับ" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px; border: 1px solid var(--line); color: var(--text); display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+    <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+      <h1 class="dsp" style="font-size: 17px; font-weight: 700;">คลังตัวเลือกเสริม</h1>
+      <span style="font-size: 12px; color: var(--muted);">สร้างครั้งเดียว ใช้ซ้ำได้ทุกเมนู</span>
+    </span>
+    
+  </div>
+  <div style="flex-grow: 1; min-height: 0; overflow: hidden; padding: 14px 20px 18px; display: flex; flex-direction: column; gap: 12px;">
+    <a href="Merchant-OptionGroup.dc.html" style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; color: var(--text);">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 700;">ระดับความเผ็ด</span>
+          <span style="font-size: 12px; color: var(--muted);">เลือก 1 อย่าง · ใช้กับ 12 เมนู</span>
+        </span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+      </div>
+      <span style="font-size: 12px; color: var(--dim); line-height: 1.5;">ไม่เผ็ด · เผ็ดน้อย · เผ็ดกลาง · เผ็ดมาก</span>
+    </a>
+    <a href="Merchant-OptionGroup.dc.html" style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; color: var(--text);">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 700;">เพิ่มไข่ดาว</span>
+          <span style="font-size: 12px; color: var(--muted);">เลือกได้หลายอย่าง · ใช้กับ 9 เมนู</span>
+        </span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+      </div>
+      <span style="font-size: 12px; color: var(--dim); line-height: 1.5;">ไข่ดาว +฿10 · ไข่เจียว +฿15</span>
+    </a>
+    <a href="Merchant-OptionGroup.dc.html" style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; color: var(--text);">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 700;">ระดับความหวาน</span>
+          <span style="font-size: 12px; color: var(--muted);">เลือก 1 อย่าง · ใช้กับ 11 เมนู</span>
+        </span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+      </div>
+      <span style="font-size: 12px; color: var(--dim); line-height: 1.5;">หวานน้อย · หวานปกติ · ไม่ใส่น้ำตาล</span>
+    </a>
+    <a href="Merchant-OptionGroup.dc.html" style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; color: var(--text);">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+          <span style="font-size: 14px; font-weight: 700;">ท็อปปิ้งเครื่องดื่ม</span>
+          <span style="font-size: 12px; color: var(--muted);">เลือกได้หลายอย่าง · ใช้กับ 8 เมนู</span>
+        </span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+      </div>
+      <span style="font-size: 12px; color: var(--dim); line-height: 1.5;">มุก +฿10 · เยลลี่ +฿10 · วิปครีม +฿15</span>
+    </a>
+  </div>
+  <div style="flex-shrink: 0; padding: 12px 20px 20px; background: var(--surface); border-top: 1px solid var(--line); box-shadow: var(--sh-sheet); display: flex; flex-direction: column; gap: 10px;">
+    <button type="button" style="min-height: 52px; border-radius: 16px; border: 0; background: var(--cta); color: var(--on-cta); font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--on-cta);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>สร้างกลุ่มตัวเลือก</button>
+  </div>
+</div></div><figcaption style="font:600 13px system-ui;color:#fff">Merchant-OptionLibrary</figcaption></figure>
+<figure style="margin:0;display:flex;flex-direction:column;gap:10px;align-items:center"><div style="border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35)"><div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--paper); overflow: hidden;">
+  <div style="flex-shrink: 0; display: flex; align-items: center; gap: 12px; padding: 16px 16px 14px; background: var(--surface); border-bottom: 1px solid var(--line);">
+    <a href="Merchant-OptionLibrary.dc.html" aria-label="ย้อนกลับ" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px; border: 1px solid var(--line); color: var(--text); display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+    <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+      <h1 class="dsp" style="font-size: 17px; font-weight: 700;">กลุ่มตัวเลือก</h1>
+      <span style="font-size: 12px; color: var(--muted);">ระดับความเผ็ด</span>
+    </span>
+    
+  </div>
+  <div style="flex-grow: 1; min-height: 0; overflow: hidden; padding: 14px 20px 18px; display: flex; flex-direction: column; gap: 12px;">
+    <label for="gname" style="display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 12px; font-weight: 600; color: var(--muted);">ชื่อกลุ่ม</span>
+      <input id="gname" type="text" value="ระดับความเผ็ด" style="min-height: 48px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 14px; padding: 0 14px;">
+    </label>
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <span style="font-size: 12px; font-weight: 600; color: var(--muted);">รูปแบบการเลือก</span>
+      <div style="display: flex; gap: 8px;">
+        <label style="flex-grow: 1; min-height: 46px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 14px; border: 1px solid var(--brand-line); background: var(--brand-soft); color: var(--brand-on-soft); font-size: 13px; font-weight: 700;"><input type="radio" name="mode" checked style="margin: 0;">เลือก 1 อย่าง</label>
+        <label style="flex-grow: 1; min-height: 46px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 13px; font-weight: 600;"><input type="radio" name="mode" style="margin: 0;">เลือกหลายอย่าง</label>
+      </div>
+    </div>
+    <button type="button" role="switch" aria-checked="true" style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); color: var(--text); text-align: left;">
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">บังคับให้ลูกค้าเลือก</span>
+        <span style="font-size: 12px; color: var(--muted);">ถ้าปิด ลูกค้าข้ามกลุ่มนี้ได้</span>
+      </span>
+      <span style="width: 50px; height: 30px; border-radius: 999px; background: var(--green-fill); padding: 3px; display: flex; justify-content: flex-end; align-items: center; flex-shrink: 0;"><span style="width: 24px; height: 24px; border-radius: 999px; background: var(--knob);"></span></span>
+    </button>
+    <div style="display: flex; align-items: center; gap: 10px; padding-top: 2px;">
+      <h2 class="dsp" style="flex-grow: 1; font-size: 14px; font-weight: 700;">ตัวเลือกในกลุ่ม</h2>
+      <span style="font-size: 12px; color: var(--muted);">4 รายการ</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line);">
+      <span aria-hidden="true" style="display: flex; flex-direction: column; gap: 3px; flex-shrink: 0;"><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span></span>
+      <label for="opt0" style="flex-grow: 1; min-width: 0; font-size: 14px; font-weight: 700;">ไม่เผ็ด</label>
+      <input id="opt0" type="text" value="+฿0" aria-label="ราคาเพิ่มของ ไม่เผ็ด" style="width: 74px; min-height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 13px; text-align: center;">
+      <button type="button" role="switch" aria-checked="true" aria-label="เปิดขาย ไม่เผ็ด" style="border: 0; background: none; padding: 7px 0; min-height: 44px; display: flex; align-items: center;"><span style="width: 50px; height: 30px; border-radius: 999px; background: var(--green-fill); padding: 3px; display: flex; justify-content: flex-end; align-items: center; flex-shrink: 0;"><span style="width: 24px; height: 24px; border-radius: 999px; background: var(--knob);"></span></span></button>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line);">
+      <span aria-hidden="true" style="display: flex; flex-direction: column; gap: 3px; flex-shrink: 0;"><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span></span>
+      <label for="opt1" style="flex-grow: 1; min-width: 0; font-size: 14px; font-weight: 700;">เผ็ดน้อย</label>
+      <input id="opt1" type="text" value="+฿0" aria-label="ราคาเพิ่มของ เผ็ดน้อย" style="width: 74px; min-height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 13px; text-align: center;">
+      <button type="button" role="switch" aria-checked="true" aria-label="เปิดขาย เผ็ดน้อย" style="border: 0; background: none; padding: 7px 0; min-height: 44px; display: flex; align-items: center;"><span style="width: 50px; height: 30px; border-radius: 999px; background: var(--green-fill); padding: 3px; display: flex; justify-content: flex-end; align-items: center; flex-shrink: 0;"><span style="width: 24px; height: 24px; border-radius: 999px; background: var(--knob);"></span></span></button>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line);">
+      <span aria-hidden="true" style="display: flex; flex-direction: column; gap: 3px; flex-shrink: 0;"><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span><span style="width: 16px; height: 2px; border-radius: 2px; background: var(--off-track);"></span></span>
+      <label for="opt2" style="flex-grow: 1; min-width: 0; font-size: 14px; font-weight: 700;">เผ็ดกลาง</label>
+      <input id="opt2" type="text" value="+฿0" aria-label="ราคาเพิ่มของ เผ็ดกลาง" style="width: 74px; min-height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 13px; text-align: center;">
+      <button type="button" role="switch" aria-checked="true" aria-label="เปิดขาย เผ็ดกลาง" style="border: 0; background: none; padding: 7px 0; min-height: 44px; display: flex; align-items: center;"><span style="width: 50px; height: 30px; border-radius: 999px; background: var(--green-fill); padding: 3px; display: flex; justify-content: flex-end; align-items: center; flex-shrink: 0;"><span style="width: 24px; height: 24px; border-radius: 999px; background: var(--knob);"></span></span></button>
+    </div>
+    <button type="button" style="min-height: 48px; border-radius: 14px; border: 1px dashed var(--line); background: var(--surface); color: var(--link); font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--link);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>เพิ่มตัวเลือก</button>
+  </div>
+  <div style="flex-shrink: 0; padding: 12px 20px 20px; background: var(--surface); border-top: 1px solid var(--line); box-shadow: var(--sh-sheet); display: flex; flex-direction: column; gap: 10px;">
+    <a href="Merchant-OptionLibrary.dc.html" style="min-height: 52px; border-radius: 16px; background: var(--cta); color: var(--on-cta); font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center;">บันทึกกลุ่มตัวเลือก</a>
+  </div>
+</div></div><figcaption style="font:600 13px system-ui;color:#fff">Merchant-OptionGroup</figcaption></figure>
+<figure style="margin:0;display:flex;flex-direction:column;gap:10px;align-items:center"><div style="border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35)"><div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--paper); overflow: hidden;">
+  <div style="flex-shrink: 0; display: flex; align-items: center; gap: 12px; padding: 16px 16px 14px; background: var(--surface); border-bottom: 1px solid var(--line);">
+    <a href="Merchant-Orders.dc.html" aria-label="ย้อนกลับ" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px; border: 1px solid var(--line); color: var(--text); display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+    <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+      <h1 class="dsp" style="font-size: 17px; font-weight: 700;">คูปองร้าน</h1>
+      <span style="font-size: 12px; color: var(--muted);">ส่วนลดที่ร้านออกค่าใช้จ่ายเอง</span>
+    </span>
+    
+  </div>
+  <div style="flex-grow: 1; min-height: 0; overflow: hidden; padding: 14px 20px 18px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 16px; background: var(--teal-soft); border: 1px solid var(--line);">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--teal-ink);" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5 5 6v6c0 4.2 3 7 7 8.5 4-1.5 7-4.3 7-8.5V6z"></path><path d="m9 12 2 2 4-4"></path></svg>
+      <span style="font-size: 12px; color: var(--teal-ink); line-height: 1.5;">ส่วนลดจากคูปองร้านจะหักจากยอดที่ร้านได้รับ ก่อนคำนวณ GP</span>
+    </div>
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="width: 38px; height: 38px; flex-shrink: 0; border-radius: 12px; background: var(--brand-soft); display: flex; align-items: center; justify-content: center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--brand-on-soft);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11.2V5.4A1.4 1.4 0 0 1 5.4 4h5.8a1.4 1.4 0 0 1 1 .4l7 7a1.4 1.4 0 0 1 0 2l-5.8 5.8a1.4 1.4 0 0 1-2 0l-7-7a1.4 1.4 0 0 1-.4-1z"></path><circle cx="8.3" cy="8.3" r="1.3"></circle></svg></span>
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+          <span class="dsp" style="font-size: 15px; font-weight: 700;">ลด 20 บาท</span>
+          <span style="font-size: 12px; color: var(--muted);">ซื้อครบ ฿150 · ใช้ได้ถึง 30 ก.ย. 2569</span>
+        </span>
+        <span style="padding: 5px 10px; border-radius: 999px; background: var(--green-soft); color: var(--green-ink); font-size: 11px; font-weight: 700;">กำลังใช้งาน</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding-top: 2px; border-top: 1px solid var(--line);">
+        <span style="flex-grow: 1; font-size: 12px; color: var(--muted); padding-top: 8px;">ใช้ไปแล้ว 46 / 200 สิทธิ์</span>
+        <button type="button" role="switch" aria-checked="true" aria-label="เปิดใช้ ลด 20 บาท" style="border: 0; background: none; padding: 8px 0 0; min-height: 44px; display: flex; align-items: center;"><span style="width: 50px; height: 30px; border-radius: 999px; background: var(--green-fill); padding: 3px; display: flex; justify-content: flex-end; align-items: center; flex-shrink: 0;"><span style="width: 24px; height: 24px; border-radius: 999px; background: var(--knob);"></span></span></button>
+      </div>
+    </div>
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="width: 38px; height: 38px; flex-shrink: 0; border-radius: 12px; background: var(--brand-soft); display: flex; align-items: center; justify-content: center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--brand-on-soft);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11.2V5.4A1.4 1.4 0 0 1 5.4 4h5.8a1.4 1.4 0 0 1 1 .4l7 7a1.4 1.4 0 0 1 0 2l-5.8 5.8a1.4 1.4 0 0 1-2 0l-7-7a1.4 1.4 0 0 1-.4-1z"></path><circle cx="8.3" cy="8.3" r="1.3"></circle></svg></span>
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+          <span class="dsp" style="font-size: 15px; font-weight: 700;">ลด 10%</span>
+          <span style="font-size: 12px; color: var(--muted);">สูงสุด ฿50 · เฉพาะลูกค้าใหม่</span>
+        </span>
+        <span style="padding: 5px 10px; border-radius: 999px; background: var(--green-soft); color: var(--green-ink); font-size: 11px; font-weight: 700;">กำลังใช้งาน</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding-top: 2px; border-top: 1px solid var(--line);">
+        <span style="flex-grow: 1; font-size: 12px; color: var(--muted); padding-top: 8px;">ใช้ไปแล้ว 12 / 100 สิทธิ์</span>
+        <button type="button" role="switch" aria-checked="true" aria-label="เปิดใช้ ลด 10%" style="border: 0; background: none; padding: 8px 0 0; min-height: 44px; display: flex; align-items: center;"><span style="width: 50px; height: 30px; border-radius: 999px; background: var(--green-fill); padding: 3px; display: flex; justify-content: flex-end; align-items: center; flex-shrink: 0;"><span style="width: 24px; height: 24px; border-radius: 999px; background: var(--knob);"></span></span></button>
+      </div>
+    </div>
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="width: 38px; height: 38px; flex-shrink: 0; border-radius: 12px; background: var(--brand-soft); display: flex; align-items: center; justify-content: center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--brand-on-soft);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11.2V5.4A1.4 1.4 0 0 1 5.4 4h5.8a1.4 1.4 0 0 1 1 .4l7 7a1.4 1.4 0 0 1 0 2l-5.8 5.8a1.4 1.4 0 0 1-2 0l-7-7a1.4 1.4 0 0 1-.4-1z"></path><circle cx="8.3" cy="8.3" r="1.3"></circle></svg></span>
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+          <span class="dsp" style="font-size: 15px; font-weight: 700;">ส่งฟรีวันจันทร์</span>
+          <span style="font-size: 12px; color: var(--muted);">หมดอายุ 15 ก.ย. 2569</span>
+        </span>
+        <span style="padding: 5px 10px; border-radius: 999px; background: var(--sunken); color: var(--muted); font-size: 11px; font-weight: 700;">หมดอายุ</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding-top: 2px; border-top: 1px solid var(--line);">
+        <span style="flex-grow: 1; font-size: 12px; color: var(--muted); padding-top: 8px;">ใช้ไปแล้ว 88 / 88 สิทธิ์</span>
+        <button type="button" role="switch" aria-checked="false" aria-label="เปิดใช้ ส่งฟรีวันจันทร์" style="border: 0; background: none; padding: 8px 0 0; min-height: 44px; display: flex; align-items: center;"><span style="width: 50px; height: 30px; border-radius: 999px; background: var(--off-track); padding: 3px; display: flex; justify-content: flex-start; align-items: center; flex-shrink: 0;"><span style="width: 24px; height: 24px; border-radius: 999px; background: var(--knob);"></span></span></button>
+      </div>
+    </div>
+  </div>
+  <div style="flex-shrink: 0; padding: 12px 20px 20px; background: var(--surface); border-top: 1px solid var(--line); box-shadow: var(--sh-sheet); display: flex; flex-direction: column; gap: 10px;">
+    <button type="button" style="min-height: 52px; border-radius: 16px; border: 0; background: var(--cta); color: var(--on-cta); font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--on-cta);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>สร้างคูปอง</button>
+  </div>
+</div></div><figcaption style="font:600 13px system-ui;color:#fff">Merchant-Coupons</figcaption></figure>
+<figure style="margin:0;display:flex;flex-direction:column;gap:10px;align-items:center"><div style="border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35)"><div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--paper); overflow: hidden;">
+  <div style="flex-shrink: 0; padding: 18px 20px 20px; background: var(--panel); color: var(--on-panel); display: flex; flex-direction: column; gap: 16px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <a href="Merchant-Profile.dc.html" aria-label="ย้อนกลับ" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px; border: 1px solid var(--panel-line); background: var(--panel-soft2); color: var(--on-panel); display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--on-panel);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+      <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+        <h1 class="dsp" style="font-size: 18px; font-weight: 700;">แผน GP</h1>
+        <span style="font-size: 12px; color: var(--panel-dim);">ค่าคอมมิชชันที่หักจากยอดอาหาร</span>
+      </span>
+    </div>
+    <div style="padding: 16px; border-radius: 18px; background: var(--panel-soft2); border: 1px solid var(--panel-line); display: flex; align-items: center; gap: 14px;">
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px;">
+        <span style="font-size: 12px; color: var(--panel-dim);">แผนปัจจุบัน</span>
+        <span class="dsp" style="font-size: 22px; font-weight: 700;">มาตรฐาน · GP 18%</span>
+      </span>
+      <span style="padding: 6px 11px; border-radius: 999px; background: var(--green-panel); border: 1px solid var(--green-panel-line); color: var(--green-on-panel); font-size: 11px; font-weight: 700;">ใช้งานอยู่</span>
+    </div>
+  </div>
+  <div style="flex-grow: 1; min-height: 0; overflow: hidden; padding: 14px 20px 18px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+      <h2 class="dsp" style="font-size: 14px; font-weight: 700;">ตัวอย่างการหักจากบิล ฿175</h2>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="flex-grow: 1; font-size: 13px; color: var(--muted);">ยอดอาหาร</span>
+        <span class="dsp" style="font-size: 14px; font-weight: 700;">฿175.00</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="flex-grow: 1; font-size: 13px; color: var(--muted);">หัก GP 18%</span>
+        <span class="dsp" style="font-size: 14px; font-weight: 700; color: var(--danger-ink);">-฿31.50</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding-top: 10px; border-top: 1px solid var(--line);">
+        <span style="flex-grow: 1; font-size: 13px; font-weight: 700;">ร้านได้รับ</span>
+        <span class="dsp" style="font-size: 18px; font-weight: 700;">฿143.50</span>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; padding-top: 2px;">
+      <h2 class="dsp" style="flex-grow: 1; font-size: 14px; font-weight: 700;">แผนที่เลือกได้</h2>
+      
+    </div>
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; border-color: var(--brand-line); box-shadow: var(--sh-brand);">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="flex-grow: 1; font-size: 14px; font-weight: 700;">มาตรฐาน · GP 18%</span>
+        <span style="padding: 5px 10px; border-radius: 999px; background: var(--brand-soft); color: var(--brand-on-soft); font-size: 11px; font-weight: 700;">แผนปัจจุบัน</span>
+      </div>
+      <span style="font-size: 12px; color: var(--muted); line-height: 1.5;">ไม่มีค่าแรกเข้า · อยู่ในหน้าแนะนำร้านตามปกติ · รองรับคูปองส่วนกลาง</span>
+    </div>
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="flex-grow: 1; font-size: 14px; font-weight: 700;">โปรโมท · GP 23%</span>
+        <span class="dsp" style="font-size: 13px; font-weight: 700; color: var(--muted);">+5%</span>
+      </div>
+      <span style="font-size: 12px; color: var(--muted); line-height: 1.5;">ปักหมุดร้านในหน้าแรก 1 ช่วงต่อวัน · ร่วมแคมเปญส่งฟรีของ JDC อัตโนมัติ</span>
+    </div>
+    <div style="display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 16px; background: var(--sunken); border: 1px solid var(--line);">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5 5 6v6c0 4.2 3 7 7 8.5 4-1.5 7-4.3 7-8.5V6z"></path><path d="m9 12 2 2 4-4"></path></svg>
+      <span style="font-size: 12px; color: var(--muted); line-height: 1.5;">การเปลี่ยนแผนต้องให้ทีม JDC อนุมัติ และจะมีผลกับออเดอร์ที่เกิดหลังอนุมัติเท่านั้น</span>
+    </div>
+  </div>
+  <div style="flex-shrink: 0; padding: 12px 20px 20px; background: var(--surface); border-top: 1px solid var(--line); box-shadow: var(--sh-sheet); display: flex; flex-direction: column; gap: 10px;">
+    <button type="button" style="min-height: 52px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 15px; font-weight: 700;">ขอเปลี่ยนแผน</button>
+  </div>
+</div></div><figcaption style="font:600 13px system-ui;color:#fff">Merchant-GpPlan</figcaption></figure>
+<figure style="margin:0;display:flex;flex-direction:column;gap:10px;align-items:center"><div style="border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35)"><div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--paper); overflow: hidden;">
+  <div style="flex-shrink: 0; display: flex; align-items: center; gap: 12px; padding: 16px 16px 14px; background: var(--surface); border-bottom: 1px solid var(--line);">
+    <a href="Merchant-Profile.dc.html" aria-label="ย้อนกลับ" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px; border: 1px solid var(--line); color: var(--text); display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+    <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+      <h1 class="dsp" style="font-size: 17px; font-weight: 700;">ตั้งค่าร้าน</h1>
+      <span style="font-size: 12px; color: var(--muted);">ครัวป้าน้อย</span>
+    </span>
+    
+  </div>
+  <div style="flex-grow: 1; min-height: 0; overflow: hidden; padding: 14px 20px 18px; display: flex; flex-direction: column; gap: 12px;">
+    <button type="button" role="switch" aria-checked="true" style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); color: var(--text); text-align: left;">
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">เปิดรับออเดอร์</span>
+        <span style="font-size: 12px; color: var(--muted);">ปิดเมื่อร้านไม่พร้อมรับงาน</span>
+      </span>
+      <span style="width: 50px; height: 30px; border-radius: 999px; background: var(--green-fill); padding: 3px; display: flex; justify-content: flex-end; align-items: center; flex-shrink: 0;"><span style="width: 24px; height: 24px; border-radius: 999px; background: var(--knob);"></span></span>
+    </button>
+    <button type="button" role="switch" aria-checked="false" style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); color: var(--text); text-align: left;">
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">รับออเดอร์อัตโนมัติ</span>
+        <span style="font-size: 12px; color: var(--muted);">ข้ามขั้นตอนกดรับภายในเวลาทำการ</span>
+      </span>
+      <span style="width: 50px; height: 30px; border-radius: 999px; background: var(--off-track); padding: 3px; display: flex; justify-content: flex-start; align-items: center; flex-shrink: 0;"><span style="width: 24px; height: 24px; border-radius: 999px; background: var(--knob);"></span></span>
+    </button>
+    <button type="button" role="switch" aria-checked="true" style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); color: var(--text); text-align: left;">
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">ให้ลูกค้ารับเองที่ร้าน</span>
+        <span style="font-size: 12px; color: var(--muted);">แสดงตัวเลือกรับเองตอนเช็กเอาต์</span>
+      </span>
+      <span style="width: 50px; height: 30px; border-radius: 999px; background: var(--green-fill); padding: 3px; display: flex; justify-content: flex-end; align-items: center; flex-shrink: 0;"><span style="width: 24px; height: 24px; border-radius: 999px; background: var(--knob);"></span></span>
+    </button>
+    <div style="display: flex; align-items: center; gap: 10px; padding-top: 2px;">
+      <h2 class="dsp" style="flex-grow: 1; font-size: 14px; font-weight: 700;">เวลาทำการ</h2>
+      
+    </div>
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="flex-grow: 1; font-size: 13px;">จันทร์ – ศุกร์</span>
+        <span class="dsp" style="font-size: 13px; font-weight: 700;">09:00 – 20:00</span>
+        <button type="button" aria-label="แก้ไขเวลา จันทร์ – ศุกร์" style="width: 44px; height: 44px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); display: flex; align-items: center; justify-content: center;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 18 9 9 18H5.5v-3.5z"></path><path d="M13 7 16.5 10.5"></path></svg></button>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="flex-grow: 1; font-size: 13px;">เสาร์ – อาทิตย์</span>
+        <span class="dsp" style="font-size: 13px; font-weight: 700;">10:00 – 21:00</span>
+        <button type="button" aria-label="แก้ไขเวลา เสาร์ – อาทิตย์" style="width: 44px; height: 44px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); display: flex; align-items: center; justify-content: center;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 18 9 9 18H5.5v-3.5z"></path><path d="M13 7 16.5 10.5"></path></svg></button>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; padding-top: 2px;">
+      <h2 class="dsp" style="flex-grow: 1; font-size: 14px; font-weight: 700;">การเตรียมอาหาร</h2>
+      
+    </div>
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;">
+      <span style="font-size: 12px; color: var(--muted);">เวลาเตรียมมาตรฐาน</span>
+      <div style="display: flex; gap: 8px;">
+        <label style="flex-grow: 1; min-height: 46px; display: flex; align-items: center; justify-content: center; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-size: 13px; font-weight: 600;"><input type="radio" name="prep" class="vh">10 นาที</label>
+        <label style="flex-grow: 1; min-height: 46px; display: flex; align-items: center; justify-content: center; border-radius: 12px; border: 1px solid var(--brand-line); background: var(--brand-soft); color: var(--brand-on-soft); font-size: 13px; font-weight: 700;"><input type="radio" name="prep" checked class="vh">15 นาที</label>
+        <label style="flex-grow: 1; min-height: 46px; display: flex; align-items: center; justify-content: center; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-size: 13px; font-weight: 600;"><input type="radio" name="prep" class="vh">20 นาที</label>
+        <label style="flex-grow: 1; min-height: 46px; display: flex; align-items: center; justify-content: center; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-size: 13px; font-weight: 600;"><input type="radio" name="prep" class="vh">30 นาที</label>
+      </div>
+    </div>
+    <a href="Merchant-GpPlan.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); color: var(--text);">
+      <span style="width: 38px; height: 38px; flex-shrink: 0; border-radius: 12px; background: var(--sunken); display: flex; align-items: center; justify-content: center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V12"></path><path d="M12 20V5"></path><path d="M19 20v-6"></path></svg></span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">แผน GP และค่าคอมมิชชัน</span>
+        <span style="font-size: 12px; color: var(--muted);">ปัจจุบัน GP 18%</span>
+      </span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+    </a>
+    <a href="Merchant-Coupons.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); color: var(--text);">
+      <span style="width: 38px; height: 38px; flex-shrink: 0; border-radius: 12px; background: var(--sunken); display: flex; align-items: center; justify-content: center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11.2V5.4A1.4 1.4 0 0 1 5.4 4h5.8a1.4 1.4 0 0 1 1 .4l7 7a1.4 1.4 0 0 1 0 2l-5.8 5.8a1.4 1.4 0 0 1-2 0l-7-7a1.4 1.4 0 0 1-.4-1z"></path><circle cx="8.3" cy="8.3" r="1.3"></circle></svg></span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">คูปองร้าน</span>
+        <span style="font-size: 12px; color: var(--muted);">กำลังใช้งาน 2 รายการ</span>
+      </span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+    </a>
+  </div>
+</div></div><figcaption style="font:600 13px system-ui;color:#fff">Merchant-Settings</figcaption></figure>
+<figure style="margin:0;display:flex;flex-direction:column;gap:10px;align-items:center"><div style="border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35)"><div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--paper); overflow: hidden;">
+  <div style="flex-shrink: 0; padding: 18px 20px 20px; background: var(--panel); color: var(--on-panel); display: flex; flex-direction: column; gap: 16px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <a href="Merchant-Orders.dc.html" aria-label="ย้อนกลับ" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px; border: 1px solid var(--panel-line); background: var(--panel-soft2); color: var(--on-panel); display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--on-panel);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+      <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+        <h1 class="dsp" style="font-size: 18px; font-weight: 700;">โปรไฟล์ร้าน</h1>
+        
+      </span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <span class="dsp" style="width: 56px; height: 56px; flex-shrink: 0; border-radius: 18px; background: var(--panel-soft3); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700;">คป</span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+        <span class="dsp" style="font-size: 18px; font-weight: 700;">ครัวป้าน้อย</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--brand-hi);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--brand-hi);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 4.5 2.3 4.8 5.2.7-3.8 3.7.9 5.2-4.6-2.5-4.6 2.5.9-5.2L4.5 10l5.2-.7z"></path></svg>4.8 · 1,240 รีวิว</span>
+        <span style="font-size: 12px; color: var(--panel-dim);">ถ.หน้าเมือง ซ.3 ขอนแก่น</span>
+      </span>
+      <a href="Merchant-EditProfile.dc.html" aria-label="แก้ไขโปรไฟล์ร้าน" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px; border: 1px solid var(--panel-line); background: var(--panel-soft2); color: var(--on-panel); display: flex; align-items: center; justify-content: center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--on-panel);" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 18 9 9 18H5.5v-3.5z"></path><path d="M13 7 16.5 10.5"></path></svg></a>
+    </div>
+  </div>
+  <div style="flex-grow: 1; min-height: 0; overflow: hidden; padding: 14px 20px 18px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;">
+      <span style="display: flex; flex-direction: column; gap: 3px;"><span class="dsp" style="font-size: 17px; font-weight: 700;">฿33,833</span><span style="font-size: 11px; color: var(--muted);">โอนเข้าเดือนนี้</span></span>
+      <span style="display: flex; flex-direction: column; gap: 3px;"><span class="dsp" style="font-size: 17px; font-weight: 700;">512</span><span style="font-size: 11px; color: var(--muted);">ออเดอร์เดือนนี้</span></span>
+      <span style="display: flex; flex-direction: column; gap: 3px;"><span class="dsp" style="font-size: 17px; font-weight: 700;">98%</span><span style="font-size: 11px; color: var(--muted);">อัตรารับงาน</span></span>
+    </div>
+    <a href="Merchant-EditProfile.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); color: var(--text);">
+      <span style="width: 38px; height: 38px; flex-shrink: 0; border-radius: 12px; background: var(--sunken); display: flex; align-items: center; justify-content: center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 18 9 9 18H5.5v-3.5z"></path><path d="M13 7 16.5 10.5"></path></svg></span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">แก้ไขข้อมูลร้าน</span>
+        <span style="font-size: 12px; color: var(--muted);">ชื่อ รูป ที่อยู่ เบอร์ติดต่อ</span>
+      </span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+    </a>
+    <a href="Merchant-Settings.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); color: var(--text);">
+      <span style="width: 38px; height: 38px; flex-shrink: 0; border-radius: 12px; background: var(--sunken); display: flex; align-items: center; justify-content: center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"></circle><path d="M19.4 14a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2v.2a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 7 18.4l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 3 12.8H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.3 6l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 2.9-1.2V2a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0 1.2 2.9h.2a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.6 1z"></path></svg></span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">ตั้งค่าร้าน</span>
+        <span style="font-size: 12px; color: var(--muted);">เวลาทำการ เวลาเตรียมอาหาร</span>
+      </span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+    </a>
+    <a href="Merchant-GpPlan.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); color: var(--text);">
+      <span style="width: 38px; height: 38px; flex-shrink: 0; border-radius: 12px; background: var(--sunken); display: flex; align-items: center; justify-content: center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V12"></path><path d="M12 20V5"></path><path d="M19 20v-6"></path></svg></span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">แผน GP</span>
+        <span style="font-size: 12px; color: var(--muted);">มาตรฐาน · GP 18%</span>
+      </span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+    </a>
+    <a href="Merchant-Coupons.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); color: var(--text);">
+      <span style="width: 38px; height: 38px; flex-shrink: 0; border-radius: 12px; background: var(--sunken); display: flex; align-items: center; justify-content: center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11.2V5.4A1.4 1.4 0 0 1 5.4 4h5.8a1.4 1.4 0 0 1 1 .4l7 7a1.4 1.4 0 0 1 0 2l-5.8 5.8a1.4 1.4 0 0 1-2 0l-7-7a1.4 1.4 0 0 1-.4-1z"></path><circle cx="8.3" cy="8.3" r="1.3"></circle></svg></span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">คูปองร้าน</span>
+        <span style="font-size: 12px; color: var(--muted);">กำลังใช้งาน 2 รายการ</span>
+      </span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+    </a>
+    <a href="Merchant-Dashboard.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); color: var(--text);">
+      <span style="width: 38px; height: 38px; flex-shrink: 0; border-radius: 12px; background: var(--sunken); display: flex; align-items: center; justify-content: center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-11A.5.5 0 0 1 6 20V4a.5.5 0 0 1 .5-.5z"></path><path d="M14 3.5V8h4"></path></svg></span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">รายงานยอดขาย</span>
+        <span style="font-size: 12px; color: var(--muted);">สรุปรายวันและรายเดือน</span>
+      </span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+    </a>
+    <button type="button" style="min-height: 50px; border-radius: 16px; border: 1px solid var(--danger-line); background: var(--surface); color: var(--danger); font-size: 14px; font-weight: 700;">ออกจากระบบ</button>
+  </div>
+  <nav style="flex-shrink: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 8px 8px 18px; background: var(--surface); border-top: 1px solid var(--line);">
+    <a href="Merchant-Orders.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--muted); font-size: 10px; font-weight: 600;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h12v17l-3-1.8-3 1.8-3-1.8-3 1.8z"></path><path d="M9.5 9h5"></path><path d="M9.5 13h5"></path></svg>ออเดอร์</a>
+    <a href="Merchant-Laundry.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--muted); font-size: 10px; font-weight: 600;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2.6"></rect><circle cx="12" cy="14" r="3.9"></circle></svg>ซักผ้า</a>
+    <a href="Merchant-Menu.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--muted); font-size: 10px; font-weight: 600;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5v17"></path><path d="M4 3.5v5a2 2 0 0 0 4 0v-5"></path><path d="M16.5 3.5c-1.6 1-2.5 2.8-2.5 5s1 3 2.5 3H18V3.5z"></path><path d="M18 11.5v9"></path></svg>เมนู</a>
+    <a href="Merchant-Dashboard.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--muted); font-size: 10px; font-weight: 600;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V12"></path><path d="M12 20V5"></path><path d="M19 20v-6"></path></svg>รายงาน</a>
+    <span aria-current="page" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--link); font-size: 10px; font-weight: 700;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--link);" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"></circle><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"></path></svg>บัญชี</span>
+  </nav>
+</div></div><figcaption style="font:600 13px system-ui;color:#fff">Merchant-Profile</figcaption></figure>
+<figure style="margin:0;display:flex;flex-direction:column;gap:10px;align-items:center"><div style="border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35)"><div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--paper); overflow: hidden;">
+  <div style="flex-shrink: 0; display: flex; align-items: center; gap: 12px; padding: 16px 16px 14px; background: var(--surface); border-bottom: 1px solid var(--line);">
+    <a href="Merchant-Profile.dc.html" aria-label="ย้อนกลับ" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px; border: 1px solid var(--line); color: var(--text); display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+    <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+      <h1 class="dsp" style="font-size: 17px; font-weight: 700;">แก้ไขโปรไฟล์ร้าน</h1>
+      <span style="font-size: 12px; color: var(--muted);">ครัวป้าน้อย</span>
+    </span>
+    
+  </div>
+  <div style="flex-grow: 1; min-height: 0; overflow: hidden; padding: 14px 20px 18px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <span class="dsp" style="width: 70px; height: 70px; flex-shrink: 0; border-radius: 20px; background: var(--sunken); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700;">คป</span>
+      <span style="display: flex; flex-direction: column; gap: 8px; min-width: 0;">
+        <span style="font-size: 12px; color: var(--muted); line-height: 1.5;">โลโก้ร้าน และรูปหน้าปกที่ลูกค้าเห็น</span>
+        <button type="button" style="min-height: 44px; padding: 0 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 13px; font-weight: 700;">เปลี่ยนรูป</button>
+      </span>
+    </div>
+    <label for="shop" style="display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 12px; font-weight: 600; color: var(--muted);">ชื่อร้าน</span>
+      <input id="shop" type="text" value="ครัวป้าน้อย" style="min-height: 48px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 14px; padding: 0 14px;">
+    </label>
+    <label for="about" style="display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 12px; font-weight: 600; color: var(--muted);">เกี่ยวกับร้าน</span>
+      <textarea id="about" rows="2" style="border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 14px; padding: 12px 14px; resize: none;">อาหารตามสั่งรสจัดจ้าน เปิดมา 12 ปี ย่านหน้าเมือง</textarea>
+    </label>
+    <label for="tel" style="display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 12px; font-weight: 600; color: var(--muted);">เบอร์ติดต่อ</span>
+      <input id="tel" type="tel" value="043 123 456" style="min-height: 48px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 14px; padding: 0 14px;">
+    </label>
+    <label for="addr" style="display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 12px; font-weight: 600; color: var(--muted);">ที่อยู่ร้าน</span>
+      <input id="addr" type="text" value="ถ.หน้าเมือง ซ.3 ต.ในเมือง อ.เมือง ขอนแก่น" style="min-height: 48px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 14px; padding: 0 14px;">
+    </label>
+    <div style="display: flex; align-items: center; gap: 10px; padding-top: 2px;">
+      <h2 class="dsp" style="flex-grow: 1; font-size: 14px; font-weight: 700;">บัญชีรับเงิน</h2>
+      
+    </div>
+    <label for="bank" style="display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 12px; font-weight: 600; color: var(--muted);">ธนาคาร</span>
+      <input id="bank" type="text" value="ธนาคารกรุงไทย" style="min-height: 48px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 14px; padding: 0 14px;">
+    </label>
+    <label for="acct" style="display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 12px; font-weight: 600; color: var(--muted);">เลขที่บัญชี</span>
+      <input id="acct" type="text" value="403-0-12345-6" style="min-height: 48px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 14px; padding: 0 14px;">
+    </label>
+  </div>
+  <div style="flex-shrink: 0; padding: 12px 20px 20px; background: var(--surface); border-top: 1px solid var(--line); box-shadow: var(--sh-sheet); display: flex; flex-direction: column; gap: 10px;">
+    <a href="Merchant-Profile.dc.html" style="min-height: 52px; border-radius: 16px; background: var(--cta); color: var(--on-cta); font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center;">บันทึกการเปลี่ยนแปลง</a>
+  </div>
+</div></div><figcaption style="font:600 13px system-ui;color:#fff">Merchant-EditProfile</figcaption></figure>
+<figure style="margin:0;display:flex;flex-direction:column;gap:10px;align-items:center"><div style="border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35)"><div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--paper); overflow: hidden;">
+  <div style="flex-shrink: 0; padding: 16px 20px 18px; background: var(--panel); color: var(--on-panel); display: flex; align-items: center; gap: 12px;">
+    <a href="Driver-Job.dc.html" aria-label="ย้อนกลับ" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px; border: 1px solid var(--panel-line); background: var(--panel-soft2); color: var(--on-panel); display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--on-panel);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+    <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
+      <h1 class="dsp" style="font-size: 20px; font-weight: 700;">เลี้ยวขวาใน 400 ม.</h1>
+      <span style="font-size: 12px; color: var(--panel-dim);">ถ.หน้าเมือง ซ.3 · ส่งให้ คุณมานี</span>
+    </span>
+  </div>
+  <div style="flex-shrink: 0; height: 230px; position: relative; background: var(--map-bg); overflow: hidden;">
+    <div style="position: absolute; inset: 0; background: repeating-linear-gradient(90deg, var(--map-grid) 0 1px, transparent 1px 44px), repeating-linear-gradient(0deg, var(--map-grid) 0 1px, transparent 1px 44px);"></div>
+    <div style="position: absolute; left: -30px; top: 97px; width: 460px; height: 16px; background: var(--map-road); transform: rotate(-9deg);"></div>
+    <div style="position: absolute; left: 96px; top: -40px; width: 14px; height: 350px; background: var(--map-road); transform: rotate(11deg);"></div>
+    <svg width="390" height="230" viewBox="0 0 390 230" fill="none" style="position: absolute; inset: 0;" aria-hidden="true">
+      <path d="M84 160C130 160 140 101 196 92s84 -26 112 -54" stroke="currentColor" style="color: var(--route);" stroke-width="5" stroke-linecap="round" stroke-dasharray="1 14"></path>
+    </svg>
+    <span style="position: absolute; left: 66px; top: 142px; width: 34px; height: 34px; border-radius: 999px; background: var(--panel); border: 3px solid var(--map-road); box-shadow: var(--sh-deep); display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--on-panel);" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="16.5" r="3.2"></circle><circle cx="18" cy="16.5" r="3.2"></circle><path d="M6 16.5 10 8h4l2 8.5"></path><path d="M13.5 8h3.5"></path></svg></span>
+    <span style="position: absolute; left: 292px; top: 56px; width: 28px; height: 28px; border-radius: 999px; background: var(--cta); border: 3px solid var(--map-road); box-shadow: var(--sh-float);"></span>
+    <span class="vh">แผนที่เส้นทางจากร้านครัวป้าน้อยไปปลายทาง ถ.หน้าเมือง ซ.3</span>
+  </div>
+  <div style="flex-grow: 1; min-height: 0; overflow: hidden; padding: 14px 20px 10px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: flex; align-items: center; gap: 12px;">
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px;">
+        <span style="font-size: 12px; color: var(--muted);">ถึงปลายทางโดยประมาณ</span>
+        <span class="dsp" style="font-size: 20px; font-weight: 700;">6 นาที · 1.8 กม.</span>
+      </span>
+      <span style="padding: 7px 12px; border-radius: 999px; background: var(--green-soft); color: var(--green-ink); font-size: 12px; font-weight: 700;">ตรงเวลา</span>
+    </div>
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="width: 34px; height: 34px; flex-shrink: 0; border-radius: 12px; background: var(--sunken); display: flex; align-items: center; justify-content: center;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        <span style="flex-grow: 1; font-size: 13px; min-width: 0;">เลี้ยวขวาเข้า ถ.หน้าเมือง</span>
+        <span class="dsp" style="font-size: 13px; font-weight: 700; color: var(--muted);">400 ม.</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="width: 34px; height: 34px; flex-shrink: 0; border-radius: 12px; background: var(--sunken); display: flex; align-items: center; justify-content: center;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></span>
+        <span style="flex-grow: 1; font-size: 13px; min-width: 0;">ตรงไปผ่านสี่แยกศาลเจ้า</span>
+        <span class="dsp" style="font-size: 13px; font-weight: 700; color: var(--muted);">1.1 กม.</span>
+      </div>
+    </div>
+  </div>
+  <div style="flex-shrink: 0; padding: 12px 20px 20px; background: var(--surface); border-top: 1px solid var(--line); box-shadow: var(--sh-sheet); display: flex; flex-direction: column; gap: 10px;">
+    <div style="display: flex; gap: 10px;">
+      <a href="#call-customer" aria-label="โทรหาลูกค้า" style="width: 56px; min-height: 52px; flex-shrink: 0; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); color: var(--text); display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 4.5h3l1.4 3.5-2 1.3a10.5 10.5 0 0 0 5.3 5.3l1.3-2 3.5 1.4v3a1.5 1.5 0 0 1-1.7 1.5C10.9 17.8 6.2 13.1 5 6.2A1.5 1.5 0 0 1 6.5 4.5z"></path></svg></a>
+      <a href="Driver-Job.dc.html" style="flex-grow: 1; min-height: 52px; border-radius: 16px; background: var(--cta); color: var(--on-cta); font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center;">ถึงจุดส่งแล้ว</a>
+    </div>
+  </div>
+</div></div><figcaption style="font:600 13px system-ui;color:#fff">Driver-Navigation</figcaption></figure>
+<figure style="margin:0;display:flex;flex-direction:column;gap:10px;align-items:center"><div style="border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35)"><div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--paper); overflow: hidden;">
+  <div style="flex-shrink: 0; display: flex; align-items: center; gap: 12px; padding: 16px 16px 14px; background: var(--surface); border-bottom: 1px solid var(--line);">
+    <a href="Driver-Job.dc.html" aria-label="ย้อนกลับ" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px; border: 1px solid var(--line); color: var(--text); display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+    <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+      <h1 class="dsp" style="font-size: 17px; font-weight: 700;">ยืนยันส่งพัสดุ</h1>
+      <span style="font-size: 12px; color: var(--muted);">#JD-2845 · คุณมานี</span>
+    </span>
+    
+  </div>
+  <div style="flex-grow: 1; min-height: 0; overflow: hidden; padding: 14px 20px 18px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: flex; align-items: center; gap: 12px;">
+      <span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 13px; background: var(--brand-soft); display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--brand-on-soft);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.5 8 4v9l-8 4-8-4v-9z"></path><path d="m4 7.5 8 4 8-4"></path><path d="M12 11.5v9"></path></svg></span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">พัสดุขนาดกลาง 1 ชิ้น</span>
+        <span style="font-size: 12px; color: var(--muted);">ถ.หน้าเมือง ซ.3 · ชั้น 2 ห้อง 205</span>
+      </span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; padding-top: 2px;">
+      <h2 class="dsp" style="flex-grow: 1; font-size: 14px; font-weight: 700;">ถ่ายรูปยืนยันการส่ง</h2>
+      <span style="font-size: 12px; color: var(--danger-ink); font-weight: 700;">จำเป็น</span>
+    </div>
+    <button type="button" style="min-height: 168px; border-radius: 18px; border: 1px dashed var(--line); background: var(--surface); color: var(--muted); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 8.5h3l1.3-2h6.4l1.3 2h3v10h-15z"></path><circle cx="12" cy="13" r="3.3"></circle></svg>
+      <span style="font-size: 14px; font-weight: 700; color: var(--text);">ถ่ายรูปพัสดุ ณ จุดส่ง</span>
+      <span style="font-size: 12px;">ให้เห็นหน้าบ้านหรือจุดวางชัดเจน</span>
+    </button>
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <span style="font-size: 12px; font-weight: 600; color: var(--muted);">ผู้รับ</span>
+      <div style="display: flex; gap: 8px;">
+        <label style="flex-grow: 1; min-height: 46px; display: flex; align-items: center; justify-content: center; border-radius: 14px; border: 1px solid var(--brand-line); background: var(--brand-soft); color: var(--brand-on-soft); font-size: 13px; font-weight: 700;"><input type="radio" name="rcv" checked class="vh">ผู้รับรับเอง</label>
+        <label style="flex-grow: 1; min-height: 46px; display: flex; align-items: center; justify-content: center; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 13px; font-weight: 600;"><input type="radio" name="rcv" class="vh">ฝากไว้หน้าบ้าน</label>
+      </div>
+    </div>
+    <label for="rcvname" style="display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 12px; font-weight: 600; color: var(--muted);">ชื่อผู้รับ</span>
+      <input id="rcvname" type="text" value="มานี ส." style="min-height: 48px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 14px; padding: 0 14px;">
+    </label>
+    <label for="note" style="display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 12px; font-weight: 600; color: var(--muted);">หมายเหตุ (ถ้ามี)</span>
+      <textarea id="note" rows="2" placeholder="เช่น ฝากไว้กับ รปภ." style="border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 14px; padding: 12px 14px; resize: none;"></textarea>
+    </label>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; background: var(--sunken); border: 1px solid var(--line);">
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+        <span style="font-size: 13px; font-weight: 700;">เก็บเงินปลายทาง</span>
+        <span style="font-size: 12px; color: var(--muted);">รับเงินสดจากลูกค้าแล้วนำส่งบริษัท</span>
+      </span>
+      <span class="dsp" style="font-size: 16px; font-weight: 700;">฿120</span>
+    </div>
+  </div>
+  <div style="flex-shrink: 0; padding: 12px 20px 20px; background: var(--surface); border-top: 1px solid var(--line); box-shadow: var(--sh-sheet); display: flex; flex-direction: column; gap: 10px;">
+    <a href="Driver-Home.dc.html" style="min-height: 52px; border-radius: 16px; background: var(--cta); color: var(--on-cta); font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center;">ยืนยันส่งสำเร็จ</a>
+  </div>
+</div></div><figcaption style="font:600 13px system-ui;color:#fff">Driver-ParcelConfirm</figcaption></figure>
+<figure style="margin:0;display:flex;flex-direction:column;gap:10px;align-items:center"><div style="border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35)"><div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--paper); overflow: hidden;">
+  <div style="flex-shrink: 0; padding: 18px 20px 20px; background: var(--hero2); color: var(--on-panel); display: flex; flex-direction: column; gap: 16px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <a href="Driver-Home.dc.html" aria-label="ย้อนกลับ" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px; border: 1px solid var(--panel-line); background: var(--panel-soft2); color: var(--on-panel); display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--on-panel);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+      <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+        <h1 class="dsp" style="font-size: 18px; font-weight: 700;">กะทำงาน</h1>
+        <span style="font-size: 12px; color: var(--panel-dim);">สมชาย ว. · กข 1234 ขอนแก่น</span>
+      </span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;">
+      <div style="padding: 11px 12px; border-radius: 14px; background: var(--panel-soft); display: flex; flex-direction: column; gap: 2px;">
+        <span class="dsp" style="font-size: 18px; font-weight: 700;">3 ชม. 12 นาที</span>
+        <span style="font-size: 11px; color: var(--panel-dim);">วิ่งวันนี้</span>
+      </div>
+      <div style="padding: 11px 12px; border-radius: 14px; background: var(--panel-soft); display: flex; flex-direction: column; gap: 2px;">
+        <span class="dsp" style="font-size: 18px; font-weight: 700;">18</span>
+        <span style="font-size: 11px; color: var(--panel-dim);">กะเดือนนี้</span>
+      </div>
+      <div style="padding: 11px 12px; border-radius: 14px; background: var(--panel-soft); display: flex; flex-direction: column; gap: 2px;">
+        <span class="dsp" style="font-size: 18px; font-weight: 700;">98%</span>
+        <span style="font-size: 11px; color: var(--panel-dim);">เข้ากะตรงเวลา</span>
+      </div>
+    </div>
+  </div>
+  <div style="flex-grow: 1; min-height: 0; overflow: hidden; padding: 14px 20px 18px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="display: flex; align-items: center; gap: 10px; padding-top: 2px;">
+      <h2 class="dsp" style="flex-grow: 1; font-size: 14px; font-weight: 700;">กะที่จองไว้</h2>
+      
+    </div>
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: flex; align-items: center; gap: 12px;">
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+        <span class="dsp" style="font-size: 14px; font-weight: 700;">วันนี้ 16:00 – 22:00</span>
+        <span style="font-size: 12px; color: var(--muted);">กะเย็น · โซนในเมือง</span>
+      </span>
+      <span style="padding: 5px 10px; border-radius: 999px; background: var(--green-soft); color: var(--green-ink); font-size: 11px; font-weight: 700;">กำลังทำงาน</span>
+    </div>
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: flex; align-items: center; gap: 12px;">
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+        <span class="dsp" style="font-size: 14px; font-weight: 700;">พรุ่งนี้ 06:00 – 12:00</span>
+        <span style="font-size: 12px; color: var(--muted);">กะเช้า · โซนในเมือง</span>
+      </span>
+      <span style="padding: 5px 10px; border-radius: 999px; background: var(--teal-soft); color: var(--teal-ink); font-size: 11px; font-weight: 700;">จองแล้ว</span>
+    </div>
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: flex; align-items: center; gap: 12px;">
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+        <span class="dsp" style="font-size: 14px; font-weight: 700;">22 ก.ย. 16:00 – 22:00</span>
+        <span style="font-size: 12px; color: var(--muted);">กะเย็น · โซนมหาวิทยาลัย</span>
+      </span>
+      <span style="padding: 5px 10px; border-radius: 999px; background: var(--teal-soft); color: var(--teal-ink); font-size: 11px; font-weight: 700;">จองแล้ว</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; padding-top: 2px;">
+      <h2 class="dsp" style="flex-grow: 1; font-size: 14px; font-weight: 700;">จองกะเพิ่ม</h2>
+      <span style="font-size: 12px; color: var(--muted);">23 ก.ย. 2569</span>
+    </div>
+    <button type="button" style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); color: var(--text); text-align: left;">
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">กะเช้า 06:00 – 12:00</span>
+        <span style="font-size: 12px; color: var(--muted);">เหลือ 4 ที่</span>
+      </span>
+      <span style="min-height: 40px; padding: 0 14px; border-radius: 12px; background: var(--cta); color: var(--on-cta); font-size: 13px; font-weight: 700; display: flex; align-items: center;">จองกะ</span>
+    </button>
+    <button type="button" style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); color: var(--text); text-align: left;">
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">กะกลางวัน 11:00 – 17:00</span>
+        <span style="font-size: 12px; color: var(--muted);">เหลือ 2 ที่</span>
+      </span>
+      <span style="min-height: 40px; padding: 0 14px; border-radius: 12px; background: var(--cta); color: var(--on-cta); font-size: 13px; font-weight: 700; display: flex; align-items: center;">จองกะ</span>
+    </button>
+    <button type="button" style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); color: var(--text); text-align: left;">
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">กะเย็น 16:00 – 22:00</span>
+        <span style="font-size: 12px; color: var(--danger-ink);">เต็มแล้ว</span>
+      </span>
+      <span style="min-height: 40px; padding: 0 14px; border-radius: 12px; background: var(--sunken); color: var(--muted); font-size: 13px; font-weight: 700; display: flex; align-items: center;">เต็ม</span>
+    </button>
+  </div>
+</div></div><figcaption style="font:600 13px system-ui;color:#fff">Driver-Shift</figcaption></figure>
+<figure style="margin:0;display:flex;flex-direction:column;gap:10px;align-items:center"><div style="border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35)"><div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--paper); overflow: hidden;">
+  <div style="flex-shrink: 0; padding: 18px 20px 20px; background: var(--hero2); color: var(--on-panel); display: flex; flex-direction: column; gap: 16px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <a href="Driver-Profile.dc.html" aria-label="ย้อนกลับ" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px; border: 1px solid var(--panel-line); background: var(--panel-soft2); color: var(--on-panel); display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--on-panel);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+      <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+        <h1 class="dsp" style="font-size: 18px; font-weight: 700;">สถิติและคะแนน</h1>
+        <span style="font-size: 12px; color: var(--panel-dim);">7 วันล่าสุด</span>
+      </span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 18px; background: var(--panel-soft2); border: 1px solid var(--panel-line);">
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px;">
+        <span style="font-size: 12px; color: var(--panel-dim);">คะแนนจากลูกค้า</span>
+        <span class="dsp" style="font-size: 26px; font-weight: 700;">4.92</span>
+      </span>
+      <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--brand-hi);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--brand-hi);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 4.5 2.3 4.8 5.2.7-3.8 3.7.9 5.2-4.6-2.5-4.6 2.5.9-5.2L4.5 10l5.2-.7z"></path></svg>จาก 1,842 งาน</span>
+    </div>
+  </div>
+  <div style="flex-grow: 1; min-height: 0; overflow: hidden; padding: 14px 20px 18px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 16px; display: flex; flex-direction: column; gap: 14px;">
+      <div style="display: flex; align-items: flex-end; gap: 10px;">
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+          <span style="font-size: 12px; color: var(--muted);">งานที่ส่งสำเร็จ 7 วัน</span>
+          <span class="dsp" style="font-size: 22px; font-weight: 700;">86 งาน</span>
+        </span>
+        <span style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 10px; border-radius: 999px; background: var(--green-soft); color: var(--green-ink); font-size: 12px; font-weight: 700;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--green-ink);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"></path><path d="m6 11 6-6 6 6"></path></svg>9%</span>
+      </div>
+      <div style="display: flex; align-items: flex-end; gap: 8px;">
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex-grow: 1;">
+          <span style="width: 100%; height: 72px; border-radius: 8px; background: var(--sunken); display: flex; align-items: flex-end; overflow: hidden;"><span style="width: 100%; height: 62%; background: var(--brand); border-radius: 8px;"></span></span>
+          <span style="font-size: 11px; color: var(--muted);">จ</span>
+        </span>
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex-grow: 1;">
+          <span style="width: 100%; height: 72px; border-radius: 8px; background: var(--sunken); display: flex; align-items: flex-end; overflow: hidden;"><span style="width: 100%; height: 78%; background: var(--brand); border-radius: 8px;"></span></span>
+          <span style="font-size: 11px; color: var(--muted);">อ</span>
+        </span>
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex-grow: 1;">
+          <span style="width: 100%; height: 72px; border-radius: 8px; background: var(--sunken); display: flex; align-items: flex-end; overflow: hidden;"><span style="width: 100%; height: 55%; background: var(--brand); border-radius: 8px;"></span></span>
+          <span style="font-size: 11px; color: var(--muted);">พ</span>
+        </span>
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex-grow: 1;">
+          <span style="width: 100%; height: 72px; border-radius: 8px; background: var(--sunken); display: flex; align-items: flex-end; overflow: hidden;"><span style="width: 100%; height: 84%; background: var(--brand); border-radius: 8px;"></span></span>
+          <span style="font-size: 11px; color: var(--muted);">พฤ</span>
+        </span>
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex-grow: 1;">
+          <span style="width: 100%; height: 72px; border-radius: 8px; background: var(--sunken); display: flex; align-items: flex-end; overflow: hidden;"><span style="width: 100%; height: 100%; background: var(--brand); border-radius: 8px;"></span></span>
+          <span style="font-size: 11px; color: var(--muted);">ศ</span>
+        </span>
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex-grow: 1;">
+          <span style="width: 100%; height: 72px; border-radius: 8px; background: var(--sunken); display: flex; align-items: flex-end; overflow: hidden;"><span style="width: 100%; height: 92%; background: var(--brand); border-radius: 8px;"></span></span>
+          <span style="font-size: 11px; color: var(--muted);">ส</span>
+        </span>
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex-grow: 1;">
+          <span style="width: 100%; height: 72px; border-radius: 8px; background: var(--sunken); display: flex; align-items: flex-end; overflow: hidden;"><span style="width: 100%; height: 48%; background: var(--brand); border-radius: 8px;"></span></span>
+          <span style="font-size: 11px; color: var(--muted);">อา</span>
+        </span>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; padding-top: 2px;">
+      <h2 class="dsp" style="flex-grow: 1; font-size: 14px; font-weight: 700;">ตัวชี้วัด</h2>
+      
+    </div>
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: flex; flex-direction: column; gap: 14px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+          <span style="font-size: 13px; font-weight: 700;">อัตราการรับงาน</span>
+          <span style="font-size: 12px; color: var(--muted);">เป้าหมาย 90%</span>
+        </span>
+        <span class="dsp" style="font-size: 15px; font-weight: 700; color: var(--green-ink);">98%</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+          <span style="font-size: 13px; font-weight: 700;">อัตรายกเลิกงาน</span>
+          <span style="font-size: 12px; color: var(--muted);">ไม่ควรเกิน 5%</span>
+        </span>
+        <span class="dsp" style="font-size: 15px; font-weight: 700; color: var(--green-ink);">1.2%</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+          <span style="font-size: 13px; font-weight: 700;">ส่งตรงเวลา</span>
+          <span style="font-size: 12px; color: var(--muted);">เป้าหมาย 92%</span>
+        </span>
+        <span class="dsp" style="font-size: 15px; font-weight: 700; color: var(--green-ink);">96%</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+          <span style="font-size: 13px; font-weight: 700;">ตอบรับงานเฉลี่ย</span>
+          <span style="font-size: 12px; color: var(--muted);">ไม่ควรเกิน 20 วินาที</span>
+        </span>
+        <span class="dsp" style="font-size: 15px; font-weight: 700; color: var(--green-ink);">8 วินาที</span>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; padding-top: 2px;">
+      <h2 class="dsp" style="flex-grow: 1; font-size: 14px; font-weight: 700;">รีวิวล่าสุด</h2>
+      
+    </div>
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="display: inline-flex; gap: 2px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--brand);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 4.5 2.3 4.8 5.2.7-3.8 3.7.9 5.2-4.6-2.5-4.6 2.5.9-5.2L4.5 10l5.2-.7z"></path></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--brand);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 4.5 2.3 4.8 5.2.7-3.8 3.7.9 5.2-4.6-2.5-4.6 2.5.9-5.2L4.5 10l5.2-.7z"></path></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--brand);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 4.5 2.3 4.8 5.2.7-3.8 3.7.9 5.2-4.6-2.5-4.6 2.5.9-5.2L4.5 10l5.2-.7z"></path></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--brand);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 4.5 2.3 4.8 5.2.7-3.8 3.7.9 5.2-4.6-2.5-4.6 2.5.9-5.2L4.5 10l5.2-.7z"></path></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--brand);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 4.5 2.3 4.8 5.2.7-3.8 3.7.9 5.2-4.6-2.5-4.6 2.5.9-5.2L4.5 10l5.2-.7z"></path></svg></span>
+        <span style="flex-grow: 1; font-size: 12px; color: var(--muted);">#JD-2839 · เมื่อวาน</span>
+      </div>
+      <span style="font-size: 13px; line-height: 1.6;">ส่งไวมาก อาหารไม่หก โทรบอกก่อนถึงด้วย</span>
+    </div>
+  </div>
+</div></div><figcaption style="font:600 13px system-ui;color:#fff">Driver-Performance</figcaption></figure>
+<figure style="margin:0;display:flex;flex-direction:column;gap:10px;align-items:center"><div style="border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35)"><div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--paper); overflow: hidden;">
+  <div style="flex-shrink: 0; padding: 18px 20px 20px; background: var(--hero2); color: var(--on-panel); display: flex; flex-direction: column; gap: 16px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <a href="Driver-Earnings.dc.html" aria-label="ย้อนกลับ" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px; border: 1px solid var(--panel-line); background: var(--panel-soft2); color: var(--on-panel); display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--on-panel);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+      <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+        <h1 class="dsp" style="font-size: 18px; font-weight: 700;">กระเป๋าเงิน</h1>
+        <span style="font-size: 12px; color: var(--panel-dim);">สมชาย ว.</span>
+      </span>
+    </div>
+    <div style="padding: 16px; border-radius: 18px; background: var(--panel-soft2); border: 1px solid var(--panel-line); display: flex; flex-direction: column; gap: 14px;">
+      <span style="display: flex; flex-direction: column; gap: 4px;">
+        <span style="font-size: 12px; color: var(--panel-dim);">ยอดเงินใน Wallet</span>
+        <span class="dsp" style="font-size: 28px; font-weight: 700;">฿2,486.50</span>
+      </span>
+      <div style="display: flex; gap: 10px;">
+        <a href="Driver-WalletWithdraw.dc.html" style="flex-grow: 1; min-height: 48px; border-radius: 14px; background: var(--brand); color: #123029; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center;">ถอนเงิน</a>
+        <a href="Driver-WalletTopup.dc.html" style="flex-grow: 1; min-height: 48px; border-radius: 14px; border: 1px solid var(--panel-line); background: var(--panel-soft); color: var(--on-panel); font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center;">เติมเงิน</a>
+      </div>
+    </div>
+  </div>
+  <div style="flex-grow: 1; min-height: 0; overflow: hidden; padding: 14px 20px 18px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; background: var(--brand-soft); border: 1px solid var(--brand-line);">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--brand-on-soft);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H17a2 2 0 0 1 2 2v1.5"></path><rect x="4" y="8.5" width="16" height="10.5" rx="2.4"></rect><circle cx="16" cy="13.8" r="1.2"></circle></svg>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+        <span style="font-size: 13px; font-weight: 700; color: var(--brand-on-soft);">เงินสดในมือที่ต้องนำส่ง</span>
+        <span style="font-size: 12px; color: var(--brand-on-soft);">นำส่งที่จุดรับภายในสิ้นกะ</span>
+      </span>
+      <span class="dsp" style="font-size: 17px; font-weight: 700; color: var(--brand-on-soft);">฿640</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; padding-top: 2px;">
+      <h2 class="dsp" style="flex-grow: 1; font-size: 14px; font-weight: 700;">ประวัติธุรกรรม</h2>
+      <span style="font-size: 12px; color: var(--muted);">7 วันล่าสุด</span>
+    </div>
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: flex; flex-direction: column; gap: 14px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="width: 36px; height: 36px; flex-shrink: 0; border-radius: 12px; background: var(--sunken); display: flex; align-items: center; justify-content: center;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"></path><path d="m6 13 6 6 6-6"></path></svg></span>
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+          <span style="font-size: 13px; font-weight: 700;">ค่ารอบส่ง #JD-2841</span>
+          <span style="font-size: 12px; color: var(--muted);">วันนี้ 18:42</span>
+        </span>
+        <span class="dsp" style="font-size: 14px; font-weight: 700; color: var(--green-ink);">+฿48</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="width: 36px; height: 36px; flex-shrink: 0; border-radius: 12px; background: var(--sunken); display: flex; align-items: center; justify-content: center;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"></path><path d="m6 13 6 6 6-6"></path></svg></span>
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+          <span style="font-size: 13px; font-weight: 700;">ค่ารอบส่ง #JD-2840</span>
+          <span style="font-size: 12px; color: var(--muted);">วันนี้ 18:05</span>
+        </span>
+        <span class="dsp" style="font-size: 14px; font-weight: 700; color: var(--green-ink);">+฿55</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="width: 36px; height: 36px; flex-shrink: 0; border-radius: 12px; background: var(--sunken); display: flex; align-items: center; justify-content: center;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"></path><path d="m6 11 6-6 6 6"></path></svg></span>
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+          <span style="font-size: 13px; font-weight: 700;">นำส่งเงินสดในมือ</span>
+          <span style="font-size: 12px; color: var(--muted);">วันนี้ 17:30</span>
+        </span>
+        <span class="dsp" style="font-size: 14px; font-weight: 700; color: var(--text);">-฿320</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="width: 36px; height: 36px; flex-shrink: 0; border-radius: 12px; background: var(--sunken); display: flex; align-items: center; justify-content: center;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"></path><path d="m6 13 6 6 6-6"></path></svg></span>
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+          <span style="font-size: 13px; font-weight: 700;">โบนัสวิ่งครบ 20 งาน</span>
+          <span style="font-size: 12px; color: var(--muted);">เมื่อวาน 21:10</span>
+        </span>
+        <span class="dsp" style="font-size: 14px; font-weight: 700; color: var(--green-ink);">+฿150</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="width: 36px; height: 36px; flex-shrink: 0; border-radius: 12px; background: var(--sunken); display: flex; align-items: center; justify-content: center;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"></path><path d="m6 11 6-6 6 6"></path></svg></span>
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+          <span style="font-size: 13px; font-weight: 700;">ถอนเข้าบัญชีกรุงไทย</span>
+          <span style="font-size: 12px; color: var(--muted);">18 ก.ย. 2569</span>
+        </span>
+        <span class="dsp" style="font-size: 14px; font-weight: 700; color: var(--text);">-฿1,500</span>
+      </div>
+    </div>
+  </div>
+  <nav style="flex-shrink: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 8px 12px 18px; background: var(--surface); border-top: 1px solid var(--line);">
+    <a href="Driver-Home.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--muted); font-size: 11px; font-weight: 600;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 11 8-6.5 8 6.5"></path><path d="M6.5 9.8V19.5h11V9.8"></path></svg>หน้าแรก</a>
+    <a href="Driver-Job.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--muted); font-size: 11px; font-weight: 600;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-5.3 7-11a7 7 0 1 0-14 0c0 5.7 7 11 7 11z"></path><circle cx="12" cy="10" r="2.6"></circle></svg>งานปัจจุบัน</a>
+    <span aria-current="page" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--link); font-size: 11px; font-weight: 700;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--link);" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V12"></path><path d="M12 20V5"></path><path d="M19 20v-6"></path></svg>รายได้</span>
+    <a href="Driver-Profile.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--muted); font-size: 11px; font-weight: 600;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"></circle><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"></path></svg>บัญชี</a>
+  </nav>
+</div></div><figcaption style="font:600 13px system-ui;color:#fff">Driver-Wallet</figcaption></figure>
+<figure style="margin:0;display:flex;flex-direction:column;gap:10px;align-items:center"><div style="border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35)"><div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--paper); overflow: hidden;">
+  <div style="flex-shrink: 0; display: flex; align-items: center; gap: 12px; padding: 16px 16px 14px; background: var(--surface); border-bottom: 1px solid var(--line);">
+    <a href="Driver-Wallet.dc.html" aria-label="ย้อนกลับ" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px; border: 1px solid var(--line); color: var(--text); display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+    <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+      <h1 class="dsp" style="font-size: 17px; font-weight: 700;">เติมเงินเข้า Wallet</h1>
+      <span style="font-size: 12px; color: var(--muted);">ยอดปัจจุบัน ฿2,486.50</span>
+    </span>
+    
+  </div>
+  <div style="flex-grow: 1; min-height: 0; overflow: hidden; padding: 14px 20px 18px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <span style="font-size: 12px; font-weight: 600; color: var(--muted);">เลือกจำนวน</span>
+      <div style="display: flex; gap: 10px;">
+      <label style="flex-grow: 1; min-height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 14px; font-weight: 700;"><input type="radio" name="amt"  class="vh">฿300</label>
+      <label style="flex-grow: 1; min-height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 14px; border: 1px solid var(--brand-line); background: var(--brand-soft); color: var(--brand-on-soft); font-size: 14px; font-weight: 700;"><input type="radio" name="amt" checked class="vh">฿500</label>
+      <label style="flex-grow: 1; min-height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 14px; font-weight: 700;"><input type="radio" name="amt"  class="vh">฿1,000</label>
+      <label style="flex-grow: 1; min-height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 14px; font-weight: 700;"><input type="radio" name="amt"  class="vh">฿2,000</label>
+      </div>
+    </div>
+    <label for="amount" style="display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 12px; font-weight: 600; color: var(--muted);">หรือระบุจำนวนเอง (บาท)</span>
+      <input id="amount" type="number" value="500" style="min-height: 48px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 14px; padding: 0 14px;">
+    </label>
+    <div style="display: flex; align-items: center; gap: 10px; padding-top: 2px;">
+      <h2 class="dsp" style="flex-grow: 1; font-size: 14px; font-weight: 700;">ช่องทางชำระ</h2>
+      
+    </div>
+    <label style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 16px; border: 1px solid var(--brand-line); background: var(--brand-soft);">
+      <input type="radio" name="pay" checked style="margin: 0;">
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700; color: var(--brand-on-soft);">พร้อมเพย์ / QR</span>
+        <span style="font-size: 12px; color: var(--brand-on-soft);">เงินเข้าทันทีหลังชำระ</span>
+      </span>
+    </label>
+    <label style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface);">
+      <input type="radio" name="pay" style="margin: 0;">
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">โอนผ่านธนาคาร</span>
+        <span style="font-size: 12px; color: var(--muted);">แนบสลิป รอตรวจสอบไม่เกิน 30 นาที</span>
+      </span>
+    </label>
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="flex-grow: 1; font-size: 13px; color: var(--muted);">จำนวนที่เติม</span>
+        <span class="dsp" style="font-size: 14px; font-weight: 700;">฿500.00</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="flex-grow: 1; font-size: 13px; color: var(--muted);">ค่าธรรมเนียม</span>
+        <span class="dsp" style="font-size: 14px; font-weight: 700;">฿0.00</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding-top: 10px; border-top: 1px solid var(--line);">
+        <span style="flex-grow: 1; font-size: 13px; font-weight: 700;">ยอดชำระ</span>
+        <span class="dsp" style="font-size: 18px; font-weight: 700;">฿500.00</span>
+      </div>
+    </div>
+  </div>
+  <div style="flex-shrink: 0; padding: 12px 20px 20px; background: var(--surface); border-top: 1px solid var(--line); box-shadow: var(--sh-sheet); display: flex; flex-direction: column; gap: 10px;">
+    <a href="Driver-Wallet.dc.html" style="min-height: 52px; border-radius: 16px; background: var(--cta); color: var(--on-cta); font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center;">ดำเนินการชำระเงิน</a>
+  </div>
+</div></div><figcaption style="font:600 13px system-ui;color:#fff">Driver-WalletTopup</figcaption></figure>
+<figure style="margin:0;display:flex;flex-direction:column;gap:10px;align-items:center"><div style="border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35)"><div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--paper); overflow: hidden;">
+  <div style="flex-shrink: 0; display: flex; align-items: center; gap: 12px; padding: 16px 16px 14px; background: var(--surface); border-bottom: 1px solid var(--line);">
+    <a href="Driver-Wallet.dc.html" aria-label="ย้อนกลับ" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px; border: 1px solid var(--line); color: var(--text); display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+    <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+      <h1 class="dsp" style="font-size: 17px; font-weight: 700;">ถอนเงินจาก Wallet</h1>
+      <span style="font-size: 12px; color: var(--muted);">ถอนได้ ฿2,486.50</span>
+    </span>
+    
+  </div>
+  <div style="flex-grow: 1; min-height: 0; overflow: hidden; padding: 14px 20px 18px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 16px; display: flex; flex-direction: column; gap: 10px;">
+      <span style="font-size: 12px; color: var(--muted);">จำนวนที่ต้องการถอน</span>
+      <label for="wd" class="vh">จำนวนเงินที่ถอน (บาท)</label>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span class="dsp" style="font-size: 26px; font-weight: 700;">฿</span>
+        <input id="wd" type="number" value="2000" style="flex-grow: 1; min-width: 0; min-height: 52px; border: 0; outline: none; background: transparent; font-family: 'IBM Plex Sans Thai', sans-serif; font-size: 26px; font-weight: 700; color: var(--text);">
+        <button type="button" style="min-height: 44px; padding: 0 13px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--link); font-size: 13px; font-weight: 700;">ถอนทั้งหมด</button>
+      </div>
+      <span style="font-size: 12px; color: var(--muted);">ถอนขั้นต่ำ ฿300 · สูงสุด ฿2,486.50</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; padding-top: 2px;">
+      <h2 class="dsp" style="flex-grow: 1; font-size: 14px; font-weight: 700;">บัญชีรับเงิน</h2>
+      
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line);">
+      <span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 13px; background: var(--teal-soft); display: flex; align-items: center; justify-content: center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--teal-ink);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H17a2 2 0 0 1 2 2v1.5"></path><rect x="4" y="8.5" width="16" height="10.5" rx="2.4"></rect><circle cx="16" cy="13.8" r="1.2"></circle></svg></span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">ธนาคารกรุงไทย · 403-0-98765-4</span>
+        <span style="font-size: 12px; color: var(--muted);">สมชาย ว.</span>
+      </span>
+      <a href="Driver-Profile.dc.html" style="min-height: 44px; display: inline-flex; align-items: center; font-size: 12px; font-weight: 700;">เปลี่ยน</a>
+    </div>
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="flex-grow: 1; font-size: 13px; color: var(--muted);">จำนวนที่ถอน</span>
+        <span class="dsp" style="font-size: 14px; font-weight: 700;">฿2,000.00</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="flex-grow: 1; font-size: 13px; color: var(--muted);">ค่าธรรมเนียมโอน</span>
+        <span class="dsp" style="font-size: 14px; font-weight: 700;">฿15.00</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding-top: 10px; border-top: 1px solid var(--line);">
+        <span style="flex-grow: 1; font-size: 13px; font-weight: 700;">ยอดที่จะได้รับ</span>
+        <span class="dsp" style="font-size: 18px; font-weight: 700;">฿1,985.00</span>
+      </div>
+    </div>
+    <div style="display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 16px; background: var(--sunken); border: 1px solid var(--line);">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 7.6V12l3 1.8"></path></svg>
+      <span style="font-size: 12px; color: var(--muted); line-height: 1.5;">คำขอถอนจะขึ้นสถานะรออนุมัติ ทีมงานโอนให้ภายใน 1 วันทำการ</span>
+    </div>
+  </div>
+  <div style="flex-shrink: 0; padding: 12px 20px 20px; background: var(--surface); border-top: 1px solid var(--line); box-shadow: var(--sh-sheet); display: flex; flex-direction: column; gap: 10px;">
+    <a href="Driver-Wallet.dc.html" style="min-height: 52px; border-radius: 16px; background: var(--cta); color: var(--on-cta); font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center;">ส่งคำขอถอนเงิน</a>
+  </div>
+</div></div><figcaption style="font:600 13px system-ui;color:#fff">Driver-WalletWithdraw</figcaption></figure>
+<figure style="margin:0;display:flex;flex-direction:column;gap:10px;align-items:center"><div style="border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35)"><div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--paper); overflow: hidden;">
+  <div style="flex-shrink: 0; display: flex; align-items: center; gap: 12px; padding: 16px 16px 14px; background: var(--surface); border-bottom: 1px solid var(--line);">
+    <a href="Driver-Profile.dc.html" aria-label="ย้อนกลับ" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px; border: 1px solid var(--line); color: var(--text); display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+    <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+      <h1 class="dsp" style="font-size: 17px; font-weight: 700;">ประเภทงานที่รับ</h1>
+      <span style="font-size: 12px; color: var(--muted);">เลือกได้มากกว่า 1 ประเภท</span>
+    </span>
+    
+  </div>
+  <div style="flex-grow: 1; min-height: 0; overflow: hidden; padding: 14px 20px 18px; display: flex; flex-direction: column; gap: 12px;">
+    <button type="button" role="switch" aria-checked="true" style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); color: var(--text); text-align: left;">
+      <span style="width: 38px; height: 38px; flex-shrink: 0; border-radius: 12px; background: var(--sunken); display: flex; align-items: center; justify-content: center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h12v17l-3-1.8-3 1.8-3-1.8-3 1.8z"></path><path d="M9.5 9h5"></path><path d="M9.5 13h5"></path></svg></span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">ส่งอาหาร</span>
+        <span style="font-size: 12px; color: var(--muted);">ออเดอร์จากร้านในระบบ</span>
+      </span>
+      <span style="width: 50px; height: 30px; border-radius: 999px; background: var(--green-fill); padding: 3px; display: flex; justify-content: flex-end; align-items: center; flex-shrink: 0;"><span style="width: 24px; height: 24px; border-radius: 999px; background: var(--knob);"></span></span>
+    </button>
+    <button type="button" role="switch" aria-checked="true" style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); color: var(--text); text-align: left;">
+      <span style="width: 38px; height: 38px; flex-shrink: 0; border-radius: 12px; background: var(--sunken); display: flex; align-items: center; justify-content: center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="16.5" r="3.2"></circle><circle cx="18" cy="16.5" r="3.2"></circle><path d="M6 16.5 10 8h4l2 8.5"></path><path d="M13.5 8h3.5"></path></svg></span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">เรียกรถ (มอเตอร์ไซค์)</span>
+        <span style="font-size: 12px; color: var(--muted);">รับส่งผู้โดยสาร</span>
+      </span>
+      <span style="width: 50px; height: 30px; border-radius: 999px; background: var(--green-fill); padding: 3px; display: flex; justify-content: flex-end; align-items: center; flex-shrink: 0;"><span style="width: 24px; height: 24px; border-radius: 999px; background: var(--knob);"></span></span>
+    </button>
+    <button type="button" role="switch" aria-checked="false" style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); color: var(--text); text-align: left;">
+      <span style="width: 38px; height: 38px; flex-shrink: 0; border-radius: 12px; background: var(--sunken); display: flex; align-items: center; justify-content: center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 16v-3l2-5h11l2 5v3"></path><path d="M4.5 16h15v2.5h-3V16"></path><path d="M7.5 18.5V16"></path><circle cx="8" cy="13" r="1"></circle><circle cx="16" cy="13" r="1"></circle></svg></span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">เรียกรถ (รถยนต์)</span>
+        <span style="font-size: 12px; color: var(--muted);">ต้องยืนยันทะเบียนรถยนต์ก่อน</span>
+      </span>
+      <span style="width: 50px; height: 30px; border-radius: 999px; background: var(--off-track); padding: 3px; display: flex; justify-content: flex-start; align-items: center; flex-shrink: 0;"><span style="width: 24px; height: 24px; border-radius: 999px; background: var(--knob);"></span></span>
+    </button>
+    <button type="button" role="switch" aria-checked="true" style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); color: var(--text); text-align: left;">
+      <span style="width: 38px; height: 38px; flex-shrink: 0; border-radius: 12px; background: var(--sunken); display: flex; align-items: center; justify-content: center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.5 8 4v9l-8 4-8-4v-9z"></path><path d="m4 7.5 8 4 8-4"></path><path d="M12 11.5v9"></path></svg></span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">ส่งพัสดุ</span>
+        <span style="font-size: 12px; color: var(--muted);">พัสดุขนาดไม่เกิน 10 กก.</span>
+      </span>
+      <span style="width: 50px; height: 30px; border-radius: 999px; background: var(--green-fill); padding: 3px; display: flex; justify-content: flex-end; align-items: center; flex-shrink: 0;"><span style="width: 24px; height: 24px; border-radius: 999px; background: var(--knob);"></span></span>
+    </button>
+    <button type="button" role="switch" aria-checked="false" style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); color: var(--text); text-align: left;">
+      <span style="width: 38px; height: 38px; flex-shrink: 0; border-radius: 12px; background: var(--sunken); display: flex; align-items: center; justify-content: center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2.6"></rect><circle cx="12" cy="14" r="3.9"></circle></svg></span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">รับส่งผ้าซักรีด</span>
+        <span style="font-size: 12px; color: var(--muted);">รับผ้าจากลูกค้าไปร้าน และส่งคืน</span>
+      </span>
+      <span style="width: 50px; height: 30px; border-radius: 999px; background: var(--off-track); padding: 3px; display: flex; justify-content: flex-start; align-items: center; flex-shrink: 0;"><span style="width: 24px; height: 24px; border-radius: 999px; background: var(--knob);"></span></span>
+    </button>
+    <div style="display: flex; align-items: center; gap: 10px; padding-top: 2px;">
+      <h2 class="dsp" style="flex-grow: 1; font-size: 14px; font-weight: 700;">ระยะทางที่รับงาน</h2>
+      
+    </div>
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="flex-grow: 1; font-size: 13px; color: var(--muted);">รับงานไกลสุด</span>
+        <span class="dsp" style="font-size: 16px; font-weight: 700;">8 กม.</span>
+      </div>
+      <label for="dist" class="vh">ระยะทางไกลสุดที่รับงาน</label>
+      <input id="dist" type="range" min="2" max="15" value="8" style="width: 100%; accent-color: var(--cta);">
+      <span style="font-size: 12px; color: var(--muted); line-height: 1.5;">ยิ่งรับงานไกล โอกาสได้งานยิ่งมาก แต่ค่าน้ำมันสูงขึ้น</span>
+    </div>
+    <button type="button" role="switch" aria-checked="true" style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); color: var(--text); text-align: left;">
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">รับงานเก็บเงินปลายทาง</span>
+        <span style="font-size: 12px; color: var(--muted);">ต้องมีเงินสดสำรองในมือ</span>
+      </span>
+      <span style="width: 50px; height: 30px; border-radius: 999px; background: var(--green-fill); padding: 3px; display: flex; justify-content: flex-end; align-items: center; flex-shrink: 0;"><span style="width: 24px; height: 24px; border-radius: 999px; background: var(--knob);"></span></span>
+    </button>
+  </div>
+  <div style="flex-shrink: 0; padding: 12px 20px 20px; background: var(--surface); border-top: 1px solid var(--line); box-shadow: var(--sh-sheet); display: flex; flex-direction: column; gap: 10px;">
+    <a href="Driver-Profile.dc.html" style="min-height: 52px; border-radius: 16px; background: var(--cta); color: var(--on-cta); font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center;">บันทึกการตั้งค่า</a>
+  </div>
+</div></div><figcaption style="font:600 13px system-ui;color:#fff">Driver-ServiceTypes</figcaption></figure>
+<figure style="margin:0;display:flex;flex-direction:column;gap:10px;align-items:center"><div style="border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35)"><div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--paper); overflow: hidden;">
+  <div style="flex-shrink: 0; padding: 18px 20px 20px; background: var(--hero2); color: var(--on-panel); display: flex; flex-direction: column; gap: 16px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <a href="Driver-Home.dc.html" aria-label="ย้อนกลับ" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px; border: 1px solid var(--panel-line); background: var(--panel-soft2); color: var(--on-panel); display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--on-panel);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+      <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+        <h1 class="dsp" style="font-size: 18px; font-weight: 700;">โปรไฟล์</h1>
+        
+      </span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <span class="dsp" style="width: 56px; height: 56px; flex-shrink: 0; border-radius: 999px; background: var(--panel-soft3); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700;">สว</span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+        <span class="dsp" style="font-size: 18px; font-weight: 700;">สมชาย ว.</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--brand-hi);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--brand-hi);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 4.5 2.3 4.8 5.2.7-3.8 3.7.9 5.2-4.6-2.5-4.6 2.5.9-5.2L4.5 10l5.2-.7z"></path></svg>4.92 · 1,842 งาน</span>
+        <span style="font-size: 12px; color: var(--panel-dim);">มอเตอร์ไซค์ · กข 1234 ขอนแก่น</span>
+      </span>
+      <span style="padding: 6px 11px; border-radius: 999px; background: var(--green-panel); border: 1px solid var(--green-panel-line); color: var(--green-on-panel); font-size: 11px; font-weight: 700; flex-shrink: 0;">ยืนยันแล้ว</span>
+    </div>
+  </div>
+  <div style="flex-grow: 1; min-height: 0; overflow: hidden; padding: 14px 20px 18px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-card); padding: 14px 16px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;">
+      <span style="display: flex; flex-direction: column; gap: 3px;"><span class="dsp" style="font-size: 17px; font-weight: 700;">฿2,486</span><span style="font-size: 11px; color: var(--muted);">ใน Wallet</span></span>
+      <span style="display: flex; flex-direction: column; gap: 3px;"><span class="dsp" style="font-size: 17px; font-weight: 700;">฿640</span><span style="font-size: 11px; color: var(--muted);">เงินสดในมือ</span></span>
+      <span style="display: flex; flex-direction: column; gap: 3px;"><span class="dsp" style="font-size: 17px; font-weight: 700;">86</span><span style="font-size: 11px; color: var(--muted);">งาน 7 วัน</span></span>
+    </div>
+    <a href="Driver-Wallet.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); color: var(--text);">
+      <span style="width: 38px; height: 38px; flex-shrink: 0; border-radius: 12px; background: var(--sunken); display: flex; align-items: center; justify-content: center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H17a2 2 0 0 1 2 2v1.5"></path><rect x="4" y="8.5" width="16" height="10.5" rx="2.4"></rect><circle cx="16" cy="13.8" r="1.2"></circle></svg></span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">กระเป๋าเงิน</span>
+        <span style="font-size: 12px; color: var(--muted);">ถอนเงิน เติมเงิน ประวัติธุรกรรม</span>
+      </span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+    </a>
+    <a href="Driver-Performance.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); color: var(--text);">
+      <span style="width: 38px; height: 38px; flex-shrink: 0; border-radius: 12px; background: var(--sunken); display: flex; align-items: center; justify-content: center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V12"></path><path d="M12 20V5"></path><path d="M19 20v-6"></path></svg></span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">สถิติและคะแนน</span>
+        <span style="font-size: 12px; color: var(--muted);">4.92 · รับงาน 98%</span>
+      </span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+    </a>
+    <a href="Driver-Shift.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); color: var(--text);">
+      <span style="width: 38px; height: 38px; flex-shrink: 0; border-radius: 12px; background: var(--sunken); display: flex; align-items: center; justify-content: center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 7.6V12l3 1.8"></path></svg></span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">กะทำงาน</span>
+        <span style="font-size: 12px; color: var(--muted);">จองแล้ว 3 กะ</span>
+      </span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+    </a>
+    <a href="Driver-ServiceTypes.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); color: var(--text);">
+      <span style="width: 38px; height: 38px; flex-shrink: 0; border-radius: 12px; background: var(--sunken); display: flex; align-items: center; justify-content: center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 4 8 4-8 4-8-4z"></path><path d="m4 12.5 8 4 8-4"></path></svg></span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">ประเภทงานที่รับ</span>
+        <span style="font-size: 12px; color: var(--muted);">อาหาร · มอเตอร์ไซค์ · พัสดุ</span>
+      </span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+    </a>
+    <a href="#documents" style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); color: var(--text);">
+      <span style="width: 38px; height: 38px; flex-shrink: 0; border-radius: 12px; background: var(--sunken); display: flex; align-items: center; justify-content: center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--text);" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-11A.5.5 0 0 1 6 20V4a.5.5 0 0 1 .5-.5z"></path><path d="M14 3.5V8h4"></path></svg></span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-size: 14px; font-weight: 700;">เอกสารและใบอนุญาต</span>
+        <span style="font-size: 12px; color: var(--muted);">ใบขับขี่ · ทะเบียนรถ · พ.ร.บ.</span>
+      </span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+    </a>
+    <button type="button" style="min-height: 50px; border-radius: 16px; border: 1px solid var(--danger-line); background: var(--surface); color: var(--danger); font-size: 14px; font-weight: 700;">ออกจากระบบ</button>
+  </div>
+  <nav style="flex-shrink: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 8px 12px 18px; background: var(--surface); border-top: 1px solid var(--line);">
+    <a href="Driver-Home.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--muted); font-size: 11px; font-weight: 600;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 11 8-6.5 8 6.5"></path><path d="M6.5 9.8V19.5h11V9.8"></path></svg>หน้าแรก</a>
+    <a href="Driver-Job.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--muted); font-size: 11px; font-weight: 600;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-5.3 7-11a7 7 0 1 0-14 0c0 5.7 7 11 7 11z"></path><circle cx="12" cy="10" r="2.6"></circle></svg>งานปัจจุบัน</a>
+    <a href="Driver-Earnings.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--muted); font-size: 11px; font-weight: 600;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--muted);" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V12"></path><path d="M12 20V5"></path><path d="M19 20v-6"></path></svg>รายได้</a>
+    <span aria-current="page" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; color: var(--link); font-size: 11px; font-weight: 700;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--link);" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"></circle><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"></path></svg>บัญชี</span>
+  </nav>
+</div></div><figcaption style="font:600 13px system-ui;color:#fff">Driver-Profile</figcaption></figure>
+</body></html>

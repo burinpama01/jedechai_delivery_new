@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สรุปแผนงานทั้งหมด — Master Plan Summary v1</title>
+<style>
+  :root { --ink:#1a2332; --sub:#5a6a80; --line:#e3e8f0; --bg:#f7f9fc; --card:#ffffff;
+    --red:#c0392b; --red-bg:#fdecea; --amber:#b9770e; --amber-bg:#fef6e0;
+    --green:#1e8449; --green-bg:#e9f7ef; --blue:#1f618d; --blue-bg:#eaf2f8;
+    --purple:#6c3483; --purple-bg:#f4ecf9; }
+  * { box-sizing:border-box; }
+  body { font-family:'Segoe UI',Tahoma,'Noto Sans Thai',sans-serif; color:var(--ink);
+    background:var(--bg); margin:0; line-height:1.65; }
+  .wrap { max-width:1040px; margin:0 auto; padding:32px 20px 80px; }
+  header.hero { background:linear-gradient(135deg,#1a5276,#1f618d); color:#fff;
+    border-radius:16px; padding:30px 32px; margin-bottom:26px; }
+  header.hero h1 { margin:0 0 8px; font-size:25px; }
+  header.hero p { margin:4px 0; opacity:.92; font-size:14px; }
+  h2 { font-size:20px; margin:40px 0 12px; padding-bottom:8px; border-bottom:2px solid var(--line); }
+  h3 { font-size:16px; margin:20px 0 8px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:18px 20px; margin:14px 0; }
+  table { width:100%; border-collapse:collapse; margin:12px 0; font-size:13px; }
+  th { background:#eef2f7; text-align:left; padding:8px 10px; border:1px solid var(--line); }
+  td { padding:7px 10px; border:1px solid var(--line); vertical-align:top; }
+  .tag { display:inline-block; padding:2px 9px; border-radius:999px; font-size:11.5px; font-weight:600; white-space:nowrap; }
+  .t-red { background:var(--red-bg); color:var(--red); }
+  .t-amber { background:var(--amber-bg); color:var(--amber); }
+  .t-green { background:var(--green-bg); color:var(--green); }
+  .t-blue { background:var(--blue-bg); color:var(--blue); }
+  .t-purple { background:var(--purple-bg); color:var(--purple); }
+  .t-grey { background:#eef1f5; color:#5a6a80; }
+  code { background:#eef2f7; padding:1px 6px; border-radius:6px; font-size:12.5px;
+    font-family:Consolas,'Courier New',monospace; }
+  .note { border-left:4px solid var(--blue); background:var(--blue-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  .ok { border-left:4px solid var(--green); background:var(--green-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  .danger { border-left:4px solid var(--red); background:var(--red-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  ul { margin:8px 0; padding-left:22px; } li { margin:5px 0; }
+  .small { color:var(--sub); font-size:12.5px; }
+  .batch { border-radius:14px; padding:18px 20px; margin:14px 0; border:1px solid var(--line);
+    background:#fff; border-left:6px solid #1a5276; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>🗺️ สรุปแผนงานทั้งหมด — งานที่เสร็จ / รายงานวิเคราะห์ / แผนค้าง / ลำดับที่แนะนำ</h1>
+  <p>เวอร์ชัน 1 · 20 กันยายน 2569 · รวมจากการทำงาน 19 ก.ย. ทั้งวัน (บัค 3 ตัว + รายงานวิเคราะห์ 4 ฉบับ + แผน 3 ชุด)</p>
+</header>
+
+<h2>1) งานที่เสร็จและขึ้น production แล้ว (19 ก.ย.)</h2>
+<table>
+<tr><th>งาน</th><th>สถานะ</th><th>รายละเอียด</th></tr>
+<tr><td>ออเดอร์ใหม่ไม่ขึ้นหน้าแรก (ISSUE-20260919-001)</td><td><span class="tag t-green">resolved-production</span></td><td>root cause: <code>bookings</code> ไม่อยู่ realtime publication + polling ถูกลบตั้งแต่ 12 พ.ค. — migration 20260919230000 deploy แล้ว · แอปเดิมได้ fix ทันที (user ยืนยันผ่าน)</td></tr>
+<tr><td>ยกเลิกออเดอร์ไม่ได้ hmac 42883 (ISSUE-20260919-002)</td><td><span class="tag t-green">resolved-production</span></td><td>trigger StoreOS ไม่ pin search_path ใต้ RPC ที่ pin — migration 20260919231000 deploy แล้ว + E2E rollback verify ผ่าน</td></tr>
+<tr><td>Dark mode หน้ายกเลิก + resume-refresh หน้าแรก (ISSUE-20260919-003)</td><td><span class="tag t-amber">รอ build</span></td><td>commit <code>09c79d1</code> push แล้ว — รอ Codemagic build 1.10.1+118 แล้ว retest บน iPad</td></tr>
+<tr><td>Regression suite ใหม่</td><td><span class="tag t-green">ใช้งาน</span></td><td>smoke 3 ไฟล์ 9 tests + fixture parse 114 แถว (mask PII แล้ว) — ทั้งหมดผ่าน</td></tr>
+</table>
+<div class="danger"><b>action ค้างของผู้ใช้:</b> ① ยกเลิกออเดอร์ค้าง <code>10db36a6</code> จาก iPad ได้เลย (fix ขึ้นแล้ว) · ② รอ build เสร็จ retest dark mode · ③ สลิปเติมเงิน/LINE notify ตามเดิม</div>
+
+<h2>2) รายงานวิเคราะห์ 4 ฉบับ (docs/)</h2>
+<table>
+<tr><th>เอกสาร</th><th>พบหลัก (ID)</th><th>ข้อสรุปสำคัญสุด</th></tr>
+<tr><td><b>StoreOS_Trigger_Impact_Analysis_v1</b></td><td>F2–F5, F8–F9</td><td>วงจร sync ผ่านครบ · <b>F2</b> ยกเลิกแล้ว POS ไม่รู้เมื่อ origin ค้าง storeos · F3 POS รับออเดอร์ใหม่ไม่ได้ (ไม่มี inbound order.created)</td></tr>
+<tr><td><b>Price_Display_and_GP_Impact_Analysis_v1</b></td><td>P1–P3, G1–G4</td><td>เงินลงตัวทางบัญชี · <b>P1</b> ปัดเลขต่างกัน 1 บาทระหว่างจอ · <b>G1</b> GP rate เปลี่ยน post-order (พิสูจน์แล้ว) · <b>G2</b> GP คำนวณฝั่ง client</td></tr>
+<tr><td><b>Coupon_System_Analysis_v1</b></td><td>C1–C7</td><td><b>C1/G3 เกิดจริงแล้ว</b>: free delivery บนเงินสด คนขับแบกส่วนลดทั้งก้อน (ออเดอร์ 25 พ.ค. พิสูจน์) · C2 คูปองไหม้ตอนยกเลิก 6 ครั้ง · C3 client ส่งจำนวนส่วนลดเอง</td></tr>
+<tr><td><b>Wallet_System_Analysis_v1</b></td><td>W1–W6</td><td><b>W2</b> policy เปิดให้ตั้งยอดกระเป๋าตัวเองผ่าน API · <b>W1</b> wallet payment ของ food/ride/parcel เป็นท่อตัน (เงินลูกค้าหายเงียบ คนขับไม่มีทางได้) · W4 เงินทดสอบ ~฿1 ล้านปนอยู่</td></tr>
+</table>
+
+<h2>3) แผนค้าง 3 ชุด (Plan/) — ทุกแผนตัดสินใจครบ รออนุมัติเริ่ม</h2>
+<table>
+<tr><th>แผน</th><th>สถานะ</th><th>ขอบเขต</th><th>สิ่งที่รอ</th></tr>
+<tr><td><b>StoreOS_Pricing_Unified_Fix_Plan_v1</b> (4 phase)</td><td>Planning</td><td>P1 จอราคาตรงกัน · P2 = F2+G2 เงินปลอดภัย · P3 = G1/G4/P3 ข้อมูล+audit · P4 = G3/F4/F5/F8 นโยบาย</td><td>decision จุดเดียว: complete ใช้ GP rate วันสั่ง (แนะนำ) หรือวันจบ</td></tr>
+<tr><td><b>Coupon_Discount_Policy_Implementation_Plan_v1</b></td><td>Planning — <span class="tag t-green">decision ครบ</span></td><td>A ชดเชยส่วนลดเข้า wallet คนขับ+แจ้งเตือน (นโยบายผู้ใช้) · B คืนคูปองตอนยกเลิก · C server คำนวณส่วนลด · D แก้ TZ 7 ชม.</td><td>อนุมัติเริ่ม (open question W1 มีคำตอบแล้วจากรายงาน wallet)</td></tr>
+<tr><td><b>Referral_Wallet_Promotion_Plan_v2</b></td><td>Planning — <span class="tag t-green">decision ครบ</span></td><td>ชวนรับเงิน 3 สถานการณ์ + ขั้นบันได (20/25/30) + wallet 2 ถัง + ถอน min 100/200 + manual approve + hold</td><td>อนุมัติเริ่ม</td></tr>
+</table>
+
+<h2>4) แผนที่จุดบรรจบ — ทำรวมกันที่ไหนได้บ้าง</h2>
+<div class="note">
+สามแผนมาบรรจบกันที่ <b>3 จุด</b> ใน DB — ควรรวม migration ตามจุดเหล่านี้เพื่อไม่แตะฟังก์ชันเดิมซ้ำ:
+<ul>
+  <li><b><code>cancel_wallet_booking_with_refund</code> + admin force-cancel:</b> F2 (เซ็ต status_origin) + C2 (คืนคูปอง) — แก้พร้อมกันใน migration เดียว</li>
+  <li><b><code>complete_booking</code>:</b> G2 (GP server-side) + ข้อ A แผนคูปอง (ชดเชยส่วนลด) + W1 (เครดิตคนขับออเดอร์ wallet)</li>
+  <li><b>wallet RPCs (topup/deduct):</b> ถังเงิน 2 ใบของแผน referral + type ใหม่ coupon_compensation — แก้ครั้งเดียวรองรับทุกแผน</li>
+</ul>
+</div>
+
+<h2>5) ลำดับการทำที่แนะนำ (รวมทุกแผนเป็น Batch)</h2>
+
+<div class="batch"><h3>Batch 0 — ปิดช่องโหว่ + ทำความสะอาดเงิน (เร็ว ทำก่อนเปิดโปรโมชั่น) <span class="tag t-red">เร่ง</span></h3>
+<ul>
+  <li>W2: DROP policy เขียนตรงบน wallets/wallet_transactions + <b>policy "Allow all" ของ bookings</b> (security ค้างจากการสอบสวนวันแรก — ยังไม่ได้อยู่ในแผนไหน ผนวกเข้าตรงนี้)</li>
+  <li>W4: ย้อนเงินทดสอบ admin_adjustment +฿977,620 (จำเป็นก่อนตั้งถัง wallet)</li>
+  <li>W3: ซ่อม 3 กระเป๋า balance≠ledger · W5: E2E ถอน 1 รอบ</li>
+</ul></div>
+
+<div class="batch"><h3>Batch 1 — เงินปลอดภัย (migration เดียวจบ 3 เรื่อง)</h3>
+<ul>
+  <li>complete_booking: G2 GP server-side + ชดเชยคูปอง (แผนคูปอง A) + W1 เครดิตคนขับ wallet-order (job_payout)</li>
+  <li>cancel RPC: F2 status_origin + C2 คืนคูปอง</li>
+  <li>ทดสอบ E2E rollback ครบทุกสถานการณ์</li>
+</ul></div>
+
+<div class="batch"><h3>Batch 2 — จอราคาตรงกัน (แอปเท่านั้น)</h3>
+<ul><li>unified P1: unify การปัดทุกจอ (P1/P2) + แผนคูปอง D แก้ timezone คูปอง (C4)</li></ul></div>
+
+<div class="batch"><h3>Batch 3 — โปรโมชั่น Referral Wallet (v2 พร้อมเลย)</h3>
+<ul><li>Phase 1 migration (ถัง 2 ใบ/ขั้นบันได/trigger จ่าย/withdraw hold) → Phase 2 แอป → Phase 3 admin-web</li></ul></div>
+
+<div class="batch"><h3>Batch 4 — ข้อมูลครบ ตรวจย้อนได้</h3>
+<ul><li>unified P3: G1 snapshot GP rate ตอนสั่ง + audit + G4 เติมคอลัมน์สรุป + P3 coupon ใน webhook StoreOS</li></ul></div>
+
+<div class="batch"><h3>Batch 5 — นโยบาย/ขยาย (ทำเมื่อพร้อม)</h3>
+<ul><li>unified P4 (F4 delivery log, F5 per-merchant, F8 shop status) · C5 UX ดัน wallet coupon · F3 รับออเดอร์ทาง POS (แผนแยก) · W6 กระเป๋าร้านค้า</li></ul></div>
+
+<h2>6) ทะเบียน issue ทั้งหมด (รวมสถานะปัจจุบัน)</h2>
+<table>
+<tr><th>ID</th><th>เรื่อง</th><th>สถานะ</th><th>อยู่ที่</th></tr>
+<tr><td>ISSUE-20260919-001</td><td>ออเดอร์ใหม่ไม่ขึ้นหน้าแรก</td><td><span class="tag t-green">resolved-production</span></td><td>—</td></tr>
+<tr><td>ISSUE-20260919-002</td><td>ยกเลิกไม่ได้ (hmac 42883)</td><td><span class="tag t-green">resolved-production</span></td><td>—</td></tr>
+<tr><td>ISSUE-20260919-003</td><td>Dark mode หน้ายกเลิก</td><td><span class="tag t-amber">รอ build/retest</span></td><td>commit 09c79d1</td></tr>
+<tr><td>F2</td><td>ยกเลิกแล้ว POS ไม่รู้</td><td><span class="tag t-blue">วางแผน</span></td><td>Batch 1</td></tr>
+<tr><td>G2 / C7</td><td>GP คำนวณฝั่ง client</td><td><span class="tag t-blue">วางแผน</span></td><td>Batch 1</td></tr>
+<tr><td>C1 = G3</td><td>คนขับแบกส่วนลด (เกิดจริงแล้ว)</td><td><span class="tag t-blue">วางแผน — มีนโยบายแล้ว</span></td><td>Batch 1</td></tr>
+<tr><td>C2</td><td>คูปองไหม้ตอนยกเลิก</td><td><span class="tag t-blue">วางแผน</span></td><td>Batch 1</td></tr>
+<tr><td>W1</td><td>Wallet payment food/ride/parcel ท่อตัน</td><td><span class="tag t-blue">วางแผน</span></td><td>Batch 1</td></tr>
+<tr><td>C3</td><td>Server คำนวณส่วนลด</td><td><span class="tag t-blue">วางแผน</span></td><td>Batch 1–2 (RPC ใน migration เดียวกับ cancel)</td></tr>
+<tr><td>P1 / P2</td><td>ปัดเลขต่างกันระหว่างจอ</td><td><span class="tag t-blue">วางแผน</span></td><td>Batch 2</td></tr>
+<tr><td>C4</td><td>Timezone คูปอง 7 ชม.</td><td><span class="tag t-blue">วางแผน</span></td><td>Batch 2</td></tr>
+<tr><td>W2</td><td>Policy ตั้งยอดกระเป๋าเอง + bookings Allow-all</td><td><span class="tag t-red">เปิดอยู่ — เร่ง</span></td><td>Batch 0</td></tr>
+<tr><td>W3 / W4 / W5</td><td>Reconcile / เงินทดสอบ / E2E ถอน</td><td><span class="tag t-blue">วางแผน</span></td><td>Batch 0</td></tr>
+<tr><td>G1 / G4 / P3</td><td>Snapshot GP / คอลัมน์สรุป / coupon ใน webhook</td><td><span class="tag t-blue">วางแผน</span></td><td>Batch 4</td></tr>
+<tr><td>Referral Wallet v2</td><td>โปรโมชั่นชวน + ขั้นบันได + 2 ถัง + ถอน</td><td><span class="tag t-purple">วางแผน — decision ครบ</span></td><td>Batch 3</td></tr>
+<tr><td>F3 / F4 / F5 / F8 / C5 / W6</td><td>ขยาย/นโยบาย/UX</td><td><span class="tag t-grey">รอเวลา</span></td><td>Batch 5 / แผนแยก</td></tr>
+</table>
+
+<div class="ok"><b>สรุปบรรทัดเดียว:</b> แก้บัคหลัก 3 ตัวขึ้น production แล้ว · วิเคราะห์ครบ 4 ระบบ (StoreOS / ราคา-GP / คูปอง / Wallet) · แผนพร้อม execute 3 ชุด โดยเสนอรวมเป็น 6 Batch ตามความเร่ง — <b>จุดเริ่มที่แนะนำ: Batch 0 (ปิด policy เปิดวาง + เคลียร์เงินทดสอบ) แล้วต่อ Batch 1 (migration เดียวจบเรื่องเงิน 3 ข้อ)</b></div>
+<div class="note"><b>เอกสารทั้งหมด:</b> รายงาน 4 ฉบับใน docs/ · แผน 3 ชุดใน Plan/ (unified v1, coupon v1, referral v2) · log ครบใน Obsidian (log.md 11 ตอน, issue-index, log-index, current.md)</div>
+
+</div>
+</body>
+</html>

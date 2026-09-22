@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StoreOS Trigger — รายงานวิเคราะห์จุดกระทบ v1</title>
+<style>
+  :root { --ink:#1a2332; --sub:#5a6a80; --line:#e3e8f0; --bg:#f7f9fc; --card:#ffffff;
+    --red:#c0392b; --red-bg:#fdecea; --amber:#b9770e; --amber-bg:#fef6e0;
+    --green:#1e8449; --green-bg:#e9f7ef; --blue:#1f618d; --blue-bg:#eaf2f8; }
+  * { box-sizing:border-box; }
+  body { font-family:'Segoe UI',Tahoma,'Noto Sans Thai',sans-serif; color:var(--ink);
+    background:var(--bg); margin:0; line-height:1.65; }
+  .wrap { max-width:960px; margin:0 auto; padding:32px 20px 80px; }
+  header.hero { background:linear-gradient(135deg,#1f618d,#2874a6); color:#fff;
+    border-radius:16px; padding:28px 30px; margin-bottom:28px; }
+  header.hero h1 { margin:0 0 6px; font-size:26px; }
+  header.hero p { margin:4px 0; opacity:.92; font-size:14px; }
+  h2 { font-size:20px; margin:38px 0 12px; padding-bottom:8px; border-bottom:2px solid var(--line); }
+  h3 { font-size:16px; margin:22px 0 8px; color:var(--blue); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:18px 20px; margin:14px 0; }
+  table { width:100%; border-collapse:collapse; margin:12px 0; font-size:13.5px; }
+  th { background:#eef2f7; text-align:left; padding:9px 10px; border:1px solid var(--line); }
+  td { padding:8px 10px; border:1px solid var(--line); vertical-align:top; }
+  .tag { display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; font-weight:600; white-space:nowrap; }
+  .t-red { background:var(--red-bg); color:var(--red); }
+  .t-amber { background:var(--amber-bg); color:var(--amber); }
+  .t-green { background:var(--green-bg); color:var(--green); }
+  .t-blue { background:var(--blue-bg); color:var(--blue); }
+  code { background:#eef2f7; padding:1px 6px; border-radius:6px; font-size:12.5px;
+    font-family:Consolas,'Courier New',monospace; }
+  .flow { background:#0f1b2d; color:#d7e3f4; border-radius:12px; padding:16px 18px;
+    font-family:Consolas,monospace; font-size:12.5px; line-height:1.8; overflow-x:auto; white-space:pre; }
+  .flow b { color:#ffd479; }
+  .note { border-left:4px solid var(--blue); background:var(--blue-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  .danger { border-left:4px solid var(--red); background:var(--red-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  .ok { border-left:4px solid var(--green); background:var(--green-bg);
+    padding:12px 16px; border-radius:0 10px 10px 0; margin:14px 0; font-size:14px; }
+  ul { margin:8px 0; padding-left:22px; }
+  li { margin:4px 0; }
+  .small { color:var(--sub); font-size:12.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>🛵 StoreOS Connect Trigger — รายงานวิเคราะห์จุดกระทบ</h1>
+  <p>เวอร์ชัน 1 · 19 กันยายน 2569 · หลัง fix วันเดียวกัน (realtime publication + trigger search_path)</p>
+  <p>ขอบเขต: วงจร sync ออเดอร์อาหารระหว่าง JDC ↔ StoreOS ใน 3 รูปแบบการใช้งาน — ใช้ POS อย่างเดียว / ใช้แอป JDC อย่างเดียว / ใช้ร่วมกันในวันเดียว</p>
+</header>
+
+<h2>1) สถาปัตยกรรมปัจจุบัน (As-Is)</h2>
+<div class="card">
+<p><b>Outbound (JDC → StoreOS)</b> — trigger 2 ตัวบน Postgres ยิง webhook ผ่าน <code>net.http_post</code> (fire-and-forget):</p>
+<ul>
+  <li><code>trg_notify_storeos_order_created</code> (บน <code>booking_items</code> INSERT) → หัวข้อ <b>order.created</b> พร้อมรายการอาหาร + commission (GP) — กันยิงซ้ำด้วย <code>pos_order_created_at</code></li>
+  <li><code>trg_notify_storeos_order</code> (บน <code>bookings</code> INSERT / UPDATE OF status) → หัวข้อ <b>order.status</b> — เฉพาะออเดอร์ <code>food</code>, ข้ามถ้าสถานะไม่เปลี่ยน, <b>ข้ามถ้า <code>status_origin='storeos'</code></b> (กัน echo loop)</li>
+</ul>
+<p><b>Inbound (StoreOS → JDC)</b> — Edge Functions 3 ตัว, ทุกตัวตรวจ Connection Key + HMAC + timestamp (±5 นาที) + dedup <code>event_id</code> (ซ้ำ → 409):</p>
+<ul>
+  <li><code>connect_upsert_menu</code> — แก้เมนู/option บน POS แล้ว sync เข้า JDC</li>
+  <li><code>connect_set_shop_status</code> — เปิด/ปิดร้านจาก POS (<code>profiles.shop_status</code>)</li>
+  <li><code>connect_update_order_status</code> — รับได้เฉพาะ <code>preparing</code> / <code>ready_for_pickup</code>; <code>ready</code> วิ่งเข้า <code>mark_food_ready_guarded</code> (logic เดียวกับปุ่ม "อาหารพร้อม" ในแอป) + optimistic lock (เลขสถานะไม่ตรง → 409)</li>
+</ul>
+<p><b>ตัวกำกับทิศทาง (echo governor)</b> — คอลัมน์ <code>status_origin</code>: ทุก inbound ตั้งเป็น <code>'storeos'</code> (trigger ขาออกจะเงียบ), <code>accept_booking</code>/<code>complete_booking</code> รีเซ็ตเป็น <code>'jdc'</code> (ฝั่งคนขับเป็นเจ้าของสถานะใหม่ → แจ้ง POS ต่อได้)</p>
+</div>
+
+<div class="flow">ออเดอร์ 1 ใบในวันที่ใช้ร่วมกัน (กรณ์จริง 16 ก.ย.)
+
+ ลูกค้าสั่งในแอป ──► bookings(pending_merchant) ──► <b>order.created → POS</b>
+ ร้านกด POS: preparing ──► inbound ──► bookings(preparing, origin=storeos) ──► ✕ ไม่ echo
+ ร้านกด POS: พร้อม ──► mark_food_ready_guarded(origin=storeos) ──► ✕ ไม่ echo / แจ้งคนขับ
+ คนขับรับงาน ──► accept_booking ──► bookings(driver_accepted, origin=<b>jdc</b>) ──► <b>order.status → POS</b>
+ คนขับส่งเสร็จ ──► complete_booking(origin=<b>jdc</b>) ──► <b>order.status → POS</b>
+ ลูกค้ายกเลิก ──► cancel_wallet_booking_with_refund ──► bookings(cancelled, origin ค้างเดิม!)</div>
+
+<h2>2) สถานการณ์ A — วันที่ใช้แอป JDC อย่างเดียว</h2>
+<div class="ok">
+<b>ผลลัพธ์: ผ่านทุกขั้น (หลัง fix 19 ก.ย.)</b> — POS ทำหน้าที่เป็น "จอแสดงออเดอร์" ของร้าน: ทุกการเปลี่ยนสถานะจากฝั่งแอป (ร้านรับ / คนขับรับ / ส่งเสร็จ / ลูกค้ายกเลิก) ถูก push ไป POS ครบ เพราะ origin เป็น <code>jdc</code>/NULL เสมอ
+</div>
+<ul>
+  <li>ก่อน fix 19 ก.ย.: <span class="tag t-red">พัง</span> <b>ลูกค้ายกเลิกไม่ได้</b> (hmac 42883 ใต้ RPC ที่ pin search_path) และ <b>แอดมิน force-cancel ก็พังด้วยเหตุผลเดียวกัน</b> (ยังไม่เคยชนเพราะไม่มีใคร force-cancel ออเดอร์ food ตอน connection active)</li>
+  <li>การจ่ายด้วย Wallet <span class="tag t-green">ไม่กระทบ</span> — RPC แตะแค่ <code>payment_method</code> ไม่ใช่ <code>status</code> trigger ไม่ยิง</li>
+  <li>Laundry/parcel/ride <span class="tag t-green">ไม่กระทบ</span> — trigger ออกทันทีถ้าไม่ใช่ <code>food</code></li>
+</ul>
+
+<h2>3) สถานการณ์ B — วันที่ใช้ StoreOS เป็นหลัก</h2>
+<div class="card">
+<p><b>สิ่งที่ทำได้จาก POS:</b> ดูออเดอร์เข้าแบบเรียลไทม์ · กด <code>preparing</code>/<code>พร้อมส่งมอบ</code> · แก้เมนู · เปิด/ปิดร้าน — ทั้งหมด sync เข้า JDC ถูกต้อง (มี dedup + optimistic lock กันกดซ้ำ/ชนกัน)</p>
+</div>
+<div class="danger">
+<b>ข้อจำกัดเชิงสถาปัตยกรรม (F3): รับออเดอร์ "ใหม่" ทาง POS ไม่ได้</b> — ไม่มี inbound <code>order.created</code> จาก StoreOS (<code>connect_update_order_status</code> ตอบ 404 ถ้าไม่มี booking) ออเดอร์ทุกใบต้องเกิดที่แอป JDC เท่านั้น ถ้าร้านรับสายโทรเข้าแล้วพิมพ์เข้า POS เอง JDC จะไม่รู้จักออเดอร์นั้น → ไม่มีคนขับรับงาน → ต้องมีใครสั่งซ้ำผ่านแอป JDC เสมอ
+</div>
+
+<h2>4) สถานการณ์ C — วันที่ใช้ร่วมกัน (สลับกันจับ)</h2>
+<div class="ok"><b>วงจรหลักผ่านครบ</b> — พิสูจน์ด้วยข้อมูลจริง 16 ก.ย.: inbound 3 events (08:16–08:18) + คนขับรับ/ส่งสำเร็จ + POS ได้รับทุก order.status จากฝั่ง JDC</div>
+
+<h3>4.1 จุดชนที่ออกแบบไว้ดีแล้ว (กันชนได้)</h3>
+<table>
+<tr><th>จุดชน</th><th>กลไกป้องกัน</th><th>ผลลัพธ์</th></tr>
+<tr><td>กด "อาหารพร้อม" ในแอป กับกด ready บน POS พร้อมกัน</td><td>สองทางใช้ <code>mark_food_ready_guarded</code> เดียวกัน + <code>FOR UPDATE</code> + เช็คสถานะก่อนเปลี่ยน</td><td>ฝั่งหลังได้ no_op/409 — idempotent ไม่พัง</td></tr>
+<tr><td>StoreOS ยิง webhook ซ้ำ (retry)</td><td><code>event_id</code> unique + ตรวจ timestamp ±5 นาที</td><td>ซ้ำได้รับ 409 Duplicate — สถานะไม่เพี้ยน</td></tr>
+<tr><td>POS เปลี่ยนสถานะ แล้ว JDC เปลี่ยนตาม วนกลับไป POS วนไม่รู้จบ</td><td><code>status_origin</code> governor (inbound ติดธง storeos → ขาออกเงียบ; คนขับรับ/จบ รีเซ็ต jdc)</td><td>ไม่เกิด echo loop</td></tr>
+<tr><td>สถานะบน POS ล้ำหน้า JDC (เช่น ยืนยันก่อนร้านกดในแอป)</td><td>transitions map เข้ม: จาก <code>pending_merchant/accepted</code> → <code>preparing</code> เท่านั้น</td><td>ทะเลาะกันไม่ได้ 409 พร้อมบอกสถานะปัจจุบัน</td></tr>
+</table>
+
+<h3>4.2 จุดกระทบคงเหลือ (ยังเปิด)</h3>
+<table>
+<tr><th>#</th><th>จุดกระทบ</th><th>ความรุนแรง</th><th>รายละเอียด</th></tr>
+<tr>
+  <td><b>F2</b></td>
+  <td><b>ยกเลิกออเดอร์แล้ว POS ไม่รู้</b> (เมื่อ origin ค้าง <code>storeos</code>)</td>
+  <td><span class="tag t-red">สูง</span></td>
+  <td><code>cancel_wallet_booking_with_refund</code> และ <code>admin_force_cancel_booking_with_wallet_refund</code> <b>ไม่เซ็ต <code>status_origin</code></b> → ถ้าการเปลี่ยนสถานะล่าสุดมาจาก POS (เช่น ร้านกด preparing) origin จะค้าง <code>storeos</code> → ขาออกเงียบ → <b>POS ยังโชว์ออเดอร์เป็นงานมีชีวิต ทั้งที่ JDC ยกเลิกไปแล้ว</b> (ร้านอาจทำอาหารเปล่า)</td>
+</tr>
+<tr>
+  <td><b>F4</b></td>
+  <td><b>Outbound fire-and-forget ไม่มี retry / delivery log</b></td>
+  <td><span class="tag t-amber">กลาง</span></td>
+  <td><code>net.http_post</code> ไม่มีการบันทึกผลส่ง — StoreOS ล่ม/เน็ตหลุดช่วงใด event นั้นหายเงียบ ไม่มีใครรู้จากฝั่ง JDC (คิว pg_net ปัจจุบัน = 0 คือถูก drain หมด แต่ "ถูกยิงทิ้ง" ไม่เท่ากับ "StoreOS ได้รับ")</td>
+</tr>
+<tr>
+  <td><b>F5</b></td>
+  <td><b>Connection เป็น system-wide → ออเดอร์ทุกร้านไป POS</b></td>
+  <td><span class="tag t-amber">กลาง</span></td>
+  <td>เงื่อนไขคือ <code>merchant_id IS NULL</code> (system-wide) → ออเดอร์อาหารของ<b>ทุกร้าน</b>ในระบบถูก push ไป StoreOS ด้วย <code>merchant_id</code> ของตัวเอง — ร้านที่ StoreOS ไม่รู้จักต้องถูกฝั่ง StoreOS ignore เอง ถ้าไม่ ignore จะเกิดออเดอร์ขยะใน POS</td>
+</tr>
+<tr>
+  <td><b>F8</b></td>
+  <td><b>เปิด/ปิดร้านสองทาง last-write-wins</b></td>
+  <td><span class="tag t-amber">ต่ำ-กลาง</span></td>
+  <td>POS ตั้ง <code>shop_status</code> ได้ แอป merchant ก็ตั้งได้ — ไม่มี sync สถานะปัจจุบันกลับไปฝั่งตรงข้าม สองจออาจโชว์สถานะต่างกันชั่วคราวจนกว่าจะมีคนกดใหม่</td>
+</tr>
+<tr>
+  <td><b>F9</b></td>
+  <td><b>115 ออเดอร์เก่า origin=NULL</b></td>
+  <td><span class="tag t-blue">ต่ำ</span></td>
+  <td>ออเดอร์ก่อนมีคอลัมน์ <code>status_origin</code> เป็น NULL → ขาออกยิงปกติ (NULL ≠ 'storeos') — พฤติกรรมถูกต้อง แค่บันทึกไว้ให้เข้าใจตรงกัน</td>
+</tr>
+</table>
+
+<h2>5) สิ่งที่ถูกแก้แล้ววันนี้ (19 ก.ย.) และเกี่ยวกับ StoreOS trigger โดยตรง</h2>
+<div class="card">
+<table>
+<tr><th>Fix</th><th>ก่อนแก้</th><th>หลังแก้</th></tr>
+<tr><td><b>search_path ของ trigger</b><br><code>20260919231000</code></td>
+  <td>RPC ที่ pin <code>search_path='public'</code> (customer cancel, admin force-cancel) เปลี่ยนสถานะ food → trigger เรียก <code>hmac()</code> ไม่เจอ → <b>42883 ทั้งธุรกรรม rollback</b> = ยกเลิกไม่ได้</td>
+  <td>trigger ทั้ง 2 ตัว pin <code>public, extensions</code> เอง — ปลอดภัยจากทุก caller ไม่ว่าจะ pin search_path แบบไหน (E2E verify ผ่าน)</td></tr>
+<tr><td><b>realtime publication</b><br><code>20260919230000</code></td>
+  <td>สถานะที่ POS ส่งเข้ามา (preparing/พร้อม) ขึ้นแอปลูกค้าแบบไม่สด ต้องปิดเปิดแอป</td>
+  <td>ลูกค้าเห็นสถานะจาก POS แบบ realtime ทันที — <b>ผลพลอยได้: วงจร mixed-day ปลายทางลูกค้ากลับมา live ด้วย</b></td></tr>
+</table>
+<p class="small">RPC ที่ยัง pin search_path และแตะ <code>bookings.status</code>: <code>cancel_wallet_booking_with_refund</code>, <code>admin_force_cancel_booking_with_wallet_refund</code> — ปลอดภัยแล้วเพราะแก้ที่ตัว trigger (แก้ที่ต้นน้ำครอบคลุมทุก caller) · Laundry RPCs pin อยู่แต่ trigger ออกก่อนถึง hmac สำหรับ non-food → ไม่เคยกระทบ</p>
+</div>
+
+<h2>6) ข้อเสนอแนะ (ยังไม่ได้แก้ — รอผู้ใช้ตัดสินใจ)</h2>
+<div class="card">
+<ol>
+  <li><b>ปิดช่อง F2 (แนะนำทำก่อน):</b> เพิ่ม <code>status_origin='jdc'</code> ใน UPDATE ของ <code>cancel_wallet_booking_with_refund</code> และ <code>admin_force_cancel_booking_with_wallet_refund</code> — บรรทัดเดียวต่อฟังก์ชัน ผล: ทุกการยกเลิกจากฝั่ง JDC บอก POS เสมอ ไม่ว่า origin เดิมจะเป็นอะไร</li>
+  <li><b>ลด F4:</b> เก็บ log outbound event ลงตาราง (หรืออ่านจาก <code>net.http_request_queue</code> ช่วงสั้นๆ) + มีหน้า admin ดู "event ล่าสุดที่ยิงไป StoreOS" เพื่อสังเกตุว่า sync ตายตอนไหน — ไม่จำเป็นต้อง retry engine เต็มรูปแบบในเฟสนี้</li>
+  <li><b>กัน F5 ระดับ data:</b> เพิ่มตาราง mapping ร้าน JDC ↔ ร้าน StoreOS แล้วให้ trigger push เฉพาะร้านที่ลงทะเบียน (เปลี่ยนจาก system-wide เป็น per-merchant) — ทำเมื่อมีร้านเข้าใช้จริงมากกว่า 1-2 ร้าน</li>
+  <li><b>F3 (รับออเดอร์ทาง POS):</b> ถ้าธุรกิจต้องการ ต้องเพิ่ม inbound <code>order.created</code> + การ map เมนู/ลูกค้า walk-in — เป็น feature ใหม่ ไม่ใช่ bug fix ควรทำเป็นแผนแยก</li>
+  <li><b>ทดสอบประจำ:</b> เพิ่ม E2E สถานการณ์ C (POS preparing → cancel → เช็คว่า POS ได้รับ cancelled) เข้า smoke ทันทีที่ทำข้อ 1</li>
+</ol>
+</div>
+
+<div class="note">
+<b>ที่มาของข้อมูล:</b> โค้ด migrations 20260630055943 / 20260630093000 / 20260702150000 / 20260704090000 · Edge Functions connect_* · ข้อมูลจริงบน production (pos_connections 1 แถว system-wide active, pos_webhook_events 88 events, คิว pg_net = 0, food bookings: NULL 115 / jdc 4 / storeos 1) · E2E rollback verify 19 ก.ย.
+</div>
+
+</div>
+</body>
+</html>

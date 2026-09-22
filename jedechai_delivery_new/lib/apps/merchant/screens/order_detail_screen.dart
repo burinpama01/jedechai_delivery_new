@@ -4,7 +4,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:jedechai_delivery_new/theme/app_theme.dart';
+import '../../../theme/jdc_colors.dart';
+import '../../../theme/jdc_layout.dart';
 import '../../../common/services/notification_sender.dart';
 import '../../../common/services/auth_service.dart';
 import '../../../common/services/booking_service.dart';
@@ -66,7 +67,11 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
     _currentOrder = widget.order;
 
     if (widget.loadRemoteData) {
-      _fetchOrderItems();
+      // loader อ้าง AppLocalizations.of(context) ในเส้นทาง error
+      // จึงต้องรอให้ initState จบก่อน ไม่งั้นชน assertion ของ Flutter
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _fetchOrderItems();
+      });
       _fetchGpRate();
       _fetchDriverInfo();
       _fetchCustomerInfo();
@@ -392,7 +397,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)!.orderDetailAccepted),
-            backgroundColor: Colors.green,
+            backgroundColor: JdcColors.of(context).successFill,
             duration: const Duration(seconds: 2),
           ),
         );
@@ -406,7 +411,8 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            icon: const Icon(Icons.error_outline, color: Colors.red, size: 48),
+            icon: Icon(Icons.error_outline,
+                color: JdcColors.of(ctx).danger, size: 48),
             title: Text(AppLocalizations.of(context)!.orderDetailAcceptFailed),
             content: Text(AppLocalizations.of(context)!
                 .orderDetailAcceptError(e.toString())),
@@ -463,7 +469,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)!.orderDetailDeclined),
-            backgroundColor: Colors.orange,
+            backgroundColor: JdcColors.of(context).danger,
             duration: const Duration(seconds: 2),
           ),
         );
@@ -474,7 +480,8 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            icon: const Icon(Icons.error_outline, color: Colors.red, size: 48),
+            icon: Icon(Icons.error_outline,
+                color: JdcColors.of(ctx).danger, size: 48),
             title: Text(AppLocalizations.of(context)!.orderDetailDeclineFailed),
             content: Text(AppLocalizations.of(context)!
                 .orderDetailDeclineError(e.toString())),
@@ -511,7 +518,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context)!.orderDetailChatError),
-          backgroundColor: Theme.of(context).colorScheme.error,
+          backgroundColor: JdcColors.of(context).danger,
         ),
       );
       return;
@@ -529,7 +536,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context)!.orderDetailChatError),
-          backgroundColor: Theme.of(context).colorScheme.error,
+          backgroundColor: JdcColors.of(context).danger,
         ),
       );
       return;
@@ -540,7 +547,8 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
         builder: (_) => ChatScreen(
           bookingId: bookingId,
           chatRoomId: room.id,
-          otherPartyName: 'ลูกค้า',
+          otherPartyName:
+              AppLocalizations.of(context)!.orderDetailCustomerDefault,
           roomType: 'merchant_order',
         ),
       ),
@@ -588,7 +596,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
             content: Text(result.pendingDriverArrival
                 ? pendingDriverArrivalText
                 : foodReadyText),
-            backgroundColor: Colors.green,
+            backgroundColor: JdcColors.of(context).successFill,
             duration: const Duration(seconds: 2),
           ),
         );
@@ -604,7 +612,8 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            icon: const Icon(Icons.error_outline, color: Colors.red, size: 48),
+            icon: Icon(Icons.error_outline,
+                color: JdcColors.of(ctx).danger, size: 48),
             title: Text(AppLocalizations.of(context)!.orderDetailUpdateFailed),
             content: Text(AppLocalizations.of(context)!
                 .orderDetailUpdateError(e.toString())),
@@ -670,10 +679,11 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
     final notes = order['notes'] as String? ?? '';
     final paymentMethod = order['payment_method'] as String? ?? 'cash';
     final hasDriver = driverId != null && driverId.isNotEmpty;
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
+    final tones = _statusTones(jdc, status);
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: jdc.paper,
       appBar: AppBar(
         title: Text(
           AppLocalizations.of(context)!.orderDetailTitle(
@@ -687,141 +697,135 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
             onPressed: _openCustomerChat,
           ),
         ],
-        backgroundColor: colorScheme.surface,
+        backgroundColor: jdc.surface,
         elevation: 0,
-        foregroundColor: colorScheme.onSurface,
+        scrolledUnderElevation: 0,
+        foregroundColor: jdc.text,
       ),
       body: _isLoading
-          ? const Center(
+          ? Center(
               child: CircularProgressIndicator(
-                valueColor:
-                    AlwaysStoppedAnimation<Color>(AppTheme.accentOrange),
+                valueColor: AlwaysStoppedAnimation<Color>(jdc.brand),
               ),
             )
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Status Card
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(status).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: _getStatusColor(status).withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Icon(
-                          _getStatusIcon(status),
-                          color: _getStatusColor(status),
-                          size: 32,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _getStatusText(status),
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: _getStatusColor(status),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Customer Info Card
-                  if (_customerName != null || _customerPhone != null)
+              padding: const EdgeInsets.symmetric(vertical: JdcSpacing.lg),
+              child: JdcContentFrame(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Status Card — โทนตามสถานะแบบ artboard
+                    // (ออเดอร์ใหม่ = brand-soft เน้นทอง)
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(JdcSpacing.lg),
                       decoration: BoxDecoration(
-                        color: Colors.blue[50],
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.blue[200]!),
+                        color: tones.bg,
+                        borderRadius: BorderRadius.circular(JdcRadius.card),
+                        border: Border.all(color: tones.border),
                       ),
                       child: Row(
                         children: [
-                          CircleAvatar(
-                            radius: 20,
-                            backgroundColor: Colors.blue[100],
-                            child: const Icon(Icons.person, color: Colors.blue, size: 22),
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: jdc.surface,
+                              borderRadius:
+                                  BorderRadius.circular(JdcRadius.small),
+                            ),
+                            child: Icon(
+                              _getStatusIcon(status),
+                              color: tones.fg,
+                              size: 20,
+                            ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: JdcSpacing.md),
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (_customerName != null)
-                                  Text(_customerName!,
-                                      style: const TextStyle(
-                                          fontSize: 15, fontWeight: FontWeight.w600)),
-                                if (_customerPhone != null)
-                                  Text(_customerPhone!,
-                                      style: TextStyle(
-                                          fontSize: 13, color: colorScheme.onSurfaceVariant)),
-                              ],
+                            child: Text(
+                              _getStatusText(status),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: _jt(
+                                  fontSize: 17, color: tones.fg, weight: 700),
                             ),
                           ),
-                          if (_customerPhone != null)
-                            Material(
-                              color: Colors.green,
-                              shape: const CircleBorder(),
-                              child: InkWell(
-                                onTap: () async {
-                                  final uri = Uri.parse('tel:$_customerPhone');
-                                  if (await canLaunchUrl(uri)) await launchUrl(uri);
-                                },
-                                customBorder: const CircleBorder(),
-                                child: const Padding(
-                                  padding: EdgeInsets.all(8),
-                                  child: Icon(Icons.phone, size: 18, color: Colors.white),
-                                ),
-                              ),
-                            ),
                         ],
                       ),
                     ),
+                    const SizedBox(height: JdcSpacing.lg),
+
+                    // Customer Info Card
+                    if (_customerName != null || _customerPhone != null)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(JdcSpacing.lg),
+                        margin: const EdgeInsets.only(bottom: JdcSpacing.lg),
+                        decoration: BoxDecoration(
+                          color: jdc.infoSoft,
+                          borderRadius: BorderRadius.circular(JdcRadius.card),
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 20,
+                              backgroundColor: jdc.surface,
+                              child: Icon(Icons.person,
+                                  color: jdc.infoInk, size: 22),
+                            ),
+                            const SizedBox(width: JdcSpacing.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (_customerName != null)
+                                    Text(_customerName!,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: _jt(
+                                            fontSize: 15,
+                                            color: jdc.infoInk,
+                                            weight: 600)),
+                                  if (_customerPhone != null)
+                                    Text(_customerPhone!,
+                                        style: _jt(
+                                            fontSize: 13,
+                                            color: jdc.muted)),
+                                ],
+                              ),
+                            ),
+                            if (_customerPhone != null)
+                              Material(
+                                color: jdc.successFill,
+                                shape: const CircleBorder(),
+                                child: InkWell(
+                                  onTap: () async {
+                                    final uri = Uri.parse('tel:$_customerPhone');
+                                    if (await canLaunchUrl(uri)) {
+                                      await launchUrl(uri);
+                                    }
+                                  },
+                                  customBorder: const CircleBorder(),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8),
+                                    child: Icon(Icons.phone,
+                                        size: 18, color: jdc.onCta),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
 
                   // Order Info Card
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainer,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
+                  _surfaceCard(
+                    jdc,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Icon(Icons.receipt_long_outlined,
-                                color: colorScheme.onSurfaceVariant, size: 20),
-                            const SizedBox(width: 8),
-                            Text(
-                                AppLocalizations.of(context)!
-                                    .orderDetailOrderInfo,
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: colorScheme.onSurface)),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
+                        _cardTitle(jdc, Icons.receipt_long_outlined,
+                            AppLocalizations.of(context)!.orderDetailOrderInfo),
+                        const SizedBox(height: JdcSpacing.lg),
                         _buildInfoRow(
                           AppLocalizations.of(context)!.orderDetailOrderCode,
                           OrderCodeFormatter.formatByServiceType(
@@ -852,53 +856,34 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: JdcSpacing.lg),
 
                   // Financial Breakdown Card
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainer,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
+                  _surfaceCard(
+                    jdc,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Icon(Icons.monetization_on_outlined,
-                                color: colorScheme.onSurfaceVariant, size: 20),
-                            const SizedBox(width: 8),
-                            Text(
-                                AppLocalizations.of(context)!
-                                    .orderDetailPriceBreakdown,
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: colorScheme.onSurface)),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
+                        _cardTitle(
+                            jdc,
+                            Icons.monetization_on_outlined,
+                            AppLocalizations.of(context)!
+                                .orderDetailPriceBreakdown),
+                        const SizedBox(height: JdcSpacing.lg),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
                                 AppLocalizations.of(context)!
                                     .orderDetailSalesAmount,
-                                style: TextStyle(
-                                    fontSize: 14,
-                                    color: colorScheme.onSurfaceVariant)),
-                            Text(RoleAmountCalculator.formatBahtCeil(price),
-                                style: const TextStyle(
-                                    fontSize: 14, fontWeight: FontWeight.w600)),
+                                style: _jt(
+                                    fontSize: 13, color: jdc.muted)),
+                            Text(
+                                RoleAmountCalculator.formatBahtCeil(price),
+                                style: _jt(
+                                    fontSize: 13,
+                                    color: jdc.text,
+                                    weight: 600)),
                           ],
                         ),
                         const SizedBox(height: 6),
@@ -910,109 +895,107 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                                     .orderDetailGpDeduction(
                                         (_effectiveGpRate * 100)
                                             .toStringAsFixed(0)),
-                                style: TextStyle(
-                                    fontSize: 13, color: Colors.red[400])),
-                            Text('-฿${RoleAmountCalculator.formatMoney(gpAmount)}',
-                                style: TextStyle(
-                                    fontSize: 13, color: Colors.red[400])),
+                                style: _jt(
+                                    fontSize: 13, color: jdc.danger)),
+                            Text(
+                                '-฿${RoleAmountCalculator.formatMoney(gpAmount)}',
+                                style: _jt(
+                                    fontSize: 13, color: jdc.danger)),
                           ],
                         ),
-                        const Divider(height: 16),
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.green[50],
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
+                        Divider(
+                          height: JdcSpacing.lg,
+                          thickness: 1,
+                          color: jdc.line,
+                        ),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Expanded(
+                              child: Text(
                                   AppLocalizations.of(context)!
                                       .orderDetailNetReceived,
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
+                                  style: _jt(
                                       fontSize: 14,
-                                      color: Colors.green[800])),
-                              Text('฿${RoleAmountCalculator.formatMoney(merchantReceives)}',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18,
-                                      color: Colors.green[800])),
-                            ],
-                          ),
+                                      color: jdc.text,
+                                      weight: 700)),
+                            ),
+                            Text(
+                              '฿${RoleAmountCalculator.formatMoney(merchantReceives)}',
+                              style: _jt(
+                                  fontSize: 20,
+                                  color: jdc.text,
+                                  weight: 700),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Icon(Icons.info_outline, size: 15,
+                                color: jdc.muted),
+                            const SizedBox(width: JdcSpacing.sm),
+                            Expanded(
+                              child: Text(
+                                'โอนเข้ากระเป๋าร้านหลังส่งสำเร็จ',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style:
+                                    _jt(fontSize: 12, color: jdc.muted),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: JdcSpacing.lg),
 
                   // Address Card
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainer,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
+                  _surfaceCard(
+                    jdc,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Icon(Icons.location_on_outlined,
-                                color: colorScheme.onSurfaceVariant, size: 20),
-                            const SizedBox(width: 8),
-                            Text(
-                                AppLocalizations.of(context)!
-                                    .orderDetailDeliveryAddress,
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: colorScheme.onSurface)),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
+                        _cardTitle(
+                            jdc,
+                            Icons.location_on_outlined,
+                            AppLocalizations.of(context)!
+                                .orderDetailDeliveryAddress),
+                        const SizedBox(height: JdcSpacing.lg),
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(JdcSpacing.md),
                           decoration: BoxDecoration(
-                            color: colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(8),
+                            color: jdc.sunken,
+                            borderRadius:
+                                BorderRadius.circular(JdcRadius.small),
                           ),
                           child: Text(
                             _formatAddress(order['destination_address']),
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: colorScheme.onSurface,
-                            ),
+                            style: _jt(fontSize: 14, color: jdc.text),
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         if (notes.isNotEmpty &&
                             !notes.startsWith('สั่งอาหารจาก')) ...[
-                          const SizedBox(height: 12),
+                          const SizedBox(height: JdcSpacing.md),
                           Container(
                             width: double.infinity,
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(JdcSpacing.md),
                             decoration: BoxDecoration(
-                              color: Colors.amber[50],
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                  color: Colors.amber[300]!, width: 1.5),
+                              color: jdc.infoSoft,
+                              borderRadius:
+                                  BorderRadius.circular(JdcRadius.small),
                             ),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Icon(Icons.warning_amber_rounded,
-                                    size: 22, color: Colors.amber[800]),
-                                const SizedBox(width: 8),
+                                    size: 20, color: jdc.infoInk),
+                                const SizedBox(width: JdcSpacing.sm),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
@@ -1021,16 +1004,16 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                                       Text(
                                           AppLocalizations.of(context)!
                                               .orderDetailCustomerNote,
-                                          style: TextStyle(
+                                          style: _jt(
                                               fontSize: 12,
-                                              fontWeight: FontWeight.w700,
-                                              color: Colors.amber[900])),
+                                              color: jdc.infoInk,
+                                              weight: 700)),
                                       const SizedBox(height: 4),
                                       Text(notes,
-                                          style: TextStyle(
+                                          style: _jt(
                                               fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                              color: Colors.amber[900])),
+                                              color: jdc.infoInk,
+                                              weight: 600)),
                                     ],
                                   ),
                                 ),
@@ -1041,64 +1024,39 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: JdcSpacing.lg),
 
                   // Order Items Card
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainer,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
+                  _surfaceCard(
+                    jdc,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.restaurant_menu_outlined,
-                              color: colorScheme.onSurfaceVariant,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              AppLocalizations.of(context)!
-                                  .orderDetailFoodItems,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: colorScheme.onSurface,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
+                        _cardTitle(
+                            jdc,
+                            Icons.restaurant_menu_outlined,
+                            AppLocalizations.of(context)!
+                                .orderDetailFoodItems),
+                        const SizedBox(height: JdcSpacing.lg),
                         if (_error != null)
                           Container(
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(JdcSpacing.md),
                             decoration: BoxDecoration(
-                              color: Colors.red[50],
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.red[200]!),
+                              color: jdc.dangerSoft,
+                              borderRadius:
+                                  BorderRadius.circular(JdcRadius.small),
+                              border: Border.all(color: jdc.dangerLine),
                             ),
                             child: Row(
                               children: [
                                 Icon(Icons.error_outline,
-                                    color: Colors.red[600], size: 20),
-                                const SizedBox(width: 8),
+                                    color: jdc.danger, size: 20),
+                                const SizedBox(width: JdcSpacing.sm),
                                 Expanded(
                                   child: Text(
                                     _error!,
-                                    style: TextStyle(
-                                        color: Colors.red[600], fontSize: 14),
+                                    style: _jt(
+                                        fontSize: 14, color: jdc.dangerInk),
                                   ),
                                 ),
                               ],
@@ -1106,44 +1064,44 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                           )
                         else if (_orderItems.isEmpty)
                           Container(
-                            padding: const EdgeInsets.all(12),
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(JdcSpacing.md),
                             decoration: BoxDecoration(
-                              color: colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(8),
+                              color: jdc.sunken,
+                              borderRadius:
+                                  BorderRadius.circular(JdcRadius.small),
                             ),
                             child: Text(
                               AppLocalizations.of(context)!.orderDetailNoItems,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: colorScheme.onSurfaceVariant,
-                              ),
+                              style: _jt(fontSize: 14, color: jdc.muted),
                             ),
                           )
                         else
                           ..._orderItems.map((item) => Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.only(
+                                    bottom: JdcSpacing.md),
                                 child: Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
                                   children: [
                                     Container(
-                                      width: 40,
-                                      height: 40,
+                                      width: 32,
+                                      height: 32,
+                                      alignment: Alignment.center,
                                       decoration: BoxDecoration(
-                                        color: AppTheme.accentOrange
-                                            .withValues(alpha: 0.1),
-                                        borderRadius: BorderRadius.circular(8),
+                                        color: jdc.sunken,
+                                        borderRadius: BorderRadius.circular(
+                                            JdcRadius.small),
                                       ),
-                                      child: Center(
-                                        child: Text(
-                                          '${item['quantity'] ?? 1}',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppTheme.accentOrange,
-                                          ),
-                                        ),
+                                      child: Text(
+                                        '${item['quantity'] ?? 1}',
+                                        style: _jt(
+                                            fontSize: 13,
+                                            color: jdc.text,
+                                            weight: 700),
                                       ),
                                     ),
-                                    const SizedBox(width: 12),
+                                    const SizedBox(width: JdcSpacing.md),
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment:
@@ -1155,11 +1113,12 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                                                 item['menu_item']?['name'] ??
                                                 AppLocalizations.of(context)!
                                                     .orderDetailItemUnnamed,
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                              color: colorScheme.onSurface,
-                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: _jt(
+                                                fontSize: 14,
+                                                color: jdc.text,
+                                                weight: 700),
                                           ),
                                           if (item['quantity'] != null &&
                                               item['quantity'] != 1) ...[
@@ -1169,99 +1128,52 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                                                   .orderDetailQuantity(
                                                       item['quantity']
                                                           .toString()),
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: colorScheme
-                                                    .onSurfaceVariant,
-                                              ),
+                                              style: _jt(
+                                                  fontSize: 12,
+                                                  color: jdc.muted),
                                             ),
                                           ],
                                           if (_parseItemOptions(item)
                                               .isNotEmpty) ...[
-                                            const SizedBox(height: 4),
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 4),
-                                              decoration: BoxDecoration(
-                                                color: AppTheme.accentOrange
-                                                    .withValues(alpha: 0.1),
-                                                borderRadius:
-                                                    BorderRadius.circular(6),
-                                              ),
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    AppLocalizations.of(
-                                                            context)!
-                                                        .orderDetailOptions,
-                                                    style: TextStyle(
-                                                      fontSize: 10,
-                                                      color:
-                                                          AppTheme.accentOrange,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 2),
-                                                  ..._parseItemOptions(item)
-                                                      .map((option) {
-                                                    // 🛠️ Logic แกะข้อมูล: รองรับทั้งแบบ String และ JSON Map
-                                                    String optionName = '';
-
-                                                    if (option is Map) {
-                                                      // กรณีเป็น Object: {"name": "เส้นเล็ก", "price": 0}
-                                                      optionName = option[
-                                                              'name'] ??
-                                                          option['item_name'] ??
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              _parseItemOptions(item)
+                                                  .map((option) {
+                                                // แกะข้อมูล option: รองรับทั้ง String และ JSON Map
+                                                if (option is Map) {
+                                                  return (option['name'] ??
+                                                          option[
+                                                              'item_name'] ??
                                                           AppLocalizations.of(
                                                                   context)!
-                                                              .orderDetailOptionDefault;
-
-                                                      // (เสริม) ถ้าอยากโชว์ราคาเพิ่ม
-                                                      // final price = (option['price'] as num?)?.toDouble() ?? 0.0;
-                                                      // if (price > 0) optionName += ' (+฿$price)';
-                                                    } else {
-                                                      // กรณีเป็น String ธรรมดา
-                                                      optionName =
-                                                          option.toString();
-                                                    }
-
-                                                    return Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              top: 1),
-                                                      child: Text(
-                                                        '• $optionName',
-                                                        style: TextStyle(
-                                                          fontSize: 11,
-                                                          color: AppTheme
-                                                              .accentOrange
-                                                              .withValues(
-                                                                  alpha: 0.8),
-                                                          fontWeight:
-                                                              FontWeight.w500,
-                                                        ),
-                                                      ),
-                                                    );
-                                                  }),
-                                                ],
-                                              ),
+                                                              .orderDetailOptionDefault)
+                                                      .toString();
+                                                }
+                                                return option.toString();
+                                              }).join(' · '),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: _jt(
+                                                  fontSize: 12,
+                                                  color: jdc.muted),
                                             ),
                                           ],
                                         ],
                                       ),
                                     ),
+                                    const SizedBox(width: JdcSpacing.sm),
                                     Text(
-                                      RoleAmountCalculator.formatBahtCeil(((item['price'] as num?)?.toDouble() ?? 0.0) * ((item['quantity'] as num?)?.toInt() ?? 1)),
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: colorScheme.onSurface,
-                                      ),
+                                      RoleAmountCalculator.formatBahtCeil(
+                                          ((item['price'] as num?)
+                                                      ?.toDouble() ??
+                                                  0.0) *
+                                              ((item['quantity'] as num?)
+                                                      ?.toInt() ??
+                                                  1)),
+                                      style: _jt(
+                                          fontSize: 13,
+                                          color: jdc.text,
+                                          weight: 700),
                                     ),
                                   ],
                                 ),
@@ -1269,7 +1181,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: JdcSpacing.xxl),
 
                   // Action Buttons
                   if (status == 'pending_merchant' || status == 'pending') ...[
@@ -1279,52 +1191,66 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                           child: OutlinedButton(
                             onPressed: _isLoading ? null : _declineOrder,
                             style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              foregroundColor: jdc.danger,
+                              minimumSize:
+                                  Size.fromHeight(JdcTouch.button),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: JdcSpacing.lg),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius:
+                                    BorderRadius.circular(JdcRadius.card),
                               ),
-                              side: const BorderSide(color: Colors.red),
+                              side: BorderSide(color: jdc.dangerLine),
                             ),
                             child: Text(
                               AppLocalizations.of(context)!
                                   .orderDetailDeclineBtn,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.red,
-                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: _jt(
+                                  fontSize: 15,
+                                  color: jdc.danger,
+                                  weight: 700),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: JdcSpacing.md),
                         Expanded(
+                          flex: 2,
                           child: ElevatedButton(
                             onPressed: _isLoading ? null : _acceptOrder,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.accentOrange,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              backgroundColor: jdc.cta,
+                              foregroundColor: jdc.onCta,
+                              minimumSize:
+                                  Size.fromHeight(JdcTouch.button),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: JdcSpacing.lg),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius:
+                                    BorderRadius.circular(JdcRadius.card),
                               ),
                             ),
                             child: _isLoading
-                                ? const SizedBox(
+                                ? SizedBox(
                                     height: 20,
                                     width: 20,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                          Colors.white),
+                                      valueColor:
+                                          AlwaysStoppedAnimation<Color>(
+                                              jdc.onCta),
                                     ),
                                   )
                                 : Text(
                                     AppLocalizations.of(context)!
                                         .orderDetailAcceptBtn,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: _jt(
+                                        fontSize: 16,
+                                        color: jdc.onCta,
+                                        weight: 700),
                                   ),
                           ),
                         ),
@@ -1334,40 +1260,35 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                     // Waiting for driver to accept
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(JdcSpacing.xl),
                       decoration: BoxDecoration(
-                        color: Colors.orange[50],
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.orange.withValues(alpha: 0.3),
-                        ),
+                        color: jdc.brandSoft,
+                        borderRadius: BorderRadius.circular(JdcRadius.card),
+                        border: Border.all(color: jdc.brandLine),
                       ),
                       child: Column(
                         children: [
                           Icon(
                             Icons.hourglass_empty,
-                            color: Colors.orange[700],
+                            color: jdc.brandOnSoft,
                             size: 32,
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: JdcSpacing.md),
                           Text(
                             AppLocalizations.of(context)!
                                 .orderDetailWaitingDriver,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.orange[900],
-                            ),
+                            textAlign: TextAlign.center,
+                            style: _jt(
+                                fontSize: 16,
+                                color: jdc.brandOnSoft,
+                                weight: 700),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: JdcSpacing.sm),
                           Text(
                             AppLocalizations.of(context)!
                                 .orderDetailWaitingDriverDesc,
                             textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: colorScheme.onSurfaceVariant,
-                            ),
+                            style: _jt(fontSize: 14, color: jdc.muted),
                           ),
                         ],
                       ),
@@ -1383,23 +1304,23 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                     if (_driverName != null || _driverPhone != null) ...[
                       Container(
                         width: double.infinity,
-                        margin: const EdgeInsets.only(bottom: 12),
+                        margin: const EdgeInsets.only(bottom: JdcSpacing.md),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 10),
+                            horizontal: JdcSpacing.lg,
+                            vertical: JdcSpacing.sm + 2),
                         decoration: BoxDecoration(
-                          color: Colors.blue[50],
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.blue[200]!),
+                          color: jdc.infoSoft,
+                          borderRadius: BorderRadius.circular(JdcRadius.card),
                         ),
                         child: Row(
                           children: [
                             CircleAvatar(
                               radius: 18,
-                              backgroundColor: Colors.blue[200],
-                              child: const Icon(Icons.delivery_dining,
-                                  size: 20, color: Colors.white),
+                              backgroundColor: jdc.surface,
+                              child: Icon(Icons.delivery_dining,
+                                  size: 20, color: jdc.infoInk),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: JdcSpacing.md),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1408,31 +1329,32 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                                       _driverName ??
                                           AppLocalizations.of(context)!
                                               .merchantDriverDefault,
-                                      style: const TextStyle(
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: _jt(
                                           fontSize: 14,
-                                          fontWeight: FontWeight.w600)),
+                                          color: jdc.infoInk,
+                                          weight: 600)),
                                   if (_driverPhone != null)
                                     Text(
                                       _driverPhone!,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: colorScheme.onSurfaceVariant,
-                                      ),
+                                      style:
+                                          _jt(fontSize: 12, color: jdc.muted),
                                     ),
                                 ],
                               ),
                             ),
                             if (_driverPhone != null)
                               Material(
-                                color: Colors.green,
+                                color: jdc.successFill,
                                 shape: const CircleBorder(),
                                 child: InkWell(
                                   onTap: _callDriver,
                                   customBorder: const CircleBorder(),
-                                  child: const Padding(
-                                    padding: EdgeInsets.all(10),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(10),
                                     child: Icon(Icons.phone,
-                                        size: 20, color: Colors.white),
+                                        size: 20, color: jdc.onCta),
                                   ),
                                 ),
                               ),
@@ -1451,65 +1373,69 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _markFoodReady,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            backgroundColor: jdc.successFill,
+                            foregroundColor: jdc.onCta,
+                            minimumSize: Size.fromHeight(JdcTouch.button),
+                            padding: const EdgeInsets.symmetric(
+                                vertical: JdcSpacing.lg),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius:
+                                  BorderRadius.circular(JdcRadius.card),
                             ),
                           ),
                           child: _isLoading
-                              ? const SizedBox(
+                              ? SizedBox(
                                   height: 20,
                                   width: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white),
+                                        jdc.onCta),
                                   ),
                                 )
                               : Text(
                                   AppLocalizations.of(context)!
                                       .orderDetailFoodReadyBtn,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: _jt(
+                                      fontSize: 16,
+                                      color: jdc.onCta,
+                                      weight: 700),
                                 ),
                         ),
                       ),
-                    ],
                   ] else ...[
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(JdcSpacing.xl),
                       decoration: BoxDecoration(
-                        color: colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(12),
+                        color: jdc.sunken,
+                        borderRadius: BorderRadius.circular(JdcRadius.card),
                       ),
                       child: Column(
                         children: [
                           Icon(
                             Icons.info_outline,
-                            color: colorScheme.onSurfaceVariant,
+                            color: jdc.muted,
                             size: 24,
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: JdcSpacing.sm),
                           Text(
                             AppLocalizations.of(context)!
                                 .orderDetailStatusLabel(_getStatusText(status)),
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: colorScheme.onSurfaceVariant,
-                            ),
+                            textAlign: TextAlign.center,
+                            style: _jt(fontSize: 14, color: jdc.muted),
                           ),
                         ],
                       ),
                     ),
                   ],
                 ],
+                ],
               ),
-            ),
+              ),
+              ),
     );
   }
 
@@ -1550,27 +1476,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
     return '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'pending_merchant':
-        return Colors.red; // New Order
-      case 'pending':
-        return Colors.orange;
-      case 'preparing':
-        return Colors.purple;
-      case 'ready_for_pickup':
-        return Colors.teal;
-      case 'driver_accepted':
-      case 'matched':
-      case 'arrived_at_merchant':
-      case 'completed':
-        return Colors.green; // Success/Active
-      case 'cancelled':
-        return Colors.grey;
-      default:
-        return Colors.grey;
-    }
-  }
+
 
   IconData _getStatusIcon(String status) {
     switch (status) {
@@ -1597,6 +1503,109 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
       default:
         return Icons.help_outline;
     }
+  }
+
+  /// โทนสีตามสถานะออเดอร์ — artboard: ออเดอร์ใหม่/กำลังเตรียมเน้นทอง,
+  /// พร้อมส่ง/เสร็จเขียว, ยกเลิกแดง
+  ({Color bg, Color fg, Color border}) _statusTones(
+      JdcColors jdc, String status) {
+    switch (status) {
+      case 'completed':
+      case 'ready':
+      case 'food_ready':
+        return (
+          bg: jdc.successSoft,
+          fg: jdc.successInk,
+          border: jdc.successLine,
+        );
+      case 'cancelled':
+        return (
+          bg: jdc.dangerSoft,
+          fg: jdc.dangerInk,
+          border: jdc.dangerLine,
+        );
+      case 'pending':
+      case 'pending_merchant':
+      case 'confirmed':
+      case 'preparing':
+      case 'accepted':
+        return (
+          bg: jdc.brandSoft,
+          fg: jdc.brandOnSoft,
+          border: jdc.brandLine,
+        );
+      default:
+        return (bg: jdc.infoSoft, fg: jdc.infoInk, border: jdc.line);
+    }
+  }
+
+  /// การ์ดพื้น surface ขอบ line เงา card ตามระบบดีไซน์
+  Widget _surfaceCard(JdcColors jdc, {required Widget child}) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: JdcSpacing.lg),
+      padding: const EdgeInsets.all(JdcSpacing.lg),
+      decoration: BoxDecoration(
+        color: jdc.surface,
+        borderRadius: BorderRadius.circular(JdcRadius.card),
+        border: Border.all(color: jdc.line),
+        boxShadow: jdc.shadowCard,
+      ),
+      child: child,
+    );
+  }
+
+  /// หัวการ์ด: ไอคอนในกล่อง sunken + ชื่อหัวข้อ
+  Widget _cardTitle(JdcColors jdc, IconData icon, String text) {
+    return Row(
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: jdc.sunken,
+            borderRadius: BorderRadius.circular(JdcRadius.small),
+          ),
+          child: Icon(icon, size: 18, color: jdc.cta),
+        ),
+        const SizedBox(width: JdcSpacing.md),
+        Expanded(
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: _jt(fontSize: 15, color: jdc.text, weight: 700),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// TextStyle พร้อม fontVariations คู่ fontWeight (Noto Sans Thai variable)
+  TextStyle _jt({
+    double? fontSize,
+    Color? color,
+    double weight = 400,
+    double? height,
+    double? letterSpacing,
+  }) {
+    const weightMap = <int, FontWeight>{
+      400: FontWeight.w400,
+      500: FontWeight.w500,
+      600: FontWeight.w600,
+      700: FontWeight.w700,
+      800: FontWeight.w800,
+      900: FontWeight.w900,
+    };
+    return TextStyle(
+      fontSize: fontSize,
+      color: color,
+      height: height,
+      letterSpacing: letterSpacing,
+      fontWeight: weightMap[weight.round()] ?? FontWeight.w400,
+      fontVariations: [FontVariation('wght', weight)],
+    );
   }
 
   String _getStatusText(String status) {
@@ -1647,12 +1656,12 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppTheme.accentOrange.withValues(alpha: 0.1),
+                color: JdcColors.of(context).successSoft,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.check_circle,
-                color: AppTheme.accentOrange,
+                color: JdcColors.of(context).successInk,
                 size: 48,
               ),
             ),
@@ -1662,7 +1671,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: AppTheme.accentOrange,
+                color: JdcColors.of(context).successInk,
               ),
               textAlign: TextAlign.center,
             ),
@@ -1688,15 +1697,15 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.blue[50],
+                  color: JdcColors.of(context).infoSoft,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.blue[200]!),
+                  border: Border.all(color: JdcColors.of(context).line),
                 ),
                 child: Row(
                   children: [
                     Icon(
                       Icons.receipt_long,
-                      color: Colors.blue[700],
+                      color: JdcColors.of(context).infoInk,
                       size: 24,
                     ),
                     const SizedBox(width: 12),
@@ -1721,7 +1730,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Colors.blue[700],
+                              color: JdcColors.of(context).infoInk,
                             ),
                           ),
                         ],
@@ -1736,15 +1745,15 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.orange[50],
+                  color: JdcColors.of(context).brandSoft,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.orange[200]!),
+                  border: Border.all(color: JdcColors.of(context).brandLine),
                 ),
                 child: Row(
                   children: [
                     Icon(
                       Icons.person,
-                      color: Colors.orange[700],
+                      color: JdcColors.of(context).cta,
                       size: 24,
                     ),
                     const SizedBox(width: 12),
@@ -1766,7 +1775,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Colors.orange[700],
+                              color: JdcColors.of(context).cta,
                             ),
                           ),
                         ],
@@ -1782,9 +1791,9 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.purple[50],
+                    color: JdcColors.of(context).successSoft,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.purple[200]!),
+                    border: Border.all(color: JdcColors.of(context).successLine),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1793,7 +1802,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                         children: [
                           Icon(
                             Icons.restaurant_menu,
-                            color: Colors.purple[700],
+                            color: JdcColors.of(context).successInk,
                             size: 24,
                           ),
                           const SizedBox(width: 12),
@@ -1825,7 +1834,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: Colors.purple[100],
+                                  color: JdcColors.of(context).successSoft,
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
@@ -1833,7 +1842,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.purple[700],
+                                    color: JdcColors.of(context).successInk,
                                   ),
                                 ),
                               ),
@@ -1853,7 +1862,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.purple[700],
+                                  color: JdcColors.of(context).successInk,
                                 ),
                               ),
                             ],
@@ -1871,8 +1880,8 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppTheme.accentOrange,
-                      AppTheme.accentOrange.withValues(alpha: 0.8)
+                      JdcColors.of(context).brand,
+                      JdcColors.of(context).brandHi
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -1880,7 +1889,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.accentOrange.withValues(alpha: 0.3),
+                      color: JdcColors.of(context).brand.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
@@ -1896,7 +1905,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                           l10n.orderDetailCompletionNetReceived,
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.white70,
+                            color: JdcColors.of(context).panel.withValues(alpha: 0.75),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -1904,19 +1913,19 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                         Text(
                           l10n.orderDetailCompletionAfterGP(
                               (_effectiveGpRate * 100).toStringAsFixed(0)),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: Colors.white60,
+                            color: JdcColors.of(context).panel.withValues(alpha: 0.65),
                           ),
                         ),
                       ],
                     ),
                     Text(
                       '฿${RoleAmountCalculator.formatMoney(_foodSettlement(order).merchantReceives)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: JdcColors.of(context).onCta,
                         letterSpacing: 1.2,
                       ),
                     ),
@@ -1935,8 +1944,8 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                 Navigator.of(context).pop(); // ปิด order_detail_screen
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accentOrange,
-                foregroundColor: Colors.white,
+                backgroundColor: JdcColors.of(context).cta,
+                foregroundColor: JdcColors.of(context).onCta,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),

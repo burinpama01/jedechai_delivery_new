@@ -4,7 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
-import 'package:jedechai_delivery_new/theme/app_theme.dart';
+import '../../../theme/jdc_colors.dart';
+import '../../../theme/jdc_layout.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
@@ -80,8 +81,9 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) {
-        final colorScheme = Theme.of(context).colorScheme;
+        final jdc = JdcColors.of(context);
         return AlertDialog(
+          backgroundColor: jdc.surface,
           title: Text(AppLocalizations.of(context)!.merchantCloseShopTitle),
           content: Text(
             AppLocalizations.of(context)!.merchantCloseShopBody,
@@ -91,17 +93,22 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               onPressed: () => Navigator.of(context).pop(false),
               child: Text(
                 AppLocalizations.of(context)!.merchantCloseShopCancel,
-                style: TextStyle(color: colorScheme.onSurfaceVariant),
+                style: _jt(fontSize: 14, color: jdc.muted, weight: 600),
               ),
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
               style: ElevatedButton.styleFrom(
-                backgroundColor: colorScheme.error,
-                foregroundColor: colorScheme.onError,
+                backgroundColor: jdc.danger,
+                foregroundColor: jdc.onCta,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(JdcRadius.field),
+                ),
               ),
-              child:
-                  Text(AppLocalizations.of(context)!.merchantCloseShopConfirm),
+              child: Text(
+                AppLocalizations.of(context)!.merchantCloseShopConfirm,
+                style: _jt(fontSize: 14, color: jdc.onCta, weight: 600),
+              ),
             ),
           ],
         );
@@ -113,13 +120,19 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
   @override
   void initState() {
     super.initState();
-    _initializePrefs();
-    _requestLocationPermissionAndUpdateProfile();
-    _fetchShopStatus();
-    _fetchShopSchedule();
-    _setupOrdersStream();
-    _startAutoRefresh();
-    _startShopScheduleTimer();
+    // งานที่อ่าน context (AppLocalizations / SnackBar) ต้องรอให้ initState จบก่อน
+    // ไม่งั้นชน assertion "dependOnInheritedWidgetOfExactType called before
+    // initState() completed" ของ Flutter
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _initializePrefs();
+      _requestLocationPermissionAndUpdateProfile();
+      _fetchShopStatus();
+      _fetchShopSchedule();
+      _setupOrdersStream();
+      _startAutoRefresh();
+      _startShopScheduleTimer();
+    });
   }
 
   Future<void> _autoAcceptPendingOrders(
@@ -566,6 +579,9 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
   }
 
   Future<void> _fetchShopStatus() async {
+    // ดึงข้อความไว้ก่อนเริ่มงาน async — ถ้าอ่านทีหลังตอน widget ถูก
+    // deactivate แล้ว จะได้ error "deactivated widget's ancestor"
+    final l10n = AppLocalizations.of(context)!;
     try {
       if (!mounted) return;
 
@@ -576,7 +592,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
 
       final userId = AuthService.userId;
       if (userId == null) {
-        throw Exception(AppLocalizations.of(context)!.merchantUserNotFound);
+        throw Exception(l10n.merchantUserNotFound);
       }
 
       final response = await _merchantOrderService.fetchShopStatus(userId);
@@ -715,7 +731,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
       }
 
       if (mounted) {
-        final colorScheme = Theme.of(context).colorScheme;
+        final jdc = JdcColors.of(context);
         final autoDisabled = updated['shop_auto_schedule_enabled'] == false;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -729,7 +745,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                       : AppLocalizations.of(context)!.merchantShopClosed),
             ),
             backgroundColor:
-                value ? AppTheme.accentOrange : colorScheme.outline,
+                value ? jdc.successFill : jdc.offTrack,
             duration: const Duration(seconds: 2),
           ),
         );
@@ -748,7 +764,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           SnackBar(
             content: Text(AppLocalizations.of(context)!
                 .merchantShopStatusError(e.toString())),
-            backgroundColor: Theme.of(context).colorScheme.error,
+            backgroundColor: JdcColors.of(context).danger,
             duration: const Duration(seconds: 3),
           ),
         );
@@ -783,7 +799,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
             SnackBar(
               content:
                   Text(AppLocalizations.of(context)!.merchantOrderConfirmed),
-              backgroundColor: Theme.of(context).colorScheme.secondary,
+              backgroundColor: JdcColors.of(context).successFill,
               duration: const Duration(seconds: 2),
             ),
           );
@@ -854,11 +870,10 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
 
   void _showSuccessSnackBar(String message) {
     if (mounted) {
-      final colorScheme = Theme.of(context).colorScheme;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: colorScheme.secondary,
+          backgroundColor: JdcColors.of(context).successFill,
           duration: const Duration(seconds: 2),
         ),
       );
@@ -867,11 +882,10 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
 
   void _showErrorSnackBar(String message) {
     if (mounted) {
-      final colorScheme = Theme.of(context).colorScheme;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: colorScheme.error,
+          backgroundColor: JdcColors.of(context).danger,
           duration: const Duration(seconds: 3),
         ),
       );
@@ -932,21 +946,23 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: jdc.paper,
       appBar: AppBar(
         title: Text(_showHistory
             ? AppLocalizations.of(context)!.merchantAppBarHistory
             : AppLocalizations.of(context)!.merchantAppBarOrders),
-        backgroundColor: colorScheme.surface,
+        backgroundColor: jdc.surface,
         elevation: 0,
-        foregroundColor: colorScheme.onSurface,
+        scrolledUnderElevation: 0,
+        foregroundColor: jdc.text,
         actions: [
           // Toggle between active and history
           IconButton(
             icon: Icon(_showHistory ? Icons.list : Icons.history),
             onPressed: _toggleView,
+            color: jdc.text,
             tooltip: _showHistory
                 ? AppLocalizations.of(context)!.merchantTooltipActiveOrders
                 : AppLocalizations.of(context)!.merchantTooltipHistory,
@@ -973,69 +989,77 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
   }
 
   Widget _buildBody() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     if (_isLoading) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accentOrange),
+          valueColor: AlwaysStoppedAnimation<Color>(jdc.brand),
         ),
       );
     }
 
     if (_error != null) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: colorScheme.error,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              AppLocalizations.of(context)!.merchantErrorOccurred,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: colorScheme.error,
+        child: JdcContentFrame(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 64,
+                color: jdc.danger,
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _error!,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: colorScheme.onSurfaceVariant,
+              const SizedBox(height: JdcSpacing.lg),
+              Text(
+                AppLocalizations.of(context)!.merchantErrorOccurred,
+                textAlign: TextAlign.center,
+                style: _jt(fontSize: 18, color: jdc.danger, weight: 700),
               ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _fetchShopStatus,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accentOrange,
-                foregroundColor: colorScheme.onPrimary,
+              const SizedBox(height: JdcSpacing.sm),
+              Text(
+                _error!,
+                textAlign: TextAlign.center,
+                style: _jt(fontSize: 14, color: jdc.muted),
               ),
-              child: Text(AppLocalizations.of(context)!.merchantRetry),
-            ),
-          ],
+              const SizedBox(height: JdcSpacing.xxl),
+              ElevatedButton(
+                onPressed: _fetchShopStatus,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: jdc.cta,
+                  foregroundColor: jdc.onCta,
+                  minimumSize: Size.fromHeight(JdcTouch.field),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: JdcSpacing.xl,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(JdcRadius.field),
+                  ),
+                ),
+                child: Text(
+                  AppLocalizations.of(context)!.merchantRetry,
+                  style: _jt(fontSize: 14, color: jdc.onCta, weight: 600),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Shop Status Card
-          _buildShopStatusCard(),
-          const SizedBox(height: 24),
+      padding: const EdgeInsets.symmetric(vertical: JdcSpacing.xl),
+      child: JdcContentFrame(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Shop Status Card
+            _buildShopStatusCard(),
+            const SizedBox(height: JdcSpacing.xxl),
 
-          // Orders Section
-          _buildOrdersList(),
-        ],
+            // Orders Section
+            _buildOrdersList(),
+          ],
+        ),
       ),
     );
   }
@@ -1081,6 +1105,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           final choice = await showDialog<bool>(
             context: context,
             builder: (ctx) => AlertDialog(
+              backgroundColor: JdcColors.of(ctx).surface,
               title: const Text('ปิด Auto-Schedule?'),
               content: const Text(
                 'ต้องการปิด auto-schedule แบบใด?',
@@ -1092,7 +1117,9 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, true),
-                  style: TextButton.styleFrom(foregroundColor: Colors.red),
+                  style: TextButton.styleFrom(
+                    foregroundColor: JdcColors.of(ctx).danger,
+                  ),
                   child: const Text('ปิดถาวร'),
                 ),
               ],
@@ -1270,4 +1297,32 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
       );
     }
   }
+}
+
+/// TextStyle มาตรฐานของกลุ่มหน้าออเดอร์ — ผูก fontWeight กับ fontVariations
+/// ให้คู่กันเสมอตามธีม JDC
+TextStyle _jt({
+  double? fontSize,
+  Color? color,
+  double weight = 400,
+  double? height,
+  double? letterSpacing,
+}) {
+  // key เป็น int — double เป็น const map key ไม่ได้ (override ==)
+  const weightMap = <int, FontWeight>{
+    400: FontWeight.w400,
+    500: FontWeight.w500,
+    600: FontWeight.w600,
+    700: FontWeight.w700,
+    800: FontWeight.w800,
+    900: FontWeight.w900,
+  };
+  return TextStyle(
+    fontSize: fontSize,
+    color: color,
+    height: height,
+    letterSpacing: letterSpacing,
+    fontWeight: weightMap[weight.round()] ?? FontWeight.w400,
+    fontVariations: [FontVariation('wght', weight)],
+  );
 }

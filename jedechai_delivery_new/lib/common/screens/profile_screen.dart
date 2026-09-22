@@ -1,12 +1,13 @@
 ﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
+
+import '../../theme/jdc_colors.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/profile_service.dart';
 import '../services/image_picker_service.dart';
 import '../services/storage_service.dart';
 import '../widgets/app_network_image.dart';
 import '../widgets/language_switcher.dart';
-import '../../theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
 
 /// Profile Screen - Universal for all roles
@@ -42,7 +43,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _loadProfile();
+    // _loadProfile แสดง dialog ที่อ่าน AppLocalizations จาก context เมื่อโหลดพลาด
+    // จึงต้องรอให้ initState จบก่อน ไม่งั้นชน assertion ของ Flutter
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadProfile();
+    });
   }
 
   @override
@@ -99,7 +104,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            icon: const Icon(Icons.error_outline, color: Colors.red, size: 48),
+            icon: Icon(Icons.error_outline,
+                color: JdcColors.of(context).danger, size: 48),
             title: Text(l10n.profileLoadFailedTitle),
             content: Text(l10n.profileLoadFailedBody(e.toString())),
             actions: [
@@ -168,7 +174,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.profileSaveSuccess),
-            backgroundColor: AppTheme.primaryGreen,
+            backgroundColor: JdcColors.of(context).cta,
           ),
         );
       }
@@ -203,7 +209,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppTheme.primaryGreen,
+        backgroundColor: JdcColors.of(context).cta,
         foregroundColor: Colors.white,
         title: Text(l10n.profileEditTitle),
         actions: const [
@@ -214,9 +220,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(
+          ? Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryGreen),
+                valueColor: AlwaysStoppedAnimation<Color>(JdcColors.of(context).cta),
               ),
             )
           : SingleChildScrollView(
@@ -258,7 +264,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: ElevatedButton(
                         onPressed: _isSaving ? null : _saveProfile,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryGreen,
+                          backgroundColor: JdcColors.of(context).cta,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(25),
@@ -355,9 +361,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+        color: JdcColors.of(context).cta.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.2)),
+        border: Border.all(color: JdcColors.of(context).cta.withValues(alpha: 0.2)),
       ),
       child: Column(
         children: [
@@ -367,7 +373,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 CircleAvatar(
                   radius: 50,
-                  backgroundColor: AppTheme.primaryGreen,
+                  backgroundColor: JdcColors.of(context).cta,
                   child: ClipOval(
                     child: hasAvatar
                         ? AppNetworkImage(
@@ -391,7 +397,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryGreen,
+                      color: JdcColors.of(context).cta,
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 2),
                     ),
@@ -423,7 +429,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: AppTheme.primaryGreen,
+              color: JdcColors.of(context).cta,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
@@ -448,10 +454,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       padding: const EdgeInsets.only(bottom: 16),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.bold,
-          color: AppTheme.primaryGreen,
+          color: JdcColors.of(context).cta,
         ),
       ),
     );
@@ -588,27 +594,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.primaryGreen.withValues(alpha: 0.1) : colorScheme.surfaceContainerHigh,
+          color: isSelected ? JdcColors.of(context).cta.withValues(alpha: 0.1) : colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppTheme.primaryGreen : colorScheme.outlineVariant,
+            color: isSelected ? JdcColors.of(context).cta : colorScheme.outlineVariant,
             width: isSelected ? 2 : 1,
           ),
         ),
         child: Column(
           children: [
-            Icon(icon, color: isSelected ? AppTheme.primaryGreen : colorScheme.onSurfaceVariant, size: 28),
+            Icon(icon, color: isSelected ? JdcColors.of(context).cta : colorScheme.onSurfaceVariant, size: 28),
             const SizedBox(height: 6),
             Text(label,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected ? AppTheme.primaryGreen : colorScheme.onSurface,
+                  color: isSelected ? JdcColors.of(context).cta : colorScheme.onSurface,
                 )),
             if (isSelected)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
-                child: Icon(Icons.check_circle, color: AppTheme.primaryGreen, size: 18),
+                child: Icon(Icons.check_circle, color: JdcColors.of(context).cta, size: 18),
               ),
           ],
         ),

@@ -1,12 +1,13 @@
 import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
+
+import '../../../theme/jdc_colors.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../common/models/booking.dart';
 import '../../../common/utils/app_time.dart';
 import '../../../common/utils/order_code_formatter.dart';
 import '../../../common/widgets/status_badge.dart';
-import '../../../theme/app_theme.dart';
 import '../../../utils/connection_helper.dart';
 import '../../../utils/mock_data_service.dart';
 import 'services/waiting_for_driver_screen.dart';
@@ -450,9 +451,9 @@ class _ActivityScreenState extends State<ActivityScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(
+          ? Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accentBlue),
+                valueColor: AlwaysStoppedAnimation<Color>(JdcColors.of(context).infoInk),
               ),
             )
           : _error != null
@@ -525,8 +526,8 @@ class _ActivityScreenState extends State<ActivityScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.filter_alt_rounded,
-                  color: AppTheme.accentBlue, size: 18),
+              Icon(Icons.filter_alt_rounded,
+                  color: JdcColors.of(context).infoInk, size: 18),
               const SizedBox(width: 6),
               Text(
                 AppLocalizations.of(context)!.activityFilterByDate,
@@ -557,7 +558,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                     ),
                     selected: _dateFilter == _ActivityDateFilter.custom,
                     onSelected: (_) => _selectCustomDateRange(),
-                    selectedColor: AppTheme.accentBlue,
+                    selectedColor: JdcColors.of(context).infoInk,
                     labelStyle: TextStyle(
                       color: _dateFilter == _ActivityDateFilter.custom
                           ? colorScheme.onPrimary
@@ -590,7 +591,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
           if (!selected) return;
           setState(() => _dateFilter = filter);
         },
-        selectedColor: AppTheme.accentBlue,
+        selectedColor: JdcColors.of(context).infoInk,
         labelStyle: TextStyle(
           color: isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
           fontWeight: FontWeight.w600,
@@ -716,10 +717,10 @@ class _ActivityScreenState extends State<ActivityScreen> {
                 color: colorScheme.primary.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.event_busy,
                 size: 48,
-                color: AppTheme.accentBlue,
+                color: JdcColors.of(context).infoInk,
               ),
             ),
             const SizedBox(height: 14),
@@ -763,13 +764,13 @@ class _ActivityScreenState extends State<ActivityScreen> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppTheme.accentBlue.withValues(alpha: 0.1),
+              color: JdcColors.of(context).infoInk.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.history,
               size: 64,
-              color: AppTheme.accentBlue,
+              color: JdcColors.of(context).infoInk,
             ),
           ),
           const SizedBox(height: 20),

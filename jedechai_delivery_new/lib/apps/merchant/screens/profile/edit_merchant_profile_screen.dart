@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
+import '../../../../theme/jdc_colors.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:jedechai_delivery_new/theme/app_theme.dart';
 import '../../../../common/services/auth_service.dart';
 import '../../../../common/services/image_picker_service.dart';
 import '../../../../common/services/storage_service.dart';
@@ -139,7 +139,7 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
                         fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                 ),
-                const Icon(Icons.access_time, color: AppTheme.accentOrange),
+                Icon(Icons.access_time, color: JdcColors.of(context).cta),
               ],
             ),
           ],
@@ -273,7 +273,7 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)!.editProfileSaveSuccess),
-            backgroundColor: Colors.green,
+            backgroundColor: JdcColors.of(context).successFill,
             duration: const Duration(seconds: 2),
           ),
         );
@@ -284,7 +284,7 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)!.editProfileSaveFailed(e.toString())),
-            backgroundColor: Colors.red,
+            backgroundColor: JdcColors.of(context).danger,
             duration: const Duration(seconds: 3),
           ),
         );
@@ -305,8 +305,8 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.editProfileTitle),
-        backgroundColor: AppTheme.accentOrange,
-        foregroundColor: Colors.white,
+        backgroundColor: JdcColors.of(context).cta,
+        foregroundColor: JdcColors.of(context).onCta,
         elevation: 0,
       ),
       body: Form(
@@ -322,9 +322,9 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
                   width: 120,
                   height: 120,
                   decoration: BoxDecoration(
-                    color: AppTheme.accentOrange.withValues(alpha: 0.1),
+                    color: JdcColors.of(context).brandSoft,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppTheme.accentOrange, width: 3),
+                    border: Border.all(color: JdcColors.of(context).cta, width: 3),
                   ),
                   child: Stack(
                     children: [
@@ -339,11 +339,11 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
                                   ? AppNetworkImage(
                                       imageUrl: _shopPhotoUrl,
                                       fit: BoxFit.cover,
-                                      backgroundColor: Colors.white,
+                                      backgroundColor: JdcColors.of(context).surface,
                                     )
-                                  : const GrayscaleLogoPlaceholder(
+                                  : GrayscaleLogoPlaceholder(
                                       fit: BoxFit.contain,
-                                      backgroundColor: Colors.white,
+                                      backgroundColor: JdcColors.of(context).surface,
                                     ),
                         ),
                       ),
@@ -351,12 +351,12 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
                         alignment: Alignment.bottomRight,
                         child: Container(
                           padding: const EdgeInsets.all(6),
-                          decoration: const BoxDecoration(
-                            color: AppTheme.accentOrange,
+                          decoration: BoxDecoration(
+                            color: JdcColors.of(context).cta,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.edit,
-                              size: 16, color: Colors.white),
+                          child: Icon(Icons.edit,
+                              size: 16, color: JdcColors.of(context).onCta),
                         ),
                       ),
                     ],
@@ -437,7 +437,7 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.pin_drop, color: AppTheme.accentOrange),
+                    Icon(Icons.pin_drop, color: JdcColors.of(context).cta),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
@@ -486,17 +486,17 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
                 return FilterChip(
                   label: Text(_weekdayLabels(context)[day] ?? day),
                   selected: isSelected,
-                  selectedColor: AppTheme.accentOrange.withValues(alpha: 0.18),
-                  checkmarkColor: AppTheme.accentOrange,
+                  selectedColor: JdcColors.of(context).brandSoft,
+                  checkmarkColor: JdcColors.of(context).cta,
                   labelStyle: TextStyle(
                     color: isSelected
-                        ? AppTheme.accentOrange
+                        ? JdcColors.of(context).cta
                         : colorScheme.onSurface,
                     fontWeight: FontWeight.w600,
                   ),
                   side: BorderSide(
                     color: isSelected
-                        ? AppTheme.accentOrange
+                        ? JdcColors.of(context).cta
                         : colorScheme.outlineVariant.withValues(alpha: 0.8),
                   ),
                   onSelected: (selected) {
@@ -563,7 +563,7 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
                             SnackBar(
                               content:
                                   Text(AppLocalizations.of(context)!.editProfileSelectDayRequired),
-                              backgroundColor: Colors.red,
+                              backgroundColor: JdcColors.of(context).danger,
                             ),
                           );
                           return;
@@ -571,21 +571,21 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
                         _saveProfile();
                       },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accentOrange,
-                  foregroundColor: Colors.white,
+                  backgroundColor: JdcColors.of(context).cta,
+                  foregroundColor: JdcColors.of(context).onCta,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   elevation: 2,
                 ),
                 child: _isLoading
-                    ? const SizedBox(
+                    ? SizedBox(
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
+                              AlwaysStoppedAnimation<Color>(JdcColors.of(context).onCta),
                         ),
                       )
                     : Text(
@@ -621,7 +621,7 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
       enabled: enabled,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, color: AppTheme.accentOrange),
+        prefixIcon: Icon(icon, color: JdcColors.of(context).cta),
         filled: true,
         fillColor: enabled
             ? colorScheme.surfaceContainer
@@ -640,15 +640,15 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppTheme.accentOrange, width: 2),
+          borderSide: BorderSide(color: JdcColors.of(context).cta, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red),
+          borderSide: BorderSide(color: JdcColors.of(context).danger),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red, width: 2),
+          borderSide: BorderSide(color: JdcColors.of(context).danger, width: 2),
         ),
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

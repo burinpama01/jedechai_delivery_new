@@ -1,9 +1,10 @@
 ﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
+
+import '../../../theme/jdc_colors.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import '../../../l10n/app_localizations.dart';
-import '../../../theme/app_theme.dart';
 import '../../../common/services/auth_service.dart';
 import '../../../common/services/profile_service.dart';
 import '../../../common/services/notification_service.dart';
@@ -379,15 +380,15 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF114B5F), Color(0xFF1A936F)],
+        gradient: LinearGradient(
+          colors: [JdcColors.of(context).panel, JdcColors.of(context).infoInk],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF114B5F).withValues(alpha: 0.25),
+            color: JdcColors.of(context).panel.withValues(alpha: 0.25),
             blurRadius: 14,
             offset: const Offset(0, 8),
           ),
@@ -516,12 +517,12 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryGreen.withValues(alpha: 0.12),
+                  color: JdcColors.of(context).cta.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.account_balance_wallet_outlined,
-                  color: AppTheme.primaryGreen,
+                  color: JdcColors.of(context).cta,
                 ),
               ),
               const SizedBox(width: 14),
@@ -552,7 +553,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Icon(Icons.chevron_right, color: AppTheme.primaryGreen),
+                  Icon(Icons.chevron_right, color: JdcColors.of(context).cta),
                   const SizedBox(height: 4),
                   Text(
                     'เติม / ถอน',
@@ -591,35 +592,40 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
         children: [
           Row(
             children: [
-              Text(
-                AppLocalizations.of(context)!.customerHomePendingOrders,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: colorScheme.onSurface,
+              // หัวข้อยาวกว่าที่ว่างบนจอแคบ ต้องยอมย่อแทนการดันจนล้น
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(context)!.customerHomePendingOrders,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: colorScheme.onSurface,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               if (_isLoadingBookings)
-                const SizedBox(
+                SizedBox(
                   height: 16,
                   width: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryGreen),
+                    valueColor: AlwaysStoppedAnimation<Color>(JdcColors.of(context).cta),
                   ),
                 )
               else
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryGreen.withValues(alpha: 0.12),
+                    color: JdcColors.of(context).cta.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     AppLocalizations.of(context)!.customerHomeJobCount(_activeBookings.length.toString()),
-                    style: const TextStyle(
-                      color: AppTheme.primaryGreen,
+                    style: TextStyle(
+                      color: JdcColors.of(context).cta,
                       fontWeight: FontWeight.w700,
                       fontSize: 12,
                     ),
@@ -640,14 +646,14 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryGreen.withValues(alpha: 0.08),
+                    color: JdcColors.of(context).cta.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     'ดูทั้งหมด (${_activeBookings.length})',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: AppTheme.primaryGreen,
+                    style: TextStyle(
+                      color: JdcColors.of(context).cta,
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
                     ),
@@ -686,7 +692,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
                 icon: Icons.directions_car,
                 title: AppLocalizations.of(context)!.customerHomeCallRide,
                 subtitle: AppLocalizations.of(context)!.customerHomeCallRideSubtitle,
-                color: AppTheme.accentBlue,
+                color: JdcColors.of(context).infoInk,
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -702,7 +708,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
                 icon: Icons.restaurant,
                 title: AppLocalizations.of(context)!.customerHomeOrderFood,
                 subtitle: AppLocalizations.of(context)!.customerHomeOrderFoodSubtitle,
-                color: AppTheme.accentOrange,
+                color: JdcColors.of(context).brand,
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -723,7 +729,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
                 title: AppLocalizations.of(context)!.customerHomeSendParcel,
                 subtitle:
                     AppLocalizations.of(context)!.customerHomeSendParcelSubtitle,
-                color: AppTheme.primaryGreen,
+                color: JdcColors.of(context).cta,
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -739,7 +745,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
                 icon: Icons.local_laundry_service_rounded,
                 title: 'ซักผ้า',
                 subtitle: 'ส่งคำขอประเมินราคา',
-                color: Colors.purple,
+                color: JdcColors.of(context).infoInk,
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -804,7 +810,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
                 icon: Icons.support_agent,
                 title: AppLocalizations.of(context)!.customerHomeHelp,
                 subtitle: AppLocalizations.of(context)!.customerHomeContactUs,
-                color: const Color(0xFF6C63FF),
+                color: JdcColors.of(context).infoInk,
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const HelpScreen()),
@@ -857,8 +863,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
                       gradient: imageUrl == null
-                          ? const LinearGradient(
-                              colors: [Color(0xFFFF9F1C), Color(0xFFFF4E50)],
+                          ? LinearGradient(
+                              colors: [JdcColors.of(context).brand, JdcColors.of(context).danger],
                             )
                           : null,
                     ),
@@ -869,7 +875,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
                             fit: BoxFit.cover,
                             width: double.infinity,
                             height: 150,
-                            backgroundColor: Colors.grey[200],
+                            backgroundColor: JdcColors.of(context).sunken,
                           )
                         : Center(
                             child: Text(
@@ -894,7 +900,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
                 height: 6,
                 margin: const EdgeInsets.symmetric(horizontal: 3),
                 decoration: BoxDecoration(
-                  color: i == _currentBannerIndex ? AppTheme.primaryGreen : Colors.grey[300],
+                  color: i == _currentBannerIndex ? JdcColors.of(context).cta : JdcColors.of(context).line,
                   borderRadius: BorderRadius.circular(3),
                 ),
               )),
@@ -911,7 +917,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            Icon(Icons.confirmation_number, color: AppTheme.primaryGreen, size: 28),
+            Icon(Icons.confirmation_number, color: JdcColors.of(context).cta, size: 28),
             const SizedBox(width: 8),
             Expanded(child: Text(AppLocalizations.of(context)!.customerHomeDiscountCode, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
           ],
@@ -928,9 +934,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
               decoration: BoxDecoration(
-                color: AppTheme.primaryGreen.withValues(alpha: 0.08),
+                color: JdcColors.of(context).cta.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.3), style: BorderStyle.solid),
+                border: Border.all(color: JdcColors.of(context).cta.withValues(alpha: 0.3), style: BorderStyle.solid),
               ),
               child: Text(
                 code,
@@ -938,7 +944,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryGreen,
+                  color: JdcColors.of(context).cta,
                   letterSpacing: 2,
                 ),
               ),
@@ -959,7 +965,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(AppLocalizations.of(context)!.customerHomeCopiedCode(code)),
-                  backgroundColor: AppTheme.primaryGreen,
+                  backgroundColor: JdcColors.of(context).cta,
                   duration: const Duration(seconds: 2),
                 ),
               );
@@ -967,7 +973,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
             icon: const Icon(Icons.copy, size: 16),
             label: Text(AppLocalizations.of(context)!.customerHomeCopyCode),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryGreen,
+              backgroundColor: JdcColors.of(context).cta,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
@@ -1393,7 +1399,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                          color: JdcColors.of(context).cta.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -1401,10 +1407,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
                           children: [
                             Text(
                               '฿${_getTotalPrice(booking).ceil()}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: AppTheme.primaryGreen,
+                                color: JdcColors.of(context).cta,
                               ),
                             ),
                           ],
@@ -1475,13 +1481,13 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
   Color _getServiceColor(String serviceType) {
     switch (serviceType.toLowerCase()) {
       case 'ride':
-        return AppTheme.accentBlue;
+        return JdcColors.of(context).infoInk;
       case 'food':
-        return AppTheme.accentOrange;
+        return JdcColors.of(context).brand;
       case 'parcel':
-        return AppTheme.primaryGreen;
+        return JdcColors.of(context).cta;
       case 'laundry':
-        return Colors.purple;
+        return JdcColors.of(context).infoInk;
       default:
         return Colors.grey;
     }
@@ -1504,7 +1510,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
       case 'ready_for_pickup':
       case 'arrived_at_merchant':
       case 'picking_up_order':
-        return Colors.purple;
+        return JdcColors.of(context).infoInk;
       case 'completed':
         return Colors.green;
       case 'cancelled':

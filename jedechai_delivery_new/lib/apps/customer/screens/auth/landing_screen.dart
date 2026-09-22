@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../../../theme/jdc_colors.dart';
+
 import '../../../../common/services/system_config_service.dart';
 import '../../../../common/widgets/app_network_image.dart';
 import '../../../../common/widgets/language_switcher.dart';
-import '../../../../theme/app_theme.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
 
@@ -37,7 +38,7 @@ class _LandingScreenState extends State<LandingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1117),
+      backgroundColor: JdcColors.of(context).panel,
       body: Stack(
         children: [
           Positioned(
@@ -45,7 +46,7 @@ class _LandingScreenState extends State<LandingScreen> {
             left: -80,
             child: _GlowOrb(
               size: 320,
-              color: AppTheme.primaryGreen.withValues(alpha: 0.30),
+              color: JdcColors.of(context).cta.withValues(alpha: 0.30),
             ),
           ),
           Positioned(
@@ -53,7 +54,7 @@ class _LandingScreenState extends State<LandingScreen> {
             right: -90,
             child: _GlowOrb(
               size: 280,
-              color: AppTheme.primaryGreenDark.withValues(alpha: 0.22),
+              color: JdcColors.of(context).linkHover.withValues(alpha: 0.22),
             ),
           ),
           SafeArea(
@@ -88,14 +89,16 @@ class _LandingScreenState extends State<LandingScreen> {
   }
 
   Widget _buildBrandHeader() {
+    // จอแคบ (360) ไม่มีที่พอสำหรับโลโก้ 64px + ข้อความ จึงย่อโลโก้ลง
+    final logoSize = MediaQuery.sizeOf(context).width < 380 ? 48.0 : 64.0;
     return Row(
       children: [
         Container(
-          width: 64,
-          height: 64,
+          width: logoSize,
+          height: logoSize,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: Colors.white,
+            color: JdcColors.of(context).surface,
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.25),
@@ -108,22 +111,22 @@ class _LandingScreenState extends State<LandingScreen> {
             borderRadius: BorderRadius.circular(20),
             child: AppNetworkImage(
               imageUrl: _logoUrl,
-              width: 64,
-              height: 64,
+              width: logoSize,
+              height: logoSize,
               fit: BoxFit.contain,
-              backgroundColor: Colors.white,
+              backgroundColor: JdcColors.of(context).surface,
             ),
           ),
         ),
         const SizedBox(width: 14),
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'JDC DELIVERY',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: JdcColors.of(context).onPanel,
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 1.0,
@@ -133,7 +136,7 @@ class _LandingScreenState extends State<LandingScreen> {
               Text(
                 'ส่งไว เรียกง่าย ครบทุกบริการ',
                 style: TextStyle(
-                  color: Color(0xFFD0D7DE),
+                  color: JdcColors.of(context).panelDim,
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                 ),
@@ -152,12 +155,12 @@ class _LandingScreenState extends State<LandingScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFFF7B500),
-            Color(0xFFC56A00),
+            JdcColors.of(context).brand,
+            JdcColors.of(context).cta,
           ],
         ),
         boxShadow: [
@@ -171,20 +174,20 @@ class _LandingScreenState extends State<LandingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'พร้อมส่งทุกความต้องการ\nในแอปเดียว',
             style: TextStyle(
-              color: Color(0xFF1C1100),
+              color: JdcColors.of(context).panel,
               fontSize: 28,
               height: 1.2,
               fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'เรียกรถ ส่งอาหาร ส่งพัสดุ และติดตามสถานะแบบเรียลไทม์',
             style: TextStyle(
-              color: Color(0xFF2F1B00),
+              color: JdcColors.of(context).panel,
               fontSize: 15,
               height: 1.35,
               fontWeight: FontWeight.w600,
@@ -207,13 +210,13 @@ class _LandingScreenState extends State<LandingScreen> {
 
   Widget _buildFeatureRow() {
     return Row(
-      children: const [
+      children: [
         Expanded(
           child: _FeatureCard(
             icon: Icons.route,
             title: 'ติดตามสด',
             subtitle: 'เห็นตำแหน่งแบบเรียลไทม์',
-            color: AppTheme.primaryGreen,
+            color: JdcColors.of(context).cta,
           ),
         ),
         SizedBox(width: 10),
@@ -222,7 +225,7 @@ class _LandingScreenState extends State<LandingScreen> {
             icon: Icons.security,
             title: 'ปลอดภัย',
             subtitle: 'ตรวจสอบได้ทุกขั้นตอน',
-            color: AppTheme.primaryGreenDark,
+            color: JdcColors.of(context).linkHover,
           ),
         ),
         SizedBox(width: 10),
@@ -231,7 +234,7 @@ class _LandingScreenState extends State<LandingScreen> {
             icon: Icons.bolt,
             title: 'เร็วทันใจ',
             subtitle: 'จับคู่คนขับไว',
-            color: AppTheme.accentOrange,
+            color: JdcColors.of(context).brand,
           ),
         ),
       ],
@@ -264,7 +267,7 @@ class _LandingScreenState extends State<LandingScreen> {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryGreen,
+                backgroundColor: JdcColors.of(context).cta,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -285,17 +288,17 @@ class _LandingScreenState extends State<LandingScreen> {
                 );
               },
               style: OutlinedButton.styleFrom(
-                side: BorderSide(color: AppTheme.primaryGreen, width: 1.4),
+                side: BorderSide(color: JdcColors.of(context).cta, width: 1.4),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'สมัครสมาชิกใหม่',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryGreen,
+                  color: JdcColors.of(context).cta,
                 ),
               ),
             ),
@@ -349,12 +352,12 @@ class _ServicePill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 15, color: const Color(0xFF1C1100)),
+          Icon(icon, size: 15, color: JdcColors.of(context).panel),
           const SizedBox(width: 6),
           Text(
             label,
-            style: const TextStyle(
-              color: Color(0xFF1C1100),
+            style: TextStyle(
+              color: JdcColors.of(context).panel,
               fontSize: 12,
               fontWeight: FontWeight.w800,
             ),
@@ -383,7 +386,7 @@ class _FeatureCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF161B22),
+        color: JdcColors.of(context).panelSoft2,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
@@ -403,8 +406,8 @@ class _FeatureCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             subtitle,
-            style: const TextStyle(
-              color: Color(0xFF9BA3AF),
+            style: TextStyle(
+              color: JdcColors.of(context).panelDim,
               fontSize: 10.5,
               height: 1.2,
             ),

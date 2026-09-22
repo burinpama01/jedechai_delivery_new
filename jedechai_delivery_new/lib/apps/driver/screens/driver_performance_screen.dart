@@ -1,8 +1,10 @@
 import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:jedechai_delivery_new/theme/app_theme.dart';
 import '../../../common/services/auth_service.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../theme/jdc_colors.dart';
+import '../../../theme/jdc_layout.dart';
 
 class DriverPerformanceScreen extends StatefulWidget {
   const DriverPerformanceScreen({super.key});
@@ -61,21 +63,13 @@ class _DriverPerformanceScreenState extends State<DriverPerformanceScreen> {
     return 'Bronze';
   }
 
-  Color _getBadgeColor() {
+  /// สีของระดับ — ใช้ token เชิงความหมายของ JDC เท่านั้น
+  Color _getBadgeColor(JdcColors jdc) {
     switch (_getBadgeLevel()) {
-      case 'Platinum': return const Color(0xFF6366F1);
-      case 'Gold': return const Color(0xFFF59E0B);
-      case 'Silver': return const Color(0xFF94A3B8);
-      default: return const Color(0xFFB45309);
-    }
-  }
-
-  IconData _getBadgeIcon() {
-    switch (_getBadgeLevel()) {
-      case 'Platinum': return Icons.diamond;
-      case 'Gold': return Icons.emoji_events;
-      case 'Silver': return Icons.military_tech;
-      default: return Icons.workspace_premium;
+      case 'Platinum': return jdc.infoInk;
+      case 'Gold': return jdc.brandOnSoft;
+      case 'Silver': return jdc.muted;
+      default: return jdc.cta;
     }
   }
 
@@ -86,290 +80,298 @@ class _DriverPerformanceScreenState extends State<DriverPerformanceScreen> {
     return 50;
   }
 
+  /// สร้าง TextStyle พร้อม fontVariations คู่กับ fontWeight ตามกฎดีไซน์
+  TextStyle _txt(
+    Color color,
+    double size, {
+    double w = 400,
+    double? height,
+    List<FontFeature>? fontFeatures,
+  }) {
+    return TextStyle(
+      color: color,
+      fontSize: size,
+      height: height,
+      fontWeight: FontWeight.values[(w.round() ~/ 100) - 1],
+      fontVariations: [FontVariation('wght', w)],
+      fontFeatures: fontFeatures,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: const Text('ผลงานของฉัน'),
-        backgroundColor: AppTheme.accentBlue,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
-        ],
-      ),
+      backgroundColor: jdc.paper,
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accentBlue)))
+          ? Center(child: CircularProgressIndicator(color: jdc.cta))
           : _error != null
               ? _buildErrorState()
-              : RefreshIndicator(
-                  onRefresh: _loadData,
-                  color: AppTheme.accentBlue,
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
+              : Column(
+                  children: [
+                    _buildHeader(),
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: _loadData,
+                        color: jdc.cta,
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: JdcContentFrame(
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                top: JdcSpacing.lg,
+                                bottom: JdcSpacing.xxl,
+                              ),
+                              child: _buildMetrics(),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+    );
+  }
+
+  /// ส่วนหัวสีเข้ม (hero2) ตาม artboard Driver-Performance —
+  /// ปุ่มย้อนกลับ + ไทต์เติล + การ์ดคะแนนบนพื้นเข้ม
+  Widget _buildHeader() {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final rating = _averageRating.clamp(0.0, 5.0);
+
+    return Container(
+      decoration: BoxDecoration(gradient: jdc.hero2),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            JdcSpacing.xl, JdcSpacing.lg, JdcSpacing.xl, JdcSpacing.xl),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  _buildBackButton(),
+                  const SizedBox(width: JdcSpacing.md),
+                  Expanded(
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildBadgeHeader(),
-                        _buildRatingSection(),
-                        _buildProgressSection(),
-                        _buildStatsGrid(),
-                        const SizedBox(height: 24),
+                        Text(
+                          l10n.driverPerfTitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: _txt(jdc.onPanel, 18, w: 700),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          l10n.driverPerfBadgeLevel(_getBadgeLevel()),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: _txt(jdc.panelDim, 12),
+                        ),
                       ],
                     ),
                   ),
-                ),
-    );
-  }
-
-  Widget _buildErrorState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
-            const SizedBox(height: 16),
-            const Text('โหลดข้อมูลไม่สำเร็จ',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text(_error ?? '', style: TextStyle(color: Colors.grey[500], fontSize: 13),
-                textAlign: TextAlign.center),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: _loadData,
-              icon: const Icon(Icons.refresh),
-              label: const Text('ลองใหม่'),
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accentBlue, foregroundColor: Colors.white),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBadgeHeader() {
-    final badge = _getBadgeLevel();
-    final color = _getBadgeColor();
-    final icon = _getBadgeIcon();
-    final next = _getBadgeNextTarget();
-    final progress = _totalCompletedJobs >= 500
-        ? 1.0
-        : _totalCompletedJobs / next.toDouble();
-
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [color, color.withValues(alpha: 0.75)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 6)),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: Colors.white, size: 32),
+                  IconButton(
+                    tooltip: l10n.driverDashRefresh,
+                    icon: Icon(Icons.refresh, color: jdc.onPanel),
+                    onPressed: _loadData,
+                  ),
+                ],
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(height: JdcSpacing.xl),
+              Container(
+                padding: const EdgeInsets.all(JdcSpacing.lg),
+                decoration: BoxDecoration(
+                  color: jdc.panelSoft2,
+                  borderRadius: BorderRadius.circular(JdcRadius.card),
+                  border: Border.all(color: jdc.panelLine),
+                ),
+                child: Row(
                   children: [
-                    Text('ระดับ $badge',
-                        style: const TextStyle(
-                            color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-                    Text('งานสำเร็จทั้งหมด $_totalCompletedJobs ครั้ง',
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 13)),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(l10n.driverPerfAvgRating, style: _txt(jdc.panelDim, 12)),
+                          const SizedBox(height: 3),
+                          Text(
+                            rating.toStringAsFixed(2),
+                            style: _txt(jdc.onPanel, 26, w: 700, fontFeatures: [
+                              FontFeature.tabularFigures(),
+                            ]),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: JdcSpacing.md),
+                    Row(
+                      children: [
+                        Icon(Icons.star, size: 14, color: jdc.brandHi),
+                        const SizedBox(width: 5),
+                        Text(l10n.driverPerfOutOfFive, style: _txt(jdc.brandHi, 12)),
+                      ],
+                    ),
                   ],
                 ),
               ),
             ],
           ),
-          if (_totalCompletedJobs < 500) ...[
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('ความคืบหน้าสู่ระดับถัดไป',
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 12)),
-                Text('$_totalCompletedJobs / $next',
-                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
-              ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBackButton() {
+    final jdc = JdcColors.of(context);
+    return SizedBox(
+      width: JdcTouch.minTarget,
+      height: JdcTouch.minTarget,
+      child: Material(
+        color: jdc.panelSoft2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(JdcRadius.field),
+          side: BorderSide(color: jdc.panelLine),
+        ),
+        child: InkWell(
+          onTap: () => Navigator.of(context).maybePop(),
+          child: Icon(Icons.chevron_left, size: 20, color: jdc.onPanel),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(JdcSpacing.xxxl),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 64, color: jdc.danger),
+            const SizedBox(height: JdcSpacing.lg),
+            Text(l10n.activityLoadFailed, style: _txt(jdc.text, 16, w: 700)),
+            const SizedBox(height: JdcSpacing.sm),
+            Text(
+              _error ?? '',
+              style: _txt(jdc.muted, 13),
+              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 6),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: progress.clamp(0.0, 1.0),
-                backgroundColor: Colors.white.withValues(alpha: 0.25),
-                valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                minHeight: 8,
+            const SizedBox(height: JdcSpacing.xl),
+            ElevatedButton.icon(
+              onPressed: _loadData,
+              icon: const Icon(Icons.refresh),
+              label: Text(l10n.earnRetry),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: jdc.cta,
+                foregroundColor: jdc.onCta,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(JdcRadius.field),
+                ),
               ),
             ),
           ],
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildRatingSection() {
-    final colorScheme = Theme.of(context).colorScheme;
-    final rating = _averageRating.clamp(0.0, 5.0);
-    final fullStars = rating.floor();
-    final hasHalf = (rating - fullStars) >= 0.5;
+  /// การ์ดตัวชี้วัดตาม artboard — แถวชื่อ+คำใบ้ กับค่าทางขวา
+  /// (กราฟแท่งรายวัน/รีวิวล่าสุดใน artboard ยังไม่มีข้อมูลรองรับ → known gap)
+  Widget _buildMetrics() {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final next = _getBadgeNextTarget();
+    final badgeHint = _totalCompletedJobs >= 500
+        ? l10n.driverPerfMaxLevel
+        : l10n.driverPerfBadgeProgress(
+            _totalCompletedJobs.toString(), next.toString());
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('คะแนนเฉลี่ย',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Text(rating.toStringAsFixed(1),
-                  style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Color(0xFFF59E0B))),
-              const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: List.generate(5, (i) {
-                      if (i < fullStars) return const Icon(Icons.star, color: Color(0xFFF59E0B), size: 24);
-                      if (i == fullStars && hasHalf) return const Icon(Icons.star_half, color: Color(0xFFF59E0B), size: 24);
-                      return Icon(Icons.star_border, color: Colors.grey[300], size: 24);
-                    }),
-                  ),
-                  const SizedBox(height: 4),
-                  Text('จากคะแนนเต็ม 5.0',
-                      style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProgressSection() {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2))],
-      ),
-      child: Column(
-        children: [
-          _buildProgressRow(
-            'อัตราการรับงาน',
-            _acceptanceRate / 100,
-            '${_acceptanceRate.toStringAsFixed(1)}%',
-            Colors.blue,
-            Icons.thumb_up_outlined,
-          ),
-          const SizedBox(height: 16),
-          _buildProgressRow(
-            'อัตราการส่งสำเร็จ',
-            _completionRate / 100,
-            '${_completionRate.toStringAsFixed(1)}%',
-            Colors.green,
-            Icons.check_circle_outline,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProgressRow(String label, double value, String valueText, Color color, IconData icon) {
-    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Icon(icon, size: 18, color: color),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(label,
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: colorScheme.onSurface)),
-            ),
-            Text(valueText,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
-          ],
-        ),
-        const SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: value.clamp(0.0, 1.0),
-            backgroundColor: color.withValues(alpha: 0.12),
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-            minHeight: 10,
+        Text(l10n.driverPerfMetrics, style: _txt(jdc.text, 14, w: 700)),
+        const SizedBox(height: JdcSpacing.md),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(
+            horizontal: JdcSpacing.lg,
+            vertical: JdcSpacing.lg,
+          ),
+          decoration: BoxDecoration(
+            color: jdc.surface,
+            borderRadius: BorderRadius.circular(JdcRadius.card),
+            border: Border.all(color: jdc.line),
+            boxShadow: jdc.shadowCard,
+          ),
+          child: Column(
+            children: [
+              _buildMetricRow(
+                l10n.driverPerfAcceptanceRate,
+                l10n.driverPerfTarget90,
+                '${_acceptanceRate.toStringAsFixed(1)}%',
+                jdc.successInk,
+              ),
+              const SizedBox(height: JdcSpacing.md),
+              _buildMetricRow(
+                l10n.driverPerfCompletionRate,
+                l10n.driverPerfCompletionRateHint,
+                '${_completionRate.toStringAsFixed(1)}%',
+                jdc.successInk,
+              ),
+              const SizedBox(height: JdcSpacing.md),
+              _buildMetricRow(
+                l10n.driverPerfTotalCompleted,
+                l10n.driverPerfTotalCompletedHint,
+                l10n.driverPerfJobsCount(_totalCompletedJobs.toString()),
+                jdc.successInk,
+              ),
+              const SizedBox(height: JdcSpacing.md),
+              _buildMetricRow(
+                l10n.driverPerfLevel,
+                badgeHint,
+                _getBadgeLevel(),
+                _getBadgeColor(jdc),
+              ),
+            ],
           ),
         ),
       ],
     );
   }
 
-  Widget _buildStatsGrid() {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          Expanded(child: _buildStatCard('งานสำเร็จ', '$_totalCompletedJobs', Icons.check_circle, Colors.green, colorScheme)),
-          const SizedBox(width: 12),
-          Expanded(child: _buildStatCard('ระดับ', _getBadgeLevel(), _getBadgeIcon(), _getBadgeColor(), colorScheme)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatCard(String title, String value, IconData icon, Color color, ColorScheme colorScheme) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2))],
-      ),
-      child: Column(
-        children: [
-          Icon(icon, size: 28, color: color),
-          const SizedBox(height: 8),
-          Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
-          const SizedBox(height: 4),
-          Text(title, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
-        ],
-      ),
+  Widget _buildMetricRow(String label, String hint, String value, Color valueColor) {
+    final jdc = JdcColors.of(context);
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: _txt(jdc.text, 13, w: 700)),
+              const SizedBox(height: 2),
+              Text(
+                hint,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: _txt(jdc.muted, 12),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: JdcSpacing.md),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: _txt(valueColor, 15, w: 700),
+        ),
+      ],
     );
   }
 }

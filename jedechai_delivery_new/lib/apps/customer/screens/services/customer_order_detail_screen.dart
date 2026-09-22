@@ -5,7 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../common/services/services.dart';
 import '../../../../common/models/booking.dart';
 import '../../../../common/widgets/app_network_image.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../theme/jdc_colors.dart';
 import '../../../../common/services/supabase_service.dart';
 import '../../../../common/services/booking_service.dart';
 import '../../../../common/services/chat_service.dart';
@@ -263,6 +263,10 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
               }
             });
           }
+        }, onError: (Object error) {
+          // ไม่มี onError สตรีมที่ล้มเหลวจะกลายเป็น unhandled error ทั้งแอป
+          // (เช่นตอน session หลุดหรือเน็ตหาย) หน้าจอยังใช้ข้อมูลเดิมต่อได้
+          debugLog('❌ Booking status stream error: $error');
         });
   }
 
@@ -427,12 +431,17 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
               Icon(Icons.access_time,
                   size: 16, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: 8),
-              Text(
-                AppLocalizations.of(context)!.orderDetailOrderedAt(
-                    _formatDateTime(widget.booking.createdAt)),
-                style: TextStyle(
-                  fontSize: 14,
-                  color: colorScheme.onSurfaceVariant,
+              // ข้อความ "สั่งเมื่อ <วันเวลา>" ยาวเกินกรอบบนจอ 360 ถ้าไม่ยืดตามที่ว่าง
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(context)!.orderDetailOrderedAt(
+                      _formatDateTime(widget.booking.createdAt)),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -612,9 +621,9 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
               color: colorScheme.onSurface,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           if (_isLoadingDriver)
-            const Center(
+            Center(
               child: Padding(
                 padding: EdgeInsets.all(20),
                 child: CircularProgressIndicator(),
@@ -631,7 +640,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                       width: 50,
                       height: 50,
                       decoration: BoxDecoration(
-                        color: AppTheme.accentBlue.withValues(alpha: 0.1),
+                        color: JdcColors.of(context).infoInk.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(25),
                       ),
                       child: _driverInfo!['avatar_url'] != null
@@ -644,12 +653,12 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                                 height: 50,
                                 fit: BoxFit.cover,
                                 backgroundColor:
-                                    AppTheme.accentBlue.withValues(alpha: 0.1),
+                                    JdcColors.of(context).infoInk.withValues(alpha: 0.1),
                               ),
                             )
-                          : const Icon(
+                          : Icon(
                               Icons.person,
-                              color: AppTheme.accentBlue,
+                              color: JdcColors.of(context).infoInk,
                               size: 24,
                             ),
                     ),
@@ -717,7 +726,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
 
                 // Bottom row: Action Buttons
                 Row(
@@ -725,7 +734,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                     // Track Driver Button
                     Expanded(
                       child: Material(
-                        color: AppTheme.accentBlue,
+                        color: JdcColors.of(context).infoInk,
                         borderRadius: BorderRadius.circular(12),
                         child: InkWell(
                           borderRadius: BorderRadius.circular(12),
@@ -740,18 +749,18 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                             );
                           },
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            padding: EdgeInsets.symmetric(vertical: 10),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.location_on,
-                                    color: Colors.white, size: 18),
-                                const SizedBox(width: 6),
+                                Icon(Icons.location_on,
+                                    color: JdcColors.of(context).surface, size: 18),
+                                SizedBox(width: 6),
                                 Text(
                                     AppLocalizations.of(context)!
                                         .orderDetailTrack,
-                                    style: const TextStyle(
-                                        color: Colors.white,
+                                    style: TextStyle(
+                                        color: JdcColors.of(context).surface,
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600)),
                               ],
@@ -761,28 +770,28 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                       ),
                     ),
                     if (_driverInfo!['phone_number'] != null) ...[
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       // Message Button
                       Expanded(
                         child: Material(
-                          color: AppTheme.accentBlue,
+                          color: JdcColors.of(context).infoInk,
                           borderRadius: BorderRadius.circular(12),
                           child: InkWell(
                             borderRadius: BorderRadius.circular(12),
                             onTap: () => _openChat(),
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              padding: EdgeInsets.symmetric(vertical: 10),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(Icons.chat_bubble,
-                                      color: Colors.white, size: 18),
-                                  const SizedBox(width: 6),
+                                  Icon(Icons.chat_bubble,
+                                      color: JdcColors.of(context).surface, size: 18),
+                                  SizedBox(width: 6),
                                   Text(
                                       AppLocalizations.of(context)!
                                           .orderDetailChat,
-                                      style: const TextStyle(
-                                          color: Colors.white,
+                                      style: TextStyle(
+                                          color: JdcColors.of(context).surface,
                                           fontSize: 13,
                                           fontWeight: FontWeight.w600)),
                                 ],
@@ -791,11 +800,11 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       // Call Button
                       Expanded(
                         child: Material(
-                          color: AppTheme.primaryGreen,
+                          color: JdcColors.of(context).cta,
                           borderRadius: BorderRadius.circular(12),
                           child: InkWell(
                             borderRadius: BorderRadius.circular(12),
@@ -817,18 +826,18 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                               }
                             },
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              padding: EdgeInsets.symmetric(vertical: 10),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(Icons.phone,
-                                      color: Colors.white, size: 18),
-                                  const SizedBox(width: 6),
+                                  Icon(Icons.phone,
+                                      color: JdcColors.of(context).surface, size: 18),
+                                  SizedBox(width: 6),
                                   Text(
                                       AppLocalizations.of(context)!
                                           .orderDetailCall,
-                                      style: const TextStyle(
-                                          color: Colors.white,
+                                      style: TextStyle(
+                                          color: JdcColors.of(context).surface,
                                           fontSize: 13,
                                           fontWeight: FontWeight.w600)),
                                 ],
@@ -891,19 +900,19 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
             )
           else
             ..._orderItems.map((item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
+                  padding: EdgeInsets.only(bottom: 12),
                   child: Row(
                     children: [
                       Container(
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: AppTheme.accentOrange.withValues(alpha: 0.1),
+                          color: JdcColors.of(context).brand.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.restaurant,
-                          color: AppTheme.accentOrange,
+                          color: JdcColors.of(context).brand,
                           size: 20,
                         ),
                       ),
@@ -941,12 +950,12 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                             if (item['options'] != null &&
                                 item['options'] is List &&
                                 (item['options'] as List).isNotEmpty) ...[
-                              const SizedBox(height: 4),
+                              SizedBox(height: 4),
                               Container(
-                                padding: const EdgeInsets.symmetric(
+                                padding: EdgeInsets.symmetric(
                                     horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.accentOrange
+                                  color: JdcColors.of(context).brand
                                       .withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
@@ -958,7 +967,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                                           .orderDetailOptionsLabel,
                                       style: TextStyle(
                                         fontSize: 10,
-                                        color: AppTheme.accentOrange,
+                                        color: JdcColors.of(context).brand,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -983,12 +992,12 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                                       }
 
                                       return Padding(
-                                        padding: const EdgeInsets.only(top: 1),
+                                        padding: EdgeInsets.only(top: 1),
                                         child: Text(
                                           '• $optionName',
                                           style: TextStyle(
                                             fontSize: 11,
-                                            color: AppTheme.accentOrange
+                                            color: JdcColors.of(context).brand
                                                 .withValues(alpha: 0.8),
                                             fontWeight: FontWeight.w500,
                                           ),
@@ -1287,10 +1296,10 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
               ),
               Text(
                 '฿${RoleAmountCalculator.ceilBaht(_calculateTotalPrice())}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryGreen,
+                  color: JdcColors.of(context).cta,
                 ),
               ),
             ],
@@ -1321,13 +1330,13 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
   Color _getServiceColor(String serviceType) {
     switch (serviceType.toLowerCase()) {
       case 'ride':
-        return AppTheme.accentBlue;
+        return JdcColors.of(context).infoInk;
       case 'food':
-        return AppTheme.accentOrange;
+        return JdcColors.of(context).brand;
       case 'parcel':
-        return AppTheme.primaryGreen;
+        return JdcColors.of(context).cta;
       default:
-        return Colors.grey;
+        return JdcColors.of(context).muted;
     }
   }
 
@@ -1347,28 +1356,28 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
-        return Colors.orange;
+        return JdcColors.of(context).brand;
       case 'pending_merchant':
-        return Colors.amber;
+        return JdcColors.of(context).brandOnSoft;
       case 'preparing':
-        return Colors.blue;
+        return JdcColors.of(context).infoInk;
       case 'ready_for_pickup':
-        return Colors.purple;
+        return JdcColors.of(context).infoInk;
       case 'driver_accepted':
-        return Colors.indigo;
+        return JdcColors.of(context).infoInk;
       case 'accepted':
       case 'confirmed':
-        return Colors.blue;
+        return JdcColors.of(context).infoInk;
       case 'arrived':
-        return Colors.teal;
+        return JdcColors.of(context).successInk;
       case 'in_transit':
-        return Colors.purple;
+        return JdcColors.of(context).infoInk;
       case 'completed':
-        return Colors.green;
+        return JdcColors.of(context).successInk;
       case 'cancelled':
-        return Colors.red;
+        return JdcColors.of(context).danger;
       default:
-        return Colors.grey;
+        return JdcColors.of(context).muted;
     }
   }
 
@@ -1417,20 +1426,20 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
         title: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.1),
+                color: JdcColors.of(context).dangerSoft,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.cancel, color: Colors.red, size: 48),
+              child: Icon(Icons.cancel, color: JdcColors.of(context).danger, size: 48),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Text(
               AppLocalizations.of(context)!.orderDetailCancelledTitle,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Colors.red,
+                color: JdcColors.of(context).danger,
               ),
               textAlign: TextAlign.center,
             ),
@@ -1503,13 +1512,13 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
               onPressed: () {
                 Navigator.of(context).pop(); // close dialog
                 Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
+                  MaterialPageRoute(builder: (_) => CustomerMainScreen()),
                   (route) => false,
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
+                backgroundColor: JdcColors.of(context).danger,
+                foregroundColor: JdcColors.of(context).surface,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
@@ -1593,23 +1602,23 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
         title: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                color: JdcColors.of(context).cta.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.check_circle,
-                  color: AppTheme.primaryGreen, size: 48),
+              child: Icon(Icons.check_circle,
+                  color: JdcColors.of(context).cta, size: 48),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Text(
               isFood
                   ? AppLocalizations.of(context)!.orderDetailCompletedFood
                   : AppLocalizations.of(context)!.orderDetailCompletedRide,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryGreen),
+                  color: JdcColors.of(context).cta),
               textAlign: TextAlign.center,
             ),
           ],
@@ -1663,15 +1672,15 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               // Total Price with food breakdown
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppTheme.primaryGreen,
-                      AppTheme.primaryGreen.withValues(alpha: 0.8)
+                      JdcColors.of(context).cta,
+                      JdcColors.of(context).cta.withValues(alpha: 0.8)
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -1689,33 +1698,33 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                             Text(
                                 AppLocalizations.of(context)!
                                     .orderDetailTotalAmount,
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 14,
-                                    color: Colors.white70,
+                                    color: JdcColors.of(context).panelDim,
                                     fontWeight: FontWeight.w500)),
                             if (isFood)
                               Text(
                                   AppLocalizations.of(context)!
                                       .orderDetailIncludingDelivery,
-                                  style: const TextStyle(
-                                      fontSize: 12, color: Colors.white60)),
+                                  style: TextStyle(
+                                      fontSize: 12, color: JdcColors.of(context).panelDim)),
                           ],
                         ),
                         Text(
                           '฿${RoleAmountCalculator.ceilBaht(totalAmount)}',
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white),
+                              color: JdcColors.of(context).surface),
                         ),
                       ],
                     ),
                     if (isFood) ...[
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
+                          color: JdcColors.of(context).surface.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -1726,29 +1735,29 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                                 Text(
                                     AppLocalizations.of(context)!
                                         .orderDetailFoodCost,
-                                    style: const TextStyle(
-                                        fontSize: 11, color: Colors.white70)),
+                                    style: TextStyle(
+                                        fontSize: 11, color: JdcColors.of(context).panelDim)),
                                 Text('฿${RoleAmountCalculator.ceilBaht(foodCost)}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.white)),
+                                        color: JdcColors.of(context).surface)),
                               ],
                             ),
                             Container(
-                                width: 1, height: 24, color: Colors.white30),
+                                width: 1, height: 24, color: JdcColors.of(context).panelLine),
                             Column(
                               children: [
                                 Text(
                                     AppLocalizations.of(context)!
                                         .orderDetailDeliveryFee,
-                                    style: const TextStyle(
-                                        fontSize: 11, color: Colors.white70)),
+                                    style: TextStyle(
+                                        fontSize: 11, color: JdcColors.of(context).panelDim)),
                                 Text('฿${RoleAmountCalculator.ceilBaht(deliveryFee)}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.white)),
+                                        color: JdcColors.of(context).surface)),
                               ],
                             ),
                           ],
@@ -1756,7 +1765,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                       ),
                     ],
                     if (couponDiscount > 0) ...[
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Text(
                         couponCode != null && couponCode.isNotEmpty
                             ? AppLocalizations.of(context)!
@@ -1765,9 +1774,9 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                             : AppLocalizations.of(context)!
                                 .orderDetailCouponUsedNoCode(
                                     RoleAmountCalculator.ceilBaht(couponDiscount).toString()),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: Colors.white,
+                          color: JdcColors.of(context).surface,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -1785,13 +1794,13 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
               onPressed: () {
                 Navigator.of(context).pop(); // ปิด dialog
                 Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
+                  MaterialPageRoute(builder: (_) => CustomerMainScreen()),
                   (route) => false,
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryGreen,
-                foregroundColor: Colors.white,
+                backgroundColor: JdcColors.of(context).cta,
+                foregroundColor: JdcColors.of(context).surface,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -1902,7 +1911,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
           SnackBar(
             content: Text(AppLocalizations.of(context)!
                 .orderDetailCancelError(e.toString())),
-            backgroundColor: Colors.red,
+            backgroundColor: JdcColors.of(context).danger,
           ),
         );
       }

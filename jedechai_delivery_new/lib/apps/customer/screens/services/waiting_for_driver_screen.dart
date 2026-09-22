@@ -2,7 +2,7 @@ import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../theme/jdc_colors.dart';
 import '../../../../common/models/booking.dart';
 import '../../../../common/services/profile_service.dart';
 import '../../../../common/services/supabase_service.dart';
@@ -220,13 +220,13 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
                   SnackBar(
                     content: Text(
                         AppLocalizations.of(context)!.waitingConnectionError),
-                    backgroundColor: Colors.orange,
+                    backgroundColor: JdcColors.of(context).brand,
                     duration: const Duration(seconds: 3),
                   ),
                 );
               }
               _retryTimer?.cancel();
-              _retryTimer = Timer(const Duration(seconds: 3), () {
+              _retryTimer = Timer(Duration(seconds: 3), () {
                 if (mounted) {
                   debugLog('🔄 Retrying stream connection...');
                   _listenToBookingUpdates();
@@ -243,7 +243,8 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            icon: const Icon(Icons.wifi_off, color: Colors.red, size: 48),
+            icon: Icon(Icons.wifi_off,
+                color: JdcColors.of(context).danger, size: 48),
             title: Text(AppLocalizations.of(context)!.waitingConnectionFailed),
             content: Text(AppLocalizations.of(context)!
                 .waitingCannotConnect(e.toString())),
@@ -395,20 +396,21 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
           title: Column(
             children: [
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
+                  color: JdcColors.of(context).dangerSoft,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.cancel, color: Colors.red, size: 48),
+                child: Icon(Icons.cancel,
+                    color: JdcColors.of(context).danger, size: 48),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Text(
                 AppLocalizations.of(context)!.waitingMerchantRejected,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Colors.red),
+                    color: JdcColors.of(context).danger),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -432,8 +434,8 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
+                  backgroundColor: JdcColors.of(context).danger,
+                  foregroundColor: JdcColors.of(context).surface,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
@@ -489,11 +491,11 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
     if (!didCancelBooking) {
       _isHandlingRideTimeout = false;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
             'No driver accepted this ride, but cancellation failed. Please try cancelling again.',
           ),
-          backgroundColor: Colors.orange,
+          backgroundColor: JdcColors.of(context).brand,
         ),
       );
       return;
@@ -596,16 +598,17 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
+          MaterialPageRoute(builder: (_) => CustomerMainScreen()),
           (route) => false,
         );
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: JdcColors.of(context).surface,
         appBar: AppBar(
-          backgroundColor:
-              _isFoodService ? AppTheme.accentOrange : AppTheme.primaryGreen,
-          foregroundColor: Colors.white,
+          backgroundColor: _isFoodService
+              ? JdcColors.of(context).brand
+              : JdcColors.of(context).cta,
+          foregroundColor: JdcColors.of(context).surface,
           title: Text(_isFoodService
               ? AppLocalizations.of(context)!.waitingForMerchant
               : AppLocalizations.of(context)!.waitingSearchingForDriver),
@@ -626,28 +629,37 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
           ],
         ),
         body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                // Status Section
-                _buildStatusSection(),
+          child: LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      children: [
+                        // Status Section
+                        _buildStatusSection(),
 
-                const SizedBox(height: 32),
+                        const SizedBox(height: 32),
 
-                // Animation Section
-                _buildAnimationSection(),
+                        // Animation Section
+                        _buildAnimationSection(),
 
-                const SizedBox(height: 32),
+                        const SizedBox(height: 32),
 
-                // Driver Info Section
-                if (_isDriverFound) _buildDriverInfoSection(),
+                        // Driver Info Section
+                        if (_isDriverFound) _buildDriverInfoSection(),
 
-                const Spacer(),
+                        Spacer(),
 
-                // Action Buttons
-                _buildActionButtons(),
-              ],
+                        // Action Buttons
+                        _buildActionButtons(),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ),
@@ -659,8 +671,9 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
     // final isWaiting = _isFoodService ? _isWaitingForRestaurant : !_isDriverFound;
     final isCompleted =
         _isFoodService ? _isRestaurantConfirmed : _isDriverFound;
-    final primaryColor =
-        _isFoodService ? AppTheme.accentOrange : AppTheme.primaryGreen;
+    final primaryColor = _isFoodService
+        ? JdcColors.of(context).brand
+        : JdcColors.of(context).cta;
 
     return Container(
       width: double.infinity,
@@ -696,7 +709,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
               color: primaryColor,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             isCompleted
                 ? (_isFoodService
@@ -706,7 +719,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
                     .waitingEstimatedTime(_estimatedTime.toString()),
             style: TextStyle(
               fontSize: 16,
-              color: Colors.grey[600],
+              color: JdcColors.of(context).muted,
             ),
           ),
         ],
@@ -721,9 +734,10 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-            color:
-                (_isFoodService ? AppTheme.accentOrange : AppTheme.primaryGreen)
-                    .withValues(alpha: 0.3),
+            color: (_isFoodService
+                    ? JdcColors.of(context).brand
+                    : JdcColors.of(context).cta)
+                .withValues(alpha: 0.3),
             width: 2),
       ),
       child: Stack(
@@ -745,8 +759,8 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: (_isFoodService
-                                    ? AppTheme.accentOrange
-                                    : AppTheme.primaryGreen)
+                                    ? JdcColors.of(context).brand
+                                    : JdcColors.of(context).cta)
                                 .withValues(alpha: 0.3 - i * 0.1),
                             width: 2,
                           ),
@@ -767,8 +781,8 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
                 child: Icon(
                   _isFoodService ? Icons.restaurant : Icons.local_taxi,
                   color: _isFoodService
-                      ? AppTheme.accentOrange
-                      : AppTheme.primaryGreen,
+                      ? JdcColors.of(context).brand
+                      : JdcColors.of(context).cta,
                   size: 40,
                 ),
               );
@@ -785,15 +799,15 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
     if (_isFoodService && _isRestaurantConfirmed) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: JdcColors.of(context).surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: JdcColors.of(context).text.withValues(alpha: 0.1),
               blurRadius: 8,
-              offset: const Offset(0, 2),
+              offset: Offset(0, 2),
             ),
           ],
         ),
@@ -805,16 +819,16 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: AppTheme.accentOrange.withValues(alpha: 0.1),
+                    color: JdcColors.of(context).brand.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(25),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.restaurant,
-                    color: AppTheme.accentOrange,
+                    color: JdcColors.of(context).brand,
                     size: 25,
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -832,7 +846,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
                         AppLocalizations.of(context)!.waitingPleaseWait,
                         style: TextStyle(
                           fontSize: 14,
-                          color: Colors.grey[600],
+                          color: JdcColors.of(context).muted,
                         ),
                       ),
                     ],
@@ -848,15 +862,15 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
     // Original driver info section for ride service
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: JdcColors.of(context).surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: JdcColors.of(context).text.withValues(alpha: 0.1),
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -866,20 +880,20 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
           Row(
             children: [
               CircleAvatar(
-                backgroundColor: AppTheme.primaryGreen,
-                child: const Icon(
+                backgroundColor: JdcColors.of(context).cta,
+                child: Icon(
                   Icons.person,
-                  color: Colors.white,
+                  color: JdcColors.of(context).surface,
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       _driverName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -888,7 +902,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
                       _driverVehicle,
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey[600],
+                        color: JdcColors.of(context).muted,
                       ),
                     ),
                   ],
@@ -896,27 +910,27 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
               ),
               if (_isDriverAssigned)
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.1),
+                    color:
+                        JdcColors.of(context).successInk.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     AppLocalizations.of(context)!.waitingAssigned,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.green,
+                      color: JdcColors.of(context).successInk,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Row(
             children: [
-              Icon(Icons.phone, color: Colors.grey[600], size: 20),
+              Icon(Icons.phone, color: JdcColors.of(context).muted, size: 20),
               const SizedBox(width: 8),
               Text(
                 _driverPhone,
@@ -940,33 +954,33 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: _showContactDialog,
-              icon: const Icon(Icons.phone),
+              icon: Icon(Icons.phone),
               label: Text(AppLocalizations.of(context)!.waitingContactDriver),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryGreen,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                backgroundColor: JdcColors.of(context).cta,
+                foregroundColor: JdcColors.of(context).surface,
+                padding: EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
             ),
           ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
           child: TextButton.icon(
             onPressed: _showCancelDialog,
-            icon: const Icon(Icons.cancel, color: Colors.red),
+            icon: Icon(Icons.cancel, color: JdcColors.of(context).danger),
             label: Text(
               AppLocalizations.of(context)!.waitingCancelBooking,
-              style: const TextStyle(color: Colors.red),
+              style: TextStyle(color: JdcColors.of(context).danger),
             ),
             style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              padding: EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
-                side: const BorderSide(color: Colors.red),
+                side: BorderSide(color: JdcColors.of(context).danger),
               ),
             ),
           ),
@@ -984,7 +998,8 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.phone, color: Colors.green),
+              leading:
+                  Icon(Icons.phone, color: JdcColors.of(context).successInk),
               title: Text(AppLocalizations.of(context)!.waitingPhoneCall),
               subtitle: Text(_driverPhone),
               onTap: () {
@@ -993,7 +1008,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
               },
             ),
             ListTile(
-              leading: const Icon(Icons.chat, color: Colors.blue),
+              leading: Icon(Icons.chat, color: JdcColors.of(context).infoInk),
               title: Text(AppLocalizations.of(context)!.waitingChatWithDriver),
               subtitle: Text(AppLocalizations.of(context)!.waitingChatInApp),
               onTap: () {
@@ -1095,13 +1110,13 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
               } catch (e) {
                 debugLog('❌ Error cancelling booking: $e');
                 if (mounted) {
-                  Future.delayed(const Duration(milliseconds: 100), () {
+                  Future.delayed(Duration(milliseconds: 100), () {
                     if (mounted) {
                       showDialog(
                         context: context,
                         builder: (ctx) => AlertDialog(
-                          icon: const Icon(Icons.error_outline,
-                              color: Colors.red, size: 48),
+                          icon: Icon(Icons.error_outline,
+                              color: JdcColors.of(context).danger, size: 48),
                           title: Text(AppLocalizations.of(context)!
                               .waitingCancelFailed),
                           content: Text(AppLocalizations.of(context)!
@@ -1121,7 +1136,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
               }
             },
             style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
+              foregroundColor: JdcColors.of(context).danger,
             ),
             child: Text(AppLocalizations.of(context)!.waitingCancel),
           ),
