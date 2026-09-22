@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แผนฟีเจอร์ฝากซื้อ/ฝากหิ้ว v4 - Jedechai Delivery</title>
+<style>
+:root{--bg:#0b1020;--panel:#111827;--panel-soft:#172033;--line:rgba(255,255,255,.12);--text:#f8fafc;--muted:#aab7cf;--blue:#2563eb;--cyan:#06b6d4;--green:#22c55e;--amber:#f59e0b;--red:#ef4444;--violet:#8b5cf6;--shadow:0 18px 45px rgba(0,0,0,.35)}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Inter","Sarabun","Noto Sans Thai",system-ui,sans-serif;background:linear-gradient(135deg,rgba(139,92,246,.18),transparent 34%),linear-gradient(315deg,rgba(6,182,212,.14),transparent 30%),var(--bg);color:var(--text);line-height:1.65}
+header,main,footer{max-width:1180px;margin:0 auto;padding:0 22px}
+header{padding-top:42px;padding-bottom:24px}
+.eyebrow{display:inline-flex;gap:8px;align-items:center;padding:6px 12px;border:1px solid var(--line);border-radius:999px;color:#ddd6fe;background:rgba(139,92,246,.16);font-size:13px;font-weight:700}
+h1{margin:18px 0 8px;font-size:clamp(28px,4vw,46px);line-height:1.12}
+.sub{color:var(--muted);max-width:880px;margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.chip{padding:5px 11px;border:1px solid var(--line);border-radius:999px;font-size:13px;color:var(--muted);background:rgba(255,255,255,.03)}
+.chip-new{border-color:rgba(34,197,94,.4);color:#86efac;background:rgba(34,197,94,.1)}
+section{margin:34px 0}
+h2{font-size:clamp(20px,2.4vw,28px);margin:0 0 6px;display:flex;align-items:center;gap:10px}
+h2 .n{width:30px;height:30px;flex:none;display:grid;place-items:center;border-radius:9px;background:rgba(139,92,246,.2);border:1px solid var(--line);font-size:14px;color:#ddd6fe}
+h3{font-size:17px;margin:22px 0 8px;color:#e2e8f0}
+.lead{color:var(--muted);margin:0 0 16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow)}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+table{width:100%;border-collapse:collapse;font-size:14.5px;margin-top:6px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:#cbd5e1;font-size:13px;text-transform:uppercase;letter-spacing:.4px}
+code{background:rgba(255,255,255,.07);padding:1px 6px;border-radius:5px;font-size:13.5px;color:#a5b4fc;font-family:ui-monospace,Menlo,Consolas,monospace}
+pre{background:#0a0f1d;border:1px solid var(--line);border-radius:12px;padding:14px 16px;overflow:auto;font-size:13px;line-height:1.55}
+pre code{background:none;color:#cbd5e1;padding:0}
+.tag{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid transparent}
+.t-new{background:rgba(34,197,94,.16);color:#86efac;border-color:rgba(34,197,94,.3)}
+.t-mod{background:rgba(245,158,11,.16);color:#fcd34d;border-color:rgba(245,158,11,.3)}
+.t-risk{background:rgba(239,68,68,.16);color:#fca5a5;border-color:rgba(239,68,68,.3)}
+.t-info{background:rgba(37,99,235,.18);color:#bfdbfe;border-color:rgba(37,99,235,.32)}
+.t-v4{background:rgba(139,92,246,.2);color:#ddd6fe;border-color:rgba(139,92,246,.35)}
+ul,ol{margin:8px 0;padding-left:22px}li{margin:5px 0}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
+.step{padding:7px 13px;border-radius:10px;background:var(--panel-soft);border:1px solid var(--line);font-size:13.5px;white-space:nowrap}
+.step-new{border-color:rgba(139,92,246,.45);background:rgba(139,92,246,.14)}
+.arw{color:var(--muted)}
+.warn{border-left:4px solid var(--amber);background:rgba(245,158,11,.08)}
+.danger{border-left:4px solid var(--red);background:rgba(239,68,68,.08)}
+.ok{border-left:4px solid var(--green);background:rgba(34,197,94,.08)}
+.info{border-left:4px solid var(--violet);background:rgba(139,92,246,.09)}
+.mock{background:#0a0f1d;border:1px solid var(--line);border-radius:14px;padding:16px 18px;font-size:14px;max-width:430px}
+.mock .row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed rgba(255,255,255,.08)}
+.mock .row:last-child{border-bottom:none}
+.mock .tot{font-weight:800;color:#86efac;font-size:16px;padding-top:8px}
+.mock .lbl{color:var(--muted)}
+.mock .hd{font-weight:700;margin-bottom:8px;color:#e2e8f0}
+.dlg{background:#0e1424;border:1px solid rgba(139,92,246,.35);border-radius:18px;padding:18px 20px;max-width:400px;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+footer{padding:30px 22px 60px;color:var(--muted);font-size:14px;border-top:1px solid var(--line);margin-top:40px}
+</style>
+</head>
+<body>
+<header>
+  <span class="eyebrow">Feature Plan · v4 (ฉบับสมบูรณ์ พร้อมเริ่ม S1) · 2026-09-23</span>
+  <h1>ระบบฝากซื้อ / ฝากหิ้ว<br>(Shop &amp; Errand Service)</h1>
+  <p class="sub">ข้อกำหนดครบทุกข้อแล้ว ไม่มีข้อค้างที่บล็อกการเริ่มงาน เอกสารนี้เป็นฉบับอ้างอิงหลักสำหรับการลงมือ</p>
+  <div class="meta">
+    <span class="chip">service_type = <code>shop</code></span>
+    <span class="chip">Wallet เท่านั้น</span>
+    <span class="chip">หมุดร้านจากแอดมิน</span>
+    <span class="chip">AI อ่านบิล</span>
+    <span class="chip chip-new">ไม่มีคนขับ = สั่งไม่ได้</span>
+    <span class="chip chip-new">Dialog สรุปราคา (ไม่เปลี่ยนหน้า)</span>
+    <span class="chip chip-new">ค่าปรับยกเลิก 25% สูงสุด 100฿</span>
+    <span class="chip">ฐาน: app 1.14.0+125</span>
+  </div>
+</header>
+
+<main>
+
+<section>
+  <h2><span class="n">0</span>สิ่งที่เปลี่ยนจาก v3</h2>
+  <table>
+    <tr><th>#</th><th>ข้อกำหนดใหม่</th><th>หัวข้อ</th></tr>
+    <tr><td>1</td><td>การคำนวณฝั่ง client ต้องย้ายไป server ทั้งหมด — <strong>บันทึกเป็นงานค้าง ยังไม่ทำตอนนี้</strong></td><td>1</td></tr>
+    <tr><td>2</td><td>Q8: <strong>ไม่มีคนขับออนไลน์ = สั่งไม่ได้</strong> ต้องขึ้นข้อความชัดเจน</td><td>2</td></tr>
+    <tr><td>3</td><td>เพดานค่าวิ่งไกล/ระยะสูงสุด — <strong>ยังไม่กำหนดตอนนี้</strong></td><td>3</td></tr>
+    <tr><td>4</td><td>การบังคับ "ต้องถึงร้านก่อน" — <strong>ของเดิมมี geofence 100m อยู่แล้วและทำงานอยู่</strong> ฝากซื้อใช้ต่อ + ปิดช่องว่างที่เหลือ (<code>ISSUE-20260923-001</code>)</td><td>4</td></tr>
+    <tr><td>5</td><td>QQ: สรุปราคาเป็น <strong>dialog ทับหน้าเดิม</strong> ไม่เปลี่ยนหน้า แต่ยังต้องเก็บ draft</td><td>5</td></tr>
+    <tr><td>A</td><td>ค่าปรับยกเลิก 25% <strong>สูงสุด 100 บาท</strong></td><td>6</td></tr>
+    <tr><td>B</td><td>ค่าปรับเข้าคนขับ 100%</td><td>6</td></tr>
+    <tr><td>C</td><td>"คนขับใหม่" นับจากงานฝากซื้อที่สำเร็จ + แอดมินปลดล็อกมือได้</td><td>7</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2><span class="n">1</span>ย้ายการคำนวณไป server (งานค้าง)</h2>
+  <div class="card ok">
+    <strong>บันทึกลงความทรงจำถาวรแล้ว</strong> — ไฟล์ <code>project_move_client_calc_to_server.md</code> พร้อมรายการจุดที่รู้แล้วว่าต้องย้าย งานนี้<strong>ไม่อยู่ในขอบเขตของฝากซื้อรอบนี้</strong> จะทำเป็นงาน migration แยกต่างหาก
+  </div>
+  <h3>จุดที่ audit เจอแล้ว (ยังไม่ครบ)</h3>
+  <table>
+    <tr><th>จุด</th><th>ปัญหา</th></tr>
+    <tr><td><code>FareAdjustmentService.findNearestOnlineDriverDistanceKm()</code></td><td>ดึง <code>driver_locations</code> ของคนขับออนไลน์ทุกคนมาที่เครื่องลูกค้า แล้ววนหาคนใกล้สุดด้วย <code>Geolocator.distanceBetween</code></td></tr>
+    <tr><td><code>FareAdjustmentService.getDriverToPickupDistanceKm()</code> + ค่าวิ่งไกล ride</td><td>คิดเงินจริงที่ฝั่ง client</td></tr>
+    <tr><td><code>_isWithinDriverOrderRadius()</code> (driver_dashboard_screen)</td><td>กรองออเดอร์ที่คนขับเห็นด้วยระยะที่คำนวณเอง</td></tr>
+  </table>
+  <div class="card warn" style="margin-top:10px">
+    <strong>ผลต่อฝากซื้อ:</strong> ฝากซื้อจะ<strong>ไม่ลอก pattern client-side ของเดิม</strong> แต่เขียน RPC ฝั่ง server ใหม่ตั้งแต่แรก (หัวข้อ 2) ซึ่งจะกลายเป็นต้นแบบให้ ride/parcel ย้ายตามทีหลัง — ได้ประโยชน์สองต่อโดยไม่ต้องแตะของเดิมในรอบนี้
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">2</span>ไม่มีคนขับ = สั่งไม่ได้ (Q8)</h2>
+
+  <h3>2.1 RPC ฝั่ง server</h3>
+  <pre><code>nearest_online_driver(p_lat, p_lng, p_vehicle_type, p_service_type)
+  =&gt; { has_driver: boolean,
+       nearest_km: numeric | null,
+       driver_count_in_radius: int }
+
+  เงื่อนไข: driver_locations.is_online = true AND is_available = true
+            AND profiles.is_online = true
+            AND profiles.approval_status = 'approved'
+            AND vehicle_type ตรง
+            AND ตัดพิกัด (0,0) ทิ้ง
+  ** ไม่คืนตำแหน่งหรือ id ของคนขับ คืนแค่ตัวเลขสรุป **</code></pre>
+
+  <h3>2.2 กฎการบล็อก</h3>
+  <table>
+    <tr><th>ผลลัพธ์</th><th>ลูกค้าเห็น</th><th>ปุ่มยืนยัน</th></tr>
+    <tr><td>มีคนขับในรัศมี</td><td>"มีคนขับ N คนในพื้นที่" · ราคาปกติ</td><td><span class="tag t-new">กดได้</span></td></tr>
+    <tr><td>มีคนขับแต่อยู่นอกรัศมี</td><td>แจ้งค่าวิ่งไกลที่เพิ่มขึ้น + ระยะทางที่เป็นเหตุ</td><td><span class="tag t-mod">กดได้</span></td></tr>
+    <tr><td><strong>ไม่มีคนขับออนไลน์เลย</strong></td><td><strong>"ขณะนี้ไม่มีคนขับออนไลน์ในพื้นที่ กรุณาลองใหม่อีกครั้งภายหลัง"</strong></td><td><span class="tag t-risk">กดไม่ได้</span></td></tr>
+  </table>
+
+  <h3>2.3 บังคับ 2 ชั้น</h3>
+  <ul>
+    <li><strong>ชั้น UI:</strong> ปุ่มยืนยันเป็น disabled พร้อมข้อความอธิบายเหตุผล + ปุ่ม "ลองตรวจอีกครั้ง"</li>
+    <li><strong>ชั้น server:</strong> <code>create_shop_booking()</code> เรียก <code>nearest_online_driver()</code> ซ้ำ ถ้าไม่มีคนขับคืน <code>error: 'no_driver_available'</code> — กันทั้งการเรียก API ตรง และกันช่องว่างเวลาระหว่างเปิด dialog กับกดยืนยัน</li>
+  </ul>
+
+  <div class="card warn" style="margin-top:12px">
+    <h3 style="margin-top:0">ข้อจำกัดที่ต้องยอมรับ และทางรับมือ</h3>
+    <p style="margin:0 0 8px">การตรวจนี้<strong>ลดโอกาส</strong>สั่งแล้วไม่มีคนรับ แต่<strong>ไม่ได้รับประกัน</strong> — คนขับที่ว่างตอนตรวจอาจไปรับงานอื่นในวินาทีถัดมา หรือปิดแอปทันทีหลังลูกค้ากดยืนยัน ดังนั้น:</p>
+    <ul style="margin-bottom:0">
+      <li>ยังต้องมี timeout หาคนขับ (<code>shop_match_timeout_min</code>, เริ่มที่ 10 นาที) แล้ว<strong>คืน hold เต็มจำนวนอัตโนมัติ</strong> พร้อมแจ้งลูกค้า</li>
+      <li>ระหว่างรอคนขับ ต้องแสดงให้ลูกค้าเห็นว่ากำลังหาอยู่ และบอกว่าถ้าหาไม่ได้จะคืนเงินเต็ม — ไม่ให้ลูกค้ากังวลว่าเงินที่ถูกกันไปจะหาย</li>
+      <li><strong>ห้ามสื่อสารกับลูกค้าว่า "รับประกันมีคนขับ"</strong> เพราะระบบทำไม่ได้จริง</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">3</span>เพดานค่าวิ่งไกล — ยังไม่กำหนด</h2>
+  <p class="lead">ผู้ใช้ระบุว่ายังไม่กำหนดตอนนี้ จึงทำเป็น config ที่เปิดใช้ภายหลังได้ โดย<strong>ค่าเริ่มต้นคือไม่จำกัด</strong></p>
+  <table>
+    <tr><th>Config key</th><th>ค่าเริ่มต้น</th><th>ความหมาย</th></tr>
+    <tr><td><code>shop_far_pickup_enabled</code></td><td><code>true</code></td><td>คิดค่าวิ่งไกลเมื่อคนขับอยู่นอกรัศมี</td></tr>
+    <tr><td><code>shop_far_pickup_rate_per_km_motorcycle</code> / <code>_car</code></td><td><code>5</code> / <code>8</code></td><td>บาทต่อ กม. เฉพาะส่วนที่เกินรัศมี</td></tr>
+    <tr><td><code>shop_far_pickup_max_fee</code></td><td><code>null</code> <span class="tag t-mod">ยังไม่กำหนด</span></td><td>เพดานค่าวิ่งไกล — <code>null</code> = ไม่จำกัด</td></tr>
+    <tr><td><code>shop_max_pickup_distance_km</code></td><td><code>null</code> <span class="tag t-mod">ยังไม่กำหนด</span></td><td>ระยะไกลสุดที่ยังจับคู่ให้ — <code>null</code> = ไม่จำกัด</td></tr>
+  </table>
+  <div class="card warn" style="margin-top:10px">
+    <strong>สิ่งที่ต้องเฝ้าดูหลังเปิดใช้งานจริง:</strong> ถ้าไม่มีเพดานเลย เป็นไปได้ที่คนขับที่อยู่ห่าง 60–80 กม. จะถูกนับเป็น "มีคนขับ" แล้วลูกค้าเห็นค่าวิ่งไกลหลายร้อยบาท หรือกดสั่งไปแล้วรอนานมาก แนะนำให้<strong>เก็บสถิติระยะทางคนขับที่ใกล้ที่สุดของทุก quote</strong> ตั้งแต่วันแรก จะได้มีข้อมูลจริงมาตั้งเพดานภายหลัง แทนที่จะเดาเอา — โค้ดพร้อมรับเพดานอยู่แล้ว แค่ใส่ค่าใน config ก็ทำงานทันที
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">4</span>การบังคับ "ต้องถึงร้านก่อน"</h2>
+
+  <div class="card danger">
+    <h3 style="margin-top:0">แก้ไข (2026-09-23): เอกสารฉบับก่อนหน้าระบุผิด</h3>
+    <p style="margin:0 0 8px">v4 ฉบับแรกเขียนว่าของเดิม "ไม่มีการตรวจตำแหน่ง" — <strong>ไม่ถูกต้อง</strong> เพราะตรวจแต่ RPC ฝั่ง server แล้วสรุป geofence <strong>มีอยู่จริงและทำงานอยู่ ฝั่ง client</strong></p>
+  </div>
+
+  <h3>4.1 ของเดิมที่มีอยู่แล้ว</h3>
+  <p class="lead"><code>driver_navigation_screen.dart:107</code> — <code>static const double kAllowedRadiusMeters = 100.0;</code></p>
+  <table>
+    <tr><th>เรื่อง</th><th>รายละเอียด</th></tr>
+    <tr><td>Action ที่ถูกคุม</td><td><code>arrived</code> · <code>arrived_at_merchant</code> · <code>picking_up_order</code> · <code>completed</code> (บรรทัด 2045-2050)</td></tr>
+    <tr><td>วัดระยะถึงอะไร</td><td>food <code>driver_accepted</code>/<code>ready_for_pickup</code> → ร้าน · ride <code>accepted</code> → จุดรับ · parcel/laundry → จุดรับ · ทุกประเภท <code>in_transit</code> → ปลายทางลูกค้า</td></tr>
+    <tr><td>Tolerance</td><td><code>accuracy.clamp(0, 50)</code> บวกเพิ่มจาก 100 ม. → <strong>สูงสุด 150 ม. เมื่อ GPS แย่</strong></td></tr>
+    <tr><td>ถ้าไม่ผ่าน</td><td><code>return</code> ก่อนยิง API + dialog บอกระยะจริงเทียบระยะที่อนุญาต</td></tr>
+  </table>
+  <div class="card ok" style="margin-top:10px">
+    <strong>สรุป:</strong> คนขับกด "ถึงร้าน" จากที่ไหนก็ได้<strong>ไม่ได้</strong> ผ่านแอปปกติ — ของเดิมใช้งานได้ดีและเผื่อ GPS ไม่แม่นไว้แล้ว ฝากซื้อ<strong>ใช้กลไกเดิมต่อ ไม่ต้องสร้างใหม่</strong>
+  </div>
+
+  <h3>4.2 ช่องว่างที่เหลือ → เปิด issue แล้ว</h3>
+  <div class="card warn">
+    <p style="margin-top:0">บันทึกเป็น <strong><code>ISSUE-20260923-001</code></strong> (status <code>open</code>, severity <code>medium</code>) ใน Obsidian แล้ว — แก้แยกจากงานฝากซื้อ</p>
+    <ol style="margin-bottom:0">
+      <li><strong>บังคับที่ client เท่านั้น</strong> — <code>driver_arrived_at_merchant_guarded</code> ตรวจแค่ลำดับสถานะ การเรียก API ตรงข้าม geofence ได้</li>
+      <li><strong>รัศมี hard-code</strong> — <code>kAllowedRadiusMeters</code> เป็น <code>const</code> ในไฟล์ แอดมินปรับไม่ได้ ต่างจากรัศมีอื่นที่อยู่ใน <code>detection_radius_config</code></li>
+      <li><strong>if-chain เป็น allow-by-default</strong> — ท้าย <code>_checkProximity()</code> มี <code>else { return true; }</code> แปลว่า service type ที่ยังไม่มี branch <strong>ผ่านตลอด</strong></li>
+    </ol>
+  </div>
+
+  <h3>4.3 สิ่งที่ฝากซื้อต้องทำในรอบนี้</h3>
+  <div class="card danger">
+    <p style="margin-top:0"><strong>ข้อ 3 ข้างบนกระทบฝากซื้อโดยตรงและต้องแก้ใน S3 ไม่ใช่รอ issue</strong> — ถ้าไม่เพิ่ม branch <code>shop</code> จะได้ geofence ที่ดูเหมือนมีแต่ไม่ทำอะไรเลย</p>
+    <p style="margin:8px 0 0">และเพราะสถานะ <code>shopping</code> คือเส้นที่ลูกค้าเริ่มโดนค่าปรับ 25% (สูงสุด 100฿) ฝากซื้อจึง<strong>ต้องบังคับฝั่ง server ด้วย</strong> ไม่พึ่ง client อย่างเดียวเหมือน vertical อื่น</p>
+  </div>
+  <table>
+    <tr><th>งาน</th><th>อยู่ที่</th></tr>
+    <tr><td>เพิ่ม branch <code>serviceType == 'shop' && status == 'accepted'</code> → วัดระยะถึงพิกัดร้าน ใน <code>_checkProximity()</code></td><td>S6 (แอปคนขับ)</td></tr>
+    <tr><td>RPC <code>shop_driver_arrived_at_store()</code> ตรวจ <strong>ลำดับสถานะ + ตำแหน่งจาก <code>driver_locations</code></strong></td><td>S3</td></tr>
+    <tr><td>ปุ่ม "ถึงร้านแล้วแต่ระบบไม่รับ" + ธง <code>arrival_self_reported</code></td><td>S6</td></tr>
+  </table>
+  <table>
+    <tr><th>Config key</th><th>ค่าเริ่มต้น</th><th>ความหมาย</th></tr>
+    <tr><td><code>shop_arrival_radius_m</code></td><td><code>150</code></td><td>ระยะที่ถือว่าถึงร้าน — ตั้ง 150 ให้ตรงกับ effective radius สูงสุดของ client (100+50) เพื่อไม่ให้ server ปฏิเสธสิ่งที่ client ปล่อยผ่าน</td></tr>
+    <tr><td><code>shop_location_freshness_sec</code></td><td><code>120</code></td><td>ตำแหน่งใน <code>driver_locations</code> เก่ากว่านี้ถือว่าใช้ไม่ได้</td></tr>
+    <tr><td><code>shop_arrival_geofence_enabled</code></td><td><code>true</code></td><td>ปิดได้ถ้าพบปัญหาหน้างาน</td></tr>
+  </table>
+  <div class="card info" style="margin-top:10px">
+    <strong>ทำไม server ตั้ง 150 ไม่ใช่ 100:</strong> client อนุญาตถึง 150 ม. เมื่อ GPS แย่ ถ้า server ตั้ง 100 จะเกิดเคสที่คนขับกดผ่านหน้าจอได้แต่ server ปฏิเสธ ซึ่งงงกว่าเดิม — ให้ server เป็นเพดานที่ผ่อนกว่าหรือเท่ากับ client เสมอ แล้วใช้ธง self-reported จับพฤติกรรมผิดปกติแทน
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">5</span>Dialog สรุปราคา (QQ)</h2>
+  <p class="lead">ผู้ใช้สั่ง: ขึ้น dialog ทับหน้าเดิม ไม่เปลี่ยนหน้า แต่ยังต้องเก็บ draft</p>
+
+  <h3>5.1 หน้าตาและพฤติกรรม</h3>
+  <div class="grid g2">
+    <div class="dlg">
+      <div style="font-weight:700;margin-bottom:10px">ยืนยันคำสั่งฝากซื้อ</div>
+      <div class="mock" style="background:transparent;border:none;padding:0;max-width:none">
+        <div class="row"><span class="lbl">วงเงินค่าสินค้า (สูงสุด)</span><span>฿500.00</span></div>
+        <div class="row"><span class="lbl">ค่าส่งตามระยะ 4.2 กม.</span><span>฿35.00</span></div>
+        <div class="row"><span class="lbl">ค่าบริการฝากซื้อ</span><span>฿50.00</span></div>
+        <div class="row"><span class="lbl">ค่าวิ่งไกล (คนขับห่าง 24 กม.)</span><span>฿20.00</span></div>
+        <div class="row tot"><span>กันไว้จาก Wallet</span><span>฿605.00</span></div>
+        <div class="row" style="margin-top:6px"><span class="lbl">Wallet คงเหลือ</span><span>฿1,240.00</span></div>
+      </div>
+      <div style="color:var(--muted);font-size:12.5px;margin-top:10px;line-height:1.5">
+        จ่ายจริงตามใบเสร็จ ส่วนที่เหลือคืนเข้า Wallet อัตโนมัติ<br>
+        มีคนขับ 3 คนในพื้นที่
+      </div>
+      <div style="border-top:1px solid rgba(245,158,11,.3);margin-top:10px;padding-top:10px;color:#fcd34d;font-size:13px;line-height:1.6">
+        หากยกเลิกหลังคนขับถึงร้านแล้ว มีค่าชดเชยคนขับ <strong>฿100.00</strong><br>
+        <span style="color:var(--muted)">เมื่อคนขับชำระเงินที่ร้านแล้ว จะยกเลิกไม่ได้</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <div style="flex:1;text-align:center;padding:10px;border:1px solid var(--line);border-radius:10px;color:var(--muted);font-size:14px">ย้อนกลับ</div>
+        <div style="flex:1.4;text-align:center;padding:10px;background:#7c3aed;border-radius:10px;font-weight:700;font-size:14px">ยืนยันสั่ง</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">กฎของ dialog</h3>
+      <ul style="padding-left:18px">
+        <li>เป็น <strong>modal ทับหน้าเดิม</strong> ปิดแล้วกลับมาที่หน้าเดิมพร้อมข้อมูลครบ ไม่ใช่ route ใหม่</li>
+        <li>แสดง<strong>ทุกบรรทัดราคา</strong> ไม่ซ่อนใน "ค่าบริการอื่น ๆ"</li>
+        <li>บรรทัดค่าวิ่งไกลแสดงเฉพาะเมื่อเกิดขึ้นจริง พร้อมบอกระยะที่เป็นเหตุ</li>
+        <li>ยอด "กันไว้จาก Wallet" เด่นที่สุด เพราะคือจำนวนที่หายจากยอดใช้ได้ทันที</li>
+        <li>คำเตือนยกเลิก<strong>แสดงเป็นจำนวนเงินจริง</strong> ไม่ใช่แค่ "25%"</li>
+        <li>บอกจำนวนคนขับในพื้นที่ เพื่อให้ลูกค้ามั่นใจก่อนกด</li>
+        <li>สูงเกินจอเมื่อไหร่ให้เลื่อนได้ แต่<strong>ปุ่มยืนยันต้องติดอยู่ล่างเสมอ</strong> และคำเตือนต้องอยู่เหนือปุ่ม</li>
+      </ul>
+      <p style="color:var(--muted);margin:0"><strong>มาตรฐาน Wave 1.5:</strong> ใช้ theme token ชุดเดียวกับที่ approve แล้ว · ห้ามใช้ <code>JdcContentFrame</code> ใน bottom sheet (บทเรียนแถบตะกร้ายืดเต็มความสูง)</p>
+    </div>
+  </div>
+
+  <h3>5.2 เงินไม่พอ — จัดการใน dialog เดียวกัน</h3>
+  <div class="flow">
+    <span class="step">dialog สรุปราคา</span><span class="arw">→</span>
+    <span class="step step-new">ตรวจพบยอดไม่พอ ขาด ฿X</span><span class="arw">→</span>
+    <span class="step step-new">ปุ่มเปลี่ยนเป็น "เติมเงิน ฿X แล้วสั่ง"</span><span class="arw">→</span>
+    <span class="step">ไปหน้าเติมเงิน Beam</span><span class="arw">→</span>
+    <span class="step step-new">กลับมา dialog เด้งเองพร้อมราคาใหม่</span><span class="arw">→</span>
+    <span class="step">กดยืนยัน</span>
+  </div>
+  <ul>
+    <li>ยอดไม่พอ ให้แสดงบรรทัด "ขาดอีก ฿X" สีเตือน ใต้ยอด Wallet คงเหลือ</li>
+    <li>เติมเงินขั้นต่ำเท่าที่ขาด ปัดขึ้นตามขั้นต่ำของ Beam</li>
+    <li><strong>เก็บ draft ไว้ในเครื่อง</strong> ก่อนออกไปหน้าเติมเงินทุกครั้ง — รายการของ ร้านที่เลือก ที่อยู่ส่ง วงเงิน ต้องอยู่ครบเมื่อกลับมา</li>
+    <li>เก็บ draft ที่ local ไม่สร้างแถวใน DB — ออเดอร์เกิดจริงตอนกดยืนยันเท่านั้น</li>
+    <li>กลับมาแล้ว <strong>ขอ quote ใหม่เสมอ</strong> เพราะคนขับและสถานะร้านอาจเปลี่ยนระหว่างนั้น</li>
+  </ul>
+  <div class="card warn" style="margin-top:10px">
+    <strong>ทำไม draft ยังจำเป็นทั้งที่เป็น dialog:</strong> ถึง dialog จะไม่เปลี่ยนหน้า แต่การไปเติมเงินต้องออกจากแอปไปหน้า Beam จริง ซึ่งระบบปฏิบัติการอาจคืน memory ของแอประหว่างนั้น ถ้าไม่เก็บ draft ลงที่เก็บถาวรในเครื่อง ลูกค้าอาจกลับมาเจอรายการที่พิมพ์มาหายทั้งหมด
+  </div>
+
+  <h3>5.3 อายุของราคา</h3>
+  <ul>
+    <li>quote มีอายุ <code>shop_quote_ttl_sec</code> (เริ่มที่ 120 วินาที) เก็บ <code>quote_token</code> + <code>quoted_at</code></li>
+    <li>หมดอายุแล้วกดยืนยัน → ขอราคาใหม่แล้วแสดงให้ดูอีกครั้ง</li>
+    <li><code>create_shop_booking()</code> คำนวณซ้ำเสมอ ถ้าต่างจากที่แสดงไป → <strong>คืน error พร้อมราคาใหม่ ไม่ใช่เงียบ ๆ คิดราคาใหม่</strong></li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="n">6</span>ค่าปรับยกเลิก (A, B)</h2>
+  <h3>6.1 กฎที่สรุปแล้ว</h3>
+  <table>
+    <tr><th>ยกเลิกตอนสถานะ</th><th>ค่าปรับ</th><th>เข้าใคร</th></tr>
+    <tr><td><code>pending</code> · <code>accepted</code></td><td>ไม่มี คืนเต็ม 100%</td><td>—</td></tr>
+    <tr><td><code>shopping</code></td><td><strong>25% ของยอด hold สูงสุด 100฿</strong></td><td><strong>คนขับ 100%</strong></td></tr>
+    <tr><td><code>receipt_review</code> ขึ้นไป</td><td><span class="tag t-risk">ยกเลิกไม่ได้</span> ต้องผ่านแอดมิน</td><td>—</td></tr>
+  </table>
+  <pre><code>ค่าปรับ = MIN( ยอด_hold x shop_cancel_fee_percent / 100 ,
+               shop_cancel_fee_max )
+
+ตัวอย่าง  hold   605฿  ->  25% = 151.25  ->  เกินเพดาน  ->  คิด 100฿
+ตัวอย่าง  hold   300฿  ->  25% =  75.00  ->  ไม่เกิน     ->  คิด  75฿
+ตัวอย่าง  hold 3,000฿  ->  25% = 750.00  ->  เกินเพดาน  ->  คิด 100฿
+
+คืนลูกค้า = ยอด_hold - ค่าปรับ        (เข้า wallet_transactions type 'refund')
+เข้าคนขับ = ค่าปรับเต็มจำนวน          (เข้า wallet_transactions type 'compensation')</code></pre>
+  <table>
+    <tr><th>Config key</th><th>ค่า</th></tr>
+    <tr><td><code>shop_cancel_fee_percent</code></td><td><code>25</code></td></tr>
+    <tr><td><code>shop_cancel_fee_max</code></td><td><code>100</code></td></tr>
+    <tr><td><code>shop_cancel_fee_to_driver_percent</code></td><td><code>100</code></td></tr>
+  </table>
+
+  <h3>6.2 จุดที่ต้องระวังตอนเขียน</h3>
+  <div class="card danger">
+    <ul style="margin:0">
+      <li><strong>ค่าปรับต้องคำนวณจาก snapshot</strong> ที่เก็บตอนสร้างออเดอร์ ไม่ใช่จาก config ปัจจุบัน — ลูกค้าที่สั่งตอนเพดาน 100฿ ต้องไม่โดน 150฿ เพราะแอดมินแก้ค่าระหว่างที่ออเดอร์กำลังทำอยู่</li>
+      <li><strong>การโอนค่าปรับให้คนขับต้องอยู่ใน transaction เดียว</strong>กับการคืนเงินลูกค้า ถ้าครึ่งทางล้ม เงินจะหายไปจากระบบ</li>
+      <li><strong>ค่าปรับเข้าคนขับต้องไม่นับเป็นรายได้ที่หักค่าคอม</strong> เพราะเป็นค่าชดเชย ไม่ใช่ค่างาน — ต้องแยก type ใน ledger ให้ชัด ไม่งั้นรายงานรายได้จะเพี้ยน</li>
+      <li><strong>ต้องกันคนขับสมคบ</strong> — คนขับกด "ถึงร้าน" แล้วชวนลูกค้ายกเลิกเพื่อแบ่งค่าปรับ ทำได้ในทางทฤษฎี → geofence ในหัวข้อ 4 ช่วยได้ส่วนหนึ่ง และควรมีรายงานให้แอดมินเห็นคนขับที่มีอัตราการถูกยกเลิกตอน <code>shopping</code> สูงผิดปกติ</li>
+    </ul>
+  </div>
+
+  <h3>6.3 คำเตือนก่อนยืนยัน</h3>
+  <ul>
+    <li>แสดงใน dialog สรุปราคา (หัวข้อ 5) เป็น<strong>จำนวนเงินจริงที่คำนวณแล้ว</strong> ไม่ใช่ "25%"</li>
+    <li>บอกด้วยว่ายกเลิกก่อนคนขับถึงร้าน<strong>ไม่มีค่าใช้จ่าย</strong> ไม่ใช่เขียนแต่ข้อเสีย</li>
+    <li>ครั้งแรกที่ใช้บริการเป็น dialog ต้องกดรับทราบ เก็บ <code>ack_shop_cancel_policy_at</code> ในโปรไฟล์ ครั้งถัดไปเป็นข้อความในสรุปราคาพอ</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="n">7</span>คนขับใหม่ (C)</h2>
+  <table>
+    <tr><th>Config key</th><th>ค่า</th><th>ความหมาย</th></tr>
+    <tr><td><code>shop_min_budget</code></td><td><code>100</code></td><td>วงเงินขั้นต่ำต่อออเดอร์</td></tr>
+    <tr><td><code>shop_max_budget</code></td><td><code>5000</code></td><td>เพดานทั่วไป</td></tr>
+    <tr><td><code>shop_new_driver_max_budget</code></td><td><code>500</code></td><td>เพดานสำหรับคนขับใหม่</td></tr>
+    <tr><td><code>shop_new_driver_completed_jobs</code></td><td><code>20</code></td><td><strong>งานฝากซื้อที่สำเร็จ</strong> กี่ครั้งถึงพ้นสถานะคนขับใหม่</td></tr>
+  </table>
+  <h3>7.1 กฎ</h3>
+  <ul>
+    <li>นับเฉพาะ <strong>booking ที่ <code>service_type='shop'</code> และ <code>status='completed'</code></strong> ของคนขับคนนั้น</li>
+    <li>ออเดอร์ที่วงเงินเกินเพดาน <strong>ไม่แสดงให้คนขับใหม่เห็นเลย</strong> ไม่ใช่ให้เห็นแล้วกดรับไม่ได้</li>
+    <li>เช็คซ้ำที่ server ตอนกดรับงาน กันการเรียก API ตรง</li>
+    <li>หน้าโปรไฟล์คนขับแสดง "ทำอีก N งานเพื่อรับงานวงเงินสูงได้"</li>
+  </ul>
+  <h3>7.2 แอดมินปลดล็อกด้วยมือ</h3>
+  <ul>
+    <li>เพิ่มคอลัมน์ <code>profiles.shop_trusted_driver</code> (boolean, default false)</li>
+    <li>เป็น <code>true</code> → ข้ามเพดานคนขับใหม่ทันทีไม่ว่าจะทำงานมากี่ครั้ง</li>
+    <li>อยู่ในกลุ่มคอลัมน์ที่<strong>ลูกค้า/คนขับแก้เองไม่ได้</strong> — ต้องอยู่ใน guard เดียวกับ <code>role</code>/<code>approval_status</code> <span class="tag t-info">บทเรียนจากช่องโหว่ privilege escalation ผ่าน profiles ที่เคยแก้ไปแล้ว</span></li>
+    <li>ทุกครั้งที่แอดมินเปลี่ยนค่านี้ต้องบันทึกว่าใครเปลี่ยนและเมื่อไหร่</li>
+  </ul>
+  <div class="card warn" style="margin-top:10px">
+    <strong>จำเป็นจริงตอนเปิดบริการ:</strong> วันแรกทุกคนเป็นคนขับใหม่หมด ออเดอร์เกิน 500฿ จะไม่มีใครรับได้เลย — แอดมินต้องตั้งคนขับชุดแรกเป็น trusted ก่อนเปิด <code>shop_enabled</code> ไม่งั้นบริการจะดูเหมือนเสีย
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">8</span>Config ทั้งหมด</h2>
+  <table>
+    <tr><th>กลุ่ม</th><th>Key</th><th>ค่าเริ่มต้น</th></tr>
+    <tr><td rowspan="2">เปิด/ปิด</td><td><code>shop_enabled</code></td><td><code>false</code></td></tr>
+    <tr><td><code>shop_ai_receipt_enabled</code></td><td><code>false</code></td></tr>
+    <tr><td rowspan="3">ร้าน</td><td><code>shop_store_radius_km</code> · <code>shop_store_radius_max_km</code></td><td><code>10</code> · <code>25</code></td></tr>
+    <tr><td><code>shop_show_closed_stores</code></td><td><code>true</code></td></tr>
+    <tr><td><code>shop_arrival_radius_m</code> · <code>shop_location_freshness_sec</code> · <code>shop_arrival_geofence_enabled</code></td><td><code>150</code> · <code>120</code> · <code>true</code></td></tr>
+    <tr><td rowspan="5">ค่าบริการ</td><td><code>shop_fee_percent</code></td><td><code>10</code></td></tr>
+    <tr><td><code>shop_fee_tiers</code></td><td><code>[{max:500,fee:30},{max:1500,fee:50},{max:null,fee:80}]</code></td></tr>
+    <tr><td><code>shop_fee_min</code> · <code>shop_fee_max</code></td><td><code>25</code> · <code>200</code></td></tr>
+    <tr><td><code>shop_fee_multiplier_by_category</code></td><td>ทุกหมวด <code>1.0</code></td></tr>
+    <tr><td><code>shop_driver_share_percent</code></td><td><code>80</code></td></tr>
+    <tr><td rowspan="4">วงเงิน</td><td><code>shop_min_budget</code> · <code>shop_max_budget</code></td><td><code>100</code> · <code>5000</code></td></tr>
+    <tr><td><code>shop_new_driver_max_budget</code></td><td><code>500</code></td></tr>
+    <tr><td><code>shop_new_driver_completed_jobs</code></td><td><code>20</code> (นับงาน shop)</td></tr>
+    <tr><td><code>shop_budget_buffer_percent</code> · <code>shop_max_items</code></td><td><code>15</code> · <code>30</code></td></tr>
+    <tr><td rowspan="4">คนขับ/ระยะ</td><td><code>shop_driver_to_store_km</code></td><td><code>20</code></td></tr>
+    <tr><td><code>shop_far_pickup_enabled</code></td><td><code>true</code></td></tr>
+    <tr><td><code>shop_far_pickup_rate_per_km_motorcycle</code> · <code>_car</code></td><td><code>5</code> · <code>8</code></td></tr>
+    <tr><td><code>shop_far_pickup_max_fee</code> · <code>shop_max_pickup_distance_km</code></td><td><code>null</code> · <code>null</code> <span class="tag t-mod">ยังไม่กำหนด</span></td></tr>
+    <tr><td rowspan="3">ยกเลิก/จับคู่</td><td><code>shop_cancel_fee_percent</code> · <code>shop_cancel_fee_max</code></td><td><code>25</code> · <code>100</code></td></tr>
+    <tr><td><code>shop_cancel_fee_to_driver_percent</code></td><td><code>100</code></td></tr>
+    <tr><td><code>shop_match_timeout_min</code></td><td><code>10</code></td></tr>
+    <tr><td rowspan="4">หลักฐาน</td><td><code>shop_photo_confirm_min</code> · <code>shop_photo_escalate_min</code></td><td><code>5</code> · <code>20</code></td></tr>
+    <tr><td><code>shop_receipt_tolerance_baht</code> · <code>_percent</code></td><td><code>5</code> · <code>2</code></td></tr>
+    <tr><td><code>shop_receipt_review_threshold_percent</code></td><td><code>10</code></td></tr>
+    <tr><td><code>shop_substitution_timeout_min</code></td><td><code>5</code></td></tr>
+    <tr><td>อื่น ๆ</td><td><code>shop_quote_ttl_sec</code></td><td><code>120</code></td></tr>
+  </table>
+  <p style="color:var(--muted)"><strong>ทั้งหมดแก้ได้จากหน้า Settings ใน Admin โดยไม่ต้อง build ใหม่</strong> และทุกตัวที่เกี่ยวกับเงินต้อง snapshot ลงออเดอร์ตอนสร้าง</p>
+</section>
+
+<section>
+  <h2><span class="n">9</span>ลำดับงาน</h2>
+  <table>
+    <tr><th>ขั้น</th><th>งาน</th><th>ผลที่ตรวจได้</th></tr>
+    <tr><td>S1</td><td><code>shop_stores</code> + RPC รัศมี/เวลาเปิดปิด + หน้า Admin จัดการร้าน</td><td>แอดมินเพิ่มร้านจริงได้ · <code>is_open_now</code> ถูกต้องข้ามเที่ยงคืน</td></tr>
+    <tr><td>S2</td><td>RPC <code>nearest_online_driver()</code> + <code>shop_quote()</code> ฝั่ง server</td><td>ได้ราคาครบทุกบรรทัด · ไม่มีคนขับคืน <code>has_driver: false</code> ถูกต้อง</td></tr>
+    <tr><td>S3</td><td>ตารางออเดอร์ + RPC สร้าง/hold/settle/cancel (รวมค่าปรับ + geofence ถึงร้าน)</td><td>ครบวงจรผ่าน SQL · ยกเลิกแต่ละสถานะคืนเงินถูกต้อง · กดถึงร้านจากไกลไม่ได้</td></tr>
+    <tr><td>S4</td><td>Fee engine + multiplier + Settings ใน Admin</td><td>แก้ค่าแล้วออเดอร์ใหม่เปลี่ยน ออเดอร์เก่าไม่เปลี่ยน</td></tr>
+    <tr><td>S5</td><td>แอปลูกค้า: เลือกร้าน → รายการ → <strong>dialog สรุปราคา + เติมเงิน</strong> → hold → ติดตาม</td><td>ไม่มีคนขับกดยืนยันไม่ได้ · เงินไม่พอกดเติมแล้วกลับมา draft ครบ · ร้านปิดกดไม่ได้</td></tr>
+    <tr><td>S6</td><td>แอปคนขับ: เช็คลิสต์ + หลักฐาน 2 โหมด + เพดานคนขับใหม่ + ปุ่มยืนยันตำแหน่งเอง</td><td>E2E ครบวงจร ยังไม่เปิด AI</td></tr>
+    <tr><td>S7</td><td>Edge function AI อ่านบิล</td><td>เปิดสวิตช์แล้วยอดตรงอัตโนมัติ · <strong>ปิดสวิตช์แล้วระบบยังทำงานปกติ</strong></td></tr>
+    <tr><td>S8</td><td>เส้นทางแตก + คิวแอดมิน + แจ้งเตือน + รายงานคนขับผิดปกติ</td><td>ของหมด · เกินวงเงิน · ยกเลิกทุกสถานะ · ลูกค้าไม่ยืนยัน · หาคนขับไม่ได้ · AI ล่ม</td></tr>
+    <tr><td>S9</td><td><code>code_reviewer</code> + bump <code>1.15.0+126</code> + แอดมินใส่ร้าน + ตั้ง trusted driver + เปิด <code>shop_enabled</code></td><td>ผ่าน review ก่อนเปิดใช้จริง</td></tr>
+  </table>
+  <div class="card ok" style="margin-top:12px">
+    <strong>ไม่มีข้อค้างที่บล็อกการเริ่มงานแล้ว</strong> — เริ่ม S1 ได้ทันที สิ่งที่ยังไม่กำหนด (เพดานค่าวิ่งไกล) เป็น config ที่ใส่ทีหลังได้โดยไม่ต้องแก้โค้ด
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">10</span>เรื่องที่เสนอให้พิจารณาแยก (ยังไม่ทำ)</h2>
+  <div class="grid g2">
+    <div class="card"><strong>ย้ายการคำนวณ client → server ทั้งระบบ</strong><p style="color:var(--muted);margin:6px 0 0">บันทึกความทรงจำแล้ว ต้อง audit ให้ครบก่อนเริ่ม แยกเป็นงาน migration ของตัวเอง ไม่ปนกับฝากซื้อ</p></div>
+    <div class="card"><strong>ปิดช่องว่าง geofence ของทั้งระบบ (<code>ISSUE-20260923-001</code>)</strong><p style="color:var(--muted);margin:6px 0 0">geofence 100m มีอยู่แล้วและทำงานอยู่ แต่บังคับที่ client เท่านั้น · รัศมี hard-code แก้จาก Admin ไม่ได้ · if-chain เป็น allow-by-default เปิด issue ไว้แล้ว แก้แยกจากงานฝากซื้อ</p></div>
+    <div class="card"><strong>เก็บสถิติระยะคนขับใกล้สุดทุก quote</strong><p style="color:var(--muted);margin:6px 0 0">เพื่อใช้ตั้งเพดานค่าวิ่งไกลจากข้อมูลจริงแทนการเดา — ควรเริ่มเก็บตั้งแต่วันแรกที่เปิดใช้</p></div>
+    <div class="card"><strong>รายงานคนขับที่มีอัตรายกเลิกตอน <code>shopping</code> สูงผิดปกติ</strong><p style="color:var(--muted);margin:6px 0 0">กันการสมคบเพื่อแบ่งค่าปรับ ควรทำใน S8 ถ้าเวลาพอ</p></div>
+  </div>
+</section>
+
+</main>
+<footer>
+  Jedechai Delivery · แผนฟีเจอร์ฝากซื้อ/ฝากหิ้ว v4 · 2026-09-23 · ฐานโค้ด app 1.14.0+125 (commit 1514742)<br>
+  v4 = ฉบับสมบูรณ์พร้อมเริ่ม S1 · v1 อ้างอิง settlement · v2 อ้างอิงร้านค้า/AI/Wallet · v3 อ้างอิง fee engine<br>
+  บันทึกความทรงจำถาวรแล้ว 2 เรื่อง: ตรวจคนขับก่อนสั่ง (ทุก vertical) · ย้ายการคำนวณไป server
+</footer>
+</body>
+</html>

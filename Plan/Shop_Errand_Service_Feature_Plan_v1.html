@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แผนฟีเจอร์ฝากซื้อ/ฝากหิ้ว v1 - Jedechai Delivery</title>
+<style>
+:root{--bg:#0b1020;--panel:#111827;--panel-soft:#172033;--line:rgba(255,255,255,.12);--text:#f8fafc;--muted:#aab7cf;--blue:#2563eb;--cyan:#06b6d4;--green:#22c55e;--amber:#f59e0b;--red:#ef4444;--violet:#8b5cf6;--shadow:0 18px 45px rgba(0,0,0,.35)}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Inter","Sarabun","Noto Sans Thai",system-ui,sans-serif;background:linear-gradient(135deg,rgba(139,92,246,.18),transparent 34%),linear-gradient(315deg,rgba(6,182,212,.14),transparent 30%),var(--bg);color:var(--text);line-height:1.65}
+header,main,footer{max-width:1180px;margin:0 auto;padding:0 22px}
+header{padding-top:42px;padding-bottom:24px}
+.eyebrow{display:inline-flex;gap:8px;align-items:center;padding:6px 12px;border:1px solid var(--line);border-radius:999px;color:#ddd6fe;background:rgba(139,92,246,.16);font-size:13px;font-weight:700}
+h1{margin:18px 0 8px;font-size:clamp(28px,4vw,46px);line-height:1.12}
+.sub{color:var(--muted);max-width:820px;margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.chip{padding:5px 11px;border:1px solid var(--line);border-radius:999px;font-size:13px;color:var(--muted);background:rgba(255,255,255,.03)}
+section{margin:34px 0}
+h2{font-size:clamp(20px,2.4vw,28px);margin:0 0 6px;display:flex;align-items:center;gap:10px}
+h2 .n{width:30px;height:30px;flex:none;display:grid;place-items:center;border-radius:9px;background:rgba(139,92,246,.2);border:1px solid var(--line);font-size:14px;color:#ddd6fe}
+h3{font-size:17px;margin:22px 0 8px;color:#e2e8f0}
+.lead{color:var(--muted);margin:0 0 16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow)}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+table{width:100%;border-collapse:collapse;font-size:14.5px;margin-top:6px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:#cbd5e1;font-size:13px;text-transform:uppercase;letter-spacing:.4px}
+code{background:rgba(255,255,255,.07);padding:1px 6px;border-radius:5px;font-size:13.5px;color:#a5b4fc;font-family:ui-monospace,Menlo,Consolas,monospace}
+pre{background:#0a0f1d;border:1px solid var(--line);border-radius:12px;padding:14px 16px;overflow:auto;font-size:13px;line-height:1.55}
+pre code{background:none;color:#cbd5e1;padding:0}
+.tag{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid transparent}
+.t-new{background:rgba(34,197,94,.16);color:#86efac;border-color:rgba(34,197,94,.3)}
+.t-mod{background:rgba(245,158,11,.16);color:#fcd34d;border-color:rgba(245,158,11,.3)}
+.t-risk{background:rgba(239,68,68,.16);color:#fca5a5;border-color:rgba(239,68,68,.3)}
+.t-info{background:rgba(37,99,235,.18);color:#bfdbfe;border-color:rgba(37,99,235,.32)}
+ul,ol{margin:8px 0;padding-left:22px}li{margin:5px 0}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
+.step{padding:7px 13px;border-radius:10px;background:var(--panel-soft);border:1px solid var(--line);font-size:13.5px;white-space:nowrap}
+.arw{color:var(--muted)}
+.warn{border-left:4px solid var(--amber);background:rgba(245,158,11,.08)}
+.danger{border-left:4px solid var(--red);background:rgba(239,68,68,.08)}
+.ok{border-left:4px solid var(--green);background:rgba(34,197,94,.08)}
+footer{padding:30px 22px 60px;color:var(--muted);font-size:14px;border-top:1px solid var(--line);margin-top:40px}
+</style>
+</head>
+<body>
+<header>
+  <span class="eyebrow">Feature Plan · v1 · 2026-09-22</span>
+  <h1>ระบบฝากซื้อ / ฝากหิ้ว<br>(Shop &amp; Errand Service)</h1>
+  <p class="sub">บริการใหม่ที่ลูกค้าพิมพ์รายการของที่อยากได้เอง เลือกร้านของชำ/ห้าง แล้วให้คนขับไปซื้อและส่งให้ โดยกันวงเงินจาก Wallet ล่วงหน้า แล้วกระทบยอดตามใบเสร็จจริง</p>
+  <div class="meta">
+    <span class="chip">service_type = <code>shop</code></span>
+    <span class="chip">รายการแบบพิมพ์เอง (free-text)</span>
+    <span class="chip">Pre-auth Wallet</span>
+    <span class="chip">ค่าบริการตั้งค่าได้ใน Admin</span>
+    <span class="chip">Phase 1: Customer + Driver + Admin</span>
+    <span class="chip">ฐาน: app 1.14.0+125</span>
+  </div>
+</header>
+
+<main>
+
+<section>
+  <h2><span class="n">1</span>สรุปผู้บริหาร</h2>
+  <p class="lead">ฝากซื้อไม่ใช่ food delivery ที่ไม่มีเมนู ความต่างที่แท้จริงคือ <strong>ราคาไม่ทราบจนกว่าคนขับจะจ่ายเงินที่ร้าน</strong> ทั้งโครงสร้างข้อมูล เงิน และ UX จึงต้องออกแบบรอบ "ความไม่แน่นอนของราคา"</p>
+  <div class="grid g3">
+    <div class="card"><h3 style="margin-top:0">ปัญหาหลัก</h3><ul style="padding-left:18px">
+      <li>ของอาจหมด / ราคาต่างจากที่คิด</li>
+      <li>ต้องมีวงเงินกันไว้ ไม่งั้นคนขับเสี่ยงสำรองแล้วลูกค้าไม่รับ</li>
+      <li>ต้องมีหลักฐาน (ใบเสร็จ) ก่อนตัดเงินจริง</li>
+    </ul></div>
+    <div class="card"><h3 style="margin-top:0">ทางออกที่เลือก</h3><ul style="padding-left:18px">
+      <li>ลูกค้าตั้ง <strong>วงเงินสูงสุด</strong> ตอนสั่ง แล้วระบบ hold จาก Wallet</li>
+      <li>คนขับซื้อจริง กรอกยอด + ถ่ายใบเสร็จ</li>
+      <li>ระบบกระทบยอด เก็บเท่าที่จ่ายจริง + ค่าบริการ คืนส่วนต่างเข้า Wallet</li>
+    </ul></div>
+    <div class="card"><h3 style="margin-top:0">สิ่งที่นำของเดิมมาใช้</h3><ul style="padding-left:18px">
+      <li>ตาราง <code>bookings</code> + matching คนขับ</li>
+      <li>รูปแบบ hold จาก laundry (<code>wallet_transactions.type='hold'</code>)</li>
+      <li>โครง settlement ฝั่ง server จาก Batch 1</li>
+      <li>Storage สำหรับรูป (ใช้เดียวกับรูปพัสดุ)</li>
+    </ul></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">2</span>ขอบเขตที่ผู้ใช้ยืนยัน</h2>
+  <table>
+    <tr><th>หัวข้อ</th><th>ตัดสินใจ</th><th>ผลต่อการออกแบบ</th></tr>
+    <tr><td>รูปแบบรายการ</td><td>พิมพ์เองอย่างเดียว (free-text)</td><td>ไม่ต้องทำ merchant catalog / onboarding ร้าน — ร้านเป็นแค่จุดหมาย (ชื่อ + พิกัด)</td></tr>
+    <tr><td>เงินค่าสินค้า</td><td>กันวงเงินจาก Wallet ก่อน (pre-auth)</td><td>คนขับไม่ต้องสำรองเอง แต่ลูกค้าต้องมียอดใน Wallet ก่อนสั่ง จึงต้องมีทางลัดเติมเงินในหน้า checkout</td></tr>
+    <tr><td>ค่าบริการ</td><td>ค่าส่งตามระยะ + % ของบิล + ขั้นบันได โดย <strong>Admin ตั้งค่าได้ทั้งหมด</strong></td><td>ต้องทำ fee engine แบบ config-driven ใน <code>system_config</code> ไม่ hard-code ในแอป</td></tr>
+    <tr><td>Phase 1</td><td>Customer + Driver + Admin web</td><td>ไม่ทำฝั่ง Merchant — ร้านไม่เห็นออเดอร์ (ยกไป Phase 2 ถ้าต้องการ)</td></tr>
+  </table>
+  <div class="card warn" style="margin-top:14px">
+    <strong>ข้อสังเกตที่ต้องตัดสินใจก่อนลงมือ (ดูหัวข้อ 9):</strong> วงเงิน pre-auth หมายถึงลูกค้าต้องมีเงินใน Wallet เต็มจำนวนก่อนสั่ง ซึ่งอาจกั้นผู้ใช้ใหม่จำนวนมาก แผนนี้จึงเสนอทางลัดเติมเงินและ fallback ไว้ให้พิจารณา
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">3</span>Flow หลัก</h2>
+  <h3>3.1 เส้นทางปกติ (Happy path)</h3>
+  <div class="flow">
+    <span class="step">ลูกค้าพิมพ์รายการ</span><span class="arw">→</span>
+    <span class="step">เลือกร้าน + ที่ส่ง</span><span class="arw">→</span>
+    <span class="step">ตั้งวงเงินสูงสุด</span><span class="arw">→</span>
+    <span class="step">ระบบ hold Wallet</span><span class="arw">→</span>
+    <span class="step">คนขับรับงาน</span><span class="arw">→</span>
+    <span class="step">ถึงร้าน / ซื้อของ</span><span class="arw">→</span>
+    <span class="step">กรอกยอดจริง + ถ่ายบิล</span><span class="arw">→</span>
+    <span class="step">ส่งของ</span><span class="arw">→</span>
+    <span class="step">settle + คืนส่วนต่าง</span>
+  </div>
+
+  <h3>3.2 สถานะ (status machine)</h3>
+  <table>
+    <tr><th>สถานะ</th><th>ความหมาย</th><th>ใครเปลี่ยน</th></tr>
+    <tr><td><code>pending</code></td><td>สร้างแล้ว hold เงินแล้ว กำลังหาคนขับ</td><td>ระบบ</td></tr>
+    <tr><td><code>accepted</code></td><td>คนขับรับงาน</td><td>คนขับ</td></tr>
+    <tr><td><code>shopping</code> <span class="tag t-new">ใหม่</span></td><td>คนขับถึงร้าน กำลังเลือกของ</td><td>คนขับ</td></tr>
+    <tr><td><code>awaiting_confirm</code> <span class="tag t-new">ใหม่</span></td><td>มีของไม่ครบ/ราคาเกินวงเงิน รอลูกค้ายืนยัน</td><td>ระบบ (จาก checklist คนขับ)</td></tr>
+    <tr><td><code>purchased</code> <span class="tag t-new">ใหม่</span></td><td>ซื้อครบ กรอกยอดจริง + ใบเสร็จแล้ว</td><td>คนขับ</td></tr>
+    <tr><td><code>delivering</code></td><td>กำลังนำส่ง</td><td>คนขับ</td></tr>
+    <tr><td><code>completed</code></td><td>ส่งถึง + settle เงินเรียบร้อย</td><td>คนขับ แล้ว server settle</td></tr>
+    <tr><td><code>cancelled</code></td><td>ยกเลิก แล้วคืน hold ตามนโยบายหัวข้อ 6.3</td><td>ลูกค้า/คนขับ/แอดมิน</td></tr>
+  </table>
+
+  <h3>3.3 เส้นทางแตก (ที่ต้องออกแบบให้ดี)</h3>
+  <div class="grid g2">
+    <div class="card"><strong>ของไม่มี / ของหมด</strong><p style="color:var(--muted);margin:6px 0 0">คนขับติ๊ก "ไม่มีของ" รายตัว ระบบส่งแจ้งเตือนหาลูกค้าพร้อมตัวเลือก: ข้ามรายการนี้ / ให้คนขับเลือกของแทน / ยกเลิกทั้งออเดอร์ ถ้าลูกค้าไม่ตอบใน N นาที (config) ให้ถือว่า "ข้ามรายการนี้"</p></div>
+    <div class="card"><strong>ราคาเกินวงเงิน</strong><p style="color:var(--muted);margin:6px 0 0">คนขับกรอกยอดแล้วเกิน hold ออเดอร์เข้า <code>awaiting_confirm</code> ลูกค้าต้องกดเพิ่มวงเงิน (hold เพิ่ม) ถึงจะไปต่อได้ ถ้า Wallet ไม่พอ ให้เติมเงินหรือลดของ</p></div>
+    <div class="card"><strong>ลูกค้าไม่รับของ</strong><p style="color:var(--muted);margin:6px 0 0">ของซื้อแล้วคืนร้านไม่ได้ นโยบาย: ยังคิดเต็มจำนวน (ค่าสินค้า + ค่าบริการ) และให้แอดมินเป็นผู้ตัดสินกรณีพิพาทผ่านหน้า Admin</p></div>
+    <div class="card"><strong>ยกเลิกหลังคนขับซื้อแล้ว</strong><p style="color:var(--muted);margin:6px 0 0">ปุ่มยกเลิกฝั่งลูกค้าต้องถูกปิดทันทีที่สถานะถึง <code>purchased</code> และต้องบังคับที่ฝั่ง server ด้วย ไม่ใช่แค่ซ่อนปุ่ม</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">4</span>โครงสร้างฐานข้อมูล</h2>
+  <p class="lead">ใช้ <code>bookings</code> เป็นแกนเหมือน vertical อื่น แล้วแยกรายละเอียดเฉพาะฝากซื้อออกเป็น 2 ตารางใหม่ (ตามแบบ <code>parcel_details</code>)</p>
+
+  <h3>4.1 ตารางใหม่</h3>
+  <table>
+    <tr><th>ตาราง</th><th>คอลัมน์สำคัญ</th><th>หมายเหตุ</th></tr>
+    <tr>
+      <td><code>shop_orders</code> <span class="tag t-new">ใหม่</span></td>
+      <td><code>booking_id</code> (FK, unique), <code>store_name</code>, <code>store_address</code>, <code>store_lat/lng</code>, <code>budget_cap</code>, <code>actual_goods_amount</code>, <code>service_fee</code>, <code>delivery_fee</code>, <code>total_amount</code>, <code>receipt_url</code>, <code>hold_transaction_id</code>, <code>refund_transaction_id</code>, <code>fee_config_snapshot</code> (jsonb), <code>substitution_policy</code>, <code>customer_note</code></td>
+      <td>ทุกยอดเงินเป็น <code>numeric(12,2)</code> <span class="tag t-risk">ห้ามใช้ double</span> (บทเรียนจาก <code>bookings.price</code>)</td>
+    </tr>
+    <tr>
+      <td><code>shop_order_items</code> <span class="tag t-new">ใหม่</span></td>
+      <td><code>shop_order_id</code>, <code>line_no</code>, <code>name_text</code>, <code>quantity_text</code>, <code>note</code>, <code>status</code> (<code>pending|bought|unavailable|substituted</code>), <code>actual_price</code>, <code>substitute_name</code></td>
+      <td><code>quantity_text</code> เป็น text เพราะลูกค้าพิมพ์ "2 ขวด" หรือ "ครึ่งโล" ไม่ใช่ตัวเลขเสมอ</td>
+    </tr>
+  </table>
+
+  <h3>4.2 แก้ของเดิม</h3>
+  <ul>
+    <li><code>bookings.service_type</code> — รองรับค่า <code>'shop'</code> (เป็น text อยู่แล้ว ต้องไล่แก้จุดที่ hard-code list <code>'ride','food','parcel'</code>)</li>
+    <li><code>coupons.service_type</code> — เพิ่ม <code>'shop'</code> ให้คูปองใช้กับฝากซื้อได้</li>
+    <li><code>system_config</code> — เพิ่ม key กลุ่ม <code>shop_*</code> (หัวข้อ 5)</li>
+    <li>Realtime publication — เพิ่ม <code>shop_orders</code>, <code>shop_order_items</code> เพื่อให้ลูกค้าเห็นคนขับติ๊กของแบบสด</li>
+  </ul>
+
+  <h3>4.3 RLS (ตามบทเรียน Batch 0)</h3>
+  <div class="card danger">
+    <ul style="margin:0">
+      <li>ลูกค้า: SELECT เฉพาะออเดอร์ตัวเอง · INSERT ผ่าน RPC เท่านั้น · <strong>ห้าม UPDATE คอลัมน์เงินทุกตัว</strong></li>
+      <li>คนขับ: SELECT เฉพาะออเดอร์ที่ตัวเองถูก assign (หรือ <code>pending</code> ในรัศมี) · UPDATE ได้เฉพาะ <code>status</code>, ข้อมูล item, <code>receipt_url</code></li>
+      <li>ยอดเงินทุกตัวคำนวณโดย <strong>ฟังก์ชันฝั่ง server เท่านั้น</strong> client ส่งได้แค่ "ราคาต่อรายการที่อ่านจากบิล" ซึ่งต้องผ่าน validation</li>
+      <li>ตั้ง <code>SECURITY DEFINER</code> + <code>SET search_path = public</code> ทุก RPC (บทเรียน HMAC trigger)</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">5</span>Fee Engine (ตั้งค่าได้ใน Admin)</h2>
+  <p class="lead">ผู้ใช้เลือก "ทั้ง 3 แบบ + admin ตั้งได้" จึงออกแบบเป็นสูตรเดียวที่ปิด/เปิดแต่ละส่วนได้</p>
+  <pre><code>ค่าบริการรวม = ค่าส่งตามระยะ
+              + max( ค่าฝากซื้อขั้นบันได , ค่าฝากซื้อแบบ % ของบิล )
+              [+ ค่าบริการเพิ่มเติมต่อรายการ ถ้าเปิด]</code></pre>
+  <table>
+    <tr><th>Config key</th><th>ตัวอย่างค่า</th><th>ความหมาย</th></tr>
+    <tr><td><code>shop_enabled</code></td><td><code>false</code></td><td>สวิตช์เปิดบริการ — <strong>ปล่อยเป็น false ตอน deploy</strong> เปิดเมื่อพร้อม</td></tr>
+    <tr><td><code>shop_delivery_fee_mode</code></td><td><code>"reuse_ride"</code></td><td>ใช้สูตรค่าส่งเดิมของ ride/parcel หรือตั้งแยก</td></tr>
+    <tr><td><code>shop_fee_percent</code></td><td><code>10</code></td><td>% ของยอดบิลจริง</td></tr>
+    <tr><td><code>shop_fee_tiers</code></td><td><code>[{max:500,fee:30},{max:1500,fee:50},{max:null,fee:80}]</code></td><td>ขั้นบันไดตามยอดบิล</td></tr>
+    <tr><td><code>shop_fee_min</code> / <code>shop_fee_max</code></td><td><code>25</code> / <code>200</code></td><td>เพดานล่าง-บน กันค่าบริการพุ่งเวลาบิลใหญ่</td></tr>
+    <tr><td><code>shop_budget_buffer_percent</code></td><td><code>15</code></td><td>ระบบแนะนำวงเงิน = ประมาณการ + buffer</td></tr>
+    <tr><td><code>shop_max_items</code> / <code>shop_max_budget</code></td><td><code>30</code> / <code>5000</code></td><td>กันสั่งเกินตัว / กันคนขับแบกของเยอะเกิน</td></tr>
+    <tr><td><code>shop_driver_share_percent</code></td><td><code>80</code></td><td>ส่วนแบ่งค่าบริการที่เข้าคนขับ</td></tr>
+    <tr><td><code>shop_substitution_timeout_min</code></td><td><code>5</code></td><td>ลูกค้าไม่ตอบเรื่องของหมดภายในกี่นาที</td></tr>
+  </table>
+  <div class="card warn" style="margin-top:12px">
+    <strong>กฎสำคัญ:</strong> ตอนสร้างออเดอร์ต้อง <strong>snapshot config ลง <code>fee_config_snapshot</code></strong> แล้วคิดเงินจาก snapshot เสมอ (ตรงกับ G1 ของ Batch 1) ไม่งั้นแอดมินแก้ค่าระหว่างวันแล้วออเดอร์เก่าคิดเงินเปลี่ยน
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">6</span>กลไกเงิน (หัวใจของฟีเจอร์)</h2>
+
+  <h3>6.1 Pre-auth (ตอนสร้างออเดอร์)</h3>
+  <p class="lead">ทำตามแบบที่ laundry ใช้อยู่แล้ว คือหักยอดออกจาก <code>wallets.balance</code> จริง แล้วบันทึก <code>wallet_transactions</code> type <code>'hold'</code></p>
+  <pre><code>hold_amount = budget_cap + ค่าบริการประมาณการ (จาก fee snapshot ที่ budget_cap)
+
+ถ้า balance &lt; hold_amount  =&gt;  ปฏิเสธ + คืน error 'insufficient_balance'
+                                พร้อมส่ง required / balance กลับไปให้ UI เสนอเติมเงิน</code></pre>
+
+  <h3>6.2 Settlement (ตอนจบงาน)</h3>
+  <pre><code>ค่าสินค้าจริง   = SUM(shop_order_items.actual_price ที่ status='bought'|'substituted')
+ค่าบริการ       = คำนวณจาก fee_config_snapshot โดยใช้ "ค่าสินค้าจริง"
+ยอดที่เก็บจริง  = ค่าสินค้าจริง + ค่าบริการ + ค่าส่ง - ส่วนลดคูปอง
+ส่วนต่างคืน     = hold_amount - ยอดที่เก็บจริง        =&gt; คืนเข้า Wallet (type 'refund')
+คนขับได้รับ     = ค่าสินค้าจริง (คืนเงินที่สำรอง) + ส่วนแบ่งค่าบริการ + ค่าส่ง</code></pre>
+  <div class="card ok" style="margin-top:12px">
+    ทั้งหมดนี้อยู่ใน RPC เดียว <code>complete_shop_booking()</code> ที่ทำงานเป็น transaction เดียว ถ้า settle ล้มเหลว ห้ามปล่อยให้ status เป็น completed
+  </div>
+
+  <h3>6.3 นโยบายยกเลิก</h3>
+  <table>
+    <tr><th>ยกเลิกตอนสถานะ</th><th>คืนเงิน</th><th>เหตุผล</th></tr>
+    <tr><td><code>pending</code>, <code>accepted</code></td><td>คืนเต็ม 100%</td><td>ยังไม่มีต้นทุนเกิดขึ้น</td></tr>
+    <tr><td><code>shopping</code></td><td>คืนค่าสินค้าเต็ม หักค่าเสียเวลาคนขับ (config)</td><td>คนขับเดินทางไปแล้ว</td></tr>
+    <tr><td><code>purchased</code> ขึ้นไป</td><td><span class="tag t-risk">ยกเลิกไม่ได้</span></td><td>ของซื้อแล้ว คืนร้านไม่ได้ ต้องผ่านแอดมินเท่านั้น</td></tr>
+  </table>
+
+  <h3>6.4 ความเสี่ยงที่ต้องปิดให้ได้</h3>
+  <div class="card danger">
+    <ul style="margin:0">
+      <li><strong>คนขับกรอกยอดเกินจริง</strong> — บังคับแนบรูปใบเสร็จก่อนเปลี่ยนเป็น <code>purchased</code> + ตั้ง threshold ให้ยอดที่ต่างจากประมาณการเกิน X% เข้าคิวให้แอดมินตรวจ</li>
+      <li><strong>hold ค้าง (orphan hold)</strong> — ต้องมี pg_cron ปลดล็อก hold ของออเดอร์ที่ค้าง <code>pending</code> เกิน N ชั่วโมง <span class="tag t-info">บทเรียน: cron auto-shop-schedule เคยตายเงียบเพราะ GUC หาย ต้องมี health check</span></li>
+      <li><strong>double settle</strong> — ใส่ guard ว่า <code>completed_at IS NULL</code> และ lock แถวด้วย <code>FOR UPDATE</code></li>
+      <li><strong>ปัดเศษ</strong> — ใช้กฎปัดเศษกลางเดียวกับ Batch 2 ห้ามปัดคนละที่</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">7</span>งานแยกตามส่วน</h2>
+
+  <h3>7.1 Database / Backend <span class="tag t-new">งานใหม่ทั้งหมด</span></h3>
+  <table>
+    <tr><th>ไฟล์/ฟังก์ชัน</th><th>งาน</th></tr>
+    <tr><td><code>supabase/migrations/&lt;ts&gt;_shop_errand_core.sql</code></td><td>สร้าง 2 ตาราง + index + RLS + เพิ่ม <code>'shop'</code> ใน constraint ที่เกี่ยวข้อง + realtime publication</td></tr>
+    <tr><td><code>create_shop_booking()</code></td><td>สร้าง booking + shop_order + items + snapshot fee + hold wallet แบบ atomic ทั้งหมด</td></tr>
+    <tr><td><code>shop_driver_update_items()</code></td><td>คนขับติ๊กสถานะของแต่ละรายการ + กรอกราคา แล้ว trigger แจ้งเตือนถ้ามี unavailable</td></tr>
+    <tr><td><code>shop_customer_respond_substitution()</code></td><td>ลูกค้าตอบเรื่องของหมด / อนุมัติวงเงินเพิ่ม</td></tr>
+    <tr><td><code>shop_mark_purchased()</code></td><td>ตรวจว่ามี receipt_url + ยอดไม่เกิน hold แล้วเปลี่ยนสถานะ</td></tr>
+    <tr><td><code>complete_shop_booking()</code></td><td>settle + คืนส่วนต่าง + จ่ายคนขับ (หัวข้อ 6.2)</td></tr>
+    <tr><td><code>cancel_shop_booking()</code></td><td>คืน hold ตามนโยบาย 6.3</td></tr>
+    <tr><td>pg_cron job</td><td>ปลด hold ค้าง + timeout substitution</td></tr>
+  </table>
+  <div class="card warn" style="margin-top:10px"><strong>วิธี deploy:</strong> <code>supabase db push</code> ใช้ไม่ได้ (history desync) ต้อง deploy ผ่าน node + pg ต่อ DB ตรงเหมือนรอบก่อน</div>
+
+  <h3>7.2 แอปลูกค้า (Flutter)</h3>
+  <table>
+    <tr><th>ไฟล์</th><th>งาน</th></tr>
+    <tr><td><code>lib/common/models/shop_order.dart</code>, <code>shop_order_item.dart</code> <span class="tag t-new">ใหม่</span></td><td>model + fromJson/toJson</td></tr>
+    <tr><td><code>lib/common/services/shop_service.dart</code> <span class="tag t-new">ใหม่</span></td><td>เรียก RPC ทั้งหมด (ยึดรูปแบบ <code>parcel_service.dart</code>)</td></tr>
+    <tr><td><code>.../services/shop_service_screen.dart</code> <span class="tag t-new">ใหม่</span></td><td>หน้าหลัก พิมพ์รายการ (เพิ่ม/ลบแถว), เลือกร้าน, ที่อยู่ส่ง, โน้ต</td></tr>
+    <tr><td><code>.../services/shop_budget_screen.dart</code> <span class="tag t-new">ใหม่</span></td><td>ตั้งวงเงิน + แสดงค่าบริการประมาณการ + ยอด hold + ทางลัดเติมเงินถ้าไม่พอ</td></tr>
+    <tr><td><code>.../services/shop_tracking_screen.dart</code> <span class="tag t-new">ใหม่</span></td><td>ติดตามแบบ realtime เห็นคนขับติ๊กของทีละชิ้น + ปุ่มตอบเรื่องของหมด + ดูใบเสร็จ</td></tr>
+    <tr><td><code>customer_home_screen.dart</code> <span class="tag t-mod">แก้</span></td><td>เพิ่มการ์ดบริการ "ฝากซื้อ" (ซ่อนถ้า <code>shop_enabled=false</code>)</td></tr>
+    <tr><td><code>activity_screen.dart</code>, <code>customer_order_detail_screen.dart</code> <span class="tag t-mod">แก้</span></td><td>รองรับ service_type ใหม่</td></tr>
+    <tr><td><code>l10n</code> <span class="tag t-mod">แก้</span></td><td>คีย์ใหม่ th/en ทั้งชุด</td></tr>
+  </table>
+
+  <h3>7.3 แอปคนขับ (Flutter)</h3>
+  <table>
+    <tr><th>ไฟล์</th><th>งาน</th></tr>
+    <tr><td><code>.../driver/screens/shop_job_screen.dart</code> <span class="tag t-new">ใหม่</span></td><td>เช็คลิสต์ซื้อของ ติ๊กได้/ไม่มีของ, กรอกราคาต่อชิ้น, ยอดรวมวิ่งสดเทียบวงเงิน</td></tr>
+    <tr><td><code>.../driver/screens/shop_receipt_screen.dart</code> <span class="tag t-new">ใหม่</span></td><td>ถ่าย/อัปโหลดใบเสร็จ + ยืนยันยอดรวม (บังคับก่อนไปต่อ)</td></tr>
+    <tr><td>หน้ารับงาน <span class="tag t-mod">แก้</span></td><td>การ์ดงานฝากซื้อต้องบอก ร้าน, จำนวนรายการ, วงเงิน, ระยะทาง 2 ขา (ไปร้าน + ไปส่ง)</td></tr>
+    <tr><td><code>driver_booking_service.dart</code> <span class="tag t-mod">แก้</span></td><td>รองรับ <code>service_type='shop'</code> ใน filter/รัศมี</td></tr>
+  </table>
+
+  <h3>7.4 Admin web</h3>
+  <table>
+    <tr><th>ไฟล์</th><th>งาน</th></tr>
+    <tr><td><code>admin-web/src/pages/shopOrdersPage.js</code> <span class="tag t-new">ใหม่</span></td><td>รายการออเดอร์ฝากซื้อ + ดูรายการของ + ดูใบเสร็จ + ยอด hold/settle</td></tr>
+    <tr><td><code>settingsPage.js</code> <span class="tag t-mod">แก้</span></td><td>แท็บใหม่ตั้งค่า fee engine ทั้งหมดจากหัวข้อ 5 + สวิตช์เปิด/ปิดบริการ</td></tr>
+    <tr><td><code>ordersPage.js</code>, <code>revenuePage.js</code> <span class="tag t-mod">แก้</span></td><td>เพิ่ม service type ใหม่ในตัวกรองและรายงาน</td></tr>
+    <tr><td>คิวตรวจสอบ <span class="tag t-new">ใหม่</span></td><td>ออเดอร์ที่ยอดต่างจากประมาณการเกิน threshold หรือมีข้อพิพาท ให้แอดมินปรับยอดได้พร้อมเหตุผลที่บันทึกไว้</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2><span class="n">8</span>ลำดับการทำงาน</h2>
+  <table>
+    <tr><th>ขั้น</th><th>งาน</th><th>ผลที่ตรวจได้</th></tr>
+    <tr><td>S0</td><td>ยืนยันข้อค้างในหัวข้อ 9 + สร้าง branch <code>feat/shop-errand</code> แยกจาก Wave 1.5</td><td>ไม่ชน worktree ที่รันอยู่</td></tr>
+    <tr><td>S1</td><td>Migration + RPC ทั้งหมด + unit test ฝั่ง SQL</td><td>สร้าง/ซื้อ/settle ครบวงจรผ่าน SQL ได้โดยไม่ต้องมี UI</td></tr>
+    <tr><td>S2</td><td>Fee engine + หน้า Settings ใน Admin</td><td>แอดมินแก้ค่าแล้วออเดอร์ใหม่คิดเงินตามค่าใหม่ ออเดอร์เก่าไม่เปลี่ยน</td></tr>
+    <tr><td>S3</td><td>แอปลูกค้า สั่ง + hold + ติดตาม</td><td>สั่งจริงแล้วเห็นยอด hold ใน Wallet</td></tr>
+    <tr><td>S4</td><td>แอปคนขับ เช็คลิสต์ + ใบเสร็จ</td><td>ครบวงจร E2E ลูกค้ากับคนขับ</td></tr>
+    <tr><td>S5</td><td>เส้นทางแตก ของหมด / เกินวงเงิน / ยกเลิก</td><td>ทดสอบทุกเคสในหัวข้อ 3.3</td></tr>
+    <tr><td>S6</td><td>Admin ops + คิวตรวจสอบ + แจ้งเตือน</td><td>แอดมินแก้ปัญหาได้โดยไม่ต้องแตะ DB</td></tr>
+    <tr><td>S7</td><td><code>code_reviewer</code> + bump version + เปิด <code>shop_enabled</code></td><td>ผ่าน review ก่อนเปิดใช้จริง</td></tr>
+  </table>
+  <div class="card warn" style="margin-top:12px"><strong>UI:</strong> หน้าจอใหม่ทั้ง 5 หน้าต้องสร้างตามมาตรฐาน Wave 1.5 ที่ approve แล้ว (theme token, ช่องรูปที่ไม่มีรูปใช้ <code>GrayscaleLogoPlaceholder</code>, ช่องหมวดใช้ไอคอน) จะได้ไม่ต้องรื้อซ้ำ</div>
+</section>
+
+<section>
+  <h2><span class="n">9</span>ข้อค้างที่ต้องตัดสินก่อนเริ่ม S1</h2>
+  <div class="grid g2">
+    <div class="card"><strong>Q1 — ลูกค้าเงินไม่พอใน Wallet</strong><p style="color:var(--muted);margin:6px 0 0">pre-auth ล้วนแปลว่าต้องมีเงินเต็มก่อนสั่ง ซึ่งอาจกั้นผู้ใช้ใหม่เกือบทั้งหมด<br><em>ข้อเสนอ:</em> ผูกปุ่มเติมเงิน Beam เข้าหน้า checkout ให้เติมแล้วสั่งต่อได้ทันที</p></div>
+    <div class="card"><strong>Q2 — ร้านมาจากไหน</strong><p style="color:var(--muted);margin:6px 0 0">ไม่มี catalog แล้วลูกค้าเลือกร้านยังไง ปักหมุดบนแผนที่เอง / แอดมินทำรายการร้านยอดนิยมไว้ให้เลือก / ทั้งสอง<br><em>ข้อเสนอ:</em> แอดมินตั้งรายการร้านแนะนำ + ให้ปักหมุดเองได้</p></div>
+    <div class="card"><strong>Q3 — ค่าเสียเวลาคนขับตอนยกเลิกกลางคัน</strong><p style="color:var(--muted);margin:6px 0 0">ตอน <code>shopping</code> คนขับไปถึงร้านแล้ว คิดเท่าไหร่ ใครออก</p></div>
+    <div class="card"><strong>Q4 — เพดานวงเงินต่อออเดอร์</strong><p style="color:var(--muted);margin:6px 0 0">ตั้งเท่าไหร่ และผูกกับระดับความน่าเชื่อถือของคนขับหรือไม่ (คนขับใหม่รับงานวงเงินสูงไม่ได้)</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">10</span>สรุปผลกระทบ</h2>
+  <table>
+    <tr><th>ด้าน</th><th>ประเมิน</th></tr>
+    <tr><td>ไฟล์ใหม่</td><td>ประมาณ 14 ไฟล์ (SQL 1-2, Flutter 8, Admin 1, model/service 3)</td></tr>
+    <tr><td>ไฟล์ที่แก้</td><td>ประมาณ 12 ไฟล์ ส่วนใหญ่แค่เพิ่ม service type ใหม่ในตัวกรอง</td></tr>
+    <tr><td>ความเสี่ยงต่อของเดิม</td><td><span class="tag t-info">ต่ำ</span> เป็น vertical ใหม่แยกตาราง ไม่แก้ logic เงินของ food/ride/parcel</td></tr>
+    <tr><td>ความเสี่ยงของตัวฟีเจอร์เอง</td><td><span class="tag t-risk">สูง</span> แตะเงินจริงและมี hold ต้องผ่าน <code>code_reviewer</code> ก่อนเปิด</td></tr>
+    <tr><td>Version bump</td><td>minor เป็น <code>1.15.0+126</code> (ฟีเจอร์ใหม่)</td></tr>
+  </table>
+</section>
+
+</main>
+<footer>
+  Jedechai Delivery · แผนฟีเจอร์ฝากซื้อ/ฝากหิ้ว v1 · 2026-09-22 · ฐานโค้ด app 1.14.0+125 (commit 1514742)<br>
+  เอกสารนี้เป็นแผน ยังไม่ได้เริ่มเขียนโค้ด ต้องตอบข้อค้างหัวข้อ 9 ก่อนเริ่ม S1
+</footer>
+</body>
+</html>

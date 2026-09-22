@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แผนฟีเจอร์ฝากซื้อ/ฝากหิ้ว v2 - Jedechai Delivery</title>
+<style>
+:root{--bg:#0b1020;--panel:#111827;--panel-soft:#172033;--line:rgba(255,255,255,.12);--text:#f8fafc;--muted:#aab7cf;--blue:#2563eb;--cyan:#06b6d4;--green:#22c55e;--amber:#f59e0b;--red:#ef4444;--violet:#8b5cf6;--shadow:0 18px 45px rgba(0,0,0,.35)}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Inter","Sarabun","Noto Sans Thai",system-ui,sans-serif;background:linear-gradient(135deg,rgba(139,92,246,.18),transparent 34%),linear-gradient(315deg,rgba(6,182,212,.14),transparent 30%),var(--bg);color:var(--text);line-height:1.65}
+header,main,footer{max-width:1180px;margin:0 auto;padding:0 22px}
+header{padding-top:42px;padding-bottom:24px}
+.eyebrow{display:inline-flex;gap:8px;align-items:center;padding:6px 12px;border:1px solid var(--line);border-radius:999px;color:#ddd6fe;background:rgba(139,92,246,.16);font-size:13px;font-weight:700}
+h1{margin:18px 0 8px;font-size:clamp(28px,4vw,46px);line-height:1.12}
+.sub{color:var(--muted);max-width:860px;margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.chip{padding:5px 11px;border:1px solid var(--line);border-radius:999px;font-size:13px;color:var(--muted);background:rgba(255,255,255,.03)}
+.chip-new{border-color:rgba(34,197,94,.4);color:#86efac;background:rgba(34,197,94,.1)}
+section{margin:34px 0}
+h2{font-size:clamp(20px,2.4vw,28px);margin:0 0 6px;display:flex;align-items:center;gap:10px}
+h2 .n{width:30px;height:30px;flex:none;display:grid;place-items:center;border-radius:9px;background:rgba(139,92,246,.2);border:1px solid var(--line);font-size:14px;color:#ddd6fe}
+h3{font-size:17px;margin:22px 0 8px;color:#e2e8f0}
+.lead{color:var(--muted);margin:0 0 16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow)}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+table{width:100%;border-collapse:collapse;font-size:14.5px;margin-top:6px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:#cbd5e1;font-size:13px;text-transform:uppercase;letter-spacing:.4px}
+code{background:rgba(255,255,255,.07);padding:1px 6px;border-radius:5px;font-size:13.5px;color:#a5b4fc;font-family:ui-monospace,Menlo,Consolas,monospace}
+pre{background:#0a0f1d;border:1px solid var(--line);border-radius:12px;padding:14px 16px;overflow:auto;font-size:13px;line-height:1.55}
+pre code{background:none;color:#cbd5e1;padding:0}
+.tag{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid transparent}
+.t-new{background:rgba(34,197,94,.16);color:#86efac;border-color:rgba(34,197,94,.3)}
+.t-mod{background:rgba(245,158,11,.16);color:#fcd34d;border-color:rgba(245,158,11,.3)}
+.t-risk{background:rgba(239,68,68,.16);color:#fca5a5;border-color:rgba(239,68,68,.3)}
+.t-info{background:rgba(37,99,235,.18);color:#bfdbfe;border-color:rgba(37,99,235,.32)}
+.t-v2{background:rgba(139,92,246,.2);color:#ddd6fe;border-color:rgba(139,92,246,.35)}
+ul,ol{margin:8px 0;padding-left:22px}li{margin:5px 0}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
+.step{padding:7px 13px;border-radius:10px;background:var(--panel-soft);border:1px solid var(--line);font-size:13.5px;white-space:nowrap}
+.step-new{border-color:rgba(139,92,246,.45);background:rgba(139,92,246,.14)}
+.arw{color:var(--muted)}
+.warn{border-left:4px solid var(--amber);background:rgba(245,158,11,.08)}
+.danger{border-left:4px solid var(--red);background:rgba(239,68,68,.08)}
+.ok{border-left:4px solid var(--green);background:rgba(34,197,94,.08)}
+.info{border-left:4px solid var(--violet);background:rgba(139,92,246,.09)}
+footer{padding:30px 22px 60px;color:var(--muted);font-size:14px;border-top:1px solid var(--line);margin-top:40px}
+</style>
+</head>
+<body>
+<header>
+  <span class="eyebrow">Feature Plan · v2 · 2026-09-23</span>
+  <h1>ระบบฝากซื้อ / ฝากหิ้ว<br>(Shop &amp; Errand Service)</h1>
+  <p class="sub">แก้จาก v1 ตามที่ผู้ใช้สั่งเพิ่ม: ร้านเป็นหมุดที่แอดมินตั้งเท่านั้น มีเวลาเปิด-ปิด ร้านปิดเลือกไม่ได้ · ใบเสร็จให้ AI ดึงยอดอัตโนมัติ · ร้านที่ไม่มีใบเสร็จใช้รูปสินค้าให้ลูกค้ายืนยัน · จ่ายด้วย Wallet เท่านั้น</p>
+  <div class="meta">
+    <span class="chip">service_type = <code>shop</code></span>
+    <span class="chip">รายการแบบพิมพ์เอง (free-text)</span>
+    <span class="chip chip-new">หมุดร้านจากแอดมิน + รัศมี</span>
+    <span class="chip chip-new">เวลาเปิด-ปิดร้าน</span>
+    <span class="chip chip-new">AI อ่านใบเสร็จ</span>
+    <span class="chip chip-new">Wallet เท่านั้น</span>
+    <span class="chip">ฐาน: app 1.14.0+125</span>
+  </div>
+</header>
+
+<main>
+
+<section>
+  <h2><span class="n">0</span>เปลี่ยนอะไรจาก v1</h2>
+  <table>
+    <tr><th>#</th><th>สิ่งที่เพิ่ม</th><th>ผลต่อแผน</th></tr>
+    <tr><td>1</td><td>หมุดร้านให้เลือกในรัศมี (แอดมินตั้งรัศมีได้)</td><td>ตารางใหม่ <code>shop_stores</code> + RPC ค้นหาตามรัศมี — <strong>ปิดข้อค้าง Q2 ของ v1</strong></td></tr>
+    <tr><td>2</td><td>ร้านมีเวลาเปิด-ปิด</td><td>เก็บตารางเวลารายวัน + คำนวณสถานะเปิด/ปิดฝั่ง server</td></tr>
+    <tr><td>3</td><td>ร้านปิดแล้วกดเลือกไม่ได้</td><td>บังคับทั้ง UI (disabled) และ server (ปฏิเสธตอนสร้างออเดอร์)</td></tr>
+    <tr><td>4</td><td>ตำแหน่งร้านแอดมินตั้งเท่านั้น</td><td>ลูกค้า/คนขับปักหมุดเองไม่ได้ — RLS ให้ลูกค้า SELECT อย่างเดียว</td></tr>
+    <tr><td>5</td><td>AI ดึงยอดจากใบเสร็จ</td><td>Edge function ใหม่ใช้ Claude vision + structured output</td></tr>
+    <tr><td>6</td><td>ร้านไม่มีใบเสร็จ ใช้รูปสินค้าให้ลูกค้ายืนยัน</td><td>โหมดหลักฐาน 2 แบบ + สถานะรอยืนยันเพิ่ม</td></tr>
+    <tr><td>7</td><td>Wallet เท่านั้น</td><td>ตัด COD/เงินสดออกทั้งหมด (เหตุผลหัวข้อ 7)</td></tr>
+  </table>
+  <p class="lead" style="margin-top:12px">หัวข้อที่ไม่ได้พูดถึงในเอกสารนี้ (fee engine, settlement, RLS พื้นฐาน, ลำดับงาน) ให้ยึดตาม v1 — v2 นี้เพิ่มและทับเฉพาะส่วนที่ระบุ</p>
+</section>
+
+<section>
+  <h2><span class="n">1</span>ร้านค้า: หมุดที่แอดมินคุมทั้งหมด</h2>
+
+  <h3>1.1 ตาราง <code>shop_stores</code> <span class="tag t-new">ใหม่</span></h3>
+  <table>
+    <tr><th>คอลัมน์</th><th>ชนิด</th><th>ความหมาย</th></tr>
+    <tr><td><code>id</code></td><td>uuid</td><td>PK</td></tr>
+    <tr><td><code>name</code></td><td>text</td><td>ชื่อร้าน (แสดงให้ลูกค้าเห็น)</td></tr>
+    <tr><td><code>category</code></td><td>text</td><td><code>grocery</code> / <code>mall</code> / <code>market</code> / <code>convenience</code> / <code>pharmacy</code></td></tr>
+    <tr><td><code>address</code></td><td>text</td><td>ที่อยู่สำหรับให้คนขับนำทาง</td></tr>
+    <tr><td><code>lat</code>, <code>lng</code></td><td>double precision</td><td>พิกัดหมุด — <strong>แอดมินตั้งเท่านั้น</strong></td></tr>
+    <tr><td><code>opening_hours</code></td><td>jsonb</td><td>เวลาเปิด-ปิดรายวัน (รูปแบบหัวข้อ 1.2)</td></tr>
+    <tr><td><code>is_24h</code></td><td>boolean</td><td>ทางลัดสำหรับร้านสะดวกซื้อ 24 ชม.</td></tr>
+    <tr><td><code>issues_receipt</code></td><td>boolean</td><td><span class="tag t-v2">สำคัญ</span> ร้านออกใบเสร็จหรือไม่ — ตัดสินว่าใช้หลักฐานแบบไหน (หัวข้อ 5)</td></tr>
+    <tr><td><code>is_active</code></td><td>boolean</td><td>แอดมินปิดร้านถาวรได้โดยไม่ต้องลบ</td></tr>
+    <tr><td><code>manual_closed_until</code></td><td>timestamptz</td><td>ปิดชั่วคราว เช่น ร้านปิดปรับปรุง (override เวลาปกติ)</td></tr>
+    <tr><td><code>service_radius_km</code></td><td>numeric</td><td>รัศมีเฉพาะร้านนี้ ถ้า null ใช้ค่ากลางจาก config</td></tr>
+    <tr><td><code>photo_url</code>, <code>note</code></td><td>text</td><td>รูปหน้าร้าน + หมายเหตุให้คนขับ เช่น "จอดรถหลังร้าน"</td></tr>
+  </table>
+  <p style="color:var(--muted);margin-top:8px">Index: <code>(is_active)</code> + index เชิงพื้นที่สำหรับค้นหาตามรัศมี (ใช้วิธีเดียวกับที่ระบบหาร้านอาหาร/คนขับในรัศมีอยู่แล้ว)</p>
+
+  <h3>1.2 รูปแบบเวลาเปิด-ปิด</h3>
+  <pre><code>{
+  "mon": [{"open":"08:00","close":"20:00"}],
+  "tue": [{"open":"08:00","close":"20:00"}],
+  ...
+  "sun": [],                                  // ปิดทั้งวัน
+  "sat": [{"open":"08:00","close":"12:00"},
+          {"open":"15:00","close":"20:00"}]   // ปิดพักกลางวัน รองรับหลายช่วง
+}</code></pre>
+  <div class="card warn" style="margin-top:10px">
+    <strong>เรื่อง timezone:</strong> เก็บเป็นเวลาท้องถิ่น (Asia/Bangkok) แล้วเทียบด้วย <code>now() AT TIME ZONE 'Asia/Bangkok'</code> เสมอ — <span class="tag t-info">บทเรียนจาก Batch 2 เรื่อง coupon timezone ที่เคยคำนวณผิด</span> ห้ามเทียบกับ <code>now()</code> ดิบ ๆ
+  </div>
+  <p style="color:var(--muted)">รองรับร้านที่ปิดข้ามเที่ยงคืน (เช่น 18:00–02:00) ด้วยการให้ <code>close &lt; open</code> หมายถึงข้ามวัน</p>
+
+  <h3>1.3 RPC ค้นหาร้านในรัศมี</h3>
+  <pre><code>shop_nearby_stores(p_lat, p_lng, p_category default null)
+  =&gt; คืน: id, name, category, address, lat, lng, distance_km,
+          is_open_now, next_open_at, issues_receipt, photo_url
+
+  กรอง: is_active = true
+        AND distance_km &lt;= COALESCE(store.service_radius_km, config.shop_store_radius_km)
+  เรียง: ร้านที่เปิดอยู่ก่อน แล้วเรียงตามระยะทาง</code></pre>
+  <div class="card ok" style="margin-top:10px">
+    <strong>ทำไมคำนวณ <code>is_open_now</code> ที่ server ไม่ใช่ที่แอป:</strong> นาฬิกาเครื่องลูกค้าตั้งเองได้ ถ้าคำนวณที่แอปคนที่ตั้งเวลาเครื่องย้อนหลังจะสั่งร้านที่ปิดอยู่ได้ — ฝั่ง server เป็นแหล่งความจริงเดียว
+  </div>
+
+  <h3>1.4 บังคับ "ร้านปิดเลือกไม่ได้" 2 ชั้น</h3>
+  <table>
+    <tr><th>ชั้น</th><th>ทำอะไร</th></tr>
+    <tr><td>UI (แอปลูกค้า)</td><td>การ์ดร้านที่ปิดแสดงแบบจาง กดไม่ได้ พร้อมป้าย "ปิดอยู่ · เปิดอีกครั้ง 08:00 พรุ่งนี้"</td></tr>
+    <tr><td>Server (RPC)</td><td><code>create_shop_booking()</code> เช็ค <code>is_open_now</code> ซ้ำ ถ้าปิดให้คืน <code>error: 'store_closed'</code> พร้อม <code>next_open_at</code></td></tr>
+  </table>
+  <div class="card danger" style="margin-top:10px">
+    <strong>ทำไมต้อง 2 ชั้น:</strong> ซ่อนปุ่มอย่างเดียวกันคนที่เรียก API ตรงไม่ได้ และยังมีช่องว่างเวลาปกติด้วย — ลูกค้าอาจเปิดหน้าไว้ตอน 19:59 แล้วกดสั่งตอน 20:01 หลังร้านปิดไปแล้ว การเช็คซ้ำตอนสร้างออเดอร์ปิดช่องนี้
+  </div>
+
+  <h3>1.5 หน้าจัดการร้านใน Admin <span class="tag t-new">ใหม่</span></h3>
+  <ul>
+    <li><code>admin-web/src/pages/shopStoresPage.js</code> — ตาราง CRUD ร้าน + ปักหมุดบนแผนที่ (ใช้ <code>mapPage.js</code> / <code>mapActions.js</code> ที่มีอยู่)</li>
+    <li>ฟอร์ม: ชื่อ · หมวด · ที่อยู่ · หมุด · เวลาเปิด-ปิดรายวัน · ออกใบเสร็จไหม · รัศมีเฉพาะร้าน · ปิดชั่วคราวถึงเมื่อไหร่</li>
+    <li>ปุ่ม "ปิดร้านชั่วคราว" แบบกดครั้งเดียว สำหรับกรณีร้านปิดกะทันหัน</li>
+    <li>ตัวช่วยกรอกเวลา: ตั้งค่าครั้งเดียวแล้วคัดลอกไปทุกวัน (ไม่งั้นต้องกรอก 7 ครั้งทุกร้าน)</li>
+  </ul>
+
+  <h3>1.6 Config ที่เกี่ยวข้อง</h3>
+  <table>
+    <tr><th>Key</th><th>ค่าเริ่มต้น</th><th>ความหมาย</th></tr>
+    <tr><td><code>shop_store_radius_km</code></td><td><code>10</code></td><td>รัศมีกลาง ใช้เมื่อร้านไม่ได้ตั้งเอง</td></tr>
+    <tr><td><code>shop_store_radius_max_km</code></td><td><code>25</code></td><td>เพดานที่แอดมินตั้งได้ กันตั้งพลาดเป็น 999</td></tr>
+    <tr><td><code>shop_show_closed_stores</code></td><td><code>true</code></td><td>แสดงร้านที่ปิดแบบจาง (true) หรือซ่อนไปเลย (false)</td></tr>
+  </table>
+  <div class="card info" style="margin-top:10px">
+    <strong>ข้อแนะนำ:</strong> ตั้งเป็น <code>true</code> ตอนเริ่ม — ให้ลูกค้าเห็นว่ามีร้านนี้อยู่แต่ยังไม่เปิด ดีกว่าหายไปเฉย ๆ แล้วลูกค้าคิดว่าไม่มีบริการในพื้นที่
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">2</span>Flow ที่ปรับใหม่</h2>
+  <div class="flow">
+    <span class="step step-new">เลือกร้านจากหมุดในรัศมี</span><span class="arw">→</span>
+    <span class="step">พิมพ์รายการของ</span><span class="arw">→</span>
+    <span class="step">ตั้งวงเงิน</span><span class="arw">→</span>
+    <span class="step">hold Wallet</span><span class="arw">→</span>
+    <span class="step">คนขับรับงาน</span><span class="arw">→</span>
+    <span class="step">ซื้อของ</span><span class="arw">→</span>
+    <span class="step step-new">ถ่ายบิล / ถ่ายรูปสินค้า</span><span class="arw">→</span>
+    <span class="step step-new">AI ดึงยอด / ลูกค้ายืนยัน</span><span class="arw">→</span>
+    <span class="step">ส่งของ</span><span class="arw">→</span>
+    <span class="step">settle + คืนส่วนต่าง</span>
+  </div>
+  <p class="lead">ต่างจาก v1 ตรงที่เลือกร้าน<strong>ก่อน</strong>พิมพ์รายการ (เพราะร้านมาจากรายการปิด) และขั้นหลักฐานแยกเป็น 2 ทางตามว่าร้านออกใบเสร็จหรือไม่</p>
+
+  <h3>สถานะที่เพิ่มจาก v1</h3>
+  <table>
+    <tr><th>สถานะ</th><th>ความหมาย</th></tr>
+    <tr><td><code>receipt_review</code> <span class="tag t-new">ใหม่ v2</span></td><td>อัปโหลดหลักฐานแล้ว รอ AI อ่าน หรือรอลูกค้ายืนยันรูปสินค้า</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2><span class="n">3</span>AI อ่านใบเสร็จ</h2>
+  <p class="lead">ทำเป็น edge function ใหม่ <code>extract-shop-receipt</code> โดยยึดโครงเดียวกับ <code>verify-topup-slip</code> ที่มีอยู่แล้ว (rate limit, จำกัดขนาดรูป, ตรวจชนิดไฟล์, คิว manual review)</p>
+
+  <h3>3.1 สถาปัตยกรรม</h3>
+  <pre><code>แอปคนขับ  --(รูปบิล)-->  Supabase Storage (bucket: shop-receipts)
+                              |
+                              v
+                    edge function extract-shop-receipt
+                       - ตรวจสิทธิ์: คนขับที่ถูก assign งานนี้เท่านั้น
+                       - ตรวจขนาด (&lt;= 8MB) + ชนิด (jpeg/png/webp)
+                       - rate limit ต่อคนขับ
+                              |
+                              v
+                     Claude API (vision + structured output)
+                              |
+                              v
+                 เขียนผลลง shop_orders.ai_extract (jsonb)
+                 + เทียบกับยอดที่คนขับกรอก</code></pre>
+
+  <h3>3.2 การเรียก Claude</h3>
+  <ul>
+    <li><strong>Model:</strong> <code>claude-opus-5</code></li>
+    <li><strong>Input:</strong> รูปบิลแบบ base64 + prompt ภาษาไทยบอกให้ดึงยอดรวม ร้าน วันเวลา และรายการสินค้า</li>
+    <li><strong>Output:</strong> ใช้ structured output (<code>output_config.format</code>) บังคับ schema ไม่ต้องมา parse ข้อความเอง</li>
+  </ul>
+  <pre><code>schema ที่ต้องการกลับมา:
+{
+  total_amount: number | null,      // ยอดรวมที่ต้องจ่าย
+  store_name:   string | null,
+  purchased_at: string | null,      // ISO ถ้าอ่านได้
+  line_items:   [{ name, qty, price }],
+  confidence:   "high" | "medium" | "low",
+  unreadable_reason: string | null  // เบลอ / มืด / ไม่ใช่ใบเสร็จ
+}</code></pre>
+  <div class="card warn" style="margin-top:10px">
+    <strong>ข้อควรรู้เรื่อง API (เช็คแล้วกับ reference ปัจจุบัน):</strong> ใช้ <code>output_config: {format: ...}</code> ไม่ใช่ <code>output_format</code> ที่เลิกใช้แล้ว · thinking ใช้ <code>{type:"adaptive"}</code> ไม่ใช่ <code>budget_tokens</code> (ส่งไปจะได้ 400) · assistant prefill ใช้ไม่ได้แล้วบน model รุ่นนี้
+  </div>
+
+  <h3>3.3 AI เป็นผู้ช่วย ไม่ใช่ผู้ตัดสิน</h3>
+  <div class="card danger">
+    <p style="margin-top:0"><strong>ห้ามให้ AI ตัดเงินเองโดยตรง</strong> เพราะอ่านผิดได้ (บิลเบลอ บิลยับ แสงสะท้อน ร้านใช้ฟอร์มแปลก) และเป็นทางให้คนขับลองยิงรูปหลอกระบบ กฎการใช้ผลลัพธ์:</p>
+    <table style="margin-top:4px">
+      <tr><th>กรณี</th><th>ระบบทำอะไร</th></tr>
+      <tr><td>AI อ่านได้ + ตรงกับที่คนขับกรอก (ต่างไม่เกิน tolerance)</td><td>ผ่านอัตโนมัติ ไปขั้นถัดไป</td></tr>
+      <tr><td>AI อ่านได้ แต่ต่างจากที่คนขับกรอก</td><td>แสดงให้คนขับเห็นทั้ง 2 ยอด ให้ยืนยัน/แก้ แล้วเข้าคิวแอดมินตรวจ</td></tr>
+      <tr><td>AI อ่านไม่ออก / confidence ต่ำ</td><td>ใช้ยอดที่คนขับกรอก แล้วเข้าคิวแอดมินตรวจ — <strong>ไม่บล็อกงาน</strong> ลูกค้าไม่ควรต้องรอเพราะ AI อ่านบิลไม่ออก</td></tr>
+      <tr><td>Claude API ล่ม / timeout</td><td>บันทึก <code>ai_extract.status='failed'</code> แล้วไปต่อด้วยยอดคนขับ — <span class="tag t-risk">ห้ามให้ทั้งระบบหยุดเพราะ AI ล่ม</span></td></tr>
+    </table>
+  </div>
+
+  <h3>3.4 Config</h3>
+  <table>
+    <tr><th>Key</th><th>ค่าเริ่มต้น</th><th>ความหมาย</th></tr>
+    <tr><td><code>shop_ai_receipt_enabled</code></td><td><code>false</code></td><td>สวิตช์ปิด AI ได้ทันทีถ้ามีปัญหา โดยไม่ต้อง deploy ใหม่</td></tr>
+    <tr><td><code>shop_receipt_tolerance_baht</code></td><td><code>5</code></td><td>ต่างกันไม่เกินกี่บาทถือว่าตรงกัน</td></tr>
+    <tr><td><code>shop_receipt_tolerance_percent</code></td><td><code>2</code></td><td>หรือต่างไม่เกินกี่ % (ใช้ค่าที่มากกว่าใน 2 อัน)</td></tr>
+    <tr><td><code>shop_receipt_review_threshold_percent</code></td><td><code>10</code></td><td>ต่างจากประมาณการเกินเท่าไหร่ถึงเข้าคิวแอดมิน</td></tr>
+  </table>
+
+  <h3>3.5 ต้นทุนโดยประมาณ</h3>
+  <div class="card">
+    <p style="margin-top:0">บิล 1 ใบคิดคร่าว ๆ: รูป ~2,000 token เข้า + ~300 token ออก บน <code>claude-opus-5</code> ($5/1M เข้า, $25/1M ออก)</p>
+    <p style="margin:6px 0 0"><strong>ประมาณ $0.018 ต่อบิล หรือราว 0.6 บาท</strong></p>
+    <p style="margin:8px 0 0;color:var(--muted)">ตัวเลขนี้เป็นการประมาณจากขนาดรูปทั่วไป ยังไม่ได้วัดจริง ต้อง log <code>usage</code> จากทุก request ไว้แล้ววัดจริงหลังใช้งานสัก 100 บิล ถ้าปริมาณโตมากค่อยพิจารณาลดต้นทุน (ปรับขนาดรูปก่อนส่ง / ลด effort / เปลี่ยน model) โดยวัดคุณภาพเทียบก่อนเสมอ</p>
+  </div>
+
+  <h3>3.6 ความปลอดภัยของ edge function</h3>
+  <ul>
+    <li>API key เก็บใน Supabase secrets เท่านั้น <span class="tag t-risk">ห้ามอยู่ในแอป</span> — <span class="tag t-info">บทเรียนจากเหตุ ENV secret leak ที่ผ่านมา</span></li>
+    <li>ตรวจว่าผู้เรียกคือคนขับที่ถูก assign งานนั้นจริง ไม่ใช่แค่ login แล้วเรียกได้</li>
+    <li>rate limit ต่อคนขับ กันยิงรูปรัว ๆ จนค่า API บาน</li>
+    <li>เก็บ <code>usage</code> (token เข้า/ออก) ทุกครั้งเพื่อดูต้นทุนจริงและจับการใช้ผิดปกติ</li>
+    <li>รูปบิลเป็นข้อมูลส่วนบุคคล — bucket ต้องไม่ public, ให้เข้าถึงผ่าน signed URL เท่านั้น</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="n">4</span>ร้านที่ไม่มีใบเสร็จ: ยืนยันด้วยรูปสินค้า</h2>
+  <p class="lead">ตลาดสด ร้านโชห่วย แผงลอย ส่วนใหญ่ไม่ออกใบเสร็จ ใช้ <code>shop_stores.issues_receipt</code> เป็นตัวตัดสินว่าจะใช้ flow ไหน</p>
+
+  <h3>4.1 เปรียบเทียบ 2 โหมด</h3>
+  <table>
+    <tr><th></th><th>ร้านมีใบเสร็จ</th><th>ร้านไม่มีใบเสร็จ</th></tr>
+    <tr><td>คนขับทำอะไร</td><td>ถ่ายใบเสร็จ 1 รูป</td><td>ถ่ายรูปสินค้าที่ซื้อ (1 รูปรวม หรือรายชิ้น) + กรอกราคาต่อชิ้น</td></tr>
+    <tr><td>ใครตรวจยอด</td><td>AI อ่านแล้วเทียบอัตโนมัติ</td><td><strong>ลูกค้ายืนยันเอง</strong></td></tr>
+    <tr><td>ไปขั้นถัดไปเมื่อ</td><td>ยอดตรง tolerance</td><td>ลูกค้ากดยืนยันในแอป</td></tr>
+    <tr><td>ถ้าไม่ผ่าน</td><td>เข้าคิวแอดมิน</td><td>ลูกค้าทักแชทคุยกับคนขับ หรือเข้าคิวแอดมิน</td></tr>
+  </table>
+
+  <h3>4.2 Flow โหมดรูปสินค้า</h3>
+  <div class="flow">
+    <span class="step">คนขับซื้อของ</span><span class="arw">→</span>
+    <span class="step">ถ่ายรูปสินค้า + กรอกราคา</span><span class="arw">→</span>
+    <span class="step step-new">ส่งให้ลูกค้า (สถานะ <code>receipt_review</code>)</span><span class="arw">→</span>
+    <span class="step">ลูกค้าเห็นรูป + ยอด</span><span class="arw">→</span>
+    <span class="step">กดยืนยัน</span><span class="arw">→</span>
+    <span class="step">คนขับส่งของ</span>
+  </div>
+
+  <h3>4.3 คำถามสำคัญ: ถ้าลูกค้าไม่กดยืนยัน?</h3>
+  <div class="card warn">
+    <p style="margin-top:0">เป็นจุดที่ระบบค้างได้ง่ายที่สุด เพราะ<strong>ของซื้อไปแล้ว คนขับรออยู่หน้าร้าน</strong> ถ้าปล่อยให้รอไม่มีกำหนดคือการลงโทษคนขับ ข้อเสนอ:</p>
+    <ul style="margin-bottom:0">
+      <li>แจ้งเตือน push ทันทีที่ส่งรูป + แจ้งซ้ำอีกครั้งเมื่อผ่านไปครึ่งเวลา</li>
+      <li>ตั้ง timeout (<code>shop_photo_confirm_timeout_min</code>, ค่าเริ่ม 10 นาที)</li>
+      <li>ครบเวลาแล้วไม่ตอบ ให้ <strong>ถือว่ายืนยันอัตโนมัติ</strong> แล้วไปต่อ พร้อมบันทึกว่าเป็น auto-confirm (เผื่อมีข้อพิพาทภายหลัง)</li>
+      <li>ยอดยังถูกคุมด้วยวงเงินที่ลูกค้าตั้งไว้อยู่แล้ว auto-confirm จึงไม่ทำให้โดนเก็บเกินวงเงิน</li>
+    </ul>
+  </div>
+  <p style="color:var(--muted)"><strong>ต้องให้ผู้ใช้ตัดสิน:</strong> auto-confirm เมื่อครบเวลา (คนขับไม่ต้องรอ แต่ลูกค้าอาจรู้สึกว่าถูกตัดสินใจแทน) หรือค้างไว้รอลูกค้าตลอด (ลูกค้าคุมเต็มที่ แต่คนขับติดอยู่กับงาน) — ดูหัวข้อ 8 Q5</p>
+
+  <h3>4.4 ผลต่อฐานข้อมูล</h3>
+  <ul>
+    <li><code>shop_orders.proof_mode</code> — <code>'receipt'</code> | <code>'photo'</code> (snapshot จาก <code>issues_receipt</code> ตอนสร้างออเดอร์ เพราะแอดมินอาจแก้ทีหลัง)</li>
+    <li><code>shop_orders.proof_urls</code> — text[] รองรับหลายรูป</li>
+    <li><code>shop_orders.customer_confirmed_at</code>, <code>confirmed_by</code> (<code>'customer'</code> | <code>'auto_timeout'</code>)</li>
+    <li><code>shop_orders.ai_extract</code> — jsonb เก็บผลดิบจาก AI + usage + confidence</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="n">5</span>Wallet เท่านั้น — เหตุผลด้านความปลอดภัย</h2>
+  <p class="lead">ผู้ใช้สั่งให้ใช้ Wallet อย่างเดียว ซึ่งเป็นการตัดสินใจที่ถูกต้องสำหรับบริการประเภทนี้ ด้านล่างคือเหตุผลที่รองรับ เพื่อใช้อธิบายทั้งทีมงานและผู้ใช้ปลายทาง</p>
+
+  <div class="grid g2">
+    <div class="card ok">
+      <h3 style="margin-top:0">1. คนขับไม่ต้องสำรองเงินตัวเอง</h3>
+      <p style="color:var(--muted);margin:0">ถ้าเก็บเงินปลายทาง คนขับต้องควักเงินตัวเองจ่ายที่ร้านก่อน ถ้าลูกค้าไม่รับของ คนขับแบกของและหนี้นั้นไว้เอง — ของกินของสดคืนร้านไม่ได้ด้วย Wallet ย้ายความเสี่ยงนี้ออกจากคนขับทั้งหมด ซึ่งเป็นเงื่อนไขที่ทำให้หาคนขับมารับงานฝากซื้อได้จริง</p>
+    </div>
+    <div class="card ok">
+      <h3 style="margin-top:0">2. ยืนยันความสามารถจ่ายก่อนเกิดต้นทุน</h3>
+      <p style="color:var(--muted);margin:0">hold เกิดขึ้น<strong>ก่อน</strong>คนขับออกเดินทาง ระบบจึงรู้แน่นอนว่าเงินมีอยู่จริง ไม่ใช่รู้ตอนคนขับถือของยืนอยู่หน้าบ้านลูกค้าแล้วพบว่าจ่ายไม่ได้ ต่างจากอาหารตรงที่ฝากซื้อมีมูลค่าสินค้าสูงกว่ามาก (หลักพัน ไม่ใช่หลักร้อย) ความเสียหายต่อเคสจึงสูงกว่า</p>
+    </div>
+    <div class="card ok">
+      <h3 style="margin-top:0">3. ทุกบาทมีร่องรอยตรวจสอบได้</h3>
+      <p style="color:var(--muted);margin:0">ทุกการเคลื่อนไหวลง <code>wallet_transactions</code> ทั้ง hold, settle, refund เวลามีข้อพิพาทว่า "จ่ายไปเท่าไหร่ คืนมาเท่าไหร่" มีหลักฐานครบ ขณะที่เงินสดไม่เหลือร่องรอยใด ๆ ในระบบเลย ต้องเชื่อคำบอกเล่าอย่างเดียว</p>
+    </div>
+    <div class="card ok">
+      <h3 style="margin-top:0">4. คืนส่วนต่างได้อัตโนมัติ</h3>
+      <p style="color:var(--muted);margin:0">ฝากซื้อเกือบทุกครั้งจ่ายจริงน้อยกว่าวงเงินที่กันไว้ ถ้าเป็นเงินสดคนขับต้องทอนเงินหน้าบ้าน ซึ่งผิดพลาดง่ายและเถียงกันได้ Wallet คืนส่วนต่างตรงเป๊ะทันทีที่ปิดงาน</p>
+    </div>
+    <div class="card ok">
+      <h3 style="margin-top:0">5. ลดความเสี่ยงทางกายภาพของคนขับ</h3>
+      <p style="color:var(--muted);margin:0">คนขับที่ต้องพกเงินสดหลักพันไปซื้อของตลอดวันตกเป็นเป้า ไม่ต้องถือเงินสดคือความปลอดภัยของตัวคนขับเอง</p>
+    </div>
+    <div class="card ok">
+      <h3 style="margin-top:0">6. บังคับเพดานได้จริง</h3>
+      <p style="color:var(--muted);margin:0">วงเงินที่ลูกค้าตั้งเป็นเพดานที่ระบบบังคับได้จริง เพราะเงินอยู่ในระบบ ถ้าเป็นเงินสดวงเงินเป็นแค่ตัวเลขแนะนำ ไม่มีอะไรหยุดการใช้จ่ายเกินได้</p>
+    </div>
+  </div>
+
+  <div class="card warn" style="margin-top:14px">
+    <h3 style="margin-top:0">ราคาที่ต้องจ่ายสำหรับข้อดีเหล่านี้ (ต้องยอมรับให้ชัด)</h3>
+    <ul style="margin-bottom:0">
+      <li><strong>ลูกค้าใหม่ที่ไม่มีเงินใน Wallet สั่งไม่ได้เลย</strong> เป็นอุปสรรคจริงและอาจเป็นตัวกั้นการเติบโตที่ใหญ่ที่สุดของฟีเจอร์นี้ ต้องทำทางเติมเงินให้ลื่นที่สุดในหน้า checkout (Q1 หัวข้อ 8)</li>
+      <li>เงินลูกค้าถูกกันไว้ระหว่างรอ ถ้าระบบมีบั๊กจน hold ค้าง ลูกค้าจะรู้สึกเหมือนเงินหาย — ต้องมี cron ปลด hold + แสดงใน Wallet ให้ชัดว่ากันไว้เพื่ออะไร</li>
+      <li>ระบบต้องแม่นเรื่องเงินทั้งหมด เพราะไม่มีเงินสดมารองรับตอนระบบพลาด</li>
+    </ul>
+  </div>
+
+  <h3>5.1 ผลต่อการทำงาน</h3>
+  <ul>
+    <li><code>payment_method</code> ของ service_type <code>'shop'</code> บังคับเป็น <code>'wallet'</code> เท่านั้น — <strong>ตรวจที่ server ด้วย</strong> ไม่ใช่แค่ซ่อนตัวเลือกในแอป</li>
+    <li>หน้าเลือกวิธีจ่ายของฝากซื้อไม่ต้องมีตัวเลือก แสดงเป็นข้อความว่าใช้ Wallet พร้อมยอดคงเหลือ</li>
+    <li>แสดงยอดที่ถูกกันไว้ในหน้า Wallet แยกจากยอดใช้ได้ พร้อมลิงก์ไปออเดอร์ที่กันไว้</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="n">6</span>สรุปงานที่เพิ่มจาก v1</h2>
+  <table>
+    <tr><th>ส่วน</th><th>งานที่เพิ่ม</th></tr>
+    <tr><td>DB</td><td><code>shop_stores</code> + RPC <code>shop_nearby_stores()</code> + ฟังก์ชันคำนวณเวลาเปิด-ปิด + คอลัมน์ <code>proof_mode</code>/<code>proof_urls</code>/<code>ai_extract</code>/<code>customer_confirmed_at</code></td></tr>
+    <tr><td>Edge function</td><td><code>extract-shop-receipt</code> <span class="tag t-new">ใหม่</span> (ยึดโครง <code>verify-topup-slip</code>)</td></tr>
+    <tr><td>แอปลูกค้า</td><td>หน้าเลือกร้าน (แผนที่ + รายการ, ร้านปิดกดไม่ได้) · หน้ายืนยันรูปสินค้า · แสดงยอดที่ถูกกันไว้ใน Wallet</td></tr>
+    <tr><td>แอปคนขับ</td><td>หน้าถ่ายหลักฐาน 2 โหมด · แสดงผล AI เทียบยอด · สถานะรอลูกค้ายืนยัน</td></tr>
+    <tr><td>Admin</td><td><code>shopStoresPage.js</code> <span class="tag t-new">ใหม่</span> (CRUD + หมุด + เวลาเปิดปิด) · คิวตรวจใบเสร็จ · config AI + รัศมี</td></tr>
+    <tr><td>Storage</td><td>bucket <code>shop-receipts</code> ไม่ public, เข้าถึงผ่าน signed URL</td></tr>
+  </table>
+  <p class="lead" style="margin-top:12px">ประเมินรวม v1+v2: ไฟล์ใหม่ประมาณ 18 ไฟล์ · ไฟล์ที่แก้ประมาณ 14 ไฟล์ · version bump เป็น <code>1.15.0+126</code></p>
+</section>
+
+<section>
+  <h2><span class="n">7</span>ลำดับงานที่ปรับ</h2>
+  <table>
+    <tr><th>ขั้น</th><th>งาน</th><th>ผลที่ตรวจได้</th></tr>
+    <tr><td>S0</td><td>ตอบข้อค้างหัวข้อ 8 + สร้าง branch <code>feat/shop-errand</code></td><td>ไม่ชน worktree Wave 1.5</td></tr>
+    <tr><td>S1</td><td><code>shop_stores</code> + RPC รัศมี/เวลาเปิดปิด + หน้า Admin จัดการร้าน</td><td><strong>ทำก่อนทุกอย่าง</strong> เพราะไม่มีร้านก็ทดสอบอะไรไม่ได้ · แอดมินเพิ่มร้านจริงได้ · query ร้านในรัศมีคืน <code>is_open_now</code> ถูกต้องข้ามเที่ยงคืน</td></tr>
+    <tr><td>S2</td><td>ตารางออเดอร์ + RPC สร้าง/hold/settle/cancel (ตาม v1)</td><td>ครบวงจรผ่าน SQL โดยไม่ต้องมี UI</td></tr>
+    <tr><td>S3</td><td>Fee engine + Settings ใน Admin</td><td>แอดมินแก้ค่าแล้วออเดอร์ใหม่เปลี่ยน ออเดอร์เก่าไม่เปลี่ยน</td></tr>
+    <tr><td>S4</td><td>แอปลูกค้า: เลือกร้าน → พิมพ์รายการ → hold → ติดตาม</td><td>สั่งจริงแล้วเห็นยอดกันไว้ใน Wallet · ร้านปิดกดไม่ได้จริง</td></tr>
+    <tr><td>S5</td><td>แอปคนขับ: เช็คลิสต์ + ถ่ายหลักฐาน 2 โหมด</td><td>E2E ลูกค้ากับคนขับครบวงจร ยังไม่เปิด AI</td></tr>
+    <tr><td>S6</td><td>Edge function AI อ่านบิล</td><td>เปิด <code>shop_ai_receipt_enabled</code> แล้วยอดตรงอัตโนมัติ · <strong>ปิดสวิตช์แล้วระบบยังทำงานได้ปกติ</strong></td></tr>
+    <tr><td>S7</td><td>เส้นทางแตก + คิวแอดมิน + แจ้งเตือน</td><td>ทดสอบของหมด เกินวงเงิน ยกเลิก ลูกค้าไม่ยืนยัน AI ล่ม</td></tr>
+    <tr><td>S8</td><td><code>code_reviewer</code> + bump version + เปิด <code>shop_enabled</code></td><td>ผ่าน review ก่อนเปิดใช้จริง</td></tr>
+  </table>
+  <div class="card info" style="margin-top:12px">
+    <strong>ทำไม AI ไปอยู่ S6 ท้าย ๆ:</strong> AI เป็นตัวเร่งความสะดวก ไม่ใช่แกนของระบบ ถ้าทำ AI ตั้งแต่ต้นแล้วติดปัญหา งานทั้งก้อนจะหยุด — ทำระบบให้ทำงานได้โดยไม่มี AI ก่อน แล้วค่อยเสียบ AI เข้าไปเป็นชั้นเสริมที่ปิดได้ตลอดเวลา
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">8</span>ข้อค้างที่ยังต้องตัดสิน</h2>
+  <div class="grid g2">
+    <div class="card"><strong>Q1 — ลูกค้าเงินไม่พอใน Wallet</strong> <span class="tag t-risk">ยังค้างจาก v1</span><p style="color:var(--muted);margin:6px 0 0">Wallet เท่านั้นแปลว่าต้องมีเงินเต็มก่อนสั่ง และนี่คืออุปสรรคที่ใหญ่ที่สุดของฟีเจอร์<br><em>ข้อเสนอ:</em> ใส่ปุ่มเติมเงิน Beam ในหน้า checkout ให้เติมแล้วกลับมาสั่งต่อได้โดยไม่ต้องกรอกใหม่</p></div>
+    <div class="card"><strong>Q3 — ค่าเสียเวลาคนขับตอนยกเลิกกลางคัน</strong> <span class="tag t-risk">ยังค้างจาก v1</span><p style="color:var(--muted);margin:6px 0 0">ยกเลิกตอนคนขับถึงร้านแล้ว คิดเท่าไหร่ ใครออก</p></div>
+    <div class="card"><strong>Q4 — เพดานวงเงินต่อออเดอร์</strong> <span class="tag t-risk">ยังค้างจาก v1</span><p style="color:var(--muted);margin:6px 0 0">ตั้งเท่าไหร่ และจำกัดตามความน่าเชื่อถือของคนขับไหม (คนขับใหม่รับงานวงเงินสูงไม่ได้)</p></div>
+    <div class="card"><strong>Q5 — ลูกค้าไม่กดยืนยันรูปสินค้า</strong> <span class="tag t-v2">ใหม่ v2</span><p style="color:var(--muted);margin:6px 0 0">auto-confirm เมื่อครบเวลา หรือค้างรอลูกค้าตลอด<br><em>ข้อเสนอ:</em> auto-confirm ที่ 10 นาที เพราะของซื้อไปแล้วและคนขับรออยู่</p></div>
+    <div class="card"><strong>Q6 — ใครเป็นคนกรอกข้อมูลร้านตั้งต้น</strong> <span class="tag t-v2">ใหม่ v2</span><p style="color:var(--muted);margin:6px 0 0">ต้องมีร้านในระบบก่อนถึงเปิดบริการได้ เริ่มกี่ร้าน พื้นที่ไหนก่อน และใครเดินสำรวจเวลาเปิด-ปิดจริง — <strong>เป็นงานคนไม่ใช่งานโค้ด แต่บล็อกการเปิดใช้งาน</strong></p></div>
+    <div class="card"><strong>Q7 — ร้านห้างกับร้านตลาดคิดค่าบริการเท่ากันไหม</strong> <span class="tag t-v2">ใหม่ v2</span><p style="color:var(--muted);margin:6px 0 0">ตอนนี้ fee engine คิดจากยอดบิลอย่างเดียว ถ้าจะคิดต่างตามหมวดร้าน ต้องเพิ่ม multiplier ต่อ category ตั้งแต่ออกแบบ ไม่ใช่มาแก้ทีหลัง</p></div>
+  </div>
+</section>
+
+</main>
+<footer>
+  Jedechai Delivery · แผนฟีเจอร์ฝากซื้อ/ฝากหิ้ว v2 · 2026-09-23 · ฐานโค้ด app 1.14.0+125 (commit 1514742)<br>
+  v2 เพิ่มจาก v1: หมุดร้านจากแอดมิน + เวลาเปิดปิด + AI อ่านบิล + โหมดรูปสินค้า + Wallet เท่านั้น · v1 ยังใช้อ้างอิงสำหรับ fee engine และ settlement<br>
+  ยังไม่ได้เริ่มเขียนโค้ด ต้องตอบข้อค้างหัวข้อ 8 ก่อนเริ่ม S1
+</footer>
+</body>
+</html>
