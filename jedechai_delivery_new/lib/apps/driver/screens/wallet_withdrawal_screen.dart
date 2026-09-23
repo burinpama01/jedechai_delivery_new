@@ -313,6 +313,7 @@ class _WalletWithdrawalScreenState extends State<WalletWithdrawalScreen> {
       appBar: AppBar(
         backgroundColor: jdc.surface,
         foregroundColor: jdc.text,
+        iconTheme: IconThemeData(color: jdc.text),
         titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: jdc.text),
         elevation: 0,
         scrolledUnderElevation: 0,

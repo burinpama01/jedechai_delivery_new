@@ -454,6 +454,7 @@ class _ShopJobScreenState extends State<ShopJobScreen> {
         title: Text(l10n.shopDrvJobTitle),
         backgroundColor: jdc.surface,
         foregroundColor: jdc.text,
+        iconTheme: IconThemeData(color: jdc.text),
         titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: jdc.text),
         elevation: 0,
       ),

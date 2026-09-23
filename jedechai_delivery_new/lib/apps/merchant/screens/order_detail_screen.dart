@@ -58,6 +58,8 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
   String? _driverPhone;
   String? _customerName;
   String? _customerPhone;
+  // countdown timer สำหรับ pending state (presentation only — ไม่กระทบ business logic)
+  // ตัวเลือกเวลาเตรียมอาหาร (UI state — ส่ง label ให้ปุ่มรับออเดอร์เท่านั้น)
   // สร้างแบบ lazy: หน้าจอ render ได้โดยไม่ต้องมี Supabase instance (widget test)
   late final MerchantOrderService _merchantOrderService = MerchantOrderService();
 
@@ -682,17 +684,30 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
     final jdc = JdcColors.of(context);
     final tones = _statusTones(jdc, status);
 
+    final isPending =
+        status == 'pending_merchant' || status == 'pending';
+
+    final orderCode = OrderCodeFormatter.formatByServiceType(
+        order['id']?.toString(),
+        serviceType: order['service_type']?.toString());
+    final createdAtFormatted = _formatDateTime(createdAt);
+
     return Scaffold(
       backgroundColor: jdc.paper,
       appBar: AppBar(
-        title: Text(
-          AppLocalizations.of(context)!.orderDetailTitle(
-              OrderCodeFormatter.formatByServiceType(order['id']?.toString(),
-                  serviceType: order['service_type']?.toString())),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(orderCode,
+                style: _jt(fontSize: 17, color: jdc.text, weight: 700)),
+            Text(AppLocalizations.of(context)!.orderDetailPlacedAt(createdAtFormatted),
+                style: _jt(fontSize: 12, color: jdc.muted)),
+          ],
         ),
         actions: [
           IconButton(
-            tooltip: 'แชทกับลูกค้า',
+            tooltip: AppLocalizations.of(context)!.orderDetailChatTooltip,
             icon: const Icon(Icons.chat_bubble_outline),
             onPressed: _openCustomerChat,
           ),
@@ -701,8 +716,71 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         foregroundColor: jdc.text,
-        titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: jdc.text),
+        iconTheme: IconThemeData(color: jdc.text),
+        titleTextStyle: TextStyle(color: jdc.text),
       ),
+      bottomNavigationBar: isPending
+          ? Container(
+              padding: const EdgeInsets.fromLTRB(
+                  JdcSpacing.xl, JdcSpacing.md, JdcSpacing.xl, JdcSpacing.xl),
+              decoration: BoxDecoration(
+                color: jdc.surface,
+                border: Border(top: BorderSide(color: jdc.line)),
+              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 110,
+                    child: OutlinedButton(
+                      onPressed: _isLoading ? null : _declineOrder,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: jdc.danger,
+                        minimumSize: const Size(0, 54),
+                        shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(JdcRadius.card)),
+                        side: BorderSide(color: jdc.dangerLine),
+                      ),
+                      child: Text(
+                        AppLocalizations.of(context)!.orderDetailDeclineBtnShort,
+                        style: _jt(fontSize: 14, color: jdc.danger, weight: 700),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: JdcSpacing.md),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _acceptOrder,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: jdc.cta,
+                        foregroundColor: jdc.onCta,
+                        minimumSize: const Size(0, 54),
+                        shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(JdcRadius.card)),
+                      ),
+                      child: _isLoading
+                          ? SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(jdc.onCta),
+                              ),
+                            )
+                          : Text(
+                              AppLocalizations.of(context)!
+                                  .orderDetailAcceptBtn,
+                              style: _jt(
+                                  fontSize: 16, color: jdc.onCta, weight: 700),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : null,
       body: _isLoading
           ? Center(
               child: CircularProgressIndicator(
@@ -716,44 +794,102 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Status Card — โทนตามสถานะแบบ artboard
-                    // (ออเดอร์ใหม่ = brand-soft เน้นทอง)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(JdcSpacing.lg),
-                      decoration: BoxDecoration(
-                        color: tones.bg,
-                        borderRadius: BorderRadius.circular(JdcRadius.card),
-                        border: Border.all(color: tones.border),
+                    // pending = brand-soft แสดง countdown + badge
+                    if (isPending)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(JdcSpacing.lg),
+                        decoration: BoxDecoration(
+                          color: tones.bg,
+                          borderRadius: BorderRadius.circular(JdcRadius.card),
+                          border: Border.all(color: tones.border),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 38,
+                              height: 38,
+                              decoration: BoxDecoration(
+                                color: jdc.surface,
+                                borderRadius:
+                                    BorderRadius.circular(JdcRadius.small),
+                              ),
+                              child: Icon(Icons.access_time_outlined,
+                                  color: tones.fg, size: 20),
+                            ),
+                            const SizedBox(width: JdcSpacing.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    AppLocalizations.of(context)!
+                                        .orderDetailPendingHint,
+                                    style: _jt(
+                                        fontSize: 14,
+                                        color: tones.fg,
+                                        weight: 700),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 7),
+                              decoration: BoxDecoration(
+                                color: jdc.surface,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                AppLocalizations.of(context)!
+                                    .orderDetailStatusPendingBadge,
+                                style: _jt(
+                                    fontSize: 12,
+                                    color: tones.fg,
+                                    weight: 700),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(JdcSpacing.lg),
+                        decoration: BoxDecoration(
+                          color: tones.bg,
+                          borderRadius: BorderRadius.circular(JdcRadius.card),
+                          border: Border.all(color: tones.border),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 38,
+                              height: 38,
+                              decoration: BoxDecoration(
+                                color: jdc.surface,
+                                borderRadius:
+                                    BorderRadius.circular(JdcRadius.small),
+                              ),
+                              child: Icon(
+                                _getStatusIcon(status),
+                                color: tones.fg,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: JdcSpacing.md),
+                            Expanded(
+                              child: Text(
+                                _getStatusText(status),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: _jt(
+                                    fontSize: 17, color: tones.fg, weight: 700),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 38,
-                            height: 38,
-                            decoration: BoxDecoration(
-                              color: jdc.surface,
-                              borderRadius:
-                                  BorderRadius.circular(JdcRadius.small),
-                            ),
-                            child: Icon(
-                              _getStatusIcon(status),
-                              color: tones.fg,
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(width: JdcSpacing.md),
-                          Expanded(
-                            child: Text(
-                              _getStatusText(status),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: _jt(
-                                  fontSize: 17, color: tones.fg, weight: 700),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                     const SizedBox(height: JdcSpacing.lg),
 
                     // Customer Info Card
@@ -1184,79 +1320,10 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                   ),
                   const SizedBox(height: JdcSpacing.xxl),
 
-                  // Action Buttons
-                  if (status == 'pending_merchant' || status == 'pending') ...[
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: _isLoading ? null : _declineOrder,
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: jdc.danger,
-                              minimumSize:
-                                  Size.fromHeight(JdcTouch.button),
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: JdcSpacing.lg),
-                              shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(JdcRadius.card),
-                              ),
-                              side: BorderSide(color: jdc.dangerLine),
-                            ),
-                            child: Text(
-                              AppLocalizations.of(context)!
-                                  .orderDetailDeclineBtn,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: _jt(
-                                  fontSize: 15,
-                                  color: jdc.danger,
-                                  weight: 700),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: JdcSpacing.md),
-                        Expanded(
-                          flex: 2,
-                          child: ElevatedButton(
-                            onPressed: _isLoading ? null : _acceptOrder,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: jdc.cta,
-                              foregroundColor: jdc.onCta,
-                              minimumSize:
-                                  Size.fromHeight(JdcTouch.button),
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: JdcSpacing.lg),
-                              shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(JdcRadius.card),
-                              ),
-                            ),
-                            child: _isLoading
-                                ? SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor:
-                                          AlwaysStoppedAnimation<Color>(
-                                              jdc.onCta),
-                                    ),
-                                  )
-                                : Text(
-                                    AppLocalizations.of(context)!
-                                        .orderDetailAcceptBtn,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: _jt(
-                                        fontSize: 16,
-                                        color: jdc.onCta,
-                                        weight: 700),
-                                  ),
-                          ),
-                        ),
-                      ],
-                    ),
+                  // Action Buttons (non-pending states)
+                  // pending ใช้ bottomNavigationBar แทน — ไม่ต้องแสดงที่นี่
+                  if (isPending) ...[
+                    const SizedBox(height: JdcSpacing.sm),
                   ] else if (status == 'preparing' && driverId == null) ...[
                     // Waiting for driver to accept
                     Container(
@@ -1879,18 +1946,13 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      JdcColors.of(context).brand,
-                      JdcColors.of(context).brandHi
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  // panel/onPanel เป็นคู่สีที่ผ่านคอนทราสต์ทั้งสองโหมด
+                  // (เดิมขาวบนทอง brand ได้ ~2:1)
+                  color: JdcColors.of(context).panel,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: JdcColors.of(context).brand.withValues(alpha: 0.3),
+                      color: JdcColors.of(context).panel.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
@@ -1906,7 +1968,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                           l10n.orderDetailCompletionNetReceived,
                           style: TextStyle(
                             fontSize: 14,
-                            color: JdcColors.of(context).panel.withValues(alpha: 0.75),
+                            color: JdcColors.of(context).onPanel,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -1916,7 +1978,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                               (_effectiveGpRate * 100).toStringAsFixed(0)),
                           style: TextStyle(
                             fontSize: 12,
-                            color: JdcColors.of(context).panel.withValues(alpha: 0.65),
+                            color: JdcColors.of(context).onPanel,
                           ),
                         ),
                       ],
@@ -1926,7 +1988,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                       style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
-                        color: JdcColors.of(context).onCta,
+                        color: JdcColors.of(context).onPanel,
                         letterSpacing: 1.2,
                       ),
                     ),

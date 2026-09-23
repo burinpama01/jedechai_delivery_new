@@ -423,6 +423,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         backgroundColor: jdc.surface,
         foregroundColor: jdc.text,
+        iconTheme: IconThemeData(color: jdc.text),
         titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: jdc.text),
         elevation: 0,
         shape: Border(bottom: BorderSide(color: jdc.line)),

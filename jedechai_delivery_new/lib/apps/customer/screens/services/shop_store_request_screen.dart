@@ -173,6 +173,7 @@ class _ShopStoreRequestScreenState extends State<ShopStoreRequestScreen> {
         title: Text(l10n.shopReqTitle),
         backgroundColor: jdc.surface,
         foregroundColor: jdc.text,
+        iconTheme: IconThemeData(color: jdc.text),
         titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: jdc.text),
         elevation: 0,
         bottom: PreferredSize(

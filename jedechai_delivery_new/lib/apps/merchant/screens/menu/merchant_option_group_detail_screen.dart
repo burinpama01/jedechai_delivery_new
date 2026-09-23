@@ -241,6 +241,7 @@ class _MerchantOptionGroupDetailScreenState
             style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
         backgroundColor: JdcColors.of(context).surface,
         foregroundColor: JdcColors.of(context).text,
+        iconTheme: IconThemeData(color: JdcColors.of(context).text),
         titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: JdcColors.of(context).text),
         elevation: 0,
         shape: Border(bottom: BorderSide(color: JdcColors.of(context).line)),

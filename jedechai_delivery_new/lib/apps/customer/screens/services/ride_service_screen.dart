@@ -131,6 +131,7 @@ class _RideConfirmViewState extends State<_RideConfirmView> {
         title: Text(l10n.rideServiceTitle),
         backgroundColor: jdc.surface,
         foregroundColor: jdc.text,
+        iconTheme: IconThemeData(color: jdc.text),
         titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: jdc.text),
         elevation: 0,
         bottom: PreferredSize(

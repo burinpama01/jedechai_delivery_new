@@ -7826,4 +7826,123 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get activityNotSignedIn => 'กรุณาเข้าสู่ระบบเพื่อดูประวัติการใช้งาน';
+
+  @override
+  String get orderDetailAcceptDeadline => 'ต้องตอบรับภายใน';
+
+  @override
+  String get orderDetailStatusPendingBadge => 'รอตอบรับ';
+
+  @override
+  String get orderDetailPrepTimeSectionLabel => 'เวลาเตรียมอาหาร';
+
+  @override
+  String orderDetailAcceptWithTime(int min) {
+    return 'รับออเดอร์ · $min นาที';
+  }
+
+  @override
+  String get orderDetailDeclineBtnShort => 'ปฏิเสธ';
+
+  @override
+  String get merchantLaundryTitle => 'งานซักรีด';
+
+  @override
+  String get merchantLaundryStatPending => 'งานค้าง';
+
+  @override
+  String get merchantLaundryStatQuoteWaiting => 'รอเสนอราคา';
+
+  @override
+  String get merchantLaundryStatWeekRevenue => 'ยอดสัปดาห์นี้';
+
+  @override
+  String get merchantLaundryFilterAll => 'ทั้งหมด';
+
+  @override
+  String get merchantLaundryFilterQuote => 'รอเสนอราคา';
+
+  @override
+  String get merchantLaundryFilterDone => 'เสร็จแล้ว';
+
+  @override
+  String merchantLaundryQuoteExpiryBanner(int hours) {
+    return 'ใบเสนอราคาหมดอายุใน $hours ชั่วโมง ถ้าลูกค้ายังไม่ตอบรับ งานจะถูกยกเลิกอัตโนมัติ';
+  }
+
+  @override
+  String get merchantLaundryStatusQuoteRequested => 'รอเสนอราคา';
+
+  @override
+  String get merchantLaundryStatusWashing => 'กำลังซัก';
+
+  @override
+  String get merchantLaundryStatusReady => 'พร้อมส่งคืน';
+
+  @override
+  String get merchantLaundryEmptyOrders => 'ยังไม่มีคำขอซักผ้า';
+
+  @override
+  String get menuEditPhotoHint => 'รูปสี่เหลี่ยมจัตุรัส อย่างน้อย 800×800 px';
+
+  @override
+  String get menuEditChangePhoto => 'เปลี่ยนรูป';
+
+  @override
+  String get menuEditPrepTimeLabelShort => 'เวลาเตรียม (นาที)';
+
+  @override
+  String get menuEditSaveBtn => 'บันทึกเมนู';
+
+  @override
+  String get menuEditDeleteBtn => 'ลบ';
+
+  @override
+  String get menuEditAvailableToggleTitle => 'เปิดขายเมนูนี้';
+
+  @override
+  String get menuEditAvailableToggleHint => 'ปิดชั่วคราวเมื่อของหมด';
+
+  @override
+  String get menuEditOptionLibraryLink => 'เพิ่มจากคลัง';
+
+  @override
+  String get menuEditOptionGroupsSectionTitle => 'กลุ่มตัวเลือกเสริม';
+
+  @override
+  String get menuEditDeleteMenuDialog => 'ยืนยันลบเมนู';
+
+  @override
+  String get menuEditDeleteMenuConfirm => 'คุณแน่ใจหรือไม่ว่าต้องการลบเมนูนี้?';
+
+  @override
+  String get menuEditDeleteMenuYes => 'ลบ';
+
+  @override
+  String get menuEditDeleteMenuCancel => 'ยกเลิก';
+
+  @override
+  String get menuEditDeleteMenuSuccess => 'ลบเมนูสำเร็จ';
+
+  @override
+  String menuEditDeleteMenuFailed(String error) {
+    return 'ลบเมนูไม่สำเร็จ: $error';
+  }
+
+  @override
+  String orderDetailPlacedAt(String time) {
+    return '$time น. · ส่งโดย JDC';
+  }
+
+  @override
+  String get orderDetailChatTooltip => 'แชทกับลูกค้า';
+
+  @override
+  String get orderDetailPendingHint => 'ลูกค้ารอร้านยืนยันออเดอร์';
+
+  @override
+  String get merchantLaundrySettingsTooltip => 'ตั้งค่าร้านซักผ้า';
+
+  @override
+  String get merchantLaundryAddPackageTooltip => 'เพิ่มแพ็กเกจ';
 }

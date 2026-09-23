@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../theme/jdc_colors.dart';
-
+import '../../../theme/jdc_layout.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../common/services/laundry_service.dart';
 
 class MerchantLaundryScreen extends StatefulWidget {
@@ -18,6 +19,8 @@ class _MerchantLaundryScreenState extends State<MerchantLaundryScreen> {
   bool _quoteSoundEnabled = true;
   List<Map<String, dynamic>> _orders = [];
   List<Map<String, dynamic>> _packages = [];
+  // filter index: 0=ทั้งหมด, 1=รอเสนอราคา, 2=เสร็จแล้ว
+  int _filterIndex = 0;
 
   @override
   void initState() {
@@ -551,72 +554,336 @@ class _MerchantLaundryScreenState extends State<MerchantLaundryScreen> {
     );
   }
 
+  // ── computed stats ──────────────────────────────────────────────────────────
+
+  int get _pendingCount => _orders
+      .where((o) =>
+          !const {'completed', 'cancelled'}.contains(o['status'] as String?))
+      .length;
+
+  int get _quoteCount => _orders
+      .where((o) => (o['status'] as String?) == 'quote_requested')
+      .length;
+
+  List<Map<String, dynamic>> get _filteredOrders {
+    if (_filterIndex == 1) {
+      return _orders
+          .where((o) => (o['status'] as String?) == 'quote_requested')
+          .toList();
+    }
+    if (_filterIndex == 2) {
+      return _orders
+          .where((o) =>
+              const {'completed', 'cancelled'}
+                  .contains(o['status'] as String?))
+          .toList();
+    }
+    return _orders;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final hasQuoteExpiry = _quoteCount > 0;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Laundry'),
-        actions: [
-          IconButton(
-            tooltip: 'เพิ่มแพ็กเกจ',
-            onPressed: () => _openPackageDialog(),
-            icon: const Icon(Icons.add_rounded),
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: () => _loadOrders(showLoading: false),
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  _LaundrySettingsCard(
-                    expiryMinutes: _quoteExpiryMinutes,
-                    soundEnabled: _quoteSoundEnabled,
-                    onEdit: _openLaundrySettingsDialog,
-                  ),
-                  const SizedBox(height: 16),
-                  _LaundryPackageManagerCard(
-                    packages: _packages,
-                    onAdd: () => _openPackageDialog(),
-                    onEdit: _openPackageDialog,
-                    onDisable: _disablePackage,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'คำขอประเมินราคา',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
+      body: Column(
+        children: [
+          // ── Panel header (dark green) ────────────────────────────────────
+          Container(
+            color: jdc.panel,
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + JdcSpacing.sm,
+              left: JdcSpacing.xl,
+              right: JdcSpacing.xl,
+              bottom: JdcSpacing.xl,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    if (Navigator.of(context).canPop())
+                      GestureDetector(
+                        onTap: () => Navigator.of(context).pop(),
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          margin: const EdgeInsets.only(right: JdcSpacing.md),
+                          decoration: BoxDecoration(
+                            color: jdc.panelSoft2,
+                            borderRadius: BorderRadius.circular(JdcRadius.small),
+                            border: Border.all(color: jdc.panelLine),
+                          ),
+                          child: Icon(Icons.chevron_left,
+                              color: jdc.onPanel, size: 24),
                         ),
-                  ),
-                  const SizedBox(height: 12),
-                  if (_orders.isEmpty)
-                    const Card(
-                      elevation: 0,
-                      child: Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Center(child: Text('ยังไม่มีคำขอซักผ้า')),
                       ),
-                    )
-                  else
-                    for (final order in _orders) ...[
-                      _LaundryOrderCard(
-                        order: order,
-                        onQuote: () => _openQuoteDialog(order),
-                        onChat: () => _openQuoteChat(order),
-                        onStartWashing: () => _startWashing(order),
-                        onCreateReturn: () => _openReturnBookingDialog(order),
-                        onCompleteSelfPickup: () => _completeSelfPickup(order),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(l10n.merchantLaundryTitle,
+                              style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: jdc.onPanel,
+                                  fontFamily: 'IBMPlexSansThai')),
+                          if (_packages.isNotEmpty)
+                            Text(
+                              _packages
+                                  .map((p) => p['name'] ?? '')
+                                  .take(2)
+                                  .join(' · '),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  fontSize: 12, color: jdc.panelDim),
+                            ),
+                        ],
                       ),
-                      const SizedBox(height: 12),
+                    ),
+                    // settings access
+                    IconButton(
+                      tooltip: AppLocalizations.of(context)!.merchantLaundrySettingsTooltip,
+                      onPressed: _openLaundrySettingsDialog,
+                      icon: Icon(Icons.tune_rounded, color: jdc.onPanel),
+                    ),
+                    IconButton(
+                      tooltip: AppLocalizations.of(context)!.merchantLaundryAddPackageTooltip,
+                      onPressed: () => _openPackageDialog(),
+                      icon: Icon(Icons.add_rounded, color: jdc.onPanel),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: JdcSpacing.lg),
+                // stats row
+                Row(
+                  children: [
+                    _StatChip(
+                      value: '$_pendingCount',
+                      label: l10n.merchantLaundryStatPending,
+                      jdc: jdc,
+                    ),
+                    const SizedBox(width: JdcSpacing.md),
+                    _StatChip(
+                      value: '$_quoteCount',
+                      label: l10n.merchantLaundryStatQuoteWaiting,
+                      jdc: jdc,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // ── Body ─────────────────────────────────────────────────────────
+          if (_isLoading)
+            const Expanded(
+                child: Center(child: CircularProgressIndicator()))
+          else
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () => _loadOrders(showLoading: false),
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(
+                      JdcSpacing.xl, JdcSpacing.lg, JdcSpacing.xl, JdcSpacing.xl),
+                  children: [
+                    // filter chips
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _FilterChip(
+                            label:
+                                '${l10n.merchantLaundryFilterAll} ${_orders.length}',
+                            selected: _filterIndex == 0,
+                            onTap: () => setState(() => _filterIndex = 0),
+                            jdc: jdc,
+                          ),
+                          const SizedBox(width: JdcSpacing.sm),
+                          _FilterChip(
+                            label:
+                                '${l10n.merchantLaundryFilterQuote} $_quoteCount',
+                            selected: _filterIndex == 1,
+                            onTap: () => setState(() => _filterIndex = 1),
+                            jdc: jdc,
+                          ),
+                          const SizedBox(width: JdcSpacing.sm),
+                          _FilterChip(
+                            label: l10n.merchantLaundryFilterDone,
+                            selected: _filterIndex == 2,
+                            onTap: () => setState(() => _filterIndex = 2),
+                            jdc: jdc,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: JdcSpacing.md),
+
+                    // quote expiry banner
+                    if (hasQuoteExpiry) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: JdcSpacing.lg,
+                            vertical: JdcSpacing.md),
+                        decoration: BoxDecoration(
+                          color: jdc.brandSoft,
+                          borderRadius:
+                              BorderRadius.circular(JdcRadius.card),
+                          border: Border.all(color: jdc.brandLine),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.access_time_outlined,
+                                color: jdc.brandOnSoft, size: 18),
+                            const SizedBox(width: JdcSpacing.sm),
+                            Expanded(
+                              child: Text(
+                                l10n.merchantLaundryQuoteExpiryBanner(
+                                    _quoteExpiryMinutes ~/ 60 > 0
+                                        ? _quoteExpiryMinutes ~/ 60
+                                        : 1),
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: jdc.brandOnSoft,
+                                    height: 1.5),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: JdcSpacing.md),
                     ],
-                ],
+
+                    // order cards
+                    if (_filteredOrders.isEmpty)
+                      Container(
+                        padding: const EdgeInsets.all(JdcSpacing.xxl),
+                        alignment: Alignment.center,
+                        child: Text(l10n.merchantLaundryEmptyOrders,
+                            style: TextStyle(color: jdc.muted)),
+                      )
+                    else
+                      for (final order in _filteredOrders) ...[
+                        _LaundryOrderCard(
+                          order: order,
+                          onQuote: () => _openQuoteDialog(order),
+                          onChat: () => _openQuoteChat(order),
+                          onStartWashing: () => _startWashing(order),
+                          onCreateReturn: () =>
+                              _openReturnBookingDialog(order),
+                          onCompleteSelfPickup: () =>
+                              _completeSelfPickup(order),
+                        ),
+                        const SizedBox(height: JdcSpacing.md),
+                      ],
+
+                    // packages manager + settings (accessible below orders)
+                    const SizedBox(height: JdcSpacing.xl),
+                    _LaundrySettingsCard(
+                      expiryMinutes: _quoteExpiryMinutes,
+                      soundEnabled: _quoteSoundEnabled,
+                      onEdit: _openLaundrySettingsDialog,
+                    ),
+                    const SizedBox(height: JdcSpacing.md),
+                    _LaundryPackageManagerCard(
+                      packages: _packages,
+                      onAdd: () => _openPackageDialog(),
+                      onEdit: _openPackageDialog,
+                      onDisable: _disablePackage,
+                    ),
+                  ],
+                ),
               ),
             ),
+        ],
+      ),
     );
   }
 }
+
+// ── Private helper widgets ─────────────────────────────────────────────────────
+
+class _StatChip extends StatelessWidget {
+  const _StatChip({
+    required this.value,
+    required this.label,
+    required this.jdc,
+  });
+  final String value;
+  final String label;
+  final JdcColors jdc;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+            horizontal: JdcSpacing.md, vertical: 11),
+        decoration: BoxDecoration(
+          color: jdc.panelSoft,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(value,
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: jdc.onPanel,
+                    fontFamily: 'IBMPlexSansThai')),
+            const SizedBox(height: 2),
+            Text(label,
+                style: TextStyle(fontSize: 11, color: jdc.panelDim)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    required this.jdc,
+  });
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final JdcColors jdc;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+            horizontal: JdcSpacing.lg, vertical: 9),
+        decoration: BoxDecoration(
+          color: selected ? jdc.panel : jdc.surface,
+          borderRadius: BorderRadius.circular(999),
+          border: selected ? null : Border.all(color: jdc.line),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+              fontSize: 13,
+              fontWeight:
+                  selected ? FontWeight.w700 : FontWeight.w600,
+              color: selected ? jdc.onPanel : jdc.muted),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Laundry Settings Card ───────────────────────────────────────────────────────
 
 class _LaundrySettingsCard extends StatelessWidget {
   const _LaundrySettingsCard({
@@ -864,7 +1131,7 @@ class _LaundryPackageManagerCard extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  tooltip: 'เพิ่มแพ็กเกจ',
+                  tooltip: AppLocalizations.of(context)!.merchantLaundryAddPackageTooltip,
                   onPressed: onAdd,
                   icon: const Icon(Icons.add_circle_outline_rounded),
                 ),

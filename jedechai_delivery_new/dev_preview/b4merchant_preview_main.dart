@@ -1,5 +1,5 @@
 // Dev-only Wave 1.5 preview for merchant b4 artboards.
-// เลือกหน้าด้วย ?screen=Dashboard|MenuCategories|Menu
+// เลือกหน้าด้วย ?screen=Dashboard|MenuCategories|Menu|OrderDetail|Laundry|AddEditMenu
 // หน้าร้านค้าต้อง login จึงใช้ fixture ผ่าน optional constructor parameter
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -8,6 +8,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jedechai_delivery_new/apps/merchant/screens/merchant_dashboard_screen.dart';
 import 'package:jedechai_delivery_new/apps/merchant/screens/menu/merchant_menu_categories_screen.dart';
 import 'package:jedechai_delivery_new/apps/merchant/screens/menu_management_screen.dart';
+import 'package:jedechai_delivery_new/apps/merchant/screens/order_detail_screen.dart';
+import 'package:jedechai_delivery_new/apps/merchant/screens/merchant_laundry_screen.dart';
+import 'package:jedechai_delivery_new/apps/merchant/screens/menu/merchant_add_edit_menu_screen.dart';
 import 'package:jedechai_delivery_new/common/config/env_config.dart';
 import 'package:jedechai_delivery_new/common/providers/language_provider.dart';
 import 'package:jedechai_delivery_new/l10n/app_localizations.dart';
@@ -119,6 +122,22 @@ List<Map<String, dynamic>> _categoriesFixture() => [
   {'id': 'cat-6', 'name': 'อื่นๆ',        'sort_order': 5, 'is_active': false,'merchant_id': 'demo'},
 ];
 
+/// Fixture สำหรับ OrderDetail (pending state)
+Map<String, dynamic> _orderDetailFixture() => {
+  'id': 'ord-preview-001',
+  'status': 'pending_merchant',
+  'price': 160.0,
+  'delivery_fee': 30.0,
+  'created_at': DateTime.now().subtract(const Duration(minutes: 2)).toIso8601String(),
+  'updated_at': DateTime.now().subtract(const Duration(minutes: 2)).toIso8601String(),
+  'notes': 'เผ็ดน้อยนะคะ',
+  'service_type': 'food',
+  'customer_id': 'cust-preview-001',
+  'merchant_id': 'merch-preview-001',
+  'driver_id': null,
+  'payment_method': 'wallet',
+};
+
 /// Fixture สำหรับ Menu
 List<Map<String, dynamic>> _menuFixture() => [
   {
@@ -176,6 +195,27 @@ class _PreviewScreen extends StatelessWidget {
       ),
     'Menu' => MenuManagementScreen(
         fixtureMenuItems: _menuFixture(),
+      ),
+    'OrderDetail' => MerchantOrderDetailScreen(
+        order: _orderDetailFixture(),
+        loadRemoteData: false,
+        enableRealtimeListener: false,
+        enableAutoRefresh: false,
+      ),
+    'Laundry' => const MerchantLaundryScreen(),
+    'AddEditMenu' => MerchantAddEditMenuScreen(
+        item: {
+          'id': 'item-preview-001',
+          'name': 'ข้าวกะเพราหมูสับ',
+          'description': 'สูตรเด็ด ปรุงสดทุกจาน',
+          'price': 55.0,
+          'prep_time_minutes': 15,
+          'category': 'อาหารตามสั่ง',
+          'category_id': 'cat-1',
+          'is_available': true,
+          'image_url': null,
+          'merchant_id': 'merch-preview-001',
+        },
       ),
     _ => Scaffold(
         body: Center(

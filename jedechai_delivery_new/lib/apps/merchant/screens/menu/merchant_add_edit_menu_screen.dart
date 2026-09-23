@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../../theme/jdc_colors.dart';
+import '../../../../theme/jdc_layout.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../common/services/menu_option_service.dart';
 import '../../../../common/services/image_picker_service.dart';
@@ -154,18 +155,6 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
     if (file != null && mounted) {
       setState(() => _menuItemPhoto = file);
     }
-  }
-
-  Widget _buildImagePlaceholder() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(Icons.add_a_photo, size: 48, color: JdcColors.of(context).trackEmpty),
-        const SizedBox(height: 8),
-        Text(AppLocalizations.of(context)!.menuEditTapToPhoto,
-            style: TextStyle(color: JdcColors.of(context).dim, fontSize: 14)),
-      ],
-    );
   }
 
   Future<void> _saveMenuItem() async {
@@ -339,12 +328,36 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing
-            ? AppLocalizations.of(context)!.menuEditTitleEdit
-            : AppLocalizations.of(context)!.menuEditTitleAdd),
-        backgroundColor: JdcColors.of(context).cta,
-        foregroundColor: JdcColors.of(context).onCta,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              isEditing
+                  ? AppLocalizations.of(context)!.menuEditTitleEdit
+                  : AppLocalizations.of(context)!.menuEditTitleAdd,
+              style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: JdcColors.of(context).text),
+            ),
+            if (isEditing && (_nameController.text.isNotEmpty))
+              Text(
+                _nameController.text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    fontSize: 12, color: JdcColors.of(context).muted),
+              ),
+          ],
+        ),
+        backgroundColor: JdcColors.of(context).surface,
+        foregroundColor: JdcColors.of(context).text,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        titleTextStyle: TextStyle(color: JdcColors.of(context).text),
+        iconTheme:
+            IconThemeData(color: JdcColors.of(context).text),
       ),
       body: Form(
         key: _formKey,
@@ -405,12 +418,9 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
                             ),
                           )
                         : Text(
-                            isEditing
-                                ? AppLocalizations.of(context)!
-                                    .menuEditBtnUpdate
-                                : AppLocalizations.of(context)!.menuEditBtnAdd,
+                            AppLocalizations.of(context)!.menuEditSaveBtn,
                             style: const TextStyle(
-                              fontSize: 16,
+                              fontSize: 15,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -425,142 +435,262 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
   }
 
   Widget _buildBasicInfoSection() {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          AppLocalizations.of(context)!.menuEditInfoTitle,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        TextFormField(
-          controller: _nameController,
-          decoration: InputDecoration(
-            labelText: AppLocalizations.of(context)!.menuEditNameLabel,
-            border: const OutlineInputBorder(),
-          ),
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return AppLocalizations.of(context)!.menuEditNameRequired;
-            }
-            return null;
-          },
-        ),
-        const SizedBox(height: 16),
-
-        TextFormField(
-          controller: _descriptionController,
-          decoration: InputDecoration(
-            labelText: AppLocalizations.of(context)!.menuEditDescLabel,
-            border: const OutlineInputBorder(),
-          ),
-          maxLines: 3,
-        ),
-        const SizedBox(height: 16),
-
-        TextFormField(
-          controller: _priceController,
-          decoration: InputDecoration(
-            labelText: AppLocalizations.of(context)!.menuEditPriceLabel,
-            border: const OutlineInputBorder(),
-            prefixText: '฿ ',
-          ),
-          keyboardType: TextInputType.number,
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return AppLocalizations.of(context)!.menuEditPriceRequired;
-            }
-            if (double.tryParse(value) == null || double.tryParse(value)! < 0) {
-              return AppLocalizations.of(context)!.menuEditPriceInvalid;
-            }
-            return null;
-          },
-        ),
-        const SizedBox(height: 16),
-
-        // Image Upload Section
-        Text(AppLocalizations.of(context)!.menuEditPhotoLabel,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-        const SizedBox(height: 8),
-        GestureDetector(
-          onTap: _isUploadingImage ? null : _pickMenuItemPhoto,
-          child: Container(
-            width: double.infinity,
-            height: 180,
-            decoration: BoxDecoration(
-              color: JdcColors.of(context).sunken,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                  color: JdcColors.of(context).line, style: BorderStyle.solid),
-            ),
-            child: _menuItemPhoto != null
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        AppFileImage(file: _menuItemPhoto!),
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: GestureDetector(
-                            onTap: () => setState(() {
-                              _menuItemPhoto = null;
-                            }),
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
+        // ── Photo row (artboard layout) ───────────────────────────────────
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            GestureDetector(
+              onTap: _isUploadingImage ? null : _pickMenuItemPhoto,
+              child: Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: jdc.sunken,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: jdc.line),
+                ),
+                child: _menuItemPhoto != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Stack(fit: StackFit.expand, children: [
+                          AppFileImage(file: _menuItemPhoto!),
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: GestureDetector(
+                              onTap: () =>
+                                  setState(() => _menuItemPhoto = null),
+                              child: Container(
+                                padding: const EdgeInsets.all(3),
+                                decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle),
+                                child: Icon(Icons.close,
+                                    color: jdc.surface, size: 14),
                               ),
-                              child: Icon(Icons.close,
-                                  color: JdcColors.of(context).surface, size: 18),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  )
-                : (_imageUrl != null && _imageUrl!.isNotEmpty)
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            AppNetworkImage(
-                              imageUrl: _imageUrl,
-                              fit: BoxFit.cover,
-                              backgroundColor: JdcColors.of(context).sunken,
-                            ),
-                            Positioned(
-                              top: 8,
-                              right: 8,
-                              child: GestureDetector(
-                                onTap: () => setState(() => _imageUrl = null),
-                                child: Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.red,
-                                    shape: BoxShape.circle,
+                        ]))
+                    : (_imageUrl != null && _imageUrl!.isNotEmpty)
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Stack(fit: StackFit.expand, children: [
+                              AppNetworkImage(
+                                  imageUrl: _imageUrl,
+                                  fit: BoxFit.cover,
+                                  backgroundColor: jdc.sunken),
+                              Positioned(
+                                top: 4,
+                                right: 4,
+                                child: GestureDetector(
+                                  onTap: () =>
+                                      setState(() => _imageUrl = null),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(3),
+                                    decoration: const BoxDecoration(
+                                        color: Colors.red,
+                                        shape: BoxShape.circle),
+                                    child: Icon(Icons.close,
+                                        color: jdc.surface, size: 14),
                                   ),
-                                  child: Icon(Icons.close,
-                                      color: JdcColors.of(context).surface, size: 18),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : _buildImagePlaceholder(),
-          ),
+                            ]))
+                        : Icon(Icons.camera_alt_outlined,
+                            size: 26, color: jdc.muted),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.menuEditPhotoHint,
+                    style: TextStyle(
+                        fontSize: 12, color: jdc.muted, height: 1.5),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    onPressed: _isUploadingImage ? null : _pickMenuItemPhoto,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: jdc.text,
+                      side: BorderSide(color: jdc.line),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                      minimumSize: const Size(0, 44),
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                    child: Text(l10n.menuEditChangePhoto,
+                        style: const TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w700)),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
 
-        // Category Dropdown
+        // ── Name ────────────────────────────────────────────────────────
+        _FieldLabel(l10n.menuEditNameLabel, jdc: jdc),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: _nameController,
+          onChanged: (_) => setState(() {}),
+          decoration: InputDecoration(
+            hintText: l10n.menuEditNameLabel,
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: jdc.line)),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: jdc.cta)),
+            errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: jdc.danger)),
+            focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: jdc.danger)),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
+            filled: false,
+            border: InputBorder.none,
+          ),
+          style: TextStyle(fontSize: 14, color: jdc.text),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return l10n.menuEditNameRequired;
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 12),
+
+        // ── Description ────────────────────────────────────────────────
+        _FieldLabel(l10n.menuEditDescLabel, jdc: jdc),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: _descriptionController,
+          maxLines: 2,
+          decoration: InputDecoration(
+            hintText: l10n.menuEditDescLabel,
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: jdc.line)),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: jdc.cta)),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            filled: false,
+            border: InputBorder.none,
+          ),
+          style: TextStyle(fontSize: 14, color: jdc.text),
+        ),
+        const SizedBox(height: 12),
+
+        // ── Price + Prep time (2-column) ──────────────────────────────
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _FieldLabel(l10n.menuEditPriceLabel, jdc: jdc),
+                  const SizedBox(height: 6),
+                  TextFormField(
+                    controller: _priceController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(color: jdc.line)),
+                      focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(color: jdc.cta)),
+                      errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(color: jdc.danger)),
+                      focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(color: jdc.danger)),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 0),
+                      filled: false,
+                      border: InputBorder.none,
+                    ),
+                    style: TextStyle(fontSize: 14, color: jdc.text),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return l10n.menuEditPriceRequired;
+                      }
+                      if (double.tryParse(value) == null ||
+                          double.tryParse(value)! < 0) {
+                        return l10n.menuEditPriceInvalid;
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _FieldLabel(l10n.menuEditPrepTimeLabelShort, jdc: jdc),
+                  const SizedBox(height: 6),
+                  TextFormField(
+                    controller: _prepTimeController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(color: jdc.line)),
+                      focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(color: jdc.cta)),
+                      errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(color: jdc.danger)),
+                      focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(color: jdc.danger)),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 0),
+                      filled: false,
+                      border: InputBorder.none,
+                    ),
+                    style: TextStyle(fontSize: 14, color: jdc.text),
+                    validator: (value) {
+                      final minutes =
+                          int.tryParse((value ?? '').trim());
+                      if (minutes == null ||
+                          minutes < 1 ||
+                          minutes > 180) {
+                        return 'กรุณาระบุ 1-180 นาที';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // ── Category Dropdown ──────────────────────────────────────────
+        _FieldLabel(l10n.menuEditCategoryLabel, jdc: jdc),
+        const SizedBox(height: 6),
         DropdownButtonFormField<String>(
           initialValue: (_menuCategories.any(
                 (category) => category['id'] == _selectedCategoryId,
@@ -571,10 +701,24 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
                   ? _selectedCategory
                   : 'อื่นๆ'),
           decoration: InputDecoration(
-            labelText: AppLocalizations.of(context)!.menuEditCategoryLabel,
-            border: const OutlineInputBorder(),
-            prefixIcon: const Icon(Icons.category),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: jdc.line)),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: jdc.cta)),
+            errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: jdc.danger)),
+            focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: jdc.danger)),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+            filled: false,
+            border: InputBorder.none,
           ),
+          style: TextStyle(fontSize: 14, color: jdc.text),
           items: [
             ..._menuCategories.map((category) {
               return DropdownMenuItem(
@@ -611,71 +755,105 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
           },
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return AppLocalizations.of(context)!.menuEditCategoryRequired;
+              return l10n.menuEditCategoryRequired;
             }
             return null;
           },
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
 
-        TextFormField(
-          controller: _prepTimeController,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'เวลาเตรียมอาหาร (นาที)',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.timer_outlined),
+        // ── Available toggle (artboard style) ────────────────────────
+        GestureDetector(
+          onTap: () => setState(() => _isAvailable = !_isAvailable),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: jdc.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: jdc.line),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(l10n.menuEditAvailableToggleTitle,
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: jdc.text)),
+                      const SizedBox(height: 2),
+                      Text(l10n.menuEditAvailableToggleHint,
+                          style:
+                              TextStyle(fontSize: 12, color: jdc.muted)),
+                    ],
+                  ),
+                ),
+                // artboard-style pill toggle
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  width: 50,
+                  height: 30,
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color: _isAvailable ? jdc.successFill : jdc.trackEmpty,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Align(
+                    alignment: _isAvailable
+                        ? Alignment.centerRight
+                        : Alignment.centerLeft,
+                    child: Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: jdc.surface,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          validator: (value) {
-            final minutes = int.tryParse((value ?? '').trim());
-            if (minutes == null || minutes < 1 || minutes > 180) {
-              return 'กรุณาระบุ 1-180 นาที';
-            }
-            return null;
-          },
-        ),
-        const SizedBox(height: 16),
-
-        SwitchListTile(
-          title: Text(AppLocalizations.of(context)!.menuEditAvailable),
-          value: _isAvailable,
-          onChanged: (value) {
-            setState(() {
-              _isAvailable = value;
-            });
-          },
-          activeThumbColor: JdcColors.of(context).cta,
         ),
       ],
     );
   }
 
   Widget _buildOptionGroupsSection() {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Text(
-              AppLocalizations.of(context)!.menuEditOptionGroupsTitle,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+            Expanded(
+              child: Text(
+                l10n.menuEditOptionGroupsSectionTitle,
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: jdc.text),
               ),
             ),
-            const Spacer(),
-            if (_linkedOptionGroups.isNotEmpty)
-              Text(
-                AppLocalizations.of(context)!
-                    .menuEditGroupCount(_linkedOptionGroups.length.toString()),
-                style: TextStyle(
-                  fontSize: 14,
-                  color: JdcColors.of(context).muted,
-                ),
-              ),
+            TextButton(
+              onPressed: _showOptionGroupSelectionSheet,
+              style: TextButton.styleFrom(
+                  foregroundColor: jdc.cta,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 4, vertical: 0),
+                  minimumSize: const Size(0, 44)),
+              child: Text(l10n.menuEditOptionLibraryLink,
+                  style: const TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.w700)),
+            ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: JdcSpacing.sm),
 
         // Linked Groups List
         if (_isLoadingOptionGroups)
@@ -748,6 +926,20 @@ class _MerchantAddEditMenuScreenState extends State<MerchantAddEditMenuScreen> {
       ],
     );
   }
+}
+
+/// Small label widget ใช้ซ้ำใน _buildBasicInfoSection
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel(this.text, {required this.jdc});
+  final String text;
+  final JdcColors jdc;
+
+  @override
+  Widget build(BuildContext context) => Text(
+        text,
+        style: TextStyle(
+            fontSize: 12, fontWeight: FontWeight.w600, color: jdc.muted),
+      );
 }
 
 class LinkedOptionGroupCard extends StatelessWidget {

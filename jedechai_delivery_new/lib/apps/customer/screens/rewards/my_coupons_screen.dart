@@ -102,6 +102,7 @@ class _MyCouponsScreenState extends State<MyCouponsScreen>
         title: Text(l10n.couponScreenTitle),
         backgroundColor: jdc.surface,
         foregroundColor: jdc.text,
+        iconTheme: IconThemeData(color: jdc.text),
         titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: jdc.text),
         elevation: 0,
         shape: Border(bottom: BorderSide(color: jdc.line)),

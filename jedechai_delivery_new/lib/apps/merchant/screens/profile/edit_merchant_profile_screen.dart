@@ -310,6 +310,7 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
         title: Text(AppLocalizations.of(context)!.editProfileTitle),
         backgroundColor: jdc.surface,
         foregroundColor: jdc.text,
+        iconTheme: IconThemeData(color: jdc.text),
         titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: jdc.text),
         elevation: 0,
         shape: Border(bottom: BorderSide(color: jdc.line)),

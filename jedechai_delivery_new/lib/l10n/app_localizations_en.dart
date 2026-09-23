@@ -7826,4 +7826,123 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get activityNotSignedIn => 'Please sign in to see your activity';
+
+  @override
+  String get orderDetailAcceptDeadline => 'Accept within';
+
+  @override
+  String get orderDetailStatusPendingBadge => 'Pending';
+
+  @override
+  String get orderDetailPrepTimeSectionLabel => 'Prep time';
+
+  @override
+  String orderDetailAcceptWithTime(int min) {
+    return 'Accept · $min min';
+  }
+
+  @override
+  String get orderDetailDeclineBtnShort => 'Decline';
+
+  @override
+  String get merchantLaundryTitle => 'Laundry';
+
+  @override
+  String get merchantLaundryStatPending => 'Pending';
+
+  @override
+  String get merchantLaundryStatQuoteWaiting => 'Quote request';
+
+  @override
+  String get merchantLaundryStatWeekRevenue => 'This week';
+
+  @override
+  String get merchantLaundryFilterAll => 'All';
+
+  @override
+  String get merchantLaundryFilterQuote => 'Quote';
+
+  @override
+  String get merchantLaundryFilterDone => 'Done';
+
+  @override
+  String merchantLaundryQuoteExpiryBanner(int hours) {
+    return 'Quote expires in $hours hours. If the customer doesn\'t respond, the order will be auto-cancelled.';
+  }
+
+  @override
+  String get merchantLaundryStatusQuoteRequested => 'Quote request';
+
+  @override
+  String get merchantLaundryStatusWashing => 'Washing';
+
+  @override
+  String get merchantLaundryStatusReady => 'Ready for return';
+
+  @override
+  String get merchantLaundryEmptyOrders => 'No laundry orders';
+
+  @override
+  String get menuEditPhotoHint => 'Square image, at least 800×800 px';
+
+  @override
+  String get menuEditChangePhoto => 'Change photo';
+
+  @override
+  String get menuEditPrepTimeLabelShort => 'Prep time (min)';
+
+  @override
+  String get menuEditSaveBtn => 'Save menu';
+
+  @override
+  String get menuEditDeleteBtn => 'Delete';
+
+  @override
+  String get menuEditAvailableToggleTitle => 'List this menu';
+
+  @override
+  String get menuEditAvailableToggleHint => 'Temporarily hide when sold out';
+
+  @override
+  String get menuEditOptionLibraryLink => 'Add from library';
+
+  @override
+  String get menuEditOptionGroupsSectionTitle => 'Add-on option groups';
+
+  @override
+  String get menuEditDeleteMenuDialog => 'Confirm delete';
+
+  @override
+  String get menuEditDeleteMenuConfirm => 'Are you sure you want to delete this menu item?';
+
+  @override
+  String get menuEditDeleteMenuYes => 'Delete';
+
+  @override
+  String get menuEditDeleteMenuCancel => 'Cancel';
+
+  @override
+  String get menuEditDeleteMenuSuccess => 'Menu deleted';
+
+  @override
+  String menuEditDeleteMenuFailed(String error) {
+    return 'Failed to delete: $error';
+  }
+
+  @override
+  String orderDetailPlacedAt(String time) {
+    return '$time · Delivered by JDC';
+  }
+
+  @override
+  String get orderDetailChatTooltip => 'Chat with customer';
+
+  @override
+  String get orderDetailPendingHint => 'Customer is waiting for you to accept';
+
+  @override
+  String get merchantLaundrySettingsTooltip => 'Laundry settings';
+
+  @override
+  String get merchantLaundryAddPackageTooltip => 'Add package';
 }

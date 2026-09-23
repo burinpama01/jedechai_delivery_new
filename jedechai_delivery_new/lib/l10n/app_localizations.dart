@@ -14584,6 +14584,228 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please sign in to see your activity'**
   String get activityNotSignedIn;
+
+  /// No description provided for @orderDetailAcceptDeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept within'**
+  String get orderDetailAcceptDeadline;
+
+  /// No description provided for @orderDetailStatusPendingBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get orderDetailStatusPendingBadge;
+
+  /// No description provided for @orderDetailPrepTimeSectionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Prep time'**
+  String get orderDetailPrepTimeSectionLabel;
+
+  /// No description provided for @orderDetailAcceptWithTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept · {min} min'**
+  String orderDetailAcceptWithTime(int min);
+
+  /// No description provided for @orderDetailDeclineBtnShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get orderDetailDeclineBtnShort;
+
+  /// No description provided for @merchantLaundryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Laundry'**
+  String get merchantLaundryTitle;
+
+  /// No description provided for @merchantLaundryStatPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get merchantLaundryStatPending;
+
+  /// No description provided for @merchantLaundryStatQuoteWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote request'**
+  String get merchantLaundryStatQuoteWaiting;
+
+  /// No description provided for @merchantLaundryStatWeekRevenue.
+  ///
+  /// In en, this message translates to:
+  /// **'This week'**
+  String get merchantLaundryStatWeekRevenue;
+
+  /// No description provided for @merchantLaundryFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get merchantLaundryFilterAll;
+
+  /// No description provided for @merchantLaundryFilterQuote.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote'**
+  String get merchantLaundryFilterQuote;
+
+  /// No description provided for @merchantLaundryFilterDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get merchantLaundryFilterDone;
+
+  /// No description provided for @merchantLaundryQuoteExpiryBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote expires in {hours} hours. If the customer doesn\'t respond, the order will be auto-cancelled.'**
+  String merchantLaundryQuoteExpiryBanner(int hours);
+
+  /// No description provided for @merchantLaundryStatusQuoteRequested.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote request'**
+  String get merchantLaundryStatusQuoteRequested;
+
+  /// No description provided for @merchantLaundryStatusWashing.
+  ///
+  /// In en, this message translates to:
+  /// **'Washing'**
+  String get merchantLaundryStatusWashing;
+
+  /// No description provided for @merchantLaundryStatusReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready for return'**
+  String get merchantLaundryStatusReady;
+
+  /// No description provided for @merchantLaundryEmptyOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'No laundry orders'**
+  String get merchantLaundryEmptyOrders;
+
+  /// No description provided for @menuEditPhotoHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Square image, at least 800×800 px'**
+  String get menuEditPhotoHint;
+
+  /// No description provided for @menuEditChangePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Change photo'**
+  String get menuEditChangePhoto;
+
+  /// No description provided for @menuEditPrepTimeLabelShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Prep time (min)'**
+  String get menuEditPrepTimeLabelShort;
+
+  /// No description provided for @menuEditSaveBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Save menu'**
+  String get menuEditSaveBtn;
+
+  /// No description provided for @menuEditDeleteBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get menuEditDeleteBtn;
+
+  /// No description provided for @menuEditAvailableToggleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'List this menu'**
+  String get menuEditAvailableToggleTitle;
+
+  /// No description provided for @menuEditAvailableToggleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Temporarily hide when sold out'**
+  String get menuEditAvailableToggleHint;
+
+  /// No description provided for @menuEditOptionLibraryLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Add from library'**
+  String get menuEditOptionLibraryLink;
+
+  /// No description provided for @menuEditOptionGroupsSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add-on option groups'**
+  String get menuEditOptionGroupsSectionTitle;
+
+  /// No description provided for @menuEditDeleteMenuDialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm delete'**
+  String get menuEditDeleteMenuDialog;
+
+  /// No description provided for @menuEditDeleteMenuConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this menu item?'**
+  String get menuEditDeleteMenuConfirm;
+
+  /// No description provided for @menuEditDeleteMenuYes.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get menuEditDeleteMenuYes;
+
+  /// No description provided for @menuEditDeleteMenuCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get menuEditDeleteMenuCancel;
+
+  /// No description provided for @menuEditDeleteMenuSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu deleted'**
+  String get menuEditDeleteMenuSuccess;
+
+  /// No description provided for @menuEditDeleteMenuFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete: {error}'**
+  String menuEditDeleteMenuFailed(String error);
+
+  /// No description provided for @orderDetailPlacedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'{time} · Delivered by JDC'**
+  String orderDetailPlacedAt(String time);
+
+  /// No description provided for @orderDetailChatTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat with customer'**
+  String get orderDetailChatTooltip;
+
+  /// No description provided for @orderDetailPendingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer is waiting for you to accept'**
+  String get orderDetailPendingHint;
+
+  /// No description provided for @merchantLaundrySettingsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Laundry settings'**
+  String get merchantLaundrySettingsTooltip;
+
+  /// No description provided for @merchantLaundryAddPackageTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Add package'**
+  String get merchantLaundryAddPackageTooltip;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

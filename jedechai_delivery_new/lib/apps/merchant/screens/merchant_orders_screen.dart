@@ -961,6 +961,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         foregroundColor: jdc.text,
+        iconTheme: IconThemeData(color: jdc.text),
         titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: jdc.text),
         actions: [
           // Toggle between active and history
