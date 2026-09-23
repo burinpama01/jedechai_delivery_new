@@ -22,6 +22,219 @@ const CATEGORIES = [
 ];
 
 let _ctx = null;
+let _storePickerMap = null;
+let _storePickerMarker = null;
+const GOOGLE_LOOKUP_ENABLED = true;
+let _googleMapCenter = [13.7563, 100.5018];
+let _googleMapZoom = 13;
+let _renderedGoogleMapCenter = null;
+let _renderedGoogleMapZoom = null;
+let _lookupGeneration = 0;
+let _mapGeneration = 0;
+
+async function callStoreLookup(payload) {
+  const { supabase } = _deps();
+  const { data, error } = await supabase.functions.invoke("shop-store-lookup", { body: payload });
+  if (error) throw new Error(data?.error || error.message || "ดึงข้อมูลร้านไม่สำเร็จ");
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+
+export function applyStoreLookupResult(result) {
+  if (!result || !validStoreCoordinates(result.lat, result.lng)) throw new Error("ข้อมูลพิกัดที่ได้รับไม่ถูกต้อง");
+  if (result.name) document.getElementById("ss_name").value = result.name;
+  else if (result.source === "address") document.getElementById("ss_name").value = "";
+  if (result.address) document.getElementById("ss_address").value = result.address;
+  document.getElementById("ss_lat").value = result.lat;
+  document.getElementById("ss_lng").value = result.lng;
+  if (result.is24h === true) {
+    document.getElementById("ss_24h").checked = true;
+    for (const [day] of DAYS) {
+      for (const suffix of ["", "2"]) {
+        document.getElementById(`h${suffix}_${day}_o`).value = "";
+        document.getElementById(`h${suffix}_${day}_c`).value = "";
+      }
+    }
+  } else if (result.openingHours && typeof result.openingHours === "object") {
+    document.getElementById("ss_24h").checked = false;
+    for (const [day] of DAYS) {
+      const ranges = Array.isArray(result.openingHours[day]) ? result.openingHours[day] : [];
+      for (const [index, suffix] of ["", "2"].entries()) {
+        document.getElementById(`h${suffix}_${day}_o`).value = ranges[index]?.open || "";
+        document.getElementById(`h${suffix}_${day}_c`).value = ranges[index]?.close || "";
+      }
+    }
+  }
+  _googleMapCenter = [result.lat, result.lng];
+  document.getElementById("ss_lookup_status").textContent = result.source === "address"
+    ? "พบที่อยู่จากหมุดแล้ว กรุณากรอกชื่อร้านและตรวจสอบข้อมูลก่อนบันทึก"
+    : "เติมข้อมูลร้านแล้ว กรุณาตรวจสอบชื่อ ที่อยู่ และตำแหน่งก่อนบันทึก";
+  renderGoogleStoreMap();
+}
+
+export async function renderGoogleStoreMap() {
+  const image = document.getElementById("ss_google_map");
+  if (!image) return;
+  const generation = ++_mapGeneration;
+  const requestedCenter = [..._googleMapCenter];
+  const requestedZoom = _googleMapZoom;
+  image.style.pointerEvents = "none";
+  image.style.opacity = "0.6";
+  try {
+    const hasMarker = validStoreCoordinates(Number(document.getElementById("ss_lat")?.value), Number(document.getElementById("ss_lng")?.value));
+    const data = await callStoreLookup({ mode: "map", lat: requestedCenter[0], lng: requestedCenter[1], zoom: requestedZoom, marker: hasMarker });
+    if (generation === _mapGeneration && image.isConnected) {
+      image.onload = () => {
+        if (generation !== _mapGeneration || !image.isConnected) return;
+        _renderedGoogleMapCenter = requestedCenter;
+        _renderedGoogleMapZoom = requestedZoom;
+        image.style.pointerEvents = "auto";
+        image.style.opacity = "1";
+      };
+      image.src = data.image;
+    }
+  } catch (error) {
+    if (generation === _mapGeneration && image.isConnected) document.getElementById("ss_lookup_status").textContent = error.message;
+  }
+}
+
+export async function lookupShopStoreFromLink() {
+  const input = document.getElementById("ss_maps_url");
+  const status = document.getElementById("ss_lookup_status");
+  const button = document.getElementById("ss_lookup_button");
+  if (!input?.value.trim()) return _deps().showToast?.("กรุณาวางลิงก์ Google Maps", "error");
+  const generation = ++_lookupGeneration;
+  button.disabled = true;
+  status.textContent = "กำลังดึงข้อมูลร้าน…";
+  try {
+    const data = await callStoreLookup({ mode: "url", url: input.value.trim() });
+    if (generation === _lookupGeneration && input.isConnected) {
+      if (data.result?.source === "unverified_search" && !globalThis.confirm(`พบ ${data.result.name}\n${data.result.address}\n\nใช่ร้านที่ต้องการหรือไม่?`)) {
+        status.textContent = "ยังไม่ได้เติมข้อมูล กรุณาใช้ลิงก์ที่ระบุร้านหรือปักหมุด";
+        return;
+      }
+      applyStoreLookupResult(data.result);
+    }
+  } catch (error) {
+    if (generation === _lookupGeneration && input.isConnected) status.textContent = error.message;
+  } finally {
+    if (generation === _lookupGeneration && input.isConnected) button.disabled = false;
+  }
+}
+
+function pointAtGoogleMapClick(event) {
+  if (!_renderedGoogleMapCenter || _renderedGoogleMapZoom == null) return null;
+  const rect = event.currentTarget.getBoundingClientRect();
+  const x = (event.clientX - rect.left) / rect.width - 0.5;
+  const y = (event.clientY - rect.top) / rect.height - 0.5;
+  const worldSize = 256 * 2 ** _renderedGoogleMapZoom;
+  const centerLat = _renderedGoogleMapCenter[0] * Math.PI / 180;
+  const centerMercatorY = (1 - Math.log(Math.tan(centerLat) + 1 / Math.cos(centerLat)) / Math.PI) / 2;
+  const lng = _renderedGoogleMapCenter[1] + x * 640 / worldSize * 360;
+  const mercatorY = centerMercatorY + y * 320 / worldSize;
+  const lat = Math.atan(Math.sinh(Math.PI * (1 - 2 * mercatorY))) * 180 / Math.PI;
+  return { lat, lng };
+}
+
+export async function pinGoogleStoreMap(event) {
+  const status = document.getElementById("ss_lookup_status");
+  const point = pointAtGoogleMapClick(event);
+  if (!point || !validStoreCoordinates(point.lat, point.lng)) return;
+  const generation = ++_lookupGeneration;
+  const lookupButton = document.getElementById("ss_lookup_button");
+  if (lookupButton) lookupButton.disabled = false;
+  document.getElementById("ss_lat").value = point.lat.toFixed(6);
+  document.getElementById("ss_lng").value = point.lng.toFixed(6);
+  _googleMapCenter = [point.lat, point.lng];
+  status.textContent = "กำลังค้นหาข้อมูลใกล้หมุด…";
+  renderGoogleStoreMap();
+  try {
+    const data = await callStoreLookup({ mode: "point", lat: point.lat, lng: point.lng });
+    if (generation === _lookupGeneration && status.isConnected) {
+      if (data.result?.source === "nearby_candidate" && !globalThis.confirm(`พบ ${data.result.name} ห่างจากหมุดประมาณ ${data.result.distanceMeters} เมตร\n${data.result.address}\n\nใช่ร้านที่ต้องการหรือไม่?`)) {
+        applyStoreLookupResult({ source: "address", name: "", address: data.result.fallbackAddress || "", lat: point.lat, lng: point.lng });
+      } else {
+        applyStoreLookupResult(data.result);
+      }
+    }
+  } catch (error) {
+    if (generation === _lookupGeneration && status.isConnected) status.textContent = `${error.message} — พิกัดหมุดยังอยู่ในฟอร์ม`;
+  }
+}
+
+export function zoomGoogleStoreMap(change) {
+  _googleMapZoom = Math.max(3, Math.min(19, _googleMapZoom + change));
+  renderGoogleStoreMap();
+}
+
+export function invalidateStoreLookup() {
+  _lookupGeneration++;
+  const button = document.getElementById("ss_lookup_button");
+  if (button) button.disabled = false;
+}
+
+function validStoreCoordinates(lat, lng) {
+  return Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180 && !(lat === 0 && lng === 0);
+}
+
+function setStorePickerCoordinates(lat, lng) {
+  if (!validStoreCoordinates(lat, lng)) return;
+  document.getElementById("ss_lat").value = lat.toFixed(6);
+  document.getElementById("ss_lng").value = lng.toFixed(6);
+  if (_storePickerMap) {
+    if (_storePickerMarker) _storePickerMarker.setLatLng([lat, lng]);
+    else _storePickerMarker = L.marker([lat, lng], { draggable: true }).addTo(_storePickerMap)
+      .on("dragend", (event) => {
+        const point = event.target.getLatLng();
+        setStorePickerCoordinates(point.lat, point.lng);
+      });
+    _storePickerMap.panTo([lat, lng]);
+  }
+}
+
+function initStorePickerMap() {
+  if (GOOGLE_LOOKUP_ENABLED) {
+    const lat = Number(document.getElementById("ss_lat")?.value);
+    const lng = Number(document.getElementById("ss_lng")?.value);
+    _googleMapCenter = validStoreCoordinates(lat, lng) ? [lat, lng] : [13.7563, 100.5018];
+    _googleMapZoom = validStoreCoordinates(lat, lng) ? 16 : 13;
+    renderGoogleStoreMap();
+    return;
+  }
+  const mapElement = document.getElementById("ss_map");
+  if (!mapElement || !globalThis.L) return;
+  const lat = Number(document.getElementById("ss_lat")?.value);
+  const lng = Number(document.getElementById("ss_lng")?.value);
+  const hasPoint = validStoreCoordinates(lat, lng);
+  _storePickerMap = L.map(mapElement).setView(hasPoint ? [lat, lng] : [13.7563, 100.5018], hasPoint ? 16 : 11);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  }).addTo(_storePickerMap);
+  _storePickerMap.on("click", (event) => setStorePickerCoordinates(event.latlng.lat, event.latlng.lng));
+  if (hasPoint) {
+    _storePickerMarker = L.marker([lat, lng], { draggable: true }).addTo(_storePickerMap)
+      .on("dragend", (event) => {
+        const point = event.target.getLatLng();
+        setStorePickerCoordinates(point.lat, point.lng);
+      });
+  }
+  setTimeout(() => _storePickerMap?.invalidateSize(), 0);
+}
+
+export function syncStorePickerFromInputs() {
+  const latRaw = document.getElementById("ss_lat")?.value;
+  const lngRaw = document.getElementById("ss_lng")?.value;
+  if (!latRaw || !lngRaw) return;
+  const lat = Number(latRaw);
+  const lng = Number(lngRaw);
+  if (GOOGLE_LOOKUP_ENABLED && validStoreCoordinates(lat, lng)) {
+    _googleMapCenter = [lat, lng];
+    renderGoogleStoreMap();
+    return;
+  }
+  if (validStoreCoordinates(lat, lng)) setStorePickerCoordinates(lat, lng);
+}
 
 function _deps() {
   return {
@@ -223,10 +436,23 @@ export async function renderShopStoresPage(el, ctx) {
   globalThis.closeShopStoreDialog = closeShopStoreDialog;
   globalThis.toggleShopStoreClosed = toggleShopStoreClosed;
   globalThis.copyMondayHoursToAll = copyMondayHoursToAll;
+  globalThis.syncStorePickerFromInputs = syncStorePickerFromInputs;
+  globalThis.lookupShopStoreFromLink = lookupShopStoreFromLink;
+  globalThis.pinGoogleStoreMap = pinGoogleStoreMap;
+  globalThis.zoomGoogleStoreMap = zoomGoogleStoreMap;
+  globalThis.renderGoogleStoreMap = renderGoogleStoreMap;
+  globalThis.invalidateStoreLookup = invalidateStoreLookup;
 }
 
 // ── ฟอร์มเพิ่ม/แก้ไข ────────────────────────────────────────
 export function editShopStore(id) {
+  _lookupGeneration++;
+  _mapGeneration++;
+  _renderedGoogleMapCenter = null;
+  _renderedGoogleMapZoom = null;
+  _storePickerMap?.remove();
+  _storePickerMap = null;
+  _storePickerMarker = null;
   const { escapeHtml } = _deps();
   const store = id ? (globalThis._allShopStores || []).find((s) => s.id === id) : null;
   const hours = store?.opening_hours || {};
@@ -263,7 +489,7 @@ export function editShopStore(id) {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1">ชื่อร้าน *</label>
-            <input id="ss_name" value="${escapeHtml(store?.name || "")}" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+            <input id="ss_name" value="${escapeHtml(store?.name || "")}" oninput="invalidateStoreLookup()" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1">หมวด *</label>
@@ -273,15 +499,28 @@ export function editShopStore(id) {
           </div>
           <div class="md:col-span-2">
             <label class="block text-xs font-semibold text-gray-500 mb-1">ที่อยู่ (ให้คนขับนำทาง)</label>
-            <input id="ss_address" value="${escapeHtml(store?.address || "")}" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+            <input id="ss_address" value="${escapeHtml(store?.address || "")}" oninput="invalidateStoreLookup()" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-gray-500 mb-1">ลิงก์ Google Maps</label>
+            <div class="flex gap-2">
+              <input id="ss_maps_url" type="url" ${GOOGLE_LOOKUP_ENABLED ? "" : "disabled"} oninput="invalidateStoreLookup()" onpaste="setTimeout(() => lookupShopStoreFromLink(), 0)" onkeydown="if(event.key==='Enter'){event.preventDefault();lookupShopStoreFromLink()}" placeholder="วางลิงก์ Google Maps" class="flex-1 min-w-0 border border-gray-200 rounded-xl px-3 py-2 text-sm ${GOOGLE_LOOKUP_ENABLED ? "" : "bg-gray-50 text-gray-400"}">
+              <button id="ss_lookup_button" type="button" onclick="lookupShopStoreFromLink()" ${GOOGLE_LOOKUP_ENABLED ? "" : "disabled"} class="px-3 py-2 rounded-xl text-sm ${GOOGLE_LOOKUP_ENABLED ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-400 cursor-not-allowed"}">ดึงข้อมูล</button>
+            </div>
+            <p id="ss_lookup_status" class="text-xs text-amber-700 mt-1">${GOOGLE_LOOKUP_ENABLED ? "วางลิงก์แล้วกดดึงข้อมูล หรือคลิกแผนที่เพื่อเลือกตำแหน่ง" : "ฟีเจอร์ดึงชื่อ ที่อยู่ และพิกัดจากลิงก์ยังไม่เปิดใช้งานระหว่างรอตั้งค่า API บน server"}</p>
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-gray-500 mb-1">เลือกตำแหน่งร้านจากหมุด</label>
+            ${GOOGLE_LOOKUP_ENABLED ? `<div class="relative"><img id="ss_google_map" onclick="pinGoogleStoreMap(event)" alt="แผนที่ Google สำหรับเลือกตำแหน่งร้าน" class="w-full aspect-[2/1] border border-gray-200 rounded-xl cursor-crosshair object-fill"><div class="absolute top-2 right-2 flex flex-col gap-1"><button type="button" onclick="zoomGoogleStoreMap(1)" class="bg-white rounded shadow px-2">+</button><button type="button" onclick="zoomGoogleStoreMap(-1)" class="bg-white rounded shadow px-2">−</button><button type="button" onclick="renderGoogleStoreMap()" aria-label="โหลดแผนที่อีกครั้ง" class="bg-white rounded shadow px-2">↻</button></div></div>` : `<div id="ss_map" class="h-64 rounded-xl border border-gray-200" aria-label="แผนที่เลือกตำแหน่งร้าน"></div>`}
+            <p class="text-xs text-gray-500 mt-1">${GOOGLE_LOOKUP_ENABLED ? "คลิกแผนที่เพื่อปักหมุด ระบบจะค้นหาข้อมูลร้านใกล้หมุดให้" : "คลิกแผนที่เพื่อวางหมุด หรือเลื่อนหมุดเพื่อปรับตำแหน่ง"}</p>
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1">Latitude *</label>
-            <input id="ss_lat" type="number" step="any" value="${store?.lat ?? ""}" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+            <input id="ss_lat" type="number" step="any" value="${store?.lat ?? ""}" oninput="invalidateStoreLookup()" onchange="syncStorePickerFromInputs()" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1">Longitude *</label>
-            <input id="ss_lng" type="number" step="any" value="${store?.lng ?? ""}" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+            <input id="ss_lng" type="number" step="any" value="${store?.lng ?? ""}" oninput="invalidateStoreLookup()" onchange="syncStorePickerFromInputs()" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1">รัศมีเฉพาะร้าน (กม.)</label>
@@ -325,13 +564,21 @@ export function editShopStore(id) {
 
         <div class="flex gap-3 mt-6">
           <button onclick="closeShopStoreDialog()" class="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-50">ยกเลิก</button>
-          <button onclick="saveShopStore()" class="flex-1 px-4 py-2.5 text-white rounded-xl text-sm font-semibold shadow-md shadow-violet-200" style="background:linear-gradient(135deg,#8b5cf6,#6366f1);">บันทึก</button>
+          <button id="ss_save_button" onclick="saveShopStore()" class="flex-1 px-4 py-2.5 text-white rounded-xl text-sm font-semibold shadow-md shadow-violet-200 disabled:opacity-60 disabled:cursor-not-allowed" style="background:linear-gradient(135deg,#8b5cf6,#6366f1);">บันทึก</button>
         </div>
       </div>
     </div>`;
+  initStorePickerMap();
 }
 
 export function closeShopStoreDialog() {
+  _lookupGeneration++;
+  _mapGeneration++;
+  _renderedGoogleMapCenter = null;
+  _renderedGoogleMapZoom = null;
+  _storePickerMap?.remove();
+  _storePickerMap = null;
+  _storePickerMarker = null;
   const host = document.getElementById("shopStoreDialog");
   if (host) host.innerHTML = "";
 }
@@ -369,8 +616,14 @@ function collectHours() {
   return hours;
 }
 
+// กันกดบันทึกซ้ำระหว่างที่ request แรกยังไม่เสร็จ
+// (เคยทำให้เกิดร้านซ้ำบน production — คลิกเดียวแต่ INSERT 2 แถว)
+let _savingStore = false;
+
 export async function saveShopStore() {
   const { supabase, showToast, refreshCurrentPage } = _deps();
+
+  if (_savingStore) return;
 
   const id = document.getElementById("ss_id")?.value || null;
   const name = (document.getElementById("ss_name")?.value || "").trim();
@@ -411,19 +664,44 @@ export async function saveShopStore() {
     note: (document.getElementById("ss_note")?.value || "").trim() || null,
   };
 
-  let error;
-  if (id) {
-    ({ error } = await supabase.from("shop_stores").update(payload).eq("id", id));
-  } else {
-    // audit trail: บันทึกว่าแอดมินคนไหนเป็นคนเพิ่มร้าน
-    const { data: auth } = (await supabase.auth?.getUser?.()) || { data: null };
-    const createdBy = auth?.user?.id || null;
-    ({ error } = await supabase
-      .from("shop_stores")
-      .insert(createdBy ? { ...payload, created_by: createdBy } : payload));
+  const saveButton = document.getElementById("ss_save_button");
+  _savingStore = true;
+  if (saveButton) {
+    saveButton.disabled = true;
+    saveButton.textContent = "กำลังบันทึก…";
   }
 
-  if (error) return showToast?.(`บันทึกไม่สำเร็จ: ${error.message}`, "error");
+  let error;
+  try {
+    if (id) {
+      ({ error } = await supabase.from("shop_stores").update(payload).eq("id", id));
+    } else {
+      // audit trail: บันทึกว่าแอดมินคนไหนเป็นคนเพิ่มร้าน
+      const { data: auth } = (await supabase.auth?.getUser?.()) || { data: null };
+      const createdBy = auth?.user?.id || null;
+      ({ error } = await supabase
+        .from("shop_stores")
+        .insert(createdBy ? { ...payload, created_by: createdBy } : payload));
+    }
+  } finally {
+    _savingStore = false;
+    if (saveButton?.isConnected) {
+      saveButton.disabled = false;
+      saveButton.textContent = "บันทึก";
+    }
+  }
+
+  if (error) {
+    // 23505 = ชนกับ unique index shop_stores_name_coord_unique
+    const duplicate =
+      error.code === "23505" || /duplicate key|unique constraint/i.test(error.message || "");
+    return showToast?.(
+      duplicate
+        ? "มีร้านชื่อนี้ที่พิกัดเดียวกันอยู่แล้ว"
+        : `บันทึกไม่สำเร็จ: ${error.message}`,
+      "error",
+    );
+  }
 
   closeShopStoreDialog();
   showToast?.(id ? "แก้ไขร้านแล้ว" : "เพิ่มร้านแล้ว", "success");

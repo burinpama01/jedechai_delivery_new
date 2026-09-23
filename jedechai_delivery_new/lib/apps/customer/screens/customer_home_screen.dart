@@ -175,6 +175,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _loadActiveBookings();
+      // แอดมินเปิด/ปิดบริการได้ตลอดเวลา ถ้าอ่านแค่ตอน initState
+      // ผู้ใช้ที่เปิดแอปค้างไว้จะไม่เห็นบริการใหม่จนกว่าจะปิดแอปแล้วเปิดใหม่
+      _loadShopEnabled();
     }
   }
 
@@ -389,7 +392,13 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
   }
 
   Future<void> _b1RefreshAll() async {
-    await Future.wait([_loadWalletSummary(), _loadActiveBookings(), _loadBanners()]);
+    await Future.wait([
+      _loadWalletSummary(),
+      _loadActiveBookings(),
+      _loadBanners(),
+      // ดึงลงเพื่อรีเฟรชต้องเห็นบริการที่แอดมินเพิ่งเปิดด้วย
+      _loadShopEnabled(),
+    ]);
   }
 
   // ── Hero header (full-bleed gradient, no rounded corners at top) ─────────
