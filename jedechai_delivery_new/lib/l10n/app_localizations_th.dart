@@ -3922,6 +3922,35 @@ class AppLocalizationsTh extends AppLocalizations {
   String get confirmCash => 'เงินสด';
 
   @override
+  String get confirmPayWallet => 'ชำระด้วย JDC Wallet';
+
+  @override
+  String get confirmPayUnknown => 'ยังไม่ได้เลือกวิธีชำระ';
+
+  @override
+  String get rideLocationServiceOff => 'กรุณาเปิดบริการระบุตำแหน่ง';
+
+  @override
+  String get rideLocationDenied => 'ไม่ได้รับอนุญาตให้เข้าถึงตำแหน่ง';
+
+  @override
+  String get rideLocationDeniedForever => 'การเข้าถึงตำแหน่งถูกปิดถาวร กรุณาเปิดในตั้งค่าเครื่อง';
+
+  @override
+  String rideLocationError(String error) {
+    return 'อ่านตำแหน่งไม่สำเร็จ: $error';
+  }
+
+  @override
+  String get rideYourLocation => 'ตำแหน่งของคุณ';
+
+  @override
+  String get rideDestination => 'ปลายทาง';
+
+  @override
+  String get rideNoDriverForVehicle => 'ไม่มีคนขับว่างใกล้คุณ ลองเลือกประเภทรถอื่น';
+
+  @override
   String get confirmTrackOrder => 'ติดตามออเดอร์';
 
   @override
@@ -4370,6 +4399,9 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get mapPickerSearchHint => 'ค้นหาสถานที่หรือที่อยู่';
+
+  @override
+  String get mapPickerSearchNotFound => 'ไม่พบที่อยู่ที่ค้นหา ลองพิมพ์ใหม่อีกครั้ง';
 
   @override
   String get mapPickerLoadingAddress => 'กำลังโหลดที่อยู่...';

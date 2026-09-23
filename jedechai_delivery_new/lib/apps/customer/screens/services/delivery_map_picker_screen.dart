@@ -32,6 +32,9 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
   bool _isLoadingAddress = false;
   bool _isLoadingLocation = true;
   LatLng? _lastGeocodedPosition;
+  final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _detailController = TextEditingController();
+  bool _isSearching = false;
 
   @override
   void initState() {
@@ -143,12 +146,67 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
     });
   }
 
+  /// ค้นหาที่อยู่แล้วเลื่อนแผนที่ไปยังผลลัพธ์แรก
+  Future<void> _searchAddress(String query) async {
+    final text = query.trim();
+    if (text.isEmpty || _isSearching) return;
+    setState(() => _isSearching = true);
+    try {
+      final url = Uri.parse(
+        'https://maps.googleapis.com/maps/api/geocode/json'
+        '?address=${Uri.encodeComponent(text)}'
+        '&language=th&region=th'
+        '&key=${EnvConfig.googleMapsApiKey}',
+      );
+      final response = await http.get(url);
+      if (!mounted) return;
+      final data = json.decode(response.body);
+      if (data['status'] == 'OK' && (data['results'] as List).isNotEmpty) {
+        final loc = data['results'][0]['geometry']['location'];
+        final target = LatLng(
+          (loc['lat'] as num).toDouble(),
+          (loc['lng'] as num).toDouble(),
+        );
+        setState(() {
+          _selectedPosition = target;
+          _addressText =
+              data['results'][0]['formatted_address'] as String? ?? _addressText;
+          _lastGeocodedPosition = target;
+        });
+        await _mapController?.animateCamera(
+          CameraUpdate.newLatLngZoom(target, 16),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text(AppLocalizations.of(context)!.mapPickerSearchNotFound)),
+        );
+      }
+    } catch (e) {
+      debugLog('❌ Address search error: $e');
+    } finally {
+      if (mounted) setState(() => _isSearching = false);
+    }
+  }
+
   void _confirmLocation() {
+    final detail = _detailController.text.trim();
     Navigator.of(context).pop({
       'lat': _selectedPosition.latitude,
       'lng': _selectedPosition.longitude,
-      'address': _addressText,
+      // ต่อรายละเอียดที่ผู้ใช้พิมพ์เข้ากับที่อยู่ เพื่อไม่ให้ข้อมูลหาย
+      'address': detail.isEmpty ? _addressText : '$_addressText ($detail)',
+      'address_detail': detail,
     });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _detailController.dispose();
+    _mapController?.dispose();
+    super.dispose();
   }
 
   @override
@@ -274,9 +332,12 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
                               const SizedBox(width: JdcSpacing.sm),
                               Expanded(
                                 child: TextField(
+                                  controller: _searchController,
+                                  textInputAction: TextInputAction.search,
+                                  onSubmitted: _searchAddress,
                                   style: TextStyle(fontSize: 13, color: jdc.text),
                                   decoration: InputDecoration(
-                                    hintText: 'ค้นหาสถานที่หรือที่อยู่',
+                                    hintText: l10n.mapPickerSearchHint,
                                     hintStyle: TextStyle(color: jdc.muted, fontSize: 13),
                                     border: InputBorder.none,
                                     isDense: true,
@@ -344,7 +405,7 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'ยืนยันตำแหน่ง',
+                          l10n.mapPickerConfirmLocation,
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w700,
                             color: jdc.text,
@@ -416,9 +477,10 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
                         const SizedBox(height: JdcSpacing.lg),
                         // ช่องรายละเอียดเพิ่มเติม
                         TextField(
+                          controller: _detailController,
                           decoration: InputDecoration(
-                            labelText: 'รายละเอียดเพิ่มเติม',
-                            hintText: 'บ้านเลขที่ ชั้น จุดสังเกต',
+                            labelText: l10n.mapPickerDetailLabel,
+                            hintText: l10n.mapPickerDetailHint,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(JdcRadius.small),
                               borderSide: BorderSide(color: jdc.line),

@@ -3922,6 +3922,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirmCash => 'Cash';
 
   @override
+  String get confirmPayWallet => 'Pay with JDC Wallet';
+
+  @override
+  String get confirmPayUnknown => 'Payment method not selected';
+
+  @override
+  String get rideLocationServiceOff => 'Please enable location services';
+
+  @override
+  String get rideLocationDenied => 'Location permissions are denied';
+
+  @override
+  String get rideLocationDeniedForever => 'Location permissions are permanently denied';
+
+  @override
+  String rideLocationError(String error) {
+    return 'Error getting location: $error';
+  }
+
+  @override
+  String get rideYourLocation => 'Your Location';
+
+  @override
+  String get rideDestination => 'Destination';
+
+  @override
+  String get rideNoDriverForVehicle => 'No available drivers nearby. Please try another vehicle type.';
+
+  @override
   String get confirmTrackOrder => 'Track order';
 
   @override
@@ -4370,6 +4399,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mapPickerSearchHint => 'Search place or address';
+
+  @override
+  String get mapPickerSearchNotFound => 'Address not found. Try a different search.';
 
   @override
   String get mapPickerLoadingAddress => 'Loading address...';

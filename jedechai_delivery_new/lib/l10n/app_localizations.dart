@@ -7313,6 +7313,60 @@ abstract class AppLocalizations {
   /// **'Cash'**
   String get confirmCash;
 
+  /// No description provided for @confirmPayWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay with JDC Wallet'**
+  String get confirmPayWallet;
+
+  /// No description provided for @confirmPayUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment method not selected'**
+  String get confirmPayUnknown;
+
+  /// No description provided for @rideLocationServiceOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enable location services'**
+  String get rideLocationServiceOff;
+
+  /// No description provided for @rideLocationDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permissions are denied'**
+  String get rideLocationDenied;
+
+  /// No description provided for @rideLocationDeniedForever.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permissions are permanently denied'**
+  String get rideLocationDeniedForever;
+
+  /// No description provided for @rideLocationError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error getting location: {error}'**
+  String rideLocationError(String error);
+
+  /// No description provided for @rideYourLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Location'**
+  String get rideYourLocation;
+
+  /// No description provided for @rideDestination.
+  ///
+  /// In en, this message translates to:
+  /// **'Destination'**
+  String get rideDestination;
+
+  /// No description provided for @rideNoDriverForVehicle.
+  ///
+  /// In en, this message translates to:
+  /// **'No available drivers nearby. Please try another vehicle type.'**
+  String get rideNoDriverForVehicle;
+
   /// No description provided for @confirmTrackOrder.
   ///
   /// In en, this message translates to:
@@ -8176,6 +8230,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Search place or address'**
   String get mapPickerSearchHint;
+
+  /// No description provided for @mapPickerSearchNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Address not found. Try a different search.'**
+  String get mapPickerSearchNotFound;
 
   /// No description provided for @mapPickerLoadingAddress.
   ///

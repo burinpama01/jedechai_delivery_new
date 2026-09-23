@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 
 import '../../../../theme/jdc_colors.dart';
 import 'package:geolocator/geolocator.dart';
@@ -558,65 +559,101 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final jdc = JdcColors.of(context);
+    final showSubmitBar = _selectedPackageId != null;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('ซักผ้า')),
+      backgroundColor: jdc.paper,
+      appBar: AppBar(
+        backgroundColor: jdc.surface,
+        foregroundColor: jdc.text,
+        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: jdc.line),
+        ),
+        title: Text(l10n.laundryTitle),
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: () => _loadMerchants(showLoading: false),
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  if (_selectedMerchantId == null) ...[
-                    _buildSectionHeader(
-                      title: 'เลือกร้านซักผ้า',
-                      subtitle: 'แตะการ์ดร้านเพื่อดูแพ็กเกจและรายละเอียด',
-                      icon: Icons.storefront_rounded,
+          : Column(
+              children: [
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: () => _loadMerchants(showLoading: false),
+                    child: ListView(
+                      padding: const EdgeInsets.all(16),
+                      children: [
+                        if (_selectedMerchantId == null) ...[
+                          _buildSectionHeader(
+                            title: l10n.laundryShopTitle,
+                            subtitle: 'แตะการ์ดร้านเพื่อดูแพ็กเกจและรายละเอียด',
+                            icon: Icons.storefront_rounded,
+                          ),
+                          const SizedBox(height: 16),
+                          _buildMerchantCards(),
+                        ],
+                        if (_selectedMerchantId != null &&
+                            _selectedPackageId == null) ...[
+                          _buildSelectedMerchantHeader(),
+                          const SizedBox(height: 16),
+                          _buildSectionHeader(
+                            title: 'เลือกแพ็กเกจ',
+                            subtitle: 'เลือกบริการที่ต้องการก่อนกรอกคำขอ',
+                            icon: Icons.inventory_2_rounded,
+                          ),
+                          const SizedBox(height: 16),
+                          _buildPackageList(),
+                        ],
+                        if (_selectedPackageId != null) ...[
+                          _buildSelectedMerchantHeader(),
+                          const SizedBox(height: 12),
+                          _buildSelectedPackageSummary(),
+                          const SizedBox(height: 16),
+                          _buildPickupForm(),
+                          const SizedBox(height: 16),
+                          _buildAttachmentPicker(),
+                        ],
+                        const SizedBox(height: 24),
+                        _buildMyLaundryOrders(),
+                        if (showSubmitBar) const SizedBox(height: 80),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    _buildMerchantCards(),
-                  ],
-                  if (_selectedMerchantId != null &&
-                      _selectedPackageId == null) ...[
-                    _buildSelectedMerchantHeader(),
-                    const SizedBox(height: 16),
-                    _buildSectionHeader(
-                      title: 'เลือกแพ็กเกจ',
-                      subtitle: 'เลือกบริการที่ต้องการก่อนกรอกคำขอ',
-                      icon: Icons.inventory_2_rounded,
-                    ),
-                    const SizedBox(height: 16),
-                    _buildPackageList(),
-                  ],
-                  if (_selectedPackageId != null) ...[
-                    _buildSelectedMerchantHeader(),
-                    const SizedBox(height: 12),
-                    _buildSelectedPackageSummary(),
-                    const SizedBox(height: 16),
-                    _buildPickupForm(),
-                    const SizedBox(height: 16),
-                    _buildAttachmentPicker(),
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      height: 52,
-                      child: FilledButton.icon(
-                        onPressed: _isSubmitting ? null : _submitQuoteRequest,
-                        icon: _isSubmitting
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Icon(Icons.request_quote_rounded),
-                        label: const Text('ส่งคำขอประเมินราคา'),
+                  ),
+                ),
+                if (showSubmitBar)
+                  Container(
+                    color: jdc.surface,
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+                    child: SafeArea(
+                      top: false,
+                      child: SizedBox(
+                        height: 54,
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: jdc.cta,
+                            foregroundColor: jdc.onCta,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          onPressed: _isSubmitting ? null : _submitQuoteRequest,
+                          icon: _isSubmitting
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2),
+                                )
+                              : const Icon(Icons.request_quote_rounded),
+                          label: Text(l10n.laundrySubmit),
+                        ),
                       ),
                     ),
-                  ],
-                  const SizedBox(height: 24),
-                  _buildMyLaundryOrders(),
-                ],
-              ),
+                  ),
+              ],
             ),
     );
   }
@@ -656,7 +693,7 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
                 style: Theme.of(context)
                     .textTheme
                     .bodySmall
-                    ?.copyWith(color: Colors.grey.shade600),
+                    ?.copyWith(color: JdcColors.of(context).muted),
               ),
             ],
           ),
@@ -666,10 +703,11 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
   }
 
   Widget _buildMerchantCards() {
+    final l10n = AppLocalizations.of(context)!;
     if (_merchants.isEmpty) {
       return _InfoPanel(
         icon: Icons.local_laundry_service_rounded,
-        title: 'ยังไม่มีร้านซักผ้า',
+        title: l10n.laundryNoMerchants,
         subtitle: 'รอแอดมินเปิดประเภทร้านซักผ้าให้ merchant ก่อน',
       );
     }
@@ -740,7 +778,7 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.grey.shade700,
+                          color: JdcColors.of(context).muted,
                         ),
                       ),
                     ],
@@ -750,7 +788,7 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
                         phone,
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.grey.shade600,
+                          color: JdcColors.of(context).muted,
                         ),
                       ),
                     ],
@@ -762,7 +800,7 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
                 ),
               ),
               Icon(Icons.arrow_forward_ios_rounded,
-                  color: Colors.grey.shade400, size: 18),
+                  color: JdcColors.of(context).muted, size: 18),
             ],
           ),
         ),
@@ -900,7 +938,7 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.grey.shade700,
+                          color: JdcColors.of(context).muted,
                         ),
                       ),
                     ],
@@ -913,7 +951,7 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
                 ),
               ),
               Icon(Icons.arrow_forward_ios_rounded,
-                  color: Colors.grey.shade400, size: 18),
+                  color: JdcColors.of(context).muted, size: 18),
             ],
           ),
         ),
@@ -976,13 +1014,14 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
   }
 
   Widget _buildPickupForm() {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
         TextField(
           controller: _pickupAddressController,
-          decoration: const InputDecoration(
-            labelText: 'ที่อยู่รับผ้า',
-            prefixIcon: Icon(Icons.location_on_rounded),
+          decoration: InputDecoration(
+            labelText: l10n.laundryAddressTitle,
+            prefixIcon: const Icon(Icons.location_on_rounded),
           ),
           minLines: 1,
           maxLines: 2,
@@ -1018,38 +1057,39 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
   }
 
   Widget _buildAttachmentPicker() {
+    final l10n = AppLocalizations.of(context)!;
+    final jdc = JdcColors.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: jdc.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: jdc.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.photo_camera_rounded,
-                  color: JdcColors.of(context).cta),
+              Icon(Icons.photo_camera_rounded, color: jdc.cta),
               const SizedBox(width: 8),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'รูปผ้าที่ต้องให้ร้านประเมิน',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+                  l10n.laundryPhotoTitle,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
               Text(
-                '${_attachmentFiles.length} รูป',
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                l10n.laundryPhotoCount(_attachmentFiles.length),
+                style: TextStyle(fontSize: 12, color: jdc.muted),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'ต้องแนบอย่างน้อย 1 รูป เพื่อให้ร้านประเมินราคาได้ถูกต้อง',
-            style: TextStyle(fontSize: 12, color: Colors.grey),
+            style: TextStyle(fontSize: 12, color: jdc.muted),
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -1090,11 +1130,12 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
   }
 
   Widget _buildMyLaundryOrders() {
+    final l10n = AppLocalizations.of(context)!;
     if (_orders.isEmpty) {
       return _InfoPanel(
         icon: Icons.receipt_long_rounded,
-        title: 'ยังไม่มีคำขอซักผ้า',
-        subtitle: 'ส่งคำขอให้ร้านประเมินราคา แล้วกลับมาดู quote ได้ที่นี่',
+        title: l10n.laundryPendingLabel,
+        subtitle: l10n.laundryPendingNote,
       );
     }
 
@@ -1158,7 +1199,7 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
             OutlinedButton.icon(
               onPressed: () => _openQuoteChat(order),
               icon: const Icon(Icons.chat_bubble_outline_rounded),
-              label: const Text('Chat กับร้าน'),
+              label: Text(AppLocalizations.of(context)!.laundryPendingChat),
             ),
             if (canAccept) ...[
               const SizedBox(height: 12),

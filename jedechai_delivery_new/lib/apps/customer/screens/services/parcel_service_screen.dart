@@ -579,61 +579,276 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
   @override
   Widget build(BuildContext context) {
     final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
+      backgroundColor: jdc.paper,
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.parcelTitle),
+        title: Text(l10n.parcelTitle),
         backgroundColor: jdc.surface,
         foregroundColor: jdc.text,
-        shape: Border(bottom: BorderSide(color: jdc.line)),
+        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: jdc.line),
+        ),
       ),
       body: _isLoadingLocation
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(),
-                    const SizedBox(height: 20),
-                    _buildSenderSection(),
-                    const SizedBox(height: 20),
-                    _buildRecipientSection(),
-                    const SizedBox(height: 20),
-                    _buildSizeSection(),
-                    const SizedBox(height: 20),
-                    _buildDetailsSection(),
-                    const SizedBox(height: 20),
-                    _buildPhotoSection(),
-                    const SizedBox(height: 20),
-                    if (_estimatedPrice > 0) ...[
-                      _buildPriceCard(),
-                      const SizedBox(height: 12),
-                      CouponEntryWidget(
-                        serviceType: 'parcel',
-                        orderAmount: _estimatedPrice,
-                        deliveryFee: _estimatedPrice,
-                        onCouponApplied: (coupon) {
-                          setState(() => _appliedCoupon = coupon);
-                        },
-                        onDiscountChanged: (discount) {
-                          setState(() => _couponDiscount = discount);
-                        },
+          : Column(
+              children: [
+                // Scrollable content
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding:
+                        const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Route card (pickup + dropoff)
+                          _buildRouteCard(),
+                          const SizedBox(height: 14),
+
+                          // Sender info (compact)
+                          _buildSenderSection(),
+                          const SizedBox(height: 14),
+
+                          // Recipient info (compact)
+                          _buildRecipientSection(),
+                          const SizedBox(height: 14),
+
+                          // Size selector
+                          _buildSizeSection(),
+                          const SizedBox(height: 14),
+
+                          // Parcel photo
+                          _buildPhotoSection(),
+                          const SizedBox(height: 14),
+
+                          // Description + weight
+                          _buildDetailsSection(),
+                          const SizedBox(height: 14),
+
+                          // Coupon
+                          if (_estimatedPrice > 0)
+                            CouponEntryWidget(
+                              serviceType: 'parcel',
+                              orderAmount: _estimatedPrice,
+                              deliveryFee: _estimatedPrice,
+                              onCouponApplied: (coupon) {
+                                setState(() => _appliedCoupon = coupon);
+                              },
+                              onDiscountChanged: (discount) {
+                                setState(
+                                    () => _couponDiscount = discount);
+                              },
+                            ),
+
+                          _buildDriverAvailabilityHint(),
+                          const SizedBox(height: 20),
+                        ],
                       ),
-                      const SizedBox(height: 20),
-                    ],
-                    _buildDriverAvailabilityHint(),
-                    const SizedBox(height: 14),
-                    _buildBookButton(),
-                    const SizedBox(height: 30),
-                  ],
+                    ),
+                  ),
                 ),
-              ),
+
+                // Sticky bottom: price + CTA
+                Container(
+                  padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+                  decoration: BoxDecoration(
+                    color: jdc.surface,
+                    border: Border(top: BorderSide(color: jdc.line)),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_estimatedPrice > 0) ...[
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '${l10n.parcelEstimatedDistanceShort} ${_estimatedDistance.toStringAsFixed(1)} กม. · ${_getSizeOptions().firstWhere((s) => s['value'] == _selectedSize, orElse: () => _getSizeOptions().first)['label']}',
+                                style: TextStyle(
+                                    fontSize: 12, color: jdc.muted),
+                              ),
+                            ),
+                            if (_couponDiscount > 0)
+                              Text(
+                                '฿${_estimatedPrice.ceil()}',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: jdc.muted,
+                                  decoration:
+                                      TextDecoration.lineThrough,
+                                ),
+                              ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '฿${_finalParcelPrice.ceil()}',
+                              style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: jdc.text),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+                      SizedBox(
+                        width: double.infinity,
+                        height: 54,
+                        child: ElevatedButton(
+                          onPressed:
+                              _isLoading ? null : _bookParcel,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: jdc.cta,
+                            foregroundColor: jdc.onCta,
+                            shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.circular(16)),
+                          ),
+                          child: _isLoading
+                              ? SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                      color: jdc.onCta,
+                                      strokeWidth: 2))
+                              : Text(l10n.parcelCallDriver,
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
     );
   }
 
+  // Route card — artboard style (Wave 1.5 b2ride)
+  Widget _buildRouteCard() {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final pickupText = _pickupController.text.isNotEmpty
+        ? _pickupController.text
+        : l10n.parcelOriginLabel;
+    final dropoffText = _dropoffController.text.isNotEmpty
+        ? _dropoffController.text
+        : l10n.parcelDestinationLabel;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: jdc.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: jdc.line),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
+            children: [
+              Container(
+                width: 11,
+                height: 11,
+                margin: const EdgeInsets.only(top: 18),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: jdc.panel, width: 3),
+                ),
+              ),
+              Container(width: 2, height: 24, color: jdc.line),
+              Container(
+                width: 11,
+                height: 11,
+                decoration: BoxDecoration(
+                  color: jdc.cta,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              children: [
+                // Pickup button
+                GestureDetector(
+                  onTap: () => _pickLocationOnMap(isPickup: true),
+                  child: Container(
+                    constraints:
+                        const BoxConstraints(minHeight: 48),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: jdc.surface,
+                      borderRadius: BorderRadius.circular(13),
+                      border: Border.all(color: jdc.line),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(l10n.parcelOriginLabel,
+                            style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: jdc.muted)),
+                        const SizedBox(height: 2),
+                        Text(pickupText,
+                            style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: jdc.text)),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                // Dropoff button
+                GestureDetector(
+                  onTap: () => _pickLocationOnMap(isPickup: false),
+                  child: Container(
+                    constraints:
+                        const BoxConstraints(minHeight: 48),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: jdc.brandSoft2,
+                      borderRadius: BorderRadius.circular(13),
+                      border: Border.all(color: jdc.brandLine),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(l10n.parcelDestinationLabel,
+                            style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: jdc.muted)),
+                        const SizedBox(height: 2),
+                        Text(dropoffText,
+                            style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: jdc.text)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // _buildHeader replaced by _buildRouteCard (Wave 1.5 b2ride) — kept as dead stub
+  // ignore: unused_element
   Widget _buildHeader() {
     final jdc = JdcColors.of(context);
     return Container(
@@ -1070,6 +1285,8 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
     );
   }
 
+  // _buildPriceCard replaced by sticky bottom bar (Wave 1.5 b2ride)
+  // ignore: unused_element
   Widget _buildPriceCard() {
     final jdc = JdcColors.of(context);
     final colorScheme = Theme.of(context).colorScheme;
@@ -1124,6 +1341,8 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
     );
   }
 
+  // _buildBookButton replaced by sticky bottom bar (Wave 1.5 b2ride)
+  // ignore: unused_element
   Widget _buildBookButton() {
     final jdc = JdcColors.of(context);
     return SizedBox(

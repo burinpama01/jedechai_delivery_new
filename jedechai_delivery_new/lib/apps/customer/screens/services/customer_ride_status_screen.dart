@@ -320,7 +320,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context)!.rideStatusEnableLocation),
-              backgroundColor: Colors.orange,
+              backgroundColor: JdcColors.of(context).offTrack,
             ),
           );
         }
@@ -347,7 +347,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(AppLocalizations.of(context)!.rideStatusAllowLocation),
-                backgroundColor: Colors.orange,
+                backgroundColor: JdcColors.of(context).offTrack,
               ),
             );
           }
@@ -364,7 +364,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
           showDialog(
             context: context,
             builder: (ctx) => AlertDialog(
-              icon: const Icon(Icons.location_off, color: Colors.red, size: 48),
+              icon: Icon(Icons.location_off, color: JdcColors.of(context).danger, size: 48),
               title: Text(AppLocalizations.of(context)!.rideStatusLocationDenied),
               content: Text(AppLocalizations.of(context)!.rideStatusLocationDeniedBody),
               actions: [
@@ -630,7 +630,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
     final booking = _currentBooking ?? widget.booking;
     final totalAmount = _calculateTotalAmount(booking);
     final couponDiscount = _couponDiscountAmount();
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     
     return PopScope(
       canPop: false,
@@ -642,10 +642,10 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
         );
       },
       child: Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: jdc.surface,
       appBar: AppBar(
         backgroundColor: JdcColors.of(context).cta,
-        foregroundColor: Colors.white,
+        foregroundColor: jdc.onCta,
         title: Text(AppLocalizations.of(context)!.rideStatusTitle),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -691,14 +691,14 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
             child: Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: colorScheme.surface,
+                color: jdc.surface,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(20),
                   topRight: Radius.circular(20),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: colorScheme.shadow.withValues(alpha: 0.12),
+                    color: jdc.line.withValues(alpha: 0.6),
                     blurRadius: 10,
                     offset: Offset(0, -5),
                   ),
@@ -718,8 +718,8 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                     ),
                     child: Text(
                       _getStatusText(),
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: JdcColors.of(context).onCta,
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
                       ),
@@ -735,16 +735,16 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
+                        color: jdc.text,
                       ),
                     ),
                     const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: colorScheme.surfaceContainer,
+                        color: jdc.panelSoft,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: colorScheme.outlineVariant),
+                        border: Border.all(color: jdc.line),
                       ),
                       child: Column(
                         children: [
@@ -752,9 +752,9 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                             children: [
                               CircleAvatar(
                                 backgroundColor: JdcColors.of(context).cta,
-                                child: const Icon(
+                                child: Icon(
                                   Icons.person,
-                                  color: Colors.white,
+                                  color: JdcColors.of(context).onCta,
                                 ),
                               ),
                               const SizedBox(width: 16),
@@ -773,7 +773,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                                       _driverProfile?['vehicle_type'] ?? AppLocalizations.of(context)!.rideStatusMotorcycle,
                                       style: TextStyle(
                                         fontSize: 14,
-                                        color: colorScheme.onSurfaceVariant,
+                                        color: jdc.muted,
                                       ),
                                     ),
                                     if (_driverProfile?['license_plate'] != null)
@@ -781,7 +781,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                                         _driverProfile!['license_plate'],
                                         style: TextStyle(
                                           fontSize: 13,
-                                          color: colorScheme.onSurfaceVariant,
+                                          color: jdc.muted,
                                         ),
                                       ),
                                   ],
@@ -801,8 +801,8 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                                   icon: const Icon(Icons.phone, size: 18),
                                   label: Text(AppLocalizations.of(context)!.rideStatusCall),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.green,
-                                    foregroundColor: Colors.white,
+                                    backgroundColor: jdc.successInk,
+                                    foregroundColor: jdc.onCta,
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                     padding: const EdgeInsets.symmetric(vertical: 10),
                                   ),
@@ -817,7 +817,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                                   label: Text(AppLocalizations.of(context)!.rideStatusChat),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: JdcColors.of(context).infoInk,
-                                    foregroundColor: Colors.white,
+                                    foregroundColor: jdc.onCta,
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                     padding: const EdgeInsets.symmetric(vertical: 10),
                                   ),
@@ -836,7 +836,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainer,
+                      color: jdc.panelSoft,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
@@ -922,9 +922,9 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: booking.status == 'completed' 
-                            ? colorScheme.outlineVariant
-                            : Colors.red,
-                        foregroundColor: Colors.white,
+                            ? jdc.line
+                            : jdc.danger,
+                        foregroundColor: JdcColors.of(context).onCta,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(25),
                         ),
@@ -953,23 +953,22 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
 
   Color _getStatusColor() {
     final booking = _currentBooking ?? widget.booking;
+    final jdc = JdcColors.of(context);
     switch (booking.status) {
       case 'accepted':
       case 'driver_accepted':
-        return Colors.blue;
+        return jdc.infoInk;
       case 'arrived':
       case 'arrived_at_merchant':
-        return Colors.orange;
+        return jdc.offTrack;
       case 'ready_for_pickup':
-        return Colors.green;
       case 'picking_up_order':
-        return JdcColors.of(context).successInk;
-      case 'in_transit':
-        return JdcColors.of(context).infoInk;
       case 'completed':
-        return Colors.green;
+        return jdc.successInk;
+      case 'in_transit':
+        return jdc.infoInk;
       default:
-        return Colors.grey;
+        return jdc.muted;
     }
   }
 
@@ -1025,7 +1024,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
     if (_hasShownCompletionDialog || !mounted) return;
     _hasShownCompletionDialog = true;
     _bookingSubscription?.cancel();
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
 
     showDialog(
       context: context,
@@ -1037,10 +1036,10 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: colorScheme.errorContainer,
+                color: jdc.dangerSoft,
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.cancel, color: colorScheme.onErrorContainer, size: 48),
+              child: Icon(Icons.cancel, color: jdc.dangerInk, size: 48),
             ),
             const SizedBox(height: 16),
             Text(
@@ -1048,7 +1047,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: colorScheme.error,
+                color: jdc.danger,
               ),
               textAlign: TextAlign.center,
             ),
@@ -1056,7 +1055,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
         ),
         content: Text(
           AppLocalizations.of(context)!.rideStatusMerchantRejectedBody,
-          style: TextStyle(fontSize: 15, color: colorScheme.onSurface, height: 1.5),
+          style: TextStyle(fontSize: 15, color: jdc.text, height: 1.5),
           textAlign: TextAlign.center,
         ),
         actions: [
@@ -1071,8 +1070,8 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
+                backgroundColor: jdc.danger,
+                foregroundColor: JdcColors.of(context).onCta,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -1098,7 +1097,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
     final grossAmount = isFood ? foodCost + deliveryFee : booking.price;
     final totalAmount = (grossAmount - couponDiscount) < 0 ? 0 : (grossAmount - couponDiscount);
     final bookingId = booking.id;
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
 
     showDialog(
       context: context,
@@ -1129,20 +1128,20 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
             children: [
               Text(
                 AppLocalizations.of(context)!.rideStatusThankYou,
-                style: TextStyle(fontSize: 16, color: colorScheme.onSurface),
+                style: TextStyle(fontSize: 16, color: jdc.text),
               ),
               const SizedBox(height: 16),
               // Order ID
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer,
+                  color: jdc.brandSoft,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: colorScheme.primary.withValues(alpha: 0.35)),
+                  border: Border.all(color: jdc.brandLine),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.receipt_long, color: colorScheme.onPrimaryContainer, size: 20),
+                    Icon(Icons.receipt_long, color: jdc.brandOnSoft, size: 20),
                     const SizedBox(width: 8),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1151,7 +1150,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                           AppLocalizations.of(context)!.rideStatusOrderNumber,
                           style: TextStyle(
                             fontSize: 11,
-                            color: colorScheme.onSurfaceVariant,
+                            color: jdc.muted,
                           ),
                         ),
                         Text(
@@ -1162,7 +1161,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
-                            color: colorScheme.onPrimaryContainer,
+                            color: jdc.brandOnSoft,
                           ),
                         ),
                       ],
@@ -1190,14 +1189,14 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(AppLocalizations.of(context)!.rideStatusTotalAmount, style: const TextStyle(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w500)),
+                            Text(AppLocalizations.of(context)!.rideStatusTotalAmount, style: TextStyle(fontSize: 14, color: JdcColors.of(context).onCta.withValues(alpha: 0.7), fontWeight: FontWeight.w500)),
                             if (isFood)
-                              Text(AppLocalizations.of(context)!.rideStatusIncludingDelivery, style: const TextStyle(fontSize: 12, color: Colors.white60)),
+                              Text(AppLocalizations.of(context)!.rideStatusIncludingDelivery, style: TextStyle(fontSize: 12, color: JdcColors.of(context).onCta.withValues(alpha: 0.6))),
                           ],
                         ),
                         Text(
                           '฿${totalAmount.ceil()}',
-                          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+                          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: JdcColors.of(context).onCta),
                         ),
                       ],
                     ),
@@ -1206,7 +1205,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
+                          color: JdcColors.of(context).onCta.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -1214,15 +1213,15 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                           children: [
                             Column(
                               children: [
-                                Text(AppLocalizations.of(context)!.rideStatusFoodCost, style: const TextStyle(fontSize: 11, color: Colors.white70)),
-                                Text('฿${foodCost.ceil()}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+                                Text(AppLocalizations.of(context)!.rideStatusFoodCost, style: TextStyle(fontSize: 11, color: JdcColors.of(context).onCta.withValues(alpha: 0.7))),
+                                Text('฿${foodCost.ceil()}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: JdcColors.of(context).onCta)),
                               ],
                             ),
-                            Container(width: 1, height: 24, color: Colors.white30),
+                            Container(width: 1, height: 24, color: JdcColors.of(context).onCta.withValues(alpha: 0.3)),
                             Column(
                               children: [
-                                Text(AppLocalizations.of(context)!.rideStatusDeliveryFee, style: const TextStyle(fontSize: 11, color: Colors.white70)),
-                                Text('฿${deliveryFee.ceil()}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+                                Text(AppLocalizations.of(context)!.rideStatusDeliveryFee, style: TextStyle(fontSize: 11, color: JdcColors.of(context).onCta.withValues(alpha: 0.7))),
+                                Text('฿${deliveryFee.ceil()}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: JdcColors.of(context).onCta)),
                               ],
                             ),
                           ],
@@ -1235,9 +1234,9 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                         couponCode != null && couponCode.isNotEmpty
                             ? AppLocalizations.of(context)!.rideStatusUsedCouponWithCode(couponCode, couponDiscount.ceil().toString())
                             : AppLocalizations.of(context)!.rideStatusUsedCoupon(couponDiscount.ceil().toString()),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: Colors.white,
+                          color: JdcColors.of(context).onCta,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -1261,7 +1260,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: JdcColors.of(context).cta,
-                foregroundColor: Colors.white,
+                foregroundColor: JdcColors.of(context).onCta,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -1274,7 +1273,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
   }
 
   Widget _buildInfoRow(String label, String value) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
@@ -1282,11 +1281,11 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
         children: [
           Text(
             label,
-            style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+            style: TextStyle(fontSize: 14, color: jdc.muted),
           ),
           Text(
             value,
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: colorScheme.onSurface),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: jdc.text),
           ),
         ],
       ),
@@ -1322,7 +1321,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(AppLocalizations.of(context)!.rideStatusCancelSuccess),
-                      backgroundColor: Theme.of(context).colorScheme.tertiary,
+                      backgroundColor: JdcColors.of(context).successInk,
                     ),
                   );
                   
@@ -1343,7 +1342,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
                   showDialog(
                     context: context,
                     builder: (ctx) => AlertDialog(
-                      icon: Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error, size: 48),
+                      icon: Icon(Icons.error_outline, color: JdcColors.of(context).danger, size: 48),
                       title: Text(AppLocalizations.of(context)!.rideStatusCancelFailed),
                       content: Text(AppLocalizations.of(context)!.rideStatusCancelError(e.toString())),
                       actions: [
@@ -1359,7 +1358,7 @@ class _CustomerRideStatusScreenState extends State<CustomerRideStatusScreen> {
             },
             child: Text(
               AppLocalizations.of(context)!.rideStatusYes,
-              style: const TextStyle(color: Colors.red),
+              style: TextStyle(color: JdcColors.of(context).danger),
             ),
           ),
         ],

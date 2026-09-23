@@ -427,25 +427,19 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  /// Build the floating service menu card
+  /// Build the floating service menu card — Wave 1.5 b2ride style
   Widget _buildServiceMenuCard() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.fromLTRB(
+          20, 20, 20, 20 + MediaQuery.of(context).padding.bottom),
       decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+        color: jdc.surface,
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(24),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.12),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
-          ),
-        ],
+        boxShadow: jdc.shadowSheet,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -455,23 +449,26 @@ class _MapScreenState extends State<MapScreen> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: colorScheme.outlineVariant,
-              borderRadius: BorderRadius.circular(2),
+              color: jdc.line,
+              borderRadius: BorderRadius.circular(999),
             ),
           ),
-          const SizedBox(height: 16),
-          
+          const SizedBox(height: 14),
+
           // Service title
-          Text(
-            AppLocalizations.of(context)!.mapSelectService,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface,
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              l10n.mapSelectService,
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+                color: jdc.text,
+              ),
             ),
           ),
-          const SizedBox(height: 16),
-          
+          const SizedBox(height: 14),
+
           // Service buttons row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -480,11 +477,12 @@ class _MapScreenState extends State<MapScreen> {
                 title: service['title'] as String,
                 icon: service['icon'] as IconData,
                 color: service['color'] as Color,
-                onTap: () => _navigateToService(service['screen'] as Widget),
+                onTap: () =>
+                    _navigateToService(service['screen'] as Widget),
               );
             }).toList(),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
         ],
       ),
     );
@@ -497,37 +495,32 @@ class _MapScreenState extends State<MapScreen> {
     required Color color,
     required VoidCallback onTap,
   }) {
+    final jdc = JdcColors.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Circular button with icon
           Container(
-            width: 60,
-            height: 60,
+            width: 56,
+            height: 56,
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
               border: Border.all(
                 color: color.withValues(alpha: 0.3),
-                width: 2,
+                width: 1.5,
               ),
             ),
-            child: Icon(
-              icon,
-              size: 28,
-              color: color,
-            ),
+            child: Icon(icon, size: 26, color: color),
           ),
-          const SizedBox(height: 8),
-          // Service title
+          const SizedBox(height: 6),
           Text(
             title,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface,
+              color: jdc.text,
             ),
           ),
         ],
@@ -553,11 +546,10 @@ class _MapScreenState extends State<MapScreen> {
       }
     } catch (e) {
       if (mounted) {
-        final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)!.mapLogoutError(e.toString())),
-            backgroundColor: colorScheme.error,
+            backgroundColor: JdcColors.of(context).danger,
           ),
         );
       }
