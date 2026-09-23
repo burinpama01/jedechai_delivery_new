@@ -569,24 +569,6 @@ abstract class AppLocalizations {
   /// **'Forgot password'**
   String get forgotPasswordTitle;
 
-  /// No description provided for @forgotPasswordHeader.
-  ///
-  /// In en, this message translates to:
-  /// **'Forgot password?'**
-  String get forgotPasswordHeader;
-
-  /// No description provided for @forgotPasswordSubheader.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter your email to receive a reset link'**
-  String get forgotPasswordSubheader;
-
-  /// No description provided for @forgotPasswordEmailLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Email'**
-  String get forgotPasswordEmailLabel;
-
   /// No description provided for @forgotPasswordEmailRequired.
   ///
   /// In en, this message translates to:
@@ -598,18 +580,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please enter a valid email'**
   String get forgotPasswordEmailInvalid;
-
-  /// No description provided for @forgotPasswordSubmit.
-  ///
-  /// In en, this message translates to:
-  /// **'Send reset email'**
-  String get forgotPasswordSubmit;
-
-  /// No description provided for @forgotPasswordBackToLogin.
-  ///
-  /// In en, this message translates to:
-  /// **'Back to sign in'**
-  String get forgotPasswordBackToLogin;
 
   /// No description provided for @forgotPasswordErrorDialogTitle.
   ///
@@ -15022,6 +14992,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No plan selected'**
   String get gpPlanNoneSelected;
+
+  /// No description provided for @forgotPwdIdentifierLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get forgotPwdIdentifierLabel;
+
+  /// No description provided for @forgotPwdIdentifierHint.
+  ///
+  /// In en, this message translates to:
+  /// **'name@example.com'**
+  String get forgotPwdIdentifierHint;
+
+  /// No description provided for @forgotPwdDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the email linked to your account. We\'ll send a reset link.'**
+  String get forgotPwdDescription;
+
+  /// No description provided for @forgotPwdInfoHint.
+  ///
+  /// In en, this message translates to:
+  /// **'If you don\'t receive the email, check your spam folder or contact our team'**
+  String get forgotPwdInfoHint;
+
+  /// No description provided for @forgotPwdSendLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Send reset link'**
+  String get forgotPwdSendLink;
+
+  /// No description provided for @forgotPwdBackToLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to sign in'**
+  String get forgotPwdBackToLogin;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

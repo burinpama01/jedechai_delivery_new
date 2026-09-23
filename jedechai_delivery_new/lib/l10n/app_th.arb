@@ -82,13 +82,8 @@
   "registerSuccessBody": "ลงทะเบียนเรียบร้อยแล้ว\nกรุณาเข้าสู่ระบบเพื่อเริ่มใช้งาน",
   "registerSuccessGoToLogin": "เข้าสู่ระบบ",
   "forgotPasswordTitle": "ลืมรหัสผ่าน",
-  "forgotPasswordHeader": "ลืมรหัสผ่าน?",
-  "forgotPasswordSubheader": "กรุณากรอกอีเมลของคุณเพื่อรับลิงก์รีเซ็ตรหัส",
-  "forgotPasswordEmailLabel": "อีเมล",
   "forgotPasswordEmailRequired": "กรุณากรอกอีเมล",
   "forgotPasswordEmailInvalid": "กรุณากรอกอีเมลที่ถูกต้อง",
-  "forgotPasswordSubmit": "ส่งอีเมลรีเซ็ตรหัส",
-  "forgotPasswordBackToLogin": "กลับไปหน้าเข้าสู่ระบบ",
   "forgotPasswordErrorDialogTitle": "ส่งอีเมลไม่สำเร็จ",
   "forgotPasswordSuccessTitle": "ส่งอีเมลสำเร็จ!",
   "forgotPasswordSuccessBody": "ลิงก์รีเซ็ตรหัสผ่านถูกส่งไปที่\n{email}\n\nกรุณาตรวจสอบอีเมลของคุณ",
@@ -3977,5 +3972,12 @@
   "gpPlanChanged": "เปลี่ยนเป็น {name} แล้ว",
   "@gpPlanChanged": {"placeholders": {"name": {"type": "String"}}},
   "gpPlanCustomDealName": "เงื่อนไขพิเศษ (แอดมิน)",
-  "gpPlanNoneSelected": "ยังไม่ได้เลือกแผน"
+  "gpPlanNoneSelected": "ยังไม่ได้เลือกแผน",
+
+  "forgotPwdIdentifierLabel": "อีเมล",
+  "forgotPwdIdentifierHint": "name@example.com",
+  "forgotPwdDescription": "กรอกอีเมลที่ผูกกับบัญชี เราจะส่งลิงก์ตั้งรหัสผ่านใหม่ให้",
+  "forgotPwdInfoHint": "ถ้าไม่ได้รับอีเมล ลองตรวจกล่องจดหมายขยะ หรือติดต่อทีมงาน",
+  "forgotPwdSendLink": "ส่งลิงก์ตั้งรหัสผ่านใหม่",
+  "forgotPwdBackToLogin": "กลับไปเข้าสู่ระบบ"
 }

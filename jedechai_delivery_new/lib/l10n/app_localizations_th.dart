@@ -252,25 +252,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get forgotPasswordTitle => 'ลืมรหัสผ่าน';
 
   @override
-  String get forgotPasswordHeader => 'ลืมรหัสผ่าน?';
-
-  @override
-  String get forgotPasswordSubheader => 'กรุณากรอกอีเมลของคุณเพื่อรับลิงก์รีเซ็ตรหัส';
-
-  @override
-  String get forgotPasswordEmailLabel => 'อีเมล';
-
-  @override
   String get forgotPasswordEmailRequired => 'กรุณากรอกอีเมล';
 
   @override
   String get forgotPasswordEmailInvalid => 'กรุณากรอกอีเมลที่ถูกต้อง';
-
-  @override
-  String get forgotPasswordSubmit => 'ส่งอีเมลรีเซ็ตรหัส';
-
-  @override
-  String get forgotPasswordBackToLogin => 'กลับไปหน้าเข้าสู่ระบบ';
 
   @override
   String get forgotPasswordErrorDialogTitle => 'ส่งอีเมลไม่สำเร็จ';
@@ -8069,4 +8054,22 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get gpPlanNoneSelected => 'ยังไม่ได้เลือกแผน';
+
+  @override
+  String get forgotPwdIdentifierLabel => 'อีเมล';
+
+  @override
+  String get forgotPwdIdentifierHint => 'name@example.com';
+
+  @override
+  String get forgotPwdDescription => 'กรอกอีเมลที่ผูกกับบัญชี เราจะส่งลิงก์ตั้งรหัสผ่านใหม่ให้';
+
+  @override
+  String get forgotPwdInfoHint => 'ถ้าไม่ได้รับอีเมล ลองตรวจกล่องจดหมายขยะ หรือติดต่อทีมงาน';
+
+  @override
+  String get forgotPwdSendLink => 'ส่งลิงก์ตั้งรหัสผ่านใหม่';
+
+  @override
+  String get forgotPwdBackToLogin => 'กลับไปเข้าสู่ระบบ';
 }

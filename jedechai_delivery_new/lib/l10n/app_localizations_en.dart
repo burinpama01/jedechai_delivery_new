@@ -252,25 +252,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get forgotPasswordTitle => 'Forgot password';
 
   @override
-  String get forgotPasswordHeader => 'Forgot password?';
-
-  @override
-  String get forgotPasswordSubheader => 'Enter your email to receive a reset link';
-
-  @override
-  String get forgotPasswordEmailLabel => 'Email';
-
-  @override
   String get forgotPasswordEmailRequired => 'Please enter email';
 
   @override
   String get forgotPasswordEmailInvalid => 'Please enter a valid email';
-
-  @override
-  String get forgotPasswordSubmit => 'Send reset email';
-
-  @override
-  String get forgotPasswordBackToLogin => 'Back to sign in';
 
   @override
   String get forgotPasswordErrorDialogTitle => 'Failed to send email';
@@ -8069,4 +8054,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gpPlanNoneSelected => 'No plan selected';
+
+  @override
+  String get forgotPwdIdentifierLabel => 'Email';
+
+  @override
+  String get forgotPwdIdentifierHint => 'name@example.com';
+
+  @override
+  String get forgotPwdDescription => 'Enter the email linked to your account. We\'ll send a reset link.';
+
+  @override
+  String get forgotPwdInfoHint => 'If you don\'t receive the email, check your spam folder or contact our team';
+
+  @override
+  String get forgotPwdSendLink => 'Send reset link';
+
+  @override
+  String get forgotPwdBackToLogin => 'Back to sign in';
 }

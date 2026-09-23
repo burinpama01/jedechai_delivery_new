@@ -1,14 +1,17 @@
 // Dev-only Wave 1.5 preview for merchant b5 artboards.
-// เลือกหน้าด้วย ?screen=OptionLibrary|Coupons|GpPlan
+// เลือกหน้าด้วย ?screen=OptionLibrary|Coupons|GpPlan|Settings|Profile|ForgotPassword
 // หน้าเหล่านี้ต้อง login จึงใช้ fixture ผ่าน optional constructor parameter
 // ไม่กระทบ production เพราะ parameter default null
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:jedechai_delivery_new/apps/customer/screens/auth/forgot_password_screen.dart';
 import 'package:jedechai_delivery_new/apps/merchant/screens/menu/merchant_option_library_screen.dart';
 import 'package:jedechai_delivery_new/apps/merchant/screens/merchant_coupon_management_screen.dart';
 import 'package:jedechai_delivery_new/apps/merchant/screens/merchant_gp_plan_screen.dart';
+import 'package:jedechai_delivery_new/apps/merchant/screens/merchant_settings_screen.dart';
+import 'package:jedechai_delivery_new/apps/merchant/screens/profile/merchant_profile_screen.dart';
 import 'package:jedechai_delivery_new/common/config/env_config.dart';
 import 'package:jedechai_delivery_new/common/models/coupon.dart';
 import 'package:jedechai_delivery_new/common/models/menu_option.dart';
@@ -251,6 +254,11 @@ class _PreviewScreen extends StatelessWidget {
             fixturePlans: _gpPlansFixture(),
             fixtureStatus: _gpStatusFixture(),
           ),
+        // b5merchant batch 2 screens — ต้องการ auth session จริง
+        // (merchant_settings + merchant_profile ใช้ ProfileService ดึงข้อมูลจาก Supabase)
+        'Settings' => const MerchantSettingsScreen(),
+        'Profile' => const MerchantProfileScreen(),
+        'ForgotPassword' => const ForgotPasswordScreen(),
         _ => Scaffold(
             body: Center(
               child: Text('Unknown preview screen: $screen'),

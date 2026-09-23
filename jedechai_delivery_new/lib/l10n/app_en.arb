@@ -82,13 +82,8 @@
   "registerSuccessBody": "Registration completed\nPlease sign in to start using the app",
   "registerSuccessGoToLogin": "Sign in",
   "forgotPasswordTitle": "Forgot password",
-  "forgotPasswordHeader": "Forgot password?",
-  "forgotPasswordSubheader": "Enter your email to receive a reset link",
-  "forgotPasswordEmailLabel": "Email",
   "forgotPasswordEmailRequired": "Please enter email",
   "forgotPasswordEmailInvalid": "Please enter a valid email",
-  "forgotPasswordSubmit": "Send reset email",
-  "forgotPasswordBackToLogin": "Back to sign in",
   "forgotPasswordErrorDialogTitle": "Failed to send email",
   "forgotPasswordSuccessTitle": "Email sent!",
   "forgotPasswordSuccessBody": "A password reset link has been sent to\n{email}\n\nPlease check your inbox",
@@ -3977,5 +3972,12 @@
   "gpPlanChanged": "Switched to {name}",
   "@gpPlanChanged": {"placeholders": {"name": {"type": "String"}}},
   "gpPlanCustomDealName": "Custom deal (admin)",
-  "gpPlanNoneSelected": "No plan selected"
+  "gpPlanNoneSelected": "No plan selected",
+
+  "forgotPwdIdentifierLabel": "Email",
+  "forgotPwdIdentifierHint": "name@example.com",
+  "forgotPwdDescription": "Enter the email linked to your account. We'll send a reset link.",
+  "forgotPwdInfoHint": "If you don't receive the email, check your spam folder or contact our team",
+  "forgotPwdSendLink": "Send reset link",
+  "forgotPwdBackToLogin": "Back to sign in"
 }
