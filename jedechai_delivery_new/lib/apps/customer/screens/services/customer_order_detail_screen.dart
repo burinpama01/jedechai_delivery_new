@@ -272,96 +272,182 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
+    final currentStatus = _currentBooking?.status ?? widget.booking.status;
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        title: Text(
-          AppLocalizations.of(context)!.orderDetailScreenTitle,
-          style: TextStyle(
-            color: colorScheme.onSurface,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        actions: [
-          // Cancel order button (only show for cancellable statuses)
-          if (_canCancelOrder())
-            Container(
-              margin: const EdgeInsets.only(right: 8),
-              child: TextButton.icon(
-                onPressed: _showCancelOrderDialog,
-                icon: Icon(Icons.cancel, size: 16, color: colorScheme.error),
-                label: Text(
-                  AppLocalizations.of(context)!.orderDetailCancel,
-                  style: TextStyle(
-                    color: colorScheme.error,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
+      backgroundColor: jdc.paper,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(64),
+        child: Container(
+          color: jdc.surface,
+          child: SafeArea(
+            bottom: false,
+            child: Row(
+              children: [
+                // Back button
+                GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    width: 44, height: 64,
+                    alignment: Alignment.center,
+                    child: Icon(Icons.chevron_left,
+                        size: 21, color: jdc.text),
                   ),
                 ),
-                style: TextButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  backgroundColor:
-                      colorScheme.errorContainer.withValues(alpha: 0.45),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                // Order code + date
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        OrderCodeFormatter.format(widget.booking.id),
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: jdc.text,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        _formatDateTime(widget.booking.createdAt),
+                        style:
+                            TextStyle(fontSize: 12, color: jdc.muted),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
                 ),
-              ),
+                // Status badge
+                Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _statusBadgeBg(jdc, currentStatus),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    _getStatusText(currentStatus),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: _statusBadgeInk(jdc, currentStatus),
+                    ),
+                  ),
+                ),
+                // Cancel button (only for cancellable statuses)
+                if (_canCancelOrder()) ...[
+                  GestureDetector(
+                    onTap: _showCancelOrderDialog,
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: jdc.dangerSoft,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: jdc.dangerLine),
+                      ),
+                      child: Text(
+                        l10n.orderDetailCancel,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: jdc.dangerInk,
+                        ),
+                      ),
+                    ),
+                  ),
+                ] else
+                  const SizedBox(width: 4),
+              ],
             ),
-          Builder(
-            builder: (context) {
-              final currentStatus =
-                  _currentBooking?.status ?? widget.booking.status;
-              return Container(
-                margin: const EdgeInsets.only(right: 16),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: _getStatusColor(currentStatus),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  _getStatusText(currentStatus),
-                  style: TextStyle(
-                    color: colorScheme.onPrimary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                ),
-              );
-            },
           ),
-        ],
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildOrderInfoCard(),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             _buildLocationCard(),
             if (_driverInfo != null && _shouldShowDriverInfo()) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               _buildDriverInfoCard(),
             ],
             if (_orderItems.isNotEmpty) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               _buildOrderItemsCard(),
             ],
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             _buildPricingCard(),
+            const SizedBox(height: 20),
           ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+        decoration: BoxDecoration(
+          color: jdc.surface,
+          border: Border(top: BorderSide(color: jdc.line)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Row(
+            children: [
+              // Help button
+              GestureDetector(
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const HelpScreen()),
+                ),
+                child: Container(
+                  width: 118, height: 52,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: jdc.line),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    l10n.b1orderDetailHelp,
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: jdc.text),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              // Reorder button
+              Expanded(
+                child: GestureDetector(
+                  onTap: _reorder,
+                  child: Container(
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: jdc.cta,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: jdc.shadowBrand,
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      l10n.b1orderDetailReorder,
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: jdc.onCta),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1353,31 +1439,50 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
     }
   }
 
-  Color _getStatusColor(String status) {
+  /// สั่งซ้ำ: เปิดหน้าร้านเดิมให้ลูกค้าเลือกเมนูใหม่
+  /// (ถ้าออเดอร์ไม่มีร้าน เช่น งานส่งพัสดุ จะแจ้งว่าสั่งซ้ำไม่ได้)
+  void _reorder() {
+    final booking = _currentBooking ?? widget.booking;
+    final merchantId = booking.merchantId;
+    final l10n = AppLocalizations.of(context)!;
+    if (merchantId == null || merchantId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.b1orderDetailReorderUnavailable)),
+      );
+      return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => RestaurantDetailScreen(
+          merchantId: merchantId,
+          merchantName: (booking.pickupAddress?.isNotEmpty ?? false)
+              ? booking.pickupAddress!
+              : l10n.foodSvcRestaurantFallback,
+        ),
+      ),
+    );
+  }
+
+  /// สีพื้นป้ายสถานะ: สำเร็จ = เขียว, ยกเลิก = แดง, กำลังดำเนินการ = โทนแบรนด์
+  Color _statusBadgeBg(JdcColors jdc, String status) {
     switch (status.toLowerCase()) {
-      case 'pending':
-        return JdcColors.of(context).brand;
-      case 'pending_merchant':
-        return JdcColors.of(context).brandOnSoft;
-      case 'preparing':
-        return JdcColors.of(context).infoInk;
-      case 'ready_for_pickup':
-        return JdcColors.of(context).infoInk;
-      case 'driver_accepted':
-        return JdcColors.of(context).infoInk;
-      case 'accepted':
-      case 'confirmed':
-        return JdcColors.of(context).infoInk;
-      case 'arrived':
-        return JdcColors.of(context).successInk;
-      case 'in_transit':
-        return JdcColors.of(context).infoInk;
       case 'completed':
-        return JdcColors.of(context).successInk;
+        return jdc.successSoft;
       case 'cancelled':
-        return JdcColors.of(context).danger;
+        return jdc.dangerSoft;
       default:
-        return JdcColors.of(context).muted;
+        return jdc.brandSoft;
+    }
+  }
+
+  Color _statusBadgeInk(JdcColors jdc, String status) {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return jdc.successInk;
+      case 'cancelled':
+        return jdc.dangerInk;
+      default:
+        return jdc.brandOnSoft;
     }
   }
 

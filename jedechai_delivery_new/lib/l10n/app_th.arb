@@ -2185,7 +2185,7 @@
   "driverAssignedHeading": "คนขับรับงานแล้ว!",
   "driverAssignedSubtitle": "คนขับกำลังเดินทางมาหาคุณ",
   "driverAssignedOnTheWay": "คนขับกำลังเดินทาง",
-  "driverAssignedEta": "ระยะเวลาโดยประมาณ: 5-10 นาที",
+  "driverAssignedEta": "ระยะเวลาโดยประมาณ",
   "driverAssignedContact": "ติดต่อคนขับ",
   "driverAssignedCancelBooking": "ยกเลิกการจอง",
   "driverAssignedContactTitle": "ติดต่อคนขับ",
@@ -3285,5 +3285,83 @@
   "topupStatusAwaiting": "รอชำระเงิน",
   "topupStatusQrExpired": "QR หมดอายุ",
   "topupStatusFailed": "ชำระไม่สำเร็จ",
-  "driverNavProxLaundryPickup": "จุดรับผ้า"
+  "driverNavProxLaundryPickup": "จุดรับผ้า",
+  "customerHomeDeliverTo": "ส่งไปที่",
+  "customerHomeSearchHint": "ค้นหาร้าน เมนู หรือบริการ",
+  "customerHomeTopUp": "เติมเงิน",
+  "customerHomeRecommendedNearby": "ร้านแนะนำใกล้คุณ",
+  "customerHomeSeeAll": "ดูทั้งหมด",
+  "customerHomeServiceFood": "อาหาร",
+  "customerHomeServiceLaundry": "ซักรีด",
+  "customerHomeTrack": "ติดตาม",
+  "customerHomeActiveTrackCard": "ติดตาม",
+  "foodSvcFilterSort": "ตัวกรอง",
+  "foodSvcFilterNearby": "ใกล้ฉัน",
+  "foodSvcFilterRating": "คะแนนสูง",
+  "foodSvcFilterFreeDelivery": "ส่งฟรี",
+  "foodSvcShopCount": "{count} ร้าน",
+  "@foodSvcShopCount": {
+    "placeholders": {
+      "count": { "type": "String" }
+    }
+  },
+  "driverAssignedFoundHeading": "ได้คนขับแล้ว",
+  "driverAssignedFoundSubtitle": "กำลังไปรับอาหารที่ร้าน",
+  "driverAssignedChatLabel": "แชท",
+  "driverAssignedCallLabel": "โทร",
+  "driverAssignedTrackMap": "ติดตามบนแผนที่",
+  "driverAssignedEtaMinutes": "~{min} นาที",
+  "@driverAssignedEtaMinutes": {
+    "placeholders": {
+      "min": { "type": "String" }
+    }
+  },
+  "waitingSearchingTitle": "กำลังหาคนขับให้คุณ",
+  "waitingSearchingBody": "ปกติใช้เวลาไม่เกิน 2 นาที\nเราจะแจ้งทันทีที่มีคนขับรับงาน",
+  "waitingCancelOrder": "ยกเลิกคำสั่งซื้อ",
+  "waitingCancelNote": "ยกเลิกหลังร้านเริ่มทำอาหารแล้วอาจมีค่าธรรมเนียม",
+  "waitingNoDriverCancelFailed": "ไม่มีคนขับรับงานนี้ และยกเลิกไม่สำเร็จ กรุณาลองยกเลิกอีกครั้ง",
+  "waitingNoDriverTitle": "ไม่มีคนขับรับงานนี้",
+  "waitingNoDriverBody": "ระบบยกเลิกคำขอนี้แล้ว เพราะไม่มีคนขับใกล้เคียงรับงานทันเวลา กรุณาลองใหม่อีกครั้ง",
+  "waitingBackToHome": "กลับหน้าแรก",
+  "waitingHelpLabel": "ช่วยเหลือ",
+  "b1foodCheckoutDeliverTo": "ส่งไปที่",
+  "b1foodCheckoutDeliverNow": "ส่งทันที",
+  "b1foodCheckoutCouponChange": "เปลี่ยน",
+  "b1foodCheckoutFoodCost": "ค่าอาหาร",
+  "b1foodCheckoutDeliveryFee": "ค่าส่ง",
+  "b1foodCheckoutCouponDiscount": "ส่วนลดคูปอง",
+  "b1foodCheckoutTotal": "ยอดชำระ",
+  "b1foodCheckoutOrderNow": "สั่งเลย",
+  "b1foodCheckoutPayWallet": "JDC Wallet",
+  "b1foodCheckoutPayCash": "เงินสดปลายทาง",
+  "b1payWalletLabel": "ชำระค่าอาหารด้วย JDC Wallet",
+  "b1payBalance": "ยอดคงเหลือ",
+  "b1payAfterPay": "คงเหลือหลังชำระ",
+  "b1payConfirm": "ยืนยันชำระ ฿{amount}",
+  "@b1payConfirm": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "b1payTopup": "เติมเงินเข้ากระเป๋า",
+  "b1payNote": "ยอดจะถูกหักทันที และคืนเข้ากระเป๋าอัตโนมัติหากร้านปฏิเสธออเดอร์",
+  "b1paySummaryTitle": "สรุปยอด",
+  "b1payFoodCost": "ค่าอาหาร",
+  "b1payDeliveryFee": "ค่าส่ง",
+  "b1payCouponDiscount": "ส่วนลดคูปอง",
+  "b1payTotal": "ยอดชำระ",
+  "b1trackStatusLabel": "กำลังดำเนินการ",
+  "b1trackMinutesLabel": "นาที",
+  "b1trackPaymentRow": "ยอดชำระ · JDC Wallet",
+  "b1orderDetailReorder": "สั่งซ้ำ",
+  "b1orderDetailReorderUnavailable": "ออเดอร์นี้สั่งซ้ำไม่ได้",
+  "b1orderDetailHelp": "ขอความช่วยเหลือ",
+  "b1orderDetailPayWith": "ชำระด้วย",
+  "b1orderDetailDeliveredAt": "ส่งถึงเมื่อ {time} น.",
+  "@b1orderDetailDeliveredAt": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  }
 }

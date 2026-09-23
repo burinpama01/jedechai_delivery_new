@@ -8150,7 +8150,7 @@ abstract class AppLocalizations {
   /// No description provided for @driverAssignedEta.
   ///
   /// In en, this message translates to:
-  /// **'Estimated time: 5-10 minutes'**
+  /// **'Estimated time'**
   String get driverAssignedEta;
 
   /// No description provided for @driverAssignedContact.
@@ -12148,6 +12148,354 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Laundry pickup point'**
   String get driverNavProxLaundryPickup;
+
+  /// No description provided for @customerHomeDeliverTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Deliver to'**
+  String get customerHomeDeliverTo;
+
+  /// No description provided for @customerHomeSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search restaurants, menus or services'**
+  String get customerHomeSearchHint;
+
+  /// No description provided for @customerHomeTopUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Top up'**
+  String get customerHomeTopUp;
+
+  /// No description provided for @customerHomeRecommendedNearby.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended near you'**
+  String get customerHomeRecommendedNearby;
+
+  /// No description provided for @customerHomeSeeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'See all'**
+  String get customerHomeSeeAll;
+
+  /// No description provided for @customerHomeServiceFood.
+  ///
+  /// In en, this message translates to:
+  /// **'Food'**
+  String get customerHomeServiceFood;
+
+  /// No description provided for @customerHomeServiceLaundry.
+  ///
+  /// In en, this message translates to:
+  /// **'Laundry'**
+  String get customerHomeServiceLaundry;
+
+  /// No description provided for @customerHomeTrack.
+  ///
+  /// In en, this message translates to:
+  /// **'Track'**
+  String get customerHomeTrack;
+
+  /// No description provided for @customerHomeActiveTrackCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Track'**
+  String get customerHomeActiveTrackCard;
+
+  /// No description provided for @foodSvcFilterSort.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get foodSvcFilterSort;
+
+  /// No description provided for @foodSvcFilterNearby.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby'**
+  String get foodSvcFilterNearby;
+
+  /// No description provided for @foodSvcFilterRating.
+  ///
+  /// In en, this message translates to:
+  /// **'Top rated'**
+  String get foodSvcFilterRating;
+
+  /// No description provided for @foodSvcFilterFreeDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Free delivery'**
+  String get foodSvcFilterFreeDelivery;
+
+  /// No description provided for @foodSvcShopCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} shops'**
+  String foodSvcShopCount(String count);
+
+  /// No description provided for @driverAssignedFoundHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver found!'**
+  String get driverAssignedFoundHeading;
+
+  /// No description provided for @driverAssignedFoundSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'On the way to pick up your order'**
+  String get driverAssignedFoundSubtitle;
+
+  /// No description provided for @driverAssignedChatLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat'**
+  String get driverAssignedChatLabel;
+
+  /// No description provided for @driverAssignedCallLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Call'**
+  String get driverAssignedCallLabel;
+
+  /// No description provided for @driverAssignedTrackMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Track on map'**
+  String get driverAssignedTrackMap;
+
+  /// No description provided for @driverAssignedEtaMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'~{min} min'**
+  String driverAssignedEtaMinutes(String min);
+
+  /// No description provided for @waitingSearchingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Finding a driver for you'**
+  String get waitingSearchingTitle;
+
+  /// No description provided for @waitingSearchingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Usually takes less than 2 minutes.\nWe\'ll notify you as soon as a driver accepts.'**
+  String get waitingSearchingBody;
+
+  /// No description provided for @waitingCancelOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel order'**
+  String get waitingCancelOrder;
+
+  /// No description provided for @waitingCancelNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelling after the restaurant starts preparing may incur a fee.'**
+  String get waitingCancelNote;
+
+  /// No description provided for @waitingNoDriverCancelFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'No driver accepted this ride, but cancellation failed. Please try cancelling again.'**
+  String get waitingNoDriverCancelFailed;
+
+  /// No description provided for @waitingNoDriverTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No driver accepted this ride'**
+  String get waitingNoDriverTitle;
+
+  /// No description provided for @waitingNoDriverBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We cancelled this request because no nearby driver accepted it in time. Please try again.'**
+  String get waitingNoDriverBody;
+
+  /// No description provided for @waitingBackToHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to home'**
+  String get waitingBackToHome;
+
+  /// No description provided for @waitingHelpLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Help'**
+  String get waitingHelpLabel;
+
+  /// No description provided for @b1foodCheckoutDeliverTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Deliver to'**
+  String get b1foodCheckoutDeliverTo;
+
+  /// No description provided for @b1foodCheckoutDeliverNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Deliver now'**
+  String get b1foodCheckoutDeliverNow;
+
+  /// No description provided for @b1foodCheckoutCouponChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get b1foodCheckoutCouponChange;
+
+  /// No description provided for @b1foodCheckoutFoodCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Food cost'**
+  String get b1foodCheckoutFoodCost;
+
+  /// No description provided for @b1foodCheckoutDeliveryFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery fee'**
+  String get b1foodCheckoutDeliveryFee;
+
+  /// No description provided for @b1foodCheckoutCouponDiscount.
+  ///
+  /// In en, this message translates to:
+  /// **'Coupon discount'**
+  String get b1foodCheckoutCouponDiscount;
+
+  /// No description provided for @b1foodCheckoutTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get b1foodCheckoutTotal;
+
+  /// No description provided for @b1foodCheckoutOrderNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Order now'**
+  String get b1foodCheckoutOrderNow;
+
+  /// No description provided for @b1foodCheckoutPayWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'JDC Wallet'**
+  String get b1foodCheckoutPayWallet;
+
+  /// No description provided for @b1foodCheckoutPayCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash on delivery'**
+  String get b1foodCheckoutPayCash;
+
+  /// No description provided for @b1payWalletLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay food with JDC Wallet'**
+  String get b1payWalletLabel;
+
+  /// No description provided for @b1payBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance'**
+  String get b1payBalance;
+
+  /// No description provided for @b1payAfterPay.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining after payment'**
+  String get b1payAfterPay;
+
+  /// No description provided for @b1payConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm pay ฿{amount}'**
+  String b1payConfirm(String amount);
+
+  /// No description provided for @b1payTopup.
+  ///
+  /// In en, this message translates to:
+  /// **'Top up wallet'**
+  String get b1payTopup;
+
+  /// No description provided for @b1payNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount deducted immediately. Auto-refunded if restaurant rejects the order.'**
+  String get b1payNote;
+
+  /// No description provided for @b1paySummaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get b1paySummaryTitle;
+
+  /// No description provided for @b1payFoodCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Food cost'**
+  String get b1payFoodCost;
+
+  /// No description provided for @b1payDeliveryFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery fee'**
+  String get b1payDeliveryFee;
+
+  /// No description provided for @b1payCouponDiscount.
+  ///
+  /// In en, this message translates to:
+  /// **'Coupon discount'**
+  String get b1payCouponDiscount;
+
+  /// No description provided for @b1payTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get b1payTotal;
+
+  /// No description provided for @b1trackStatusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get b1trackStatusLabel;
+
+  /// No description provided for @b1trackMinutesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'min'**
+  String get b1trackMinutesLabel;
+
+  /// No description provided for @b1trackPaymentRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment · JDC Wallet'**
+  String get b1trackPaymentRow;
+
+  /// No description provided for @b1orderDetailReorder.
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder'**
+  String get b1orderDetailReorder;
+
+  /// No description provided for @b1orderDetailReorderUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This order cannot be reordered'**
+  String get b1orderDetailReorderUnavailable;
+
+  /// No description provided for @b1orderDetailHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Get help'**
+  String get b1orderDetailHelp;
+
+  /// No description provided for @b1orderDetailPayWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid with'**
+  String get b1orderDetailPayWith;
+
+  /// No description provided for @b1orderDetailDeliveredAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered at {time}'**
+  String b1orderDetailDeliveredAt(String time);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

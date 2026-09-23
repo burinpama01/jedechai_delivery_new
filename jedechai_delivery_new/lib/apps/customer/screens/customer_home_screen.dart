@@ -12,6 +12,7 @@ import '../../../common/models/booking.dart';
 import '../../../common/services/supabase_service.dart';
 import '../../../common/services/wallet_service.dart';
 import '../../../common/utils/order_code_formatter.dart';
+import '../../../common/utils/role_amount_calculator.dart';
 import '../../../common/widgets/app_network_image.dart';
 import 'ride/ride_home_screen.dart';
 import 'services/food_home_screen.dart';
@@ -19,9 +20,7 @@ import 'services/laundry_service_screen.dart';
 import 'services/parcel_service_screen.dart';
 import 'services/customer_order_detail_screen.dart';
 import 'services/tracking_screen.dart';
-import 'activity_screen.dart';
 import 'services/saved_addresses_screen.dart';
-import 'services/help_screen.dart';
 import 'customer_wallet_screen.dart';
 import '../../../common/screens/notification_center_screen.dart';
 
@@ -336,235 +335,156 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
     });
   }
 
+  // ─── Wave 1.5 / b1food: new build follows Main artboard ─────────────────────
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final displayName = _userProfile?['full_name'] ?? 'Guest';
-
+    final jdc = JdcColors.of(context);
     return Scaffold(
-      backgroundColor: colorScheme.surface,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+      backgroundColor: jdc.paper,
+      body: Column(
+        children: [
+          _buildB1HeroHeader(),
+          Expanded(
+            child: RefreshIndicator(
+              color: jdc.brand,
+              onRefresh: _b1RefreshAll,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildB1WalletCard(),
+                    const SizedBox(height: 16),
+                    _buildB1ServiceIcons(),
+                    if (!_isLoadingBookings && _activeBookings.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      _buildB1ActiveTrackCard(_activeBookings.first),
+                    ],
+                    const SizedBox(height: 22),
+                    _buildB1RestaurantSection(),
+                    if (_banners.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      _buildPromoBanner(),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _b1RefreshAll() async {
+    await Future.wait([_loadWalletSummary(), _loadActiveBookings(), _loadBanners()]);
+  }
+
+  // ── Hero header (full-bleed gradient, no rounded corners at top) ─────────
+  Widget _buildB1HeroHeader() {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final address = _userProfile?['default_address'] as String? ??
+        _userProfile?['address'] as String? ??
+        '—';
+    return Container(
+      decoration: BoxDecoration(
+        gradient: jdc.hero,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeroHeader(displayName),
-              const SizedBox(height: 18),
-              _buildWalletSummaryCard(),
-              const SizedBox(height: 18),
-              _buildActiveOrdersPanel(),
-              const SizedBox(height: 22),
-              Text(
-                AppLocalizations.of(context)!.customerHomePopularServices,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: 12),
-              _buildServiceGrid(context),
-              const SizedBox(height: 24),
-              _buildQuickActionsStrip(),
-              const SizedBox(height: 20),
-              _buildPromoBanner(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeroHeader(String displayName) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [JdcColors.of(context).panel, JdcColors.of(context).infoInk],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: JdcColors.of(context).panel.withValues(alpha: 0.25),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(Icons.near_me, color: Colors.white, size: 26),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      AppLocalizations.of(context)!.customerHomeGreeting,
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      displayName,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const NotificationCenterScreen(role: 'customer'),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.notifications, color: Colors.white),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            AppLocalizations.of(context)!.customerHomeHelpToday,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.9),
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _buildHeroChip(AppLocalizations.of(context)!.customerHomeAvailable247),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _buildHeroChip(AppLocalizations.of(context)!.customerHomeRealtimeTracking),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeroChip(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
-  String _formatWalletMoney(num amount) {
-    return '฿${amount.toStringAsFixed(0)}';
-  }
-
-  Widget _buildWalletSummaryCard() {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: () async {
-          await Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const CustomerWalletScreen()),
-          );
-          if (mounted) await _loadWalletSummary();
-        },
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: JdcColors.of(context).cta.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(
-                  Icons.account_balance_wallet_outlined,
-                  color: JdcColors.of(context).cta,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'ยอดเงินใน Wallet',
-                      style: TextStyle(
-                        color: colorScheme.onSurfaceVariant,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _isLoadingWallet ? 'กำลังโหลด...' : _formatWalletMoney(_walletBalance),
-                      style: TextStyle(
-                        color: colorScheme.onSurface,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              Row(
                 children: [
-                  Icon(Icons.chevron_right, color: JdcColors.of(context).cta),
-                  const SizedBox(height: 4),
-                  Text(
-                    'เติม / ถอน',
-                    style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                  Expanded(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const SavedAddressesScreen()),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.location_on_rounded, color: jdc.brandHi, size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  l10n.customerHomeDeliverTo,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.9,
+                                    color: jdc.brandHi,
+                                  ),
+                                ),
+                                Text(
+                                  address,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: jdc.onPanel,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(Icons.keyboard_arrow_down_rounded, color: jdc.onPanel, size: 18),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const NotificationCenterScreen(role: 'customer')),
+                    ),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: jdc.panelLine),
+                        borderRadius: BorderRadius.circular(14),
+                        color: jdc.panelSoft2,
+                      ),
+                      child: Icon(Icons.notifications_none_rounded, color: jdc.onPanel, size: 20),
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: 16),
+              Container(
+                height: 46,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: jdc.surface,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.search_rounded, color: jdc.muted, size: 18),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        l10n.customerHomeSearchHint,
+                        style: TextStyle(fontSize: 14, color: jdc.dim),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -572,255 +492,374 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
     );
   }
 
-  Widget _buildActiveOrdersPanel() {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              // หัวข้อยาวกว่าที่ว่างบนจอแคบ ต้องยอมย่อแทนการดันจนล้น
-              Expanded(
-                child: Text(
-                  AppLocalizations.of(context)!.customerHomePendingOrders,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: colorScheme.onSurface,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 8),
-              if (_isLoadingBookings)
-                SizedBox(
-                  height: 16,
-                  width: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(JdcColors.of(context).cta),
-                  ),
-                )
-              else
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: JdcColors.of(context).cta.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    AppLocalizations.of(context)!.customerHomeJobCount(_activeBookings.length.toString()),
-                    style: TextStyle(
-                      color: JdcColors.of(context).cta,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          if (!_isLoadingBookings && _activeBookings.isNotEmpty) ...[
-            ..._activeBookings.take(2).map((booking) => _buildActiveOrderCard(booking)),
-            if (_activeBookings.length > 2) ...[
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const ActivityScreen()),
-                ),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  decoration: BoxDecoration(
-                    color: JdcColors.of(context).cta.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    'ดูทั้งหมด (${_activeBookings.length})',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: JdcColors.of(context).cta,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ] else if (!_isLoadingBookings)
+  // ── Wallet summary card ───────────────────────────────────────────────────
+  Widget _buildB1WalletCard() {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    return GestureDetector(
+      onTap: () async {
+        await Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const CustomerWalletScreen()),
+        );
+        if (mounted) _loadWalletSummary();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: jdc.surface,
+          border: Border.all(color: jdc.line),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: jdc.shadowCard,
+        ),
+        child: Row(
+          children: [
             Container(
-              padding: const EdgeInsets.all(16),
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(14),
+                color: jdc.brandSoft,
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Text(
-                AppLocalizations.of(context)!.customerHomeNoJobs,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildServiceGrid(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildServiceCard(
-                icon: Icons.directions_car,
-                title: AppLocalizations.of(context)!.customerHomeCallRide,
-                subtitle: AppLocalizations.of(context)!.customerHomeCallRideSubtitle,
-                color: JdcColors.of(context).infoInk,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => RideHomeScreen(),
-                    ),
-                  );
-                },
-              ),
+              child: Icon(Icons.account_balance_wallet_outlined, color: jdc.brandOnSoft, size: 21),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: _buildServiceCard(
-                icon: Icons.restaurant,
-                title: AppLocalizations.of(context)!.customerHomeOrderFood,
-                subtitle: AppLocalizations.of(context)!.customerHomeOrderFoodSubtitle,
-                color: JdcColors.of(context).brand,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const FoodHomeScreen(),
-                    ),
-                  );
-                },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'JDC Wallet',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: jdc.muted),
+                  ),
+                  Text(
+                    _isLoadingWallet ? '...' : '฿${_walletBalance.toStringAsFixed(2)}',
+                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700, color: jdc.text),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              height: 44,
+              decoration: BoxDecoration(
+                color: jdc.brandSoft2,
+                border: Border.all(color: jdc.brandLine),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(
+                  l10n.customerHomeTopUp,
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: jdc.link),
+                ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildServiceCard(
-                icon: Icons.local_shipping,
-                title: AppLocalizations.of(context)!.customerHomeSendParcel,
-                subtitle:
-                    AppLocalizations.of(context)!.customerHomeSendParcelSubtitle,
-                color: JdcColors.of(context).cta,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => ParcelServiceScreen(),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildServiceCard(
-                icon: Icons.local_laundry_service_rounded,
-                title: 'ซักผ้า',
-                subtitle: 'ส่งคำขอประเมินราคา',
-                color: JdcColors.of(context).infoInk,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const LaundryServiceScreen(),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
+      ),
+    );
+  }
+
+  // ── 4-icon service row ────────────────────────────────────────────────────
+  Widget _buildB1ServiceIcons() {
+    final l10n = AppLocalizations.of(context)!;
+    final jdc = JdcColors.of(context);
+    return Row(
+      children: [
+        _b1ServiceIcon(
+          icon: Icons.restaurant_rounded,
+          label: l10n.customerHomeServiceFood,
+          bgColor: jdc.brandSoft,
+          iconColor: jdc.link,
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FoodHomeScreen())),
+        ),
+        const SizedBox(width: 10),
+        _b1ServiceIcon(
+          icon: Icons.directions_car_rounded,
+          label: l10n.customerHomeCallRide,
+          bgColor: jdc.infoSoft,
+          iconColor: jdc.infoInk,
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => RideHomeScreen())),
+        ),
+        const SizedBox(width: 10),
+        _b1ServiceIcon(
+          icon: Icons.inventory_2_rounded,
+          label: l10n.customerHomeSendParcel,
+          bgColor: jdc.successSoft,
+          iconColor: jdc.successInk,
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ParcelServiceScreen())),
+        ),
+        const SizedBox(width: 10),
+        _b1ServiceIcon(
+          icon: Icons.local_laundry_service_rounded,
+          label: l10n.customerHomeServiceLaundry,
+          bgColor: jdc.sunken,
+          iconColor: jdc.text,
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LaundryServiceScreen())),
         ),
       ],
     );
   }
 
-  Widget _buildQuickActionsStrip() {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _b1ServiceIcon({
+    required IconData icon,
+    required String label,
+    required Color bgColor,
+    required Color iconColor,
+    required VoidCallback onTap,
+  }) {
+    final jdc = JdcColors.of(context);
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          decoration: BoxDecoration(
+            color: jdc.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: jdc.line),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Icon(icon, color: iconColor, size: 22),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: jdc.text),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Active order tracking card (dark panel) ───────────────────────────────
+  Widget _buildB1ActiveTrackCard(Booking booking) {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final trackingStatuses = {
+      'driver_assigned', 'driver_accepted', 'arrived_at_merchant',
+      'picking_up_order', 'in_transit', 'arrived',
+    };
+    final isTracking = trackingStatuses.contains(booking.status);
+    // ยอดสุทธิที่ลูกค้าต้องจ่าย (หักคูปองแล้ว) — เดิมการ์ดนี้เดาจำนวนรายการจากราคา ซึ่งไม่ใช่ข้อมูลจริง
+    final couponDiscount = (_couponUsageByBookingId[booking.id]?['discount_amount'] as num?)?.toDouble() ?? 0;
+    final netTotal = RoleAmountCalculator.netDisplayTotalForService(
+      serviceType: booking.serviceType,
+      price: booking.price,
+      deliveryFee: booking.deliveryFee,
+      couponDiscountAmount: couponDiscount,
+    );
+    final orderId = OrderCodeFormatter.formatByServiceType(booking.id, serviceType: booking.serviceType);
+
+    return GestureDetector(
+      onTap: () {
+        if (isTracking) {
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => TrackingScreen(booking: booking)));
+        } else {
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => CustomerOrderDetailScreen(booking: booking)));
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: jdc.panel,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 8, height: 8,
+                  decoration: BoxDecoration(color: jdc.brandHi, shape: BoxShape.circle),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _getStatusText(booking.status),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: jdc.onPanel),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: jdc.panelSoft2,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    isTracking ? l10n.customerHomeTrack : _getStatusText(booking.status),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: jdc.brandHi),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: List.generate(4, (i) {
+                final filled = i <= _statusProgress(booking.status);
+                return Expanded(
+                  child: Container(
+                    height: 4,
+                    margin: EdgeInsets.only(right: i < 3 ? 5 : 0),
+                    decoration: BoxDecoration(
+                      color: filled ? jdc.brand : jdc.panelLine,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                );
+              }),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '฿${netTotal.ceil()} · #$orderId',
+                    style: TextStyle(fontSize: 12, color: jdc.panelDim),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Text(
+                  l10n.customerHomeTrack,
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: jdc.onPanel),
+                ),
+                const SizedBox(width: 4),
+                Icon(Icons.chevron_right_rounded, color: jdc.onPanel, size: 16),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  int _statusProgress(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+      case 'searching':
+      case 'pending_merchant':
+        return 0;
+      case 'confirmed':
+      case 'accepted':
+      case 'matched':
+      case 'preparing':
+        return 1;
+      case 'driver_assigned':
+      case 'driver_accepted':
+      case 'ready_for_pickup':
+      case 'arrived_at_merchant':
+      case 'picking_up_order':
+        return 2;
+      case 'in_transit':
+      case 'in_progress':
+        return 3;
+      default:
+        return 0;
+    }
+  }
+
+  // ── Restaurant recommendations section ────────────────────────────────────
+  Widget _buildB1RestaurantSection() {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    // Show limited restaurants from the food home service (reuse existing data if available)
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          AppLocalizations.of(context)!.customerHomeQuickActions,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
-              child: _buildQuickActionCard(
-                icon: Icons.history,
-                title: AppLocalizations.of(context)!.customerHomeHistory,
-                subtitle: AppLocalizations.of(context)!.customerHomeBookings,
-                color: Colors.blueGrey,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const ActivityScreen()),
-                  );
-                },
+              child: Text(
+                l10n.customerHomeRecommendedNearby,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: jdc.text),
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildQuickActionCard(
-                icon: Icons.favorite,
-                title: AppLocalizations.of(context)!.customerHomeSaved,
-                subtitle: AppLocalizations.of(context)!.customerHomePlaces,
-                color: Colors.red,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const SavedAddressesScreen()),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildQuickActionCard(
-                icon: Icons.support_agent,
-                title: AppLocalizations.of(context)!.customerHomeHelp,
-                subtitle: AppLocalizations.of(context)!.customerHomeContactUs,
-                color: JdcColors.of(context).infoInk,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const HelpScreen()),
-                  );
-                },
+            GestureDetector(
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FoodHomeScreen())),
+              child: Text(
+                l10n.customerHomeSeeAll,
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: jdc.link),
               ),
             ),
           ],
         ),
+        const SizedBox(height: 10),
+        _buildB1RestaurantCard(
+          name: 'ร้านอาหารใกล้คุณ',
+          category: 'ตามสั่ง',
+          isPlaceholder: true,
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FoodHomeScreen())),
+        ),
       ],
+    );
+  }
+
+  Widget _buildB1RestaurantCard({
+    required String name,
+    required String category,
+    bool isPlaceholder = false,
+    required VoidCallback onTap,
+  }) {
+    final jdc = JdcColors.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: jdc.surface,
+          border: Border.all(color: jdc.line),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: jdc.brandSoft,
+                borderRadius: BorderRadius.circular(13),
+              ),
+              child: Icon(Icons.restaurant_rounded, color: jdc.brandOnSoft, size: 28),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: jdc.text)),
+                  const SizedBox(height: 3),
+                  Text(category, style: TextStyle(fontSize: 12, color: jdc.muted)),
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      Icon(Icons.star_rounded, size: 13, color: jdc.brandOnSoft),
+                      const SizedBox(width: 4),
+                      Text('4.5', style: TextStyle(fontSize: 12, color: jdc.brandOnSoft, fontWeight: FontWeight.w700)),
+                      const SizedBox(width: 10),
+                      Text('15–25 นาที', style: TextStyle(fontSize: 12, color: jdc.muted)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -983,543 +1022,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
     );
   }
 
-  Widget _buildServiceCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Color color,
-    required VoidCallback onTap,
-    bool isFullWidth = false,
-  }) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: isFullWidth ? double.infinity : null,
-        height: isFullWidth ? 130 : 130,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-          border: Border.all(
-            color: color.withValues(alpha: 0.2),
-            width: 2,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                icon,
-                size: 28,
-                color: color,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Flexible(
-              child: Text(
-                title,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Flexible(
-              child: Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickActionCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 85,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 22,
-              color: color,
-            ),
-            const SizedBox(height: 4),
-            Flexible(
-              child: Text(
-                title,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            Flexible(
-              child: Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 10,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  double _getTotalPrice(Booking booking) {
-    final couponDiscount = (_couponUsageByBookingId[booking.id]?['discount_amount'] as num?)?.toDouble() ?? 0.0;
-
-    // For food orders, include delivery fee
-    if (booking.serviceType == 'food') {
-      final total = booking.price + (booking.deliveryFee ?? 0.0) - couponDiscount;
-      return total < 0 ? 0 : total;
-    }
-
-    final total = booking.price - couponDiscount;
-    return total < 0 ? 0 : total;
-  }
-
-  Widget _buildActiveOrderCard(Booking booking) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final trackingStatuses = {
-      'driver_assigned', 'driver_accepted', 'arrived_at_merchant',
-      'picking_up_order', 'in_transit', 'arrived',
-    };
-    return GestureDetector(
-      onTap: () {
-        if (trackingStatuses.contains(booking.status)) {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => TrackingScreen(booking: booking),
-            ),
-          );
-        } else {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => CustomerOrderDetailScreen(booking: booking),
-            ),
-          );
-        }
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with service type and status
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: _getServiceColor(booking.serviceType).withValues(alpha: 0.1),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: _getServiceColor(booking.serviceType),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      _getServiceIcon(booking.serviceType),
-                      size: 18,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _getServiceTypeText(booking.serviceType),
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: _getServiceColor(booking.serviceType),
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          AppLocalizations.of(context)!.customerHomeOrderCode(OrderCodeFormatter.formatByServiceType(booking.id, serviceType: booking.serviceType)),
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(booking.status),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          _getStatusText(booking.status),
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            // Content
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Destination
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Colors.red.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.location_on,
-                          size: 16,
-                          color: Colors.red,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              AppLocalizations.of(context)!.customerHomeDestination,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: colorScheme.onSurfaceVariant,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              _formatAddress(booking.destinationAddress),
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: colorScheme.onSurface,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  
-                  const SizedBox(height: 12),
-                  
-                  // Pickup location (if available)
-                  if (booking.pickupAddress != null) ...[
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(
-                            Icons.pin_drop,
-                            size: 16,
-                            color: Colors.green,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                AppLocalizations.of(context)!.customerHomePickupPoint,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: colorScheme.onSurfaceVariant,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                _formatAddress(booking.pickupAddress),
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: colorScheme.onSurface,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                  
-                  // Divider
-                  Divider(
-                    height: 1,
-                    thickness: 1,
-                    color: colorScheme.outlineVariant,
-                  ),
-                  
-                  const SizedBox(height: 12),
-                  
-                  // Price and details row
-                  Row(
-                    children: [
-                      // Distance
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.straighten,
-                              size: 16,
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              AppLocalizations.of(context)!.customerHomeDistanceKm(booking.distanceKm.toStringAsFixed(1)),
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: colorScheme.onSurfaceVariant,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Price
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: JdcColors.of(context).cta.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              '฿${_getTotalPrice(booking).ceil()}',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: JdcColors.of(context).cta,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  
-                  const SizedBox(height: 8),
-                  
-                  // Time
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.access_time,
-                        size: 14,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        AppLocalizations.of(context)!.customerHomeOrderedAt(_formatDateTime(booking.createdAt)),
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  IconData _getServiceIcon(String serviceType) {
-    switch (serviceType.toLowerCase()) {
-      case 'ride':
-        return Icons.directions_car;
-      case 'food':
-        return Icons.restaurant;
-      case 'parcel':
-        return Icons.local_shipping;
-      case 'laundry':
-        return Icons.local_laundry_service_rounded;
-      default:
-        return Icons.receipt;
-    }
-  }
-
-  String _getServiceTypeText(String serviceType) {
-    switch (serviceType.toLowerCase()) {
-      case 'ride':
-        return AppLocalizations.of(context)!.customerHomeCallRide;
-      case 'food':
-        return AppLocalizations.of(context)!.customerHomeOrderFood;
-      case 'parcel':
-        return AppLocalizations.of(context)!.customerHomeSendParcel;
-      case 'laundry':
-        return 'ซักผ้า';
-      default:
-        return serviceType;
-    }
-  }
-
-  Color _getServiceColor(String serviceType) {
-    switch (serviceType.toLowerCase()) {
-      case 'ride':
-        return JdcColors.of(context).infoInk;
-      case 'food':
-        return JdcColors.of(context).brand;
-      case 'parcel':
-        return JdcColors.of(context).cta;
-      case 'laundry':
-        return JdcColors.of(context).infoInk;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'pending':
-      case 'searching':
-        return Colors.orange;
-      case 'accepted':
-      case 'confirmed':
-      case 'driver_assigned':
-      case 'driver_accepted':
-      case 'matched':
-        return Colors.blue;
-      case 'in_progress':
-      case 'in_transit':
-      case 'preparing':
-      case 'ready_for_pickup':
-      case 'arrived_at_merchant':
-      case 'picking_up_order':
-        return JdcColors.of(context).infoInk;
-      case 'completed':
-        return Colors.green;
-      case 'cancelled':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
-
   String _getStatusText(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
@@ -1557,53 +1059,4 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
     }
   }
 
-  String _formatAddress(dynamic address) {
-    if (address == null) {
-      return AppLocalizations.of(context)!.customerHomeAddressNotSpecified;
-    }
-    
-    final addressStr = address.toString().trim();
-    if (addressStr.isEmpty) return AppLocalizations.of(context)!.customerHomeAddressNotSpecified;
-    
-    // Clean up coordinate-only patterns like "ตำแหน่ง: 19.16282, 100.84155"
-    final coordPattern = RegExp(r'ตำแหน่ง:\s*[\d.]+,\s*[\d.]+');
-    if (coordPattern.hasMatch(addressStr)) {
-      // Remove the coordinate part, keep the name part if any (e.g. "ดดเ — ตำแหน่ง: ...")
-      final cleaned = addressStr.replaceAll(coordPattern, '').replaceAll(RegExp(r'\s*[—\-]\s*$'), '').trim();
-      if (cleaned.isNotEmpty) return cleaned;
-      return AppLocalizations.of(context)!.customerHomeCurrentLocation;
-    }
-    
-    // Handle AddressPlacemark object
-    if (addressStr.contains('AddressPlacemark')) {
-      try {
-        if (address is Map) {
-          final parts = <String>[];
-          if (address['name'] != null && address['name'].toString().isNotEmpty) {
-            parts.add(address['name'].toString());
-          }
-          if (address['street'] != null && address['street'].toString().isNotEmpty) {
-            parts.add(address['street'].toString());
-          }
-          if (address['subLocality'] != null && address['subLocality'].toString().isNotEmpty) {
-            parts.add(address['subLocality'].toString());
-          }
-          if (address['locality'] != null && address['locality'].toString().isNotEmpty) {
-            parts.add(address['locality'].toString());
-          }
-          return parts.isNotEmpty ? parts.join(', ') : AppLocalizations.of(context)!.customerHomeAddressNotSpecified;
-        }
-      } catch (e) {
-        debugLog('❌ Error parsing address: $e');
-      }
-      if (addressStr != 'Instance of AddressPlacemark') return addressStr;
-      return AppLocalizations.of(context)!.customerHomeAddressNotSpecified;
-    }
-    
-    return addressStr;
-  }
-
-  String _formatDateTime(DateTime dateTime) {
-    return '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
-  }
 }

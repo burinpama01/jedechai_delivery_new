@@ -2185,7 +2185,7 @@
   "driverAssignedHeading": "Driver accepted the job!",
   "driverAssignedSubtitle": "The driver is on the way to you",
   "driverAssignedOnTheWay": "Driver is on the way",
-  "driverAssignedEta": "Estimated time: 5-10 minutes",
+  "driverAssignedEta": "Estimated time",
   "driverAssignedContact": "Contact Driver",
   "driverAssignedCancelBooking": "Cancel Booking",
   "driverAssignedContactTitle": "Contact Driver",
@@ -3285,5 +3285,83 @@
   "topupStatusAwaiting": "Awaiting payment",
   "topupStatusQrExpired": "QR expired",
   "topupStatusFailed": "Payment failed",
-  "driverNavProxLaundryPickup": "Laundry pickup point"
+  "driverNavProxLaundryPickup": "Laundry pickup point",
+  "customerHomeDeliverTo": "Deliver to",
+  "customerHomeSearchHint": "Search restaurants, menus or services",
+  "customerHomeTopUp": "Top up",
+  "customerHomeRecommendedNearby": "Recommended near you",
+  "customerHomeSeeAll": "See all",
+  "customerHomeServiceFood": "Food",
+  "customerHomeServiceLaundry": "Laundry",
+  "customerHomeTrack": "Track",
+  "customerHomeActiveTrackCard": "Track",
+  "foodSvcFilterSort": "Filter",
+  "foodSvcFilterNearby": "Nearby",
+  "foodSvcFilterRating": "Top rated",
+  "foodSvcFilterFreeDelivery": "Free delivery",
+  "foodSvcShopCount": "{count} shops",
+  "@foodSvcShopCount": {
+    "placeholders": {
+      "count": { "type": "String" }
+    }
+  },
+  "driverAssignedFoundHeading": "Driver found!",
+  "driverAssignedFoundSubtitle": "On the way to pick up your order",
+  "driverAssignedChatLabel": "Chat",
+  "driverAssignedCallLabel": "Call",
+  "driverAssignedTrackMap": "Track on map",
+  "driverAssignedEtaMinutes": "~{min} min",
+  "@driverAssignedEtaMinutes": {
+    "placeholders": {
+      "min": { "type": "String" }
+    }
+  },
+  "waitingSearchingTitle": "Finding a driver for you",
+  "waitingSearchingBody": "Usually takes less than 2 minutes.\nWe'll notify you as soon as a driver accepts.",
+  "waitingCancelOrder": "Cancel order",
+  "waitingCancelNote": "Cancelling after the restaurant starts preparing may incur a fee.",
+  "waitingNoDriverCancelFailed": "No driver accepted this ride, but cancellation failed. Please try cancelling again.",
+  "waitingNoDriverTitle": "No driver accepted this ride",
+  "waitingNoDriverBody": "We cancelled this request because no nearby driver accepted it in time. Please try again.",
+  "waitingBackToHome": "Back to home",
+  "waitingHelpLabel": "Help",
+  "b1foodCheckoutDeliverTo": "Deliver to",
+  "b1foodCheckoutDeliverNow": "Deliver now",
+  "b1foodCheckoutCouponChange": "Change",
+  "b1foodCheckoutFoodCost": "Food cost",
+  "b1foodCheckoutDeliveryFee": "Delivery fee",
+  "b1foodCheckoutCouponDiscount": "Coupon discount",
+  "b1foodCheckoutTotal": "Total",
+  "b1foodCheckoutOrderNow": "Order now",
+  "b1foodCheckoutPayWallet": "JDC Wallet",
+  "b1foodCheckoutPayCash": "Cash on delivery",
+  "b1payWalletLabel": "Pay food with JDC Wallet",
+  "b1payBalance": "Balance",
+  "b1payAfterPay": "Remaining after payment",
+  "b1payConfirm": "Confirm pay ฿{amount}",
+  "@b1payConfirm": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "b1payTopup": "Top up wallet",
+  "b1payNote": "Amount deducted immediately. Auto-refunded if restaurant rejects the order.",
+  "b1paySummaryTitle": "Summary",
+  "b1payFoodCost": "Food cost",
+  "b1payDeliveryFee": "Delivery fee",
+  "b1payCouponDiscount": "Coupon discount",
+  "b1payTotal": "Total",
+  "b1trackStatusLabel": "In progress",
+  "b1trackMinutesLabel": "min",
+  "b1trackPaymentRow": "Payment · JDC Wallet",
+  "b1orderDetailReorder": "Reorder",
+  "b1orderDetailReorderUnavailable": "This order cannot be reordered",
+  "b1orderDetailHelp": "Get help",
+  "b1orderDetailPayWith": "Paid with",
+  "b1orderDetailDeliveredAt": "Delivered at {time}",
+  "@b1orderDetailDeliveredAt": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  }
 }

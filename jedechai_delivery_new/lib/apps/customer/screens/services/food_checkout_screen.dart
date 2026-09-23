@@ -586,14 +586,40 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
   Widget build(BuildContext context) {
     return Consumer<CartProvider>(
       builder: (context, cart, _) {
-        final colorScheme = Theme.of(context).colorScheme;
+        final jdc = JdcColors.of(context);
         return Scaffold(
-          backgroundColor: colorScheme.surface,
-          appBar: AppBar(
-            title: Text(AppLocalizations.of(context)!.foodCheckoutTitle),
-            backgroundColor: JdcColors.of(context).brand,
-            foregroundColor: JdcColors.of(context).surface,
-            elevation: 0,
+          backgroundColor: jdc.paper,
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(60),
+            child: Container(
+              color: jdc.surface,
+              child: SafeArea(
+                bottom: false,
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: Container(
+                        width: 44, height: 60,
+                        alignment: Alignment.center,
+                        child: Icon(Icons.chevron_left,
+                            size: 21, color: jdc.text),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        AppLocalizations.of(context)!.foodCheckoutTitle,
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: jdc.text,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
           body: cart.isEmpty
               ? Center(child: Text(AppLocalizations.of(context)!.foodCartEmpty))
@@ -648,8 +674,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                                               item.selectedOptions.join(', '),
                                               style: TextStyle(
                                                   fontSize: 12,
-                                                  color: colorScheme
-                                                      .onSurfaceVariant),
+                                                  color: jdc.muted),
                                             ),
                                         ],
                                       ),
@@ -714,7 +739,7 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                             hintText: AppLocalizations.of(context)!
                                 .foodCheckoutNoteHint,
                             hintStyle:
-                                TextStyle(color: colorScheme.onSurfaceVariant),
+                                TextStyle(color: jdc.muted),
                             border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10)),
                             contentPadding: const EdgeInsets.symmetric(
@@ -771,43 +796,41 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
           bottomNavigationBar: cart.isEmpty
               ? null
               : Container(
-                  padding: EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  padding: EdgeInsets.fromLTRB(20, 14, 20, 20),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainer,
-                    boxShadow: [
-                      BoxShadow(
-                        color: JdcColors.of(context).text.withValues(alpha: 0.08),
-                        blurRadius: 8,
-                        offset: Offset(0, -2),
-                      ),
-                    ],
+                    color: jdc.surface,
+                    border: Border(top: BorderSide(color: jdc.line)),
                   ),
                   child: SafeArea(
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: (_isPlacingOrder || _isCalculatingFee)
-                            ? null
-                            : () => _placeOrder(context, cart),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: JdcColors.of(context).brand,
-                          foregroundColor: JdcColors.of(context).surface,
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14)),
-                          elevation: 0,
+                    top: false,
+                    child: GestureDetector(
+                      onTap: (_isPlacingOrder || _isCalculatingFee)
+                          ? null
+                          : () => _placeOrder(context, cart),
+                      child: Container(
+                        height: 54,
+                        decoration: BoxDecoration(
+                          color: (_isPlacingOrder || _isCalculatingFee)
+                              ? jdc.line
+                              : jdc.cta,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: (_isPlacingOrder || _isCalculatingFee)
+                              ? null
+                              : jdc.shadowBrand,
                         ),
+                        alignment: Alignment.center,
                         child: _isPlacingOrder
                             ? SizedBox(
-                                height: 20,
-                                width: 20,
+                                height: 20, width: 20,
                                 child: CircularProgressIndicator(
-                                    strokeWidth: 2, color: JdcColors.of(context).surface),
+                                    strokeWidth: 2, color: jdc.onCta),
                               )
                             : Text(
                                 '${AppLocalizations.of(context)!.foodCheckoutConfirmButton} — ฿${_calculateFinalTotal(cart.subtotal, _deliveryFee).ceil()}',
-                                style: const TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: jdc.onCta),
                               ),
                       ),
                     ),
@@ -1037,13 +1060,14 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
 
   Widget _buildSection(
       {required IconData icon, required String title, required Widget child}) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return Container(
-      margin: EdgeInsets.fromLTRB(16, 12, 16, 0),
+      margin: EdgeInsets.fromLTRB(20, 14, 20, 0),
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
+        color: jdc.surface,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: jdc.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1052,9 +1076,13 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
             children: [
               Icon(icon, size: 20, color: JdcColors.of(context).brand),
               const SizedBox(width: 8),
-              Text(title,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 15)),
+              Expanded(
+                child: Text(title,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 15),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis),
+              ),
             ],
           ),
           const SizedBox(height: 12),

@@ -1,6 +1,7 @@
 import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../common/services/system_config_service.dart';
@@ -225,65 +226,24 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: jdc.paper,
       body: _isLoading
-          ? Center(
-              child: CircularProgressIndicator(color: JdcColors.of(context).brand))
+          ? Center(child: CircularProgressIndicator(color: jdc.brand))
           : _error != null
               ? _buildErrorState()
-              : _buildContent(),
-      bottomNavigationBar: _buildCartBar(),
+              : _buildB1Content(),
+      bottomNavigationBar: _buildB1CartBar(),
     );
   }
 
-  Widget _buildContent() {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _buildB1Content() {
     return NestedScrollView(
-      headerSliverBuilder: (context, innerBoxIsScrolled) {
+      headerSliverBuilder: (context, _) {
         return [
-          // Cover Image + Back button
-          SliverAppBar(
-            expandedHeight: 200,
-            pinned: true,
-            backgroundColor: JdcColors.of(context).brand,
-            foregroundColor: JdcColors.of(context).surface,
-            title: innerBoxIsScrolled ? Text(widget.merchantName) : null,
-            actions: [
-              IconButton(
-                tooltip: 'Favorite',
-                onPressed: _toggleFavorite,
-                icon: Icon(
-                  _isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: JdcColors.of(context).surface,
-                ),
-              ),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              background: _buildCoverImage(),
-            ),
-          ),
-          // Restaurant Info
-          SliverToBoxAdapter(child: _buildRestaurantInfo()),
-          // Category Tabs
-          if (_categories.isNotEmpty && _tabController != null)
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: _TabBarDelegate(
-                TabBar(
-                  controller: _tabController,
-                  isScrollable: true,
-                  labelColor: JdcColors.of(context).brand,
-                  unselectedLabelColor: colorScheme.onSurfaceVariant,
-                  indicatorColor: JdcColors.of(context).brand,
-                  indicatorWeight: 3,
-                  labelStyle: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 14),
-                  tabs: _categories.map((c) => Tab(text: c)).toList(),
-                ),
-              ),
-            ),
+          SliverToBoxAdapter(child: _buildB1HeroAndCard()),
+          SliverToBoxAdapter(child: _buildB1CategoryTabs()),
         ];
       },
       body: _categories.isEmpty
@@ -298,204 +258,336 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
     );
   }
 
-  Widget _buildCoverImage() {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        _shopPhotoUrl != null && _shopPhotoUrl!.isNotEmpty
-            ? AppNetworkImage(
-                imageUrl: _shopPhotoUrl,
-                fit: BoxFit.cover,
-                backgroundColor: colorScheme.surfaceContainerHighest,
-              )
-            : _buildCoverPlaceholder(),
-        // Gradient overlay
-        Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.transparent,
-                JdcColors.of(context).text.withValues(alpha: 0.6),
-              ],
+  Widget _buildB1HeroAndCard() {
+    final jdc = JdcColors.of(context);
+    return SizedBox(
+      height: 274,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Hero3 gradient header (168px)
+          Positioned(
+            top: 0, left: 0, right: 0,
+            child: Container(
+              height: 168,
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+              decoration: BoxDecoration(
+                gradient: jdc.hero3,
+                // รูปหน้าร้านจริงเป็นพื้นหลังจาง ๆ ใต้เกรเดียนต์ (ของเดิมเป็นรูปปก)
+                image: (_shopPhotoUrl ?? '').isNotEmpty
+                    ? DecorationImage(
+                        image: NetworkImage(_shopPhotoUrl!),
+                        fit: BoxFit.cover,
+                        opacity: 0.35,
+                      )
+                    : null,
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        // Back button
+                        GestureDetector(
+                          onTap: () => Navigator.of(context).pop(),
+                          child: Container(
+                            width: 44, height: 44,
+                            decoration: BoxDecoration(
+                              color: jdc.panelSoft2,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: jdc.panelLine),
+                            ),
+                            child: Icon(Icons.chevron_left,
+                                size: 20, color: jdc.onPanel),
+                          ),
+                        ),
+                        const Spacer(),
+                        // Favorite button
+                        GestureDetector(
+                          onTap: _toggleFavorite,
+                          child: Container(
+                            width: 44, height: 44,
+                            decoration: BoxDecoration(
+                              color: jdc.panelSoft2,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: jdc.panelLine),
+                            ),
+                            child: Icon(
+                              _isFavorite
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              size: 20,
+                              color: _isFavorite
+                                  ? jdc.brand
+                                  : jdc.onPanel,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
-        // Restaurant name at bottom
-        Positioned(
-          left: 16,
-          bottom: 16,
-          right: 16,
-          child: Text(
-            widget.merchantName,
-            style: TextStyle(
-              color: JdcColors.of(context).surface,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              shadows: [Shadow(blurRadius: 8, color: Color(0x8A000000))],
-            ),
+          // Overlapping info card (-34px)
+          Positioned(
+            top: 134,
+            left: 20, right: 20,
+            child: _buildB1InfoCard(),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildCoverPlaceholder() {
-    final colorScheme = Theme.of(context).colorScheme;
-    return GrayscaleLogoPlaceholder(
-      fit: BoxFit.contain,
-      backgroundColor: colorScheme.surfaceContainerHighest,
-      padding: const EdgeInsets.all(24),
-    );
-  }
-
-  Widget _buildRestaurantInfo() {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _buildB1InfoCard() {
+    final jdc = JdcColors.of(context);
     return Container(
-      color: colorScheme.surfaceContainer,
       padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: jdc.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: jdc.line),
+        boxShadow: jdc.shadowRaise,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Delivery info
+          Text(
+            widget.merchantName,
+            style: TextStyle(
+              fontSize: 20, fontWeight: FontWeight.w700, color: jdc.text),
+          ),
+          const SizedBox(height: 4),
           Row(
             children: [
-              const SizedBox(width: 16),
-              Icon(Icons.access_time,
-                  size: 16, color: colorScheme.onSurfaceVariant),
-              const SizedBox(width: 4),
-              Text(AppLocalizations.of(context)!.restDeliveryTime,
-                  style: TextStyle(
-                      color: colorScheme.onSurfaceVariant, fontSize: 13)),
-              const SizedBox(width: 16),
-              Icon(Icons.delivery_dining,
-                  size: 16, color: colorScheme.onSurfaceVariant),
-              const SizedBox(width: 4),
+              if (widget.distanceKm != null) ...[
+                Icon(Icons.storefront_outlined,
+                    size: 13, color: jdc.muted),
+                const SizedBox(width: 3),
+                Text(
+                  '${widget.distanceKm!.toStringAsFixed(1)} กม.',
+                  style: TextStyle(fontSize: 12, color: jdc.muted),
+                ),
+                const SizedBox(width: 8),
+              ],
               Text(
-                  _estimatedDeliveryFee != null
-                      ? '~฿$_estimatedDeliveryFee'
-                      : AppLocalizations.of(context)!.restDeliveryFee,
-                  style: TextStyle(
-                      color: colorScheme.onSurfaceVariant, fontSize: 13)),
+                AppLocalizations.of(context)!.restDeliveryTime,
+                style: TextStyle(fontSize: 12, color: jdc.muted),
+              ),
             ],
           ),
-          if (_shopAddress != null && _shopAddress!.isNotEmpty) ...[
-            const SizedBox(height: 8),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              // Rating badge
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: jdc.brandSoft,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.star, size: 13, color: jdc.brandOnSoft),
+                    const SizedBox(width: 4),
+                    Text('4.8',
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: jdc.brandOnSoft)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Delivery fee badge
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: jdc.successSoft,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  _estimatedDeliveryFee != null
+                      ? 'ค่าส่ง ฿$_estimatedDeliveryFee'
+                      : AppLocalizations.of(context)!.restDeliveryFee,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: jdc.successInk,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          // ข้อมูลติดต่อร้าน (ของเดิม artboard ไม่มี แต่เป็นข้อมูลที่ลูกค้าใช้จริง)
+          if ((_shopAddress ?? '').isNotEmpty) ...[
+            const SizedBox(height: 10),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.location_on_outlined,
-                    size: 16, color: colorScheme.onSurfaceVariant),
-                const SizedBox(width: 4),
+                Icon(Icons.place_outlined, size: 15, color: jdc.muted),
+                const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     _shopAddress!,
-                    style: TextStyle(
-                        color: colorScheme.onSurfaceVariant, fontSize: 13),
-                    maxLines: 1,
+                    style: TextStyle(fontSize: 12, color: jdc.muted),
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
           ],
-          if (_phoneNumber != null && _phoneNumber!.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Icon(Icons.phone_outlined,
-                    size: 16, color: colorScheme.onSurfaceVariant),
-                const SizedBox(width: 4),
-                Text(_phoneNumber!,
+          if ((_phoneNumber ?? '').isNotEmpty) ...[
+            const SizedBox(height: 6),
+            GestureDetector(
+              onTap: _callShop,
+              child: Row(
+                children: [
+                  Icon(Icons.phone_outlined, size: 15, color: jdc.brand),
+                  const SizedBox(width: 6),
+                  Text(
+                    _phoneNumber!,
                     style: TextStyle(
-                        color: colorScheme.onSurfaceVariant, fontSize: 13)),
-              ],
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: jdc.brand),
+                  ),
+                ],
+              ),
             ),
           ],
-          const SizedBox(height: 12),
-          // Promo tag (admin-configurable)
+          // คูปองของร้าน
+          if (_merchantCoupons.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 30,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: _merchantCoupons.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (_, i) => Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: jdc.brandSoft,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: jdc.brandLine),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.confirmation_num_outlined,
+                          size: 13, color: jdc.brandOnSoft),
+                      const SizedBox(width: 4),
+                      Text(
+                        _merchantCoupons[i].code,
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: jdc.brandOnSoft),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+          // Promo tag
           if (_promoEnabled && _promoText != null && _promoText!.isNotEmpty)
+            ...[
+            const SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: colorScheme.errorContainer,
+                color: jdc.dangerSoft,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                    color: colorScheme.error.withValues(alpha: 0.35)),
+                border: Border.all(color: jdc.dangerLine),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.local_offer,
-                      size: 14, color: colorScheme.onErrorContainer),
+                      size: 13, color: jdc.dangerInk),
                   const SizedBox(width: 4),
-                  Text(
-                    _promoText!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: colorScheme.onErrorContainer,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  Text(_promoText!,
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: jdc.dangerInk,
+                          fontWeight: FontWeight.w600)),
                 ],
               ),
-            ),
-          if (_merchantCoupons.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _merchantCoupons.map((coupon) {
-                return InkWell(
-                  onTap: () async {
-                    await Clipboard.setData(ClipboardData(text: coupon.code));
-                    if (!mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                          content: Text(AppLocalizations.of(context)!
-                              .restCouponCopied(coupon.code))),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: JdcColors.of(context).successInk.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                          color: JdcColors.of(context).successInk.withValues(alpha: 0.25)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.local_offer_outlined,
-                            size: 14, color: JdcColors.of(context).successInk),
-                        SizedBox(width: 6),
-                        Text(
-                          '${coupon.code} • ${coupon.discountText}',
-                          style: TextStyle(
-                              fontSize: 12,
-                              color: JdcColors.of(context).successInk,
-                              fontWeight: FontWeight.w600),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              AppLocalizations.of(context)!.restCouponHint,
-              style:
-                  TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
             ),
           ],
         ],
       ),
     );
+  }
+
+  Widget _buildB1CategoryTabs() {
+    if (_categories.isEmpty) return const SizedBox.shrink();
+    final jdc = JdcColors.of(context);
+    return Container(
+      color: jdc.paper,
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: _categories.asMap().entries.map((entry) {
+            final i = entry.key;
+            final cat = entry.value;
+            final isActive = _tabController?.index == i;
+            return Padding(
+              padding: EdgeInsets.only(right: i < _categories.length - 1 ? 8 : 0),
+              child: GestureDetector(
+                onTap: () {
+                  _tabController?.animateTo(i);
+                  setState(() {});
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isActive ? jdc.panel : jdc.surface,
+                    borderRadius: BorderRadius.circular(999),
+                    border: isActive
+                        ? null
+                        : Border.all(color: jdc.line),
+                  ),
+                  child: Text(
+                    cat,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: isActive ? jdc.onPanel : jdc.muted,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  /// โทรหาร้าน (ฟีเจอร์เดิมของหน้าร้าน)
+  Future<void> _callShop() async {
+    final phone = (_phoneNumber ?? '').replaceAll(RegExp(r'[^0-9+]'), '');
+    if (phone.isEmpty) return;
+    final uri = Uri.parse('tel:$phone');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
   }
 
   Widget _buildMenuList(List<Map<String, dynamic>> items) {
@@ -644,28 +736,22 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
     );
   }
 
-  Widget _buildCartBar() {
+  Widget _buildB1CartBar() {
     return Consumer<CartProvider>(
       builder: (context, cart, _) {
-        final colorScheme = Theme.of(context).colorScheme;
+        final jdc = JdcColors.of(context);
         if (cart.isEmpty) return const SizedBox.shrink();
 
         return Container(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
           decoration: BoxDecoration(
-            color: colorScheme.surfaceContainer,
-            boxShadow: [
-              BoxShadow(
-                color: colorScheme.shadow.withValues(alpha: 0.12),
-                blurRadius: 10,
-                offset: Offset(0, -4),
-              ),
-            ],
+            color: jdc.surface,
+            border: Border(top: BorderSide(color: jdc.line)),
           ),
           child: SafeArea(
+            top: false,
             child: GestureDetector(
               onTap: () {
-                // Show cart bottom sheet
                 showModalBottomSheet(
                   context: context,
                   isScrollControlled: true,
@@ -674,50 +760,51 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                 );
               },
               child: Container(
-                padding:
-                    EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                constraints: const BoxConstraints(minHeight: 56),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 18, vertical: 0),
                 decoration: BoxDecoration(
-                  color: JdcColors.of(context).brand,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: JdcColors.of(context).brand.withValues(alpha: 0.4),
-                      blurRadius: 8,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
+                  color: jdc.cta,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: jdc.shadowBrand,
                 ),
                 child: Row(
                   children: [
+                    // Item count badge
                     Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                      constraints: const BoxConstraints(
+                          minWidth: 26, minHeight: 26),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 7, vertical: 2),
                       decoration: BoxDecoration(
-                        color: JdcColors.of(context).surface.withValues(alpha: 0.25),
-                        borderRadius: BorderRadius.circular(8),
+                        color: jdc.panelSoft3,
+                        borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
                         '${cart.totalItems}',
                         style: TextStyle(
-                            color: JdcColors.of(context).surface, fontWeight: FontWeight.bold),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: jdc.onPanel),
+                        textAlign: TextAlign.center,
                       ),
                     ),
-                    SizedBox(width: 12),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         AppLocalizations.of(context)!.restViewCart,
                         style: TextStyle(
-                            color: JdcColors.of(context).surface,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 15),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: jdc.onCta),
                       ),
                     ),
                     Text(
                       '฿${cart.subtotal.ceil()}',
                       style: TextStyle(
-                          color: JdcColors.of(context).surface,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: jdc.onCta),
                     ),
                   ],
                 ),
@@ -1189,30 +1276,4 @@ class _MenuItemCard extends StatelessWidget {
       ));
     }
   }
-}
-
-// ============================================================
-// Tab Bar Delegate for pinned tabs
-// ============================================================
-class _TabBarDelegate extends SliverPersistentHeaderDelegate {
-  final TabBar tabBar;
-  _TabBarDelegate(this.tabBar);
-
-  @override
-  double get minExtent => tabBar.preferredSize.height;
-  @override
-  double get maxExtent => tabBar.preferredSize.height;
-
-  @override
-  Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      color: colorScheme.surface,
-      child: tabBar,
-    );
-  }
-
-  @override
-  bool shouldRebuild(covariant _TabBarDelegate oldDelegate) => false;
 }

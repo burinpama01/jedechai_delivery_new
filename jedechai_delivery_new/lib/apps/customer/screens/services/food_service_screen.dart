@@ -7,6 +7,7 @@ import '../../../../common/utils/shop_schedule.dart';
 import '../../../../common/services/system_config_service.dart';
 import '../../../../theme/jdc_colors.dart';
 import '../../../../theme/jdc_layout.dart';
+import '../../../../common/widgets/app_network_image.dart';
 import 'restaurant_detail_screen.dart';
 
 /// Food Service Screen
@@ -25,6 +26,9 @@ class _FoodServiceScreenState extends State<FoodServiceScreen> {
   String? _error;
   Position? _currentPosition;
   double _radiusKm = 30.0;
+
+  // Wave 1.5 filter state
+  String _b1ActiveFilter = 'nearby';
 
   @override
   void initState() {
@@ -100,31 +104,123 @@ class _FoodServiceScreenState extends State<FoodServiceScreen> {
     } catch (_) {}
   }
 
+  // Wave 1.5 b1food: artboard Customer-FoodService layout
   @override
   Widget build(BuildContext context) {
     final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: jdc.paper,
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.foodSvcTitle),
-        backgroundColor: jdc.panel,
-        foregroundColor: jdc.onPanel,
-      ),
-      body: RefreshIndicator(
-        onRefresh: _fetchRestaurants,
-        child: _buildBody(context),
+      body: Column(
+        children: [
+          // Header
+          Container(
+            color: jdc.surface,
+            child: SafeArea(
+              bottom: false,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 16, 20, 0),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: Icon(Icons.chevron_left_rounded, color: jdc.text, size: 21),
+                          constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                          padding: EdgeInsets.zero,
+                        ),
+                        Expanded(
+                          child: Text(
+                            l10n.foodSvcTitle,
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: jdc.text),
+                          ),
+                        ),
+                        if (!_isLoading)
+                          Text(
+                            l10n.foodSvcShopCount(_restaurants.length.toString()),
+                            style: TextStyle(fontSize: 12, color: jdc.muted),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Filter chips
+                  SizedBox(
+                    height: 50,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.fromLTRB(20, 5, 20, 5),
+                      children: [
+                        _b1FilterChip(l10n.foodSvcFilterSort, 'sort', icon: Icons.tune_rounded),
+                        const SizedBox(width: 8),
+                        _b1FilterChip(l10n.foodSvcFilterNearby, 'nearby'),
+                        const SizedBox(width: 8),
+                        _b1FilterChip(l10n.foodSvcFilterRating, 'rating'),
+                        const SizedBox(width: 8),
+                        _b1FilterChip(l10n.foodSvcFilterFreeDelivery, 'free'),
+                      ],
+                    ),
+                  ),
+                  Divider(height: 1, color: jdc.line),
+                ],
+              ),
+            ),
+          ),
+          // List
+          Expanded(
+            child: RefreshIndicator(
+              color: jdc.brand,
+              onRefresh: _fetchRestaurants,
+              child: _buildB1Body(context),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildBody(BuildContext context) {
+  Widget _b1FilterChip(String label, String id, {IconData? icon}) {
     final jdc = JdcColors.of(context);
-    if (_isLoading) {
-      return Center(
-        child: CircularProgressIndicator(color: jdc.brand),
-      );
-    }
+    final isActive = _b1ActiveFilter == id;
+    return GestureDetector(
+      onTap: () => setState(() => _b1ActiveFilter = id),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 13),
+        height: 40,
+        decoration: BoxDecoration(
+          color: isActive ? jdc.panel : jdc.surface,
+          border: Border.all(color: isActive ? Colors.transparent : jdc.line),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 15, color: isActive ? jdc.onPanel : jdc.text),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
+                color: isActive ? jdc.onPanel : jdc.text,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
+  Widget _buildB1Body(BuildContext context) {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    if (_isLoading) {
+      return Center(child: CircularProgressIndicator(color: jdc.brand));
+    }
     if (_error != null) {
       return Center(
         child: Padding(
@@ -134,22 +230,14 @@ class _FoodServiceScreenState extends State<FoodServiceScreen> {
             children: [
               Icon(Icons.error_outline, size: 64, color: jdc.dim),
               const SizedBox(height: JdcSpacing.lg),
-              Text(
-                AppLocalizations.of(context)!.foodSvcLoadError(_error!),
-                style: TextStyle(fontSize: 16, color: jdc.muted),
-                textAlign: TextAlign.center,
-              ),
+              Text(l10n.foodSvcLoadError(_error!), style: TextStyle(fontSize: 16, color: jdc.muted), textAlign: TextAlign.center),
               const SizedBox(height: JdcSpacing.lg),
-              ElevatedButton(
-                onPressed: _fetchRestaurants,
-                child: Text(AppLocalizations.of(context)!.foodSvcRetry),
-              ),
+              ElevatedButton(onPressed: _fetchRestaurants, child: Text(l10n.foodSvcRetry)),
             ],
           ),
         ),
       );
     }
-
     if (_restaurants.isEmpty) {
       return Center(
         child: Column(
@@ -157,44 +245,129 @@ class _FoodServiceScreenState extends State<FoodServiceScreen> {
           children: [
             Icon(Icons.restaurant_outlined, size: 64, color: jdc.dim),
             const SizedBox(height: JdcSpacing.lg),
-            Text(
-              AppLocalizations.of(context)!.foodSvcEmpty,
-              style: TextStyle(fontSize: 16, color: jdc.muted),
-            ),
+            Text(l10n.foodSvcEmpty, style: TextStyle(fontSize: 16, color: jdc.muted)),
             const SizedBox(height: JdcSpacing.lg),
-            ElevatedButton(
-              onPressed: _fetchRestaurants,
-              child: Text(AppLocalizations.of(context)!.foodSvcRefresh),
-            ),
+            ElevatedButton(onPressed: _fetchRestaurants, child: Text(l10n.foodSvcRefresh)),
           ],
         ),
       );
     }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(JdcSpacing.lg),
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
       itemCount: _restaurants.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
-        final restaurant = _restaurants[index];
-        return RestaurantCard(
-          restaurant: restaurant,
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => RestaurantDetailScreen(
-                  merchantId: restaurant['id'],
-                  merchantName: restaurant['full_name'] ??
-                      AppLocalizations.of(context)!.foodSvcRestaurantFallback,
-                ),
-              ),
-            );
-          },
+        final r = _restaurants[index];
+        return _B1RestaurantCard(
+          restaurant: r,
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => RestaurantDetailScreen(
+              merchantId: r['id'],
+              merchantName: r['full_name'] ?? l10n.foodSvcRestaurantFallback,
+            ),
+          )),
         );
       },
     );
   }
 }
 
+/// Wave 1.5 b1food restaurant card (Customer-FoodService artboard style)
+class _B1RestaurantCard extends StatelessWidget {
+  final Map<String, dynamic> restaurant;
+  final VoidCallback onTap;
+  const _B1RestaurantCard({required this.restaurant, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final name = restaurant['full_name'] as String? ?? l10n.foodSvcRestaurantFallback;
+    final imageUrl = restaurant['profile_image_url'] as String?;
+    final isOpen = isShopOpenNow(restaurant);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: jdc.surface,
+          border: Border.all(color: jdc.line),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            // Logo
+            ClipRRect(
+              borderRadius: BorderRadius.circular(13),
+              child: SizedBox(
+                width: 58,
+                height: 58,
+                child: imageUrl != null && imageUrl.isNotEmpty
+                    ? AppNetworkImage(
+                        imageUrl: imageUrl,
+                        width: 58,
+                        height: 58,
+                        fit: BoxFit.cover,
+                        backgroundColor: jdc.brandSoft,
+                      )
+                    : GrayscaleLogoPlaceholder(
+                        width: 58,
+                        height: 58,
+                        backgroundColor: jdc.brandSoft,
+                        padding: const EdgeInsets.all(10),
+                      ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: isOpen ? jdc.text : jdc.dim,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'ตามสั่ง · ก๋วยเตี๋ยว',
+                    style: TextStyle(fontSize: 12, color: jdc.muted),
+                  ),
+                  const SizedBox(height: 3),
+                  if (isOpen)
+                    Row(
+                      children: [
+                        Icon(Icons.star_rounded, size: 13, color: jdc.brandOnSoft),
+                        const SizedBox(width: 4),
+                        Text('4.5', style: TextStyle(fontSize: 12, color: jdc.brandOnSoft, fontWeight: FontWeight.w700)),
+                        const SizedBox(width: 10),
+                        Text('15–25 นาที', style: TextStyle(fontSize: 12, color: jdc.muted)),
+                        const SizedBox(width: 10),
+                        Text('ค่าส่ง ฿15', style: TextStyle(fontSize: 12, color: jdc.muted)),
+                      ],
+                    )
+                  else
+                    Text(
+                      'ปิดอยู่',
+                      style: TextStyle(fontSize: 12, color: jdc.dangerInk, fontWeight: FontWeight.w600),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Legacy RestaurantCard kept for backward compatibility
 class RestaurantCard extends StatelessWidget {
   final Map<String, dynamic> restaurant;
   final VoidCallback onTap;
@@ -206,90 +379,5 @@ class RestaurantCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final jdc = JdcColors.of(context);
-    final l10n = AppLocalizations.of(context)!;
-    final name = restaurant['full_name'] ?? l10n.foodSvcRestaurantFallback;
-    final phone = restaurant['phone_number'] ?? l10n.foodSvcNotSpecified;
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: JdcSpacing.lg),
-      elevation: 2,
-      color: jdc.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(JdcRadius.card),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(JdcRadius.card),
-        child: Padding(
-          padding: const EdgeInsets.all(JdcSpacing.lg),
-          child: Row(
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: jdc.brandSoft,
-                  borderRadius: BorderRadius.circular(JdcRadius.small),
-                ),
-                child: Icon(
-                  Icons.restaurant,
-                  color: jdc.brandOnSoft,
-                  size: 30,
-                ),
-              ),
-              const SizedBox(width: JdcSpacing.lg),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: jdc.text,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: JdcSpacing.xs),
-                    Text(
-                      phone,
-                      style: TextStyle(fontSize: 14, color: jdc.muted),
-                    ),
-                    const SizedBox(height: JdcSpacing.xs),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: JdcSpacing.sm,
-                        vertical: JdcSpacing.xs,
-                      ),
-                      decoration: BoxDecoration(
-                        color: jdc.successSoft,
-                        borderRadius: BorderRadius.circular(JdcRadius.chip),
-                      ),
-                      child: Text(
-                        l10n.foodSvcOpen,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: jdc.successInk,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios,
-                color: jdc.dim,
-                size: 18,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => _B1RestaurantCard(restaurant: restaurant, onTap: onTap);
 }

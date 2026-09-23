@@ -4365,7 +4365,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get driverAssignedOnTheWay => 'Driver is on the way';
 
   @override
-  String get driverAssignedEta => 'Estimated time: 5-10 minutes';
+  String get driverAssignedEta => 'Estimated time';
 
   @override
   String get driverAssignedContact => 'Contact Driver';
@@ -6528,4 +6528,186 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get driverNavProxLaundryPickup => 'Laundry pickup point';
+
+  @override
+  String get customerHomeDeliverTo => 'Deliver to';
+
+  @override
+  String get customerHomeSearchHint => 'Search restaurants, menus or services';
+
+  @override
+  String get customerHomeTopUp => 'Top up';
+
+  @override
+  String get customerHomeRecommendedNearby => 'Recommended near you';
+
+  @override
+  String get customerHomeSeeAll => 'See all';
+
+  @override
+  String get customerHomeServiceFood => 'Food';
+
+  @override
+  String get customerHomeServiceLaundry => 'Laundry';
+
+  @override
+  String get customerHomeTrack => 'Track';
+
+  @override
+  String get customerHomeActiveTrackCard => 'Track';
+
+  @override
+  String get foodSvcFilterSort => 'Filter';
+
+  @override
+  String get foodSvcFilterNearby => 'Nearby';
+
+  @override
+  String get foodSvcFilterRating => 'Top rated';
+
+  @override
+  String get foodSvcFilterFreeDelivery => 'Free delivery';
+
+  @override
+  String foodSvcShopCount(String count) {
+    return '$count shops';
+  }
+
+  @override
+  String get driverAssignedFoundHeading => 'Driver found!';
+
+  @override
+  String get driverAssignedFoundSubtitle => 'On the way to pick up your order';
+
+  @override
+  String get driverAssignedChatLabel => 'Chat';
+
+  @override
+  String get driverAssignedCallLabel => 'Call';
+
+  @override
+  String get driverAssignedTrackMap => 'Track on map';
+
+  @override
+  String driverAssignedEtaMinutes(String min) {
+    return '~$min min';
+  }
+
+  @override
+  String get waitingSearchingTitle => 'Finding a driver for you';
+
+  @override
+  String get waitingSearchingBody => 'Usually takes less than 2 minutes.\nWe\'ll notify you as soon as a driver accepts.';
+
+  @override
+  String get waitingCancelOrder => 'Cancel order';
+
+  @override
+  String get waitingCancelNote => 'Cancelling after the restaurant starts preparing may incur a fee.';
+
+  @override
+  String get waitingNoDriverCancelFailed => 'No driver accepted this ride, but cancellation failed. Please try cancelling again.';
+
+  @override
+  String get waitingNoDriverTitle => 'No driver accepted this ride';
+
+  @override
+  String get waitingNoDriverBody => 'We cancelled this request because no nearby driver accepted it in time. Please try again.';
+
+  @override
+  String get waitingBackToHome => 'Back to home';
+
+  @override
+  String get waitingHelpLabel => 'Help';
+
+  @override
+  String get b1foodCheckoutDeliverTo => 'Deliver to';
+
+  @override
+  String get b1foodCheckoutDeliverNow => 'Deliver now';
+
+  @override
+  String get b1foodCheckoutCouponChange => 'Change';
+
+  @override
+  String get b1foodCheckoutFoodCost => 'Food cost';
+
+  @override
+  String get b1foodCheckoutDeliveryFee => 'Delivery fee';
+
+  @override
+  String get b1foodCheckoutCouponDiscount => 'Coupon discount';
+
+  @override
+  String get b1foodCheckoutTotal => 'Total';
+
+  @override
+  String get b1foodCheckoutOrderNow => 'Order now';
+
+  @override
+  String get b1foodCheckoutPayWallet => 'JDC Wallet';
+
+  @override
+  String get b1foodCheckoutPayCash => 'Cash on delivery';
+
+  @override
+  String get b1payWalletLabel => 'Pay food with JDC Wallet';
+
+  @override
+  String get b1payBalance => 'Balance';
+
+  @override
+  String get b1payAfterPay => 'Remaining after payment';
+
+  @override
+  String b1payConfirm(String amount) {
+    return 'Confirm pay ฿$amount';
+  }
+
+  @override
+  String get b1payTopup => 'Top up wallet';
+
+  @override
+  String get b1payNote => 'Amount deducted immediately. Auto-refunded if restaurant rejects the order.';
+
+  @override
+  String get b1paySummaryTitle => 'Summary';
+
+  @override
+  String get b1payFoodCost => 'Food cost';
+
+  @override
+  String get b1payDeliveryFee => 'Delivery fee';
+
+  @override
+  String get b1payCouponDiscount => 'Coupon discount';
+
+  @override
+  String get b1payTotal => 'Total';
+
+  @override
+  String get b1trackStatusLabel => 'In progress';
+
+  @override
+  String get b1trackMinutesLabel => 'min';
+
+  @override
+  String get b1trackPaymentRow => 'Payment · JDC Wallet';
+
+  @override
+  String get b1orderDetailReorder => 'Reorder';
+
+  @override
+  String get b1orderDetailReorderUnavailable => 'This order cannot be reordered';
+
+  @override
+  String get b1orderDetailHelp => 'Get help';
+
+  @override
+  String get b1orderDetailPayWith => 'Paid with';
+
+  @override
+  String b1orderDetailDeliveredAt(String time) {
+    return 'Delivered at $time';
+  }
 }

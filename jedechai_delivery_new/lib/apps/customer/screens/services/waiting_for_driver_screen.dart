@@ -14,6 +14,7 @@ import '../../../../common/utils/order_code_formatter.dart';
 import '../../../../common/utils/role_amount_calculator.dart';
 import '../../../../common/widgets/chat_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../common/widgets/app_network_image.dart';
 import '../customer_home_screen.dart';
 import '../customer_main_screen.dart';
 import 'customer_ride_status_screen.dart';
@@ -36,9 +37,7 @@ class WaitingForDriverScreen extends StatefulWidget {
 
 class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
     with TickerProviderStateMixin {
-  late final AnimationController _radarAnimationController;
   late final AnimationController _pulseAnimationController;
-  late final Animation<double> _radarAnimation;
   late final Animation<double> _pulseAnimation;
 
   StreamSubscription<List<Map<String, dynamic>>>? _bookingStreamSubscription;
@@ -51,42 +50,25 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
   static const Duration _rideMatchTimeout = Duration(minutes: 5);
 
   bool _isDriverFound = false;
-  bool _isDriverAssigned = false;
   String _driverName = '';
   String _driverPhone = '';
-  String _driverVehicle = '';
-  int _estimatedTime = 5; // minutes
 
   // Food service specific
   bool get _isFoodService => widget.booking.serviceType == 'food';
-  // ignore: unused_element
-  bool get _isWaitingForRestaurant =>
-      widget.booking.status == 'pending_merchant';
-  bool get _isRestaurantConfirmed =>
-      widget.booking.status == 'confirmed_merchant';
 
   @override
   void initState() {
     super.initState();
-
-    _radarAnimationController = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
-    );
 
     _pulseAnimationController = AnimationController(
       duration: const Duration(seconds: 1),
       vsync: this,
     );
 
-    _radarAnimation = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(
-        parent: _radarAnimationController, curve: Curves.linear));
-
     _pulseAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
         CurvedAnimation(
             parent: _pulseAnimationController, curve: Curves.easeInOut));
 
-    _radarAnimationController.repeat();
     _pulseAnimationController.repeat();
     _initialQuotedPrice = widget.booking.price;
 
@@ -301,12 +283,9 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
           if (driverInfo != null) {
             setState(() {
               _isDriverFound = true;
-              _isDriverAssigned = true;
               _driverName = driverInfo['full_name'] ??
                   AppLocalizations.of(context)!.waitingDriverFallback;
               _driverPhone = driverInfo['phone'] ?? '';
-              _driverVehicle = driverInfo['vehicle_type'] ??
-                  AppLocalizations.of(context)!.waitingMotorcycleFallback;
             });
           }
 
@@ -453,7 +432,6 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
 
   void _startRideTimeout() {
     _rideTimeoutTimer?.cancel();
-    _estimatedTime = _rideMatchTimeout.inMinutes;
     _rideTimeoutTimer = Timer(_rideMatchTimeout, _handleRideTimeout);
   }
 
@@ -493,7 +471,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'No driver accepted this ride, but cancellation failed. Please try cancelling again.',
+            AppLocalizations.of(context)!.waitingNoDriverCancelFailed,
           ),
           backgroundColor: JdcColors.of(context).brand,
         ),
@@ -523,9 +501,9 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('No driver accepted this ride'),
-        content: const Text(
-          'We cancelled this request because no nearby driver accepted it in time. Please try again.',
+        title: Text(AppLocalizations.of(context)!.waitingNoDriverTitle),
+        content: Text(
+          AppLocalizations.of(context)!.waitingNoDriverBody,
         ),
         actions: [
           SizedBox(
@@ -539,7 +517,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
                   (route) => false,
                 );
               },
-              child: const Text('Back to home'),
+              child: Text(AppLocalizations.of(context)!.waitingBackToHome),
             ),
           ),
         ],
@@ -586,13 +564,19 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
     _retryTimer = null;
     _rideTimeoutTimer?.cancel();
     _rideTimeoutTimer = null;
-    _radarAnimationController.dispose();
     _pulseAnimationController.dispose();
     super.dispose();
   }
 
+  // Wave 1.5 b1food: Customer-WaitingDriver artboard layout
   @override
   Widget build(BuildContext context) {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final orderId = OrderCodeFormatter.formatByServiceType(
+        widget.booking.id, serviceType: widget.booking.serviceType);
+    final merchantName = widget.booking.merchantId ?? '';
+    final totalAmount = widget.booking.price;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -603,389 +587,212 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
         );
       },
       child: Scaffold(
-        backgroundColor: JdcColors.of(context).surface,
-        appBar: AppBar(
-          backgroundColor: _isFoodService
-              ? JdcColors.of(context).brand
-              : JdcColors.of(context).cta,
-          foregroundColor: JdcColors.of(context).surface,
-          title: Text(_isFoodService
-              ? AppLocalizations.of(context)!.waitingForMerchant
-              : AppLocalizations.of(context)!.waitingSearchingForDriver),
-          leading: IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () {
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
-                (route) => false,
-              );
-            },
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.info_outline),
-              onPressed: _showInfoDialog,
-            ),
-          ],
-        ),
+        backgroundColor: jdc.paper,
         body: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) => SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: IntrinsicHeight(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              // Minimal header row: order ID + help
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '#$orderId',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: jdc.muted),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _showInfoDialog,
+                      child: Text(l10n.waitingHelpLabel, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: jdc.link)),
+                    ),
+                  ],
+                ),
+              ),
+              // Center content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: MediaQuery.of(context).size.height * 0.6,
+                    ),
                     child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Status Section
-                        _buildStatusSection(),
-
-                        const SizedBox(height: 32),
-
-                        // Animation Section
-                        _buildAnimationSection(),
-
-                        const SizedBox(height: 32),
-
-                        // Driver Info Section
-                        if (_isDriverFound) _buildDriverInfoSection(),
-
-                        Spacer(),
-
-                        // Action Buttons
-                        _buildActionButtons(),
+                        const SizedBox(height: 22),
+                        // Animated radar icon
+                        AnimatedBuilder(
+                          animation: _pulseAnimation,
+                          builder: (context, _) {
+                            return SizedBox(
+                              width: 156,
+                              height: 156,
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: jdc.brandSoft,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 110,
+                                    height: 110,
+                                    decoration: BoxDecoration(
+                                      color: jdc.brandLine.withValues(alpha: 0.55),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 74,
+                                    height: 74,
+                                    decoration: BoxDecoration(
+                                      color: jdc.panel,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(Icons.directions_car_rounded, color: jdc.onPanel, size: 34),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 22),
+                        // Title + subtitle
+                        Text(
+                          _isDriverFound
+                              ? l10n.waitingDriverFound
+                              : l10n.waitingSearchingTitle,
+                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: jdc.text),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _isDriverFound
+                              ? l10n.waitingDriverComing
+                              : l10n.waitingSearchingBody,
+                          style: TextStyle(fontSize: 13, color: jdc.muted, height: 1.7),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 22),
+                        // Progress dots
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(3, (i) {
+                            final filled = _isDriverFound ? true : i == 0;
+                            return Container(
+                              width: 34,
+                              height: 4,
+                              margin: EdgeInsets.only(right: i < 2 ? 6 : 0),
+                              decoration: BoxDecoration(
+                                color: filled ? jdc.brand : jdc.trackEmpty,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                            );
+                          }),
+                        ),
+                        const SizedBox(height: 22),
+                        // Order info card
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: jdc.surface,
+                            border: Border.all(color: jdc.line),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 46,
+                                height: 46,
+                                decoration: BoxDecoration(
+                                  color: jdc.brandSoft,
+                                  borderRadius: BorderRadius.circular(13),
+                                ),
+                                clipBehavior: Clip.antiAlias,
+                                child: const GrayscaleLogoPlaceholder(),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      merchantName.isNotEmpty ? merchantName : l10n.foodSvcRestaurantFallback,
+                                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: jdc.text),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      _isFoodService ? l10n.waitingForMerchantDots : l10n.waitingSearchingForDriver,
+                                      style: TextStyle(fontSize: 12, color: jdc.muted),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                '฿${totalAmount.ceil()}',
+                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: jdc.text),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ),
               ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatusSection() {
-    // final isWaiting = _isFoodService ? _isWaitingForRestaurant : !_isDriverFound;
-    final isCompleted =
-        _isFoodService ? _isRestaurantConfirmed : _isDriverFound;
-    final primaryColor = _isFoodService
-        ? JdcColors.of(context).brand
-        : JdcColors.of(context).cta;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: primaryColor.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: primaryColor.withValues(alpha: 0.2)),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            isCompleted
-                ? Icons.check_circle
-                : _isFoodService
-                    ? Icons.restaurant
-                    : Icons.search,
-            color: primaryColor,
-            size: 48,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            isCompleted
-                ? (_isFoodService
-                    ? AppLocalizations.of(context)!.waitingMerchantConfirmed
-                    : AppLocalizations.of(context)!.waitingDriverFound)
-                : (_isFoodService
-                    ? AppLocalizations.of(context)!.waitingForMerchantDots
-                    : AppLocalizations.of(context)!.waitingSearchingDriverDots),
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: primaryColor,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            isCompleted
-                ? (_isFoodService
-                    ? AppLocalizations.of(context)!.waitingMerchantPreparing
-                    : AppLocalizations.of(context)!.waitingDriverComing)
-                : AppLocalizations.of(context)!
-                    .waitingEstimatedTime(_estimatedTime.toString()),
-            style: TextStyle(
-              fontSize: 16,
-              color: JdcColors.of(context).muted,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAnimationSection() {
-    return Container(
-      width: 200,
-      height: 200,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(
-            color: (_isFoodService
-                    ? JdcColors.of(context).brand
-                    : JdcColors.of(context).cta)
-                .withValues(alpha: 0.3),
-            width: 2),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Radar circles
-          AnimatedBuilder(
-            animation: _radarAnimation,
-            builder: (context, child) {
-              return Stack(
-                alignment: Alignment.center,
-                children: [
-                  for (int i = 0; i < 3; i++)
-                    Positioned.fill(
-                      child: Container(
-                        margin: EdgeInsets.all(
-                            20.0 * (_radarAnimation.value + i * 0.3)),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: (_isFoodService
-                                    ? JdcColors.of(context).brand
-                                    : JdcColors.of(context).cta)
-                                .withValues(alpha: 0.3 - i * 0.1),
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
-
-          // Center icon
-          AnimatedBuilder(
-            animation: _pulseAnimation,
-            builder: (context, child) {
-              return Transform.scale(
-                scale: _pulseAnimation.value,
-                child: Icon(
-                  _isFoodService ? Icons.restaurant : Icons.local_taxi,
-                  color: _isFoodService
-                      ? JdcColors.of(context).brand
-                      : JdcColors.of(context).cta,
-                  size: 40,
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDriverInfoSection() {
-    final colorScheme = Theme.of(context).colorScheme;
-    // For food service, show restaurant info instead of driver info
-    if (_isFoodService && _isRestaurantConfirmed) {
-      return Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: JdcColors.of(context).surface,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: JdcColors.of(context).text.withValues(alpha: 0.1),
-              blurRadius: 8,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: JdcColors.of(context).brand.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  child: Icon(
-                    Icons.restaurant,
-                    color: JdcColors.of(context).brand,
-                    size: 25,
-                  ),
-                ),
-                SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        AppLocalizations.of(context)!
-                            .waitingRestaurantPreparing,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                      Text(
-                        AppLocalizations.of(context)!.waitingPleaseWait,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: JdcColors.of(context).muted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      );
-    }
-
-    // Original driver info section for ride service
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: JdcColors.of(context).surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: JdcColors.of(context).text.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: JdcColors.of(context).cta,
-                child: Icon(
-                  Icons.person,
-                  color: JdcColors.of(context).surface,
-                ),
-              ),
-              SizedBox(width: 16),
-              Expanded(
+              // Bottom actions
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      _driverName,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                    if (_isDriverFound) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton.icon(
+                          onPressed: _showContactDialog,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: jdc.cta,
+                            foregroundColor: jdc.onCta,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                          icon: const Icon(Icons.headset_mic_rounded, size: 18),
+                          label: Text(l10n.waitingContactDriver, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: OutlinedButton(
+                        onPressed: _showCancelDialog,
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: jdc.dangerLine),
+                          foregroundColor: jdc.dangerInk,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                        child: Text(l10n.waitingCancelOrder, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
                       ),
                     ),
+                    const SizedBox(height: 10),
                     Text(
-                      _driverVehicle,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: JdcColors.of(context).muted,
-                      ),
+                      l10n.waitingCancelNote,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 11, color: jdc.muted),
                     ),
                   ],
                 ),
               ),
-              if (_isDriverAssigned)
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color:
-                        JdcColors.of(context).successInk.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    AppLocalizations.of(context)!.waitingAssigned,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: JdcColors.of(context).successInk,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
             ],
-          ),
-          SizedBox(height: 16),
-          Row(
-            children: [
-              Icon(Icons.phone, color: JdcColors.of(context).muted, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                _driverPhone,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButtons() {
-    return Column(
-      children: [
-        if (_isDriverAssigned)
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _showContactDialog,
-              icon: Icon(Icons.phone),
-              label: Text(AppLocalizations.of(context)!.waitingContactDriver),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: JdcColors.of(context).cta,
-                foregroundColor: JdcColors.of(context).surface,
-                padding: EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
-        SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: TextButton.icon(
-            onPressed: _showCancelDialog,
-            icon: Icon(Icons.cancel, color: JdcColors.of(context).danger),
-            label: Text(
-              AppLocalizations.of(context)!.waitingCancelBooking,
-              style: TextStyle(color: JdcColors.of(context).danger),
-            ),
-            style: TextButton.styleFrom(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: BorderSide(color: JdcColors.of(context).danger),
-              ),
-            ),
           ),
         ),
-      ],
+      ),
     );
   }
 

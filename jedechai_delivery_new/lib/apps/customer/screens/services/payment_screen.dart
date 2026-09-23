@@ -202,10 +202,36 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final methods = _getPaymentMethods(context);
     return Scaffold(
       backgroundColor: jdc.paper,
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.payTitle),
-        backgroundColor: jdc.panel,
-        foregroundColor: jdc.onPanel,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Container(
+          color: jdc.surface,
+          child: SafeArea(
+            bottom: false,
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    width: 44, height: 60,
+                    alignment: Alignment.center,
+                    child: Icon(Icons.chevron_left,
+                        size: 21, color: jdc.text),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    AppLocalizations.of(context)!.payTitle,
+                    style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: jdc.text),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
       body: Column(
         children: [
@@ -424,18 +450,22 @@ class _PaymentScreenState extends State<PaymentScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _buildMiniAmount(
-                      AppLocalizations.of(context)!.payFoodCost,
-                      '฿${widget.booking.price.ceil()}'),
+                  Flexible(
+                    child: _buildMiniAmount(
+                        AppLocalizations.of(context)!.payFoodCost,
+                        '฿${widget.booking.price.ceil()}'),
+                  ),
                   Container(
                       width: 1,
                       height: 24,
                       color: jdc.panelLine,
                       margin: const EdgeInsets.symmetric(
                           horizontal: JdcSpacing.md)),
-                  _buildMiniAmount(
-                      AppLocalizations.of(context)!.payDeliveryFee,
-                      '฿${widget.booking.deliveryFee!.ceil()}'),
+                  Flexible(
+                    child: _buildMiniAmount(
+                        AppLocalizations.of(context)!.payDeliveryFee,
+                        '฿${widget.booking.deliveryFee!.ceil()}'),
+                  ),
                 ],
               ),
             ),

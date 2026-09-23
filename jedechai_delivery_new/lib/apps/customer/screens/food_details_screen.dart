@@ -208,70 +208,50 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final jdc = JdcColors.of(context);
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _onWillPop();
       },
       child: Scaffold(
+        backgroundColor: jdc.paper,
         body: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _buildContent(),
-        bottomNavigationBar: _buildBottomBar(),
+            ? Center(child: CircularProgressIndicator(color: jdc.brand))
+            : _buildB1Content(),
+        bottomNavigationBar: _buildB1BottomBar(),
       ),
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildB1Content() {
     return CustomScrollView(
       slivers: [
-        // App Bar with Image Background
-        SliverAppBar(
-          expandedHeight: 250,
-          pinned: true,
-          flexibleSpace: FlexibleSpaceBar(
-            background: _buildFoodImage(),
-          ),
-          actions: [
-            // Favorite Button (Optional)
-            IconButton(
-              icon: const Icon(Icons.favorite_border),
-              onPressed: () {
-                // TODO: Add to favorites
-              },
-            ),
-          ],
-        ),
-
-        // Content
+        // 150px image header with back button overlay
+        SliverToBoxAdapter(child: _buildB1ImageHeader()),
+        // Scrollable content
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Food Header
-                _buildFoodHeader(),
-                const SizedBox(height: 24),
-
-                // Options Section
+                // Item name / desc / price
+                _buildB1FoodHeader(),
+                const SizedBox(height: 16),
+                // Options
                 if (_menuItemWithOptions != null &&
                     _menuItemWithOptions!.optionGroups.isNotEmpty) ...[
                   _buildOptionsSection(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                 ],
-
                 // Description
                 if (widget.menuItem.description?.isNotEmpty == true) ...[
                   _buildDescriptionSection(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                 ],
-
-                // Restaurant Info
-                if (widget.restaurantName != null) ...[
-                  _buildRestaurantSection(),
-                  const SizedBox(height: 100), // Space for bottom bar
-                ],
+                // Bottom space
+                const SizedBox(height: 100),
               ],
             ),
           ),
@@ -280,89 +260,110 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
     );
   }
 
-  Widget _buildFoodImage() {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      width: double.infinity,
-      height: 250,
-      color: colorScheme.surfaceContainerHighest,
-      child: AppNetworkImage(
-        imageUrl: widget.menuItem.imageUrl,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: 250,
-        backgroundColor: colorScheme.surfaceContainerHighest,
+  Widget _buildB1ImageHeader() {
+    final jdc = JdcColors.of(context);
+    return SizedBox(
+      height: 150,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Image or placeholder
+          widget.menuItem.imageUrl != null &&
+                  widget.menuItem.imageUrl!.isNotEmpty
+              ? AppNetworkImage(
+                  imageUrl: widget.menuItem.imageUrl,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: 150,
+                  backgroundColor: jdc.brandSoft,
+                )
+              : Container(
+                  color: jdc.brandSoft,
+                  alignment: Alignment.center,
+                  child: Text(
+                    widget.menuItem.name.isNotEmpty
+                        ? widget.menuItem.name
+                            .split(' ')
+                            .take(2)
+                            .map((w) => w.isNotEmpty ? w[0] : '')
+                            .join()
+                        : '',
+                    style: TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.w700,
+                      color: jdc.brandOnSoft,
+                    ),
+                  ),
+                ),
+          // Back button overlay
+          Positioned(
+            top: 16, left: 16,
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).pop(null),
+              child: Container(
+                width: 44, height: 44,
+                decoration: BoxDecoration(
+                  color: jdc.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: jdc.shadowFloat,
+                ),
+                child: Icon(Icons.chevron_left,
+                    size: 21, color: jdc.text),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildFoodHeader() {
-    final colorScheme = Theme.of(context).colorScheme;
-    final availabilityColor =
-        widget.menuItem.isAvailable ? colorScheme.tertiary : colorScheme.error;
+  Widget _buildB1FoodHeader() {
+    final jdc = JdcColors.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Food Name
         Text(
           widget.menuItem.name,
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: jdc.text,
           ),
         ),
-        const SizedBox(height: 8),
-
-        // Price and Category
-        Row(
-          children: [
-            Text(
-              '฿${widget.menuItem.price}',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: colorScheme.primary,
-              ),
-            ),
-            const SizedBox(width: 12),
-            if (widget.menuItem.category?.isNotEmpty == true)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  widget.menuItem.category!,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-          ],
+        if (widget.menuItem.description?.isNotEmpty == true) ...[
+          const SizedBox(height: 4),
+          Text(
+            widget.menuItem.description!,
+            style: TextStyle(fontSize: 12, color: jdc.muted),
+          ),
+        ],
+        const SizedBox(height: 6),
+        Text(
+          '฿${widget.menuItem.price.round()}',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: jdc.link,
+          ),
         ),
-        const SizedBox(height: 8),
-
-        // Availability Status
-        Row(
-          children: [
-            Icon(
-              widget.menuItem.isAvailable ? Icons.check_circle : Icons.cancel,
-              size: 16,
-              color: availabilityColor,
+        if (!widget.menuItem.isAvailable) ...[
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: jdc.dangerSoft,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: jdc.dangerLine),
             ),
-            const SizedBox(width: 4),
-            Text(
-              widget.menuItem.isAvailable ? AppLocalizations.of(context)!.foodDetAvailable : AppLocalizations.of(context)!.foodDetSoldOut,
+            child: Text(
+              AppLocalizations.of(context)!.foodDetSoldOut,
               style: TextStyle(
-                fontSize: 14,
-                color: availabilityColor,
-                fontWeight: FontWeight.w500,
-              ),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: jdc.dangerInk),
             ),
-          ],
-        ),
+          ),
+        ],
       ],
     );
   }
@@ -471,106 +472,55 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
     );
   }
 
-  Widget _buildRestaurantSection() {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          AppLocalizations.of(context)!.foodDetRestaurant,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            border: Border.all(color: colorScheme.outlineVariant),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Icon(Icons.store, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  widget.restaurantName ?? AppLocalizations.of(context)!.foodDetRestaurant,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              const Icon(Icons.arrow_forward_ios, size: 16),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBottomBar() {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _buildB1BottomBar() {
+    final jdc = JdcColors.of(context);
+    final canAdd = (_menuItemWithOptions == null || _isValid) &&
+        widget.menuItem.isAvailable &&
+        !_isAddingToCart;
     return Container(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.12),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
+        color: jdc.surface,
+        border: Border(top: BorderSide(color: jdc.line)),
       ),
       child: SafeArea(
+        top: false,
         child: Row(
           children: [
-            // Quantity Counter
-            _buildQuantityCounter(),
-            const SizedBox(width: 16),
-
-            // Add to Cart Button
+            // Quantity counter
+            _buildB1QuantityCounter(),
+            const SizedBox(width: 12),
+            // Add to cart button
             Expanded(
-              child: ElevatedButton(
-                onPressed: ((_menuItemWithOptions == null || _isValid) && widget.menuItem.isAvailable && !_isAddingToCart)
-                    ? _addToCart
-                    : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colorScheme.primary,
-                  foregroundColor: colorScheme.onPrimary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              child: GestureDetector(
+                onTap: canAdd ? _addToCart : null,
+                child: Container(
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: canAdd ? jdc.cta : jdc.line,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: canAdd ? jdc.shadowBrand : null,
                   ),
-                  elevation: 0,
+                  alignment: Alignment.center,
+                  child: _isAddingToCart
+                      ? SizedBox(
+                          width: 20, height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: jdc.onCta,
+                          ),
+                        )
+                      : Text(
+                          AppLocalizations.of(context)!
+                              .foodDetAddToCart(
+                                  _calculateTotalPrice().toString()),
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: canAdd ? jdc.onCta : jdc.muted,
+                          ),
+                        ),
                 ),
-                child: _isAddingToCart
-                    ? SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(colorScheme.onPrimary),
-                        ),
-                      )
-                    : Text(
-                        AppLocalizations.of(context)!.foodDetAddToCart(_calculateTotalPrice().toString()),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
               ),
             ),
           ],
@@ -579,71 +529,46 @@ class _FoodDetailsScreenState extends State<FoodDetailsScreen> {
     );
   }
 
-  Widget _buildQuantityCounter() {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _buildB1QuantityCounter() {
+    final jdc = JdcColors.of(context);
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: colorScheme.outlineVariant),
-        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: jdc.line),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Decrease Button
-          InkWell(
+          GestureDetector(
             onTap: () => _updateQuantity(_quantity - 1),
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(8),
-              bottomLeft: Radius.circular(8),
-            ),
             child: Container(
-              width: 40,
-              height: 48,
-              decoration: const BoxDecoration(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(8),
-                  bottomLeft: Radius.circular(8),
-                ),
-              ),
-              child: const Icon(Icons.remove),
+              width: 44, height: 48,
+              alignment: Alignment.center,
+              child: Icon(Icons.remove, size: 18, color: jdc.text),
             ),
           ),
-
-          // Quantity Display
-          Container(
-            width: 50,
-            height: 48,
-            alignment: Alignment.center,
+          SizedBox(
+            width: 36,
             child: Text(
               '$_quantity',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: jdc.text),
             ),
           ),
-
-          // Increase Button
-          InkWell(
+          GestureDetector(
             onTap: () => _updateQuantity(_quantity + 1),
-            borderRadius: const BorderRadius.only(
-              topRight: Radius.circular(8),
-              bottomRight: Radius.circular(8),
-            ),
             child: Container(
-              width: 40,
-              height: 48,
-              decoration: const BoxDecoration(
-                borderRadius: BorderRadius.only(
-                  topRight: Radius.circular(8),
-                  bottomRight: Radius.circular(8),
-                ),
-              ),
-              child: const Icon(Icons.add),
+              width: 44, height: 48,
+              alignment: Alignment.center,
+              child: Icon(Icons.add, size: 18, color: jdc.text),
             ),
           ),
         ],
       ),
     );
   }
+
 }

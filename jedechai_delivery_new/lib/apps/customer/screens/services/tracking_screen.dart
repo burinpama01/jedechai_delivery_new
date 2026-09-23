@@ -9,6 +9,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/jdc_colors.dart';
 import '../../../../theme/jdc_layout.dart';
 import '../../../../common/models/booking.dart';
+import '../../../../common/utils/order_code_formatter.dart';
 import '../../../../common/config/env_config.dart';
 import '../../../../utils/debug_logger.dart';
 
@@ -275,15 +276,40 @@ class _TrackingScreenState extends State<TrackingScreen> {
             },
           ),
 
-          // ปุ่มกลับ
+          // ปุ่มกลับ (Wave 1.5 style)
           Positioned(
             top: MediaQuery.of(context).padding.top + JdcSpacing.sm,
-            left: JdcSpacing.md,
-            child: CircleAvatar(
-              backgroundColor: jdc.surface,
+            left: JdcSpacing.lg,
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: jdc.surface,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: jdc.shadowFloat,
+              ),
               child: IconButton(
-                icon: Icon(Icons.arrow_back, color: jdc.text),
+                icon: Icon(Icons.chevron_left_rounded, color: jdc.text, size: 21),
                 onPressed: () => Navigator.of(context).pop(),
+                padding: EdgeInsets.zero,
+              ),
+            ),
+          ),
+
+          // Order ID chip top right
+          Positioned(
+            top: MediaQuery.of(context).padding.top + JdcSpacing.sm,
+            right: JdcSpacing.lg,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              decoration: BoxDecoration(
+                color: jdc.surface,
+                borderRadius: BorderRadius.circular(999),
+                boxShadow: jdc.shadowFloat,
+              ),
+              child: Text(
+                '#${OrderCodeFormatter.formatByServiceType(_booking.id, serviceType: _booking.serviceType)}',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: jdc.text),
               ),
             ),
           ),

@@ -4365,7 +4365,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get driverAssignedOnTheWay => 'คนขับกำลังเดินทาง';
 
   @override
-  String get driverAssignedEta => 'ระยะเวลาโดยประมาณ: 5-10 นาที';
+  String get driverAssignedEta => 'ระยะเวลาโดยประมาณ';
 
   @override
   String get driverAssignedContact => 'ติดต่อคนขับ';
@@ -6528,4 +6528,186 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get driverNavProxLaundryPickup => 'จุดรับผ้า';
+
+  @override
+  String get customerHomeDeliverTo => 'ส่งไปที่';
+
+  @override
+  String get customerHomeSearchHint => 'ค้นหาร้าน เมนู หรือบริการ';
+
+  @override
+  String get customerHomeTopUp => 'เติมเงิน';
+
+  @override
+  String get customerHomeRecommendedNearby => 'ร้านแนะนำใกล้คุณ';
+
+  @override
+  String get customerHomeSeeAll => 'ดูทั้งหมด';
+
+  @override
+  String get customerHomeServiceFood => 'อาหาร';
+
+  @override
+  String get customerHomeServiceLaundry => 'ซักรีด';
+
+  @override
+  String get customerHomeTrack => 'ติดตาม';
+
+  @override
+  String get customerHomeActiveTrackCard => 'ติดตาม';
+
+  @override
+  String get foodSvcFilterSort => 'ตัวกรอง';
+
+  @override
+  String get foodSvcFilterNearby => 'ใกล้ฉัน';
+
+  @override
+  String get foodSvcFilterRating => 'คะแนนสูง';
+
+  @override
+  String get foodSvcFilterFreeDelivery => 'ส่งฟรี';
+
+  @override
+  String foodSvcShopCount(String count) {
+    return '$count ร้าน';
+  }
+
+  @override
+  String get driverAssignedFoundHeading => 'ได้คนขับแล้ว';
+
+  @override
+  String get driverAssignedFoundSubtitle => 'กำลังไปรับอาหารที่ร้าน';
+
+  @override
+  String get driverAssignedChatLabel => 'แชท';
+
+  @override
+  String get driverAssignedCallLabel => 'โทร';
+
+  @override
+  String get driverAssignedTrackMap => 'ติดตามบนแผนที่';
+
+  @override
+  String driverAssignedEtaMinutes(String min) {
+    return '~$min นาที';
+  }
+
+  @override
+  String get waitingSearchingTitle => 'กำลังหาคนขับให้คุณ';
+
+  @override
+  String get waitingSearchingBody => 'ปกติใช้เวลาไม่เกิน 2 นาที\nเราจะแจ้งทันทีที่มีคนขับรับงาน';
+
+  @override
+  String get waitingCancelOrder => 'ยกเลิกคำสั่งซื้อ';
+
+  @override
+  String get waitingCancelNote => 'ยกเลิกหลังร้านเริ่มทำอาหารแล้วอาจมีค่าธรรมเนียม';
+
+  @override
+  String get waitingNoDriverCancelFailed => 'ไม่มีคนขับรับงานนี้ และยกเลิกไม่สำเร็จ กรุณาลองยกเลิกอีกครั้ง';
+
+  @override
+  String get waitingNoDriverTitle => 'ไม่มีคนขับรับงานนี้';
+
+  @override
+  String get waitingNoDriverBody => 'ระบบยกเลิกคำขอนี้แล้ว เพราะไม่มีคนขับใกล้เคียงรับงานทันเวลา กรุณาลองใหม่อีกครั้ง';
+
+  @override
+  String get waitingBackToHome => 'กลับหน้าแรก';
+
+  @override
+  String get waitingHelpLabel => 'ช่วยเหลือ';
+
+  @override
+  String get b1foodCheckoutDeliverTo => 'ส่งไปที่';
+
+  @override
+  String get b1foodCheckoutDeliverNow => 'ส่งทันที';
+
+  @override
+  String get b1foodCheckoutCouponChange => 'เปลี่ยน';
+
+  @override
+  String get b1foodCheckoutFoodCost => 'ค่าอาหาร';
+
+  @override
+  String get b1foodCheckoutDeliveryFee => 'ค่าส่ง';
+
+  @override
+  String get b1foodCheckoutCouponDiscount => 'ส่วนลดคูปอง';
+
+  @override
+  String get b1foodCheckoutTotal => 'ยอดชำระ';
+
+  @override
+  String get b1foodCheckoutOrderNow => 'สั่งเลย';
+
+  @override
+  String get b1foodCheckoutPayWallet => 'JDC Wallet';
+
+  @override
+  String get b1foodCheckoutPayCash => 'เงินสดปลายทาง';
+
+  @override
+  String get b1payWalletLabel => 'ชำระค่าอาหารด้วย JDC Wallet';
+
+  @override
+  String get b1payBalance => 'ยอดคงเหลือ';
+
+  @override
+  String get b1payAfterPay => 'คงเหลือหลังชำระ';
+
+  @override
+  String b1payConfirm(String amount) {
+    return 'ยืนยันชำระ ฿$amount';
+  }
+
+  @override
+  String get b1payTopup => 'เติมเงินเข้ากระเป๋า';
+
+  @override
+  String get b1payNote => 'ยอดจะถูกหักทันที และคืนเข้ากระเป๋าอัตโนมัติหากร้านปฏิเสธออเดอร์';
+
+  @override
+  String get b1paySummaryTitle => 'สรุปยอด';
+
+  @override
+  String get b1payFoodCost => 'ค่าอาหาร';
+
+  @override
+  String get b1payDeliveryFee => 'ค่าส่ง';
+
+  @override
+  String get b1payCouponDiscount => 'ส่วนลดคูปอง';
+
+  @override
+  String get b1payTotal => 'ยอดชำระ';
+
+  @override
+  String get b1trackStatusLabel => 'กำลังดำเนินการ';
+
+  @override
+  String get b1trackMinutesLabel => 'นาที';
+
+  @override
+  String get b1trackPaymentRow => 'ยอดชำระ · JDC Wallet';
+
+  @override
+  String get b1orderDetailReorder => 'สั่งซ้ำ';
+
+  @override
+  String get b1orderDetailReorderUnavailable => 'ออเดอร์นี้สั่งซ้ำไม่ได้';
+
+  @override
+  String get b1orderDetailHelp => 'ขอความช่วยเหลือ';
+
+  @override
+  String get b1orderDetailPayWith => 'ชำระด้วย';
+
+  @override
+  String b1orderDetailDeliveredAt(String time) {
+    return 'ส่งถึงเมื่อ $time น.';
+  }
 }
