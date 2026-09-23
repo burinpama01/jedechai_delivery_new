@@ -9,6 +9,7 @@ import '../../../../theme/jdc_layout.dart';
 import '../../../../common/models/shop_order.dart';
 import '../../../../common/services/shop_service.dart';
 import '../../../../common/widgets/app_network_image.dart';
+import '../../../../common/widgets/shop_ref_image.dart';
 import '../../../../utils/debug_logger.dart';
 
 /// หน้าติดตามออเดอร์ฝากซื้อ
@@ -593,6 +594,11 @@ class _ShopTrackingScreenState extends State<ShopTrackingScreen> {
                       : '$statusText · ${item.substituteName}',
                   style: TextStyle(fontSize: 11.5, color: color),
                 ),
+                if (item.refImagePath != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: ShopRefImage(path: item.refImagePath!, size: 44),
+                  ),
               ],
             ),
           ),

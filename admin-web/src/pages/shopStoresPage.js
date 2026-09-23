@@ -32,10 +32,19 @@ let _renderedGoogleMapZoom = null;
 let _lookupGeneration = 0;
 let _mapGeneration = 0;
 
-async function callStoreLookup(payload) {
+export async function callStoreLookup(payload) {
   const { supabase } = _deps();
   const { data, error } = await supabase.functions.invoke("shop-store-lookup", { body: payload });
-  if (error) throw new Error(data?.error || error.message || "ดึงข้อมูลร้านไม่สำเร็จ");
+  if (error) {
+    let serverError = data?.error;
+    if (!serverError && typeof error.context?.json === "function") {
+      try {
+        const responseBody = await error.context.json();
+        if (typeof responseBody?.error === "string") serverError = responseBody.error;
+      } catch { /* Keep the original transport error when the body is not JSON. */ }
+    }
+    throw new Error(serverError || error.message || "ดึงข้อมูลร้านไม่สำเร็จ");
+  }
   if (data?.error) throw new Error(data.error);
   return data;
 }
@@ -316,6 +325,7 @@ export async function renderShopStoresPage(el, ctx) {
   }
 
   const list = stores || [];
+  const requests = await loadPendingStoreRequests(supabase);
   const active = list.filter((s) => s.is_active);
   const openNow = active.filter(isOpenNowApprox);
   const noHours = active.filter((s) => !s.is_24h && summarizeHours(s) === "ยังไม่ได้ตั้งเวลา");
@@ -377,6 +387,8 @@ export async function renderShopStoresPage(el, ctx) {
              </div>`
           : ""
       }
+
+      ${renderStoreRequestsCard(requests, escapeHtml)}
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="glass-card p-4">
@@ -442,6 +454,125 @@ export async function renderShopStoresPage(el, ctx) {
   globalThis.zoomGoogleStoreMap = zoomGoogleStoreMap;
   globalThis.renderGoogleStoreMap = renderGoogleStoreMap;
   globalThis.invalidateStoreLookup = invalidateStoreLookup;
+  globalThis.reviewShopStoreRequest = reviewShopStoreRequest;
+}
+
+// ── คำขอเพิ่มร้านจากลูกค้า ───────────────────────────────────
+// ลูกค้าส่งได้แค่ "คำขอ" — ร้านจริงสร้างเมื่อแอดมินกดอนุมัติเท่านั้น
+// และร้านที่ได้จะปิดใช้งานไว้ก่อน เพราะคำขอไม่มีเวลาเปิด-ปิด
+
+async function loadPendingStoreRequests(supabase) {
+  const { data, error } = await supabase
+    .from("shop_store_requests")
+    .select("*, requester:profiles!shop_store_requests_requester_id_fkey(full_name)")
+    .eq("status", "pending")
+    .order("created_at", { ascending: true })
+    .limit(50);
+  if (error) {
+    // ยังไม่ได้ migrate ตาราง -> ไม่ให้ทั้งหน้าร้านพังตาม
+    console.warn("shop_store_requests:", error.message);
+    return [];
+  }
+  return data || [];
+}
+
+function safeHttpUrl(raw) {
+  try {
+    const u = new URL(String(raw || ""));
+    return u.protocol === "https:" || u.protocol === "http:" ? u.href : null;
+  } catch {
+    return null;
+  }
+}
+
+export function renderStoreRequestsCard(requests, escapeHtml) {
+  if (!requests || requests.length === 0) return "";
+  const { fmtDate } = _deps();
+
+  const items = requests
+    .map((r) => {
+      const lat = Number(r.lat);
+      const lng = Number(r.lng);
+      const pin = `https://www.google.com/maps?q=${lat},${lng}`;
+      const link = safeHttpUrl(r.maps_url);
+      const who = r.requester?.full_name || "ลูกค้า";
+      return `
+      <div class="border border-gray-100 rounded-xl p-3 flex flex-wrap gap-3 items-start justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2">
+            <span class="material-icons-round text-violet-500 text-lg">${categoryIcon(r.category)}</span>
+            <span class="font-semibold text-gray-800">${escapeHtml(r.name)}</span>
+            <span class="text-xs text-gray-400">${categoryLabel(r.category)}${r.is_24h ? " · เปิด 24 ชม." : ""}</span>
+          </div>
+          <div class="text-xs text-gray-500 mt-1">${escapeHtml(r.address || "-")}</div>
+          <div class="text-xs mt-1 flex flex-wrap gap-3">
+            <a href="${pin}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">${lat.toFixed(5)}, ${lng.toFixed(5)}</a>
+            ${link ? `<a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">ลิงก์ Google Maps จากลูกค้า</a>` : ""}
+          </div>
+          ${r.note ? `<div class="text-xs text-gray-600 mt-1">หมายเหตุ: ${escapeHtml(r.note)}</div>` : ""}
+          <div class="text-[11px] text-gray-400 mt-1">โดย ${escapeHtml(who)} · ${escapeHtml(fmtDate ? fmtDate(r.created_at) : r.created_at)}</div>
+        </div>
+        <div class="flex gap-1 shrink-0">
+          <button onclick="reviewShopStoreRequest('${escapeHtml(r.id)}', true)" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100">อนุมัติ</button>
+          <button onclick="reviewShopStoreRequest('${escapeHtml(r.id)}', false)" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-50 text-red-600 border border-red-200 hover:bg-red-100">ไม่อนุมัติ</button>
+        </div>
+      </div>`;
+    })
+    .join("");
+
+  return `
+    <div class="glass-card p-4 border-l-4 border-violet-400">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="material-icons-round text-violet-500">add_location_alt</span>
+        <div class="font-semibold text-gray-800">คำขอเพิ่มร้านจากลูกค้า (${requests.length})</div>
+      </div>
+      <div class="text-xs text-gray-500 mb-3">
+        อนุมัติแล้วระบบจะสร้างร้านแบบ <b>ปิดใช้งาน</b> ให้ — ตรวจพิกัด ตั้งเวลาเปิด-ปิด แล้วค่อยเปิดใช้งาน
+      </div>
+      <div class="space-y-2">${items}</div>
+    </div>`;
+}
+
+const REVIEW_ERRORS = {
+  not_authorized: "ไม่มีสิทธิ์ตรวจคำขอ",
+  request_not_found: "ไม่พบคำขอนี้",
+  already_reviewed: "คำขอนี้ถูกตรวจไปแล้ว",
+  store_exists: "มีร้านชื่อนี้ที่พิกัดเดียวกันอยู่แล้ว",
+};
+
+let _reviewing = false;
+
+export async function reviewShopStoreRequest(id, approve) {
+  if (_reviewing) return;
+  const { supabase, showToast, refreshCurrentPage } = _deps();
+
+  let note = null;
+  if (!approve) {
+    note = globalThis.prompt?.("เหตุผลที่ไม่อนุมัติ (ลูกค้าจะเห็นข้อความนี้)", "");
+    if (note === null || note === undefined) return;
+  } else if (globalThis.confirm && !globalThis.confirm("อนุมัติและสร้างร้าน (ปิดใช้งานไว้ก่อน)?")) {
+    return;
+  }
+
+  _reviewing = true;
+  try {
+    const { data, error } = await supabase.rpc("shop_review_store_request", {
+      p_request_id: id,
+      p_approve: approve,
+      p_admin_note: note,
+    });
+    if (error) return showToast?.(`ทำรายการไม่สำเร็จ: ${error.message}`, "error");
+    if (!data?.success) {
+      return showToast?.(REVIEW_ERRORS[data?.error] || `ทำรายการไม่สำเร็จ (${data?.error || "unknown"})`, "error");
+    }
+
+    showToast?.(approve ? "อนุมัติแล้ว — ตั้งเวลาเปิด-ปิดแล้วเปิดใช้งานร้าน" : "ปฏิเสธคำขอแล้ว", "success");
+    await refreshCurrentPage?.();
+    // เปิดฟอร์มร้านที่เพิ่งสร้างให้เลย จะได้ตั้งเวลาต่อทันที
+    if (approve && data.store_id) editShopStore(data.store_id);
+  } finally {
+    _reviewing = false;
+  }
 }
 
 // ── ฟอร์มเพิ่ม/แก้ไข ────────────────────────────────────────

@@ -7403,4 +7403,118 @@ class AppLocalizationsEn extends AppLocalizations {
   String shopDrvProofCount(int count) {
     return '$count photos';
   }
+
+  @override
+  String get shopAddressChange => 'Change';
+
+  @override
+  String get shopAddressPickFirst => 'Choose a delivery address first';
+
+  @override
+  String get shopItemPhoto => 'Reference photo (optional)';
+
+  @override
+  String get shopItemPhotoAdd => 'Attach photo';
+
+  @override
+  String get shopItemPhotoRemove => 'Remove photo';
+
+  @override
+  String get shopItemPhotoHint => 'A photo helps the driver pick the right brand. Images are resized before upload.';
+
+  @override
+  String get shopItemPhotoUploading => 'Uploading reference photos…';
+
+  @override
+  String get shopItemPhotoUploadFailed => 'Could not upload the reference photos, but your order was created. You can describe the items to the driver in chat.';
+
+  @override
+  String get shopDrvRefPhoto => 'Customer reference photo';
+
+  @override
+  String get shopStoreRequestCta => 'Store not listed? Request a new one';
+
+  @override
+  String get shopReqTitle => 'Request a new store';
+
+  @override
+  String get shopReqIntro => 'Fill in the store details. An admin will review it and set opening hours before it goes live.';
+
+  @override
+  String get shopReqName => 'Store name';
+
+  @override
+  String get shopReqNameHint => 'e.g. 7-Eleven, Pua Market branch';
+
+  @override
+  String get shopReqCategory => 'Store type';
+
+  @override
+  String get shopReqAddress => 'Store address';
+
+  @override
+  String get shopReqAddressHint => 'Landmarks help';
+
+  @override
+  String get shopReqLocation => 'Store location';
+
+  @override
+  String get shopReqPickOnMap => 'Pin on map';
+
+  @override
+  String get shopReqLocationNone => 'No location selected yet';
+
+  @override
+  String get shopReqMapsUrl => 'Google Maps link (optional)';
+
+  @override
+  String get shopReqMapsUrlHint => 'Paste a Google Maps share link';
+
+  @override
+  String get shopReqMapsUrlInvalid => 'Google Maps link must start with http:// or https://';
+
+  @override
+  String get shopReq24h => 'Open 24 hours';
+
+  @override
+  String get shopReqNote => 'Note for the admin';
+
+  @override
+  String get shopReqNoteHint => 'e.g. inside the petrol station, entrance behind the market';
+
+  @override
+  String get shopReqSubmit => 'Send request';
+
+  @override
+  String get shopReqSent => 'Request sent. An admin will review it.';
+
+  @override
+  String get shopReqErrName => 'Please enter the store name';
+
+  @override
+  String get shopReqErrLocation => 'Please pin the store location';
+
+  @override
+  String get shopReqErrExists => 'This store already exists';
+
+  @override
+  String get shopReqErrPending => 'A request for this store is already pending';
+
+  @override
+  String get shopReqErrLimit => 'You have reached today\'s request limit. Try again tomorrow.';
+
+  @override
+  String get shopReqErrDisabled => 'Store requests are temporarily closed';
+
+  @override
+  String get shopReqMine => 'My requests';
+
+  @override
+  String get shopReqStatusPending => 'Under review';
+
+  @override
+  String get shopReqStatusApproved => 'Approved';
+
+  @override
+  String get shopReqStatusRejected => 'Not approved';
 }

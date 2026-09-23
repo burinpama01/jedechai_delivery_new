@@ -263,5 +263,34 @@ void main() {
       expect(restored.quantity, original.quantity);
       expect(restored.note, original.note);
     });
+
+    test('รูปตัวอย่างในเครื่องติดไปกับ draft แต่ไม่ถูกส่งขึ้น RPC', () {
+      final original = ShopDraftItem(name: 'นม', localImagePath: '/tmp/a.jpg');
+      expect(original.hasImage, isTrue);
+      expect(original.toRpcJson().containsKey('local_image_path'), isFalse);
+      final restored =
+          ShopDraftItem.fromStorageJson(original.toStorageJson());
+      expect(restored.localImagePath, '/tmp/a.jpg');
+      expect(ShopDraftItem(name: 'นม', localImagePath: ' ').hasImage, isFalse);
+      // draft รุ่นเก่าที่ไม่มี key รูป ต้องอ่านได้
+      expect(ShopDraftItem.fromStorageJson({'name': 'x'}).hasImage, isFalse);
+    });
+  });
+
+  group('ShopOrderItem.refImagePath', () {
+    Map<String, dynamic> row(Object? path) => {
+          'id': 'i1',
+          'line_no': 1,
+          'name': 'นม',
+          'status': 'pending',
+          'ref_image_path': path,
+        };
+
+    test('อ่าน path รูปตัวอย่าง และค่าว่างเป็น null', () {
+      expect(ShopOrderItem.fromJson(row('b/ref/1.jpg')).refImagePath,
+          'b/ref/1.jpg');
+      expect(ShopOrderItem.fromJson(row('')).refImagePath, isNull);
+      expect(ShopOrderItem.fromJson(row(null)).refImagePath, isNull);
+    });
   });
 }

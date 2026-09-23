@@ -11,6 +11,7 @@ import '../../../common/models/shop_order.dart';
 import '../../../common/services/image_picker_service.dart';
 import '../../../common/services/shop_service.dart';
 import '../../../common/services/storage_service.dart';
+import '../../../common/widgets/shop_ref_image.dart';
 
 /// หน้างานฝากซื้อของคนขับ
 ///
@@ -533,6 +534,14 @@ class _ShopJobScreenState extends State<ShopJobScreen> {
               padding: const EdgeInsets.only(top: 2),
               child: Text(item.note!,
                   style: TextStyle(fontSize: 11.5, color: jdc.muted)),
+            ),
+          if (item.refImagePath != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: ShopRefImage(
+                path: item.refImagePath!,
+                label: l10n.shopDrvRefPhoto,
+              ),
             ),
           const SizedBox(height: 8),
           Wrap(

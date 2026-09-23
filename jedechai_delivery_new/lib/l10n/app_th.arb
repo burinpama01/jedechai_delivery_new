@@ -1984,7 +1984,13 @@
   "rideLocationDenied": "ไม่ได้รับอนุญาตให้เข้าถึงตำแหน่ง",
   "rideLocationDeniedForever": "การเข้าถึงตำแหน่งถูกปิดถาวร กรุณาเปิดในตั้งค่าเครื่อง",
   "rideLocationError": "อ่านตำแหน่งไม่สำเร็จ: {error}",
-  "@rideLocationError": {"placeholders": {"error": {"type": "String"}}},
+  "@rideLocationError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "rideYourLocation": "ตำแหน่งของคุณ",
   "rideDestination": "ปลายทาง",
   "rideNoDriverForVehicle": "ไม่มีคนขับว่างใกล้คุณ ลองเลือกประเภทรถอื่น",
@@ -3694,5 +3700,43 @@
         "type": "int"
       }
     }
-  }
+  },
+  "shopAddressChange": "เปลี่ยนที่อยู่",
+  "shopAddressPickFirst": "เลือกที่อยู่จัดส่งก่อน",
+  "shopItemPhoto": "รูปตัวอย่าง (ไม่บังคับ)",
+  "shopItemPhotoAdd": "แนบรูป",
+  "shopItemPhotoRemove": "เอารูปออก",
+  "shopItemPhotoHint": "แนบรูปช่วยให้คนขับหยิบถูกยี่ห้อ ระบบย่อขนาดรูปให้อัตโนมัติก่อนอัปโหลด",
+  "shopItemPhotoUploading": "กำลังอัปโหลดรูปตัวอย่าง…",
+  "shopItemPhotoUploadFailed": "อัปโหลดรูปตัวอย่างไม่สำเร็จ แต่ออเดอร์ถูกสร้างแล้ว แจ้งรายละเอียดกับคนขับได้ในแชท",
+  "shopDrvRefPhoto": "รูปตัวอย่างจากลูกค้า",
+  "shopStoreRequestCta": "ไม่เจอร้านที่ต้องการ? ส่งคำขอเพิ่มร้าน",
+  "shopReqTitle": "ขอเพิ่มตำแหน่งร้าน",
+  "shopReqIntro": "กรอกข้อมูลร้านให้ครบ แอดมินจะตรวจสอบและตั้งเวลาเปิด-ปิดก่อนเปิดให้ใช้งาน",
+  "shopReqName": "ชื่อร้าน",
+  "shopReqNameHint": "เช่น เซเว่น สาขาตลาดปัว",
+  "shopReqCategory": "ประเภทร้าน",
+  "shopReqAddress": "ที่อยู่ร้าน",
+  "shopReqAddressHint": "บอกจุดสังเกตได้ยิ่งดี",
+  "shopReqLocation": "ตำแหน่งร้าน",
+  "shopReqPickOnMap": "ปักหมุดบนแผนที่",
+  "shopReqLocationNone": "ยังไม่ได้เลือกตำแหน่ง",
+  "shopReqMapsUrl": "ลิงก์ Google Maps (ถ้ามี)",
+  "shopReqMapsUrlHint": "วางลิงก์แชร์ตำแหน่งจาก Google Maps",
+  "shopReqMapsUrlInvalid": "ลิงก์ Google Maps ต้องขึ้นต้นด้วย http:// หรือ https://",
+  "shopReq24h": "ร้านเปิด 24 ชั่วโมง",
+  "shopReqNote": "หมายเหตุถึงแอดมิน",
+  "shopReqNoteHint": "เช่น อยู่ในปั๊มน้ำมัน ทางเข้าหลังตลาด",
+  "shopReqSubmit": "ส่งคำขอ",
+  "shopReqSent": "ส่งคำขอแล้ว แอดมินจะตรวจสอบให้",
+  "shopReqErrName": "กรุณากรอกชื่อร้าน",
+  "shopReqErrLocation": "กรุณาปักหมุดตำแหน่งร้าน",
+  "shopReqErrExists": "ร้านนี้มีอยู่ในระบบแล้ว",
+  "shopReqErrPending": "มีคำขอร้านนี้รอตรวจสอบอยู่แล้ว",
+  "shopReqErrLimit": "วันนี้ส่งคำขอครบจำนวนที่อนุญาตแล้ว ลองใหม่พรุ่งนี้",
+  "shopReqErrDisabled": "ตอนนี้ปิดรับคำขอเพิ่มร้านชั่วคราว",
+  "shopReqMine": "คำขอของฉัน",
+  "shopReqStatusPending": "รอตรวจสอบ",
+  "shopReqStatusApproved": "อนุมัติแล้ว",
+  "shopReqStatusRejected": "ไม่อนุมัติ"
 }

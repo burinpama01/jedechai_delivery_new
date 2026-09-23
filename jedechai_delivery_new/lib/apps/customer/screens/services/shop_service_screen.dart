@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -5,15 +8,20 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/jdc_colors.dart';
 import '../../../../theme/jdc_layout.dart';
+import '../../../../common/models/saved_address.dart';
 import '../../../../common/models/shop_order.dart';
 import '../../../../common/models/shop_quote.dart';
 import '../../../../common/models/shop_store.dart';
+import '../../../../common/services/geocoding_service.dart';
+import '../../../../common/services/image_picker_service.dart';
 import '../../../../common/services/location_service.dart';
 import '../../../../common/services/shop_service.dart';
 import '../../../../utils/debug_logger.dart';
 import '../customer_wallet_screen.dart';
 import 'delivery_map_picker_screen.dart';
+import 'saved_addresses_screen.dart';
 import 'shop_quote_dialog.dart';
+import 'shop_store_request_screen.dart';
 import 'shop_tracking_screen.dart';
 
 /// หน้าสั่งฝากซื้อ/ฝากหิ้ว
@@ -46,6 +54,14 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
   double? _destLat;
   double? _destLng;
   String _destAddress = '';
+
+  /// โหมดที่อยู่จัดส่ง — ใช้ชุดเดียวกับหน้าสั่งอาหาร ('current' | 'pin' | 'saved')
+  /// เพื่อให้ลูกค้าเจอฟอร์มหน้าตาเดียวกันทุกบริการ
+  String _deliveryMode = 'current';
+  bool _resolvingAddress = false;
+
+  /// เปิดรับคำขอเพิ่มร้านอยู่ไหม (แอดมินปิดได้)
+  bool _storeRequestEnabled = false;
 
   double? _myLat;
   double? _myLng;
@@ -83,6 +99,13 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
     await _loadLimits();
     await _restoreDraft();
     await _loadStores();
+    await _loadStoreRequestFlag();
+  }
+
+  Future<void> _loadStoreRequestFlag() async {
+    final enabled = await _shop.storeRequestEnabled();
+    if (!mounted) return;
+    setState(() => _storeRequestEnabled = enabled);
   }
 
   /// ดึงขีดจำกัดที่แอดมินตั้งไว้ เพื่อให้ UI ตรงกับที่ server จะยอมรับ
@@ -101,12 +124,22 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
     if (draft == null || !mounted) return;
 
     final items = ShopService.draftItemsFrom(draft);
+    // รูปอยู่ในโฟลเดอร์ชั่วคราว ระบบอาจล้างไปแล้วระหว่างที่ออกไปเติมเงิน
+    for (final item in items) {
+      if (item.hasImage && !File(item.localImagePath!).existsSync()) {
+        item.localImagePath = null;
+      }
+    }
     setState(() {
       if (items.isNotEmpty) _items = items;
       _pendingDraftStoreId = draft['store_id'] as String?;
       _destLat = (draft['dest_lat'] as num?)?.toDouble();
       _destLng = (draft['dest_lng'] as num?)?.toDouble();
       _destAddress = (draft['dest_address'] as String?) ?? '';
+      // draft ที่มีที่อยู่ติดมาแล้ว = ลูกค้าเคยเลือกเอง อย่าเขียนทับด้วยตำแหน่งปัจจุบัน
+      if (_destLat != null && _destLng != null && _destAddress.isNotEmpty) {
+        _deliveryMode = 'pin';
+      }
       final budget = (draft['budget_cap'] as num?)?.toDouble();
       if (budget != null && budget > 0) {
         _budgetController.text = budget.toStringAsFixed(0);
@@ -168,6 +201,10 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
       // ยังไม่ได้เลือกที่อยู่ส่ง -> ใช้ตำแหน่งปัจจุบันเป็นค่าเริ่มต้น
       _destLat ??= pos.latitude;
       _destLng ??= pos.longitude;
+      if (_deliveryMode == 'current' && _destAddress.isEmpty) {
+        // ไม่ await เพราะ reverse geocode ช้าและไม่ควรกั้นรายการร้าน
+        unawaited(_resolveCurrentAddress(pos.latitude, pos.longitude));
+      }
 
       if (!mounted || token != _storeRequestToken) return;
 
@@ -240,7 +277,43 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
 
   // ── ที่อยู่ส่ง ─────────────────────────────────────────────────────────
 
-  Future<void> _pickAddress() async {
+  /// แปลงพิกัดปัจจุบันเป็นข้อความที่อยู่ (ให้ลูกค้าเห็นว่าจะส่งไปที่ไหนจริง)
+  Future<void> _resolveCurrentAddress(double lat, double lng) async {
+    if (mounted) setState(() => _resolvingAddress = true);
+    final addr = await GeocodingService.getAddressFromCoordinates(lat, lng);
+    if (!mounted) return;
+    setState(() {
+      _resolvingAddress = false;
+      // ลูกค้าอาจเปลี่ยนไปปักหมุดระหว่างรอ -> อย่าเขียนทับ
+      if (_deliveryMode == 'current' && addr != null && addr.isNotEmpty) {
+        _destAddress = addr;
+      }
+    });
+  }
+
+  /// ตัวเลือก 1: ตำแหน่งปัจจุบัน
+  Future<void> _useCurrentLocation() async {
+    setState(() {
+      _deliveryMode = 'current';
+      _destAddress = '';
+    });
+    final pos = await LocationService.getCurrentLocation(context: context);
+    if (!mounted) return;
+    if (pos == null) {
+      _snack(AppLocalizations.of(context)!.shopStoreLocationNeeded);
+      return;
+    }
+    setState(() {
+      _myLat = pos.latitude;
+      _myLng = pos.longitude;
+      _destLat = pos.latitude;
+      _destLng = pos.longitude;
+    });
+    await _resolveCurrentAddress(pos.latitude, pos.longitude);
+  }
+
+  /// ตัวเลือก 2: ปักหมุดบนแผนที่
+  Future<void> _openMapPicker() async {
     final result = await Navigator.of(context).push<Map<String, dynamic>>(
       MaterialPageRoute(
         builder: (_) => DeliveryMapPickerScreen(
@@ -257,10 +330,113 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
     final lng = (result['lng'] as num?)?.toDouble();
     if (lat == null || lng == null) return;
     setState(() {
+      _deliveryMode = 'pin';
       _destLat = lat;
       _destLng = lng;
       _destAddress = result['address']?.toString() ?? '';
     });
+  }
+
+  /// ตัวเลือก 3: ที่อยู่ที่บันทึกไว้
+  Future<void> _openSavedAddresses() async {
+    final result = await Navigator.of(context).push<SavedAddress>(
+      MaterialPageRoute(
+        builder: (_) => const SavedAddressesScreen(pickMode: true),
+      ),
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      _deliveryMode = 'saved';
+      _destLat = result.latitude;
+      _destLng = result.longitude;
+      _destAddress = '${result.name} — ${result.address}';
+    });
+  }
+
+  // ── รูปตัวอย่างต่อรายการ ──────────────────────────────────────────────
+
+  /// เลือกรูป (กล้อง/คลัง) — ImagePickerService ย่อเหลือไม่เกิน 1024px
+  /// และบีบอัดไฟล์ที่เกิน 500KB ให้แล้ว ก่อนจะถึงขั้นอัปโหลด
+  Future<void> _pickItemImage(int index) async {
+    final file = await ImagePickerService.showImageSourceDialog(context);
+    if (file == null || !mounted || index >= _items.length) return;
+    setState(() => _items[index].localImagePath = file.path);
+  }
+
+  void _removeItemImage(int index) {
+    setState(() => _items[index].localImagePath = null);
+  }
+
+  // ── คำขอเพิ่มร้าน ────────────────────────────────────────────────────
+
+  Future<void> _openStoreRequest() async {
+    final sent = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => ShopStoreRequestScreen(
+          initialPosition: (_myLat != null && _myLng != null)
+              ? LatLng(_myLat!, _myLng!)
+              : null,
+          initialName: _searchController.text,
+        ),
+      ),
+    );
+    if (sent == true && mounted) _searchController.clear();
+  }
+
+  Future<void> _showMyStoreRequests() async {
+    final l10n = AppLocalizations.of(context)!;
+    final jdc = JdcColors.of(context);
+    final rows = await _shop.myStoreRequests();
+    if (!mounted) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: jdc.surface,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: rows.isEmpty
+            ? Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                child: Text(l10n.shopStoreEmpty,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: jdc.muted)),
+              )
+            : ListView(
+                shrinkWrap: true,
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                children: [
+                  Text(l10n.shopReqMine,
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: jdc.text)),
+                  const SizedBox(height: 8),
+                  for (final r in rows)
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(r['name']?.toString() ?? '',
+                          style: TextStyle(color: jdc.text)),
+                      subtitle: (r['admin_note']?.toString() ?? '').isEmpty
+                          ? null
+                          : Text(r['admin_note'].toString(),
+                              style: TextStyle(color: jdc.muted)),
+                      trailing: _requestStatusPill(jdc, l10n, r['status']),
+                    ),
+                ],
+              ),
+      ),
+    );
+  }
+
+  Widget _requestStatusPill(JdcColors jdc, AppLocalizations l10n, Object? s) {
+    switch (s?.toString()) {
+      case 'approved':
+        return _pill(jdc, l10n.shopReqStatusApproved, false);
+      case 'rejected':
+        return _pill(jdc, l10n.shopReqStatusRejected, true);
+      default:
+        return Text(l10n.shopReqStatusPending,
+            style: TextStyle(fontSize: 12, color: jdc.muted));
+    }
   }
 
   // ── ขอราคา + ยืนยัน ───────────────────────────────────────────────────
@@ -359,6 +535,7 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
     final store = _selectedStore;
     final budget = _budgetValue;
     if (store == null || budget == null) return;
+    if (_destLat == null || _destLng == null) return;
 
     setState(() => _placing = true);
 
@@ -399,9 +576,34 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
       return;
     }
 
-    await _shop.clearDraft();
     final bookingId = res['booking_id']?.toString();
-    if (bookingId == null || !mounted) return;
+    if (bookingId == null) {
+      await _shop.clearDraft();
+      return;
+    }
+
+    // รูปตัวอย่างอัปโหลดได้หลังมี booking_id เท่านั้น (policy ตรวจจาก path)
+    // ล้มก็ไม่ย้อนออเดอร์ — แค่บอกลูกค้าให้คุยกับคนขับในแชทแทน
+    if (_items.any((i) => !i.isBlank && i.hasImage)) {
+      if (mounted) {
+        setState(() => _placing = true);
+        _snack(l10n.shopItemPhotoUploading);
+      }
+      bool ok;
+      try {
+        ok = await _shop.uploadItemImages(bookingId: bookingId, items: _items);
+      } catch (e) {
+        debugLog('❌ อัปโหลดรูปตัวอย่าง: $e');
+        ok = false;
+      }
+      if (mounted) {
+        setState(() => _placing = false);
+        if (!ok) _snack(l10n.shopItemPhotoUploadFailed);
+      }
+    }
+
+    await _shop.clearDraft();
+    if (!mounted) return;
 
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
@@ -428,7 +630,13 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
         title: Text(l10n.shopSvcTitle),
         backgroundColor: jdc.surface,
         foregroundColor: jdc.text,
+        iconTheme: IconThemeData(color: jdc.text),
         elevation: 0,
+        // โหมดสว่าง surface (ขาว) กับ paper ต่างกันนิดเดียว header เลยกลืนไปกับพื้น
+        // -> ขีดเส้นใต้แบบเดียวกับหน้าที่อยู่ + ปิด tint ที่ M3 ใส่ตอนเลื่อน
+        shape: Border(bottom: BorderSide(color: jdc.line)),
+        surfaceTintColor: Colors.transparent,
+        scrolledUnderElevation: 0,
       ),
       body: SafeArea(
         child: ListView(
@@ -652,6 +860,30 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
           )
         else
           ...visible.map((s) => _storeTile(jdc, l10n, s)),
+        if (_storeRequestEnabled) ...[
+          const SizedBox(height: 4),
+          OutlinedButton.icon(
+            onPressed: _openStoreRequest,
+            icon: const Icon(Icons.add_location_alt_rounded, size: 18),
+            label: Text(l10n.shopStoreRequestCta, textAlign: TextAlign.center),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(JdcTouch.minTarget),
+              side: BorderSide(color: jdc.brandLine),
+              foregroundColor: jdc.link,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(JdcRadius.small),
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.center,
+            child: TextButton(
+              onPressed: _showMyStoreRequests,
+              child: Text(l10n.shopReqMine,
+                  style: TextStyle(fontSize: 12.5, color: jdc.muted)),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -860,6 +1092,8 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
   Widget _itemRow(JdcColors jdc, AppLocalizations l10n, int index) {
     final item = _items[index];
     return Container(
+      // ผูก state ของช่องกรอกกับตัว item ไม่ใช่ลำดับ — ลบบรรทัดกลางแล้วข้อความไม่สลับแถว
+      key: ObjectKey(item),
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -902,8 +1136,68 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
             onChanged: (v) => item.note = v,
             decoration: _dec(jdc, l10n.shopItemNote, l10n.shopItemNoteHint),
           ),
+          const SizedBox(height: 8),
+          _itemPhoto(jdc, l10n, index),
         ],
       ),
+    );
+  }
+
+  /// แนบรูปตัวอย่าง (ไม่บังคับ)
+  Widget _itemPhoto(JdcColors jdc, AppLocalizations l10n, int index) {
+    final item = _items[index];
+    if (!item.hasImage) {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: TextButton.icon(
+          onPressed: () => _pickItemImage(index),
+          icon: Icon(Icons.add_a_photo_outlined, size: 18, color: jdc.link),
+          label: Text(l10n.shopItemPhoto,
+              style: TextStyle(fontSize: 13, color: jdc.link)),
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            minimumSize: const Size(0, JdcTouch.minTarget),
+          ),
+        ),
+      );
+    }
+    return Row(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(JdcRadius.small),
+          child: Image.file(
+            File(item.localImagePath!),
+            width: 56,
+            height: 56,
+            fit: BoxFit.cover,
+            cacheWidth: 168,
+            errorBuilder: (_, __, ___) => Container(
+              width: 56,
+              height: 56,
+              color: jdc.sunken,
+              child: Icon(Icons.broken_image_outlined, color: jdc.muted),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            l10n.shopItemPhotoHint,
+            style: TextStyle(fontSize: 11.5, height: 1.4, color: jdc.muted),
+          ),
+        ),
+        IconButton(
+          tooltip: l10n.shopItemPhotoAdd,
+          onPressed: () => _pickItemImage(index),
+          icon: Icon(Icons.autorenew_rounded, color: jdc.muted, size: 20),
+        ),
+        IconButton(
+          tooltip: l10n.shopItemPhotoRemove,
+          onPressed: () => _removeItemImage(index),
+          icon: Icon(Icons.delete_outline_rounded,
+              color: jdc.dangerInk, size: 20),
+        ),
+      ],
     );
   }
 
@@ -928,30 +1222,122 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
 
   // ── ที่อยู่ + วงเงิน ───────────────────────────────────────────────────
 
-  Widget _addressCard(JdcColors jdc, AppLocalizations l10n) => _card(
-        jdc,
+  /// ฟอร์มที่อยู่จัดส่ง — ชุดเดียวกับหน้าสั่งอาหาร (ตำแหน่งปัจจุบัน / ปักหมุด / ที่บันทึกไว้)
+  Widget _addressCard(JdcColors jdc, AppLocalizations l10n) {
+    final hasAddress = _destAddress.isNotEmpty;
+    return _card(
+      jdc,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _addressOption(jdc,
+              icon: Icons.my_location,
+              label: l10n.foodAddressCurrentLocation,
+              selected: _deliveryMode == 'current',
+              onTap: _useCurrentLocation),
+          const SizedBox(height: 8),
+          _addressOption(jdc,
+              icon: Icons.pin_drop,
+              label: l10n.foodAddressPinOnMap,
+              selected: _deliveryMode == 'pin',
+              onTap: _openMapPicker),
+          const SizedBox(height: 8),
+          _addressOption(jdc,
+              icon: Icons.bookmark_outline,
+              label: l10n.foodAddressSaved,
+              selected: _deliveryMode == 'saved',
+              onTap: _openSavedAddresses),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: hasAddress ? jdc.successSoft : jdc.sunken,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                  color: hasAddress ? jdc.successLine : jdc.line),
+            ),
+            child: Row(
+              children: [
+                if (_resolvingAddress && !hasAddress)
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  Icon(
+                    hasAddress
+                        ? Icons.check_circle
+                        : Icons.location_searching_rounded,
+                    size: 16,
+                    color: hasAddress ? jdc.successInk : jdc.muted,
+                  ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    hasAddress
+                        ? _destAddress
+                        : (_destLat != null && _destLng != null)
+                            ? '${_destLat!.toStringAsFixed(5)}, ${_destLng!.toStringAsFixed(5)}'
+                            : l10n.shopAddressPickFirst,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: hasAddress ? jdc.successInk : jdc.muted,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _addressOption(
+    JdcColors jdc, {
+    required IconData icon,
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        constraints: const BoxConstraints(minHeight: JdcTouch.minTarget),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: selected ? jdc.brand : jdc.line,
+            width: selected ? 2 : 1,
+          ),
+          color: selected ? jdc.brand.withValues(alpha: 0.05) : jdc.sunken,
+        ),
         child: Row(
           children: [
-            Icon(Icons.location_on_rounded, color: jdc.link),
+            Icon(icon, size: 20, color: selected ? jdc.brand : jdc.muted),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                _destAddress.isEmpty ? l10n.shopPickAddress : _destAddress,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+                label,
                 style: TextStyle(
-                  fontSize: 13.5,
-                  color: _destAddress.isEmpty ? jdc.muted : jdc.text,
+                  fontSize: 14,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                  color: selected ? jdc.brand : jdc.text,
                 ),
               ),
             ),
-            TextButton(
-              onPressed: _pickAddress,
-              child: Text(l10n.shopStoreChange),
-            ),
+            if (selected)
+              Icon(Icons.check_circle, size: 20, color: jdc.brand),
           ],
         ),
-      );
+      ),
+    );
+  }
 
   Widget _budgetCard(JdcColors jdc, AppLocalizations l10n) => _card(
         jdc,

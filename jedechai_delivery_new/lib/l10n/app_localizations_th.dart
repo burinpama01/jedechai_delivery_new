@@ -7403,4 +7403,118 @@ class AppLocalizationsTh extends AppLocalizations {
   String shopDrvProofCount(int count) {
     return '$count รูป';
   }
+
+  @override
+  String get shopAddressChange => 'เปลี่ยนที่อยู่';
+
+  @override
+  String get shopAddressPickFirst => 'เลือกที่อยู่จัดส่งก่อน';
+
+  @override
+  String get shopItemPhoto => 'รูปตัวอย่าง (ไม่บังคับ)';
+
+  @override
+  String get shopItemPhotoAdd => 'แนบรูป';
+
+  @override
+  String get shopItemPhotoRemove => 'เอารูปออก';
+
+  @override
+  String get shopItemPhotoHint => 'แนบรูปช่วยให้คนขับหยิบถูกยี่ห้อ ระบบย่อขนาดรูปให้อัตโนมัติก่อนอัปโหลด';
+
+  @override
+  String get shopItemPhotoUploading => 'กำลังอัปโหลดรูปตัวอย่าง…';
+
+  @override
+  String get shopItemPhotoUploadFailed => 'อัปโหลดรูปตัวอย่างไม่สำเร็จ แต่ออเดอร์ถูกสร้างแล้ว แจ้งรายละเอียดกับคนขับได้ในแชท';
+
+  @override
+  String get shopDrvRefPhoto => 'รูปตัวอย่างจากลูกค้า';
+
+  @override
+  String get shopStoreRequestCta => 'ไม่เจอร้านที่ต้องการ? ส่งคำขอเพิ่มร้าน';
+
+  @override
+  String get shopReqTitle => 'ขอเพิ่มตำแหน่งร้าน';
+
+  @override
+  String get shopReqIntro => 'กรอกข้อมูลร้านให้ครบ แอดมินจะตรวจสอบและตั้งเวลาเปิด-ปิดก่อนเปิดให้ใช้งาน';
+
+  @override
+  String get shopReqName => 'ชื่อร้าน';
+
+  @override
+  String get shopReqNameHint => 'เช่น เซเว่น สาขาตลาดปัว';
+
+  @override
+  String get shopReqCategory => 'ประเภทร้าน';
+
+  @override
+  String get shopReqAddress => 'ที่อยู่ร้าน';
+
+  @override
+  String get shopReqAddressHint => 'บอกจุดสังเกตได้ยิ่งดี';
+
+  @override
+  String get shopReqLocation => 'ตำแหน่งร้าน';
+
+  @override
+  String get shopReqPickOnMap => 'ปักหมุดบนแผนที่';
+
+  @override
+  String get shopReqLocationNone => 'ยังไม่ได้เลือกตำแหน่ง';
+
+  @override
+  String get shopReqMapsUrl => 'ลิงก์ Google Maps (ถ้ามี)';
+
+  @override
+  String get shopReqMapsUrlHint => 'วางลิงก์แชร์ตำแหน่งจาก Google Maps';
+
+  @override
+  String get shopReqMapsUrlInvalid => 'ลิงก์ Google Maps ต้องขึ้นต้นด้วย http:// หรือ https://';
+
+  @override
+  String get shopReq24h => 'ร้านเปิด 24 ชั่วโมง';
+
+  @override
+  String get shopReqNote => 'หมายเหตุถึงแอดมิน';
+
+  @override
+  String get shopReqNoteHint => 'เช่น อยู่ในปั๊มน้ำมัน ทางเข้าหลังตลาด';
+
+  @override
+  String get shopReqSubmit => 'ส่งคำขอ';
+
+  @override
+  String get shopReqSent => 'ส่งคำขอแล้ว แอดมินจะตรวจสอบให้';
+
+  @override
+  String get shopReqErrName => 'กรุณากรอกชื่อร้าน';
+
+  @override
+  String get shopReqErrLocation => 'กรุณาปักหมุดตำแหน่งร้าน';
+
+  @override
+  String get shopReqErrExists => 'ร้านนี้มีอยู่ในระบบแล้ว';
+
+  @override
+  String get shopReqErrPending => 'มีคำขอร้านนี้รอตรวจสอบอยู่แล้ว';
+
+  @override
+  String get shopReqErrLimit => 'วันนี้ส่งคำขอครบจำนวนที่อนุญาตแล้ว ลองใหม่พรุ่งนี้';
+
+  @override
+  String get shopReqErrDisabled => 'ตอนนี้ปิดรับคำขอเพิ่มร้านชั่วคราว';
+
+  @override
+  String get shopReqMine => 'คำขอของฉัน';
+
+  @override
+  String get shopReqStatusPending => 'รอตรวจสอบ';
+
+  @override
+  String get shopReqStatusApproved => 'อนุมัติแล้ว';
+
+  @override
+  String get shopReqStatusRejected => 'ไม่อนุมัติ';
 }

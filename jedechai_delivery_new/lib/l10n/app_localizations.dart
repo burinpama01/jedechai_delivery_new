@@ -13822,6 +13822,234 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} photos'**
   String shopDrvProofCount(int count);
+
+  /// No description provided for @shopAddressChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get shopAddressChange;
+
+  /// No description provided for @shopAddressPickFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a delivery address first'**
+  String get shopAddressPickFirst;
+
+  /// No description provided for @shopItemPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference photo (optional)'**
+  String get shopItemPhoto;
+
+  /// No description provided for @shopItemPhotoAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach photo'**
+  String get shopItemPhotoAdd;
+
+  /// No description provided for @shopItemPhotoRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove photo'**
+  String get shopItemPhotoRemove;
+
+  /// No description provided for @shopItemPhotoHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A photo helps the driver pick the right brand. Images are resized before upload.'**
+  String get shopItemPhotoHint;
+
+  /// No description provided for @shopItemPhotoUploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading reference photos…'**
+  String get shopItemPhotoUploading;
+
+  /// No description provided for @shopItemPhotoUploadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not upload the reference photos, but your order was created. You can describe the items to the driver in chat.'**
+  String get shopItemPhotoUploadFailed;
+
+  /// No description provided for @shopDrvRefPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer reference photo'**
+  String get shopDrvRefPhoto;
+
+  /// No description provided for @shopStoreRequestCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Store not listed? Request a new one'**
+  String get shopStoreRequestCta;
+
+  /// No description provided for @shopReqTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Request a new store'**
+  String get shopReqTitle;
+
+  /// No description provided for @shopReqIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill in the store details. An admin will review it and set opening hours before it goes live.'**
+  String get shopReqIntro;
+
+  /// No description provided for @shopReqName.
+  ///
+  /// In en, this message translates to:
+  /// **'Store name'**
+  String get shopReqName;
+
+  /// No description provided for @shopReqNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 7-Eleven, Pua Market branch'**
+  String get shopReqNameHint;
+
+  /// No description provided for @shopReqCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Store type'**
+  String get shopReqCategory;
+
+  /// No description provided for @shopReqAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Store address'**
+  String get shopReqAddress;
+
+  /// No description provided for @shopReqAddressHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Landmarks help'**
+  String get shopReqAddressHint;
+
+  /// No description provided for @shopReqLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Store location'**
+  String get shopReqLocation;
+
+  /// No description provided for @shopReqPickOnMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin on map'**
+  String get shopReqPickOnMap;
+
+  /// No description provided for @shopReqLocationNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No location selected yet'**
+  String get shopReqLocationNone;
+
+  /// No description provided for @shopReqMapsUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Maps link (optional)'**
+  String get shopReqMapsUrl;
+
+  /// No description provided for @shopReqMapsUrlHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste a Google Maps share link'**
+  String get shopReqMapsUrlHint;
+
+  /// No description provided for @shopReqMapsUrlInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Maps link must start with http:// or https://'**
+  String get shopReqMapsUrlInvalid;
+
+  /// No description provided for @shopReq24h.
+  ///
+  /// In en, this message translates to:
+  /// **'Open 24 hours'**
+  String get shopReq24h;
+
+  /// No description provided for @shopReqNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note for the admin'**
+  String get shopReqNote;
+
+  /// No description provided for @shopReqNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. inside the petrol station, entrance behind the market'**
+  String get shopReqNoteHint;
+
+  /// No description provided for @shopReqSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Send request'**
+  String get shopReqSubmit;
+
+  /// No description provided for @shopReqSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Request sent. An admin will review it.'**
+  String get shopReqSent;
+
+  /// No description provided for @shopReqErrName.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter the store name'**
+  String get shopReqErrName;
+
+  /// No description provided for @shopReqErrLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Please pin the store location'**
+  String get shopReqErrLocation;
+
+  /// No description provided for @shopReqErrExists.
+  ///
+  /// In en, this message translates to:
+  /// **'This store already exists'**
+  String get shopReqErrExists;
+
+  /// No description provided for @shopReqErrPending.
+  ///
+  /// In en, this message translates to:
+  /// **'A request for this store is already pending'**
+  String get shopReqErrPending;
+
+  /// No description provided for @shopReqErrLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'You have reached today\'s request limit. Try again tomorrow.'**
+  String get shopReqErrLimit;
+
+  /// No description provided for @shopReqErrDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Store requests are temporarily closed'**
+  String get shopReqErrDisabled;
+
+  /// No description provided for @shopReqMine.
+  ///
+  /// In en, this message translates to:
+  /// **'My requests'**
+  String get shopReqMine;
+
+  /// No description provided for @shopReqStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Under review'**
+  String get shopReqStatusPending;
+
+  /// No description provided for @shopReqStatusApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved'**
+  String get shopReqStatusApproved;
+
+  /// No description provided for @shopReqStatusRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Not approved'**
+  String get shopReqStatusRejected;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -76,6 +77,64 @@ class ShopService {
     } catch (e) {
       debugLog('⚠️ อ่าน shop_enabled ไม่สำเร็จ: $e');
       return false;
+    }
+  }
+
+  /// เปิดให้ลูกค้าส่งคำขอเพิ่มร้านอยู่ไหม
+  /// อ่านพลาด -> ถือว่าเปิด เพราะ server ปฏิเสธซ้ำให้อยู่แล้ว และการซ่อนปุ่มทิ้ง
+  /// ทำให้ลูกค้าไม่มีทางบอกเราได้เลยว่าร้านที่ต้องการยังไม่มีในระบบ
+  Future<bool> storeRequestEnabled() async {
+    try {
+      final row = await _client
+          .from('system_config')
+          .select('value')
+          .eq('key', 'shop_store_request_enabled')
+          .maybeSingle();
+      final raw = (row?['value'] ?? '').toString().trim().toLowerCase();
+      if (raw.isEmpty) return true;
+      return raw == 'true' || raw == 't' || raw == '1' || raw == 'yes';
+    } catch (e) {
+      debugLog('⚠️ อ่าน shop_store_request_enabled ไม่สำเร็จ: $e');
+      return true;
+    }
+  }
+
+  /// ส่งคำขอเพิ่มตำแหน่งร้าน — ไม่ได้สร้างร้านทันที แอดมินต้องอนุมัติก่อน
+  Future<Map<String, dynamic>> createStoreRequest({
+    required String name,
+    required String category,
+    required double lat,
+    required double lng,
+    String? address,
+    String? mapsUrl,
+    bool is24h = false,
+    String? note,
+  }) =>
+      _rpc('create_shop_store_request', {
+        'p_name': name,
+        'p_category': category,
+        'p_lat': lat,
+        'p_lng': lng,
+        'p_address': address,
+        'p_maps_url': mapsUrl,
+        'p_is_24h': is24h,
+        'p_note': note,
+      });
+
+  /// คำขอเพิ่มร้านของตัวเอง (RLS จำกัดให้เห็นเฉพาะของตัวเองอยู่แล้ว)
+  Future<List<Map<String, dynamic>>> myStoreRequests() async {
+    try {
+      final rows = await _client
+          .from('shop_store_requests')
+          .select('id, name, status, admin_note, created_at')
+          .order('created_at', ascending: false)
+          .limit(20);
+      return (rows as List)
+          .map((e) => (e as Map).cast<String, dynamic>())
+          .toList();
+    } catch (e) {
+      debugLog('⚠️ อ่านคำขอเพิ่มร้านไม่สำเร็จ: $e');
+      return const [];
     }
   }
 
@@ -186,6 +245,55 @@ class ShopService {
       return {'success': false, 'error': 'rpc_failed', 'message': e.toString()};
     }
   }
+
+  /// อัปโหลดรูปตัวอย่างของแต่ละรายการแล้วผูกกับออเดอร์
+  ///
+  /// ทำ **หลัง** สร้างออเดอร์สำเร็จเท่านั้น เพราะ policy ของ storage ตรวจสิทธิ์
+  /// จาก booking_id ที่อยู่ใน path และเพราะรูปเป็นของไม่บังคับ — อัปโหลดล้ม
+  /// ต้องไม่ทำให้ออเดอร์ที่กันเงินไปแล้วล้มตาม
+  ///
+  /// คืน true เมื่อผูกครบทุกรูปที่มี
+  Future<bool> uploadItemImages({
+    required String bookingId,
+    required List<ShopDraftItem> items,
+  }) async {
+    final withPhoto = <int, String>{};
+    var line = 0;
+    for (final item in items) {
+      if (item.isBlank) continue;
+      line += 1; // line_no ต้องนับแบบเดียวกับ server (ข้ามบรรทัดว่าง)
+      if (item.hasImage) withPhoto[line] = item.localImagePath!;
+    }
+    if (withPhoto.isEmpty) return true;
+
+    final payload = <Map<String, dynamic>>[];
+    for (final entry in withPhoto.entries) {
+      final file = File(entry.value);
+      if (!file.existsSync()) continue;
+      final path = await StorageService.uploadPrivateFile(
+        file: file,
+        path: '$bookingId/ref',
+        bucketName: receiptBucket,
+        metadata: {'booking_id': bookingId},
+      );
+      if (path == null) {
+        debugLog('⚠️ อัปโหลดรูปตัวอย่างบรรทัด ${entry.key} ไม่สำเร็จ');
+        continue;
+      }
+      payload.add({'line_no': entry.key, 'path': path});
+    }
+    if (payload.isEmpty) return false;
+
+    final res = await _rpc('shop_set_item_images', {
+      'p_booking_id': bookingId,
+      'p_images': payload,
+    });
+    return res['success'] == true && payload.length == withPhoto.length;
+  }
+
+  /// signed URL ของรูปตัวอย่าง 1 รูป
+  Future<String?> signedRefImageUrl(String path) =>
+      StorageService.signedUrl(bucketName: receiptBucket, path: path);
 
   // ── ติดตามออเดอร์ ───────────────────────────────────────────────────────
 

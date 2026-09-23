@@ -1984,7 +1984,13 @@
   "rideLocationDenied": "Location permissions are denied",
   "rideLocationDeniedForever": "Location permissions are permanently denied",
   "rideLocationError": "Error getting location: {error}",
-  "@rideLocationError": {"placeholders": {"error": {"type": "String"}}},
+  "@rideLocationError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "rideYourLocation": "Your Location",
   "rideDestination": "Destination",
   "rideNoDriverForVehicle": "No available drivers nearby. Please try another vehicle type.",
@@ -3694,5 +3700,43 @@
         "type": "int"
       }
     }
-  }
+  },
+  "shopAddressChange": "Change",
+  "shopAddressPickFirst": "Choose a delivery address first",
+  "shopItemPhoto": "Reference photo (optional)",
+  "shopItemPhotoAdd": "Attach photo",
+  "shopItemPhotoRemove": "Remove photo",
+  "shopItemPhotoHint": "A photo helps the driver pick the right brand. Images are resized before upload.",
+  "shopItemPhotoUploading": "Uploading reference photos…",
+  "shopItemPhotoUploadFailed": "Could not upload the reference photos, but your order was created. You can describe the items to the driver in chat.",
+  "shopDrvRefPhoto": "Customer reference photo",
+  "shopStoreRequestCta": "Store not listed? Request a new one",
+  "shopReqTitle": "Request a new store",
+  "shopReqIntro": "Fill in the store details. An admin will review it and set opening hours before it goes live.",
+  "shopReqName": "Store name",
+  "shopReqNameHint": "e.g. 7-Eleven, Pua Market branch",
+  "shopReqCategory": "Store type",
+  "shopReqAddress": "Store address",
+  "shopReqAddressHint": "Landmarks help",
+  "shopReqLocation": "Store location",
+  "shopReqPickOnMap": "Pin on map",
+  "shopReqLocationNone": "No location selected yet",
+  "shopReqMapsUrl": "Google Maps link (optional)",
+  "shopReqMapsUrlHint": "Paste a Google Maps share link",
+  "shopReqMapsUrlInvalid": "Google Maps link must start with http:// or https://",
+  "shopReq24h": "Open 24 hours",
+  "shopReqNote": "Note for the admin",
+  "shopReqNoteHint": "e.g. inside the petrol station, entrance behind the market",
+  "shopReqSubmit": "Send request",
+  "shopReqSent": "Request sent. An admin will review it.",
+  "shopReqErrName": "Please enter the store name",
+  "shopReqErrLocation": "Please pin the store location",
+  "shopReqErrExists": "This store already exists",
+  "shopReqErrPending": "A request for this store is already pending",
+  "shopReqErrLimit": "You have reached today's request limit. Try again tomorrow.",
+  "shopReqErrDisabled": "Store requests are temporarily closed",
+  "shopReqMine": "My requests",
+  "shopReqStatusPending": "Under review",
+  "shopReqStatusApproved": "Approved",
+  "shopReqStatusRejected": "Not approved"
 }

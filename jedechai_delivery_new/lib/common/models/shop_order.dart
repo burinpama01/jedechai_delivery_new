@@ -16,6 +16,9 @@ class ShopOrderItem {
   final double? actualPrice;
   final String? substituteName;
 
+  /// path ของรูปตัวอย่างที่ลูกค้าแนบ (อยู่ใน bucket ส่วนตัว ต้องขอ signed URL ก่อนแสดง)
+  final String? refImagePath;
+
   const ShopOrderItem({
     required this.id,
     required this.lineNo,
@@ -25,6 +28,7 @@ class ShopOrderItem {
     required this.status,
     this.actualPrice,
     this.substituteName,
+    this.refImagePath,
   });
 
   bool get isPending => status == 'pending';
@@ -40,6 +44,7 @@ class ShopOrderItem {
         status: (json['status'] as String?) ?? 'pending',
         actualPrice: _toDouble(json['actual_price']),
         substituteName: _emptyToNull(json['substitute_name'] as String?),
+        refImagePath: _emptyToNull(json['ref_image_path'] as String?),
       );
 }
 
@@ -49,9 +54,22 @@ class ShopDraftItem {
   String quantity;
   String note;
 
-  ShopDraftItem({this.name = '', this.quantity = '', this.note = ''});
+  /// path ของไฟล์รูปในเครื่อง (ยังไม่อัปโหลด)
+  ///
+  /// รูปอัปโหลดได้ก็ต่อเมื่อมี booking_id แล้ว เพราะ policy ของ storage
+  /// ตรวจสิทธิ์จาก booking_id ที่อยู่ใน path -> ระหว่างกรอกฟอร์มจึงเก็บไว้ในเครื่องก่อน
+  String? localImagePath;
+
+  ShopDraftItem({
+    this.name = '',
+    this.quantity = '',
+    this.note = '',
+    this.localImagePath,
+  });
 
   bool get isBlank => name.trim().isEmpty;
+  bool get hasImage =>
+      localImagePath != null && localImagePath!.trim().isNotEmpty;
 
   Map<String, dynamic> toRpcJson() => {
         'name': name.trim(),
@@ -59,13 +77,18 @@ class ShopDraftItem {
         'note': note.trim(),
       };
 
-  Map<String, dynamic> toStorageJson() =>
-      {'name': name, 'quantity': quantity, 'note': note};
+  Map<String, dynamic> toStorageJson() => {
+        'name': name,
+        'quantity': quantity,
+        'note': note,
+        'local_image_path': localImagePath,
+      };
 
   factory ShopDraftItem.fromStorageJson(Map<String, dynamic> j) => ShopDraftItem(
         name: (j['name'] as String?) ?? '',
         quantity: (j['quantity'] as String?) ?? '',
         note: (j['note'] as String?) ?? '',
+        localImagePath: _emptyToNull(j['local_image_path'] as String?),
       );
 }
 
