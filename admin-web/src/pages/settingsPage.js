@@ -1003,8 +1003,10 @@ export async function renderSettingsPage(el, ctx) {
   // Load banners and app assets after render
   loadBanners();
   loadAppAssets();
-  if (typeof globalThis.loadBeamSettings === 'function') globalThis.loadBeamSettings();
-  if (typeof globalThis.loadReferralSettings === 'function') globalThis.loadReferralSettings();
+  // ต้องส่ง ctx ไปด้วย: bridge ไม่มี supabase client ของตัวเอง (globalThis.supabase ไม่มีในแอปนี้)
+  // ถ้าเปิดหน้า Settings เป็นหน้าแรก _ctx ของ bridge ยังว่าง -> "reading 'from' of undefined"
+  if (typeof globalThis.loadBeamSettings === 'function') globalThis.loadBeamSettings(ctx);
+  if (typeof globalThis.loadReferralSettings === 'function') globalThis.loadReferralSettings(ctx);
 }
 
 export function wireSettingsBridge() {
