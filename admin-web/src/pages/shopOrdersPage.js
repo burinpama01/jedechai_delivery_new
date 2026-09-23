@@ -392,6 +392,49 @@ export function closeShopOrderDialog() {
   if (host) host.innerHTML = "";
 }
 
+/**
+ * กล่องยืนยันในหน้าเว็บเอง (แทน confirm()/prompt() ของเบราว์เซอร์)
+ * บางเบราว์เซอร์/ webview ปิด native dialog แล้วคืน false ทันที -> ปุ่มดูเหมือนกดไม่ติด
+ * คืนค่า { ok, note } — note มีเมื่อ withNote = true
+ */
+export function askInPage({ message, withNote = false, notePlaceholder = "", confirmLabel = "ยืนยัน", danger = false }) {
+  const escapeHtml = _deps().escapeHtml || String;
+  return new Promise((resolve) => {
+    let host = document.getElementById("shopAskDialog");
+    if (!host) {
+      host = document.createElement("div");
+      host.id = "shopAskDialog";
+      document.body.appendChild(host);
+    }
+    host.innerHTML = `
+      <div class="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-5 space-y-4">
+          <div class="text-sm text-gray-800 whitespace-pre-line">${escapeHtml(message)}</div>
+          ${
+            withNote
+              ? `<textarea id="shopAskNote" rows="3" maxlength="500" placeholder="${escapeHtml(notePlaceholder)}"
+                   class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"></textarea>`
+              : ""
+          }
+          <div class="flex justify-end gap-2">
+            <button id="shopAskCancel" class="px-4 py-2 rounded-xl text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50">ย้อนกลับ</button>
+            <button id="shopAskOk" class="px-4 py-2 rounded-xl text-sm font-semibold text-white ${
+              danger ? "bg-red-600 hover:bg-red-700" : "bg-violet-600 hover:bg-violet-700"
+            }">${escapeHtml(confirmLabel)}</button>
+          </div>
+        </div>
+      </div>`;
+    const done = (ok) => {
+      const note = withNote ? (document.getElementById("shopAskNote")?.value || "").trim() : undefined;
+      host.innerHTML = "";
+      resolve({ ok, note });
+    };
+    document.getElementById("shopAskCancel").onclick = () => done(false);
+    document.getElementById("shopAskOk").onclick = () => done(true);
+    if (withNote) document.getElementById("shopAskNote")?.focus();
+  });
+}
+
 const CONFIRM_TEXT = {
   confirm_proof: "ยืนยันรูปสินค้าแทนลูกค้า? (ควรติดต่อลูกค้าแล้ว)",
   complete: "ปิดงาน: คืนส่วนต่างให้ลูกค้าและจ่ายคนขับตามยอดจริง?",
@@ -404,20 +447,30 @@ export async function shopOrderAction(bookingId, action) {
   let rpc;
   let params;
   if (action === "cancel") {
-    const reason = globalThis.prompt?.(
-      "เหตุผลที่ยกเลิก (ถ้าคนขับซื้อของไปแล้ว ระบบจะกันค่าสินค้าคืนคนขับก่อน แล้วคืนส่วนที่เหลือให้ลูกค้า)",
-      "",
-    );
-    if (reason === null || reason === undefined) return;
+    const { ok, note: reason } = await askInPage({
+      message:
+        "ยกเลิกออเดอร์และคืนเงิน?\nถ้าคนขับซื้อของไปแล้ว ระบบจะกันค่าสินค้าคืนคนขับก่อน แล้วคืนส่วนที่เหลือให้ลูกค้า",
+      withNote: true,
+      notePlaceholder: "เหตุผลที่ยกเลิก",
+      confirmLabel: "ยกเลิก + คืนเงิน",
+      danger: true,
+    });
+    if (!ok) return;
     rpc = "cancel_shop_booking";
     params = { p_booking_id: bookingId, p_reason: reason ? `แอดมิน: ${reason}` : "แอดมินยกเลิก" };
   } else if (action === "resolve") {
-    const note = globalThis.prompt?.("บันทึกสิ่งที่ตรวจ/ดำเนินการ", "");
-    if (note === null || note === undefined) return;
+    const { ok, note } = await askInPage({
+      message: "ทำเครื่องหมายว่าตรวจแล้ว — บันทึกสิ่งที่ตรวจ/ดำเนินการ",
+      withNote: true,
+      notePlaceholder: "เช่น โทรหาลูกค้าแล้ว ยืนยันรับของครบ",
+      confirmLabel: "บันทึก",
+    });
+    if (!ok) return;
     rpc = "shop_admin_resolve_review";
     params = { p_booking_id: bookingId, p_note: note };
   } else if (action === "confirm_proof" || action === "complete") {
-    if (globalThis.confirm && !globalThis.confirm(CONFIRM_TEXT[action])) return;
+    const { ok } = await askInPage({ message: CONFIRM_TEXT[action] });
+    if (!ok) return;
     rpc = action === "confirm_proof" ? "shop_customer_confirm_proof" : "complete_shop_booking";
     params = { p_booking_id: bookingId };
   } else {
@@ -443,7 +496,8 @@ export async function toggleShopTrusted(driverId, trusted) {
   const msg = trusted
     ? "ตั้งคนขับนี้เป็น Trusted? จะรับงานวงเงินเกินเพดานคนขับใหม่ได้ทันที"
     : "ถอน Trusted? คนขับจะกลับไปใช้เพดานคนขับใหม่จนกว่าจะทำงานครบเกณฑ์";
-  if (globalThis.confirm && !globalThis.confirm(msg)) return;
+  const { ok } = await askInPage({ message: msg, danger: !trusted });
+  if (!ok) return;
 
   _busy = true;
   try {
