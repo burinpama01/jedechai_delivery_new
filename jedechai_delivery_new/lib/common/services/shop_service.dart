@@ -8,6 +8,7 @@ import '../models/shop_order.dart';
 import '../models/shop_quote.dart';
 import '../models/shop_store.dart';
 import 'auth_service.dart';
+import 'storage_service.dart';
 
 /// ShopService — บริการฝากซื้อ/ฝากหิ้ว
 ///
@@ -237,6 +238,71 @@ class ShopService {
       return {'success': false, 'error': 'unexpected_response'};
     } catch (e) {
       debugLog('❌ cancel_shop_booking: $e');
+      return {'success': false, 'error': 'rpc_failed', 'message': e.toString()};
+    }
+  }
+
+  // ── ฝั่งคนขับ ───────────────────────────────────────────────────────────
+
+  /// ชื่อ bucket ส่วนตัวสำหรับรูปใบเสร็จ/รูปสินค้า
+  static const receiptBucket = 'shop-receipts';
+
+  /// คนขับรับงาน — server ตรวจเพดานวงเงินของคนขับใหม่ให้เอง
+  Future<Map<String, dynamic>> driverAccept(String bookingId) =>
+      _rpc('shop_driver_accept', {'p_booking_id': bookingId});
+
+  /// กดถึงร้าน — server ตรวจทั้งลำดับสถานะและตำแหน่งจริง
+  ///
+  /// [selfReported] = คนขับกดปุ่ม "ถึงร้านแล้วแต่ระบบไม่รับ" (เช่น GPS เพี้ยนในห้าง)
+  /// ข้ามการตรวจตำแหน่งได้ แต่ server จะติดธงให้แอดมินตรวจ
+  Future<Map<String, dynamic>> driverArrivedAtStore(
+    String bookingId, {
+    bool selfReported = false,
+  }) =>
+      _rpc('shop_driver_arrived_at_store', {
+        'p_booking_id': bookingId,
+        'p_self_reported': selfReported,
+      });
+
+  /// ติ๊กสถานะของแต่ละรายการ + กรอกราคาที่อ่านจากบิล
+  ///
+  /// [items] แต่ละตัว: {line_no, status, actual_price?, substitute_name?}
+  Future<Map<String, dynamic>> driverUpdateItems(
+    String bookingId,
+    List<Map<String, dynamic>> items,
+  ) =>
+      _rpc('shop_driver_update_items', {
+        'p_booking_id': bookingId,
+        'p_items': items,
+      });
+
+  /// ยืนยันว่าซื้อครบแล้ว — ต้องมีหลักฐานอย่างน้อย 1 รูป
+  Future<Map<String, dynamic>> markPurchased(
+    String bookingId,
+    List<String> proofPaths,
+  ) =>
+      _rpc('shop_mark_purchased', {
+        'p_booking_id': bookingId,
+        'p_proof_urls': proofPaths,
+      });
+
+  Future<Map<String, dynamic>> completeBooking(String bookingId) =>
+      _rpc('complete_shop_booking', {'p_booking_id': bookingId});
+
+  /// แปลง path ใน bucket ส่วนตัวเป็น signed URL สำหรับแสดงรูป
+  Future<List<String>> signedProofUrls(List<String> paths) =>
+      StorageService.signedUrls(bucketName: receiptBucket, paths: paths);
+
+  Future<Map<String, dynamic>> _rpc(
+    String fn,
+    Map<String, dynamic> params,
+  ) async {
+    try {
+      final res = await _client.rpc(fn, params: params);
+      if (res is Map) return res.cast<String, dynamic>();
+      return {'success': false, 'error': 'unexpected_response'};
+    } catch (e) {
+      debugLog('❌ $fn: $e');
       return {'success': false, 'error': 'rpc_failed', 'message': e.toString()};
     }
   }

@@ -40,6 +40,75 @@ class StorageService {
     }
   }
 
+  /// อัปโหลดไฟล์ลง bucket ที่เป็น private แล้วคืน **path ในที่เก็บ** (ไม่ใช่ URL)
+  ///
+  /// bucket ส่วนตัวไม่มี public URL -> ต้องเก็บ path ไว้แล้วขอ signed URL ตอนจะแสดง
+  /// ใช้กับรูปใบเสร็จ/รูปสินค้าของฝากซื้อ ซึ่งเป็นข้อมูลส่วนบุคคล
+  static Future<String?> uploadPrivateFile({
+    required File file,
+    required String path,
+    required String bucketName,
+    Map<String, String>? metadata,
+  }) async {
+    try {
+      final fileName =
+          '${DateTime.now().millisecondsSinceEpoch}_${_extractFileName(file.path)}';
+      final filePath = '$path/$fileName';
+
+      await Supabase.instance.client.storage.from(bucketName).upload(
+            filePath,
+            file,
+            fileOptions: FileOptions(
+              contentType: _getContentType(file.path),
+              metadata: metadata,
+            ),
+          );
+
+      return filePath;
+    } catch (e) {
+      debugLog('Error uploading private file: $e');
+      return null;
+    }
+  }
+
+  /// ขอ signed URL สำหรับดูไฟล์ใน bucket ส่วนตัว
+  static Future<String?> signedUrl({
+    required String bucketName,
+    required String path,
+    int expiresInSeconds = 3600,
+  }) async {
+    try {
+      return await Supabase.instance.client.storage
+          .from(bucketName)
+          .createSignedUrl(path, expiresInSeconds);
+    } catch (e) {
+      debugLog('Error creating signed url: $e');
+      return null;
+    }
+  }
+
+  /// ขอ signed URL หลายไฟล์พร้อมกัน — คืนเฉพาะอันที่สำเร็จ
+  static Future<List<String>> signedUrls({
+    required String bucketName,
+    required List<String> paths,
+    int expiresInSeconds = 3600,
+  }) async {
+    if (paths.isEmpty) return const [];
+    try {
+      final res = await Supabase.instance.client.storage
+          .from(bucketName)
+          .createSignedUrls(paths, expiresInSeconds);
+      return res
+          .map((e) => e.signedUrl)
+          .whereType<String>()
+          .where((u) => u.isNotEmpty)
+          .toList();
+    } catch (e) {
+      debugLog('Error creating signed urls: $e');
+      return const [];
+    }
+  }
+
   static Future<String?> uploadImage({
     required File imageFile,
     required String folder,

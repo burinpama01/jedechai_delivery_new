@@ -34,6 +34,7 @@ import '../../customer/screens/services/support_tickets_screen.dart';
 import 'driver_main_screen.dart';
 import 'driver_job_detail_screen.dart';
 import 'driver_parcel_confirmation_screen.dart';
+import 'shop_job_screen.dart';
 import '../../../l10n/app_localizations.dart';
 
 /// Driver Navigation Screen
@@ -1921,6 +1922,10 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     final status = _booking?.status ?? 'unknown';
     final serviceType = _booking?.serviceType ?? 'ride';
     final l10n = AppLocalizations.of(context)!;
+
+    if (serviceType == 'shop') {
+      return l10n.shopDrvJobTitle;
+    }
     debugLog(
         '🎯 Getting action button text for status: $status, service: $serviceType');
 
@@ -2013,6 +2018,26 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
     }
 
     debugLog('🎯 Handling action press - Current status: ${_booking!.status}');
+
+    // ฝากซื้อมีขั้นตอนของตัวเอง (เช็คลิสต์ + หลักฐาน + ยอดเงิน)
+    // จึงแยกไปหน้าเฉพาะ ไม่เดินผ่าน status machine กลางของ vertical อื่น
+    if (_booking!.serviceType == 'shop') {
+      final changed = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) => ShopJobScreen(
+            bookingId: widget.bookingId,
+            initialStatus: _booking!.status,
+          ),
+        ),
+      );
+      if (!mounted) return;
+      if (changed == true) {
+        Navigator.of(context).pop();
+      } else {
+        await _fetchBookingDetails();
+      }
+      return;
+    }
 
     final serviceType = _booking!.serviceType;
     final newStatus = BookingStatusPolicy.driverNextStatus(
@@ -2238,9 +2263,26 @@ class _DriverNavigationScreenState extends State<DriverNavigationScreen>
         targetLng = _booking!.originLng;
         locationName = l10n.driverNavProxLaundryPickup;
         debugLog('📍 Target: Laundry pickup evidence (${targetLat}, ${targetLng})');
+      } else if (serviceType == 'shop' &&
+          (status == 'accepted' || status == 'driver_accepted')) {
+        // ฝากซื้อ: วัดระยะถึงร้าน
+        //
+        // ทางที่ใช้จริงตอนนี้คือ ShopJobScreen ซึ่งตรวจระยะเองก่อนยิง server
+        // (_handleActionPress แยกงาน shop ออกไปก่อนถึงตรงนี้)
+        // เก็บ branch นี้ไว้เป็น fallback เผื่ออนาคตมีเส้นทางที่วิ่งผ่าน flow กลาง
+        // จะได้ไม่ตกไปที่ 'ปล่อยผ่าน' ท้าย if-chain
+        // ตัวตัดสินจริงคือ shop_driver_arrived_at_store ฝั่ง server
+        targetLat = _booking!.originLat;
+        targetLng = _booking!.originLng;
+        locationName = l10n.driverNavProxMerchant;
+        debugLog('📍 Target: Shop store ($targetLat, $targetLng)');
       } else {
-        debugLog('⚠️ Unexpected service type or status for proximity check');
-        return true; // Allow if not a case we're checking
+        // service type ใหม่ที่ยังไม่มี branch จะมาถึงตรงนี้
+        // ปล่อยผ่านเพื่อไม่ให้ vertical เดิมพัง แต่ต้อง log ให้เห็นว่ามีจุดที่หลุดการตรวจ
+        debugLog(
+            '⚠️ ไม่มี proximity branch สำหรับ serviceType=$serviceType status=$status '
+            '-> ปล่อยผ่าน (ดู ISSUE-20260923-001)');
+        return true;
       }
 
       // Calculate distance using Geolocator

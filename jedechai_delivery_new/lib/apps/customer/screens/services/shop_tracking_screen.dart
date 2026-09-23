@@ -64,6 +64,11 @@ class _ShopTrackingScreenState extends State<ShopTrackingScreen> {
 
   bool _reloading = false;
 
+  /// รูปหลักฐานเก็บใน bucket ส่วนตัว -> ต้องขอ signed URL ก่อนแสดง
+  /// key = path ใน storage, value = signed URL ที่ใช้ได้ชั่วคราว
+  List<String> _proofSignedUrls = const [];
+  String _signedForKey = '';
+
   Future<void> _load() async {
     // realtime ยิงหลาย event พร้อมกันได้ ถ้าปล่อยให้ซ้อนกัน
     // ผลลัพธ์ที่มาถึงทีหลังอาจเป็นข้อมูลเก่ากว่า แล้วทับ state ใหม่
@@ -83,13 +88,38 @@ class _ShopTrackingScreenState extends State<ShopTrackingScreen> {
         _order = order;
         _loading = false;
       });
-      if (order != null) _subscribeItems(order.id);
+      if (order != null) {
+        _subscribeItems(order.id);
+        await _refreshProofUrls(order);
+      }
     } catch (e) {
       debugLog('❌ โหลดสถานะฝากซื้อไม่สำเร็จ: $e');
       if (mounted) setState(() => _loading = false);
     } finally {
       _reloading = false;
     }
+  }
+
+  /// ขอ signed URL ใหม่เมื่อชุดรูปเปลี่ยน (ไม่ขอซ้ำทุกครั้งที่ reload)
+  Future<void> _refreshProofUrls(ShopOrder order) async {
+    final key = order.proofUrls.join('|');
+    if (key.isEmpty) {
+      if (_proofSignedUrls.isNotEmpty && mounted) {
+        setState(() {
+          _proofSignedUrls = const [];
+          _signedForKey = '';
+        });
+      }
+      return;
+    }
+    if (key == _signedForKey) return;
+
+    final urls = await _shop.signedProofUrls(order.proofUrls);
+    if (!mounted) return;
+    setState(() {
+      _proofSignedUrls = urls;
+      _signedForKey = key;
+    });
   }
 
   void _subscribe() {
@@ -393,22 +423,30 @@ class _ShopTrackingScreenState extends State<ShopTrackingScreen> {
           Text(l10n.shopProofConfirmHint,
               style: TextStyle(fontSize: 12, height: 1.5, color: jdc.muted)),
           const SizedBox(height: 10),
-          if (order.proofUrls.isNotEmpty)
+          if (_proofSignedUrls.isNotEmpty)
             SizedBox(
               height: 120,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: order.proofUrls.length,
+                itemCount: _proofSignedUrls.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 8),
                 itemBuilder: (_, i) => ClipRRect(
                   borderRadius: BorderRadius.circular(JdcRadius.small),
                   child: AppNetworkImage(
-                    imageUrl: order.proofUrls[i],
+                    imageUrl: _proofSignedUrls[i],
                     width: 120,
                     height: 120,
                     fit: BoxFit.cover,
                   ),
                 ),
+              ),
+            )
+          else if (order.proofUrls.isNotEmpty)
+            // มีรูปแต่ยังขอ signed URL ไม่สำเร็จ -> อย่าให้ดูเหมือนไม่มีรูป
+            SizedBox(
+              height: 120,
+              child: Center(
+                child: CircularProgressIndicator(strokeWidth: 2, color: jdc.dim),
               ),
             ),
           const SizedBox(height: 10),

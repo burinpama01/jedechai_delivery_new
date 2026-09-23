@@ -7228,4 +7228,147 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get parcelEstimatedDistanceShort => 'Approx. distance';
+
+  @override
+  String get shopDrvJobTitle => 'Shop-for-me job';
+
+  @override
+  String get shopDrvBudget => 'Budget';
+
+  @override
+  String get shopDrvItemsCount => 'items';
+
+  @override
+  String get shopDrvToStore => 'To store';
+
+  @override
+  String get shopDrvToCustomer => 'To customer';
+
+  @override
+  String get shopDrvArrived => 'I am at the store';
+
+  @override
+  String get shopDrvArrivedFail => 'Could not confirm you are at the store';
+
+  @override
+  String get shopDrvSelfReport => 'I am here but the app says no';
+
+  @override
+  String get shopDrvSelfReportHint => 'Use this when GPS is off, e.g. inside a mall or underground parking. It is flagged for admin review.';
+
+  @override
+  String get shopDrvTooFar => 'You are too far from the store';
+
+  @override
+  String get shopDrvLocationStale => 'Your location is too old. Turn on GPS and wait a moment.';
+
+  @override
+  String get shopDrvLocationUnknown => 'Your location is unknown';
+
+  @override
+  String get shopDrvChecklist => 'Shopping checklist';
+
+  @override
+  String get shopDrvMarkBought => 'Bought';
+
+  @override
+  String get shopDrvMarkUnavailable => 'Out of stock';
+
+  @override
+  String get shopDrvMarkSubstituted => 'Substituted';
+
+  @override
+  String get shopDrvPriceLabel => 'Price paid';
+
+  @override
+  String get shopDrvSubstituteLabel => 'Replaced with';
+
+  @override
+  String get shopDrvSubtotal => 'Bought so far';
+
+  @override
+  String get shopDrvOverBudget => 'Total exceeds the customer budget';
+
+  @override
+  String get shopDrvItemsPending => 'Some items are not marked yet';
+
+  @override
+  String get shopDrvNothingBought => 'Nothing has been bought yet';
+
+  @override
+  String get shopDrvSaveItems => 'Save list';
+
+  @override
+  String get shopDrvSaved => 'Saved';
+
+  @override
+  String get shopDrvProofStepReceipt => 'Photograph the receipt';
+
+  @override
+  String get shopDrvProofStepPhoto => 'Photograph the items';
+
+  @override
+  String get shopDrvProofHintReceipt => 'Make sure the total is clearly visible';
+
+  @override
+  String get shopDrvProofHintPhoto => 'This store issues no receipt. Photograph the items for the customer to confirm.';
+
+  @override
+  String get shopDrvAddPhoto => 'Add photo';
+
+  @override
+  String get shopDrvProofRequired => 'At least one photo is required';
+
+  @override
+  String get shopDrvUploading => 'Uploading';
+
+  @override
+  String get shopDrvUploadFailed => 'Upload failed';
+
+  @override
+  String get shopDrvConfirmPurchase => 'Confirm purchase';
+
+  @override
+  String get shopDrvWaitingCustomer => 'Sent to the customer, waiting';
+
+  @override
+  String get shopDrvWaitingCustomerHint => 'The customer has not confirmed yet. You can contact them.';
+
+  @override
+  String get shopDrvDeliver => 'Start delivery';
+
+  @override
+  String get shopDrvComplete => 'Delivered, close job';
+
+  @override
+  String get shopDrvExceedsHold => 'Total exceeds the held amount. The customer must raise the budget.';
+
+  @override
+  String get shopDrvNewDriverLimit => 'This job budget is too high for new drivers';
+
+  @override
+  String get shopDrvAlreadyTaken => 'This job was already taken';
+
+  @override
+  String get shopDrvNotYourJob => 'This job is not yours';
+
+  @override
+  String shopDrvDistanceToStore(String km) {
+    return '$km km to store';
+  }
+
+  @override
+  String shopDrvAllowedRadius(String m) {
+    return 'You must be within $m m of the store';
+  }
+
+  @override
+  String shopDrvBudgetLeft(String amount) {
+    return '$amount left in budget';
+  }
+
+  @override
+  String shopDrvProofCount(int count) {
+    return '$count photos';
+  }
 }

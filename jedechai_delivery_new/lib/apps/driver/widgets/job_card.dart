@@ -33,6 +33,8 @@ class JobCard extends StatelessWidget {
         return Icons.local_shipping;
       case 'food':
         return Icons.restaurant;
+      case 'shop':
+        return Icons.shopping_basket;
       default:
         return Icons.directions_car;
     }
@@ -48,6 +50,8 @@ class JobCard extends StatelessWidget {
         return Colors.orange;
       case 'food':
         return Colors.red;
+      case 'shop':
+        return Colors.purple;
       default:
         return Colors.green;
     }
@@ -62,6 +66,8 @@ class JobCard extends StatelessWidget {
         return l10n.driverDashJobRide;
       case 'parcel':
         return l10n.driverDashJobParcel;
+      case 'shop':
+        return l10n.shopDrvJobTitle;
       default:
         return l10n.driverDashJobGeneral;
     }
@@ -76,6 +82,8 @@ class JobCard extends StatelessWidget {
         return l10n.driverDashJobRide;
       case 'parcel':
         return l10n.driverDashJobParcel;
+      case 'shop':
+        return l10n.shopDrvJobTitle;
       default:
         return l10n.driverDashJobGeneral;
     }
@@ -435,7 +443,11 @@ class _ActionButtons extends StatelessWidget {
 
     switch (job.status) {
       case 'pending':
-        if (job.serviceType != 'ride' && job.serviceType != 'parcel') return const SizedBox.shrink();
+        if (job.serviceType != 'ride' &&
+            job.serviceType != 'parcel' &&
+            job.serviceType != 'shop') {
+          return const SizedBox.shrink();
+        }
         return SizedBox(
           width: double.infinity,
           height: 50,
@@ -450,7 +462,11 @@ class _ActionButtons extends StatelessWidget {
             child: Text(
               isScheduledLocked
                   ? l10n.driverDashAcceptAt(_formatScheduledDateTime(job.scheduledAt!))
-                  : (job.serviceType == 'parcel' ? l10n.driverDashAcceptParcel : l10n.driverDashAcceptRide),
+                  : (job.serviceType == 'shop'
+                      ? l10n.shopDrvJobTitle
+                      : job.serviceType == 'parcel'
+                          ? l10n.driverDashAcceptParcel
+                          : l10n.driverDashAcceptRide),
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
             ),
           ),
@@ -486,6 +502,11 @@ class _ActionButtons extends StatelessWidget {
       case 'arrived_at_merchant':
       case 'picking_up_order':
       case 'in_transit':
+      // สถานะเฉพาะของฝากซื้อ — ถ้าไม่ใส่ คนขับที่ออกจากหน้างานไปแล้วจะกลับเข้างานไม่ได้
+      case 'shopping':
+      case 'receipt_review':
+      case 'purchased':
+      case 'delivering':
         return Column(
           children: [
             Container(

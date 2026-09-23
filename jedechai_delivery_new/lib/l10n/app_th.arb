@@ -3610,5 +3610,78 @@
       }
     }
   },
-  "parcelEstimatedDistanceShort": "ระยะทางโดยประมาณ"
+  "parcelEstimatedDistanceShort": "ระยะทางโดยประมาณ",
+  "shopDrvJobTitle": "งานฝากซื้อ",
+  "shopDrvBudget": "วงเงิน",
+  "shopDrvItemsCount": "รายการ",
+  "shopDrvToStore": "ไปร้าน",
+  "shopDrvToCustomer": "ไปส่ง",
+  "shopDrvArrived": "ถึงร้านแล้ว",
+  "shopDrvArrivedFail": "ระบบยังไม่รับว่าถึงร้าน",
+  "shopDrvSelfReport": "ฉันถึงร้านแล้วแต่ระบบไม่รับ",
+  "shopDrvSelfReportHint": "ใช้เมื่อ GPS เพี้ยน เช่น ในห้างหรือที่จอดใต้ดิน · ระบบจะบันทึกไว้ให้แอดมินตรวจ",
+  "shopDrvTooFar": "คุณอยู่ห่างร้านเกินไป",
+  "shopDrvLocationStale": "ตำแหน่งของคุณเก่าเกินไป เปิด GPS แล้วรอสักครู่",
+  "shopDrvLocationUnknown": "ยังไม่ทราบตำแหน่งของคุณ",
+  "shopDrvChecklist": "เช็คลิสต์ซื้อของ",
+  "shopDrvMarkBought": "ซื้อแล้ว",
+  "shopDrvMarkUnavailable": "ของหมด",
+  "shopDrvMarkSubstituted": "เปลี่ยนของ",
+  "shopDrvPriceLabel": "ราคาที่จ่าย",
+  "shopDrvSubstituteLabel": "เปลี่ยนเป็น",
+  "shopDrvSubtotal": "ยอดที่ซื้อแล้ว",
+  "shopDrvOverBudget": "ยอดเกินวงเงินที่ลูกค้าตั้งไว้",
+  "shopDrvItemsPending": "ยังมีรายการที่ยังไม่ได้ติ๊ก",
+  "shopDrvNothingBought": "ยังไม่ได้ซื้ออะไรเลย",
+  "shopDrvSaveItems": "บันทึกรายการ",
+  "shopDrvSaved": "บันทึกแล้ว",
+  "shopDrvProofStepReceipt": "ถ่ายใบเสร็จ",
+  "shopDrvProofStepPhoto": "ถ่ายรูปสินค้า",
+  "shopDrvProofHintReceipt": "ถ่ายใบเสร็จให้เห็นยอดรวมชัดเจน",
+  "shopDrvProofHintPhoto": "ร้านนี้ไม่ออกใบเสร็จ ถ่ายรูปสินค้าให้ลูกค้ายืนยันก่อนนำส่ง",
+  "shopDrvAddPhoto": "เพิ่มรูป",
+  "shopDrvProofRequired": "ต้องมีรูปหลักฐานอย่างน้อย 1 รูป",
+  "shopDrvUploading": "กำลังอัปโหลด",
+  "shopDrvUploadFailed": "อัปโหลดรูปไม่สำเร็จ",
+  "shopDrvConfirmPurchase": "ยืนยันว่าซื้อครบแล้ว",
+  "shopDrvWaitingCustomer": "ส่งให้ลูกค้ายืนยันแล้ว กำลังรอ",
+  "shopDrvWaitingCustomerHint": "ลูกค้ายังไม่ยืนยัน ติดต่อลูกค้าได้เลย",
+  "shopDrvDeliver": "เริ่มนำส่ง",
+  "shopDrvComplete": "ส่งเรียบร้อย ปิดงาน",
+  "shopDrvExceedsHold": "ยอดรวมเกินวงเงินที่กันไว้ ต้องให้ลูกค้าเพิ่มวงเงินก่อน",
+  "shopDrvNewDriverLimit": "งานนี้วงเงินสูงเกินสำหรับคนขับใหม่",
+  "shopDrvAlreadyTaken": "งานนี้มีคนรับไปแล้ว",
+  "shopDrvNotYourJob": "งานนี้ไม่ใช่ของคุณ",
+  "shopDrvDistanceToStore": "ห่างร้าน {km} กม.",
+  "@shopDrvDistanceToStore": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "shopDrvAllowedRadius": "ต้องอยู่ในระยะ {m} เมตรจากร้าน",
+  "@shopDrvAllowedRadius": {
+    "placeholders": {
+      "m": {
+        "type": "String"
+      }
+    }
+  },
+  "shopDrvBudgetLeft": "เหลือวงเงินอีก {amount}",
+  "@shopDrvBudgetLeft": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "shopDrvProofCount": "{count} รูป",
+  "@shopDrvProofCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

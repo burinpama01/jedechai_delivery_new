@@ -7228,4 +7228,147 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get parcelEstimatedDistanceShort => 'ระยะทางโดยประมาณ';
+
+  @override
+  String get shopDrvJobTitle => 'งานฝากซื้อ';
+
+  @override
+  String get shopDrvBudget => 'วงเงิน';
+
+  @override
+  String get shopDrvItemsCount => 'รายการ';
+
+  @override
+  String get shopDrvToStore => 'ไปร้าน';
+
+  @override
+  String get shopDrvToCustomer => 'ไปส่ง';
+
+  @override
+  String get shopDrvArrived => 'ถึงร้านแล้ว';
+
+  @override
+  String get shopDrvArrivedFail => 'ระบบยังไม่รับว่าถึงร้าน';
+
+  @override
+  String get shopDrvSelfReport => 'ฉันถึงร้านแล้วแต่ระบบไม่รับ';
+
+  @override
+  String get shopDrvSelfReportHint => 'ใช้เมื่อ GPS เพี้ยน เช่น ในห้างหรือที่จอดใต้ดิน · ระบบจะบันทึกไว้ให้แอดมินตรวจ';
+
+  @override
+  String get shopDrvTooFar => 'คุณอยู่ห่างร้านเกินไป';
+
+  @override
+  String get shopDrvLocationStale => 'ตำแหน่งของคุณเก่าเกินไป เปิด GPS แล้วรอสักครู่';
+
+  @override
+  String get shopDrvLocationUnknown => 'ยังไม่ทราบตำแหน่งของคุณ';
+
+  @override
+  String get shopDrvChecklist => 'เช็คลิสต์ซื้อของ';
+
+  @override
+  String get shopDrvMarkBought => 'ซื้อแล้ว';
+
+  @override
+  String get shopDrvMarkUnavailable => 'ของหมด';
+
+  @override
+  String get shopDrvMarkSubstituted => 'เปลี่ยนของ';
+
+  @override
+  String get shopDrvPriceLabel => 'ราคาที่จ่าย';
+
+  @override
+  String get shopDrvSubstituteLabel => 'เปลี่ยนเป็น';
+
+  @override
+  String get shopDrvSubtotal => 'ยอดที่ซื้อแล้ว';
+
+  @override
+  String get shopDrvOverBudget => 'ยอดเกินวงเงินที่ลูกค้าตั้งไว้';
+
+  @override
+  String get shopDrvItemsPending => 'ยังมีรายการที่ยังไม่ได้ติ๊ก';
+
+  @override
+  String get shopDrvNothingBought => 'ยังไม่ได้ซื้ออะไรเลย';
+
+  @override
+  String get shopDrvSaveItems => 'บันทึกรายการ';
+
+  @override
+  String get shopDrvSaved => 'บันทึกแล้ว';
+
+  @override
+  String get shopDrvProofStepReceipt => 'ถ่ายใบเสร็จ';
+
+  @override
+  String get shopDrvProofStepPhoto => 'ถ่ายรูปสินค้า';
+
+  @override
+  String get shopDrvProofHintReceipt => 'ถ่ายใบเสร็จให้เห็นยอดรวมชัดเจน';
+
+  @override
+  String get shopDrvProofHintPhoto => 'ร้านนี้ไม่ออกใบเสร็จ ถ่ายรูปสินค้าให้ลูกค้ายืนยันก่อนนำส่ง';
+
+  @override
+  String get shopDrvAddPhoto => 'เพิ่มรูป';
+
+  @override
+  String get shopDrvProofRequired => 'ต้องมีรูปหลักฐานอย่างน้อย 1 รูป';
+
+  @override
+  String get shopDrvUploading => 'กำลังอัปโหลด';
+
+  @override
+  String get shopDrvUploadFailed => 'อัปโหลดรูปไม่สำเร็จ';
+
+  @override
+  String get shopDrvConfirmPurchase => 'ยืนยันว่าซื้อครบแล้ว';
+
+  @override
+  String get shopDrvWaitingCustomer => 'ส่งให้ลูกค้ายืนยันแล้ว กำลังรอ';
+
+  @override
+  String get shopDrvWaitingCustomerHint => 'ลูกค้ายังไม่ยืนยัน ติดต่อลูกค้าได้เลย';
+
+  @override
+  String get shopDrvDeliver => 'เริ่มนำส่ง';
+
+  @override
+  String get shopDrvComplete => 'ส่งเรียบร้อย ปิดงาน';
+
+  @override
+  String get shopDrvExceedsHold => 'ยอดรวมเกินวงเงินที่กันไว้ ต้องให้ลูกค้าเพิ่มวงเงินก่อน';
+
+  @override
+  String get shopDrvNewDriverLimit => 'งานนี้วงเงินสูงเกินสำหรับคนขับใหม่';
+
+  @override
+  String get shopDrvAlreadyTaken => 'งานนี้มีคนรับไปแล้ว';
+
+  @override
+  String get shopDrvNotYourJob => 'งานนี้ไม่ใช่ของคุณ';
+
+  @override
+  String shopDrvDistanceToStore(String km) {
+    return 'ห่างร้าน $km กม.';
+  }
+
+  @override
+  String shopDrvAllowedRadius(String m) {
+    return 'ต้องอยู่ในระยะ $m เมตรจากร้าน';
+  }
+
+  @override
+  String shopDrvBudgetLeft(String amount) {
+    return 'เหลือวงเงินอีก $amount';
+  }
+
+  @override
+  String shopDrvProofCount(int count) {
+    return '$count รูป';
+  }
 }

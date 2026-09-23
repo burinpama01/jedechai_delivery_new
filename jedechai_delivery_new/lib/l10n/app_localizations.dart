@@ -13492,6 +13492,276 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Approx. distance'**
   String get parcelEstimatedDistanceShort;
+
+  /// No description provided for @shopDrvJobTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop-for-me job'**
+  String get shopDrvJobTitle;
+
+  /// No description provided for @shopDrvBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget'**
+  String get shopDrvBudget;
+
+  /// No description provided for @shopDrvItemsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'items'**
+  String get shopDrvItemsCount;
+
+  /// No description provided for @shopDrvToStore.
+  ///
+  /// In en, this message translates to:
+  /// **'To store'**
+  String get shopDrvToStore;
+
+  /// No description provided for @shopDrvToCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'To customer'**
+  String get shopDrvToCustomer;
+
+  /// No description provided for @shopDrvArrived.
+  ///
+  /// In en, this message translates to:
+  /// **'I am at the store'**
+  String get shopDrvArrived;
+
+  /// No description provided for @shopDrvArrivedFail.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not confirm you are at the store'**
+  String get shopDrvArrivedFail;
+
+  /// No description provided for @shopDrvSelfReport.
+  ///
+  /// In en, this message translates to:
+  /// **'I am here but the app says no'**
+  String get shopDrvSelfReport;
+
+  /// No description provided for @shopDrvSelfReportHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this when GPS is off, e.g. inside a mall or underground parking. It is flagged for admin review.'**
+  String get shopDrvSelfReportHint;
+
+  /// No description provided for @shopDrvTooFar.
+  ///
+  /// In en, this message translates to:
+  /// **'You are too far from the store'**
+  String get shopDrvTooFar;
+
+  /// No description provided for @shopDrvLocationStale.
+  ///
+  /// In en, this message translates to:
+  /// **'Your location is too old. Turn on GPS and wait a moment.'**
+  String get shopDrvLocationStale;
+
+  /// No description provided for @shopDrvLocationUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Your location is unknown'**
+  String get shopDrvLocationUnknown;
+
+  /// No description provided for @shopDrvChecklist.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping checklist'**
+  String get shopDrvChecklist;
+
+  /// No description provided for @shopDrvMarkBought.
+  ///
+  /// In en, this message translates to:
+  /// **'Bought'**
+  String get shopDrvMarkBought;
+
+  /// No description provided for @shopDrvMarkUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Out of stock'**
+  String get shopDrvMarkUnavailable;
+
+  /// No description provided for @shopDrvMarkSubstituted.
+  ///
+  /// In en, this message translates to:
+  /// **'Substituted'**
+  String get shopDrvMarkSubstituted;
+
+  /// No description provided for @shopDrvPriceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Price paid'**
+  String get shopDrvPriceLabel;
+
+  /// No description provided for @shopDrvSubstituteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Replaced with'**
+  String get shopDrvSubstituteLabel;
+
+  /// No description provided for @shopDrvSubtotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Bought so far'**
+  String get shopDrvSubtotal;
+
+  /// No description provided for @shopDrvOverBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Total exceeds the customer budget'**
+  String get shopDrvOverBudget;
+
+  /// No description provided for @shopDrvItemsPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Some items are not marked yet'**
+  String get shopDrvItemsPending;
+
+  /// No description provided for @shopDrvNothingBought.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing has been bought yet'**
+  String get shopDrvNothingBought;
+
+  /// No description provided for @shopDrvSaveItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Save list'**
+  String get shopDrvSaveItems;
+
+  /// No description provided for @shopDrvSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get shopDrvSaved;
+
+  /// No description provided for @shopDrvProofStepReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'Photograph the receipt'**
+  String get shopDrvProofStepReceipt;
+
+  /// No description provided for @shopDrvProofStepPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Photograph the items'**
+  String get shopDrvProofStepPhoto;
+
+  /// No description provided for @shopDrvProofHintReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'Make sure the total is clearly visible'**
+  String get shopDrvProofHintReceipt;
+
+  /// No description provided for @shopDrvProofHintPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'This store issues no receipt. Photograph the items for the customer to confirm.'**
+  String get shopDrvProofHintPhoto;
+
+  /// No description provided for @shopDrvAddPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Add photo'**
+  String get shopDrvAddPhoto;
+
+  /// No description provided for @shopDrvProofRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'At least one photo is required'**
+  String get shopDrvProofRequired;
+
+  /// No description provided for @shopDrvUploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading'**
+  String get shopDrvUploading;
+
+  /// No description provided for @shopDrvUploadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload failed'**
+  String get shopDrvUploadFailed;
+
+  /// No description provided for @shopDrvConfirmPurchase.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm purchase'**
+  String get shopDrvConfirmPurchase;
+
+  /// No description provided for @shopDrvWaitingCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent to the customer, waiting'**
+  String get shopDrvWaitingCustomer;
+
+  /// No description provided for @shopDrvWaitingCustomerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The customer has not confirmed yet. You can contact them.'**
+  String get shopDrvWaitingCustomerHint;
+
+  /// No description provided for @shopDrvDeliver.
+  ///
+  /// In en, this message translates to:
+  /// **'Start delivery'**
+  String get shopDrvDeliver;
+
+  /// No description provided for @shopDrvComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered, close job'**
+  String get shopDrvComplete;
+
+  /// No description provided for @shopDrvExceedsHold.
+  ///
+  /// In en, this message translates to:
+  /// **'Total exceeds the held amount. The customer must raise the budget.'**
+  String get shopDrvExceedsHold;
+
+  /// No description provided for @shopDrvNewDriverLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'This job budget is too high for new drivers'**
+  String get shopDrvNewDriverLimit;
+
+  /// No description provided for @shopDrvAlreadyTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'This job was already taken'**
+  String get shopDrvAlreadyTaken;
+
+  /// No description provided for @shopDrvNotYourJob.
+  ///
+  /// In en, this message translates to:
+  /// **'This job is not yours'**
+  String get shopDrvNotYourJob;
+
+  /// No description provided for @shopDrvDistanceToStore.
+  ///
+  /// In en, this message translates to:
+  /// **'{km} km to store'**
+  String shopDrvDistanceToStore(String km);
+
+  /// No description provided for @shopDrvAllowedRadius.
+  ///
+  /// In en, this message translates to:
+  /// **'You must be within {m} m of the store'**
+  String shopDrvAllowedRadius(String m);
+
+  /// No description provided for @shopDrvBudgetLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} left in budget'**
+  String shopDrvBudgetLeft(String amount);
+
+  /// No description provided for @shopDrvProofCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} photos'**
+  String shopDrvProofCount(int count);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

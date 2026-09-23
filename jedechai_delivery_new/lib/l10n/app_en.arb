@@ -3610,5 +3610,78 @@
       }
     }
   },
-  "parcelEstimatedDistanceShort": "Approx. distance"
+  "parcelEstimatedDistanceShort": "Approx. distance",
+  "shopDrvJobTitle": "Shop-for-me job",
+  "shopDrvBudget": "Budget",
+  "shopDrvItemsCount": "items",
+  "shopDrvToStore": "To store",
+  "shopDrvToCustomer": "To customer",
+  "shopDrvArrived": "I am at the store",
+  "shopDrvArrivedFail": "Could not confirm you are at the store",
+  "shopDrvSelfReport": "I am here but the app says no",
+  "shopDrvSelfReportHint": "Use this when GPS is off, e.g. inside a mall or underground parking. It is flagged for admin review.",
+  "shopDrvTooFar": "You are too far from the store",
+  "shopDrvLocationStale": "Your location is too old. Turn on GPS and wait a moment.",
+  "shopDrvLocationUnknown": "Your location is unknown",
+  "shopDrvChecklist": "Shopping checklist",
+  "shopDrvMarkBought": "Bought",
+  "shopDrvMarkUnavailable": "Out of stock",
+  "shopDrvMarkSubstituted": "Substituted",
+  "shopDrvPriceLabel": "Price paid",
+  "shopDrvSubstituteLabel": "Replaced with",
+  "shopDrvSubtotal": "Bought so far",
+  "shopDrvOverBudget": "Total exceeds the customer budget",
+  "shopDrvItemsPending": "Some items are not marked yet",
+  "shopDrvNothingBought": "Nothing has been bought yet",
+  "shopDrvSaveItems": "Save list",
+  "shopDrvSaved": "Saved",
+  "shopDrvProofStepReceipt": "Photograph the receipt",
+  "shopDrvProofStepPhoto": "Photograph the items",
+  "shopDrvProofHintReceipt": "Make sure the total is clearly visible",
+  "shopDrvProofHintPhoto": "This store issues no receipt. Photograph the items for the customer to confirm.",
+  "shopDrvAddPhoto": "Add photo",
+  "shopDrvProofRequired": "At least one photo is required",
+  "shopDrvUploading": "Uploading",
+  "shopDrvUploadFailed": "Upload failed",
+  "shopDrvConfirmPurchase": "Confirm purchase",
+  "shopDrvWaitingCustomer": "Sent to the customer, waiting",
+  "shopDrvWaitingCustomerHint": "The customer has not confirmed yet. You can contact them.",
+  "shopDrvDeliver": "Start delivery",
+  "shopDrvComplete": "Delivered, close job",
+  "shopDrvExceedsHold": "Total exceeds the held amount. The customer must raise the budget.",
+  "shopDrvNewDriverLimit": "This job budget is too high for new drivers",
+  "shopDrvAlreadyTaken": "This job was already taken",
+  "shopDrvNotYourJob": "This job is not yours",
+  "shopDrvDistanceToStore": "{km} km to store",
+  "@shopDrvDistanceToStore": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "shopDrvAllowedRadius": "You must be within {m} m of the store",
+  "@shopDrvAllowedRadius": {
+    "placeholders": {
+      "m": {
+        "type": "String"
+      }
+    }
+  },
+  "shopDrvBudgetLeft": "{amount} left in budget",
+  "@shopDrvBudgetLeft": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "shopDrvProofCount": "{count} photos",
+  "@shopDrvProofCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }
