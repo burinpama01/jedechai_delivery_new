@@ -3740,5 +3740,50 @@
   "shopReqMine": "คำขอของฉัน",
   "shopReqStatusPending": "รอตรวจสอบ",
   "shopReqStatusApproved": "อนุมัติแล้ว",
-  "shopReqStatusRejected": "ไม่อนุมัติ"
+  "shopReqStatusRejected": "ไม่อนุมัติ",
+  "shopDrvBudgetAskTitle": "ยอดเกินวงเงิน",
+  "shopDrvBudgetAskBody": "ยอดรวมเกินวงเงินที่ลูกค้ากันไว้ ส่งคำขอให้ลูกค้าเพิ่มวงเงิน หรือกลับไปตัดรายการให้อยู่ในวงเงิน",
+  "shopDrvBudgetAskSend": "ขอให้ลูกค้าเพิ่มวงเงิน",
+  "shopDrvBudgetAskSent": "ส่งคำขอแล้ว รอลูกค้าตอบ",
+  "shopDrvBudgetWaiting": "รอลูกค้าตอบคำขอเพิ่มวงเงิน {amount}",
+  "@shopDrvBudgetWaiting": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "shopDrvBudgetApproved": "ลูกค้าเพิ่มวงเงินแล้ว กดยืนยันซื้อได้เลย",
+  "shopDrvBudgetDeclined": "ลูกค้าไม่เพิ่มวงเงิน ตัดรายการให้อยู่ในวงเงินเดิม หรือโทรหาลูกค้า",
+  "shopDrvBudgetMaxExceeded": "ยอดที่ต้องเพิ่มเกินวงเงินสูงสุดของระบบ กรุณาตัดรายการบางส่วน",
+  "shopDrvBudgetWithinHold": "ยอดยังอยู่ในวงเงิน กดยืนยันซื้อได้เลย",
+  "shopBudgetReqTitle": "คนขับขอเพิ่มวงเงิน",
+  "shopBudgetReqBody": "ยอดสินค้าจริงเกินวงเงินที่กันไว้ ต้องกันเงินเพิ่มอีก {amount} จาก Wallet ส่วนที่ไม่ได้ใช้จะคืนอัตโนมัติเมื่อปิดงาน",
+  "@shopBudgetReqBody": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "shopBudgetReqApprove": "เพิ่มวงเงิน {amount}",
+  "@shopBudgetReqApprove": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "shopBudgetReqDecline": "ไม่เพิ่ม ให้คนขับตัดรายการ",
+  "shopBudgetReqApproved": "เพิ่มวงเงินแล้ว",
+  "shopBudgetReqDeclined": "แจ้งคนขับแล้วว่าไม่เพิ่มวงเงิน",
+  "shopBudgetReqNoBalance": "ยอด Wallet ไม่พอ ขาดอีก {amount} เติมเงินแล้วกดเพิ่มวงเงินอีกครั้ง",
+  "@shopBudgetReqNoBalance": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "shopBudgetReqTopup": "เติมเงิน"
 }

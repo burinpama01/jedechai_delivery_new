@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ฝากซื้อ S8–S9 แผนงาน</title>
+<style>
+  :root { --bg:#f7f6f2; --card:#ffffff; --ink:#1f2328; --muted:#5b6470; --line:#e3e1da; --brand:#b8860b; --ok:#1f7a45; --warn:#9a5b00; --bad:#a3262a; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#16181b; --card:#1e2125; --ink:#e8e6e1; --muted:#a3a9b1; --line:#30343a; --brand:#e0b44a; --ok:#5cc58b; --warn:#e3a44a; --bad:#ef7a7e; } }
+  :root[data-theme="dark"] { --bg:#16181b; --card:#1e2125; --ink:#e8e6e1; --muted:#a3a9b1; --line:#30343a; --brand:#e0b44a; --ok:#5cc58b; --warn:#e3a44a; --bad:#ef7a7e; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.6 "Noto Sans Thai", system-ui, sans-serif; }
+  main { max-width:920px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font-size:24px; margin:0 0 4px; } h2 { font-size:18px; margin:28px 0 8px; border-bottom:1px solid var(--line); padding-bottom:4px; }
+  .sub { color:var(--muted); margin:0 0 16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin:10px 0; }
+  table { width:100%; border-collapse:collapse; font-size:14px; } th, td { text-align:left; padding:7px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--muted); font-weight:600; } code { font-size:13px; background:rgba(127,127,127,.12); padding:1px 5px; border-radius:4px; }
+  .tag { display:inline-block; font-size:12px; padding:1px 8px; border-radius:999px; border:1px solid var(--line); color:var(--muted); }
+  .ok { color:var(--ok); } .warn { color:var(--warn); } .bad { color:var(--bad); }
+  .scroll { overflow-x:auto; }
+</style>
+</head>
+<body>
+<main>
+  <h1>ฝากซื้อ S8–S9 — เส้นทางแตก, คิวแอดมิน, ปิดงาน</h1>
+  <p class="sub">v1 · 2026-09-23 · ต่อจากแผนหลัก <code>Plan/Shop_Errand_Service_Feature_Plan_v4.html</code> หัวข้อ 9 · S7 (AI อ่านบิล) ข้ามไปก่อนตามที่ผู้ใช้สั่ง</p>
+
+  <h2>1. สิ่งที่มีอยู่แล้ว (S3–S6)</h2>
+  <div class="card">
+    <ul>
+      <li>ยกเลิกได้ทุกสถานะ: ก่อนถึงร้านคืนเต็ม · ตอน <code>shopping</code> ลูกค้ายกเลิกหัก 25% สูงสุด 100฿ เข้าคนขับ · หลังจ่ายที่ร้านแล้วแอดมินเท่านั้น และกันค่าสินค้าคืนคนขับ</li>
+      <li>ของหมด: คนขับติ๊ก <code>unavailable</code> รายชิ้นได้ · ไม่ได้ซื้ออะไรเลย = ปิดยอดไม่ได้ (<code>nothing_bought</code>)</li>
+      <li>เกินวงเงิน: <code>shop_mark_purchased</code> ปฏิเสธด้วย <code>exceeds_hold</code> — <span class="bad">แต่ยังไม่มีทางให้ลูกค้าเพิ่มวงเงิน คนขับติดตัน</span></li>
+      <li>ธงให้แอดมินดู: <code>amount_variance</code>, <code>arrival_self_reported</code>, <code>cancelled_after_purchase</code> — <span class="bad">แต่ยังไม่มีหน้าให้แอดมินดู</span></li>
+      <li>config พร้อมแล้ว: <code>shop_match_timeout_min=10</code>, <code>shop_photo_confirm_min=5</code>, <code>shop_photo_escalate_min=20</code></li>
+    </ul>
+  </div>
+
+  <h2>2. งาน S8</h2>
+  <div class="scroll"><table>
+    <tr><th>#</th><th>เส้นทาง</th><th>ทำอย่างไร</th><th>ที่</th></tr>
+    <tr><td>1</td><td>หาคนขับไม่ได้</td><td>cron ทุกนาที: <code>pending</code> ไม่มีคนขับนานเกิน <code>shop_match_timeout_min</code> → ยกเลิก + คืน hold เต็มจำนวน + แจ้งลูกค้า</td><td>DB</td></tr>
+    <tr><td>2</td><td>เกินวงเงิน</td><td>คนขับกด "ขอให้ลูกค้าเพิ่มวงเงิน" → server คำนวณยอดที่ขาดเอง → ลูกค้าเห็นแถบบนหน้าติดตาม กด "เพิ่มวงเงิน ฿X" (กันเงินเพิ่มจาก Wallet) หรือ "ไม่เพิ่ม" (คนขับตัดรายการ) · เงินไม่พอ → ไปหน้าเติมเงิน</td><td>DB + แอปทั้งสองฝั่ง</td></tr>
+    <tr><td>3</td><td>ลูกค้าไม่ยืนยันรูป</td><td>cron: <code>receipt_review</code> เกิน <code>shop_photo_escalate_min</code> → ธง <code>customer_no_confirm</code> + แจ้งแอดมิน (แอดมินยืนยันแทนได้อยู่แล้ว) · ไม่มี auto-confirm ตามข้อกำหนดเดิม</td><td>DB</td></tr>
+    <tr><td>4</td><td>ของหมดทั้งหมด</td><td>ไม่ต้องทำเพิ่ม — คนขับยกเลิกได้โดยลูกค้าได้เงินคืนเต็ม (ไม่มีค่าปรับเพราะไม่ใช่ลูกค้ายกเลิก)</td><td>—</td></tr>
+    <tr><td>5</td><td>AI ล่ม</td><td>ข้าม — ไม่มี AI จนกว่าจะทำ S7</td><td>—</td></tr>
+    <tr><td>6</td><td>แจ้งเตือน</td><td>trigger สถานะออเดอร์ฝากซื้อ → แจ้งในแอปลูกค้า/คนขับ · ธง <code>needs_admin_review</code> ขึ้น → แจ้งแอดมิน (กระดิ่ง admin-web)</td><td>DB</td></tr>
+    <tr><td>7</td><td>คิวแอดมิน</td><td>หน้า admin-web ใหม่ "ออเดอร์ฝากซื้อ": แท็บต้องตรวจสอบ / ทั้งหมด · ดูรายการ รูปหลักฐาน เหตุผลธง · ปุ่ม ยืนยันรูปแทนลูกค้า · ปิดงาน · ยกเลิก+คืนเงิน · ทำเครื่องหมายตรวจแล้ว (พร้อมโน้ต)</td><td>DB + admin-web</td></tr>
+    <tr><td>8</td><td>รายงานคนขับผิดปกติ</td><td>แท็บ "คนขับ": จำนวนงาน / สำเร็จ / ถูกยกเลิกตอนซื้อของ (มีค่าปรับ) / ยืนยันถึงร้านเอง · เรียงตามอัตรายกเลิก · สลับ trusted ได้ในหน้าเดียว (ใช้ใน S9)</td><td>DB + admin-web</td></tr>
+  </table></div>
+
+  <h2>3. งาน S9</h2>
+  <div class="card">
+    <ul>
+      <li><code>code_reviewer</code> ตรวจงาน S8 ทั้งหมด แก้จนผ่าน</li>
+      <li>bump version แอป + admin-web แล้ว commit แยกไฟล์จากงาน Wave 1.5 ของ Codex</li>
+      <li>deploy migration + admin-web (ขออนุมัติก่อน)</li>
+      <li>ร้านมีแล้ว 40 ร้าน · <code>shop_enabled=true</code> อยู่แล้ว</li>
+      <li class="warn">ตั้งคนขับ trusted: ต้องให้แอดมิน/ผู้ใช้เลือกเองว่าคนขับคนไหน — ทำได้จากแท็บ "คนขับ" ในหน้าใหม่ (ผมจะไม่เลือกให้เอง)</li>
+      <li class="warn">merge เข้า main และ push: รอคำสั่งผู้ใช้</li>
+    </ul>
+  </div>
+
+  <h2>4. หลักการที่ต้องคงไว้</h2>
+  <div class="card">
+    <ul>
+      <li>เงินทุกบาทคำนวณที่ server — ยอดที่ขาดตอนเกินวงเงินคำนวณจาก snapshot ของออเดอร์ ไม่รับตัวเลขจากแอป</li>
+      <li>ทุกการเคลื่อนเงินอยู่ใน transaction เดียว + ลง ledger (<code>hold</code>/<code>refund</code>) ทุกครั้ง</li>
+      <li>cron ใช้ <code>FOR UPDATE SKIP LOCKED</code> กันชนกับคนขับที่กดรับงานพอดี</li>
+      <li>ทดสอบบน production แบบ transaction + ROLLBACK (ต้องได้อนุมัติ) — ไม่มีข้อมูลค้าง</li>
+    </ul>
+  </div>
+</main>
+</body>
+</html>

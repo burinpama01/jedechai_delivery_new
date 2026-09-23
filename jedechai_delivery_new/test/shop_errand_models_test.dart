@@ -237,6 +237,32 @@ void main() {
         isFalse,
       );
     });
+
+    test('คำขอเพิ่มวงเงิน: แสดงเฉพาะที่รอตอบและมียอดจริง', () {
+      Map<String, dynamic> base(String? status, Object? amount) => {
+            'id': 'o3',
+            'booking_id': 'b3',
+            'store_id': 's3',
+            'store_name': 'ร้าน',
+            'budget_cap': 300,
+            'hold_amount': 380,
+            'budget_increase_status': status,
+            'budget_increase_amount': amount,
+          };
+
+      final requested = ShopOrder.fromJson(base('requested', '107.00'));
+      expect(requested.hasPendingBudgetIncrease, isTrue);
+      expect(requested.budgetIncreaseAmount, 107);
+
+      expect(ShopOrder.fromJson(base('approved', 107)).hasPendingBudgetIncrease,
+          isFalse);
+      expect(ShopOrder.fromJson(base('declined', 107)).hasPendingBudgetIncrease,
+          isFalse);
+      expect(ShopOrder.fromJson(base('requested', 0)).hasPendingBudgetIncrease,
+          isFalse);
+      expect(ShopOrder.fromJson(base(null, null)).hasPendingBudgetIncrease,
+          isFalse);
+    });
   });
 
   group('ShopDraftItem', () {

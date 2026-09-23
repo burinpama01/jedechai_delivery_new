@@ -7523,4 +7523,63 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get shopReqStatusRejected => 'ไม่อนุมัติ';
+
+  @override
+  String get shopDrvBudgetAskTitle => 'ยอดเกินวงเงิน';
+
+  @override
+  String get shopDrvBudgetAskBody => 'ยอดรวมเกินวงเงินที่ลูกค้ากันไว้ ส่งคำขอให้ลูกค้าเพิ่มวงเงิน หรือกลับไปตัดรายการให้อยู่ในวงเงิน';
+
+  @override
+  String get shopDrvBudgetAskSend => 'ขอให้ลูกค้าเพิ่มวงเงิน';
+
+  @override
+  String get shopDrvBudgetAskSent => 'ส่งคำขอแล้ว รอลูกค้าตอบ';
+
+  @override
+  String shopDrvBudgetWaiting(String amount) {
+    return 'รอลูกค้าตอบคำขอเพิ่มวงเงิน $amount';
+  }
+
+  @override
+  String get shopDrvBudgetApproved => 'ลูกค้าเพิ่มวงเงินแล้ว กดยืนยันซื้อได้เลย';
+
+  @override
+  String get shopDrvBudgetDeclined => 'ลูกค้าไม่เพิ่มวงเงิน ตัดรายการให้อยู่ในวงเงินเดิม หรือโทรหาลูกค้า';
+
+  @override
+  String get shopDrvBudgetMaxExceeded => 'ยอดที่ต้องเพิ่มเกินวงเงินสูงสุดของระบบ กรุณาตัดรายการบางส่วน';
+
+  @override
+  String get shopDrvBudgetWithinHold => 'ยอดยังอยู่ในวงเงิน กดยืนยันซื้อได้เลย';
+
+  @override
+  String get shopBudgetReqTitle => 'คนขับขอเพิ่มวงเงิน';
+
+  @override
+  String shopBudgetReqBody(String amount) {
+    return 'ยอดสินค้าจริงเกินวงเงินที่กันไว้ ต้องกันเงินเพิ่มอีก $amount จาก Wallet ส่วนที่ไม่ได้ใช้จะคืนอัตโนมัติเมื่อปิดงาน';
+  }
+
+  @override
+  String shopBudgetReqApprove(String amount) {
+    return 'เพิ่มวงเงิน $amount';
+  }
+
+  @override
+  String get shopBudgetReqDecline => 'ไม่เพิ่ม ให้คนขับตัดรายการ';
+
+  @override
+  String get shopBudgetReqApproved => 'เพิ่มวงเงินแล้ว';
+
+  @override
+  String get shopBudgetReqDeclined => 'แจ้งคนขับแล้วว่าไม่เพิ่มวงเงิน';
+
+  @override
+  String shopBudgetReqNoBalance(String amount) {
+    return 'ยอด Wallet ไม่พอ ขาดอีก $amount เติมเงินแล้วกดเพิ่มวงเงินอีกครั้ง';
+  }
+
+  @override
+  String get shopBudgetReqTopup => 'เติมเงิน';
 }

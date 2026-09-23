@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/jdc_colors.dart';
@@ -49,14 +50,37 @@ class _ShopJobScreenState extends State<ShopJobScreen> {
   final List<File> _proofFiles = [];
   bool _uploading = false;
 
+  /// ฟังการเปลี่ยนแปลงของออเดอร์นี้ — ลูกค้าตอบคำขอเพิ่มวงเงินแล้วปุ่มยืนยันซื้อ
+  /// ต้องปลดล็อกเองโดยคนขับไม่ต้องรู้ว่าต้องกดรีเฟรช
+  RealtimeChannel? _orderChannel;
+
   @override
   void initState() {
     super.initState();
     _load();
+    _orderChannel = Supabase.instance.client
+        .channel('shop_job_${widget.bookingId}')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.update,
+          schema: 'public',
+          table: 'shop_orders',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'booking_id',
+            value: widget.bookingId,
+          ),
+          callback: (_) {
+            if (mounted) _load();
+          },
+        )
+        .subscribe();
   }
 
   @override
   void dispose() {
+    if (_orderChannel != null) {
+      Supabase.instance.client.removeChannel(_orderChannel!);
+    }
     for (final c in _priceControllers.values) {
       c.dispose();
     }
@@ -123,6 +147,12 @@ class _ShopJobScreenState extends State<ShopJobScreen> {
         return l10n.shopDrvNotYourJob;
       case 'proof_required':
         return l10n.shopDrvProofRequired;
+      case 'exceeds_max_budget':
+        return l10n.shopDrvBudgetMaxExceeded;
+      case 'within_hold':
+        return l10n.shopDrvBudgetWithinHold;
+      case 'already_requested':
+        return l10n.shopDrvBudgetAskSent;
       default:
         return l10n.shopErrGeneric;
     }
@@ -283,11 +313,115 @@ class _ShopJobScreenState extends State<ShopJobScreen> {
     setState(() => _uploading = false);
 
     if (res['success'] != true) {
+      // เกินวงเงิน -> ให้ทางไปต่อ (ขอลูกค้าเพิ่ม) แทนที่จะจบแค่ข้อความ error
+      if (res['error'] == 'exceeds_hold') {
+        await _askBudgetIncrease();
+        return;
+      }
       _snack(_errText(l10n, res));
       return;
     }
     setState(() => _status = res['status']?.toString() ?? 'purchased');
     await _load();
+  }
+
+  /// ยอดรวมเกินที่ลูกค้ากันไว้ -> ถามว่าจะส่งคำขอเพิ่มวงเงินไหม
+  /// ยอดที่ขอ server คำนวณเองจากรายการที่ติ๊กไว้ แอปไม่ส่งตัวเลข
+  Future<void> _askBudgetIncrease() async {
+    final l10n = AppLocalizations.of(context)!;
+    final jdc = JdcColors.of(context);
+
+    final send = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: jdc.surface,
+        title: Text(l10n.shopDrvBudgetAskTitle),
+        content: Text(l10n.shopDrvBudgetAskBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n.shopQuoteBack),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l10n.shopDrvBudgetAskSend),
+          ),
+        ],
+      ),
+    );
+    if (send != true || !mounted) return;
+
+    setState(() => _busy = true);
+    final res = await _shop.requestBudgetIncrease(widget.bookingId);
+    if (!mounted) return;
+    setState(() => _busy = false);
+
+    if (res['success'] != true) {
+      _snack(_errText(l10n, res));
+      return;
+    }
+    _snack(l10n.shopDrvBudgetAskSent);
+    await _load();
+  }
+
+  /// สถานะคำขอเพิ่มวงเงินล่าสุด (แสดงเหนือเช็คลิสต์ระหว่างซื้อของ)
+  Widget _budgetIncreaseBanner(
+      JdcColors jdc, AppLocalizations l10n, ShopOrder order) {
+    final String text;
+    final Color bg;
+    final Color line;
+    final Color ink;
+    final IconData icon;
+    switch (order.budgetIncreaseStatus) {
+      case 'requested':
+        text = l10n.shopDrvBudgetWaiting(
+            _money(order.budgetIncreaseAmount ?? 0));
+        bg = jdc.infoSoft;
+        line = jdc.line;
+        ink = jdc.infoInk;
+        icon = Icons.hourglass_top_rounded;
+        break;
+      case 'approved':
+        text = l10n.shopDrvBudgetApproved;
+        bg = jdc.successSoft;
+        line = jdc.successLine;
+        ink = jdc.successInk;
+        icon = Icons.check_circle_rounded;
+        break;
+      case 'declined':
+        text = l10n.shopDrvBudgetDeclined;
+        bg = jdc.dangerSoft;
+        line = jdc.dangerLine;
+        ink = jdc.dangerInk;
+        icon = Icons.info_outline_rounded;
+        break;
+      default:
+        return const SizedBox.shrink();
+    }
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(JdcRadius.small),
+        border: Border.all(color: line),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: ink),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(text, style: TextStyle(fontSize: 13, color: ink)),
+          ),
+          // สำรองกรณี realtime หลุด (สัญญาณมือถือไม่ดีในห้าง) -> กดดึงคำตอบล่าสุดเองได้
+          IconButton(
+            tooltip: l10n.shopStoreRetry,
+            onPressed: _busy ? null : _load,
+            icon: Icon(Icons.refresh_rounded, color: ink),
+          ),
+        ],
+      ),
+    );
   }
 
   // ── นำส่ง / ปิดงาน ────────────────────────────────────────────────────
@@ -333,6 +467,8 @@ class _ShopJobScreenState extends State<ShopJobScreen> {
                     const SizedBox(height: 14),
                     if (_status == 'accepted') _arriveCard(jdc, l10n),
                     if (_status == 'shopping') ...[
+                      if (order.budgetIncreaseStatus != null)
+                        _budgetIncreaseBanner(jdc, l10n, order),
                       _checklistCard(jdc, l10n, order),
                       const SizedBox(height: 14),
                       _proofCard(jdc, l10n, order),

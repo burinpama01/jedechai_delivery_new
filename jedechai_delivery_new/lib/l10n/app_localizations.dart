@@ -14062,6 +14062,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not approved'**
   String get shopReqStatusRejected;
+
+  /// No description provided for @shopDrvBudgetAskTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Over budget'**
+  String get shopDrvBudgetAskTitle;
+
+  /// No description provided for @shopDrvBudgetAskBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The total is above the amount the customer reserved. Ask the customer to raise the budget, or go back and remove items to fit.'**
+  String get shopDrvBudgetAskBody;
+
+  /// No description provided for @shopDrvBudgetAskSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask customer to raise budget'**
+  String get shopDrvBudgetAskSend;
+
+  /// No description provided for @shopDrvBudgetAskSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Request sent — waiting for the customer'**
+  String get shopDrvBudgetAskSent;
+
+  /// No description provided for @shopDrvBudgetWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the customer to approve {amount} more'**
+  String shopDrvBudgetWaiting(String amount);
+
+  /// No description provided for @shopDrvBudgetApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'The customer raised the budget. You can confirm the purchase now.'**
+  String get shopDrvBudgetApproved;
+
+  /// No description provided for @shopDrvBudgetDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'The customer declined. Remove items to fit the original budget, or call the customer.'**
+  String get shopDrvBudgetDeclined;
+
+  /// No description provided for @shopDrvBudgetMaxExceeded.
+  ///
+  /// In en, this message translates to:
+  /// **'The extra amount exceeds the system maximum budget. Please remove some items.'**
+  String get shopDrvBudgetMaxExceeded;
+
+  /// No description provided for @shopDrvBudgetWithinHold.
+  ///
+  /// In en, this message translates to:
+  /// **'The total is within budget. You can confirm the purchase.'**
+  String get shopDrvBudgetWithinHold;
+
+  /// No description provided for @shopBudgetReqTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver asks to raise the budget'**
+  String get shopBudgetReqTitle;
+
+  /// No description provided for @shopBudgetReqBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The actual total is above what you reserved. {amount} more will be reserved from your Wallet; anything unused is refunded automatically when the order closes.'**
+  String shopBudgetReqBody(String amount);
+
+  /// No description provided for @shopBudgetReqApprove.
+  ///
+  /// In en, this message translates to:
+  /// **'Raise budget {amount}'**
+  String shopBudgetReqApprove(String amount);
+
+  /// No description provided for @shopBudgetReqDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'No — ask the driver to remove items'**
+  String get shopBudgetReqDecline;
+
+  /// No description provided for @shopBudgetReqApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget raised'**
+  String get shopBudgetReqApproved;
+
+  /// No description provided for @shopBudgetReqDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'The driver has been told you declined'**
+  String get shopBudgetReqDeclined;
+
+  /// No description provided for @shopBudgetReqNoBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough Wallet balance — {amount} short. Top up, then raise the budget again.'**
+  String shopBudgetReqNoBalance(String amount);
+
+  /// No description provided for @shopBudgetReqTopup.
+  ///
+  /// In en, this message translates to:
+  /// **'Top up'**
+  String get shopBudgetReqTopup;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

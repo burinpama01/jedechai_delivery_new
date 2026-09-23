@@ -11,6 +11,7 @@ import '../../../../common/services/shop_service.dart';
 import '../../../../common/widgets/app_network_image.dart';
 import '../../../../common/widgets/shop_ref_image.dart';
 import '../../../../utils/debug_logger.dart';
+import '../customer_wallet_screen.dart';
 
 /// หน้าติดตามออเดอร์ฝากซื้อ
 ///
@@ -227,6 +228,53 @@ class _ShopTrackingScreenState extends State<ShopTrackingScreen> {
     await _load();
   }
 
+  /// ตอบคำขอเพิ่มวงเงินของคนขับ — ยอดที่กันเพิ่มมาจาก server (แอปไม่ส่งตัวเลข)
+  Future<void> _respondBudget({required bool approve}) async {
+    final l10n = AppLocalizations.of(context)!;
+    setState(() => _busy = true);
+    final res =
+        await _shop.respondBudgetIncrease(widget.bookingId, approve: approve);
+    if (!mounted) return;
+    setState(() => _busy = false);
+
+    if (res['success'] == true) {
+      _snack(approve ? l10n.shopBudgetReqApproved : l10n.shopBudgetReqDeclined);
+      await _load();
+      return;
+    }
+
+    if (res['error'] == 'insufficient_balance') {
+      final shortfall = (res['shortfall'] as num?)?.toDouble() ?? 0;
+      final topup = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: JdcColors.of(ctx).surface,
+          content: Text(l10n.shopBudgetReqNoBalance(_money(shortfall))),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(l10n.shopQuoteBack),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(l10n.shopBudgetReqTopup),
+            ),
+          ],
+        ),
+      );
+      if (topup != true || !mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const CustomerWalletScreen()),
+      );
+      // กลับมาแล้วให้ลูกค้ากดอนุมัติเองอีกครั้ง — ไม่กันเงินให้อัตโนมัติ
+      if (mounted) await _load();
+      return;
+    }
+
+    _snack(l10n.shopErrGeneric);
+    await _load();
+  }
+
   String _money(double v) => '฿${v.toStringAsFixed(2)}';
 
   /// ข้อความเตือนก่อนยกเลิก
@@ -273,6 +321,12 @@ class _ShopTrackingScreenState extends State<ShopTrackingScreen> {
                 children: [
                   _statusCard(jdc, l10n),
                   const SizedBox(height: 14),
+                  if (order != null &&
+                      _status == 'shopping' &&
+                      order.hasPendingBudgetIncrease) ...[
+                    _budgetRequestCard(jdc, l10n, order),
+                    const SizedBox(height: 14),
+                  ],
                   if (order != null && order.needsCustomerConfirm)
                     _proofCard(jdc, l10n, order),
                   if (order != null) ...[
@@ -302,6 +356,73 @@ class _ShopTrackingScreenState extends State<ShopTrackingScreen> {
               ),
             )
           : null,
+    );
+  }
+
+  /// คนขับขอเพิ่มวงเงิน — ลูกค้าต้องตอบก่อนคนขับจะยืนยันซื้อได้
+  Widget _budgetRequestCard(
+      JdcColors jdc, AppLocalizations l10n, ShopOrder order) {
+    final amount = _money(order.budgetIncreaseAmount ?? 0);
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: jdc.brandSoft,
+        borderRadius: BorderRadius.circular(JdcRadius.card),
+        border: Border.all(color: jdc.brandLine),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.account_balance_wallet_outlined,
+                  color: jdc.brandOnSoft),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  l10n.shopBudgetReqTitle,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: jdc.brandOnSoft,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.shopBudgetReqBody(amount),
+            style: TextStyle(fontSize: 13, color: jdc.text),
+          ),
+          const SizedBox(height: 12),
+          FilledButton(
+            onPressed: _busy ? null : () => _respondBudget(approve: true),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(JdcTouch.button),
+              backgroundColor: jdc.cta,
+              foregroundColor: jdc.onCta,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(JdcRadius.small),
+              ),
+            ),
+            child: Text(l10n.shopBudgetReqApprove(amount)),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton(
+            onPressed: _busy ? null : () => _respondBudget(approve: false),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(JdcTouch.minTarget),
+              side: BorderSide(color: jdc.line),
+              foregroundColor: jdc.text,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(JdcRadius.small),
+              ),
+            ),
+            child: Text(l10n.shopBudgetReqDecline, textAlign: TextAlign.center),
+          ),
+        ],
+      ),
     );
   }
 

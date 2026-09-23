@@ -22,6 +22,7 @@ import { renderNotificationDeliveriesPage } from "./notificationDeliveriesPage.j
 import { renderReviewsPage } from "./reviewsPage.js";
 import { renderBroadcastPage } from "./broadcastPage.js";
 import { renderShopStoresPage } from "./shopStoresPage.js";
+import { renderShopOrdersPage } from "./shopOrdersPage.js";
 
 export function registerInitialPages(reg) {
   if (typeof reg !== "function") return;
@@ -49,6 +50,7 @@ export function registerInitialPages(reg) {
     ["reviews", renderReviewsPage],
     ["broadcast", renderBroadcastPage],
     ["shop_stores", renderShopStoresPage],
+    ["shop_orders", renderShopOrdersPage],
   ];
 
   for (const [name, renderer, dispose] of pages) {

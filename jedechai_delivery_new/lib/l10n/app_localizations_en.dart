@@ -7523,4 +7523,63 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shopReqStatusRejected => 'Not approved';
+
+  @override
+  String get shopDrvBudgetAskTitle => 'Over budget';
+
+  @override
+  String get shopDrvBudgetAskBody => 'The total is above the amount the customer reserved. Ask the customer to raise the budget, or go back and remove items to fit.';
+
+  @override
+  String get shopDrvBudgetAskSend => 'Ask customer to raise budget';
+
+  @override
+  String get shopDrvBudgetAskSent => 'Request sent — waiting for the customer';
+
+  @override
+  String shopDrvBudgetWaiting(String amount) {
+    return 'Waiting for the customer to approve $amount more';
+  }
+
+  @override
+  String get shopDrvBudgetApproved => 'The customer raised the budget. You can confirm the purchase now.';
+
+  @override
+  String get shopDrvBudgetDeclined => 'The customer declined. Remove items to fit the original budget, or call the customer.';
+
+  @override
+  String get shopDrvBudgetMaxExceeded => 'The extra amount exceeds the system maximum budget. Please remove some items.';
+
+  @override
+  String get shopDrvBudgetWithinHold => 'The total is within budget. You can confirm the purchase.';
+
+  @override
+  String get shopBudgetReqTitle => 'Driver asks to raise the budget';
+
+  @override
+  String shopBudgetReqBody(String amount) {
+    return 'The actual total is above what you reserved. $amount more will be reserved from your Wallet; anything unused is refunded automatically when the order closes.';
+  }
+
+  @override
+  String shopBudgetReqApprove(String amount) {
+    return 'Raise budget $amount';
+  }
+
+  @override
+  String get shopBudgetReqDecline => 'No — ask the driver to remove items';
+
+  @override
+  String get shopBudgetReqApproved => 'Budget raised';
+
+  @override
+  String get shopBudgetReqDeclined => 'The driver has been told you declined';
+
+  @override
+  String shopBudgetReqNoBalance(String amount) {
+    return 'Not enough Wallet balance — $amount short. Top up, then raise the budget again.';
+  }
+
+  @override
+  String get shopBudgetReqTopup => 'Top up';
 }

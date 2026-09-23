@@ -119,6 +119,12 @@ class ShopOrder {
   final DateTime? customerConfirmedAt;
   final String? customerNote;
 
+  /// คนขับขอเพิ่มวงเงิน (ยอดจริงเกินที่กันไว้) — ยอดคำนวณที่ server
+  final double? budgetIncreaseAmount;
+
+  /// null · 'requested' · 'approved' · 'declined'
+  final String? budgetIncreaseStatus;
+
   final List<ShopOrderItem> items;
 
   /// snapshot ค่า config ที่ server เก็บไว้ตอนสร้างออเดอร์
@@ -147,9 +153,15 @@ class ShopOrder {
     this.proofSentAt,
     this.customerConfirmedAt,
     this.customerNote,
+    this.budgetIncreaseAmount,
+    this.budgetIncreaseStatus,
     required this.items,
     this.feeSnapshot = const {},
   });
+
+  bool get hasPendingBudgetIncrease =>
+      budgetIncreaseStatus == 'requested' &&
+      (budgetIncreaseAmount ?? 0) > 0;
 
   bool get needsCustomerConfirm =>
       proofMode == 'photo' && customerConfirmedAt == null;
@@ -209,6 +221,8 @@ class ShopOrder {
       proofSentAt: _toDate(json['proof_sent_at']),
       customerConfirmedAt: _toDate(json['customer_confirmed_at']),
       customerNote: _emptyToNull(json['customer_note'] as String?),
+      budgetIncreaseAmount: _toDouble(json['budget_increase_amount']),
+      budgetIncreaseStatus: json['budget_increase_status'] as String?,
       items: items,
       feeSnapshot: (json['fee_config_snapshot'] as Map?)
               ?.cast<String, dynamic>() ??

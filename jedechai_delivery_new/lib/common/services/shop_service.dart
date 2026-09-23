@@ -394,6 +394,20 @@ class ShopService {
         'p_proof_urls': proofPaths,
       });
 
+  /// ยอดจริงเกินวงเงิน -> ขอให้ลูกค้าเพิ่ม (server คำนวณยอดที่ขาดเอง)
+  Future<Map<String, dynamic>> requestBudgetIncrease(String bookingId) =>
+      _rpc('shop_request_budget_increase', {'p_booking_id': bookingId});
+
+  /// ลูกค้าตอบคำขอเพิ่มวงเงิน — อนุมัติ = กันเงินเพิ่มจาก Wallet ตามยอดที่ server เก็บไว้
+  Future<Map<String, dynamic>> respondBudgetIncrease(
+    String bookingId, {
+    required bool approve,
+  }) =>
+      _rpc('shop_customer_respond_budget_increase', {
+        'p_booking_id': bookingId,
+        'p_approve': approve,
+      });
+
   Future<Map<String, dynamic>> completeBooking(String bookingId) =>
       _rpc('complete_shop_booking', {'p_booking_id': bookingId});
 

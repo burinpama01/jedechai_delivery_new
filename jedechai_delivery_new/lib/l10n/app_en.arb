@@ -3740,5 +3740,50 @@
   "shopReqMine": "My requests",
   "shopReqStatusPending": "Under review",
   "shopReqStatusApproved": "Approved",
-  "shopReqStatusRejected": "Not approved"
+  "shopReqStatusRejected": "Not approved",
+  "shopDrvBudgetAskTitle": "Over budget",
+  "shopDrvBudgetAskBody": "The total is above the amount the customer reserved. Ask the customer to raise the budget, or go back and remove items to fit.",
+  "shopDrvBudgetAskSend": "Ask customer to raise budget",
+  "shopDrvBudgetAskSent": "Request sent — waiting for the customer",
+  "shopDrvBudgetWaiting": "Waiting for the customer to approve {amount} more",
+  "@shopDrvBudgetWaiting": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "shopDrvBudgetApproved": "The customer raised the budget. You can confirm the purchase now.",
+  "shopDrvBudgetDeclined": "The customer declined. Remove items to fit the original budget, or call the customer.",
+  "shopDrvBudgetMaxExceeded": "The extra amount exceeds the system maximum budget. Please remove some items.",
+  "shopDrvBudgetWithinHold": "The total is within budget. You can confirm the purchase.",
+  "shopBudgetReqTitle": "Driver asks to raise the budget",
+  "shopBudgetReqBody": "The actual total is above what you reserved. {amount} more will be reserved from your Wallet; anything unused is refunded automatically when the order closes.",
+  "@shopBudgetReqBody": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "shopBudgetReqApprove": "Raise budget {amount}",
+  "@shopBudgetReqApprove": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "shopBudgetReqDecline": "No — ask the driver to remove items",
+  "shopBudgetReqApproved": "Budget raised",
+  "shopBudgetReqDeclined": "The driver has been told you declined",
+  "shopBudgetReqNoBalance": "Not enough Wallet balance — {amount} short. Top up, then raise the budget again.",
+  "@shopBudgetReqNoBalance": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "shopBudgetReqTopup": "Top up"
 }
