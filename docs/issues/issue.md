@@ -408,7 +408,11 @@ bool get isExpired => endDate != null && _bangkokNow().isAfter(endDate!);       
 
 ## รอบเก็บตก 2026-09-19 (รอบสอง) — เคลียร์ของค้างครบ
 
-### ISSUE-115 — Fixed
+### ISSUE-115 — ~~Fixed~~ → ดูหัวข้อ "รอบ reconcile กับ main (2026-09-23)"
+
+> ⚠️ วิธีแก้ด้านล่าง (ส่ง `p_updates` เข้า `accept_booking`) **ถูกถอนออกแล้ว** เพราะข้าม
+> trigger กันแอปเขียนราคาของ Batch 1 ได้ ปล่อยให้คนขับตั้งราคาเองได้
+
 เพิ่ม parameter `p_updates jsonb` ให้ RPC `accept_booking`
 (`supabase/migrations/20260919090000_accept_booking_atomic_updates.sql`)
 ตอนนี้การเคลมงานกับการเขียน `price` / `delivery_fee` / `notes` /
@@ -467,24 +471,105 @@ switch ทั้ง 6 ชุดครอบคลุมครบ 19 ค่า
 
 ## Migration / Edge Function ที่ต้อง deploy
 
-- `supabase/migrations/20260917100000_fix_withdrawal_cancel_atomic.sql`
-- `supabase/migrations/20260917100100_harden_wallet_settlement_rpcs.sql`
-- `supabase/migrations/20260919090000_accept_booking_atomic_updates.sql`
-- Edge Function `maps-proxy` พร้อม secret:
-  `supabase secrets set GOOGLE_MAPS_SERVER_KEY=xxx`
-  แล้ว `supabase functions deploy maps-proxy`
-  (ถ้ายังไม่ deploy หรือยังไม่ตั้ง secret หน้าจอที่ใช้เส้นทาง/ค้นหาที่อยู่
-  จะตกไป fallback เส้นตรง/คืนผลว่าง — ต้อง deploy ก่อนปล่อยแอป)
+> ⚠️ **ส่วนนี้ถูกแทนที่แล้ว** — ดูหัวข้อ "รอบ reconcile กับ main (2026-09-23)" ด้านล่าง
+> migration ทั้ง 3 ไฟล์ที่เคยระบุไว้ตรงนี้ **ถูกลบออกจาก branch แล้ว และห้าม deploy**
+> เพราะจะทับฟังก์ชันของ Batch 0/1/3 ที่ขึ้น production ไปแล้ว
 
-migration ตัวที่สองจะพยายามสร้าง partial unique index กันค่าคอมซ้ำ
-(`uniq_wallet_tx_commission_per_booking`) ถ้ามีข้อมูลค่าคอมซ้ำค้างอยู่แล้ว index จะ
-สร้างไม่สำเร็จและขึ้น `WARNING` แทนการล้ม migration — **ต้องเช็ค log ตอน deploy** ถ้า
-เจอ warning ให้เคลียร์แถวซ้ำแล้วรัน migration ซ้ำอีกรอบ
+---
+
+# รอบ reconcile กับ main (2026-09-23)
+
+ระหว่างที่ branch นี้ทำงาน `main` มีงาน Batch 0–5 (20 ก.ย.) ที่**ขึ้น production แล้ว**
+(ดู `Plan/Master_Plan_Summary_v2.html`) และทับกับ issue ชุดนี้หลายข้อ รอบนี้จึง merge
+`main` เข้ามา แล้วตรวจแต่ละข้อใหม่เทียบกับ production
+
+## สถานะหลัง reconcile
+
+| ID | สถานะใหม่ | เหตุผล |
+|---|---|---|
+| ISSUE-101 | Superseded (main) | Batch 0/3 ทำ `cancel_wallet_withdrawal_request` แบบรองรับ 2 ถังแล้ว แอปใช้ `withdrawal_service.dart` ของ main |
+| ISSUE-102 | Superseded (main) | main แยก secret ออกเป็น `.env.client` + มีเทสต์ `app_env_asset_policy_test.dart` บังคับ เหลือแค่ **rotate key** |
+| ISSUE-103 | Superseded (main) | Batch 0/1 ใส่ actor check ให้ `wallet_deduct` / `complete_booking` และให้ server คิดค่าคอมเอง |
+| ISSUE-109 | Fixed (+ DB บล็อกซ้ำ) | Batch 1 ห้ามแอปตั้ง `completed` เองด้วย trigger แล้ว ส่วนแอปยังคงการ throw ใน `updateBookingStatus('completed')` ไว้ |
+| ISSUE-113 | Fixed (รวมกับ main) | main แก้ปัญหาเวลาเพี้ยน 7 ชม. (C4) ด้วย `_now()` แล้ว branch นี้เพิ่ม `AppTime.parseDbTimestamp` ใน `fromJson` |
+| ISSUE-115 | **Blocked — รอผู้ใช้ตัดสินใจ** | ดูหัวข้อด้านล่าง |
+| ISSUE-120 | Fixed — ต้อง deploy | main ไม่ได้ย้าย Google Web Service key ออกจากแอป `maps-proxy` จึงยังจำเป็น |
+| ข้ออื่น (104–108, 110–112, 114, 116–119, 121–125) | Fixed | ตรวจแล้วว่าบั๊กยังมีอยู่บน main และ fix ของ branch นี้ยังอยู่ครบหลัง merge |
+
+## Migration ที่ลบออก (ห้าม deploy)
+
+| ไฟล์ | ถ้าลงไปจะเกิดอะไร |
+|---|---|
+| `20260917100000_fix_withdrawal_cancel_atomic.sql` | ไม่ตั้ง `app.wallet_bucket` ก่อนคืนเงิน trigger `apply_wallet_tx_bucket` จึงคืนเข้าถังเติมเองเสมอ เงินรางวัลในถังระบบ (ถอนขั้นต่ำ ฿200) จะกลายเป็นเงินเติมเอง (ขั้นต่ำ ฿100) |
+| `20260917100100_harden_wallet_settlement_rpcs.sql` | `complete_booking` เชื่อ `p_commission_amount` จากแอป เปิดช่อง "คนขับส่งค่าคอม 0" ที่ Batch 1 ปิดไปกลับมา และตัด `job_payout` / ค่าชดเชยคูปอง / การ์ดงาน laundry ทิ้ง |
+| `20260919090000_accept_booking_atomic_updates.sql` | ฟังก์ชัน SECURITY DEFINER ข้าม trigger `guard_booking_client_writes` ได้ คนขับจะส่ง `price` เท่าไรก็ได้ |
+
+ตอนนี้ **branch นี้ไม่มี migration ของตัวเองเลย** สิ่งที่ต้อง deploy มีแค่ Edge Function:
+
+```bash
+supabase secrets set GOOGLE_MAPS_SERVER_KEY=xxx
+supabase functions deploy maps-proxy
+```
+
+ต้อง deploy ก่อนปล่อยแอปเวอร์ชัน 1.13.2+125 ไม่งั้นหน้าที่ใช้เส้นทางหรือค้นหาที่อยู่จะตกไป fallback (เส้นตรง / ผลว่าง)
+
+## ISSUE-115 — ตรวจซ้ำกับ production แล้ว (แก้ข้อสรุปเดิม)
+
+ข้อสรุปรอบก่อนว่า "คนขับไม่เคยได้ค่าชดเชยระยะทางเลยสักงาน" **ผิดบางส่วน** ผลที่ถูกต้องคือ:
+
+**Food — บั๊กจริง** ไล่เส้นทางในโค้ดได้ครบ:
+1. หน้า checkout ไม่คิด surcharge เลย มีแค่ตอนรับงานที่แอปบวก surcharge เข้า `delivery_fee` ผ่าน UPDATE ธรรมดา
+2. UPDATE ผ่าน RLS (`Drivers can update assigned bookings` เพราะ `driver_id = auth.uid()` หลังเคลมงาน)
+3. trigger `trg_guard_booking_client_writes` (BEFORE UPDATE) ตั้ง `NEW.delivery_fee := OLD.delivery_fee` แบบไม่มี error
+4. `booking_settlement()` คิดรายได้คนขับเป็น `(delivery_fee − ค่าระบบ) + GP คนขับ` คนขับจึงไม่ได้ส่วนนี้
+
+เกิดเมื่อคนขับอยู่ห่างร้านเกินเกณฑ์ (default 3 กม. หรือ `custom_base_distance` ของร้าน)
+คนขับเสียเงินเท่ากับ (ระยะ − เกณฑ์) × ฿5/กม. และ**ไม่ทิ้งร่องรอยในข้อมูล**
+
+**Ride — ข้ออ้างเดิมผิด** ลูกค้าจ่าย surcharge แบบประมาณการ (จากคนขับออนไลน์ที่ใกล้ที่สุด)
+รวมใน `price` ตั้งแต่ตอนสร้างออเดอร์แล้ว สิ่งที่ trigger บล็อกคือการบวก**ซ้ำรอบสอง**ตอนรับงาน
+ซึ่งก่อน 20 ก.ย. เคยทำให้ลูกค้าโดนเก็บเงินซ้ำ เหลือบั๊กเล็กคือ `notes` ถูกเขียนว่า
+"ปรับราคาเพิ่ม (+฿X)" ทั้งที่ `price` ไม่เปลี่ยน
+
+**สิ่งที่แก้แล้วในรอบนี้**
+- แอปกลับไปเรียก `accept_booking` แบบ 3 argument ตรงกับ production
+- ride: เลิกคิด surcharge ซ้ำตอนรับงาน และเลิกเขียน `notes` ที่บันทึกผิด
+- food: เลิกคิดและเลิกเขียน surcharge ที่ถูกรีเซ็ตทิ้งอยู่แล้ว เช็คยอดกระเป๋าด้วย `delivery_fee` จริง
+
+**สิ่งที่ยังค้าง — รอผู้ใช้ตัดสินใจว่าใครจ่าย surcharge ของ food**
+
+การบวกเข้า `delivery_fee` ฝั่ง server ตรง ๆ (แบบเดิม) ใช้ไม่ได้ เพราะ
+- ออเดอร์เงินสด: ลูกค้าต้องจ่ายเพิ่มหน้าบ้าน มากกว่ายอดที่เห็นตอน checkout
+- ออเดอร์ Wallet: settlement จ่ายคนขับเท่ากับยอดที่ลูกค้าจ่ายจริง แต่คิดค่าคอมจาก
+  `delivery_fee` ใหม่ คนขับจะ**โดนหักค่าคอมจาก surcharge ที่ไม่เคยได้รับ**
+
+ทางเลือก:
+- **A. ลูกค้าจ่าย** — ต้องแสดง surcharge ตั้งแต่ checkout (แต่ตอนนั้นยังไม่รู้ว่าใครจะรับงาน ต้องใช้ค่าประมาณแบบ ride)
+- **B. แพลตฟอร์มจ่าย** — เก็บ surcharge แยกคอลัมน์ตอนรับงาน แล้วเครดิตเข้ากระเป๋าคนขับตอนปิดงาน แบบเดียวกับ `coupon_compensation` ของ Batch 1
+- **C. เลิกฟีเจอร์นี้**
+
+## ยืนยันบั๊ก food บน production (dry-run + ROLLBACK)
 
 ```sql
--- หาแถวค่าคอมซ้ำก่อน deploy
-SELECT wallet_id, related_booking_id, count(*)
-FROM public.wallet_transactions
-WHERE type = 'commission' AND related_booking_id IS NOT NULL
-GROUP BY 1, 2 HAVING count(*) > 1;
+BEGIN;
+SELECT id, driver_id, delivery_fee FROM public.bookings
+WHERE service_type = 'food' AND driver_id IS NOT NULL LIMIT 1;
+
+SELECT set_config('request.jwt.claims',
+  json_build_object('sub', '<driver_id>', 'role', 'authenticated')::text, true);
+SET LOCAL ROLE authenticated;
+
+UPDATE public.bookings SET delivery_fee = delivery_fee + 10
+WHERE id = '<booking_id>' RETURNING delivery_fee;
+ROLLBACK;
 ```
+
+ถ้าบั๊กมีจริง `RETURNING` จะได้ `delivery_fee` ค่าเดิมและไม่มี error
+
+## ข้อจำกัดของการตรวจรอบนี้
+
+- ไม่มีสิทธิ์เข้า production — หลักฐานมาจาก migration บน `main` + ข้อความใน handoff ว่า
+  "ทุก migration ขึ้น production แล้ว" RLS จริงอาจต่างจากที่ไล่จาก migration แต่ข้อสรุปของ
+  food ไม่เปลี่ยน (ถ้า RLS บล็อก UPDATE ก็ได้ 0 แถว ถ้าผ่านก็โดน trigger รีเซ็ต)
+- ยังไม่ได้รัน `flutter analyze` / `flutter test` (container ไม่มี Flutter SDK)
+  จำลองเทสต์ policy ของ main 2 ไฟล์ด้วย regex เดียวกันแล้ว ผ่าน
