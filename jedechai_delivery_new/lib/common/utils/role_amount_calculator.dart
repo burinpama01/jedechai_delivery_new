@@ -1,6 +1,30 @@
 class RoleAmountCalculator {
   static double clampNonNegative(double value) => value < 0 ? 0 : value;
 
+  /// จุดปัดเงินเดียวของทั้งแอป (P1): ยอดที่ลูกค้าจ่าย/คนขับเก็บ/ราคา/ค่าส่ง/ส่วนลด
+  /// ปัดขึ้นเป็นบาทเต็มเหมือนกันทุกจอ (ลูกค้า คนขับ ร้าน)
+  static int ceilBaht(num value) {
+    final v = value.toDouble();
+    if (v.isNaN || v <= 0) return 0;
+    // กันเศษทศนิยมจาก floating point เช่น 20.000000001 → 20
+    return (v - 1e-9).ceil();
+  }
+
+  /// '฿123' สำหรับยอดเก็บเงิน/ราคา/ค่าส่ง/ส่วนลด (ปัดขึ้น)
+  static String formatBahtCeil(num value) => '฿${ceilBaht(value)}';
+
+  /// รายได้/ยอดกระเป๋า (P2): แสดงตรงกับยอดจริงในกระเป๋า
+  /// จำนวนเต็มแสดงไม่มีทศนิยม ถ้ามีเศษแสดง 2 ตำแหน่ง
+  static String formatMoney(num value) {
+    final v = value.toDouble();
+    if (v.isNaN) return '0';
+    final rounded = (v * 100).roundToDouble() / 100;
+    if (rounded == rounded.truncateToDouble()) {
+      return rounded.toStringAsFixed(0);
+    }
+    return rounded.toStringAsFixed(2);
+  }
+
   static double customerGrossTotal({
     required double foodPrice,
     required double deliveryFee,

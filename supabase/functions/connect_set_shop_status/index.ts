@@ -59,6 +59,8 @@ serve(async (req) => {
       .update({
         shop_status: body.is_open,
         is_online: body.is_open,
+        // F8: ให้ร้าน/แอดมินรู้ว่าสถานะนี้มาจาก POS
+        shop_status_source: "storeos",
       })
       .eq("id", merchantId)
       .select("id, shop_status, is_online")

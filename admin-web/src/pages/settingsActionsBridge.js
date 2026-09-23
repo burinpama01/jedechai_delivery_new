@@ -97,8 +97,8 @@ export async function saveTopupModeSettings(ctx) {
   await _ensureFns();
 
   try {
+    // topup_mode สลับผ่าน setTopupMode() เท่านั้น (ตรวจ Beam ฝั่ง server) — ห้ามเขียนทับตรงนี้
     await _upsertSystemConfig({
-      topup_mode: 'admin_approve',
       slip2go_receiver_account: document.getElementById('settSlip2goReceiverAccount')?.value?.trim() || null,
       slip2go_allow_masked_receiver_account:
         document.getElementById('settSlip2goAllowMaskedReceiver')?.checked === true,
@@ -702,6 +702,230 @@ async function readFunctionError(error) {
   }
 }
 
+// ─── Beam Checkout (เติมเงิน Wallet) ───
+// คีย์เก็บใน payment_gateway_settings ฝั่ง server — เรียกผ่าน admin-actions เท่านั้น
+
+function renderBeamSettings(view) {
+  if (!view) return;
+  const set = (id, v) => {
+    const el = document.getElementById(id);
+    if (el) el.value = v ?? '';
+  };
+  const text = (id, v) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = v ?? '';
+  };
+  set('settBeamEnvironment', view.environment || 'playground');
+  set('settBeamMerchantId', view.merchant_id || '');
+  set('settBeamApiKey', '');
+  set('settBeamWebhookKey', '');
+  set('settBeamQrExpiry', view.qr_expiry_minutes ?? 15);
+  set('settBeamWebhookUrl', view.webhook_url || '');
+  text('settBeamApiKeyHint', view.has_api_key ? `ตั้งค่าแล้ว (${view.api_key_masked})` : 'ยังไม่ได้ตั้งค่า');
+  text('settBeamWebhookKeyHint', view.has_webhook_hmac_key ? `ตั้งค่าแล้ว (${view.webhook_hmac_key_masked})` : 'ยังไม่ได้ตั้งค่า');
+
+  const badge = document.getElementById('beamTestBadge');
+  if (badge) {
+    if (view.last_test_ok === true) {
+      badge.textContent = 'เชื่อมต่อสำเร็จ';
+      badge.className = 'text-xs px-2 py-1 rounded-full bg-emerald-100 text-emerald-700';
+    } else if (view.last_test_ok === false) {
+      badge.textContent = 'เชื่อมต่อไม่สำเร็จ';
+      badge.className = 'text-xs px-2 py-1 rounded-full bg-red-100 text-red-700';
+    } else {
+      badge.textContent = 'ยังไม่ทดสอบ';
+      badge.className = 'text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-500';
+    }
+  }
+  const when = view.last_test_at ? new Date(view.last_test_at).toLocaleString('th-TH') : '';
+  text('beamLastTestMessage', view.last_test_message ? `ทดสอบล่าสุด ${when}: ${view.last_test_message}` : '');
+
+  const mode = view.topup_mode === 'beam' ? 'beam' : 'admin_approve';
+  document.querySelectorAll('input[name="settTopupMode"]').forEach((r) => {
+    r.checked = r.value === mode;
+  });
+  const optSlip = document.getElementById('topupModeOptSlip');
+  const optBeam = document.getElementById('topupModeOptBeam');
+  if (optSlip) optSlip.style.borderColor = mode === 'admin_approve' ? '#14b8a6' : '#e5e7eb';
+  if (optBeam) optBeam.style.borderColor = mode === 'beam' ? '#6366f1' : '#e5e7eb';
+}
+
+export async function loadBeamSettings(ctx) {
+  _ctx = ctx || _ctx;
+  const { callAdminAction, showToast } = _deps();
+  try {
+    const view = await callAdminAction({ action: 'get_beam_settings' });
+    renderBeamSettings(view);
+    return view;
+  } catch (e) {
+    showToast?.('โหลดการตั้งค่า Beam ไม่สำเร็จ: ' + (e?.message || e), 'error');
+    return null;
+  }
+}
+
+export async function saveBeamSettings(ctx) {
+  _ctx = ctx || _ctx;
+  const { callAdminAction, showToast } = _deps();
+  const merchantId = document.getElementById('settBeamMerchantId')?.value?.trim() || '';
+  if (!merchantId) {
+    showToast('กรุณากรอก Merchant ID', 'error');
+    return;
+  }
+  try {
+    const view = await callAdminAction({
+      action: 'save_beam_settings',
+      environment: document.getElementById('settBeamEnvironment')?.value || 'playground',
+      merchant_id: merchantId,
+      api_key: document.getElementById('settBeamApiKey')?.value?.trim() || '',
+      webhook_hmac_key: document.getElementById('settBeamWebhookKey')?.value?.trim() || '',
+      qr_expiry_minutes: parseInt(document.getElementById('settBeamQrExpiry')?.value || '15', 10),
+    });
+    renderBeamSettings(view);
+    showToast('บันทึกคีย์ Beam แล้ว — กดทดสอบการเชื่อมต่อก่อนเปิดใช้', 'success');
+  } catch (e) {
+    showToast('บันทึกคีย์ Beam ไม่สำเร็จ: ' + (e?.message || e), 'error');
+  }
+}
+
+export async function testBeamConnection(ctx) {
+  _ctx = ctx || _ctx;
+  const { callAdminAction, showToast } = _deps();
+  const btn = document.getElementById('testBeamConnectionButton');
+  if (btn) btn.disabled = true;
+  showToast('กำลังทดสอบการเชื่อมต่อ Beam...', 'info');
+  try {
+    const view = await callAdminAction({ action: 'test_beam_connection' });
+    renderBeamSettings(view);
+    showToast(view?.test_message || 'ทดสอบเสร็จแล้ว', view?.test_ok ? 'success' : 'error');
+  } catch (e) {
+    showToast('ทดสอบการเชื่อมต่อไม่สำเร็จ: ' + (e?.message || e), 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+export async function setTopupMode(mode, ctx) {
+  _ctx = ctx || _ctx;
+  const { callAdminAction, showToast } = _deps();
+  const label = mode === 'beam' ? 'Beam Checkout' : 'แนบสลิป';
+  if (!confirm(`เปลี่ยนช่องทางเติมเงินเป็น "${label}"?\nผู้ใช้ทุกคนจะเห็นช่องทางใหม่ทันที`)) {
+    await loadBeamSettings();
+    return;
+  }
+  try {
+    const view = await callAdminAction({ action: 'set_topup_mode', mode });
+    renderBeamSettings(view);
+    showToast(`เปลี่ยนเป็น ${label} แล้ว`, 'success');
+  } catch (e) {
+    showToast('เปลี่ยนช่องทางไม่สำเร็จ: ' + (e?.message || e), 'error');
+    await loadBeamSettings();
+  }
+}
+
+export async function copyBeamWebhookUrl() {
+  const { showToast } = _deps();
+  const url = document.getElementById('settBeamWebhookUrl')?.value || '';
+  if (!url) return;
+  try {
+    await navigator.clipboard.writeText(url);
+    showToast('คัดลอก Webhook URL แล้ว', 'success');
+  } catch (_) {
+    showToast('คัดลอกไม่สำเร็จ กรุณาคัดลอกเอง', 'error');
+  }
+}
+
+// ─── โปรโมชั่นชวนเพื่อน + ขั้นต่ำถอน (Batch 3) ───
+const REFERRAL_KEYS = {
+  settRefBaseDriverMerchant: 'referral_reward_base_driver_invite_merchant',
+  settRefBaseCustomerMerchant: 'referral_reward_base_customer_invite_merchant',
+  settRefBaseDriverDriverReferrer: 'referral_reward_base_driver_invite_driver_referrer',
+  settRefBaseDriverDriverNew: 'referral_reward_base_driver_invite_driver_newdriver',
+  settRefMaxPerMonth: 'referral_max_rewards_per_month',
+  settRefTiers: 'referral_reward_tiers',
+  settWithdrawMinTopup: 'withdrawal_min_topup',
+  settWithdrawMinSystem: 'withdrawal_min_system',
+};
+
+export async function loadReferralSettings(ctx) {
+  _ctx = ctx || _ctx;
+  const { _fetchSystemConfigKeyValues, supabase, escapeHtml } = _deps();
+  try {
+    const values = (await _fetchSystemConfigKeyValues(Object.values(REFERRAL_KEYS))) || {};
+    Object.entries(REFERRAL_KEYS).forEach(([id, key]) => {
+      const el = document.getElementById(id);
+      if (el && values[key] != null) el.value = values[key];
+    });
+    const { data: pending } = await supabase
+      .from('referral_rewards')
+      .select('id, beneficiary_user_id, amount, reward_type, created_at')
+      .eq('status', 'pending_review')
+      .order('created_at', { ascending: true })
+      .limit(50);
+    const box = document.getElementById('referralPendingReviewBox');
+    if (box) {
+      box.innerHTML = (pending || []).length === 0
+        ? 'ไม่มีรางวัลที่รออนุมัติ'
+        : `<p class="font-semibold text-gray-700 mb-2">รางวัลรออนุมัติ (เกินแคป) ${pending.length} รายการ</p>` +
+          pending.map((r) => `
+            <div class="flex items-center justify-between border border-gray-100 rounded-lg px-3 py-2 mb-1">
+              <span class="text-xs">${escapeHtml(r.reward_type)} · ฿${Number(r.amount).toFixed(0)} · ${escapeHtml(String(r.beneficiary_user_id).slice(0, 8))}</span>
+              <button onclick="releaseReferralReward('${escapeHtml(r.id)}')" class="px-3 py-1 rounded-lg text-xs font-semibold bg-emerald-500 text-white">จ่ายรางวัล</button>
+            </div>`).join('');
+    }
+  } catch (e) {
+    showToastSafe('โหลดการตั้งค่ารางวัลไม่สำเร็จ: ' + (e?.message || e), 'error');
+  }
+}
+
+function showToastSafe(msg, kind) {
+  const { showToast } = _deps();
+  if (typeof showToast === 'function') showToast(msg, kind);
+}
+
+export async function saveReferralSettings(ctx) {
+  _ctx = ctx || _ctx;
+  const { _upsertSystemConfigKeyValues } = _deps();
+  try {
+    const tiersRaw = document.getElementById('settRefTiers')?.value?.trim() || '';
+    if (tiersRaw) {
+      let parsed;
+      try {
+        parsed = JSON.parse(tiersRaw);
+      } catch (_) {
+        throw new Error('ขั้นบันไดต้องเป็น JSON เช่น [{"from":1,"to":5,"multiplier":1}]');
+      }
+      if (!Array.isArray(parsed) || parsed.length === 0) throw new Error('ขั้นบันไดต้องเป็น array อย่างน้อย 1 ขั้น');
+      for (const t of parsed) {
+        if (!(Number(t.multiplier) > 0)) throw new Error('multiplier ต้องมากกว่า 0 ทุกขั้น');
+      }
+    }
+    const payload = {};
+    Object.entries(REFERRAL_KEYS).forEach(([id, key]) => {
+      const raw = document.getElementById(id)?.value;
+      if (raw == null || String(raw).trim() === '') return;
+      payload[key] = String(raw).trim();
+    });
+    await _upsertSystemConfigKeyValues(payload);
+    showToastSafe('บันทึกการตั้งค่ารางวัลแล้ว', 'success');
+    await loadReferralSettings();
+  } catch (e) {
+    showToastSafe('บันทึกไม่สำเร็จ: ' + (e?.message || e), 'error');
+  }
+}
+
+export async function releaseReferralReward(rewardId, ctx) {
+  _ctx = ctx || _ctx;
+  const { callAdminAction } = _deps();
+  if (!confirm('จ่ายรางวัลนี้เข้ากระเป๋าผู้ชวน?')) return;
+  try {
+    await callAdminAction({ action: 'release_referral_reward', reward_id: rewardId });
+    showToastSafe('จ่ายรางวัลแล้ว', 'success');
+    await loadReferralSettings();
+  } catch (e) {
+    showToastSafe('จ่ายรางวัลไม่สำเร็จ: ' + (e?.message || e), 'error');
+  }
+}
+
 export function wireSettingsActionsBridge() {
   globalThis.__adminWebBridge = globalThis.__adminWebBridge || {};
   globalThis.__adminWebBridge.saveGeneralSettings = saveGeneralSettings;
@@ -721,4 +945,22 @@ export function wireSettingsActionsBridge() {
   globalThis.__adminWebBridge.provisionStoreOsConnection = provisionStoreOsConnection;
   globalThis.__adminWebBridge.rotateStoreOsWebhookSecret = rotateStoreOsWebhookSecret;
   globalThis.__adminWebBridge.copyStoreOsCredential = copyStoreOsCredential;
+  globalThis.__adminWebBridge.loadBeamSettings = loadBeamSettings;
+  globalThis.__adminWebBridge.saveBeamSettings = saveBeamSettings;
+  globalThis.__adminWebBridge.testBeamConnection = testBeamConnection;
+  globalThis.__adminWebBridge.setTopupMode = setTopupMode;
+  globalThis.__adminWebBridge.copyBeamWebhookUrl = copyBeamWebhookUrl;
+
+  // ปุ่ม inline onclick ในหน้า settings เรียกผ่าน global (ไม่มีฟังก์ชัน legacy คู่)
+  globalThis.loadBeamSettings = loadBeamSettings;
+  globalThis.saveBeamSettings = saveBeamSettings;
+  globalThis.testBeamConnection = testBeamConnection;
+  globalThis.setTopupMode = setTopupMode;
+  globalThis.copyBeamWebhookUrl = copyBeamWebhookUrl;
+  globalThis.__adminWebBridge.loadReferralSettings = loadReferralSettings;
+  globalThis.__adminWebBridge.saveReferralSettings = saveReferralSettings;
+  globalThis.__adminWebBridge.releaseReferralReward = releaseReferralReward;
+  globalThis.loadReferralSettings = loadReferralSettings;
+  globalThis.saveReferralSettings = saveReferralSettings;
+  globalThis.releaseReferralReward = releaseReferralReward;
 }

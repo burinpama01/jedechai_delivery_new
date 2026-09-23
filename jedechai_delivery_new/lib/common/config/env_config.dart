@@ -2,16 +2,14 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Environment Configuration
 ///
-/// Centralized access to all environment variables from .env file
-/// All secrets/keys are loaded from .env instead of being hardcoded
+/// Centralized access to public client config from `.env.client`
+/// (bundled into the app as a Flutter asset — anyone can read it from the APK/IPA).
+/// NEVER add service keys, secret keys, private keys or database URLs here;
+/// server-side secrets belong in Supabase secrets / Edge Functions.
 class EnvConfig {
   // Supabase
   static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
   static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
-  // ISSUE-102: ห้ามอ่าน SUPABASE_SERVICE_KEY จากฝั่งแอปเด็ดขาด
-  // .env ถูก bundle เป็น Flutter asset (pubspec.yaml) จึงถูกแตกออกจาก
-  // APK/IPA ได้แบบ plaintext — service role key bypass RLS ทั้งระบบ
-  // งานที่ต้องใช้สิทธิ์ service role ต้องไปอยู่ใน Supabase Edge Function
 
   // Google Maps
   // ISSUE-120: key ตัวนี้เหลือไว้สำหรับ Maps SDK (แสดงแผนที่ใน
@@ -29,12 +27,9 @@ class EnvConfig {
   static String get firebaseProjectId =>
       dotenv.env['FIREBASE_PROJECT_ID'] ?? '';
 
-  // Omise Payment Gateway
-  // ISSUE-102: อ่านได้เฉพาะ public key — secret key ต้องอยู่ฝั่ง Edge Function
-  // (payment-create-charge / payment-check-status) เท่านั้น
-  static String get omisePublicKey => dotenv.env['OMISE_PUBLIC_KEY'] ?? '';
-
-  static bool get isOmiseConfigured => omisePublicKey.isNotEmpty;
+  // Omise Payment Gateway — ปิดแล้ว (กำลังเปลี่ยนเป็น Beam ผ่าน server)
+  // คืนค่าว่างเสมอเพื่อไม่ให้ flow Omise ฝั่งแอปทำงาน
+  static String get omisePublicKey => '';
 
   // Validation
   static bool get isSupabaseConfigured =>

@@ -1,9 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:jedechai_delivery_new/common/models/booking.dart';
 import 'package:jedechai_delivery_new/common/models/chat_message.dart';
 import 'package:jedechai_delivery_new/common/utils/app_time.dart';
 
 void main() {
+  setUpAll(() async {
+    // DateFormat locale th_TH ต้อง initialize ก่อนใช้ในเทสต์
+    await initializeDateFormatting('th_TH');
+  });
+
   group('AppTime', () {
     test('formats UTC timestamps in Bangkok time', () {
       final utc = DateTime.utc(2026, 5, 20, 17, 30);

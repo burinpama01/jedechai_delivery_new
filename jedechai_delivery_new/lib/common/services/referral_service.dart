@@ -46,6 +46,19 @@ class ReferralService {
     }
   }
 
+  /// สรุปโค้ดชวนเพื่อน: ขั้นบันไดปัจจุบัน ฐานรางวัล ยอดที่ได้รับ ฯลฯ
+  Future<Map<String, dynamic>?> getSummary() async {
+    if (AuthService.userId == null) return null;
+    try {
+      final res = await _client.rpc('my_referral_summary');
+      if (res is Map) return Map<String, dynamic>.from(res);
+      return null;
+    } catch (e) {
+      debugLog('⚠️ Error my_referral_summary: $e');
+      return null;
+    }
+  }
+
   Future<void> submitReferralCode(String referralCode) async {
     final userId = AuthService.userId;
     if (userId == null) throw Exception('กรุณาเข้าสู่ระบบ');

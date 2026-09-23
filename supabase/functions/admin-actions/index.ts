@@ -7,6 +7,13 @@ import {
   errorResponse,
   notifyTargets,
 } from "../_shared/admin-auth.ts";
+import {
+  isBeamConfigured,
+  isValidBase64Key,
+  loadBeamSettings,
+  maskSecret,
+  testBeamConnection,
+} from "../_shared/beam.ts";
 
 // Phase 7: Simple in-memory rate limiter (per admin user)
 const _rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -144,6 +151,25 @@ serve(async (req) => {
         result = await handleToggleShopStatus(supabaseAdmin, body);
         break;
 
+      // ─── Referral payouts ───
+      case "release_referral_reward":
+        result = await handleReleaseReferralReward(supabaseAdmin, body);
+        break;
+
+      // ─── Payment gateway (Beam) ───
+      case "get_beam_settings":
+        result = await handleGetBeamSettings(supabaseAdmin);
+        break;
+      case "save_beam_settings":
+        result = await handleSaveBeamSettings(supabaseAdmin, body, adminId);
+        break;
+      case "test_beam_connection":
+        result = await handleTestBeamConnection(supabaseAdmin);
+        break;
+      case "set_topup_mode":
+        result = await handleSetTopupMode(supabaseAdmin, body);
+        break;
+
       // ─── GP Plans (แพ็กเกจ GP ให้ร้านเลือกตอนสมัคร) ───
       case "upsert_gp_plan":
         result = await handleUpsertGpPlan(supabaseAdmin, body);
@@ -234,6 +260,20 @@ serve(async (req) => {
         result = await handleDeleteLaundryPackage(supabaseAdmin, body);
         break;
 
+      // ─── Laundry Act-on-Behalf (admin ทำแทนร้าน) ───
+      case "admin_laundry_send_quote":
+        result = await handleAdminLaundrySendQuote(supabaseAdmin, body);
+        break;
+      case "admin_laundry_update_status":
+        result = await handleAdminLaundryUpdateStatus(supabaseAdmin, body);
+        break;
+      case "admin_laundry_create_return_booking":
+        result = await handleAdminLaundryCreateReturnBooking(supabaseAdmin, body);
+        break;
+      case "admin_laundry_cancel":
+        result = await handleAdminLaundryCancel(supabaseAdmin, body);
+        break;
+
       // ─── Support Tickets ───
       case "update_ticket_status":
         result = await handleUpdateTicketStatus(supabaseAdmin, body);
@@ -289,6 +329,16 @@ serve(async (req) => {
         result = await handleDeleteBanner(supabaseAdmin, body);
         break;
 
+      // ─── Reviews Moderation ───
+      case "admin_delete_review":
+        result = await handleAdminDeleteReview(supabaseAdmin, body);
+        break;
+
+      // ─── Broadcast Notification ───
+      case "admin_broadcast_notification":
+        result = await handleAdminBroadcastNotification(supabaseAdmin, body, adminId);
+        break;
+
       // ─── Fetch User Emails ───
       case "fetch_user_emails":
         result = await handleFetchUserEmails(supabaseAdmin);
@@ -308,8 +358,33 @@ serve(async (req) => {
 // ─── Handlers ───────────────────────────────────────────
 
 async function handleApproveProfile(supabase, body, role: string) {
-  const { id } = body;
+  const { id, override_gp } = body;
   if (!id) return errorResponse("Missing 'id'");
+
+  // G1: ร้านอาหารต้องเลือกแพ็กเกจ GP เองก่อน แอดมินจะได้ไม่ต้องตั้งค่าให้ภายหลัง
+  if (role === "merchant") {
+    const { data: profile, error: profileErr } = await supabase
+      .from("profiles")
+      .select("gp_plan_id, merchant_service_types, gp_rate")
+      .eq("id", id)
+      .maybeSingle();
+    if (profileErr) return errorResponse(profileErr.message);
+    if (!profile) return errorResponse("Merchant profile not found", 404);
+
+    const serviceTypes = Array.isArray(profile.merchant_service_types)
+      ? profile.merchant_service_types
+      : [];
+    const isFood = serviceTypes.length === 0 || serviceTypes.includes("food");
+    if (isFood && !profile.gp_plan_id && override_gp !== true) {
+      // ตอบ 200 เพื่อให้ admin-web อ่าน payload ได้ (callAdminAction throw เมื่อ non-2xx)
+      return jsonResponse({
+        success: false,
+        error: "gp_plan_required",
+        message:
+          "ร้านยังไม่ได้เลือกแพ็กเกจ GP — ให้ร้านเลือกในแอป หรือกำหนดแพ็กเกจให้ในหน้าแก้ไขร้านก่อนอนุมัติ",
+      });
+    }
+  }
 
   const { error } = await supabase
     .from("profiles")
@@ -588,11 +663,193 @@ async function handleToggleShopStatus(supabase, body) {
   const nowIso = new Date().toISOString();
   const { error } = await supabase
     .from("profiles")
-    .update({ shop_status: !!make_open, is_online: !!make_open, updated_at: nowIso })
+    .update({ shop_status: !!make_open, is_online: !!make_open, shop_status_source: "admin", updated_at: nowIso })
     .eq("id", id);
   if (error) return errorResponse(error.message);
 
+  // แจ้งร้านให้รู้ว่าแอดมินเปิด/ปิดร้านแทน (transparency — ร้านจะได้ไม่งงว่าทำไมสถานะเปลี่ยนเอง)
+  await notifyTargets(supabase, [
+    {
+      user_id: id,
+      title: make_open ? "แอดมินเปิดร้านของคุณ" : "แอดมินปิดร้านของคุณชั่วคราว",
+      body: make_open
+        ? "ร้านของคุณถูกเปิดรับออเดอร์โดยผู้ดูแลระบบ"
+        : "ร้านของคุณถูกปิดรับออเดอร์ชั่วคราวโดยผู้ดูแลระบบ หากมีข้อสงสัยติดต่อแอดมิน",
+      type: "shop.status_changed_by_admin",
+      data: { shop_open: !!make_open },
+    },
+  ]);
+
   return jsonResponse({ success: true });
+}
+
+// ─── Referral payouts ───
+
+async function handleReleaseReferralReward(supabase, body) {
+  const { reward_id } = body;
+  if (!reward_id) return errorResponse("Missing 'reward_id'");
+  const { data, error } = await supabase.rpc("admin_release_referral_reward", {
+    p_reward_id: reward_id,
+  });
+  if (error) return errorResponse(error.message);
+  if (data?.success !== true) return errorResponse(data?.error ?? "release_referral_reward_failed");
+  return jsonResponse({ success: true, reward: data });
+}
+
+// ─── Payment gateway (Beam) ───
+// คีย์อยู่ใน payment_gateway_settings (ไม่มี RLS policy) — ส่งกลับให้แอดมินแบบ mask เท่านั้น
+
+async function readMainTopupMode(supabase): Promise<{ id: number | null; mode: string }> {
+  const { data } = await supabase
+    .from("system_config")
+    .select("id, topup_mode")
+    .is("key", null)
+    .order("id", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  return { id: data?.id ?? null, mode: data?.topup_mode ?? "admin_approve" };
+}
+
+function beamSettingsView(s, topupMode: string) {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  return {
+    success: true,
+    topup_mode: topupMode,
+    environment: s?.environment ?? "playground",
+    merchant_id: s?.merchant_id ?? "",
+    has_api_key: !!s?.api_key,
+    api_key_masked: maskSecret(s?.api_key),
+    has_webhook_hmac_key: !!s?.webhook_hmac_key,
+    webhook_hmac_key_masked: maskSecret(s?.webhook_hmac_key),
+    qr_expiry_minutes: s?.qr_expiry_minutes ?? 15,
+    last_test_at: s?.last_test_at ?? null,
+    last_test_ok: s?.last_test_ok ?? null,
+    last_test_message: s?.last_test_message ?? null,
+    updated_at: s?.updated_at ?? null,
+    webhook_url: `${supabaseUrl}/functions/v1/beam-webhook`,
+  };
+}
+
+async function handleGetBeamSettings(supabase) {
+  const s = await loadBeamSettings(supabase);
+  const { mode } = await readMainTopupMode(supabase);
+  return jsonResponse(beamSettingsView(s, mode));
+}
+
+async function handleSaveBeamSettings(supabase, body, adminId: string) {
+  const current = await loadBeamSettings(supabase);
+  const environment = String(body.environment ?? current?.environment ?? "playground");
+  if (!["playground", "production"].includes(environment)) {
+    return errorResponse("environment must be playground or production");
+  }
+  const merchantId = typeof body.merchant_id === "string" ? body.merchant_id.trim() : "";
+  if (!merchantId || merchantId.length > 128) return errorResponse("merchant_id is required");
+
+  // ช่องคีย์ว่าง = คงค่าเดิม
+  const apiKeyInput = typeof body.api_key === "string" ? body.api_key.trim() : "";
+  const hmacInput = typeof body.webhook_hmac_key === "string" ? body.webhook_hmac_key.trim() : "";
+  if (apiKeyInput.length > 512 || hmacInput.length > 512) return errorResponse("key too long");
+  if (hmacInput && !isValidBase64Key(hmacInput)) {
+    return errorResponse("webhook_hmac_key ต้องเป็น base64 จาก Beam Lighthouse");
+  }
+  const apiKey = apiKeyInput || current?.api_key || null;
+  const hmacKey = hmacInput || current?.webhook_hmac_key || null;
+  if (!apiKey) return errorResponse("api_key is required");
+
+  const expiry = Number(body.qr_expiry_minutes ?? current?.qr_expiry_minutes ?? 15);
+  if (!Number.isInteger(expiry) || expiry < 5 || expiry > 60) {
+    return errorResponse("qr_expiry_minutes must be 5-60");
+  }
+
+  const credentialsChanged =
+    environment !== current?.environment ||
+    merchantId !== current?.merchant_id ||
+    apiKey !== current?.api_key;
+
+  // เปลี่ยน HMAC key ขณะเปิดใช้ Beam → ถ้าไม่ตรงกับ Lighthouse webhook ทุกตัวจะถูกปฏิเสธ
+  const hmacChanged = hmacKey !== (current?.webhook_hmac_key ?? null);
+
+  const { mode } = await readMainTopupMode(supabase);
+  if (mode === "beam" && (credentialsChanged || hmacChanged)) {
+    return errorResponse(
+      "ปิดโหมด Beam (สลับเป็นแนบสลิป) ก่อนเปลี่ยน Merchant ID / API Key / Webhook HMAC Key / environment",
+      409,
+    );
+  }
+
+  const patch: Record<string, unknown> = {
+    provider: "beam",
+    environment,
+    merchant_id: merchantId,
+    api_key: apiKey,
+    webhook_hmac_key: hmacKey,
+    qr_expiry_minutes: expiry,
+    updated_by: adminId,
+    updated_at: new Date().toISOString(),
+  };
+  if (credentialsChanged) {
+    patch.last_test_at = null;
+    patch.last_test_ok = null;
+    patch.last_test_message = null;
+  }
+
+  const { error } = await supabase.from("payment_gateway_settings").upsert(patch, { onConflict: "provider" });
+  if (error) return errorResponse(error.message, 500);
+
+  const saved = await loadBeamSettings(supabase);
+  return jsonResponse(beamSettingsView(saved, mode));
+}
+
+async function handleTestBeamConnection(supabase) {
+  const s = await loadBeamSettings(supabase);
+  if (!isBeamConfigured(s)) return errorResponse("กรุณาบันทึก Merchant ID และ API Key ก่อนทดสอบ");
+
+  const result = await testBeamConnection({
+    environment: s.environment,
+    merchant_id: s.merchant_id,
+    api_key: s.api_key,
+  });
+  let message = result.message;
+  if (result.ok && !s.webhook_hmac_key) {
+    message += " · ยังไม่ได้ใส่ Webhook HMAC Key";
+  }
+
+  await supabase
+    .from("payment_gateway_settings")
+    .update({
+      last_test_at: new Date().toISOString(),
+      last_test_ok: result.ok,
+      last_test_message: message,
+    })
+    .eq("provider", "beam");
+
+  const { mode } = await readMainTopupMode(supabase);
+  const saved = await loadBeamSettings(supabase);
+  return jsonResponse({ ...beamSettingsView(saved, mode), test_ok: result.ok, test_message: message });
+}
+
+async function handleSetTopupMode(supabase, body) {
+  const mode = String(body.mode ?? "");
+  if (!["admin_approve", "beam"].includes(mode)) {
+    return errorResponse("mode must be admin_approve or beam");
+  }
+  if (mode === "beam") {
+    const s = await loadBeamSettings(supabase);
+    if (!isBeamConfigured(s)) return errorResponse("ยังไม่ได้ตั้งค่า Beam Merchant ID / API Key", 409);
+    if (!s.webhook_hmac_key) return errorResponse("ยังไม่ได้ใส่ Webhook HMAC Key", 409);
+    if (s.last_test_ok !== true) return errorResponse("กรุณากดทดสอบการเชื่อมต่อให้ผ่านก่อนเปิดใช้ Beam", 409);
+  }
+
+  const { id } = await readMainTopupMode(supabase);
+  if (id == null) return errorResponse("system_config main row not found", 500);
+  const { error } = await supabase
+    .from("system_config")
+    .update({ topup_mode: mode, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) return errorResponse(error.message, 500);
+
+  const s = await loadBeamSettings(supabase);
+  return jsonResponse(beamSettingsView(s, mode));
 }
 
 // ─── GP Plans ───
@@ -823,40 +1080,17 @@ async function handleRejectWithdrawal(supabase, body) {
     return jsonResponse({ success: false, already_processed: true });
   }
 
-  // Refund to wallet (read-then-write for now; Phase 2 will make this atomic via RPC)
-  const { data: wallet } = await supabase
-    .from("wallets")
-    .select("id, balance")
-    .eq("user_id", req.user_id)
-    .single();
-  if (wallet) {
-    await supabase
-      .from("wallets")
-      .update({ balance: (wallet.balance || 0) + req.amount })
-      .eq("id", wallet.id);
-    await supabase.from("wallet_transactions").insert({
-      wallet_id: wallet.id,
-      amount: req.amount,
-      type: "refund",
-      description: `คืนเงินจากคำขอถอนที่ถูกปฏิเสธ: ${reason}`,
-    });
-  }
-
-  // Update request with expected-state guard
-  const { data: updated, error: updateErr } = await supabase
-    .from("withdrawal_requests")
-    .update({
-      status: "rejected",
-      admin_note: reason,
-      processed_at: new Date().toISOString(),
-    })
-    .eq("id", id)
-    .eq("status", "pending")
-    .select("id")
-    .maybeSingle();
-  if (updateErr) return errorResponse(updateErr.message);
-  if (!updated) {
-    return jsonResponse({ success: false, already_processed: true });
+  // ปฏิเสธ + คืนเงินแบบ atomic (FOR UPDATE + ledger) — กันคืนเงินซ้ำเมื่อกดซ้ำ/พร้อมกัน
+  const { data: result, error: rpcErr } = await supabase.rpc("reject_withdrawal_request", {
+    p_request_id: id,
+    p_reason: reason,
+  });
+  if (rpcErr) return errorResponse(rpcErr.message);
+  if (result?.success !== true) {
+    if (result?.error === "already_processed") {
+      return jsonResponse({ success: false, already_processed: true });
+    }
+    return errorResponse(result?.error ?? "reject_withdrawal_failed");
   }
 
   await notifyTargets(supabase, [
@@ -945,11 +1179,24 @@ async function handleRejectTopup(supabase, body) {
     })
     .eq("id", id)
     .eq("status", "pending")
-    .select("id")
+    .select("id, user_id, amount")
     .maybeSingle();
   if (error) return errorResponse(error.message);
   if (!updated) {
     return jsonResponse({ success: false, already_processed: true });
+  }
+
+  // เดิม approve แจ้งแต่ reject เงียบ — ลูกค้าต้องรู้ว่าสลิปไม่ผ่านพร้อมเหตุผล
+  if (updated.user_id) {
+    await notifyTargets(supabase, [
+      {
+        user_id: updated.user_id,
+        title: "คำขอเติมเงินไม่ได้รับการอนุมัติ",
+        body: `คำขอเติมเงิน ฿${Number(updated.amount || 0).toLocaleString("th-TH")} ถูกปฏิเสธ${reason ? ` เหตุผล: ${reason}` : " กรุณาตรวจสอบสลิปแล้วส่งใหม่อีกครั้ง"}`,
+        type: "topup.rejected",
+        data: { topup_id: updated.id },
+      },
+    ]);
   }
 
   return jsonResponse({ success: true });
@@ -1155,6 +1402,28 @@ async function handleRejectAccountDeletion(supabase, body, adminId) {
     p_reason: reason || "",
   });
   if (error) return errorResponse(error.message);
+
+  // ผู้ขอลบบัญชีควรรู้ผลการพิจารณา (เคส approve บัญชีถูกลบ แจ้งไม่ได้อยู่แล้ว)
+  if (data?.success !== false) {
+    const { data: request } = await supabase
+      .from("account_deletion_requests")
+      .select("user_id")
+      .eq("id", id)
+      .maybeSingle();
+    if (request?.user_id) {
+      await notifyTargets(supabase, [
+        {
+          user_id: request.user_id,
+          title: "คำขอลบบัญชีไม่ได้รับการอนุมัติ",
+          body: reason
+            ? `คำขอลบบัญชีของคุณถูกปฏิเสธ เหตุผล: ${reason}`
+            : "คำขอลบบัญชีของคุณถูกปฏิเสธ หากต้องการดำเนินการต่อกรุณาติดต่อฝ่ายบริการ",
+          type: "account_deletion.rejected",
+          data: { request_id: id },
+        },
+      ]);
+    }
+  }
 
   return jsonResponse(data || { success: true });
 }
@@ -1404,16 +1673,306 @@ async function handleDeleteLaundryPackage(supabase, body) {
   return jsonResponse({ success: true });
 }
 
+// ─── Laundry Act-on-Behalf (admin ทำแทนร้าน) ──────────
+// DB-side wrappers (migration 20260718020000) impersonate the order's merchant
+// inside the transaction, so quote/GP/stage logic stays in the merchant RPCs.
+
+async function loadLaundryOrderParticipants(supabase, laundryOrderId: string) {
+  const { data, error } = await supabase
+    .from("laundry_orders")
+    .select("id, customer_id, merchant_id, status")
+    .eq("id", laundryOrderId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+async function handleAdminLaundrySendQuote(supabase, body) {
+  const laundryOrderId = String(body.laundry_order_id || "").trim();
+  const laundryAmount = Number(body.laundry_amount);
+  if (!laundryOrderId) return errorResponse("Missing 'laundry_order_id'");
+  if (!Number.isFinite(laundryAmount) || laundryAmount <= 0) {
+    return errorResponse("Invalid 'laundry_amount'");
+  }
+  const deliveryFeeOutbound = Number(body.delivery_fee_outbound);
+  const expiresMinutes = Number(body.quote_expires_minutes);
+
+  const { data, error } = await supabase.rpc("admin_send_laundry_quote", {
+    p_laundry_order_id: laundryOrderId,
+    p_laundry_amount: laundryAmount,
+    p_quote_message: String(body.quote_message || "").trim() || null,
+    p_quote_expires_minutes: Number.isFinite(expiresMinutes) && expiresMinutes > 0
+      ? Math.trunc(expiresMinutes)
+      : null,
+    p_delivery_fee_outbound: Number.isFinite(deliveryFeeOutbound) && deliveryFeeOutbound >= 0
+      ? deliveryFeeOutbound
+      : 0,
+    p_platform_gp_rate: null,
+  });
+  if (error) return errorResponse(error.message);
+  if (!data?.success) return errorResponse(data?.error || "admin_send_laundry_quote_failed");
+
+  // ลูกค้าถูกแจ้งโดย RPC แล้ว — แจ้งร้านเพิ่มเพื่อความโปร่งใสว่าแอดมินทำแทน
+  const order = await loadLaundryOrderParticipants(supabase, laundryOrderId).catch(() => null);
+  if (order?.merchant_id) {
+    await notifyTargets(supabase, [
+      {
+        user_id: order.merchant_id,
+        title: "แอดมินส่งใบเสนอราคาแทนร้านของคุณ",
+        body: `คำขอซักผ้า #${laundryOrderId.substring(0, 8)} ถูกส่ง quote โดยแอดมิน (${laundryAmount} บาท)`,
+        type: "laundry.admin_quote_sent",
+        data: { laundry_order_id: laundryOrderId },
+      },
+    ]);
+  }
+  return jsonResponse({ success: true, result: data });
+}
+
+async function handleAdminLaundryUpdateStatus(supabase, body) {
+  const laundryOrderId = String(body.laundry_order_id || "").trim();
+  const status = String(body.status || "").trim();
+  if (!laundryOrderId) return errorResponse("Missing 'laundry_order_id'");
+  if (!["washing", "completed"].includes(status)) {
+    return errorResponse("Invalid 'status' (allowed: washing, completed)");
+  }
+
+  const { data, error } = await supabase.rpc("admin_update_laundry_status", {
+    p_laundry_order_id: laundryOrderId,
+    p_status: status,
+  });
+  if (error) return errorResponse(error.message);
+  if (!data?.success) return errorResponse(data?.error || "admin_update_laundry_status_failed");
+
+  // ลูกค้าถูกแจ้งโดย trigger trg_laundry_status_notify แล้ว (migration 20260718230000)
+  // — เหลือแจ้งร้านเพื่อความโปร่งใสว่าแอดมินเป็นคนกดแทน
+  const order = await loadLaundryOrderParticipants(supabase, laundryOrderId).catch(() => null);
+  if (order?.merchant_id) {
+    await notifyTargets(supabase, [
+      {
+        user_id: order.merchant_id,
+        title: "แอดมินอัปเดตสถานะซักผ้าแทนร้าน",
+        body: `คำขอ #${laundryOrderId.substring(0, 8)} → ${status === "washing" ? "กำลังซัก" : "เสร็จสิ้น"}`,
+        type: "laundry.admin_status_updated",
+        data: { laundry_order_id: laundryOrderId, status },
+      },
+    ]);
+  }
+  return jsonResponse({ success: true, result: data });
+}
+
+async function handleAdminLaundryCreateReturnBooking(supabase, body) {
+  const laundryOrderId = String(body.laundry_order_id || "").trim();
+  if (!laundryOrderId) return errorResponse("Missing 'laundry_order_id'");
+  const deliveryFeeReturn = Number(body.delivery_fee_return);
+  const returnPaymentMethod = String(body.return_payment_method || "").trim();
+
+  const { data, error } = await supabase.rpc("admin_create_laundry_return_booking", {
+    p_laundry_order_id: laundryOrderId,
+    p_delivery_fee_return: Number.isFinite(deliveryFeeReturn) && deliveryFeeReturn >= 0
+      ? deliveryFeeReturn
+      : 0,
+    p_return_payment_method: ["cash", "wallet"].includes(returnPaymentMethod)
+      ? returnPaymentMethod
+      : null,
+  });
+  if (error) return errorResponse(error.message);
+  if (!data?.success) return errorResponse(data?.error || "admin_create_laundry_return_booking_failed");
+
+  const order = await loadLaundryOrderParticipants(supabase, laundryOrderId).catch(() => null);
+  if (order?.merchant_id) {
+    await notifyTargets(supabase, [
+      {
+        user_id: order.merchant_id,
+        title: "แอดมินจัดการงานส่งผ้ากลับแทนร้าน",
+        body: `คำขอ #${laundryOrderId.substring(0, 8)} ถูกสร้างงานขากลับ/ปิดขั้นตอนโดยแอดมิน`,
+        type: "laundry.admin_return_created",
+        data: { laundry_order_id: laundryOrderId },
+      },
+    ]);
+  }
+  return jsonResponse({ success: true, result: data });
+}
+
+async function handleAdminLaundryCancel(supabase, body) {
+  const laundryOrderId = String(body.laundry_order_id || "").trim();
+  if (!laundryOrderId) return errorResponse("Missing 'laundry_order_id'");
+
+  const { data, error } = await supabase.rpc("admin_cancel_laundry_order", {
+    p_laundry_order_id: laundryOrderId,
+    p_reason: String(body.reason || "").trim() || null,
+    p_do_refund: body.do_refund === true,
+  });
+  if (error) return errorResponse(error.message);
+  if (!data?.success) return errorResponse(data?.error || "admin_cancel_laundry_order_failed");
+
+  // in-app notifications ถูก insert ใน RPC แล้ว (customer/merchant/drivers) —
+  // ไม่ notify ซ้ำที่นี่เพื่อกัน insert ซ้อน
+  return jsonResponse({ success: true, result: data });
+}
+
+// ─── Reviews Moderation ───────────────────────────────
+
+async function handleAdminDeleteReview(supabase, body) {
+  const reviewId = String(body.review_id || "").trim();
+  if (!reviewId) return errorResponse("Missing 'review_id'");
+
+  const { data: review, error: loadError } = await supabase
+    .from("reviews")
+    .select("id, booking_id, rating")
+    .eq("id", reviewId)
+    .maybeSingle();
+  if (loadError) return errorResponse(loadError.message);
+  if (!review) return errorResponse("Review not found", 404);
+
+  const { error } = await supabase.from("reviews").delete().eq("id", reviewId);
+  if (error) return errorResponse(error.message);
+  return jsonResponse({ success: true, deleted_review_id: reviewId });
+}
+
+// ─── Broadcast Notification ───────────────────────────
+
+const BROADCAST_MAX_RECIPIENTS = 5000;
+const BROADCAST_CHUNK_SIZE = 500;
+
+async function handleAdminBroadcastNotification(supabase, body, adminId: string) {
+  const title = String(body.title || "").trim();
+  const message = String(body.body || body.message || "").trim();
+  const target = String(body.target || "all").trim();
+  const sendPush = body.send_push !== false;
+
+  if (!title || !message) return errorResponse("Missing 'title' or 'body'");
+  if (title.length > 120) return errorResponse("'title' too long (max 120)");
+  if (message.length > 500) return errorResponse("'body' too long (max 500)");
+  if (!["all", "customer", "driver", "merchant"].includes(target)) {
+    return errorResponse("Invalid 'target' (allowed: all, customer, driver, merchant)");
+  }
+
+  let query = supabase
+    .from("profiles")
+    .select("id")
+    .limit(BROADCAST_MAX_RECIPIENTS);
+  if (target === "all") {
+    query = query.in("role", ["customer", "driver", "merchant"]);
+  } else {
+    query = query.eq("role", target);
+  }
+  const { data: recipients, error: recipientsError } = await query;
+  if (recipientsError) return errorResponse(recipientsError.message);
+
+  const userIds = (recipients || []).map((r) => r.id).filter(Boolean);
+  if (!userIds.length) return errorResponse("No recipients for this target");
+
+  const nowIso = new Date().toISOString();
+  const notifData = {
+    broadcast: true,
+    target,
+    sent_by: adminId,
+    sent_at: nowIso,
+  };
+
+  let inserted = 0;
+  for (let i = 0; i < userIds.length; i += BROADCAST_CHUNK_SIZE) {
+    const chunk = userIds.slice(i, i + BROADCAST_CHUNK_SIZE);
+    const rows = chunk.map((userId) => ({
+      user_id: userId,
+      title,
+      body: message,
+      type: "admin.broadcast",
+      data: notifData,
+    }));
+    const { error: insertError } = await supabase.from("notifications").insert(rows);
+    if (insertError) {
+      return errorResponse(`insert_failed_after_${inserted}: ${insertError.message}`);
+    }
+    inserted += chunk.length;
+  }
+
+  // สำเนาถึงแอดมินผู้ส่ง — notifications RLS ให้อ่านเฉพาะ user_id ตัวเอง
+  // แถวนี้คือสิ่งที่หน้า "ประกาศล่าสุด" ใน admin-web อ่านเป็นประวัติ
+  if (adminId && !userIds.includes(adminId)) {
+    const { error: senderCopyError } = await supabase.from("notifications").insert({
+      user_id: adminId,
+      title,
+      body: message,
+      type: "admin.broadcast",
+      data: notifData,
+    });
+    if (senderCopyError) {
+      console.warn("Broadcast sender-copy insert failed:", senderCopyError.message);
+    }
+  }
+
+  let pushChunksSent = 0;
+  if (sendPush) {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    if (supabaseUrl && serviceRoleKey) {
+      for (let i = 0; i < userIds.length; i += BROADCAST_CHUNK_SIZE) {
+        const chunk = userIds.slice(i, i + BROADCAST_CHUNK_SIZE);
+        try {
+          await fetch(`${supabaseUrl}/functions/v1/send-fcm-notification`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${serviceRoleKey}`,
+            },
+            body: JSON.stringify({
+              user_ids: chunk,
+              title,
+              message,
+              persist_in_app: false,
+            }),
+          });
+          pushChunksSent += 1;
+        } catch (e) {
+          console.warn("Broadcast FCM chunk failed:", e);
+        }
+      }
+    }
+  }
+
+  return jsonResponse({
+    success: true,
+    target,
+    recipients: userIds.length,
+    inserted,
+    push_chunks_sent: pushChunksSent,
+    capped: userIds.length >= BROADCAST_MAX_RECIPIENTS,
+  });
+}
+
 // ─── Support Tickets ──────────────────────────────────
+
+const TICKET_STATUS_LABELS: Record<string, string> = {
+  open: "รอดำเนินการ",
+  in_progress: "กำลังดำเนินการ",
+  resolved: "แก้ไขแล้ว",
+  closed: "ปิดเรื่อง",
+};
 
 async function handleUpdateTicketStatus(supabase, body) {
   const { id, status } = body;
   if (!id || !status) return errorResponse("Missing 'id' or 'status'");
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from("support_tickets")
     .update({ status, updated_at: new Date().toISOString() })
-    .eq("id", id);
+    .eq("id", id)
+    .select("id, user_id, subject")
+    .maybeSingle();
   if (error) return errorResponse(error.message);
+
+  // ผู้ร้องเรียนควรเห็นความคืบหน้า ไม่ใช่ยื่นแล้วเงียบหาย
+  if (updated?.user_id) {
+    await notifyTargets(supabase, [
+      {
+        user_id: updated.user_id,
+        title: "อัปเดตเรื่องร้องเรียนของคุณ",
+        body: `"${String(updated.subject || "").slice(0, 60)}" สถานะ: ${TICKET_STATUS_LABELS[String(status)] || status}`,
+        type: "ticket.status_updated",
+        data: { ticket_id: updated.id, status },
+      },
+    ]);
+  }
   return jsonResponse({ success: true });
 }
 
@@ -1421,11 +1980,25 @@ async function handleResolveTicket(supabase, body) {
   const { id, resolution } = body;
   if (!id || !resolution) return errorResponse("Missing 'id' or 'resolution'");
   const nowIso = new Date().toISOString();
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from("support_tickets")
     .update({ status: "resolved", resolution, resolved_at: nowIso, updated_at: nowIso })
-    .eq("id", id);
+    .eq("id", id)
+    .select("id, user_id, subject")
+    .maybeSingle();
   if (error) return errorResponse(error.message);
+
+  if (updated?.user_id) {
+    await notifyTargets(supabase, [
+      {
+        user_id: updated.user_id,
+        title: "เรื่องร้องเรียนได้รับการแก้ไขแล้ว",
+        body: `"${String(updated.subject || "").slice(0, 60)}" — ${String(resolution).slice(0, 140)}`,
+        type: "ticket.resolved",
+        data: { ticket_id: updated.id },
+      },
+    ]);
+  }
   return jsonResponse({ success: true });
 }
 
@@ -1465,6 +2038,20 @@ async function handleAssignOrder(supabase, body) {
       if (laundryError) return errorResponse(laundryError.message);
     }
   }
+
+  // แจ้งคนขับที่ถูก assign — เดิมอัปเดต DB เงียบๆ คนขับไม่รู้ตัวจนกว่าแอปจะ refresh
+  const legLabel = booking.service_type === "laundry"
+    ? (booking.laundry_leg === "return" ? " (ซักผ้า-ขากลับ)" : " (ซักผ้า-ขาไป)")
+    : "";
+  await notifyTargets(supabase, [
+    {
+      user_id: driver_id,
+      title: "คุณได้รับมอบหมายงานใหม่",
+      body: `แอดมินมอบหมายออเดอร์ #${String(order_id).substring(0, 8)}${legLabel} ให้คุณ`,
+      type: "order.assigned",
+      data: { order_id, laundry_order_id: booking.laundry_order_id || null },
+    },
+  ]);
 
   return jsonResponse({ success: true });
 }
@@ -1649,6 +2236,29 @@ async function handleMarkFoodReadyAsMerchant(supabase, body, adminId: string) {
       driverCandidateNotificationCount = Array.isArray(driverNotifications) ? driverNotifications.length : 0;
     }
   }
+
+  // เดิมแจ้งเฉพาะ driver candidates ตอนยังไม่มีคนขับ —
+  // คนขับที่รับงานอยู่แล้วและลูกค้าไม่เคยรู้ว่าอาหารเสร็จ
+  const readyRows = [];
+  if (booking.driver_id) {
+    readyRows.push({
+      user_id: booking.driver_id,
+      title: "อาหารพร้อมแล้ว 🍽",
+      body: `ออเดอร์ #${String(order_id).substring(0, 8)} เตรียมเสร็จแล้ว ไปรับที่ร้านได้เลย`,
+      type: "order.food_ready",
+      data: { order_id },
+    });
+  }
+  if (booking.customer_id) {
+    readyRows.push({
+      user_id: booking.customer_id,
+      title: "ร้านเตรียมอาหารเสร็จแล้ว",
+      body: `ออเดอร์ #${String(order_id).substring(0, 8)} พร้อมส่ง กำลังรอคนขับไปรับ`,
+      type: "order.food_ready",
+      data: { order_id },
+    });
+  }
+  if (readyRows.length) await notifyTargets(supabase, readyRows);
 
   console.log("mark_food_ready_as_merchant", {
     admin_id: adminId,
@@ -1844,6 +2454,17 @@ async function handleWalletAdjust(supabase, body) {
   });
   if (txErr) return errorResponse(txErr.message);
 
+  // เจ้าของกระเป๋าต้องรู้ทุกครั้งที่ยอดถูกแก้โดยแอดมิน (การเงินห้ามเงียบ)
+  await notifyTargets(supabase, [
+    {
+      user_id,
+      title: amount >= 0 ? "แอดมินปรับเพิ่มยอดเงินในกระเป๋า" : "แอดมินปรับลดยอดเงินในกระเป๋า",
+      body: `${amount >= 0 ? "+" : "-"}฿${Math.abs(Number(amount)).toLocaleString("th-TH")} (ยอดใหม่ ฿${Math.round(after).toLocaleString("th-TH")})${reason ? ` เหตุผล: ${reason}` : ""}`,
+      type: "wallet.admin_adjusted",
+      data: { amount, before, after },
+    },
+  ]);
+
   return jsonResponse({ success: true, before, after });
 }
 
@@ -1906,6 +2527,16 @@ async function handleManualTopup(supabase, body) {
   } catch (e) {
     topupRequestLogError = String((e as Error)?.message || e);
   }
+
+  await notifyTargets(supabase, [
+    {
+      user_id,
+      title: "เติมเงินเข้ากระเป๋าแล้ว 💰",
+      body: `แอดมินเติมเงิน ฿${Number(amount).toLocaleString("th-TH")} เข้ากระเป๋าของคุณ (ยอดใหม่ ฿${Math.round(after).toLocaleString("th-TH")})`,
+      type: "wallet.manual_topup",
+      data: { amount, after },
+    },
+  ]);
 
   return jsonResponse({
     success: true,

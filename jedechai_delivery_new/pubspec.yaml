@@ -1,7 +1,7 @@
 name: jedechai_delivery_new
 description: Super App for Food Delivery, Parcel Delivery, and Passenger Transport
 publish_to: 'none'
-version: 1.10.0+117
+version: 1.13.1+124
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -12,7 +12,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  package_info_plus: ^8.2.0  # หรือเวอร์ชั่นล่าสุด
+  package_info_plus: ^8.2.0  # เธซเธฃเธทเธญเน€เธงเธญเธฃเนเธเธฑเนเธเธฅเนเธฒเธชเธธเธ”
   # Supabase
   supabase_flutter: ^2.12.0
   
@@ -71,30 +71,30 @@ dev_dependencies:
   flutter_launcher_icons: ^0.13.1
 
 dependency_overrides:
-  # กลุ่ม Android Core
-  url_launcher_android: 6.3.6           # ขยับจาก 6.3.1 เป็น 6.3.6 (ผ่านชัวร์)
-  shared_preferences_android: 2.3.0     # ใช้ 2.3.0 (ปลอดภัยกว่า 2.2.3)
-  path_provider_android: 2.2.6          # ใช้ 2.2.6
+  # เธเธฅเธธเนเธก Android Core
+  url_launcher_android: 6.3.6           # เธเธขเธฑเธเธเธฒเธ 6.3.1 เน€เธเนเธ 6.3.6 (เธเนเธฒเธเธเธฑเธงเธฃเน)
+  shared_preferences_android: 2.3.0     # เนเธเน 2.3.0 (เธเธฅเธญเธ”เธ เธฑเธขเธเธงเนเธฒ 2.2.3)
+  path_provider_android: 2.2.6          # เนเธเน 2.2.6
   flutter_plugin_android_lifecycle: 2.0.21
   
-  # ใช้ 2.14.0 ที่ implement updateHeatmaps() แล้ว (แก้ crash: updateHeatmaps unimplemented)
+  # เนเธเน 2.14.0 เธ—เธตเน implement updateHeatmaps() เนเธฅเนเธง (เนเธเน crash: updateHeatmaps unimplemented)
   google_maps_flutter_android: 2.14.0
   
-  # ล็อค image_picker_android ให้ใช้กับ compileSdk 35
+  # เธฅเนเธญเธ image_picker_android เนเธซเนเนเธเนเธเธฑเธ compileSdk 35
   image_picker_android: 0.8.12+17
   
-  # ตัวการสำคัญที่ฟ้อง SDK 36 เราล็อคไว้ที่นี่
+  # เธ•เธฑเธงเธเธฒเธฃเธชเธณเธเธฑเธเธ—เธตเนเธเนเธญเธ SDK 36 เน€เธฃเธฒเธฅเนเธญเธเนเธงเนเธ—เธตเนเธเธตเน
   app_links: 7.0.0
   
-  # แถม: ล็อคกลุ่ม Google Maps ให้อยู่ในโซนปลอดภัย
+  # เนเธ–เธก: เธฅเนเธญเธเธเธฅเธธเนเธก Google Maps เนเธซเนเธญเธขเธนเนเนเธเนเธเธเธเธฅเธญเธ”เธ เธฑเธข
   geolocator_android: 4.5.5
   
-  # แก้ไขปัญหา Guava/AndroidX concurrent futures conflict
+  # เนเธเนเนเธเธเธฑเธเธซเธฒ Guava/AndroidX concurrent futures conflict
   collection: ^1.19.0
   async: ^2.11.0
   
-  # บังคับใช้ Guava เวอร์ชั่นที่เข้ากันได้
-  # สำหรับแก้ NoClassDefFoundError: AbstractResolvableFuture
+  # เธเธฑเธเธเธฑเธเนเธเน Guava เน€เธงเธญเธฃเนเธเธฑเนเธเธ—เธตเนเน€เธเนเธฒเธเธฑเธเนเธ”เน
+  # เธชเธณเธซเธฃเธฑเธเนเธเน NoClassDefFoundError: AbstractResolvableFuture
 
 # Flutter Native Splash configuration
 flutter_native_splash:
@@ -117,5 +117,5 @@ flutter:
   generate: true
   uses-material-design: true
   assets:
-    - .env
+    - .env.client
     - assets/images/

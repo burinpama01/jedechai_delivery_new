@@ -41,15 +41,15 @@ void main() async {
     }
   }
 
-  // Load environment variables from .env file
-  // ISSUE-123: ถ้า .env ไม่ถูก bundle มาด้วย dotenv.load จะ throw ทำให้แอป
-  // ดับตั้งแต่ก่อน runApp() เป็นจอขาวโดยไม่บอกสาเหตุ
+  // Load public client config (bundled asset) — secret ห้ามอยู่ในไฟล์นี้
+  // ISSUE-123: ถ้า .env.client ไม่ถูก bundle มาด้วย dotenv.load จะ throw
+  // ทำให้แอปดับตั้งแต่ก่อน runApp() เป็นจอขาวโดยไม่บอกสาเหตุ
   try {
-    await dotenv.load(fileName: '.env');
+    await dotenv.load(fileName: '.env.client');
   } catch (e) {
     runApp(_StartupErrorApp(
       title: 'โหลดไฟล์ตั้งค่าไม่สำเร็จ',
-      detail: 'ไม่พบไฟล์ .env ในแอป กรุณาติดต่อผู้ดูแลระบบ\n\n$e',
+      detail: 'ไม่พบไฟล์ .env.client ในแอป กรุณาติดต่อผู้ดูแลระบบ\n\n$e',
     ));
     return;
   }

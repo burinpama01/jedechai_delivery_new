@@ -97,7 +97,7 @@ export async function dashboardFilter() {
   if (!dc) return;
   dc.innerHTML = '<div class="flex justify-center py-10"><div class="loader"></div></div>';
 
-  const [periodOrders, completedPeriod, revenueData, pendingDrivers, pendingMerchants, pendingWithdrawals, totalUsers, profilesByRole, recentOrders] = await Promise.all([
+  const [periodOrders, completedPeriod, revenueData, pendingDrivers, pendingMerchants, pendingWithdrawals, totalUsers, profilesByRole, recentOrders, laundryAttention] = await Promise.all([
     supabase.from('bookings').select('id', { count: 'exact', head: true }).gte('created_at', startDate).lte('created_at', endDate),
     supabase.from('bookings').select('id', { count: 'exact', head: true }).gte('created_at', startDate).lte('created_at', endDate).eq('status', 'completed'),
     supabase.from('bookings').select('id, price, delivery_fee, service_type').gte('created_at', startDate).lte('created_at', endDate).eq('status', 'completed'),
@@ -107,6 +107,8 @@ export async function dashboardFilter() {
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
     supabase.from('profiles').select('role, is_online'),
     supabase.from('bookings').select('*').gte('created_at', startDate).lte('created_at', endDate).order('created_at', { ascending: false }).limit(10),
+    // laundry ที่รอ admin/ร้านขยับ (ไม่ผูกช่วงวันที่ — งานค้างคืองานค้าง)
+    supabase.from('laundry_orders').select('id', { count: 'exact', head: true }).in('status', ['quote_requested', 'washing', 'ready_for_return']),
   ]);
 
   const couponDiscountMap = await _loadCouponDiscountMap(supabase, [
@@ -192,10 +194,11 @@ export async function dashboardFilter() {
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mt-6">
         ${globalThis.pendingCard('คนขับรอการอนุมัติ', pendingDrivers.count || 0, 'directions_car', 'blue', 'drivers')}
         ${globalThis.pendingCard('ร้านค้ารอการอนุมัติ', pendingMerchants.count || 0, 'store', 'emerald', 'merchants')}
         ${globalThis.pendingCard('คำขอถอนเงิน', pendingWithdrawals.count || 0, 'account_balance_wallet', 'orange', 'withdrawals')}
+        ${globalThis.pendingCard('Laundry รอจัดการ', laundryAttention.count || 0, 'local_laundry_service', 'cyan', 'laundry')}
       </div>
 
       <div class="glass-card overflow-hidden mt-6">

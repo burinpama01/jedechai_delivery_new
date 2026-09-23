@@ -11,29 +11,28 @@
 
 ## 2) Environment Setup
 
-สร้างไฟล์ `.env` ที่ root ของ Flutter app (`jedechai_delivery_new/.env`) และใส่ค่าอย่างน้อย:
+คัดลอก `.env.client.example` เป็น `.env.client` ที่ root ของ Flutter app
+(`jedechai_delivery_new/.env.client`) แล้วใส่ค่า:
 
 ```env
 SUPABASE_URL=
 SUPABASE_ANON_KEY=
-PASSWORD_RESET_REDIRECT_URL=
-
 GOOGLE_MAPS_API_KEY=
-
+PASSWORD_RESET_REDIRECT_URL=
 FIREBASE_PROJECT_ID=
-
-OMISE_PUBLIC_KEY=
 ```
 
-> ⚠️ **ห้ามใส่ secret ลง `.env` ของแอปเด็ดขาด** (ISSUE-102)
-> `pubspec.yaml` ประกาศ `.env` เป็น Flutter asset → ไฟล์นี้ถูกแพ็กเข้า APK/IPA
-> แบบ plaintext ใครก็แตกไฟล์อ่านได้ ดังนั้นคีย์ต่อไปนี้ **ต้องไม่อยู่ที่นี่**:
+> ⚠️ **ห้ามใส่ secret ลง `.env.client` เด็ดขาด** (ISSUE-102)
+> `pubspec.yaml` ประกาศ `.env.client` เป็น Flutter asset → ไฟล์นี้ถูกแพ็กเข้า APK/IPA
+> แบบ plaintext ใครก็แตกไฟล์อ่านได้ `test/app_env_asset_policy_test.dart` บังคับ
+> ให้มีได้เฉพาะ 5 key ข้างบน คีย์ต่อไปนี้ **ต้องไม่อยู่ในแอป**:
 >
 > | Key | เก็บที่ไหนแทน |
 > |---|---|
 > | `SUPABASE_SERVICE_KEY` | Supabase Edge Function secrets เท่านั้น (bypass RLS ทั้งระบบ) |
-> | `OMISE_SECRET_KEY` | Edge Function `payment-create-charge` / `payment-check-status` |
+> | `OMISE_SECRET_KEY` / คีย์ Beam | Edge Function ฝั่งชำระเงิน (`beam-topup`, `beam-webhook`) |
 > | `FIREBASE_PRIVATE_KEY`, `FIREBASE_PRIVATE_KEY_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_CLIENT_ID` | Edge Function `send-fcm-notification` (service account ฝั่ง server) |
+> | `GOOGLE_MAPS_SERVER_KEY` | Edge Function `maps-proxy` |
 >
 > ถ้าเคยปล่อย build ที่มีคีย์เหล่านี้ออกไปแล้ว ต้องถือว่า **คีย์รั่ว** และ rotate ทุกตัว
 >

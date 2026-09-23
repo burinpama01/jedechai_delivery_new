@@ -84,6 +84,11 @@ export async function renderOrdersPage(el, ctx) {
           <option value="">ทุกประเภท</option>
           <option value="food">อาหาร</option><option value="ride">เรียกรถ</option><option value="parcel">พัสดุ</option>
         </select>
+        <select id="orderScheduledFilter" onchange="filterOrders()" class="text-sm border border-gray-200 rounded-xl px-3.5 py-2 bg-gray-50/50 transition-all">
+          <option value="">ทันที + จองล่วงหน้า</option>
+          <option value="scheduled">เฉพาะจองล่วงหน้า</option>
+          <option value="immediate">เฉพาะสั่งทันที</option>
+        </select>
         <button onclick="loadOrders()" class="text-white px-5 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-indigo-200" style="background:linear-gradient(135deg,#6366f1,#818cf8);">กรอง</button>
         <button onclick="exportOrdersCsv()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors">Export CSV</button>
         <button onclick="exportOrdersExcel()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200 hover:bg-cyan-100 transition-colors">Export Excel</button>
@@ -255,7 +260,10 @@ export function renderOrderRows(orders) {
       <td class="px-4 py-3 text-gray-600 max-w-[120px] truncate">${o.destination_address || '-'}</td>
       <td class="px-4 py-3 font-semibold">฿${fmt(Math.round(totalAmount))}${o.service_type === 'food' ? `<div class="text-[10px] text-gray-400">อาหาร ฿${fmt(Math.round(o.price || 0))} + ส่ง ฿${fmt(Math.round(o.delivery_fee || 0))}${couponDiscount > 0 ? ` - คูปอง ฿${fmt(Math.round(couponDiscount))}` : ''}</div>` : ''}</td>
       <td class="px-4 py-3">${typeof statusBadge === 'function' ? statusBadge(o.status) : o.status}</td>
-      <td class="px-4 py-3 text-gray-500 text-xs">${fmtDate(o.created_at)}</td>
+      <td class="px-4 py-3 text-gray-500 text-xs">
+        ${fmtDate(o.created_at)}
+        ${o.scheduled_at ? `<div class="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 text-[10px] font-semibold" title="ออเดอร์จองล่วงหน้า">⏰ นัด ${fmtDate(o.scheduled_at)}</div>` : ''}
+      </td>
       <td class="px-4 py-3 whitespace-nowrap">${actions}</td>
     </tr>`;
   }).join('');
@@ -264,9 +272,12 @@ export function renderOrderRows(orders) {
 export function filterOrders() {
   const status = document.getElementById('orderStatusFilter').value;
   const type = document.getElementById('orderTypeFilter').value;
+  const scheduled = document.getElementById('orderScheduledFilter')?.value || '';
   let filtered = globalThis._allOrders || [];
   if (status) filtered = filtered.filter(o => o.status === status);
   if (type) filtered = filtered.filter(o => o.service_type === type);
+  if (scheduled === 'scheduled') filtered = filtered.filter(o => !!o.scheduled_at);
+  if (scheduled === 'immediate') filtered = filtered.filter(o => !o.scheduled_at);
   globalThis._filteredOrders = filtered;
   const tbody = document.getElementById('ordersTableBody');
   if (tbody) tbody.innerHTML = renderOrderRows(filtered);

@@ -1365,7 +1365,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               Expanded(
                 child: _buildQuickStat(
                   AppLocalizations.of(context)!.driverDashEarningsToday,
-                  '฿${_todayEarnings.toStringAsFixed(0)}',
+                  '฿${RoleAmountCalculator.formatMoney(_todayEarnings)}',
                   Icons.payments,
                   Colors.white,
                 ),
@@ -1406,7 +1406,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               Text(info.$1, style: const TextStyle(fontSize: 12)),
               const SizedBox(width: 4),
               Text(
-                '${info.$2} ฿${e.value.toStringAsFixed(0)}',
+                '${info.$2} ฿${RoleAmountCalculator.formatMoney(e.value)}',
                 style: const TextStyle(
                     fontSize: 11,
                     color: Colors.white70,
@@ -2393,7 +2393,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                   ),
                 ),
                 Text(
-                  '฿${totalCollect.toStringAsFixed(0)}',
+                  RoleAmountCalculator.formatBahtCeil(totalCollect),
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -2409,14 +2409,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                 Expanded(
                   child: _buildMiniDetail(
                       AppLocalizations.of(context)!.driverDashFoodCost,
-                      '฿${foodPrice.toStringAsFixed(0)}',
+                      RoleAmountCalculator.formatBahtCeil(foodPrice),
                       Colors.orange),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: _buildMiniDetail(
                       AppLocalizations.of(context)!.driverDashDeliveryFee,
-                      '฿${deliveryFee.toStringAsFixed(0)}',
+                      RoleAmountCalculator.formatBahtCeil(deliveryFee),
                       Colors.blue),
                 ),
                 const SizedBox(width: 8),
@@ -2440,10 +2440,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                     hideCouponBreakdown
                         ? AppLocalizations.of(context)!
                             .driverDashCouponDiscount(
-                                couponDiscount.toStringAsFixed(0))
+                                RoleAmountCalculator.ceilBaht(couponDiscount).toString())
                         : AppLocalizations.of(context)!
                             .driverDashCouponDiscountCode(
-                                couponDiscount.toStringAsFixed(0)),
+                                RoleAmountCalculator.ceilBaht(couponDiscount).toString()),
                     style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -2486,7 +2486,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                         ),
                       ),
                       Text(
-                        '฿${netCollect.toStringAsFixed(0)}',
+                        RoleAmountCalculator.formatBahtCeil(netCollect),
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -2527,10 +2527,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                       hideCouponBreakdown
                           ? AppLocalizations.of(context)!
                               .driverDashCouponDiscount(
-                                  couponDiscount.toStringAsFixed(0))
+                                  RoleAmountCalculator.ceilBaht(couponDiscount).toString())
                           : AppLocalizations.of(context)!
                               .driverDashCouponDiscountCode(
-                                  couponDiscount.toStringAsFixed(0)),
+                                  RoleAmountCalculator.ceilBaht(couponDiscount).toString()),
                       style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -2763,7 +2763,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                 ),
               ),
               Text(
-                '฿${displayAmount.toStringAsFixed(0)}',
+                RoleAmountCalculator.formatBahtCeil(displayAmount),
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

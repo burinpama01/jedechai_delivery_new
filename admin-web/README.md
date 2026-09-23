@@ -1,113 +1,97 @@
 # Jedechai Admin Web Dashboard
 
-ระบบจัดการหลังบ้าน Jedechai Delivery แบบ Web Application
+ระบบจัดการหลังบ้าน Jedechai Delivery แบบ Web Application (Vanilla JS + Tailwind + Supabase)
 
 ## ฟีเจอร์
 
 - **แดชบอร์ด** — ภาพรวมระบบ (ออเดอร์วันนี้, รายได้, ผู้ใช้, กราฟ 7 วัน)
-- **ออเดอร์ทั้งหมด** — ดูและกรองออเดอร์ตามสถานะ/ประเภท
-- **จัดการคนขับ** — อนุมัติ/ปฏิเสธ/ระงับคนขับ
-- **จัดการร้านค้า** — อนุมัติ/ปฏิเสธ/ระงับร้านค้า
-- **ผู้ใช้ทั้งหมด** — ค้นหาและจัดการผู้ใช้ทุกบทบาท
-- **คำขอถอนเงิน** — อนุมัติ/ปฏิเสธคำขอถอนเงิน (คืนเงินอัตโนมัติเมื่อปฏิเสธ)
-- **ตั้งค่าระบบ** — ค่าคอมมิชชั่น, Platform Fee, Merchant GP, Minimum Wallet
+- **ออเดอร์ทั้งหมด** — ดู/กรองออเดอร์ทุกประเภท (food/ride/parcel), รับออเดอร์แทนร้าน, แก้รายการ, reassign, force cancel + refund, rebroadcast
+- **แผนที่ Realtime** — ตำแหน่งคนขับ/ออเดอร์ + dispatch
+- **ออเดอร์รอจัดการ** — คิวงานค้าง พร้อม realtime + quick filters
+- **Laundry** — คำขอซักผ้า, quote, งานขาไป/ขากลับ, แพ็กเกจซักผ้า, จัดการแทนร้าน (ส่ง quote/เปลี่ยนสถานะ/ยกเลิก/คืนเงิน/ตอบแชท)
+- **จัดการคนขับ / ร้านค้า / ผู้ใช้** — อนุมัติ, ปฏิเสธ, ระงับ, แก้ไขโปรไฟล์, GP plans, ยอดสั่งซื้อขั้นต่ำต่อร้าน
+- **จัดการเมนู** — เมนูอาหาร + option groups ของทุกร้าน
+- **การเงิน** — รายได้, คำขอถอนเงิน (อนุมัติ/ปฏิเสธ + slip), คำขอเติมเงิน (verify slip), Customer Wallet (ปรับยอด/เติมเงิน manual)
+- **โค้ดส่วนลด / ชวนเพื่อน / ร้องเรียน / Delivery Log แจ้งเตือน / คำขอลบบัญชี**
+- **ตั้งค่าระบบ** — ค่าคอมมิชชั่น, Platform Fee, Merchant GP, Minimum Wallet, Banners, App Assets, App Update Policy
 - **รีเซ็ตรหัสผ่าน (Public Page)** — หน้า `reset-password.html` สำหรับลิงก์ลืมรหัสผ่านจาก Supabase
 
-## วิธีพัฒนา (Development)
+## สถาปัตยกรรม
 
-1. แก้ไขไฟล์ `config.js` ใส่ค่า Supabase:
-
-```javascript
-window.JEDECHAI_CONFIG = {
-  SUPABASE_URL: 'https://your-project.supabase.co',
-  SUPABASE_ANON_KEY: 'your-anon-key-here',
-  SUPABASE_SERVICE_KEY: 'your-service-key-here',
-};
-```
-
-2. เปิด `index.html` ในเบราว์เซอร์ หรือ `npm run dev`
-
-3. เข้าสู่ระบบด้วยบัญชี Admin (role = 'admin' ใน profiles table)
-
-## หน้ารีเซ็ตรหัสผ่าน (สำหรับแอปมือถือ)
-
-มีหน้า web สำหรับรองรับลิงก์จากอีเมลลืมรหัสผ่านแล้ว:
-
-- `reset-password.html`
-- รองรับเส้นทาง `/reset-password` ผ่านไฟล์ `_redirects`
-
-ให้ตั้งค่าใน Flutter `.env`:
-
-```env
-PASSWORD_RESET_REDIRECT_URL=https://your-domain.com/reset-password
-```
-
-และเพิ่ม URL เดียวกันใน Supabase Dashboard:
-
-- Authentication → URL Configuration → Redirect URLs
-
-## วิธี Deploy ขึ้น Hosting
-
-### Netlify (แนะนำ)
-
-1. สมัคร [Netlify](https://www.netlify.com/) แล้วเชื่อมต่อ Git repository
-2. ตั้งค่า Deploy:
-   - **Publish directory:** `admin-web`
-   - **Build command:** *(ไม่ต้อง — เป็น static site)*
-3. สร้างไฟล์ `config.production.js` บน server หรือใส่ค่าใน config.js ก่อน deploy
-4. ⚠️ **ห้าม commit `config.production.js` ลง Git!** (มี `.gitignore` ป้องกันอยู่)
-
-### Vercel
-
-1. สมัคร [Vercel](https://vercel.com/) แล้ว import project
-2. ตั้ง **Root Directory:** `admin-web`
-3. Framework: `Other`
-4. สร้าง `config.production.js` ผ่าน build script หรือ env variable
-
-### Firebase Hosting
-
-```bash
-firebase init hosting
-# เลือก public directory = admin-web
-firebase deploy
-```
-
-### HostGator / Shared Hosting
-
-1. Upload ไฟล์ทั้งหมดใน `admin-web/` ไปยัง `public_html/admin/`
-2. สร้างไฟล์ `config.production.js` บน server โดยตรง
-3. เข้าถึงผ่าน `https://yourdomain.com/admin/`
-
-## ⚠️ ความปลอดภัย
-
-- **`SUPABASE_SERVICE_KEY`** มีสิทธิ์เต็ม (bypass RLS) — ห้ามเผยแพร่!
-- ใช้ `config.production.js` แยกไฟล์ Service Key ออกจาก source code
-- ไฟล์ `robots.txt` บล็อก search engines ไม่ให้ index หน้า admin
-- Header `X-Frame-Options: DENY` ป้องกัน clickjacking
-- แนะนำ: จำกัด access ด้วย IP whitelist หรือ Netlify Identity
-
-## เทคโนโลยี
-
-- **Vanilla HTML/CSS/JS** — ไม่ต้อง build, ไม่ต้องติดตั้ง Node.js
-- **Tailwind CSS** (CDN) — สำหรับ styling
-- **Supabase JS Client** (CDN) — เชื่อมต่อฐานข้อมูล
-- **Material Icons** — ไอคอน
-- **Leaflet.js** — แผนที่
-- **Inter Font** — ฟอนต์
+- **การอ่านข้อมูล**: Supabase JS client ด้วย **anon key + admin session** (ผ่าน RLS)
+- **การเขียนที่ต้องสิทธิ์สูง**: ยิงทุกอย่างผ่าน Edge Function **`admin-actions`** (ตรวจ JWT ว่าเป็น admin ฝั่ง server แล้วใช้ service role ใน backend เท่านั้น)
+- ⛔ **ห้ามใส่ `SUPABASE_SERVICE_KEY` ใน config ฝั่ง browser เด็ดขาด** — โค้ดฝั่งเว็บไม่ใช้และต้องไม่ใช้ service key ไม่ว่ากรณีใด
 
 ## โครงสร้างไฟล์
 
 ```
 admin-web/
-├── index.html              — หน้าเว็บหลัก (Login + Dashboard layout)
-├── app.js                  — ลอจิก JavaScript ทั้งหมด
-├── config.js               — ตั้งค่า Supabase (development)
-├── config.production.js    — ตั้งค่า Supabase (production, ไม่ commit!)
-├── package.json            — สำหรับ npm run dev
-├── reset-password.html     — หน้า web สำหรับตั้งรหัสผ่านใหม่จากอีเมล
-├── robots.txt              — บล็อก search engines
-├── _redirects              — Netlify SPA redirects
-├── _headers                — Netlify security headers
-├── .gitignore              — ป้องกัน commit production config
-└── README.md               — คู่มือนี้
+├── index.html              — Login + Layout + Sidebar
+├── app.js                  — loader (โหลด src/main.js + app.legacy.js)
+├── app.legacy.js           — โค้ดเดิม (เหลือ bootstrap/login/shell — หน้าเกือบทั้งหมดย้ายไป src/ แล้ว)
+├── src/
+│   ├── main.js             — bootstrap + wire bridges
+│   ├── config.js           — อ่าน/validate window.JEDECHAI_CONFIG
+│   ├── services/           — supabaseClient, authService, adminActionsApi
+│   ├── router/             — page registry + lifecycle + meta
+│   ├── pages/              — implementation ของแต่ละหน้า (dashboard, orders, laundry, …)
+│   ├── ui/                 — toast, helpers
+│   └── utils/              — format, export, orderItems
+├── config.js               — ค่า dev (placeholder)
+├── config.production.js    — ค่า production (gitignored, ห้าม commit)
+├── reset-password.html     — หน้า public ตั้งรหัสผ่านใหม่
+├── refund-policy.html      — หน้านโยบายการคืนเงิน (สาธารณะ)
+├── landing.html            — หน้า landing สาธารณะ (เวอร์ชันจาก landing-deploy/)
+├── admin.html              — admin shell (เดิมชื่อ index.html — rename เพื่อให้ `/` เป็น landing บน Vercel)
+├── robots.txt              — อนุญาต landing, บล็อก /admin
+├── vercel.json             — Vercel routing + headers (deploy ปัจจุบัน)
+├── _redirects / _headers   — Netlify legacy config (inert — เก็บไว้เพื่อ parity)
+└── package.json            — เวอร์ชัน + npm scripts
 ```
+
+## วิธีพัฒนา (Development)
+
+1. แก้ไข `config.js` ใส่ค่า Supabase (เฉพาะค่า public):
+
+```javascript
+window.JEDECHAI_CONFIG = {
+  SUPABASE_URL: 'https://your-project.supabase.co',
+  SUPABASE_ANON_KEY: 'your-anon-key-here',
+};
+```
+
+2. รัน `npm run dev` (npx serve) แล้วเปิด `http://localhost:3000`
+3. เข้าสู่ระบบด้วยบัญชี Admin (role = 'admin' ใน profiles table)
+
+## วิธี Deploy (Vercel — วิธีที่ยืนยันแล้ว)
+
+> รายละเอียด/ประวัติอยู่ใน Obsidian: `Projects/jedechai_delivery_new/deployment.md`
+> (Netlify เลิกใช้แล้วตั้งแต่ 2026-09-19 — site เดิม 404 ทุก path)
+
+```bash
+# one-shot จาก root ของ repo — เตรียม artifact (sanitize config) แล้ว deploy ขึ้น Vercel production
+node scripts/deploy-admin-web-vercel.mjs
+```
+
+- Production URL: `https://jedechai-delivery.vercel.app` (admin ที่ `/admin`, landing ที่ `/`)
+- ต้องมี `VERCEL_TOKEN` ใน `jedechai_delivery_new/.env` (หรือ env var — ห้าม commit/log token)
+- สคริปต์ prepare จะ **ปฏิเสธ** config ที่มี service-role key และเขียน `config.production.js` ฉบับ sanitize ให้เอง
+- ตัวสคริปต์ยัง stamp เวอร์ชัน asset (`?v=…`) จาก `package.json` ให้อัตโนมัติ กัน browser cache ค้าง
+
+## หน้ารีเซ็ตรหัสผ่าน (สำหรับแอปมือถือ)
+
+- `reset-password.html` รองรับเส้นทาง `/reset-password` ผ่าน `_redirects`
+- ตั้งใน Flutter `.env`: `PASSWORD_RESET_REDIRECT_URL=https://<domain>/reset-password`
+- เพิ่ม URL เดียวกันใน Supabase Dashboard → Authentication → URL Configuration → Redirect URLs
+
+## ความปลอดภัย
+
+- privileged writes ทั้งหมดผ่าน Edge Function `admin-actions` (ตรวจ admin + rate limit ฝั่ง server)
+- `config.production.js` ถูก gitignore และถูก sanitize ก่อน deploy เสมอ
+- `robots.txt` (บล็อก `/admin`) + `noindex` บน config บล็อกส่วนที่ไม่ต้องการให้ index
+- Header `X-Frame-Options: DENY` ป้องกัน clickjacking
+
+## เทคโนโลยี
+
+- Vanilla HTML/CSS/JS (ES Modules ใน `src/`)
+- Tailwind CSS (CDN), Supabase JS Client (CDN), Material Icons, Leaflet.js, Inter Font

@@ -34,7 +34,8 @@ class CustomerHomeScreen extends StatefulWidget {
   State<CustomerHomeScreen> createState() => _CustomerHomeScreenState();
 }
 
-class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
+class _CustomerHomeScreenState extends State<CustomerHomeScreen>
+    with WidgetsBindingObserver {
   final currentUser = AuthService.currentUser;
   final ProfileService _profileService = ProfileService();
   final WalletService _walletService = WalletService();
@@ -110,6 +111,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadUserProfile();
     _loadWalletSummary();
     _loadActiveBookings();
@@ -155,8 +157,19 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     await NotificationService.markAsRead(n.id);
   }
 
+  // Realtime events cover live updates while foregrounded, but the socket can
+  // drop while backgrounded — refetch so orders placed/status changes made in
+  // between still appear on the home list.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadActiveBookings();
+    }
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _bookingsStreamSubscription?.cancel();
     _bannerTimer?.cancel();
     _bannerController.dispose();

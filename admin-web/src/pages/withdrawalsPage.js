@@ -45,10 +45,23 @@ export async function renderWithdrawalsPage(el, ctx) {
 
   const userIds = [...new Set((requests || []).map(r => r.user_id))];
   let userMap = {};
+  let walletMap = {};
   if (userIds.length) {
     const { data: profiles } = await supabase.from('profiles').select('id, full_name, role').in('id', userIds);
     (profiles || []).forEach(p => userMap[p.id] = p);
+    const { data: wallets } = await supabase.from('wallets').select('user_id, balance, balance_system').in('user_id', userIds);
+    (wallets || []).forEach((w) => { walletMap[w.user_id] = w; });
   }
+
+  // ถังเงิน (Batch 3): ถังระบบใช้ได้ไม่เกินยอดคงเหลือรวม
+  const bucketInfo = (userId) => {
+    const w = walletMap[userId];
+    if (!w) return { system: 0, topup: 0 };
+    const balance = Math.max(Number(w.balance || 0), 0);
+    const system = Math.min(Math.max(Number(w.balance_system || 0), 0), balance);
+    return { system, topup: balance - system };
+  };
+  const bucketLabel = (b) => (b === 'system' ? 'จากระบบ' : 'เติมเอง');
 
   const statusCounts = { pending: 0, completed: 0, rejected: 0 };
   (requests || []).forEach((r) => {
@@ -86,6 +99,8 @@ export async function renderWithdrawalsPage(el, ctx) {
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">ผู้ขอ</th>
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">บทบาท</th>
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">จำนวน</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">ถังเงิน</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">คงเหลือ (ระบบ / เติมเอง)</th>
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">ธนาคาร</th>
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">เลขบัญชี</th>
               <th class="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">สถานะ</th>
@@ -100,6 +115,8 @@ export async function renderWithdrawalsPage(el, ctx) {
                     <td class="px-4 py-3 font-medium">${escapeHtml(user.full_name) || '-'}</td>
                     <td class="px-4 py-3 text-gray-500">${escapeHtml(user.role) || '-'}</td>
                     <td class="px-4 py-3 font-semibold text-green-600">฿${fmt(r.amount)}</td>
+                    <td class="px-4 py-3 text-xs"><span class="px-2 py-1 rounded-full ${r.source_bucket === 'system' ? 'bg-indigo-50 text-indigo-700' : 'bg-gray-100 text-gray-600'}">${bucketLabel(r.source_bucket)}</span></td>
+                    <td class="px-4 py-3 text-xs text-gray-500">฿${fmt(bucketInfo(r.user_id).system)} / ฿${fmt(bucketInfo(r.user_id).topup)}</td>
                     <td class="px-4 py-3">${escapeHtml(r.bank_name) || '-'}</td>
                     <td class="px-4 py-3 font-mono text-xs">${escapeHtml(r.bank_account_number) || '-'}</td>
                     <td class="px-4 py-3">${statusBadge(r.status)}</td>

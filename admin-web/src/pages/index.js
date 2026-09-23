@@ -1,41 +1,58 @@
-import { registerDashboardPage } from "./dashboard.js";
-import { registerOrdersPage } from "./orders.js";
-import { registerPendingOrdersPage } from "./pending_orders.js";
-import { registerMapPage } from "./map.js";
-import { registerSettingsPage } from "./settings.js";
-import { registerAccountDeletionsPage } from "./account_deletions.js";
-import { registerUsersPage } from "./users.js";
-import { registerDriversPage } from "./drivers.js";
-import { registerMerchantsPage } from "./merchants.js";
-import { registerPromosPage } from "./promos.js";
-import { registerWithdrawalsPage } from "./withdrawals.js";
-import { registerTopupsPage } from "./topups.js";
-import { registerCustomerWalletsPage } from "./customer_wallets.js";
-import { registerLaundryPage } from "./laundry.js";
-import { registerMenusPage } from "./menus.js";
-import { registerRevenuePage } from "./revenue.js";
-import { registerComplaintsPage } from "./complaints.js";
-import { registerReferralsPage } from "./referrals.js";
-import { registerNotificationDeliveriesPage } from "./notification_deliveries.js";
+// Central page registry — imports each page's renderer directly.
+// (เดิมมี stub ไฟล์ละ 8 บรรทัดคั่นกลาง 21 ไฟล์ — ยุบเข้าไฟล์นี้ 2026-07-18)
+import { renderDashboardPage } from "./dashboardPage.js";
+import { renderOrdersPage } from "./ordersPage.js";
+import { renderPendingOrdersPage, disposePendingOrdersPage } from "./pendingOrdersPage.js";
+import { renderMapPage, disposeMapPage } from "./mapPage.js";
+import { renderSettingsPage } from "./settingsPage.js";
+import { renderAccountDeletionsPage } from "./accountDeletionsPage.js";
+import { renderUsersPage } from "./usersPage.js";
+import { renderDriversPage } from "./driversPage.js";
+import { renderMerchantsPage } from "./merchantsPage.js";
+import { renderPromosPage } from "./promosPage.js";
+import { renderWithdrawalsPage } from "./withdrawalsPage.js";
+import { renderTopupsPage } from "./topupsPage.js";
+import { renderCustomerWalletsPage } from "./customerWalletsPage.js";
+import { renderLaundryPage } from "./laundryPage.js";
+import { renderMenusPage } from "./menusPage.js";
+import { renderRevenuePage } from "./revenuePage.js";
+import { renderComplaintsPage } from "./complaintsPage.js";
+import { renderReferralsPage } from "./referralsPage.js";
+import { renderNotificationDeliveriesPage } from "./notificationDeliveriesPage.js";
+import { renderReviewsPage } from "./reviewsPage.js";
+import { renderBroadcastPage } from "./broadcastPage.js";
 
 export function registerInitialPages(reg) {
-  registerDashboardPage(reg);
-  registerOrdersPage(reg);
-  registerPendingOrdersPage(reg);
-  registerMapPage(reg);
-  registerSettingsPage(reg);
-  registerAccountDeletionsPage(reg);
-  registerUsersPage(reg);
-  registerDriversPage(reg);
-  registerMerchantsPage(reg);
-  registerPromosPage(reg);
-  registerWithdrawalsPage(reg);
-  registerTopupsPage(reg);
-  registerCustomerWalletsPage(reg);
-  registerLaundryPage(reg);
-  registerMenusPage(reg);
-  registerRevenuePage(reg);
-  registerComplaintsPage(reg);
-  registerReferralsPage(reg);
-  registerNotificationDeliveriesPage(reg);
+  if (typeof reg !== "function") return;
+
+  const pages = [
+    ["dashboard", renderDashboardPage],
+    ["orders", renderOrdersPage],
+    ["pending_orders", renderPendingOrdersPage, disposePendingOrdersPage],
+    ["map", renderMapPage, disposeMapPage],
+    ["settings", renderSettingsPage],
+    ["account_deletions", renderAccountDeletionsPage],
+    ["users", renderUsersPage],
+    ["drivers", renderDriversPage],
+    ["merchants", renderMerchantsPage],
+    ["promos", renderPromosPage],
+    ["withdrawals", renderWithdrawalsPage],
+    ["topups", renderTopupsPage],
+    ["customer_wallets", renderCustomerWalletsPage],
+    ["laundry", renderLaundryPage],
+    ["menus", renderMenusPage],
+    ["revenue", renderRevenuePage],
+    ["complaints", renderComplaintsPage],
+    ["referrals", renderReferralsPage],
+    ["notification_deliveries", renderNotificationDeliveriesPage],
+    ["reviews", renderReviewsPage],
+    ["broadcast", renderBroadcastPage],
+  ];
+
+  for (const [name, renderer, dispose] of pages) {
+    const opts = typeof dispose === "function"
+      ? { dispose: async (ctx) => await dispose(ctx) }
+      : undefined;
+    reg(name, async (el, ctx) => await renderer(el, ctx), opts);
+  }
 }

@@ -17,6 +17,7 @@ import '../../../common/utils/driver_amount_calculator.dart';
 import '../../../common/utils/order_code_formatter.dart';
 import '../../../common/widgets/chat_screen.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../common/utils/role_amount_calculator.dart';
 
 /// Merchant Order Detail Screen
 ///
@@ -56,7 +57,8 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
   String? _driverPhone;
   String? _customerName;
   String? _customerPhone;
-  final MerchantOrderService _merchantOrderService = MerchantOrderService();
+  // สร้างแบบ lazy: หน้าจอ render ได้โดยไม่ต้องมี Supabase instance (widget test)
+  late final MerchantOrderService _merchantOrderService = MerchantOrderService();
 
   @override
   void initState() {
@@ -894,7 +896,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                                 style: TextStyle(
                                     fontSize: 14,
                                     color: colorScheme.onSurfaceVariant)),
-                            Text('฿${price.toStringAsFixed(0)}',
+                            Text(RoleAmountCalculator.formatBahtCeil(price),
                                 style: const TextStyle(
                                     fontSize: 14, fontWeight: FontWeight.w600)),
                           ],
@@ -910,7 +912,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                                             .toStringAsFixed(0)),
                                 style: TextStyle(
                                     fontSize: 13, color: Colors.red[400])),
-                            Text('-฿${gpAmount.toStringAsFixed(0)}',
+                            Text('-฿${RoleAmountCalculator.formatMoney(gpAmount)}',
                                 style: TextStyle(
                                     fontSize: 13, color: Colors.red[400])),
                           ],
@@ -932,7 +934,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14,
                                       color: Colors.green[800])),
-                              Text('฿${merchantReceives.toStringAsFixed(0)}',
+                              Text('฿${RoleAmountCalculator.formatMoney(merchantReceives)}',
                                   style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 18,
@@ -1254,7 +1256,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                                       ),
                                     ),
                                     Text(
-                                      '฿${(((item['price'] as num?)?.toDouble() ?? 0.0) * ((item['quantity'] as num?)?.toInt() ?? 1)).toStringAsFixed(0)}',
+                                      RoleAmountCalculator.formatBahtCeil(((item['price'] as num?)?.toDouble() ?? 0.0) * ((item['quantity'] as num?)?.toInt() ?? 1)),
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
@@ -1850,7 +1852,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                                 ),
                               ),
                               Text(
-                                '฿${itemPrice.toStringAsFixed(0)}',
+                                RoleAmountCalculator.formatBahtCeil(itemPrice),
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold,
@@ -1913,7 +1915,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
                       ],
                     ),
                     Text(
-                      '฿${_foodSettlement(order).merchantReceives.toStringAsFixed(0)}',
+                      '฿${RoleAmountCalculator.formatMoney(_foodSettlement(order).merchantReceives)}',
                       style: const TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,

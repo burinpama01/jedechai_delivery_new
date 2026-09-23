@@ -1,8 +1,10 @@
 # JDC Delivery Landing Deploy
 
-Standalone public landing-page package.
+> **สถานะ: ถูกผนวกเข้า admin-web แล้ว (2026-09-19) — โฟลเดอร์นี้เป็นต้นฉบับเก่า ห้าม deploy แยก**
+>
+> เนื้อหา landing (index.html), refund-policy.html, robots.txt และ assets ถูกคัดลอกไปรวมใน `../admin-web/` และ deploy ผ่าน `node scripts/deploy-admin-web-vercel.mjs` (โดย Vercel project เดียวกับ admin) — แก้ landing ให้แก้ที่ `../admin-web/landing.html` เท่านั้น โฟลเดอร์นี้เหลือไว้เพื่ออ้างอิงประวัติ
 
-Deploy this folder as a separate static site:
+ต้นฉบับเดิม (ก่อนผนวก):
 
 - `index.html` - public landing page
 - `reset-password.html` - password reset page used by app links

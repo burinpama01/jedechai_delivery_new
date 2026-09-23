@@ -23,11 +23,13 @@ class _ReferralScreenState extends State<ReferralScreen> {
   int totalReferrals = 0;
 
   bool _didCheckReferralRewardDialog = false;
+  Map<String, dynamic>? _referralSummary;
 
   @override
   void initState() {
     super.initState();
     _loadReferralData();
+    _loadReferralSummary();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAndShowReferralRewardDialogIfAny();
     });
@@ -149,6 +151,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
             _buildMyCodeSection(),
             _buildEnterCodeSection(),
             _buildStatsSection(),
+            _buildTierSection(),
             _buildHowItWorks(),
           ],
         ),
@@ -342,6 +345,76 @@ class _ReferralScreenState extends State<ReferralScreen> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _loadReferralSummary() async {
+    final summary = await _referralService.getSummary();
+    if (mounted) setState(() => _referralSummary = summary);
+  }
+
+  /// ขั้นบันไดรางวัล: ขั้นปัจจุบัน ตัวคูณ และอีกกี่รายถึงขั้นถัดไป
+  Widget _buildTierSection() {
+    final s = _referralSummary;
+    if (s == null) return const SizedBox.shrink();
+    final colorScheme = Theme.of(context).colorScheme;
+    final tier = s['current_tier'];
+    final multiplier = (s['current_multiplier'] as num?)?.toDouble() ?? 1;
+    final toNext = s['referrals_to_next_tier'];
+    // ฐานรางวัลตามบทบาทผู้ชวน: คนขับ = S1, ลูกค้า = S2
+    final baseKey = AuthService.currentUserRole == 'driver'
+        ? 'driver_invite_merchant'
+        : 'customer_invite_merchant';
+    final base = (s['base'] is Map)
+        ? ((s['base'][baseKey] as num?)?.toDouble() ?? 20)
+        : 20.0;
+    final earned = (s['total_earned'] as num?)?.toDouble() ?? 0;
+    final pending = (s['pending_review'] as num?)?.toInt() ?? 0;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colorScheme.outline.withValues(alpha: 0.12)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.stairs, color: colorScheme.primary),
+                const SizedBox(width: 8),
+                Text('ขั้นรางวัลปัจจุบัน: ขั้น ${tier ?? 1}',
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text('ชวนสำเร็จ 1 ราย ได้ ฿${(base * multiplier).toStringAsFixed(0)} '
+                '(ฐาน ฿${base.toStringAsFixed(0)} × ${multiplier.toStringAsFixed(2)})'),
+            if (toNext != null)
+              Text('อีก $toNext รายถึงขั้นถัดไป',
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: colorScheme.onSurface.withValues(alpha: 0.7))),
+            const SizedBox(height: 6),
+            Text('รับรางวัลสะสมแล้ว ฿${earned.toStringAsFixed(0)}'
+                '${pending > 0 ? ' · รออนุมัติ $pending รายการ' : ''}',
+                style: TextStyle(
+                    fontSize: 12,
+                    color: colorScheme.onSurface.withValues(alpha: 0.7))),
+            const SizedBox(height: 6),
+            Text('เงินรางวัลเข้ากระเป๋า "ถังระบบ" ถอนได้ขั้นต่ำ ฿'
+                '${((s['withdrawal_min'] is Map ? (s['withdrawal_min']['system'] as num?)?.toDouble() : null) ?? 200).toStringAsFixed(0)}',
+                style: TextStyle(
+                    fontSize: 11,
+                    color: colorScheme.onSurface.withValues(alpha: 0.6))),
+          ],
+        ),
       ),
     );
   }

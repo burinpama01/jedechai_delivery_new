@@ -59,6 +59,7 @@ app.*.map.json
 # Environment variables (secrets)
 .env
 .env.*
+!.env.client.example
 google-services.json
 GoogleService-Info.plist
 

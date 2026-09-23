@@ -19,6 +19,7 @@ import 'cancellation_screen.dart';
 import 'customer_ride_status_screen.dart';
 import '../../customer.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../common/utils/role_amount_calculator.dart';
 
 /// Customer Order Detail Screen
 ///
@@ -1003,7 +1004,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                       ),
                       if (item['price'] != null)
                         Text(
-                          '฿${(((item['price'] as num?)?.toDouble() ?? 0.0) * ((item['quantity'] as num?)?.toInt() ?? 1)).toStringAsFixed(0)}',
+                          RoleAmountCalculator.formatBahtCeil(((item['price'] as num?)?.toDouble() ?? 0.0) * ((item['quantity'] as num?)?.toInt() ?? 1)),
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
@@ -1108,7 +1109,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                         ),
                       ),
                       Text(
-                        '฿${itemTotal.ceil()}',
+                        '฿${RoleAmountCalculator.ceilBaht(itemTotal)}',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -1131,7 +1132,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                   style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
                 ),
                 Text(
-                  '฿${booking.price.ceil()}',
+                  '฿${RoleAmountCalculator.ceilBaht(booking.price)}',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -1153,7 +1154,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                         TextStyle(fontSize: 14, color: colorScheme.onSurface),
                   ),
                   Text(
-                    '฿${booking.deliveryFee!.ceil()}',
+                    '฿${RoleAmountCalculator.ceilBaht(booking.deliveryFee!)}',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -1184,7 +1185,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                     ),
                   ),
                   Text(
-                    '-฿${couponDiscount.ceil()}',
+                    '-฿${RoleAmountCalculator.ceilBaht(couponDiscount)}',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -1231,7 +1232,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                   ),
                 ),
                 Text(
-                  '฿${booking.price.ceil()}',
+                  '฿${RoleAmountCalculator.ceilBaht(booking.price)}',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -1258,7 +1259,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                         TextStyle(fontSize: 14, color: colorScheme.secondary),
                   ),
                   Text(
-                    '-฿${couponDiscount.ceil()}',
+                    '-฿${RoleAmountCalculator.ceilBaht(couponDiscount)}',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -1285,7 +1286,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                 ),
               ),
               Text(
-                '฿${_calculateTotalPrice().ceil()}',
+                '฿${RoleAmountCalculator.ceilBaht(_calculateTotalPrice())}',
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -1701,7 +1702,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                           ],
                         ),
                         Text(
-                          '฿${totalAmount.ceil()}',
+                          '฿${RoleAmountCalculator.ceilBaht(totalAmount)}',
                           style: const TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
@@ -1727,7 +1728,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                                         .orderDetailFoodCost,
                                     style: const TextStyle(
                                         fontSize: 11, color: Colors.white70)),
-                                Text('฿${foodCost.ceil()}',
+                                Text('฿${RoleAmountCalculator.ceilBaht(foodCost)}',
                                     style: const TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
@@ -1743,7 +1744,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                                         .orderDetailDeliveryFee,
                                     style: const TextStyle(
                                         fontSize: 11, color: Colors.white70)),
-                                Text('฿${deliveryFee.ceil()}',
+                                Text('฿${RoleAmountCalculator.ceilBaht(deliveryFee)}',
                                     style: const TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
@@ -1760,10 +1761,10 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                         couponCode != null && couponCode.isNotEmpty
                             ? AppLocalizations.of(context)!
                                 .orderDetailCouponUsed(couponCode,
-                                    couponDiscount.ceil().toString())
+                                    RoleAmountCalculator.ceilBaht(couponDiscount).toString())
                             : AppLocalizations.of(context)!
                                 .orderDetailCouponUsedNoCode(
-                                    couponDiscount.ceil().toString()),
+                                    RoleAmountCalculator.ceilBaht(couponDiscount).toString()),
                         style: const TextStyle(
                           fontSize: 12,
                           color: Colors.white,

@@ -32,7 +32,7 @@ class WalletService {
     try {
       final response = await _supabase
           .from('wallets')
-          .select('id, user_id, balance, updated_at')
+          .select('id, user_id, balance, balance_system, updated_at')
           .eq('user_id', driverId)
           .maybeSingle();
 
@@ -57,7 +57,7 @@ class WalletService {
             'user_id': userId,
             'balance': 0,
           })
-          .select('id, user_id, balance, updated_at')
+          .select('id, user_id, balance, balance_system, updated_at')
           .single();
 
       debugLog('✅ สร้างกระเป๋าเงินสำเร็จสำหรับ: $userId');
@@ -552,20 +552,38 @@ class DriverWallet {
   final String id;
   final String userId;
   final double balance;
+
+  /// ถัง "จากระบบ" (รางวัลชวนเพื่อน / ชดเชยคูปอง / ค่าออเดอร์ที่จ่ายผ่าน Wallet)
+  final double balanceSystem;
   final DateTime updatedAt;
 
   DriverWallet({
     required this.id,
     required this.userId,
     required this.balance,
+    this.balanceSystem = 0,
     required this.updatedAt,
   });
+
+  /// ยอดที่ถอน/ใช้ได้จริงของถังระบบ (balance ติดลบได้จากค่าคอม)
+  double get availableSystem {
+    final b = balance < 0 ? 0.0 : balance;
+    final s = balanceSystem < 0 ? 0.0 : balanceSystem;
+    return s < b ? s : b;
+  }
+
+  /// ถังเติมเอง = ยอดที่ใช้ได้ทั้งหมด − ถังระบบ
+  double get availableTopup {
+    final b = balance < 0 ? 0.0 : balance;
+    return b - availableSystem;
+  }
 
   factory DriverWallet.fromJson(Map<String, dynamic> json) {
     return DriverWallet(
       id: json['id'] as String,
       userId: json['user_id'] as String,
       balance: (json['balance'] as num).toDouble(),
+      balanceSystem: (json['balance_system'] as num?)?.toDouble() ?? 0,
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
   }
@@ -575,6 +593,7 @@ class DriverWallet {
       'id': id,
       'user_id': userId,
       'balance': balance,
+      'balance_system': balanceSystem,
       'updated_at': updatedAt.toIso8601String(),
     };
   }
@@ -650,6 +669,15 @@ class WalletTransaction {
         return 'รายได้จากงาน';
       case 'penalty':
         return 'ค่าปรับ';
+      case 'coupon_compensation':
+        return 'ชดเชยส่วนลดคูปอง';
+      case 'job_payout':
+        return 'รับค่าออเดอร์ (ลูกค้าจ่ายผ่าน Wallet)';
+      case 'withdrawal_pending':
+        return 'ถอนเงิน (รอโอน)';
+      case 'withdrawal_refund':
+      case 'refund':
+        return 'คืนเงิน';
       default:
         return type;
     }

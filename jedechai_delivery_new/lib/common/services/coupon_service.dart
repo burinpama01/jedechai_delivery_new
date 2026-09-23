@@ -140,16 +140,16 @@ class CouponService {
     }
   }
 
-  /// Bangkok time string for DB date queries — matches [Coupon._bangkokNow].
-  static String _bangkokNowIso() =>
-      DateTime.now().toUtc().add(const Duration(hours: 7)).toIso8601String();
+  /// เวลาปัจจุบันแบบ UTC ที่มี 'Z' สำหรับ query คอลัมน์ timestamptz (C4)
+  /// (เดิมส่งเวลาไทยแบบไม่มีโซน → Postgres ตีเป็น UTC → คูปองขึ้น/หมดเร็วไป 7 ชม.)
+  static String _nowUtcIso() => DateTime.now().toUtc().toIso8601String();
 
   Future<List<Coupon>> getClaimableCoupons({
     String? serviceType,
     String? merchantId,
   }) async {
     try {
-      final now = _bangkokNowIso();
+      final now = _nowUtcIso();
       final response = await _client
           .from('coupons')
           .select()
@@ -340,7 +340,7 @@ class CouponService {
     String? merchantId,
   }) async {
     try {
-      final now = _bangkokNowIso();
+      final now = _nowUtcIso();
       var query = _client
           .from('coupons')
           .select()
@@ -420,8 +420,8 @@ class CouponService {
             'merchant_gp_charge_rate': merchantGpChargeRate,
             'merchant_gp_system_rate': merchantGpSystemRate,
             'merchant_gp_driver_rate': merchantGpDriverRate,
-            'start_date': startDate.toIso8601String(),
-            'end_date': endDate.toIso8601String(),
+            'start_date': startDate.toUtc().toIso8601String(),
+            'end_date': endDate.toUtc().toIso8601String(),
             'is_active': true,
           })
           .select()

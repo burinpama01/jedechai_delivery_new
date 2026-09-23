@@ -16,11 +16,13 @@ class WithdrawalService {
   ///
   /// หักเงินจาก wallet ทันที แล้วรอ admin อนุมัติ
   /// ถ้า admin ปฏิเสธ จะคืนเงินเข้า wallet
+  /// [bucket] 'topup' (เติมเอง ขั้นต่ำ ฿100) หรือ 'system' (จากระบบ ขั้นต่ำ ฿200)
   Future<bool> createWithdrawalRequest({
     required double amount,
     required String bankName,
     required String bankAccountNumber,
     required String bankAccountName,
+    String bucket = 'topup',
   }) async {
     final userId = AuthService.userId;
     if (userId == null) {
@@ -29,7 +31,8 @@ class WithdrawalService {
     }
 
     // Phase 6: Validate withdrawal amount (min/max)
-    const double minWithdrawal = 100.0;
+    // ขั้นต่ำต่อถัง (server เป็นผู้ตัดสินใจจริง — ค่านี้ไว้กันเรียกผิดฝั่ง client)
+    final double minWithdrawal = bucket == 'system' ? 200.0 : 100.0;
     const double maxWithdrawal = 50000.0;
     if (amount < minWithdrawal) {
       debugLog('❌ จำนวนเงินต่ำกว่าขั้นต่ำ: $amount < $minWithdrawal');
@@ -41,10 +44,9 @@ class WithdrawalService {
     }
 
     try {
-      final rpcResult =
-          await _client.rpc('create_wallet_withdrawal_request', params: {
-        'p_user_id': userId,
+      final rpcResult = await _client.rpc('request_wallet_withdrawal', params: {
         'p_amount': amount,
+        'p_bucket': bucket,
         'p_bank_name': bankName,
         'p_bank_account_number': bankAccountNumber,
         'p_bank_account_name': bankAccountName,
@@ -95,29 +97,20 @@ class WithdrawalService {
     }
   }
 
-  /// ยกเลิกคำขอถอนเงิน (เฉพาะสถานะ pending)
-  ///
-  /// ISSUE-101: ต้องทำผ่าน RPC `cancel_wallet_withdrawal_request` เท่านั้น
-  /// เพราะการเปลี่ยนสถานะ + คืนเงินต้องอยู่ใน transaction เดียวกัน และต้อง
-  /// เปลี่ยนสถานะแบบมีเงื่อนไข (WHERE status = 'pending') ก่อนคืนเงิน
-  /// มิฉะนั้นการกดยกเลิกซ้ำจะคืนเงินเข้า wallet ได้หลายรอบ
+  /// ยกเลิกคำขอถอนเงิน (เฉพาะสถานะ pending) — คืนเงินผ่าน RPC แบบ atomic
   Future<bool> cancelWithdrawalRequest(String requestId) async {
-    final userId = AuthService.userId;
-    if (userId == null) return false;
-
+    if (AuthService.userId == null) return false;
     try {
-      final rpcResult =
-          await _client.rpc('cancel_wallet_withdrawal_request', params: {
-        'p_request_id': requestId,
-      });
-
-      if (rpcResult is Map && rpcResult['success'] != true) {
-        debugLog('❌ ยกเลิกคำขอถอนเงินไม่สำเร็จ: ${rpcResult['error']}');
-        return false;
+      final result = await _client.rpc(
+        'cancel_wallet_withdrawal_request',
+        params: {'p_request_id': requestId},
+      );
+      if (result is Map && result['success'] == true) {
+        debugLog('✅ Withdrawal request cancelled, refunded ฿${result['amount']}');
+        return true;
       }
-
-      debugLog('✅ ยกเลิกคำขอถอนเงินสำเร็จ: $requestId');
-      return true;
+      debugLog('❌ Cancel withdrawal failed: $result');
+      return false;
     } catch (e) {
       debugLog('❌ Error cancelling withdrawal request: $e');
       return false;

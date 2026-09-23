@@ -21,6 +21,7 @@ import '../../../common/widgets/reviews_screen.dart';
 import '../../customer/screens/auth/login_screen.dart';
 import '../../../l10n/app_localizations.dart';
 import 'merchant_coupon_management_screen.dart';
+import 'merchant_gp_plan_screen.dart';
 import 'profile/edit_merchant_profile_screen.dart';
 
 /// Merchant Settings Screen — Account & Settings
@@ -1522,6 +1523,13 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
   // Menu Card
   // ============================================================
 
+  /// แพ็กเกจ GP ใช้กับร้านอาหารเท่านั้น (ร้านซักรีดไม่มีแพ็กเกจ)
+  bool get _isFoodMerchant {
+    final types = _userProfile?['merchant_service_types'];
+    if (types is List && types.isNotEmpty) return types.contains('food');
+    return true;
+  }
+
   Widget _buildMenuCard() {
     return _card(
       title: AppLocalizations.of(context)!.accountMenuTitle,
@@ -1549,6 +1557,20 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             );
           },
         ),
+        if (_isFoodMerchant) ...[
+          _divider(),
+          _menuItem(
+            Icons.percent,
+            'แพ็กเกจ GP',
+            () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const MerchantGpPlanScreen(),
+                ),
+              );
+            },
+          ),
+        ],
         _divider(),
         _menuItem(
           Icons.notifications_outlined,

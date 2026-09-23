@@ -100,6 +100,40 @@ function allowSanitizedConfigInStaging(outDir) {
   writeFileSync(ignorePath, next, "utf8");
 }
 
+// Cache-busting: browsers kept serving stale JS because the ?v= stamp in
+// index.html was hardcoded and rarely bumped. Stamp every deploy artifact with
+// package.json version + timestamp (source files stay untouched).
+function stampAssetVersion(sourceDir, outDir) {
+  let version = "0.0.0";
+  try {
+    const pkg = JSON.parse(readFileSync(join(sourceDir, "package.json"), "utf8"));
+    if (typeof pkg.version === "string" && pkg.version.trim()) version = pkg.version.trim();
+  } catch {
+    // keep fallback version
+  }
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  const stamp = `${version}-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}`;
+
+  const adminShellNames = ["admin.html", "index.html"];
+  for (const shellName of adminShellNames) {
+    const shellPath = join(outDir, shellName);
+    if (!existsSync(shellPath)) continue;
+    const html = readFileSync(shellPath, "utf8")
+      .replace(/\?v=[A-Za-z0-9._-]+/g, `?v=${stamp}`);
+    writeFileSync(shellPath, html, "utf8");
+  }
+
+  const appJsPath = join(outDir, "app.js");
+  if (existsSync(appJsPath)) {
+    const appJs = readFileSync(appJsPath, "utf8")
+      .replace(/var ASSET_VERSION = '[^']*'/, `var ASSET_VERSION = '${stamp}'`);
+    writeFileSync(appJsPath, appJs, "utf8");
+  }
+
+  return stamp;
+}
+
 const args = parseArgs(process.argv.slice(2));
 const sourceDir = resolve(args.source || join(process.cwd(), "admin-web"));
 const outDir = resolve(
@@ -116,6 +150,7 @@ if (existsSync(outDir)) {
 const publicConfig = readPublicConfig(sourceDir);
 const copiedFiles = copyAdminWeb(sourceDir, outDir);
 allowSanitizedConfigInStaging(outDir);
+const assetVersion = stampAssetVersion(sourceDir, outDir);
 
 writeFileSync(
   join(outDir, "config.production.js"),
@@ -135,4 +170,5 @@ console.log(JSON.stringify({
   source: basename(sourceDir),
   sanitizedConfig: true,
   rawConfigExcluded: true,
+  assetVersion,
 }, null, 2));

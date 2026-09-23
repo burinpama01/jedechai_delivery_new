@@ -5,7 +5,7 @@ import '../../utils/debug_logger.dart';
 /// MapsService — เรียก Google Maps Web Service ผ่าน Edge Function `maps-proxy`
 ///
 /// ISSUE-120: เดิมทุกหน้าจอยิง `https://maps.googleapis.com/maps/api/...`
-/// ตรงจากเครื่องผู้ใช้ด้วย `EnvConfig.googleMapsApiKey` ซึ่งอยู่ใน `.env` ที่ถูก
+/// ตรงจากเครื่องผู้ใช้ด้วย `EnvConfig.googleMapsApiKey` ซึ่งอยู่ใน `.env.client` ที่ถูก
 /// bundle เป็น Flutter asset — key ของ Web Service ผูก application restriction
 /// ไม่ได้ ใครแตก APK ก็เอาไปยิงบิลเข้าโปรเจคได้ไม่จำกัด
 ///
