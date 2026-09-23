@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../theme/jdc_colors.dart';
+import '../../../theme/jdc_layout.dart';
 import 'package:intl/intl.dart';
 import '../../../common/models/coupon.dart';
 import '../../../common/services/auth_service.dart';
@@ -12,12 +13,15 @@ class MerchantCouponManagementScreen extends StatefulWidget {
   final String? targetMerchantId;
   final bool managedByAdmin;
   final String? merchantDisplayName;
+  /// Fixture สำหรับ dev_preview เท่านั้น — ไม่กระทบ production เพราะ default null
+  final List<Coupon>? fixtureCoupons;
 
   const MerchantCouponManagementScreen({
     super.key,
     this.targetMerchantId,
     this.managedByAdmin = false,
     this.merchantDisplayName,
+    this.fixtureCoupons,
   });
 
   @override
@@ -71,6 +75,14 @@ class _MerchantCouponManagementScreenState
   }
 
   Future<void> _loadCoupons() async {
+    // Fixture override สำหรับ dev_preview
+    if (widget.fixtureCoupons != null) {
+      setState(() {
+        _coupons = widget.fixtureCoupons!;
+        _isLoading = false;
+      });
+      return;
+    }
     final merchantId = _merchantId;
     if (merchantId == null) return;
     setState(() => _isLoading = true);
@@ -83,7 +95,7 @@ class _MerchantCouponManagementScreenState
     }
   }
 
-  Future<void> _openAdminCreateCouponDialog() async {
+  Future<void> _openCreateCouponDialog() async {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
@@ -101,8 +113,8 @@ class _MerchantCouponManagementScreenState
                     children: [
                       Expanded(
                         child: Text(
-                          AppLocalizations.of(context)!.couponAdminDialogTitle,
-                          style: TextStyle(
+                          AppLocalizations.of(context)!.merchantCouponCreateDialogTitle,
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
@@ -240,164 +252,367 @@ class _MerchantCouponManagementScreenState
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+  // ─── helpers ────────────────────────────────────────────────────────────────
 
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: Text(
-          widget.managedByAdmin
-              ? (widget.merchantDisplayName != null
-                  ? AppLocalizations.of(context)!.couponAdminTitle(widget.merchantDisplayName!)
-                  : AppLocalizations.of(context)!.couponAdminTitleNoName)
-              : AppLocalizations.of(context)!.couponTitle,
-        ),
-        backgroundColor: JdcColors.of(context).cta,
-        foregroundColor: JdcColors.of(context).onCta,
-      ),
-      body: RefreshIndicator(
-        onRefresh: _loadCoupons,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _buildUsageGuide(),
-            const SizedBox(height: 12),
-            if (widget.managedByAdmin)
-              _buildAdminCreateButton()
-            else
-              _buildCreateForm(),
-            const SizedBox(height: 16),
-            Text(
-              AppLocalizations.of(context)!.couponListTitle,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
-            if (_isLoading)
-              Center(
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: CircularProgressIndicator(
-                    color: JdcColors.of(context).cta,
-                  ),
-                ),
-              )
-            else if (_coupons.isEmpty)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: colorScheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: colorScheme.outline.withOpacity(0.12)),
-                ),
-                child: Text(
-                  AppLocalizations.of(context)!.couponEmpty,
-                  style: TextStyle(color: colorScheme.onSurface),
-                ),
-              )
-            else
-              ..._coupons.map(_buildCouponCard),
-          ],
-        ),
-      ),
+  TextStyle _txt(Color color, double size, {double w = 400, double? height}) {
+    return TextStyle(
+      color: color,
+      fontSize: size,
+      height: height,
+      fontWeight: FontWeight.values[(w.round() ~/ 100) - 1],
+      fontVariations: [FontVariation('wght', w)],
     );
   }
 
-  Widget _buildUsageGuide() {
-    final colorScheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final l10n = AppLocalizations.of(context)!;
-    final step3 = l10n.couponGuideStep3;
-    final step4 = widget.managedByAdmin
-        ? l10n.couponGuideStep4Admin
-        : l10n.couponGuideStep4Merchant;
+  // ─── layout ─────────────────────────────────────────────────────────────────
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDark
-            ? colorScheme.surfaceContainerHighest
-            : JdcColors.of(context).brandSoft,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark
-              ? colorScheme.outline.withOpacity(0.18)
-              : JdcColors.of(context).brandLine,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  @override
+  Widget build(BuildContext context) {
+    final jdc = JdcColors.of(context);
+    return Scaffold(
+      backgroundColor: jdc.paper,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            AppLocalizations.of(context)!.couponGuideTitle,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface,
+          _buildHeader(),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _loadCoupons,
+              color: jdc.cta,
+              child: _buildBody(),
             ),
           ),
-          const SizedBox(height: 6),
-          Text(
-            widget.managedByAdmin
-                ? AppLocalizations.of(context)!.couponGuideStep1Admin
-                : AppLocalizations.of(context)!.couponGuideStep1Merchant,
-            style: TextStyle(color: colorScheme.onSurface.withOpacity(0.85)),
-          ),
-          Text(
-            widget.managedByAdmin
-                ? AppLocalizations.of(context)!.couponGuideStep2Admin
-                : AppLocalizations.of(context)!.couponGuideStep2Merchant,
-            style: TextStyle(color: colorScheme.onSurface.withOpacity(0.85)),
-          ),
-          Text(step3, style: TextStyle(color: colorScheme.onSurface.withOpacity(0.85))),
-          Text(step4, style: TextStyle(color: colorScheme.onSurface.withOpacity(0.85))),
+          _buildBottomBar(),
         ],
       ),
     );
   }
 
-  Widget _buildAdminCreateButton() {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _buildHeader() {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.outline.withOpacity(0.12)),
+        color: jdc.surface,
+        border: Border(bottom: BorderSide(color: jdc.line)),
       ),
-      child: OutlinedButton.icon(
-        onPressed: _openAdminCreateCouponDialog,
-        icon: Icon(
-          PlatformAdaptive.icon(
-            android: Icons.edit_note,
-            ios: CupertinoIcons.pencil,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+              JdcSpacing.lg, JdcSpacing.lg, JdcSpacing.lg, JdcSpacing.md),
+          child: Row(
+            children: [
+              // ปุ่มย้อนกลับ 44×44 ตาม artboard
+              SizedBox(
+                width: JdcTouch.minTarget,
+                height: JdcTouch.minTarget,
+                child: Material(
+                  color: jdc.surface,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(JdcRadius.field),
+                    side: BorderSide(color: jdc.line),
+                  ),
+                  child: InkWell(
+                    onTap: () => Navigator.of(context).maybePop(),
+                    borderRadius: BorderRadius.circular(JdcRadius.field),
+                    child: Icon(Icons.chevron_left, size: 20, color: jdc.text),
+                  ),
+                ),
+              ),
+              const SizedBox(width: JdcSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.managedByAdmin
+                          ? (widget.merchantDisplayName != null
+                              ? l10n.couponAdminTitle(widget.merchantDisplayName!)
+                              : l10n.couponAdminTitleNoName)
+                          : l10n.merchantCouponTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: _txt(jdc.text, 17, w: 700),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      l10n.merchantCouponSubtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: _txt(jdc.muted, 12),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ),
-        label: Text(AppLocalizations.of(context)!.couponAdminOpenForm),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: JdcColors.of(context).cta,
-          side: BorderSide(color: JdcColors.of(context).cta),
-          padding: const EdgeInsets.symmetric(vertical: 12),
         ),
       ),
     );
   }
 
+  Widget _buildBody() {
+    final jdc = JdcColors.of(context);
+    if (_isLoading) {
+      return Center(child: CircularProgressIndicator(color: jdc.cta));
+    }
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(
+          JdcSpacing.xl, JdcSpacing.md, JdcSpacing.xl, JdcSpacing.lg),
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        _buildInfoBanner(),
+        const SizedBox(height: JdcSpacing.md),
+        if (_coupons.isEmpty)
+          _buildEmpty()
+        else
+          ..._coupons.map(_buildCouponCard),
+      ],
+    );
+  }
+
+  /// แบนเนอร์ข้อมูล: สีเขียวอ่อน + icon shield ตาม artboard (ใช้ successSoft เป็น closest เพราะ JdcColors ไม่มี teal)
+  Widget _buildInfoBanner() {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: JdcSpacing.md, vertical: JdcSpacing.md),
+      decoration: BoxDecoration(
+        color: jdc.successSoft,
+        borderRadius: BorderRadius.circular(JdcRadius.small),
+        border: Border.all(color: jdc.line),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.shield_outlined, size: 18, color: jdc.successInk),
+          const SizedBox(width: JdcSpacing.sm),
+          Expanded(
+            child: Text(
+              l10n.merchantCouponInfoNote,
+              style: _txt(jdc.successInk, 12, height: 1.5),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmpty() {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: JdcSpacing.xxxl),
+      child: Column(
+        children: [
+          Icon(Icons.local_offer_outlined, size: 48, color: jdc.dim),
+          const SizedBox(height: JdcSpacing.md),
+          Text(l10n.couponEmpty, style: _txt(jdc.muted, 14)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomBar() {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    return Container(
+      decoration: BoxDecoration(
+        color: jdc.surface,
+        border: Border(top: BorderSide(color: jdc.line)),
+        boxShadow: jdc.shadowSheet,
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+              JdcSpacing.xl, JdcSpacing.md, JdcSpacing.xl, JdcSpacing.xl),
+          child: SizedBox(
+            width: double.infinity,
+            height: JdcTouch.button,
+            child: Material(
+              color: jdc.cta,
+              borderRadius: BorderRadius.circular(JdcRadius.card),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(JdcRadius.card),
+                onTap: _openCreateCouponDialog,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.add, size: 19, color: jdc.onCta),
+                    const SizedBox(width: JdcSpacing.sm),
+                    Text(l10n.merchantCouponCreateBtn,
+                        style: _txt(jdc.onCta, 15, w: 700)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─── coupon card ─────────────────────────────────────────────────────────────
+
+  /// สร้างข้อความเงื่อนไขย่อ เช่น "ซื้อครบ ฿150 · ใช้ได้ถึง 31 ธ.ค."
+  String _buildConditionText(Coupon coupon) {
+    final parts = <String>[];
+    if ((coupon.minOrderAmount ?? 0) > 0) {
+      parts.add(AppLocalizations.of(context)!.merchantCouponMinSpend(coupon.minOrderAmount!.toStringAsFixed(0)));
+    }
+    if (coupon.endDate != null) {
+      parts.add(AppLocalizations.of(context)!.merchantCouponValidUntil(_formatDate(coupon.endDate!)));
+    }
+    if (parts.isEmpty && coupon.description != null) {
+      return coupon.description!;
+    }
+    return parts.join(' · ');
+  }
+
+  Widget _buildCouponCard(Coupon coupon) {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+
+    final String statusLabel;
+    final Color statusBg;
+    final Color statusText;
+    if (coupon.isExpired) {
+      statusLabel = l10n.merchantCouponExpiredStatus;
+      statusBg = jdc.sunken;
+      statusText = jdc.muted;
+    } else if (coupon.isUsedUp) {
+      statusLabel = l10n.merchantCouponUsedUpStatus;
+      statusBg = jdc.sunken;
+      statusText = jdc.muted;
+    } else if (!coupon.isActive) {
+      statusLabel = l10n.merchantCouponDisabledStatus;
+      statusBg = jdc.sunken;
+      statusText = jdc.muted;
+    } else {
+      statusLabel = l10n.merchantCouponActiveStatus;
+      statusBg = jdc.successSoft;
+      statusText = jdc.successInk;
+    }
+
+    final usageText = coupon.usageLimit == 0
+        ? l10n.merchantCouponUnlimitedUsage
+        : l10n.merchantCouponUsageCount(
+            coupon.usedCount.toString(),
+            coupon.usageLimit.toString(),
+          );
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: JdcSpacing.md),
+      decoration: BoxDecoration(
+        color: jdc.surface,
+        borderRadius: BorderRadius.circular(JdcRadius.card),
+        border: Border.all(color: jdc.line),
+        boxShadow: jdc.shadowCard,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // แถวบน: icon + ชื่อ/เงื่อนไข + status badge
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+                JdcSpacing.lg, JdcSpacing.md, JdcSpacing.lg, JdcSpacing.sm),
+            child: Row(
+              children: [
+                // icon กล่อง brand-soft 38×38
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: jdc.brandSoft,
+                    borderRadius: BorderRadius.circular(JdcRadius.small),
+                  ),
+                  child: Icon(
+                    Icons.local_offer_outlined,
+                    size: 19,
+                    color: jdc.brandOnSoft,
+                  ),
+                ),
+                const SizedBox(width: JdcSpacing.sm + 2),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        coupon.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: _txt(jdc.text, 15, w: 700),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _buildConditionText(coupon),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: _txt(jdc.muted, 12),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: JdcSpacing.sm),
+                // status badge
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: JdcSpacing.sm + 2, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: statusBg,
+                    borderRadius: BorderRadius.circular(JdcRadius.chip),
+                  ),
+                  child: Text(statusLabel,
+                      style: _txt(statusText, 11, w: 700)),
+                ),
+              ],
+            ),
+          ),
+          // เส้นแบ่ง
+          Divider(height: 1, color: jdc.line),
+          // แถวล่าง: usage text + toggle
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+                JdcSpacing.lg, JdcSpacing.sm, JdcSpacing.md, JdcSpacing.sm),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    usageText,
+                    style: _txt(jdc.muted, 12),
+                  ),
+                ),
+                // toggle switch — ใช้ Switch เดิม ห้ามแตะ logic
+                Switch(
+                  value: coupon.isActive,
+                  onChanged: (_) => _toggleCoupon(coupon),
+                  activeThumbColor: jdc.surface,
+                  activeTrackColor: jdc.successFill,
+                  inactiveThumbColor: jdc.surface,
+                  inactiveTrackColor: jdc.offTrack,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── form (ใช้ใน dialog) ─────────────────────────────────────────────────────
+
   Widget _buildCreateForm({VoidCallback? onCreated}) {
-    final colorScheme = Theme.of(context).colorScheme;
     return Form(
       key: _formKey,
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: colorScheme.surface,
+          color: JdcColors.of(context).surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colorScheme.outline.withOpacity(0.12)),
+          border: Border.all(color: JdcColors.of(context).line),
         ),
         child: Column(
           children: [
@@ -423,7 +638,6 @@ class _MerchantCouponManagementScreenState
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               initialValue: _discountType,
-              // ข้อความตัวเลือกภาษาไทยยาวเกินกรอบบนจอ 360 ถ้าไม่ให้ยืดเต็มความกว้าง
               isExpanded: true,
               items: [
                 DropdownMenuItem(
@@ -509,7 +723,7 @@ class _MerchantCouponManagementScreenState
                       locale: const Locale('th', 'TH'),
                       title: AppLocalizations.of(context)!.couponPickStartDate,
                     );
-                    if (picked != null) setState(() => _startDate = picked);
+                    if (picked != null && mounted) setState(() => _startDate = picked);
                   },
                   child: Text(AppLocalizations.of(context)!.couponPick),
                 ),
@@ -528,7 +742,7 @@ class _MerchantCouponManagementScreenState
                       locale: const Locale('th', 'TH'),
                       title: AppLocalizations.of(context)!.couponPickEndDate,
                     );
-                    if (picked != null) setState(() => _endDate = picked);
+                    if (picked != null && mounted) setState(() => _endDate = picked);
                   },
                   child: Text(AppLocalizations.of(context)!.couponPick),
                 ),
@@ -559,55 +773,6 @@ class _MerchantCouponManagementScreenState
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildCouponCard(Coupon coupon) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.outline.withOpacity(0.12)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  coupon.code,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-                Text(
-                  coupon.name,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: colorScheme.onSurface.withOpacity(0.85),
-                  ),
-                ),
-                Text(
-                  coupon.discountText,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.onSurface.withOpacity(0.7),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Switch(
-            value: coupon.isActive,
-            onChanged: (_) => _toggleCoupon(coupon),
-          ),
-        ],
       ),
     );
   }

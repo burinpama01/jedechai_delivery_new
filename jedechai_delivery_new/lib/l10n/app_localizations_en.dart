@@ -7945,4 +7945,128 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get merchantLaundryAddPackageTooltip => 'Add package';
+
+  @override
+  String get optLibPageTitle => 'Option Library';
+
+  @override
+  String get optLibSubtitle => 'Create once, reuse with any menu';
+
+  @override
+  String get merchantCouponTitle => 'Shop Coupons';
+
+  @override
+  String get merchantCouponSubtitle => 'Discounts funded by the shop';
+
+  @override
+  String get merchantCouponInfoNote => 'Free delivery coupons will charge an additional 25% GP · Toggle each coupon with the switch on the right';
+
+  @override
+  String get merchantCouponActiveStatus => 'Active';
+
+  @override
+  String get merchantCouponExpiredStatus => 'Expired';
+
+  @override
+  String get merchantCouponUsedUpStatus => 'Used up';
+
+  @override
+  String get merchantCouponDisabledStatus => 'Disabled';
+
+  @override
+  String merchantCouponUsageCount(String used, String limit) {
+    return 'Used $used / $limit';
+  }
+
+  @override
+  String get merchantCouponUnlimitedUsage => 'Unlimited';
+
+  @override
+  String get merchantCouponCreateBtn => 'Create coupon';
+
+  @override
+  String get merchantCouponCreateDialogTitle => 'Create new coupon';
+
+  @override
+  String get gpPlanTitle => 'GP Plan';
+
+  @override
+  String get gpPlanSubtitle => 'Commission deducted from food orders';
+
+  @override
+  String get gpPlanCurrentLabel => 'Current plan';
+
+  @override
+  String get gpPlanActiveStatus => 'Active';
+
+  @override
+  String get gpPlanAvailableTitle => 'Available plans';
+
+  @override
+  String get gpPlanRequestChangeBtn => 'Request plan change';
+
+  @override
+  String get gpPlanCurrentBadge => 'Current plan';
+
+  @override
+  String get gpPlanBannerPendingApproval => 'Your shop is pending approval — you can change plans until approved; after approval, once per month';
+
+  @override
+  String get gpPlanBannerCustomDeal => 'Your shop has a custom deal with admin. Please contact admin to change plans';
+
+  @override
+  String gpPlanBannerCooldown(String time) {
+    return 'You can change plans again in $time';
+  }
+
+  @override
+  String get gpPlanBannerActiveOrders => 'Orders in progress — you can change plans once all are finished';
+
+  @override
+  String get gpPlanBannerCanChange => 'You can change plans now (once per month, applies to new orders immediately)';
+
+  @override
+  String merchantCouponMinSpend(String amount) {
+    return 'Min. spend ฿$amount';
+  }
+
+  @override
+  String merchantCouponValidUntil(String date) {
+    return 'Valid until $date';
+  }
+
+  @override
+  String get gpPlanLoadFailed => 'Failed to load plans';
+
+  @override
+  String gpPlanConfirmTitle(String name) {
+    return 'Switch to $name?';
+  }
+
+  @override
+  String gpPlanConfirmBody(String gp, String fee, String km, String perKm) {
+    return 'GP $gp · delivery fee ฿$fee within $km km, ฿$perKm/km beyond\n\nApplies to new orders immediately';
+  }
+
+  @override
+  String gpPlanConfirmCooldown(String days) {
+    return 'After switching, you can change again in $days days';
+  }
+
+  @override
+  String get gpPlanConfirmCancel => 'Cancel';
+
+  @override
+  String get gpPlanConfirmOk => 'Confirm';
+
+  @override
+  String gpPlanChanged(String name) {
+    return 'Switched to $name';
+  }
+
+  @override
+  String get gpPlanCustomDealName => 'Custom deal (admin)';
+
+  @override
+  String get gpPlanNoneSelected => 'No plan selected';
 }

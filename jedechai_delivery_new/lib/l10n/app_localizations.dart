@@ -14806,6 +14806,222 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add package'**
   String get merchantLaundryAddPackageTooltip;
+
+  /// No description provided for @optLibPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Option Library'**
+  String get optLibPageTitle;
+
+  /// No description provided for @optLibSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create once, reuse with any menu'**
+  String get optLibSubtitle;
+
+  /// No description provided for @merchantCouponTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop Coupons'**
+  String get merchantCouponTitle;
+
+  /// No description provided for @merchantCouponSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discounts funded by the shop'**
+  String get merchantCouponSubtitle;
+
+  /// No description provided for @merchantCouponInfoNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Free delivery coupons will charge an additional 25% GP · Toggle each coupon with the switch on the right'**
+  String get merchantCouponInfoNote;
+
+  /// No description provided for @merchantCouponActiveStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get merchantCouponActiveStatus;
+
+  /// No description provided for @merchantCouponExpiredStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get merchantCouponExpiredStatus;
+
+  /// No description provided for @merchantCouponUsedUpStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Used up'**
+  String get merchantCouponUsedUpStatus;
+
+  /// No description provided for @merchantCouponDisabledStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled'**
+  String get merchantCouponDisabledStatus;
+
+  /// No description provided for @merchantCouponUsageCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Used {used} / {limit}'**
+  String merchantCouponUsageCount(String used, String limit);
+
+  /// No description provided for @merchantCouponUnlimitedUsage.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited'**
+  String get merchantCouponUnlimitedUsage;
+
+  /// No description provided for @merchantCouponCreateBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Create coupon'**
+  String get merchantCouponCreateBtn;
+
+  /// No description provided for @merchantCouponCreateDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create new coupon'**
+  String get merchantCouponCreateDialogTitle;
+
+  /// No description provided for @gpPlanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'GP Plan'**
+  String get gpPlanTitle;
+
+  /// No description provided for @gpPlanSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Commission deducted from food orders'**
+  String get gpPlanSubtitle;
+
+  /// No description provided for @gpPlanCurrentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Current plan'**
+  String get gpPlanCurrentLabel;
+
+  /// No description provided for @gpPlanActiveStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get gpPlanActiveStatus;
+
+  /// No description provided for @gpPlanAvailableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Available plans'**
+  String get gpPlanAvailableTitle;
+
+  /// No description provided for @gpPlanRequestChangeBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Request plan change'**
+  String get gpPlanRequestChangeBtn;
+
+  /// No description provided for @gpPlanCurrentBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Current plan'**
+  String get gpPlanCurrentBadge;
+
+  /// No description provided for @gpPlanBannerPendingApproval.
+  ///
+  /// In en, this message translates to:
+  /// **'Your shop is pending approval — you can change plans until approved; after approval, once per month'**
+  String get gpPlanBannerPendingApproval;
+
+  /// No description provided for @gpPlanBannerCustomDeal.
+  ///
+  /// In en, this message translates to:
+  /// **'Your shop has a custom deal with admin. Please contact admin to change plans'**
+  String get gpPlanBannerCustomDeal;
+
+  /// No description provided for @gpPlanBannerCooldown.
+  ///
+  /// In en, this message translates to:
+  /// **'You can change plans again in {time}'**
+  String gpPlanBannerCooldown(String time);
+
+  /// No description provided for @gpPlanBannerActiveOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders in progress — you can change plans once all are finished'**
+  String get gpPlanBannerActiveOrders;
+
+  /// No description provided for @gpPlanBannerCanChange.
+  ///
+  /// In en, this message translates to:
+  /// **'You can change plans now (once per month, applies to new orders immediately)'**
+  String get gpPlanBannerCanChange;
+
+  /// No description provided for @merchantCouponMinSpend.
+  ///
+  /// In en, this message translates to:
+  /// **'Min. spend ฿{amount}'**
+  String merchantCouponMinSpend(String amount);
+
+  /// No description provided for @merchantCouponValidUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid until {date}'**
+  String merchantCouponValidUntil(String date);
+
+  /// No description provided for @gpPlanLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load plans'**
+  String get gpPlanLoadFailed;
+
+  /// No description provided for @gpPlanConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to {name}?'**
+  String gpPlanConfirmTitle(String name);
+
+  /// No description provided for @gpPlanConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'GP {gp} · delivery fee ฿{fee} within {km} km, ฿{perKm}/km beyond\n\nApplies to new orders immediately'**
+  String gpPlanConfirmBody(String gp, String fee, String km, String perKm);
+
+  /// No description provided for @gpPlanConfirmCooldown.
+  ///
+  /// In en, this message translates to:
+  /// **'After switching, you can change again in {days} days'**
+  String gpPlanConfirmCooldown(String days);
+
+  /// No description provided for @gpPlanConfirmCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get gpPlanConfirmCancel;
+
+  /// No description provided for @gpPlanConfirmOk.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get gpPlanConfirmOk;
+
+  /// No description provided for @gpPlanChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Switched to {name}'**
+  String gpPlanChanged(String name);
+
+  /// No description provided for @gpPlanCustomDealName.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom deal (admin)'**
+  String get gpPlanCustomDealName;
+
+  /// No description provided for @gpPlanNoneSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'No plan selected'**
+  String get gpPlanNoneSelected;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

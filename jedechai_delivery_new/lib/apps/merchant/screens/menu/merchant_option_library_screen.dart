@@ -13,10 +13,13 @@ import '../../../../theme/jdc_layout.dart';
 /// Features: List, Create, Edit, Delete option groups
 class MerchantOptionLibraryScreen extends StatefulWidget {
   final String merchantId;
+  /// Fixture สำหรับ dev_preview เท่านั้น — ไม่กระทบ production เพราะ default null
+  final List<MenuOptionGroup>? fixtureGroups;
 
   const MerchantOptionLibraryScreen({
     super.key,
     required this.merchantId,
+    this.fixtureGroups,
   });
 
   @override
@@ -48,6 +51,15 @@ class _MerchantOptionLibraryScreenState
   }
 
   Future<void> _loadOptionGroups() async {
+    // Fixture override สำหรับ dev_preview
+    if (widget.fixtureGroups != null) {
+      setState(() {
+        _optionGroups = widget.fixtureGroups!;
+        _isLoading = false;
+        _error = null;
+      });
+      return;
+    }
     try {
       setState(() {
         _isLoading = true;
@@ -214,14 +226,14 @@ class _MerchantOptionLibraryScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      AppLocalizations.of(context)!.optLibTitle,
+                      AppLocalizations.of(context)!.optLibPageTitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: _txt(jdc.text, 17, w: 700),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'สร้างครั้งเดียว ใช้ซ้ำได้ทุกเมนู',
+                      AppLocalizations.of(context)!.optLibSubtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: _txt(jdc.muted, 12),
@@ -248,6 +260,7 @@ class _MerchantOptionLibraryScreenState
           side: BorderSide(color: jdc.line),
         ),
         child: InkWell(
+          borderRadius: BorderRadius.circular(JdcRadius.field),
           onTap: () => Navigator.of(context).maybePop(),
           child: Icon(Icons.chevron_left, size: 20, color: jdc.text),
         ),

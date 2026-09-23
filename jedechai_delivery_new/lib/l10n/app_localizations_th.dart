@@ -7945,4 +7945,128 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get merchantLaundryAddPackageTooltip => 'เพิ่มแพ็กเกจ';
+
+  @override
+  String get optLibPageTitle => 'คลังตัวเลือกเสริม';
+
+  @override
+  String get optLibSubtitle => 'สร้างครั้งเดียว ใช้ซ้ำได้ทุกเมนู';
+
+  @override
+  String get merchantCouponTitle => 'คูปองร้าน';
+
+  @override
+  String get merchantCouponSubtitle => 'ส่วนลดที่ร้านออกค่าใช้จ่ายเอง';
+
+  @override
+  String get merchantCouponInfoNote => 'คูปองส่งฟรีของร้าน จะคิด GP เพิ่มรวม 25% · เปิด/ปิดคูปองแต่ละรายการได้จากสวิตช์ด้านขวา';
+
+  @override
+  String get merchantCouponActiveStatus => 'กำลังใช้งาน';
+
+  @override
+  String get merchantCouponExpiredStatus => 'หมดอายุ';
+
+  @override
+  String get merchantCouponUsedUpStatus => 'สิทธิ์หมด';
+
+  @override
+  String get merchantCouponDisabledStatus => 'ปิดใช้งาน';
+
+  @override
+  String merchantCouponUsageCount(String used, String limit) {
+    return 'ใช้ไปแล้ว $used / $limit สิทธิ์';
+  }
+
+  @override
+  String get merchantCouponUnlimitedUsage => 'ไม่จำกัดสิทธิ์';
+
+  @override
+  String get merchantCouponCreateBtn => 'สร้างคูปอง';
+
+  @override
+  String get merchantCouponCreateDialogTitle => 'สร้างคูปองใหม่';
+
+  @override
+  String get gpPlanTitle => 'แผน GP';
+
+  @override
+  String get gpPlanSubtitle => 'ค่าคอมมิชชันที่หักจากยอดอาหาร';
+
+  @override
+  String get gpPlanCurrentLabel => 'แผนปัจจุบัน';
+
+  @override
+  String get gpPlanActiveStatus => 'ใช้งานอยู่';
+
+  @override
+  String get gpPlanAvailableTitle => 'แผนที่เลือกได้';
+
+  @override
+  String get gpPlanRequestChangeBtn => 'ขอเปลี่ยนแผน';
+
+  @override
+  String get gpPlanCurrentBadge => 'แผนปัจจุบัน';
+
+  @override
+  String get gpPlanBannerPendingApproval => 'ร้านยังรอการอนุมัติ — เปลี่ยนแพ็กเกจได้จนกว่าจะอนุมัติ หลังอนุมัติเปลี่ยนได้เดือนละ 1 ครั้ง';
+
+  @override
+  String get gpPlanBannerCustomDeal => 'ร้านของคุณใช้เงื่อนไขพิเศษที่ตกลงกับแอดมิน หากต้องการเปลี่ยนแพ็กเกจ กรุณาติดต่อแอดมิน';
+
+  @override
+  String gpPlanBannerCooldown(String time) {
+    return 'เปลี่ยนแพ็กเกจได้อีกครั้งใน $time';
+  }
+
+  @override
+  String get gpPlanBannerActiveOrders => 'มีออเดอร์ที่กำลังดำเนินการ — เปลี่ยนแพ็กเกจได้เมื่อออเดอร์เสร็จทั้งหมด';
+
+  @override
+  String get gpPlanBannerCanChange => 'เปลี่ยนแพ็กเกจได้ตอนนี้ (เดือนละ 1 ครั้ง มีผลกับออเดอร์ใหม่ทันที)';
+
+  @override
+  String merchantCouponMinSpend(String amount) {
+    return 'ซื้อครบ ฿$amount';
+  }
+
+  @override
+  String merchantCouponValidUntil(String date) {
+    return 'ใช้ได้ถึง $date';
+  }
+
+  @override
+  String get gpPlanLoadFailed => 'โหลดข้อมูลแพ็กเกจไม่สำเร็จ';
+
+  @override
+  String gpPlanConfirmTitle(String name) {
+    return 'เปลี่ยนเป็น $name?';
+  }
+
+  @override
+  String gpPlanConfirmBody(String gp, String fee, String km, String perKm) {
+    return 'หัก GP $gp · ค่าส่ง $fee ฿ ในระยะ $km กม. เกินคิด $perKm ฿/กม.\n\nมีผลกับออเดอร์ใหม่ทันที';
+  }
+
+  @override
+  String gpPlanConfirmCooldown(String days) {
+    return 'หลังเปลี่ยนแล้ว จะเปลี่ยนได้อีกครั้งในอีก $days วัน';
+  }
+
+  @override
+  String get gpPlanConfirmCancel => 'ยกเลิก';
+
+  @override
+  String get gpPlanConfirmOk => 'ยืนยันเปลี่ยน';
+
+  @override
+  String gpPlanChanged(String name) {
+    return 'เปลี่ยนเป็น $name แล้ว';
+  }
+
+  @override
+  String get gpPlanCustomDealName => 'เงื่อนไขพิเศษ (แอดมิน)';
+
+  @override
+  String get gpPlanNoneSelected => 'ยังไม่ได้เลือกแผน';
 }
