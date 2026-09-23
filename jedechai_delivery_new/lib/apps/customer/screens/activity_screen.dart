@@ -9,7 +9,6 @@ import '../../../common/utils/app_time.dart';
 import '../../../common/utils/order_code_formatter.dart';
 import '../../../common/widgets/status_badge.dart';
 import '../../../utils/connection_helper.dart';
-import '../../../utils/mock_data_service.dart';
 import 'services/waiting_for_driver_screen.dart';
 import 'services/customer_order_detail_screen.dart';
 import '../../../common/utils/role_amount_calculator.dart';
@@ -25,6 +24,8 @@ enum _ActivityDateFilter {
 /// Activity Screen
 ///
 /// Shows booking history for the customer
+const String _kNotSignedInError = '__not_signed_in__';
+
 class ActivityScreen extends StatefulWidget {
   const ActivityScreen({super.key});
 
@@ -262,22 +263,8 @@ class _ActivityScreenState extends State<ActivityScreen> {
       final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId == null) {
         setState(() {
-          _error = 'User not authenticated';
-          _isLoading = false;
-        });
-        return;
-      }
-
-      // Check real Supabase connection first
-      final isRealSupabaseAvailable =
-          await MockDataService.checkRealConnection();
-
-      if (!isRealSupabaseAvailable) {
-        await Future.delayed(
-            const Duration(seconds: 1)); // Simulate network delay
-        final mockBookings = MockDataService.getMockBookings();
-        setState(() {
-          _bookings = mockBookings;
+          // ถูกเรียกจาก initState — ห้ามอ่าน l10n ที่นี่ แปลตอน build แทน
+          _error = _kNotSignedInError;
           _isLoading = false;
         });
         return;
@@ -315,25 +302,17 @@ class _ActivityScreenState extends State<ActivityScreen> {
           _isLoading = false;
         });
       } catch (supabaseError) {
-        // Handle Supabase connection errors
-
-        // Fallback to mock data on connection error
-        if (ConnectionHelper.isConnectionError(supabaseError)) {
-          final mockBookings = MockDataService.getMockBookings();
-          setState(() {
-            _bookings = mockBookings;
-            _isLoading = false;
-          });
-        } else {
-          setState(() {
-            _error = ConnectionHelper.getErrorMessage(
-                supabaseError, AppLocalizations.of(context));
-            _isLoading = false;
-          });
-        }
+        // ห้ามแสดงข้อมูลจำลองแทนออเดอร์จริง — แสดง error + ปุ่มลองใหม่
+        if (!mounted) return;
+        setState(() {
+          _error = ConnectionHelper.getErrorMessage(
+              supabaseError, AppLocalizations.of(context));
+          _isLoading = false;
+        });
       }
     } catch (e) {
       debugLog('❌ Error loading bookings: $e');
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _isLoading = false;
@@ -733,7 +712,9 @@ class _ActivityScreenState extends State<ActivityScreen> {
 
   Widget _buildErrorWidget() {
     return ConnectionHelper.buildErrorWidget(
-      error: _error!,
+      error: _error == _kNotSignedInError
+          ? AppLocalizations.of(context)!.activityNotSignedIn
+          : _error!,
       onRetry: _fetchBookings,
       title: AppLocalizations.of(context)!.activityLoadFailed,
     );

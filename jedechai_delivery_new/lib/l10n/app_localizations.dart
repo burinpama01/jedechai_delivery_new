@@ -14428,6 +14428,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Auto'**
   String get languageSystemShort;
+
+  /// No description provided for @mchDashScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop Dashboard'**
+  String get mchDashScreenTitle;
+
+  /// No description provided for @mchDashHeaderOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders'**
+  String get mchDashHeaderOrders;
+
+  /// No description provided for @mchDashHeaderAvgBill.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg./Bill'**
+  String get mchDashHeaderAvgBill;
+
+  /// No description provided for @mchDashWeekSalesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 7 Days Revenue'**
+  String get mchDashWeekSalesLabel;
+
+  /// No description provided for @mchDashTopItemsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Best Sellers'**
+  String get mchDashTopItemsTitle;
+
+  /// No description provided for @mchDashPayoutLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Payout to Shop'**
+  String get mchDashPayoutLabel;
+
+  /// No description provided for @mchDashSalesChartOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} orders'**
+  String mchDashSalesChartOrders(int count);
+
+  /// No description provided for @mchDashGpDeductedFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'GP Deducted {rate}%'**
+  String mchDashGpDeductedFmt(String rate);
+
+  /// No description provided for @mchDashHeaderSalesPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales{period}'**
+  String mchDashHeaderSalesPeriod(String period);
+
+  /// No description provided for @mchCatTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu Categories'**
+  String get mchCatTitle;
+
+  /// No description provided for @mchCatSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to reorder for customers'**
+  String get mchCatSubtitle;
+
+  /// No description provided for @mchCatAddCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Category'**
+  String get mchCatAddCategory;
+
+  /// No description provided for @mchCatAddDialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Category'**
+  String get mchCatAddDialog;
+
+  /// No description provided for @mchCatEditDialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Category'**
+  String get mchCatEditDialog;
+
+  /// No description provided for @mchCatSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get mchCatSave;
+
+  /// No description provided for @mchCatNameField.
+  ///
+  /// In en, this message translates to:
+  /// **'Category Name'**
+  String get mchCatNameField;
+
+  /// No description provided for @mchCatEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No categories yet'**
+  String get mchCatEmpty;
+
+  /// No description provided for @mchCatEditTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit category {name}'**
+  String mchCatEditTooltip(String name);
+
+  /// No description provided for @mchCatSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to manage category: {error}'**
+  String mchCatSaveFailed(String error);
+
+  /// No description provided for @mchCatReorderTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to reorder'**
+  String get mchCatReorderTooltip;
+
+  /// No description provided for @mchCatSortOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Order {order}'**
+  String mchCatSortOrder(int order);
+
+  /// No description provided for @mchMenuOptionButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Add-ons'**
+  String get mchMenuOptionButton;
+
+  /// No description provided for @mchMenuSortCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get mchMenuSortCategories;
+
+  /// No description provided for @mchMenuSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search menu items'**
+  String get mchMenuSearchHint;
+
+  /// No description provided for @mchMenuFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All {count}'**
+  String mchMenuFilterAll(int count);
+
+  /// No description provided for @activityNotSignedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in to see your activity'**
+  String get activityNotSignedIn;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

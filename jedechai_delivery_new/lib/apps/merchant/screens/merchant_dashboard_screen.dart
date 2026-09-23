@@ -13,13 +13,44 @@ import '../../../theme/jdc_colors.dart';
 import '../../../theme/jdc_layout.dart';
 import 'order_detail_screen.dart';
 
+/// Fixture data สำหรับ dev_preview เท่านั้น — ไม่ใช้ใน production
+class MerchantDashboardFixture {
+  const MerchantDashboardFixture({
+    required this.shopName,
+    required this.grossRevenue,
+    required this.totalRevenue,
+    required this.systemGP,
+    required this.vsLastPeriod,
+    required this.totalOrders,
+    required this.completedOrders,
+    required this.cancelledOrders,
+    required this.avgOrderValue,
+    required this.merchantSystemRate,
+    required this.merchantDriverRate,
+    required this.deliverySystemRate,
+    required this.salesChart,
+    required this.topItems,
+    required this.orderHistory,
+  });
+  final String shopName;
+  final double grossRevenue, totalRevenue, systemGP, vsLastPeriod, avgOrderValue;
+  final double merchantSystemRate, merchantDriverRate, deliverySystemRate;
+  final int totalOrders, completedOrders, cancelledOrders;
+  final List<DailySalesPoint> salesChart;
+  final List<TopItemReport> topItems;
+  final List<Map<String, dynamic>> orderHistory;
+}
+
 /// Merchant Sales Report Screen (JDC design)
 ///
 /// แสดงรายงานและประวัติการขาย พร้อมสรุปยอดขาย — โครงตาม artboard
 /// Merchant-Dashboard.dc.html: หัวเข้ม + สถิติ 3 ช่อง, ชิปช่วงเวลา,
 /// การ์ดกราฟ 7 วัน, การ์ด GP/ยอดโอน, เมนูขายดี และประวัติออเดอร์
 class MerchantDashboardScreen extends StatefulWidget {
-  const MerchantDashboardScreen({super.key});
+  const MerchantDashboardScreen({super.key, this.fixtureData});
+
+  /// Dev-preview only — null ใน production
+  final MerchantDashboardFixture? fixtureData;
 
   @override
   State<MerchantDashboardScreen> createState() =>
@@ -46,6 +77,9 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
 
   DateTimeRange? _customDateRange;
 
+  // Shop name (for header subtitle)
+  String? _shopName;
+
   // Stats
   double _totalRevenue = 0;
   double _grossRevenue = 0;
@@ -61,8 +95,8 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
 
   // Order history
   List<Map<String, dynamic>> _orderHistory = [];
-  List<_DailySalesPoint> _salesChart = [];
-  List<_TopItemReport> _topItems = [];
+  List<DailySalesPoint> _salesChart = [];
+  List<TopItemReport> _topItems = [];
 
   @override
   void initState() {
@@ -135,6 +169,30 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
   }
 
   Future<void> _loadData() async {
+    // Dev-preview shortcut: ใช้ fixture แทน Supabase ถ้ามี
+    final fixture = widget.fixtureData;
+    if (fixture != null) {
+      setState(() {
+        _shopName = fixture.shopName;
+        _grossRevenue = fixture.grossRevenue;
+        _totalRevenue = fixture.totalRevenue;
+        _systemGP = fixture.systemGP;
+        _vsLastPeriod = fixture.vsLastPeriod;
+        _totalOrders = fixture.totalOrders;
+        _completedOrders = fixture.completedOrders;
+        _cancelledOrders = fixture.cancelledOrders;
+        _avgOrderValue = fixture.avgOrderValue;
+        _merchantSystemRate = fixture.merchantSystemRate;
+        _merchantDriverRate = fixture.merchantDriverRate;
+        _deliverySystemRate = fixture.deliverySystemRate;
+        _salesChart = fixture.salesChart;
+        _topItems = fixture.topItems;
+        _orderHistory = fixture.orderHistory;
+        _isLoading = false;
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _error = null;
@@ -182,7 +240,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
       var allQuery = Supabase.instance.client
           .from('bookings')
           .select(
-              'id, price, delivery_fee, status, created_at, updated_at, notes, customer_id')
+              'id, service_type, price, delivery_fee, status, created_at, updated_at, notes, customer_id')
           .eq('merchant_id', merchantId)
           .eq('service_type', 'food')
           .inFilter('status', [
@@ -209,7 +267,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
         merchantProfile = await Supabase.instance.client
             .from('profiles')
             .select(
-              'gp_rate, merchant_gp_system_rate, merchant_gp_driver_rate, custom_base_fare, custom_base_distance, custom_per_km, custom_delivery_fee',
+              'gp_rate, merchant_gp_system_rate, merchant_gp_driver_rate, custom_base_fare, custom_base_distance, custom_per_km, custom_delivery_fee, shop_name',
             )
             .eq('id', merchantId)
             .maybeSingle();
@@ -274,6 +332,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
           _orderHistory = List<Map<String, dynamic>>.from(allOrdersResponse);
           _salesChart = chartBuckets;
           _topItems = topItems;
+          _shopName = merchantProfile?['shop_name']?.toString();
           _isLoading = false;
         });
       }
@@ -303,17 +362,17 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
     );
   }
 
-  List<_DailySalesPoint> _buildEmptySalesBuckets() {
+  List<DailySalesPoint> _buildEmptySalesBuckets() {
     final now = DateTime.now();
     return List.generate(7, (index) {
       final date = DateTime(now.year, now.month, now.day)
           .subtract(Duration(days: 6 - index));
-      return _DailySalesPoint(date: date, revenue: 0, orders: 0);
+      return DailySalesPoint(date: date, revenue: 0, orders: 0);
     });
   }
 
   void _addOrderToSalesBuckets(
-    List<_DailySalesPoint> buckets,
+    List<DailySalesPoint> buckets,
     Map<String, dynamic> order,
     double revenue,
   ) {
@@ -370,7 +429,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
     return ((currentRevenue - previousRevenue) / previousRevenue) * 100;
   }
 
-  Future<List<_TopItemReport>> _loadTopItems({
+  Future<List<TopItemReport>> _loadTopItems({
     required String merchantId,
     required DateTime start,
     required DateTime end,
@@ -386,7 +445,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
         },
       );
       return (response as List)
-          .map((row) => _TopItemReport.fromJson(Map<String, dynamic>.from(row)))
+          .map((row) => TopItemReport.fromJson(Map<String, dynamic>.from(row)))
           .toList();
     } catch (e) {
       debugLog('⚠️ Unable to load merchant top items: $e');
@@ -521,13 +580,16 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
   }
 
   /// ส่วนหัวสีเข้มตาม artboard Merchant-Dashboard —
-  /// ไทต์เติล + วันที่ + ไอคอนส่งออก/รีเฟรช + สถิติ 3 ช่องบนพื้น panel
+  /// ไทต์เติล + ชื่อร้าน+วันที่ + ไอคอนส่งออก/รีเฟรช + สถิติ 3 ช่องบนพื้น panel
   /// (หน้านี้เป็นแท็บใน shell จึงไม่มีปุ่มย้อนกลับ)
   Widget _buildHeader() {
     final jdc = JdcColors.of(context);
     final l10n = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context).toString();
     final dateText = DateFormat.yMMMd(locale).format(DateTime.now());
+    final subtitleText = _shopName != null && _shopName!.isNotEmpty
+        ? '$_shopName · $dateText'
+        : dateText;
 
     return Container(
       color: jdc.panel,
@@ -546,14 +608,14 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          l10n.mchDashTitle,
+                          l10n.mchDashScreenTitle,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: _txt(jdc.onPanel, 18, w: 700),
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          dateText,
+                          subtitleText,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: _txt(jdc.panelDim, 12),
@@ -578,23 +640,22 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
                 children: [
                   Expanded(
                     child: _buildHeaderStatTile(
-                      // TODO(l10n): mchDashHeaderSales — "ยอดขาย{period}"
-                      'ยอดขาย${_periodLabels(context)[_selectedPeriod]}',
+                      l10n.mchDashHeaderSalesPeriod(
+                        _periodLabels(context)[_selectedPeriod]),
                       _formatCurrency(_grossRevenue),
                     ),
-                  ),                  const SizedBox(width: JdcSpacing.sm + 2),
+                  ),
+                  const SizedBox(width: JdcSpacing.sm + 2),
                   Expanded(
                     child: _buildHeaderStatTile(
-                      // TODO(l10n): mchDashHeaderOrders — "ออเดอร์"
-                      'ออเดอร์',
+                      l10n.mchDashHeaderOrders,
                       '$_totalOrders',
                     ),
                   ),
                   const SizedBox(width: JdcSpacing.sm + 2),
                   Expanded(
                     child: _buildHeaderStatTile(
-                      // TODO(l10n): mchDashHeaderAvgPerBill — "เฉลี่ย/บิล"
-                      'เฉลี่ย/บิล',
+                      l10n.mchDashHeaderAvgBill,
                       _formatCurrency(_avgOrderValue),
                     ),
                   ),
@@ -811,6 +872,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
   /// ตามด้วยแท่งกราฟบนราง sunken ป้ายวันย่อทุกแท่ง
   Widget _buildSalesChart() {
     final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context).toString();
     final maxRevenue = _salesChart.fold<double>(
       0,
@@ -839,8 +901,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // TODO(l10n): mchDashSalesChartTitle — "ยอดขาย 7 วันล่าสุด"
-                    Text('ยอดขาย 7 วันล่าสุด', style: _txt(jdc.muted, 12)),
+                    Text(l10n.mchDashWeekSalesLabel, style: _txt(jdc.muted, 12)),
                     const SizedBox(height: 2),
                     Text(
                       _formatCurrency(weekTotal),
@@ -872,8 +933,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
                   child: Tooltip(
                     message:
                         '${DateFormat('d/M', locale).format(point.date)}\n${_formatCurrency(point.revenue)} '
-                        // TODO(l10n): ใช้ key จำนวนออเดอร์ ({count} ออเดอร์)
-                        '(${point.orders} ออเดอร์)',
+                        '(${l10n.mchDashSalesChartOrders(point.orders)})',
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                           horizontal: JdcSpacing.xs + 1),
@@ -955,6 +1015,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
 
   /// การ์ดคู่ "หัก GP" กับ "ยอดโอนเข้าร้าน" ตาม artboard
   Widget _buildPayoutCards() {
+    final l10n = AppLocalizations.of(context)!;
     final gpPct = ((_merchantSystemRate + _merchantDriverRate) * 100)
         .toStringAsFixed(0);
     return Padding(
@@ -963,16 +1024,14 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
         children: [
           Expanded(
             child: _buildPayoutCard(
-              // TODO(l10n): mchDashGpDeducted — "หัก GP {rate}%"
-              'หัก GP $gpPct%',
+              l10n.mchDashGpDeductedFmt(gpPct),
               _formatCurrency(_systemGP),
             ),
           ),
           const SizedBox(width: JdcSpacing.sm + 2),
           Expanded(
             child: _buildPayoutCard(
-              // TODO(l10n): mchDashPayoutLabel — "ยอดโอนเข้าร้าน"
-              'ยอดโอนเข้าร้าน',
+              l10n.mchDashPayoutLabel,
               _formatCurrency(_totalRevenue),
             ),
           ),
@@ -1031,8 +1090,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // TODO(l10n): mchDashTopItemsTitle — "เมนูขายดี"
-          Text('เมนูขายดี', style: _txt(jdc.text, 14, w: 700)),
+          Text(AppLocalizations.of(context)!.mchDashTopItemsTitle, style: _txt(jdc.text, 14, w: 700)),
           const SizedBox(height: JdcSpacing.md),
           Container(
             padding: const EdgeInsets.symmetric(
@@ -1059,7 +1117,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
     );
   }
 
-  Widget _buildTopItemRow(_TopItemReport item) {
+  Widget _buildTopItemRow(TopItemReport item) {
     final jdc = JdcColors.of(context);
     return Row(
       children: [
@@ -1075,8 +1133,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
               ),
               const SizedBox(height: 2),
               Text(
-                // TODO(l10n): mchDashOrderCount — "{count} ออเดอร์"
-                '${item.orderCount} ออเดอร์',
+                AppLocalizations.of(context)!.mchDashSalesChartOrders(item.orderCount),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: _txt(jdc.muted, 12),
@@ -1372,8 +1429,8 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
   }
 }
 
-class _DailySalesPoint {
-  const _DailySalesPoint({
+class DailySalesPoint {
+  const DailySalesPoint({
     required this.date,
     required this.revenue,
     required this.orders,
@@ -1383,11 +1440,11 @@ class _DailySalesPoint {
   final double revenue;
   final int orders;
 
-  _DailySalesPoint copyWith({
+  DailySalesPoint copyWith({
     double? revenue,
     int? orders,
   }) {
-    return _DailySalesPoint(
+    return DailySalesPoint(
       date: date,
       revenue: revenue ?? this.revenue,
       orders: orders ?? this.orders,
@@ -1395,8 +1452,8 @@ class _DailySalesPoint {
   }
 }
 
-class _TopItemReport {
-  const _TopItemReport({
+class TopItemReport {
+  const TopItemReport({
     required this.name,
     required this.orderCount,
     required this.revenue,
@@ -1406,8 +1463,8 @@ class _TopItemReport {
   final int orderCount;
   final double revenue;
 
-  factory _TopItemReport.fromJson(Map<String, dynamic> json) {
-    return _TopItemReport(
+  factory TopItemReport.fromJson(Map<String, dynamic> json) {
+    return TopItemReport(
       name: json['name']?.toString() ?? '-',
       orderCount: (json['order_count'] as num?)?.toInt() ?? 0,
       revenue: (json['revenue'] as num?)?.toDouble() ?? 0,

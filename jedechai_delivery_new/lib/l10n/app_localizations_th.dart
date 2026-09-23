@@ -7734,4 +7734,96 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get languageSystemShort => 'ระบบ';
+
+  @override
+  String get mchDashScreenTitle => 'แดชบอร์ดร้าน';
+
+  @override
+  String get mchDashHeaderOrders => 'ออเดอร์';
+
+  @override
+  String get mchDashHeaderAvgBill => 'เฉลี่ย/บิล';
+
+  @override
+  String get mchDashWeekSalesLabel => 'ยอดขาย 7 วันล่าสุด';
+
+  @override
+  String get mchDashTopItemsTitle => 'เมนูขายดี';
+
+  @override
+  String get mchDashPayoutLabel => 'ยอดโอนเข้าร้าน';
+
+  @override
+  String mchDashSalesChartOrders(int count) {
+    return '$count ออเดอร์';
+  }
+
+  @override
+  String mchDashGpDeductedFmt(String rate) {
+    return 'หัก GP $rate%';
+  }
+
+  @override
+  String mchDashHeaderSalesPeriod(String period) {
+    return 'ยอดขาย$period';
+  }
+
+  @override
+  String get mchCatTitle => 'หมวดหมู่เมนู';
+
+  @override
+  String get mchCatSubtitle => 'ลากเพื่อจัดลำดับที่ลูกค้าเห็น';
+
+  @override
+  String get mchCatAddCategory => 'เพิ่มหมวดหมู่';
+
+  @override
+  String get mchCatAddDialog => 'เพิ่มหมวดหมู่';
+
+  @override
+  String get mchCatEditDialog => 'แก้ไขหมวดหมู่';
+
+  @override
+  String get mchCatSave => 'บันทึก';
+
+  @override
+  String get mchCatNameField => 'ชื่อหมวดหมู่';
+
+  @override
+  String get mchCatEmpty => 'ยังไม่มีหมวดหมู่';
+
+  @override
+  String mchCatEditTooltip(String name) {
+    return 'แก้ไขหมวด $name';
+  }
+
+  @override
+  String mchCatSaveFailed(String error) {
+    return 'จัดการหมวดหมู่ไม่สำเร็จ: $error';
+  }
+
+  @override
+  String get mchCatReorderTooltip => 'ลากเพื่อจัดลำดับ';
+
+  @override
+  String mchCatSortOrder(int order) {
+    return 'ลำดับ $order';
+  }
+
+  @override
+  String get mchMenuOptionButton => 'ตัวเลือกเสริม';
+
+  @override
+  String get mchMenuSortCategories => 'จัดลำดับ';
+
+  @override
+  String get mchMenuSearchHint => 'ค้นหาเมนูในร้าน';
+
+  @override
+  String mchMenuFilterAll(int count) {
+    return 'ทั้งหมด $count';
+  }
+
+  @override
+  String get activityNotSignedIn => 'กรุณาเข้าสู่ระบบเพื่อดูประวัติการใช้งาน';
 }

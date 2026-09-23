@@ -7734,4 +7734,96 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get languageSystemShort => 'Auto';
+
+  @override
+  String get mchDashScreenTitle => 'Shop Dashboard';
+
+  @override
+  String get mchDashHeaderOrders => 'Orders';
+
+  @override
+  String get mchDashHeaderAvgBill => 'Avg./Bill';
+
+  @override
+  String get mchDashWeekSalesLabel => 'Last 7 Days Revenue';
+
+  @override
+  String get mchDashTopItemsTitle => 'Best Sellers';
+
+  @override
+  String get mchDashPayoutLabel => 'Payout to Shop';
+
+  @override
+  String mchDashSalesChartOrders(int count) {
+    return '$count orders';
+  }
+
+  @override
+  String mchDashGpDeductedFmt(String rate) {
+    return 'GP Deducted $rate%';
+  }
+
+  @override
+  String mchDashHeaderSalesPeriod(String period) {
+    return 'Sales$period';
+  }
+
+  @override
+  String get mchCatTitle => 'Menu Categories';
+
+  @override
+  String get mchCatSubtitle => 'Drag to reorder for customers';
+
+  @override
+  String get mchCatAddCategory => 'Add Category';
+
+  @override
+  String get mchCatAddDialog => 'Add Category';
+
+  @override
+  String get mchCatEditDialog => 'Edit Category';
+
+  @override
+  String get mchCatSave => 'Save';
+
+  @override
+  String get mchCatNameField => 'Category Name';
+
+  @override
+  String get mchCatEmpty => 'No categories yet';
+
+  @override
+  String mchCatEditTooltip(String name) {
+    return 'Edit category $name';
+  }
+
+  @override
+  String mchCatSaveFailed(String error) {
+    return 'Failed to manage category: $error';
+  }
+
+  @override
+  String get mchCatReorderTooltip => 'Drag to reorder';
+
+  @override
+  String mchCatSortOrder(int order) {
+    return 'Order $order';
+  }
+
+  @override
+  String get mchMenuOptionButton => 'Add-ons';
+
+  @override
+  String get mchMenuSortCategories => 'Sort';
+
+  @override
+  String get mchMenuSearchHint => 'Search menu items';
+
+  @override
+  String mchMenuFilterAll(int count) {
+    return 'All $count';
+  }
+
+  @override
+  String get activityNotSignedIn => 'Please sign in to see your activity';
 }

@@ -3833,5 +3833,50 @@
   "connErrDialogTitle": "การเชื่อมต่อขัดข้อง",
   "connErrTitle": "เชื่อมต่อไม่ได้",
   "connErrTitleGeneric": "เกิดข้อผิดพลาด",
-  "languageSystemShort": "ระบบ"
+  "languageSystemShort": "ระบบ",
+  "mchDashScreenTitle": "แดชบอร์ดร้าน",
+  "mchDashHeaderOrders": "ออเดอร์",
+  "mchDashHeaderAvgBill": "เฉลี่ย/บิล",
+  "mchDashWeekSalesLabel": "ยอดขาย 7 วันล่าสุด",
+  "mchDashTopItemsTitle": "เมนูขายดี",
+  "mchDashPayoutLabel": "ยอดโอนเข้าร้าน",
+  "mchDashSalesChartOrders": "{count} ออเดอร์",
+  "@mchDashSalesChartOrders": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "mchDashGpDeductedFmt": "หัก GP {rate}%",
+  "@mchDashGpDeductedFmt": {
+    "placeholders": {"rate": {"type": "String"}}
+  },
+  "mchDashHeaderSalesPeriod": "ยอดขาย{period}",
+  "@mchDashHeaderSalesPeriod": {
+    "placeholders": {"period": {"type": "String"}}
+  },
+  "mchCatTitle": "หมวดหมู่เมนู",
+  "mchCatSubtitle": "ลากเพื่อจัดลำดับที่ลูกค้าเห็น",
+  "mchCatAddCategory": "เพิ่มหมวดหมู่",
+  "mchCatAddDialog": "เพิ่มหมวดหมู่",
+  "mchCatEditDialog": "แก้ไขหมวดหมู่",
+  "mchCatSave": "บันทึก",
+  "mchCatNameField": "ชื่อหมวดหมู่",
+  "mchCatEmpty": "ยังไม่มีหมวดหมู่",
+  "mchCatEditTooltip": "แก้ไขหมวด {name}",
+  "@mchCatEditTooltip": {
+    "placeholders": {"name": {"type": "String"}}
+  },
+  "mchCatSaveFailed": "จัดการหมวดหมู่ไม่สำเร็จ: {error}",
+  "@mchCatSaveFailed": {
+    "placeholders": {"error": {"type": "String"}}
+  },
+  "mchCatReorderTooltip": "ลากเพื่อจัดลำดับ",
+  "mchCatSortOrder": "ลำดับ {order}",
+  "@mchCatSortOrder": {
+    "placeholders": {"order": {"type": "int"}}
+  },
+  "mchMenuOptionButton": "ตัวเลือกเสริม",
+  "mchMenuSortCategories": "จัดลำดับ",
+  "mchMenuSearchHint": "ค้นหาเมนูในร้าน",
+  "mchMenuFilterAll": "ทั้งหมด {count}",
+  "@mchMenuFilterAll": {"placeholders": {"count": {"type": "int"}}},
+  "activityNotSignedIn": "กรุณาเข้าสู่ระบบเพื่อดูประวัติการใช้งาน"
 }

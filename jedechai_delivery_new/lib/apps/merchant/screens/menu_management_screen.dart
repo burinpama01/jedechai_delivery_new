@@ -16,7 +16,10 @@ const String _kSoldOutFilter = '__soldout__';
 /// Allows merchants to manage their food menu items
 /// Features: Add, Edit, Delete menu items
 class MenuManagementScreen extends StatefulWidget {
-  const MenuManagementScreen({super.key});
+  const MenuManagementScreen({super.key, this.fixtureMenuItems});
+
+  /// Dev-preview only — null ใน production
+  final List<Map<String, dynamic>>? fixtureMenuItems;
 
   @override
   State<MenuManagementScreen> createState() => _MenuManagementScreenState();
@@ -53,6 +56,15 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   }
 
   Future<void> _fetchMenuItems() async {
+    // Dev-preview shortcut
+    final fixtureData = widget.fixtureMenuItems;
+    if (fixtureData != null) {
+      setState(() {
+        _menuItems = List<Map<String, dynamic>>.from(fixtureData);
+        _isLoading = false;
+      });
+      return;
+    }
     // ดึงข้อความไว้ก่อนเริ่มงาน async — ถ้าอ่านทีหลังตอน widget ถูก
     // deactivate แล้ว จะได้ error "deactivated widget's ancestor"
     final l10n = AppLocalizations.of(context)!;
@@ -357,7 +369,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                     onPressed: _fetchMenuItems,
                   ),
                   const SizedBox(width: JdcSpacing.xs),
-                  _buildOptionLibraryButton(),
+                  _buildOptionLibraryButton(AppLocalizations.of(context)!),
                 ],
               ),
               const SizedBox(height: JdcSpacing.md + 2),
@@ -372,7 +384,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   }
 
   /// ปุ่ม outline "ตัวเลือกเสริม" สูง 40 ตาม artboard
-  Widget _buildOptionLibraryButton() {
+  Widget _buildOptionLibraryButton(AppLocalizations l10n) {
     final jdc = JdcColors.of(context);
     return SizedBox(
       height: 40,
@@ -389,7 +401,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 13),
             child: Center(
               child: Text(
-                AppLocalizations.of(context)!.menuMgmtOptionTooltip,
+                l10n.mchMenuOptionButton,
                 style: _txt(jdc.text, 12, w: 700),
               ),
             ),
@@ -421,7 +433,10 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                 decoration: InputDecoration(
                   isDense: true,
                   border: InputBorder.none,
-                  hintText: 'ค้นหาเมนูในร้าน',
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  filled: false,
+                  hintText: AppLocalizations.of(context)!.mchMenuSearchHint,
                   hintStyle: _txt(jdc.muted, 14),
                   contentPadding: EdgeInsets.zero,
                 ),
@@ -444,7 +459,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
         scrollDirection: Axis.horizontal,
         children: [
           _buildFilterChip(
-            label: 'ทั้งหมด ${_menuItems.length}',
+            label: AppLocalizations.of(context)!.mchMenuFilterAll(_menuItems.length),
             selected: _categoryFilter == null,
             onTap: () => setState(() => _categoryFilter = null),
           ),
@@ -624,7 +639,9 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     final jdc = JdcColors.of(context);
     final label = _categoryFilter == null
         ? '${AppLocalizations.of(context)!.menuMgmtTitle} · $visibleCount'
-        : '$_categoryFilter · $visibleCount';
+        : _categoryFilter == _kSoldOutFilter
+            ? '${AppLocalizations.of(context)!.menuMgmtSoldOut} · $visibleCount'
+            : '$_categoryFilter · $visibleCount';
     return Padding(
       padding: const EdgeInsets.only(
           left: JdcSpacing.xs, right: JdcSpacing.xs, bottom: JdcSpacing.sm + 2),
@@ -650,7 +667,8 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: JdcSpacing.sm),
                 minimumSize: Size.zero,
               ),
-              child: Text('จัดลำดับ', style: _txt(jdc.link, 12, w: 700)),
+              child: Text(AppLocalizations.of(context)!.mchMenuSortCategories,
+                  style: _txt(jdc.link, 12, w: 700)),
             ),
           ),
         ],

@@ -3833,5 +3833,50 @@
   "connErrDialogTitle": "Connection problem",
   "connErrTitle": "Connection error",
   "connErrTitleGeneric": "Error",
-  "languageSystemShort": "Auto"
+  "languageSystemShort": "Auto",
+  "mchDashScreenTitle": "Shop Dashboard",
+  "mchDashHeaderOrders": "Orders",
+  "mchDashHeaderAvgBill": "Avg./Bill",
+  "mchDashWeekSalesLabel": "Last 7 Days Revenue",
+  "mchDashTopItemsTitle": "Best Sellers",
+  "mchDashPayoutLabel": "Payout to Shop",
+  "mchDashSalesChartOrders": "{count} orders",
+  "@mchDashSalesChartOrders": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "mchDashGpDeductedFmt": "GP Deducted {rate}%",
+  "@mchDashGpDeductedFmt": {
+    "placeholders": {"rate": {"type": "String"}}
+  },
+  "mchDashHeaderSalesPeriod": "Sales{period}",
+  "@mchDashHeaderSalesPeriod": {
+    "placeholders": {"period": {"type": "String"}}
+  },
+  "mchCatTitle": "Menu Categories",
+  "mchCatSubtitle": "Drag to reorder for customers",
+  "mchCatAddCategory": "Add Category",
+  "mchCatAddDialog": "Add Category",
+  "mchCatEditDialog": "Edit Category",
+  "mchCatSave": "Save",
+  "mchCatNameField": "Category Name",
+  "mchCatEmpty": "No categories yet",
+  "mchCatEditTooltip": "Edit category {name}",
+  "@mchCatEditTooltip": {
+    "placeholders": {"name": {"type": "String"}}
+  },
+  "mchCatSaveFailed": "Failed to manage category: {error}",
+  "@mchCatSaveFailed": {
+    "placeholders": {"error": {"type": "String"}}
+  },
+  "mchCatReorderTooltip": "Drag to reorder",
+  "mchCatSortOrder": "Order {order}",
+  "@mchCatSortOrder": {
+    "placeholders": {"order": {"type": "int"}}
+  },
+  "mchMenuOptionButton": "Add-ons",
+  "mchMenuSortCategories": "Sort",
+  "mchMenuSearchHint": "Search menu items",
+  "mchMenuFilterAll": "All {count}",
+  "@mchMenuFilterAll": {"placeholders": {"count": {"type": "int"}}},
+  "activityNotSignedIn": "Please sign in to see your activity"
 }

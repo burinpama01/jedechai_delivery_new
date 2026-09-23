@@ -5,7 +5,10 @@ import '../../../../theme/jdc_colors.dart';
 import '../../../../theme/jdc_layout.dart';
 
 class MerchantMenuCategoriesScreen extends StatefulWidget {
-  const MerchantMenuCategoriesScreen({super.key});
+  const MerchantMenuCategoriesScreen({super.key, this.fixtureCategories});
+
+  /// Dev-preview only — null ใน production
+  final List<Map<String, dynamic>>? fixtureCategories;
 
   @override
   State<MerchantMenuCategoriesScreen> createState() =>
@@ -41,6 +44,15 @@ class _MerchantMenuCategoriesScreenState
   }
 
   Future<void> _loadCategories() async {
+    // Dev-preview shortcut
+    final fixtureData = widget.fixtureCategories;
+    if (fixtureData != null) {
+      setState(() {
+        _categories = List<Map<String, dynamic>>.from(fixtureData);
+        _isLoading = false;
+      });
+      return;
+    }
     // ดึงข้อความไว้ก่อนเริ่มงาน async — ถ้าอ่านทีหลังตอน widget ถูก
     // deactivate แล้ว จะได้ error "deactivated widget's ancestor"
     final l10n = AppLocalizations.of(context)!;
@@ -77,17 +89,18 @@ class _MerchantMenuCategoriesScreenState
   }
 
   Future<void> _saveCategory({Map<String, dynamic>? category}) async {
+    final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController(
       text: category?['name']?.toString() ?? '',
     );
     final name = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(category == null ? 'เพิ่มหมวดหมู่' : 'แก้ไขหมวดหมู่'),
+        title: Text(category == null ? l10n.mchCatAddDialog : l10n.mchCatEditDialog),
         content: TextField(
           controller: controller,
           autofocus: true,
-          decoration: const InputDecoration(labelText: 'ชื่อหมวดหมู่'),
+          decoration: InputDecoration(labelText: l10n.mchCatNameField),
         ),
         actions: [
           TextButton(
@@ -96,7 +109,7 @@ class _MerchantMenuCategoriesScreenState
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-            child: const Text('บันทึก'),
+            child: Text(l10n.mchCatSave),
           ),
         ],
       ),
@@ -138,32 +151,36 @@ class _MerchantMenuCategoriesScreenState
     await _loadCategories();
   }
 
-  Future<void> _moveCategory(int index, int delta) async {
-    final target = index + delta;
-    if (target < 0 || target >= _categories.length) return;
-    final current = _categories[index];
-    final other = _categories[target];
+  /// จัดลำดับใหม่ผ่าน drag-and-drop — อัปเดต sort_order ทุกรายการ
+  Future<void> _reorderCategories(int oldIndex, int newIndex) async {
+    if (newIndex > oldIndex) newIndex--;
+    if (oldIndex == newIndex) return;
+
+    // Optimistic update
+    final updated = List<Map<String, dynamic>>.from(_categories);
+    final item = updated.removeAt(oldIndex);
+    updated.insert(newIndex, item);
+    setState(() => _categories = updated);
+
     try {
-      await Future.wait([
-        _client.from('menu_categories').update({
-          'sort_order': other['sort_order'] ?? target,
-        }).eq('id', current['id']),
-        _client.from('menu_categories').update({
-          'sort_order': current['sort_order'] ?? index,
-        }).eq('id', other['id']),
-      ]);
+      await Future.wait(
+        List.generate(updated.length, (i) => _client
+            .from('menu_categories')
+            .update({'sort_order': i})
+            .eq('id', updated[i]['id'])),
+      );
     } catch (e) {
       _showError(e);
-      return;
+      // Reload to restore correct state on failure
+      if (mounted) await _loadCategories();
     }
-    await _loadCategories();
   }
 
   void _showError(Object error) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('จัดการหมวดหมู่ไม่สำเร็จ: $error'),
+        content: Text(AppLocalizations.of(context)!.mchCatSaveFailed(error.toString())),
         backgroundColor: Theme.of(context).colorScheme.error,
       ),
     );
@@ -194,6 +211,7 @@ class _MerchantMenuCategoriesScreenState
   /// พื้น surface + เส้นแบ่งล่าง + ปุ่มย้อนกลับ 44x44 + ไทต์เติล 17px + คำโปรย
   Widget _buildHeader() {
     final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: BoxDecoration(
         color: jdc.surface,
@@ -213,14 +231,14 @@ class _MerchantMenuCategoriesScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'หมวดหมู่เมนู',
+                      l10n.mchCatTitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: _txt(jdc.text, 17, w: 700),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'ลากเพื่อจัดลำดับที่ลูกค้าเห็น',
+                      l10n.mchCatSubtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: _txt(jdc.muted, 12),
@@ -256,6 +274,7 @@ class _MerchantMenuCategoriesScreenState
 
   Widget _buildBody() {
     final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     if (_isLoading) {
       return Center(child: CircularProgressIndicator(color: jdc.cta));
     }
@@ -289,22 +308,34 @@ class _MerchantMenuCategoriesScreenState
             children: [
               Icon(Icons.category_outlined, size: 48, color: jdc.dim),
               const SizedBox(height: JdcSpacing.md),
-              Text('ยังไม่มีหมวดหมู่', style: _txt(jdc.muted, 16, w: 600)),
+              Text(l10n.mchCatEmpty, style: _txt(jdc.muted, 16, w: 600)),
             ],
           ),
         ),
       );
     }
 
+    // ใช้ ReorderableListView ตาม artboard (drag handle)
     return JdcContentFrame(
-      child: ListView.separated(
+      child: ReorderableListView.builder(
         padding: const EdgeInsets.only(top: JdcSpacing.md, bottom: JdcSpacing.xl),
         physics: const AlwaysScrollableScrollPhysics(),
+        onReorder: _reorderCategories,
+        // ใช้ handle ของเราเอง — ปิด handle อัตโนมัติที่ซ้อนทับปุ่มแก้ไขบนเว็บ/เดสก์ท็อป
+        buildDefaultDragHandles: false,
         itemCount: _categories.length,
-        separatorBuilder: (_, __) => const SizedBox(height: JdcSpacing.md),
+        proxyDecorator: (child, index, animation) => Material(
+          elevation: 4,
+          color: Colors.transparent,
+          child: child,
+        ),
         itemBuilder: (context, index) {
           final category = _categories[index];
-          return _buildCategoryCard(category, index);
+          return Padding(
+            key: ValueKey(category['id'] ?? index),
+            padding: const EdgeInsets.only(bottom: JdcSpacing.md),
+            child: _buildCategoryCard(category, index),
+          );
         },
       ),
     );
@@ -329,12 +360,13 @@ class _MerchantMenuCategoriesScreenState
     );
   }
 
-  /// การ์ดหมวดหมู่ 1 แถวตาม artboard —
-  /// คอลัมน์ปุ่มย้ายลำดับ (ขึ้น/ลง ตามพฤติกรรมเดิม แทน drag handle ใน artboard),
-  /// ชื่อหมวด + ลำดับ, สวิตช์เปิดใช้งาน (พฤติกรรมเดิม), ปุ่มแก้ไข 44x44
+  /// การ์ดหมวดหมู่ 1 แถวตาม artboard Merchant-MenuCategories —
+  /// drag handle (3-line) + ชื่อหมวด + sort order, สวิตช์เปิดใช้งาน (feature เดิม), ปุ่มแก้ไข 44x44
   Widget _buildCategoryCard(Map<String, dynamic> category, int index) {
     final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final isActive = category['is_active'] == true;
+    final categoryName = category['name']?.toString() ?? '';
     return Container(
       padding: const EdgeInsets.symmetric(
           horizontal: JdcSpacing.md, vertical: JdcSpacing.md),
@@ -345,46 +377,38 @@ class _MerchantMenuCategoriesScreenState
       ),
       child: Row(
         children: [
-          // ปุ่มย้ายลำดับขึ้น/ลง — พฤติกรรม _moveCategory เดิม
-          SizedBox(
-            width: JdcSpacing.xxxl,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildMoveButton(
-                  icon: Icons.keyboard_arrow_up,
-                  onPressed:
-                      index == 0 ? null : () => _moveCategory(index, -1),
-                ),
-                _buildMoveButton(
-                  icon: Icons.keyboard_arrow_down,
-                  onPressed: index == _categories.length - 1
-                      ? null
-                      : () => _moveCategory(index, 1),
-                ),
-              ],
+          // Drag handle — ลากเพื่อจัดลำดับตาม artboard (3 เส้นแนวนอน)
+          Tooltip(
+            message: l10n.mchCatReorderTooltip,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: JdcSpacing.sm, vertical: JdcSpacing.sm),
+              child: ReorderableDragStartListener(
+                index: index,
+                child: _DragHandle(color: jdc.offTrack),
+              ),
             ),
           ),
-          const SizedBox(width: JdcSpacing.md),
+          const SizedBox(width: JdcSpacing.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  category['name']?.toString() ?? '',
+                  categoryName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: _txt(
-                      isActive ? jdc.text : jdc.dim, 14, w: 700),
+                  style: _txt(isActive ? jdc.text : jdc.dim, 14, w: 700),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'ลำดับ ${index + 1}',
+                  l10n.mchCatSortOrder(index + 1),
                   style: _txt(jdc.muted, 12),
                 ),
               ],
             ),
           ),
+          // Switch เปิด/ปิดหมวด (feature เดิม ไม่มีใน artboard แต่เก็บไว้)
           SizedBox(
             height: 28,
             child: Switch(
@@ -398,34 +422,16 @@ class _MerchantMenuCategoriesScreenState
             ),
           ),
           const SizedBox(width: JdcSpacing.sm),
-          _buildEditButton(category),
+          _buildEditButton(category, categoryName),
         ],
       ),
     );
   }
 
-  Widget _buildMoveButton({required IconData icon, VoidCallback? onPressed}) {
+  Widget _buildEditButton(Map<String, dynamic> category, String categoryName) {
     final jdc = JdcColors.of(context);
-    return SizedBox(
-      width: JdcTouch.minTarget,
-      height: 32,
-      child: IconButton(
-        padding: EdgeInsets.zero,
-        visualDensity: VisualDensity.compact,
-        iconSize: 20,
-        icon: Icon(icon,
-            color: onPressed != null ? jdc.muted : jdc.offTrack),
-        onPressed: onPressed,
-        tooltip: onPressed == null ? null : 'จัดลำดับ',
-      ),
-    );
-  }
-
-  Widget _buildEditButton(Map<String, dynamic> category) {
-    final jdc = JdcColors.of(context);
-    final name = category['name']?.toString() ?? '';
     return Tooltip(
-      message: 'แก้ไขหมวด $name',
+      message: AppLocalizations.of(context)!.mchCatEditTooltip(categoryName),
       child: SizedBox(
         width: JdcTouch.minTarget,
         height: JdcTouch.minTarget,
@@ -444,9 +450,10 @@ class _MerchantMenuCategoriesScreenState
     );
   }
 
-  /// แถบล่าง — ปุ่มเพิ่มหมวดหมู่ (cta) ตาม artboard แทน FAB เดิม
+  /// แถบล่าง — ปุ่มเพิ่มหมวดหมู่ (cta) ตาม artboard
   Widget _buildBottomBar() {
     final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: BoxDecoration(
         color: jdc.surface,
@@ -472,13 +479,50 @@ class _MerchantMenuCategoriesScreenState
                   children: [
                     Icon(Icons.add, size: 19, color: jdc.onCta),
                     const SizedBox(width: JdcSpacing.sm),
-                    Text('เพิ่มหมวดหมู่', style: _txt(jdc.onCta, 15, w: 700)),
+                    Text(l10n.mchCatAddCategory, style: _txt(jdc.onCta, 15, w: 700)),
                   ],
                 ),
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Drag handle widget — 3 เส้นแนวนอน ตาม artboard
+class _DragHandle extends StatelessWidget {
+  const _DragHandle({required this.color});
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _Line(color: color),
+        const SizedBox(height: 3),
+        _Line(color: color),
+        const SizedBox(height: 3),
+        _Line(color: color),
+      ],
+    );
+  }
+}
+
+class _Line extends StatelessWidget {
+  const _Line({required this.color});
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 16,
+      height: 2,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(2),
       ),
     );
   }
