@@ -9,7 +9,6 @@ import 'auth_service.dart';
 import 'wallet_service.dart';
 import 'system_config_service.dart';
 import 'merchant_food_config_service.dart';
-import 'fare_adjustment_service.dart';
 import 'notification_sender.dart';
 import 'admin_line_notification_service.dart';
 
@@ -894,25 +893,20 @@ class BookingService {
     // ── Risk Prevention: Per-job wallet balance check ──
     final walletService = WalletService();
 
-    final updates = <String, dynamic>{};
-
     if (booking.serviceType == 'food') {
       // Food order: check against estimated deduction
-      var deliveryFee = booking.deliveryFee ?? 0;
+      //
+      // ISSUE-115: เดิมตรงนี้คิดค่าชดเชยระยะคนขับ→ร้าน (far-pickup surcharge)
+      // แล้วเขียน delivery_fee ใหม่ด้วย UPDATE จากแอปหลังเคลมงาน แต่ตั้งแต่
+      // Batch 1 trigger guard_booking_client_writes รีเซ็ต delivery_fee
+      // กลับเป็นค่าเดิมเสมอ (ไม่มี error) ค่าชดเชยจึงไม่เคยถูกบันทึก
+      // และถ้าย้ายไปบวกฝั่ง server ตรง ๆ ออเดอร์ที่จ่ายผ่าน Wallet จะโดน
+      // คิดค่าคอมจาก surcharge ที่ลูกค้าไม่ได้จ่าย — "ใครจ่าย surcharge"
+      // ต้องให้ผู้ใช้ตัดสินใจก่อน (ดู docs/issues/issue.md) ระหว่างนี้จึงเลิก
+      // คิดและเลิกเขียนค่าที่ไม่มีผลจริง แล้วใช้ delivery_fee จริงในการเช็คยอด
+      final deliveryFee = booking.deliveryFee ?? 0;
       final foodPrice =
           booking.price; // price field = food cost for food orders
-
-      final foodPickupSurcharge =
-          await FareAdjustmentService.calculateFoodFarPickupSurcharge(
-        merchantId: booking.merchantId ?? '',
-        driverId: driverId,
-        merchantLat: booking.originLat,
-        merchantLng: booking.originLng,
-      );
-      if (foodPickupSurcharge > 0) {
-        deliveryFee += foodPickupSurcharge;
-        updates['delivery_fee'] = deliveryFee;
-      }
 
       // ตรวจสอบให้แน่ใจว่ามีข้อมูล config
       final configService = SystemConfigService();
@@ -948,7 +942,6 @@ class BookingService {
       debugLog('   └─ Delivery Fee: $deliveryFee');
       debugLog('   └─ Food Price: $foodPrice');
       debugLog('   └─ Merchant mode: ${merchantFoodConfig.summary}');
-      debugLog('   └─ Far pickup surcharge: $foodPickupSurcharge');
       debugLog('   └─ Estimated Deduction: $estimatedDeduction');
 
       final canAccept = await walletService.canAcceptFoodJob(
@@ -976,29 +969,12 @@ class BookingService {
             'ยอดเงินในกระเป๋าไม่พอรับงานนี้ กรุณาเติมเงินอย่างน้อย $minWallet บาท');
       }
 
-      if (booking.serviceType == 'ride') {
-        final config = await FareAdjustmentService.loadRideFarPickupConfig();
-        final distanceKm =
-            await FareAdjustmentService.getDriverToPickupDistanceKm(
-          driverId: driverId,
-          pickupLat: booking.originLat,
-          pickupLng: booking.originLng,
-        );
-        if (distanceKm != null) {
-          final surcharge =
-              FareAdjustmentService.calculateRideFarPickupSurcharge(
-            driverToPickupDistanceKm: distanceKm,
-            vehicleType: booking.notes ?? booking.serviceType,
-            config: config,
-          );
-          if (surcharge > 0) {
-            final adjustedPrice = booking.price + surcharge;
-            updates['price'] = adjustedPrice;
-            updates['notes'] =
-                '${booking.notes ?? ''} | ปรับราคาเพิ่มจากระยะคนขับ→จุดรับ ${distanceKm.toStringAsFixed(2)} กม. (+฿${surcharge.toStringAsFixed(2)})';
-          }
-        }
-      }
+      // ISSUE-115: ride ไม่คิดค่าชดเชยระยะซ้ำตอนรับงานแล้ว
+      // ลูกค้าจ่าย surcharge แบบประมาณการ (จากคนขับออนไลน์ที่ใกล้ที่สุด)
+      // รวมอยู่ใน price ตั้งแต่ตอนสร้างออเดอร์ (ride_home_screen) อยู่แล้ว
+      // โค้ดเดิมบวก surcharge ทับลงไปอีกรอบ (booking.price + surcharge) ก่อน
+      // Batch 1 จึงเก็บเงินลูกค้าซ้ำ หลัง Batch 1 trigger รีเซ็ต price คืน
+      // แต่ notes ยังถูกเขียนว่า "ปรับราคาเพิ่ม (+฿X)" ทั้งที่ราคาไม่เปลี่ยน
     }
 
     // ISSUE-115: เดิมมีตัวแปร newStatus ที่คำนวณแยก food/ride แล้วไม่ถูกใช้
@@ -1007,26 +983,27 @@ class BookingService {
 
     final expectedStatus = booking.status;
 
-    // ค่าที่ต้องเขียนพร้อมกับการเคลมงาน (ค่าชดเชยระยะทาง ฯลฯ)
-    if (booking.serviceType == 'food' && expectedStatus == 'ready_for_pickup') {
-      updates['merchant_food_ready_at'] = DateTime.now().toIso8601String();
-    }
-
     // Optimistic concurrency: use RPC to atomically claim the booking (Phase 2)
     // Only succeeds if booking still has no driver and expected status
-    //
-    // ISSUE-115: ส่ง updates เข้าไปใน RPC ด้วย เพื่อให้เคลมงานและเขียน
-    // ค่าชดเชย/ค่าส่งที่ปรับแล้วอยู่ใน UPDATE เดียวกัน เดิมยิงเป็น UPDATE
-    // แยกอีกรอบหลังเคลมสำเร็จ ถ้า call นั้นล้มเหลวคนขับจะได้งานแต่ไม่ได้
-    // ค่าชดเชย และ rollback ไม่ได้เพราะงานถูกเคลมไปแล้ว
     final rpcResult = await _client.rpc('accept_booking', params: {
       'p_booking_id': bookingId,
       'p_driver_id': driverId,
       'p_expected_status': expectedStatus,
-      'p_updates': updates.isEmpty ? null : updates,
     });
     if (rpcResult is Map && rpcResult['success'] != true) {
       throw Exception(rpcResult['message'] ?? 'งานนี้ถูกรับไปแล้ว');
+    }
+
+    // merchant_food_ready_at ไม่อยู่ในคอลัมน์ที่ guard ตรึงไว้ และคนขับของงาน
+    // UPDATE ได้ตาม RLS — เป็นแค่ timestamp จึงไม่ทำให้การรับงานล้มถ้าเขียนไม่ได้
+    if (booking.serviceType == 'food' && expectedStatus == 'ready_for_pickup') {
+      try {
+        await _client.from('bookings').update({
+          'merchant_food_ready_at': DateTime.now().toIso8601String(),
+        }).eq('id', bookingId);
+      } catch (e) {
+        debugLog('⚠️ บันทึก merchant_food_ready_at ไม่สำเร็จ: $e');
+      }
     }
 
     debugLog('✅ Driver accepted job: $bookingId (status ถูกตั้งโดย RPC)');
