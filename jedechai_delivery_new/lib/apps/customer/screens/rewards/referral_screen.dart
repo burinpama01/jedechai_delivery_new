@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../theme/jdc_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:intl/intl.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../common/services/referral_service.dart';
 import '../../../../common/services/notification_service.dart';
@@ -138,11 +139,13 @@ class _ReferralScreenState extends State<ReferralScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final jdc = JdcColors.of(context);
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.referralTitle,
-            style: const TextStyle(color: Colors.white)),
-        backgroundColor: JdcColors.of(context).cta,
+            style: TextStyle(color: jdc.onPanel)),
+        foregroundColor: jdc.onPanel,
+        backgroundColor: jdc.panel,
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -150,9 +153,9 @@ class _ReferralScreenState extends State<ReferralScreen> {
           children: [
             _buildHeroSection(),
             _buildMyCodeSection(),
-            _buildEnterCodeSection(),
-            _buildStatsSection(),
             _buildTierSection(),
+            _buildStatsSection(),
+            _buildEnterCodeSection(),
             _buildHowItWorks(),
           ],
         ),
@@ -161,31 +164,42 @@ class _ReferralScreenState extends State<ReferralScreen> {
   }
 
   Widget _buildHeroSection() {
+    final jdc = JdcColors.of(context);
+    final earned = (_referralSummary?['total_earned'] as num?)?.toDouble();
     return Container(
       width: double.infinity,
-      color: JdcColors.of(context).cta,
-      padding: const EdgeInsets.only(bottom: 32, left: 24, right: 24),
+      color: jdc.panel,
+      padding: const EdgeInsets.fromLTRB(20, 2, 20, 22),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.people_alt, size: 80, color: Colors.white),
-          const SizedBox(height: 16),
           Text(
             AppLocalizations.of(context)!.referralHeroTitle,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 24,
+            style: TextStyle(
+              fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: jdc.onPanel,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             AppLocalizations.of(context)!.referralHeroSubtitle,
-            textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 14,
-              color: Colors.white.withOpacity(0.9),
+              fontSize: 12,
+              color: jdc.panelDim,
             ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            earned == null
+                ? '—'
+                : NumberFormat.currency(locale: 'th_TH', symbol: '฿', decimalDigits: 2).format(earned),
+            style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: jdc.onPanel),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${AppLocalizations.of(context)!.referralSuccessful}: $totalReferrals',
+            style: TextStyle(fontSize: 12, color: jdc.panelDim),
           ),
         ],
       ),
@@ -193,23 +207,15 @@ class _ReferralScreenState extends State<ReferralScreen> {
   }
 
   Widget _buildMyCodeSection() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
 
-    return Transform.translate(
-      offset: const Offset(0, -20),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 24),
-        padding: const EdgeInsets.all(20),
+    return Container(
+        margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
+          color: jdc.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: jdc.line),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,33 +223,34 @@ class _ReferralScreenState extends State<ReferralScreen> {
             Text(
               AppLocalizations.of(context)!.referralMyCodeLabel,
               style: TextStyle(
-                fontSize: 14,
-                color: colorScheme.onSurface.withOpacity(0.7),
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: jdc.text,
               ),
             ),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: JdcColors.of(context).cta.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-                border:
-                    Border.all(color: JdcColors.of(context).cta.withOpacity(0.3)),
+                color: jdc.brandSoft,
+                borderRadius: BorderRadius.circular(13),
+                border: Border.all(color: jdc.brandLine),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
+                  Expanded(child: Text(
                     myReferralCode,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: JdcColors.of(context).cta,
+                      color: jdc.brandOnSoft,
                       letterSpacing: 2,
                     ),
-                  ),
+                  )),
                   IconButton(
-                    icon: Icon(Icons.copy, color: JdcColors.of(context).cta),
+                    icon: Icon(Icons.copy, color: jdc.brandOnSoft),
                     onPressed: _copyToClipboard,
                     constraints: const BoxConstraints(),
                     padding: EdgeInsets.zero,
@@ -259,30 +266,31 @@ class _ReferralScreenState extends State<ReferralScreen> {
                 icon: const Icon(Icons.share),
                 label: Text(AppLocalizations.of(context)!.referralShareButton),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: JdcColors.of(context).cta,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  backgroundColor: jdc.cta,
+                  foregroundColor: jdc.onCta,
+                  minimumSize: const Size.fromHeight(50),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                 ),
               ),
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildEnterCodeSection() {
     final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+      margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colorScheme.outline.withOpacity(0.15)),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -299,7 +307,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
             AppLocalizations.of(context)!.referralEnterCodeHint,
             style: TextStyle(
               fontSize: 14,
-              color: colorScheme.onSurface.withOpacity(0.7),
+              color: colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 16),
@@ -328,7 +336,10 @@ class _ReferralScreenState extends State<ReferralScreen> {
               ElevatedButton(
                 onPressed: _isLoading ? null : _submitCode,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: JdcColors.of(context).cta,
+                  backgroundColor: jdc.cta,
+                  foregroundColor: jdc.onCta,
+                  disabledBackgroundColor: jdc.cta,
+                  disabledForegroundColor: jdc.onCta,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                   shape: RoundedRectangleBorder(
@@ -336,11 +347,11 @@ class _ReferralScreenState extends State<ReferralScreen> {
                   ),
                 ),
                 child: _isLoading
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2))
+                            color: jdc.onCta, strokeWidth: 2))
                     : Text(AppLocalizations.of(context)!.referralUseCode),
               ),
             ],
@@ -374,7 +385,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
     final pending = (s['pending_review'] as num?)?.toInt() ?? 0;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
@@ -390,27 +401,36 @@ class _ReferralScreenState extends State<ReferralScreen> {
               children: [
                 Icon(Icons.stairs, color: colorScheme.primary),
                 const SizedBox(width: 8),
-                Text('ขั้นรางวัลปัจจุบัน: ขั้น ${tier ?? 1}',
+                Text(
+                    AppLocalizations.of(context)!
+                        .referralTierCurrent('${tier ?? 1}'),
                     style: const TextStyle(fontWeight: FontWeight.bold)),
               ],
             ),
             const SizedBox(height: 6),
-            Text('ชวนสำเร็จ 1 ราย ได้ ฿${(base * multiplier).toStringAsFixed(0)} '
-                '(ฐาน ฿${base.toStringAsFixed(0)} × ${multiplier.toStringAsFixed(2)})'),
+            Text(AppLocalizations.of(context)!.referralTierReward(
+                (base * multiplier).toStringAsFixed(0),
+                base.toStringAsFixed(0),
+                multiplier.toStringAsFixed(2))),
             if (toNext != null)
-              Text('อีก $toNext รายถึงขั้นถัดไป',
+              Text(
+                  AppLocalizations.of(context)!
+                      .referralTierToNext('$toNext'),
                   style: TextStyle(
                       fontSize: 12,
                       color: colorScheme.onSurface.withValues(alpha: 0.7))),
             const SizedBox(height: 6),
-            Text('รับรางวัลสะสมแล้ว ฿${earned.toStringAsFixed(0)}'
-                '${pending > 0 ? ' · รออนุมัติ $pending รายการ' : ''}',
+            Text(
+                '${AppLocalizations.of(context)!.referralTierEarned(earned.toStringAsFixed(0))}'
+                '${pending > 0 ? ' · ${AppLocalizations.of(context)!.referralTierPending('$pending')}' : ''}',
                 style: TextStyle(
                     fontSize: 12,
                     color: colorScheme.onSurface.withValues(alpha: 0.7))),
             const SizedBox(height: 6),
-            Text('เงินรางวัลเข้ากระเป๋า "ถังระบบ" ถอนได้ขั้นต่ำ ฿'
-                '${((s['withdrawal_min'] is Map ? (s['withdrawal_min']['system'] as num?)?.toDouble() : null) ?? 200).toStringAsFixed(0)}',
+            Text(
+                AppLocalizations.of(context)!.referralTierWithdrawNote(
+                    ((s['withdrawal_min'] is Map ? (s['withdrawal_min']['system'] as num?)?.toDouble() : null) ?? 200)
+                        .toStringAsFixed(0)),
                 style: TextStyle(
                     fontSize: 11,
                     color: colorScheme.onSurface.withValues(alpha: 0.6))),
@@ -424,14 +444,14 @@ class _ReferralScreenState extends State<ReferralScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colorScheme.outline.withOpacity(0.12)),
+          border: Border.all(color: colorScheme.outline.withValues(alpha: 0.12)),
         ),
         child: Column(
           children: [
@@ -448,7 +468,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
             Text(
               AppLocalizations.of(context)!.referralSuccessful,
               style: TextStyle(
-                color: colorScheme.onSurface.withOpacity(0.7),
+                color: colorScheme.onSurface.withValues(alpha: 0.7),
                 fontSize: 12,
               ),
             ),
@@ -460,7 +480,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
 
   Widget _buildHowItWorks() {
     return Container(
-      margin: const EdgeInsets.all(24),
+      margin: const EdgeInsets.fromLTRB(20, 24, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -499,8 +519,9 @@ class _ReferralScreenState extends State<ReferralScreen> {
             child: Center(
               child: Text(
                 number,
-                style: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    color: JdcColors.of(context).onCta,
+                    fontWeight: FontWeight.bold),
               ),
             ),
           ),

@@ -659,6 +659,7 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
         title: Text(l10n.shopSvcTitle),
         backgroundColor: jdc.surface,
         foregroundColor: jdc.text,
+        titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: jdc.text),
         iconTheme: IconThemeData(color: jdc.text),
         elevation: 0,
         // โหมดสว่าง surface (ขาว) กับ paper ต่างกันนิดเดียว header เลยกลืนไปกับพื้น

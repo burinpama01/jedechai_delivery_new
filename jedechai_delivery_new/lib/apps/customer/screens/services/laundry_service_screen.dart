@@ -568,6 +568,7 @@ class _LaundryServiceScreenState extends State<LaundryServiceScreen> {
       appBar: AppBar(
         backgroundColor: jdc.surface,
         foregroundColor: jdc.text,
+        titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: jdc.text),
         elevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),

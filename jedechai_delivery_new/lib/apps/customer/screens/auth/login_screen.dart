@@ -169,8 +169,9 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final onSurface = theme.colorScheme.onSurface;
-    final secondaryText = onSurface.withValues(alpha: 0.82);
+    final jdc = JdcColors.of(context);
+    final onSurface = jdc.text;
+    final secondaryText = jdc.muted;
     final l10n = AppLocalizations.of(context)!;
 
     return PopScope(
@@ -193,9 +194,10 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       },
       child: Scaffold(
+      backgroundColor: jdc.surface,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.fromLTRB(28, 8, 28, 28),
           child: Form(
             key: _formKey,
             child: Column(
@@ -212,51 +214,52 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: const LanguageSwitcher(),
                   ),
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 24),
                 
                 // Logo
-                Center(
+                Align(
+                  alignment: Alignment.centerLeft,
                   child: Container(
-                    width: 100,
-                    height: 100,
+                    width: 56,
+                    height: 56,
                     decoration: BoxDecoration(
-                      color: JdcColors.of(context).cta.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(25),
+                      color: jdc.brandSoft,
+                      borderRadius: BorderRadius.circular(16),
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(25),
+                      borderRadius: BorderRadius.circular(16),
                       child: AppNetworkImage(
                         imageUrl: _logoUrl,
-                        width: 100,
-                        height: 100,
+                        width: 56,
+                        height: 56,
                         fit: BoxFit.contain,
-                        backgroundColor: JdcColors.of(context).cta,
+                        backgroundColor: jdc.brandSoft,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 20),
 
                 // Welcome Text
                 Text(
                   l10n.loginWelcomeTitle,
                   style: theme.textTheme.headlineMedium?.copyWith(
-                    fontSize: 32,
+                    fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: onSurface,
                   ),
-                  textAlign: TextAlign.center,
+                  textAlign: TextAlign.left,
                 ),
                 const SizedBox(height: 8),
                 Text(
                   l10n.loginWelcomeSubtitle,
                   style: theme.textTheme.bodyLarge?.copyWith(
-                    fontSize: 16,
+                    fontSize: 14,
                     color: secondaryText,
                   ),
-                  textAlign: TextAlign.center,
+                  textAlign: TextAlign.left,
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 28),
 
                 // Email Field
                 TextFormField(
@@ -264,6 +267,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   decoration: InputDecoration(
                     labelText: l10n.loginEmailLabel,
                     prefixIcon: const Icon(Icons.email_outlined),
+                    filled: true,
+                    fillColor: jdc.paper,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
@@ -285,6 +293,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   decoration: InputDecoration(
                     labelText: l10n.loginPasswordLabel,
                     prefixIcon: const Icon(Icons.lock_outlined),
+                    filled: true,
+                    fillColor: jdc.paper,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
@@ -339,14 +352,21 @@ class _LoginScreenState extends State<LoginScreen> {
                   height: 56,
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _signIn,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: jdc.cta,
+                      foregroundColor: jdc.onCta,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
                     child: _isLoading
-                        ? const SizedBox(
+                        ? SizedBox(
                             height: 24,
                             width: 24,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
                               valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                                  AlwaysStoppedAnimation<Color>(jdc.onCta),
                             ),
                           )
                         : Text(

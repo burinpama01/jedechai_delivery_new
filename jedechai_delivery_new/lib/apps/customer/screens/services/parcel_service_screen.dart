@@ -586,6 +586,7 @@ class _ParcelServiceScreenState extends State<ParcelServiceScreen> {
         title: Text(l10n.parcelTitle),
         backgroundColor: jdc.surface,
         foregroundColor: jdc.text,
+        titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: jdc.text),
         elevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),

@@ -263,11 +263,14 @@ class _DriverParcelConfirmationScreenState
     return Scaffold(
       backgroundColor: jdc.paper,
       appBar: AppBar(
-        title: Text(isPickup ? AppLocalizations.of(context)!.parcelConfirmPickupTitle : AppLocalizations.of(context)!.parcelConfirmDeliveryTitle),
+        title: Text(isPickup ? AppLocalizations.of(context)!.parcelConfirmPickupTitle : AppLocalizations.of(context)!.parcelConfirmDeliveryTitle,
+            style: TextStyle(color: jdc.text, fontSize: 17, fontWeight: FontWeight.w700)),
         backgroundColor: jdc.surface,
         foregroundColor: jdc.text,
+        titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: jdc.text),
         elevation: 0,
         scrolledUnderElevation: 0,
+        shape: Border(bottom: BorderSide(color: jdc.line)),
       ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator(color: jdc.cta))
@@ -299,10 +302,22 @@ class _DriverParcelConfirmationScreenState
                     const SizedBox(height: JdcSpacing.xl),
                   ],
 
-                  // ปุ่มยืนยัน
-                  _buildSubmitButton(isPickup),
-                  const SizedBox(height: JdcSpacing.xxxl),
                 ],
+              ),
+            ),
+      bottomNavigationBar: _isLoading
+          ? null
+          : SafeArea(
+              top: false,
+              child: Container(
+                padding: EdgeInsets.fromLTRB(
+                    context.gutter, JdcSpacing.md, context.gutter, JdcSpacing.md),
+                decoration: BoxDecoration(
+                  color: jdc.surface,
+                  border: Border(top: BorderSide(color: jdc.line)),
+                  boxShadow: jdc.shadowCard,
+                ),
+                child: _buildSubmitButton(isPickup),
               ),
             ),
     );
@@ -628,7 +643,7 @@ class _DriverParcelConfirmationScreenState
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
-                    color: jdc.onCta, strokeWidth: 2))
+                    color: jdc.text, strokeWidth: 2))
             : Icon(isPickup ? Icons.check_circle : Icons.done_all),
         label: Text(
           isPickup ? AppLocalizations.of(context)!.parcelConfirmPickupBtn : AppLocalizations.of(context)!.parcelConfirmDeliveryBtn,
@@ -640,8 +655,8 @@ class _DriverParcelConfirmationScreenState
         style: ElevatedButton.styleFrom(
           backgroundColor: jdc.cta,
           foregroundColor: jdc.onCta,
-          disabledBackgroundColor: jdc.offTrack,
-          disabledForegroundColor: jdc.onCta,
+          disabledBackgroundColor: jdc.sunken,
+          disabledForegroundColor: jdc.text,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(JdcRadius.field)),
           elevation: 0,

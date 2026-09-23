@@ -310,6 +310,7 @@ class _ShopTrackingScreenState extends State<ShopTrackingScreen> {
         title: Text(l10n.shopTrackTitle),
         backgroundColor: jdc.surface,
         foregroundColor: jdc.text,
+        titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: jdc.text),
         elevation: 0,
       ),
       body: _loading

@@ -24,6 +24,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
   final TicketService _ticketService = TicketService();
   List<SupportTicket> _tickets = [];
   bool _isLoading = true;
+  bool _showClosed = false;
 
   @override
   void initState() {
@@ -220,28 +221,76 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
   @override
   Widget build(BuildContext context) {
     final jdc = JdcColors.of(context);
+    final activeCount = _tickets.where((t) => t.status == 'open' || t.status == 'in_progress').length;
+    final closedCount = _tickets.length - activeCount;
     return Scaffold(
       backgroundColor: jdc.paper,
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.ticketTitle),
         backgroundColor: jdc.surface,
         foregroundColor: jdc.text,
+        titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: jdc.text),
         shape: Border(bottom: BorderSide(color: jdc.line)),
         iconTheme: IconThemeData(color: jdc.text),
       ),
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: jdc.cta))
-          : _tickets.isEmpty
-              ? _buildEmptyState()
-              : _buildTicketList(),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showCreateDialog,
-        icon: const Icon(Icons.add),
-        label: Text(AppLocalizations.of(context)!.ticketFab),
-        backgroundColor: jdc.cta,
-        foregroundColor: jdc.onCta,
+      body: Column(
+        children: [
+          if (!_isLoading && _tickets.isNotEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+              color: jdc.surface,
+              child: Wrap(
+                spacing: 8,
+                children: [
+                  ChoiceChip(
+                    label: Text('${_statusFilterLabel(context, closed: false)} $activeCount'),
+                    selected: !_showClosed,
+                    onSelected: (_) => setState(() => _showClosed = false),
+                  ),
+                  ChoiceChip(
+                    label: Text('${_statusFilterLabel(context, closed: true)} $closedCount'),
+                    selected: _showClosed,
+                    onSelected: (_) => setState(() => _showClosed = true),
+                  ),
+                ],
+              ),
+            ),
+          Expanded(
+            child: _isLoading
+                ? Center(child: CircularProgressIndicator(color: jdc.cta))
+                : _tickets.isEmpty
+                    ? _buildEmptyState()
+                    : _buildTicketList(),
+          ),
+        ],
+      ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+          decoration: BoxDecoration(color: jdc.surface, border: Border(top: BorderSide(color: jdc.line))),
+          child: SizedBox(
+            height: 54,
+            child: ElevatedButton.icon(
+              onPressed: _showCreateDialog,
+              icon: const Icon(Icons.add),
+              label: Text(AppLocalizations.of(context)!.ticketFab),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: jdc.cta,
+                foregroundColor: jdc.onCta,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+            ),
+          ),
+        ),
       ),
     );
+  }
+
+  String _statusFilterLabel(BuildContext context, {required bool closed}) {
+    final l10n = AppLocalizations.of(context)!;
+    return closed ? l10n.ticketFilterFinished : l10n.ticketFilterActive;
   }
 
   Widget _buildEmptyState() {
@@ -270,12 +319,27 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
   }
 
   Widget _buildTicketList() {
+    final visibleTickets = _tickets.where((t) => _showClosed
+        ? t.status != 'open' && t.status != 'in_progress'
+        : t.status == 'open' || t.status == 'in_progress').toList();
     return RefreshIndicator(
       onRefresh: _loadTickets,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: _tickets.length,
-        itemBuilder: (context, index) => _buildTicketCard(_tickets[index]),
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: visibleTickets.isEmpty ? 1 : visibleTickets.length,
+        itemBuilder: (context, index) => visibleTickets.isEmpty
+            ? Padding(
+                padding: const EdgeInsets.symmetric(vertical: 64),
+                child: Center(
+                  child: Text(
+                    _showClosed
+                        ? AppLocalizations.of(context)!.ticketFilterEmptyFinished
+                        : AppLocalizations.of(context)!.ticketFilterEmptyActive,
+                  ),
+                ),
+              )
+            : _buildTicketCard(visibleTickets[index]),
       ),
     );
   }
@@ -300,7 +364,33 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(JdcRadius.card),
-        onTap: () {},
+        onTap: () => showDialog<void>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: Text(ticket.subject),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(ticket.statusText),
+                  const SizedBox(height: 12),
+                  Text(ticket.description),
+                  if (ticket.resolution != null && ticket.resolution!.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Text(ticket.resolution!),
+                  ],
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text(MaterialLocalizations.of(dialogContext).closeButtonTooltip),
+              ),
+            ],
+          ),
+        ),
         child: Padding(
           padding: const EdgeInsets.all(JdcSpacing.lg),
           child: Column(
@@ -371,8 +461,8 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                 alignment: Alignment.centerRight,
                 child: Text(
                   ticket.status == 'open' || ticket.status == 'in_progress'
-                      ? 'ดูบทสนทนา'
-                      : 'ดูรายละเอียด',
+                      ? AppLocalizations.of(context)!.ticketViewConversation
+                      : AppLocalizations.of(context)!.ticketViewDetail,
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: jdc.link),
                 ),
               ),

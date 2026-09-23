@@ -312,7 +312,7 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
         backgroundColor: jdc.panel,
         foregroundColor: jdc.onPanel,
         elevation: 0,
-        centerTitle: true,
+        centerTitle: false,
         title: Text(
           l10n.jobDetailTitle,
           style: TextStyle(
@@ -325,10 +325,10 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
       ),
       body: Column(
         children: [
-          // ── Map Section ──
+          // The route remains the primary visual anchor of the job summary.
           if (_hasValidCoordinates)
             SizedBox(
-              height: 180,
+              height: 220,
               child: GoogleMap(
                 initialCameraPosition: CameraPosition(
                   target: LatLng(
@@ -369,7 +369,7 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
             )
           else
             Container(
-              height: 120,
+              height: 160,
               color: jdc.panel,
               child: Center(
                 child: Column(
@@ -400,7 +400,7 @@ class _DriverJobDetailScreenState extends State<DriverJobDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Date & Order ID ──
+                    // Keep the historical job ID and date visible above the route.
                     Row(
                       children: [
                         Icon(Icons.calendar_today, size: 14, color: jdc.muted),

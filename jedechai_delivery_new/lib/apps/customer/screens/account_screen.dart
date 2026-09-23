@@ -27,7 +27,10 @@ import 'services/help_screen.dart';
 
 /// Account Screen — Customer
 class AccountScreen extends StatefulWidget {
-  const AccountScreen({super.key});
+  const AccountScreen({super.key, this.previewProfile});
+
+  /// ใช้กับ dev preview/widget test เท่านั้น เพื่อดู layout เมื่อมีข้อมูลบัญชี
+  final Map<String, dynamic>? previewProfile;
 
   @override
   State<AccountScreen> createState() => _AccountScreenState();
@@ -44,13 +47,16 @@ class _AccountScreenState extends State<AccountScreen> {
   // อ่านจาก context ตอน build เพื่อให้สลับตามโหมดสว่าง/มืดได้
   // (static field ใช้ context ไม่ได้)
   Color get _accent => JdcColors.of(context).infoInk;
-  List<Color> get _gradient =>
-      [JdcColors.of(context).infoInk, JdcColors.of(context).panel];
 
   @override
   void initState() {
     super.initState();
-    _fetchUserProfile();
+    if (widget.previewProfile != null) {
+      _userProfile = widget.previewProfile;
+      _isLoading = false;
+    } else {
+      _fetchUserProfile();
+    }
     _loadAppVersion();
   }
 
@@ -325,7 +331,7 @@ class _AccountScreenState extends State<AccountScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(l10n.accountUploadSuccess),
-              backgroundColor: Colors.green,
+              backgroundColor: JdcColors.of(context).successInk,
             ),
           );
         }
@@ -390,7 +396,7 @@ class _AccountScreenState extends State<AccountScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(l10n.accountEditSuccess),
-              backgroundColor: Colors.green,
+              backgroundColor: JdcColors.of(context).successInk,
             ),
           );
         }
@@ -459,7 +465,7 @@ class _AccountScreenState extends State<AccountScreen> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: JdcColors.of(context).danger,
-              foregroundColor: Colors.white,
+              foregroundColor: JdcColors.of(context).onCta,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -593,19 +599,20 @@ class _AccountScreenState extends State<AccountScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: jdc.paper,
       appBar: AppBar(
-        title: Text(l10n.accountTitle),
-        backgroundColor: colorScheme.surface,
-        foregroundColor: colorScheme.onSurface,
+        title: Text(l10n.accountTitle,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        backgroundColor: jdc.panel,
+        foregroundColor: jdc.onPanel,
         elevation: 0,
-        actions: const [
+        actions: [
           Padding(
             padding: EdgeInsets.only(right: 8),
-            child: LanguageSwitcher(),
+            child: LanguageSwitcher(selectedColor: jdc.onPanel),
           ),
         ],
       ),
@@ -659,7 +666,7 @@ class _AccountScreenState extends State<AccountScreen> {
               label: Text(l10n.accountRetry),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _accent,
-                foregroundColor: Colors.white,
+                foregroundColor: JdcColors.of(context).onCta,
               ),
             ),
           ],
@@ -670,20 +677,25 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Widget _buildContent() {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.zero,
       children: [
         _buildProfileHeader(),
-        const SizedBox(height: 16),
-        _buildInfoCard(),
-        const SizedBox(height: 16),
-        _buildMenuCard(),
-        const SizedBox(height: 16),
-        _buildAppInfoCard(),
-        const SizedBox(height: 24),
-        _buildLogoutButton(),
-        const SizedBox(height: 12),
-        _buildDeleteAccountButton(),
-        const SizedBox(height: 32),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+          child: Column(
+            children: [
+              _buildInfoCard(),
+              const SizedBox(height: 16),
+              _buildMenuCard(),
+              const SizedBox(height: 16),
+              _buildAppInfoCard(),
+              const SizedBox(height: 24),
+              _buildLogoutButton(),
+              const SizedBox(height: 12),
+              _buildDeleteAccountButton(),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -696,51 +708,46 @@ class _AccountScreenState extends State<AccountScreen> {
     final avatarUrl = _userProfile?['avatar_url'] as String?;
     final hasAvatar = avatarUrl != null && avatarUrl.isNotEmpty;
     final l10n = AppLocalizations.of(context)!;
+    final jdc = JdcColors.of(context);
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(20, 6, 20, 20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: _gradient,
+          colors: [jdc.panel, jdc.successFill, jdc.panel],
+          stops: const [0, 0.65, 1],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
       ),
-      child: Column(
+      child: Row(
         children: [
           GestureDetector(
             onTap: _pickAndUploadAvatar,
             child: Stack(
               children: [
                 Container(
-                  width: 80,
-                  height: 80,
+                  width: 56,
+                  height: 56,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: jdc.panelSoft3,
                     shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.15),
-                        blurRadius: 10,
-                      ),
-                    ],
                   ),
                   child: ClipOval(
                     child: hasAvatar
                         ? AppNetworkImage(
                             imageUrl: avatarUrl,
-                            width: 80,
-                            height: 80,
+                            width: 56,
+                            height: 56,
                             fit: BoxFit.cover,
-                            backgroundColor: Colors.white,
+                            backgroundColor: jdc.panelSoft3,
                           )
-                        : const GrayscaleLogoPlaceholder(
-                            width: 80,
-                            height: 80,
+                        : GrayscaleLogoPlaceholder(
+                            width: 56,
+                            height: 56,
                             fit: BoxFit.contain,
-                            backgroundColor: Colors.white,
+                            backgroundColor: jdc.panelSoft3,
                           ),
                   ),
                 ),
@@ -750,9 +757,9 @@ class _AccountScreenState extends State<AccountScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
-                      color: _accent,
+                      color: jdc.brand,
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
+                      border: Border.all(color: jdc.panel, width: 2),
                     ),
                     child: Icon(
                       PlatformAdaptive.icon(
@@ -760,37 +767,46 @@ class _AccountScreenState extends State<AccountScreen> {
                         ios: CupertinoIcons.camera,
                       ),
                       size: 12,
-                      color: Colors.white,
+                      color: jdc.panel,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 14),
-          Text(
-            _userProfile?['full_name'] ?? l10n.accountUserFallback,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _userProfile?['full_name'] ?? l10n.accountUserFallback,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold,
+                      color: jdc.onPanel),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  _userProfile?['phone_number'] ?? l10n.accountRoleCustomer,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12, color: jdc.onPanel),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 4),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
+          const SizedBox(width: 8),
+          IconButton(
+            onPressed: _navigateToEditProfile,
+            tooltip: l10n.accountMenuEditProfile,
+            color: jdc.onPanel,
+            style: IconButton.styleFrom(
+              backgroundColor: jdc.panelSoft2,
+              side: BorderSide(color: jdc.panelLine),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: Text(
-              l10n.accountRoleCustomer,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            icon: const Icon(Icons.edit_outlined),
           ),
         ],
       ),
@@ -862,7 +878,7 @@ class _AccountScreenState extends State<AccountScreen> {
             android: Icons.account_balance_wallet_outlined,
             ios: CupertinoIcons.creditcard,
           ),
-          'Wallet / เติมเงิน',
+          AppLocalizations.of(context)!.accountMenuWallet,
           () {
             Navigator.push(
               context,
@@ -938,13 +954,8 @@ class _AccountScreenState extends State<AccountScreen> {
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        // (เดิมเป็นเงาดำ hardcode — ใช้ token แทนเพื่อให้โหมดมืดถูกต้อง)
+        boxShadow: JdcColors.of(context).shadowCard,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -974,7 +985,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   ScaffoldMessenger.of(context).clearSnackBars();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Debug: ${_versionTapCount}/7'),
+                      content: Text('Debug: $_versionTapCount/7'),
                       duration: const Duration(milliseconds: 700),
                     ),
                   );
@@ -999,12 +1010,14 @@ class _AccountScreenState extends State<AccountScreen> {
           const SizedBox(height: 6),
           Row(
             children: [
-              Text(
+              Expanded(child: Text(
                 l10n.accountDevelopedByLabel,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                     fontSize: 13, color: colorScheme.onSurfaceVariant),
-              ),
-              const Spacer(),
+              )),
+              const SizedBox(width: 8),
               Text(
                 'Jedechai Team',
                 style: TextStyle(
@@ -1078,20 +1091,14 @@ class _AccountScreenState extends State<AccountScreen> {
   // ============================================================
 
   Widget _card({required String title, required List<Widget> children}) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: jdc.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: jdc.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1101,7 +1108,7 @@ class _AccountScreenState extends State<AccountScreen> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface,
+              color: jdc.text,
             ),
           ),
           const SizedBox(height: 12),

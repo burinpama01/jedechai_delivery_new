@@ -6,10 +6,12 @@ import '../../l10n/app_localizations.dart';
 
 class LanguageSwitcher extends StatelessWidget {
   final bool showSystemOption;
+  final Color? selectedColor;
 
   const LanguageSwitcher({
     super.key,
     this.showSystemOption = true,
+    this.selectedColor,
   });
 
   @override
@@ -30,6 +32,7 @@ class LanguageSwitcher extends StatelessWidget {
     return DropdownButtonHideUnderline(
       child: DropdownButton<String>(
         value: value,
+        iconEnabledColor: selectedColor,
         onChanged: (v) async {
           if (v == null) return;
           final p = context.read<LanguageProvider>();
@@ -45,9 +48,9 @@ class LanguageSwitcher extends StatelessWidget {
         // ("ใช้ภาษาของระบบ") แล้วไปดัน Row ที่ครอบอยู่จนล้นบนจอแคบ
         selectedItemBuilder: (context) => [
           if (showSystemOption)
-            const Center(child: Text('ระบบ')),
-          const Center(child: Text('TH')),
-          const Center(child: Text('EN')),
+            Center(child: Text(l10n?.languageSystemShort ?? 'ระบบ', style: TextStyle(color: selectedColor))),
+          Center(child: Text('TH', style: TextStyle(color: selectedColor))),
+          Center(child: Text('EN', style: TextStyle(color: selectedColor))),
         ],
         items: [
           if (showSystemOption)

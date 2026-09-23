@@ -1218,8 +1218,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
               children: [
                 Expanded(
                   child: _buildHeroStat(
-                    '${_availableJobs.length}',
-                    l10n.driverDashPendingJobs,
+                    l10n.driverEarningsBaht(
+                        RoleAmountCalculator.formatMoney(_todayEarnings)),
+                    l10n.driverDashEarningsToday,
                   ),
                 ),
                 const SizedBox(width: JdcSpacing.md),
@@ -1232,9 +1233,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                 const SizedBox(width: JdcSpacing.md),
                 Expanded(
                   child: _buildHeroStat(
-                    l10n.driverEarningsBaht(
-                        RoleAmountCalculator.formatMoney(_todayEarnings)),
-                    l10n.driverDashEarningsToday,
+                    '${_availableJobs.length}',
+                    l10n.driverDashPendingJobs,
                   ),
                 ),
               ],

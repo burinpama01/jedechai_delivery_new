@@ -1,12 +1,13 @@
-﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
+import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
 import '../../../../theme/jdc_colors.dart';
 import '../../../../common/services/menu_option_service.dart';
 import '../../../../common/models/menu_option.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../theme/jdc_layout.dart';
 
 /// Merchant Option Group Detail Screen
-/// 
+///
 /// Allows merchants to create or edit option groups and their options
 /// Features: Create/Update group, Add/Remove options, Price management
 class MerchantOptionGroupDetailScreen extends StatefulWidget {
@@ -20,18 +21,20 @@ class MerchantOptionGroupDetailScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<MerchantOptionGroupDetailScreen> createState() => _MerchantOptionGroupDetailScreenState();
+  State<MerchantOptionGroupDetailScreen> createState() =>
+      _MerchantOptionGroupDetailScreenState();
 }
 
-class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDetailScreen> {
+class _MerchantOptionGroupDetailScreenState
+    extends State<MerchantOptionGroupDetailScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _minSelectionController = TextEditingController(text: '0');
   final _maxSelectionController = TextEditingController(text: '1');
-  
+
   final _optionNameController = TextEditingController();
   final _optionPriceController = TextEditingController(text: '0');
-  
+
   List<MenuOption> _options = [];
   // ignore: unused_field
   bool _isLoading = false;
@@ -49,12 +52,13 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
       _nameController.text = widget.group!.name;
       _minSelectionController.text = widget.group!.minSelection.toString();
       _maxSelectionController.text = widget.group!.maxSelection.toString();
-      
+
       debugLog('🔍 Loading existing group: ${widget.group!.name}');
-      debugLog('📋 Existing options count: ${widget.group!.options?.length ?? 0}');
-      
-      _options = widget.group!.options ?? [];
-      
+      debugLog(
+          '📋 Existing options count: ${widget.group!.options?.length ?? 0}');
+
+      _options = List<MenuOption>.of(widget.group!.options ?? const []);
+
       debugLog('📊 Loaded options for editing:');
       for (int i = 0; i < _options.length; i++) {
         final option = _options[i];
@@ -113,7 +117,7 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(widget.group == null 
+            content: Text(widget.group == null
                 ? AppLocalizations.of(context)!.optGroupCreateSuccess
                 : AppLocalizations.of(context)!.optGroupUpdateSuccess),
             backgroundColor: JdcColors.of(context).successFill,
@@ -125,7 +129,8 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ $e'),
+            content: Text('❌ $e',
+                style: TextStyle(color: JdcColors.of(context).paper)),
             backgroundColor: JdcColors.of(context).danger,
           ),
         );
@@ -163,7 +168,9 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context)!.optGroupOptionNameRequired),
+          content:
+              Text(AppLocalizations.of(context)!.optGroupOptionNameRequired,
+                  style: TextStyle(color: JdcColors.of(context).paper)),
           backgroundColor: JdcColors.of(context).danger,
         ),
       );
@@ -174,7 +181,9 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
     if (price < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context)!.optGroupOptionPriceNegative),
+          content:
+              Text(AppLocalizations.of(context)!.optGroupOptionPriceNegative,
+                  style: TextStyle(color: JdcColors.of(context).paper)),
           backgroundColor: JdcColors.of(context).danger,
         ),
       );
@@ -212,16 +221,29 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
     });
   }
 
+  void _updateOptionPrice(int index, int price) {
+    setState(() {
+      _options[index] = _options[index].copyWith(price: price);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.group != null;
 
     return Scaffold(
+      backgroundColor: JdcColors.of(context).paper,
       appBar: AppBar(
-        title: Text(isEditing ? AppLocalizations.of(context)!.optGroupEditTitle : AppLocalizations.of(context)!.optGroupCreateTitle),
-        backgroundColor: JdcColors.of(context).cta,
-        foregroundColor: JdcColors.of(context).onCta,
+        title: Text(
+            isEditing
+                ? AppLocalizations.of(context)!.optGroupEditTitle
+                : AppLocalizations.of(context)!.optGroupCreateTitle,
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+        backgroundColor: JdcColors.of(context).surface,
+        foregroundColor: JdcColors.of(context).text,
+        titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: JdcColors.of(context).text),
         elevation: 0,
+        shape: Border(bottom: BorderSide(color: JdcColors.of(context).line)),
         actions: [
           if (isEditing)
             IconButton(
@@ -236,7 +258,8 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(
+                    JdcSpacing.xl, JdcSpacing.md, JdcSpacing.xl, JdcSpacing.lg),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -250,7 +273,7 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
 
                     // Options List
                     _buildOptionsList(),
-                    const SizedBox(height: 100), // Space for save button
+                    const SizedBox(height: JdcSpacing.xl),
                   ],
                 ),
               ),
@@ -258,7 +281,8 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
 
             // Save Button
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(
+                  JdcSpacing.xl, JdcSpacing.md, JdcSpacing.xl, JdcSpacing.lg),
               decoration: BoxDecoration(
                 color: JdcColors.of(context).surface,
                 boxShadow: [
@@ -270,8 +294,10 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
                 ],
               ),
               child: SafeArea(
+                top: false,
                 child: SizedBox(
                   width: double.infinity,
+                  height: JdcTouch.button,
                   child: ElevatedButton(
                     onPressed: _isSaving ? null : _saveGroup,
                     style: ElevatedButton.styleFrom(
@@ -279,7 +305,7 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
                       foregroundColor: JdcColors.of(context).onCta,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(JdcRadius.card),
                       ),
                     ),
                     child: _isSaving
@@ -288,11 +314,16 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
                             width: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(JdcColors.of(context).onCta),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  JdcColors.of(context).onCta),
                             ),
                           )
                         : Text(
-                            isEditing ? AppLocalizations.of(context)!.optGroupBtnUpdate : AppLocalizations.of(context)!.optGroupBtnCreate,
+                            isEditing
+                                ? AppLocalizations.of(context)!
+                                    .optGroupBtnUpdate
+                                : AppLocalizations.of(context)!
+                                    .optGroupBtnCreate,
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -320,14 +351,17 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
           ),
         ),
         const SizedBox(height: 16),
-        
+
         // Group Name
         TextFormField(
           controller: _nameController,
           decoration: InputDecoration(
             labelText: AppLocalizations.of(context)!.optGroupNameLabel,
             hintText: AppLocalizations.of(context)!.optGroupNameHint,
-            border: const OutlineInputBorder(),
+            filled: true,
+            fillColor: JdcColors.of(context).surface,
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(JdcRadius.field)),
           ),
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
@@ -348,7 +382,10 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
                 decoration: InputDecoration(
                   labelText: AppLocalizations.of(context)!.optGroupMinLabel,
                   hintText: '0',
-                  border: const OutlineInputBorder(),
+                  filled: true,
+                  fillColor: JdcColors.of(context).surface,
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(JdcRadius.field)),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -370,7 +407,10 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
                 decoration: InputDecoration(
                   labelText: AppLocalizations.of(context)!.optGroupMaxLabel,
                   hintText: '1',
-                  border: const OutlineInputBorder(),
+                  filled: true,
+                  fillColor: JdcColors.of(context).surface,
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(JdcRadius.field)),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -410,51 +450,73 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
           ),
         ),
         const SizedBox(height: 16),
-        
-        Row(
-          children: [
-            // Option Name
-            Expanded(
-              flex: 2,
-              child: TextFormField(
-                controller: _optionNameController,
-                decoration: InputDecoration(
-                  labelText: AppLocalizations.of(context)!.optGroupOptionNameLabel,
-                  hintText: AppLocalizations.of(context)!.optGroupOptionNameHint,
-                  border: const OutlineInputBorder(),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            
-            // Option Price
-            SizedBox(
-              width: 100,
-              child: TextFormField(
-                controller: _optionPriceController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: AppLocalizations.of(context)!.optGroupOptionPriceLabel,
-                  hintText: '0',
-                  prefixText: '฿',
-                  border: const OutlineInputBorder(),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            
-            // Add Button
-            ElevatedButton(
-              onPressed: _addOption,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: JdcColors.of(context).cta,
-                foregroundColor: JdcColors.of(context).onCta,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              ),
-              child: const Icon(Icons.add),
-            ),
-          ],
-        ),
+        LayoutBuilder(
+            builder: (context, constraints) => Flex(
+                  direction: constraints.maxWidth < 370
+                      ? Axis.vertical
+                      : Axis.horizontal,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Option Name
+                    SizedBox(
+                      width: constraints.maxWidth < 370
+                          ? constraints.maxWidth
+                          : constraints.maxWidth - 196,
+                      child: TextFormField(
+                        controller: _optionNameController,
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.of(context)!
+                              .optGroupOptionNameLabel,
+                          hintText: AppLocalizations.of(context)!
+                              .optGroupOptionNameHint,
+                          filled: true,
+                          fillColor: JdcColors.of(context).surface,
+                          border: OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.circular(JdcRadius.field)),
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                        width: constraints.maxWidth < 370 ? 0 : 12,
+                        height: constraints.maxWidth < 370 ? 8 : 0),
+
+                    // Option Price
+                    SizedBox(
+                      width: constraints.maxWidth < 370 ? double.infinity : 100,
+                      child: TextFormField(
+                        controller: _optionPriceController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.of(context)!
+                              .optGroupOptionPriceLabel,
+                          hintText: '0',
+                          prefixText: '฿',
+                          filled: true,
+                          fillColor: JdcColors.of(context).surface,
+                          border: OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.circular(JdcRadius.field)),
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                        width: constraints.maxWidth < 370 ? 0 : 12,
+                        height: constraints.maxWidth < 370 ? 8 : 0),
+
+                    // Add Button
+                    ElevatedButton(
+                      onPressed: _addOption,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: JdcColors.of(context).cta,
+                        foregroundColor: JdcColors.of(context).onCta,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 16),
+                      ),
+                      child: const Icon(Icons.add),
+                    ),
+                  ],
+                )),
       ],
     );
   }
@@ -509,7 +571,8 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
             ),
             const Spacer(),
             Text(
-              AppLocalizations.of(context)!.optGroupItemCount(_options.length.toString()),
+              AppLocalizations.of(context)!
+                  .optGroupItemCount(_options.length.toString()),
               style: TextStyle(
                 fontSize: 14,
                 color: JdcColors.of(context).muted,
@@ -518,14 +581,17 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
           ],
         ),
         const SizedBox(height: 16),
-        
         ..._options.asMap().entries.map((entry) {
           final index = entry.key;
           final option = entry.value;
           return OptionCard(
+            key: ValueKey(option.id.isNotEmpty
+                ? option.id
+                : option.createdAt.microsecondsSinceEpoch),
             option: option,
             onRemove: () => _removeOption(index),
             onToggleAvailability: () => _toggleOptionAvailability(index),
+            onPriceChanged: (price) => _updateOptionPrice(index, price),
           );
         }),
       ],
@@ -534,49 +600,53 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
 
   Future<void> _deleteGroup() async {
     final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.optLibDeleteConfirmTitle),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(AppLocalizations.of(context)!.optLibDeleteConfirmBody(widget.group!.name)),
-            const SizedBox(height: 8),
-            Text(
-              AppLocalizations.of(context)!.optLibDeleteNote((widget.group!.options?.length ?? 0).toString()),
-              style: TextStyle(
-                color: JdcColors.of(context).brandOnSoft,
-                fontSize: 12,
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(AppLocalizations.of(context)!.optLibDeleteConfirmTitle),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(AppLocalizations.of(context)!
+                    .optLibDeleteConfirmBody(widget.group!.name)),
+                const SizedBox(height: 8),
+                Text(
+                  AppLocalizations.of(context)!.optLibDeleteNote(
+                      (widget.group!.options?.length ?? 0).toString()),
+                  style: TextStyle(
+                    color: JdcColors.of(context).brandOnSoft,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(AppLocalizations.of(context)!.optLibCancel),
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(AppLocalizations.of(context)!.optLibCancel),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: JdcColors.of(context).danger,
+                  foregroundColor: JdcColors.of(context).paper,
+                ),
+                child: Text(AppLocalizations.of(context)!.optLibDeleteBtn),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: JdcColors.of(context).danger,
-              foregroundColor: JdcColors.of(context).onCta,
-            ),
-            child: Text(AppLocalizations.of(context)!.optLibDeleteBtn),
-          ),
-        ],
-      ),
-    ) ?? false;
+        ) ??
+        false;
 
     if (confirmed) {
       try {
         await MenuOptionService().deleteOptionGroup(widget.group!.id);
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppLocalizations.of(context)!.optLibDeleteSuccess(widget.group!.name)),
+              content: Text(AppLocalizations.of(context)!
+                  .optLibDeleteSuccess(widget.group!.name)),
               backgroundColor: JdcColors.of(context).successFill,
             ),
           );
@@ -586,7 +656,9 @@ class _MerchantOptionGroupDetailScreenState extends State<MerchantOptionGroupDet
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppLocalizations.of(context)!.optLibDeleteFailed(e.toString())),
+              content: Text(AppLocalizations.of(context)!
+                  .optLibDeleteFailed(e.toString()),
+                  style: TextStyle(color: JdcColors.of(context).paper)),
               backgroundColor: JdcColors.of(context).danger,
             ),
           );
@@ -600,12 +672,14 @@ class OptionCard extends StatelessWidget {
   final MenuOption option;
   final VoidCallback onRemove;
   final VoidCallback onToggleAvailability;
+  final ValueChanged<int> onPriceChanged;
 
   const OptionCard({
     Key? key,
     required this.option,
     required this.onRemove,
     required this.onToggleAvailability,
+    required this.onPriceChanged,
   }) : super(key: key);
 
   @override
@@ -623,7 +697,9 @@ class OptionCard extends StatelessWidget {
                 width: 24,
                 height: 24,
                 decoration: BoxDecoration(
-                  color: option.isAvailable ? JdcColors.of(context).successInk : JdcColors.of(context).muted,
+                  color: option.isAvailable
+                      ? JdcColors.of(context).successInk
+                      : JdcColors.of(context).muted,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -634,7 +710,7 @@ class OptionCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 16),
-            
+
             // Option Info
             Expanded(
               child: Column(
@@ -645,25 +721,50 @@ class OptionCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: option.isAvailable ? JdcColors.of(context).text : JdcColors.of(context).muted,
+                      color: option.isAvailable
+                          ? JdcColors.of(context).text
+                          : JdcColors.of(context).muted,
                     ),
                   ),
-                  if (option.price > 0)
-                    Text(
-                      '+฿${option.price}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: JdcColors.of(context).cta,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
                 ],
               ),
             ),
-            
+
+            SizedBox(
+              width: 74,
+              child: TextFormField(
+                initialValue: option.price.toString(),
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                decoration: InputDecoration(
+                  prefixText: '฿',
+                  isDense: true,
+                  filled: true,
+                  fillColor: JdcColors.of(context).surface,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(JdcRadius.field),
+                  ),
+                ),
+                validator: (value) {
+                  final price = int.tryParse(value ?? '');
+                  if (price == null || price < 0) {
+                    return AppLocalizations.of(context)!
+                        .optGroupOptionPriceNegative;
+                  }
+                  return null;
+                },
+                onChanged: (value) {
+                  final price = int.tryParse(value);
+                  if (price != null && price >= 0) onPriceChanged(price);
+                },
+              ),
+            ),
+            const SizedBox(width: JdcSpacing.sm),
+
             // Remove Button
             IconButton(
-              icon: Icon(Icons.remove_circle, color: JdcColors.of(context).dangerInk),
+              icon: Icon(Icons.remove_circle,
+                  color: JdcColors.of(context).dangerInk),
               onPressed: onRemove,
             ),
           ],

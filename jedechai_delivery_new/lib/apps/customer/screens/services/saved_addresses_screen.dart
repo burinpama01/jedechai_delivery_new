@@ -172,14 +172,17 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                         child: Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(
-                              horizontal: JdcSpacing.md, vertical: JdcSpacing.lg),
+                              horizontal: JdcSpacing.md,
+                              vertical: JdcSpacing.lg),
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(JdcRadius.small),
+                            borderRadius:
+                                BorderRadius.circular(JdcRadius.small),
                             border: Border.all(
                               color: pickedLat != null ? jdc2.cta : jdc2.line,
                               width: pickedLat != null ? 2 : 1,
                             ),
-                            color: pickedLat != null ? jdc2.brandSoft : jdc2.paper,
+                            color:
+                                pickedLat != null ? jdc2.brandSoft : jdc2.paper,
                           ),
                           child: Row(
                             children: [
@@ -187,7 +190,8 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                                 pickedLat != null
                                     ? Icons.check_circle
                                     : Icons.pin_drop,
-                                color: pickedLat != null ? jdc2.cta : jdc2.muted,
+                                color:
+                                    pickedLat != null ? jdc2.cta : jdc2.muted,
                                 size: 22,
                               ),
                               const SizedBox(width: JdcSpacing.sm),
@@ -215,8 +219,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                                             ? pickedAddress
                                             : '${pickedLat!.toStringAsFixed(5)}, ${pickedLng!.toStringAsFixed(5)}',
                                         style: TextStyle(
-                                            fontSize: 11,
-                                            color: jdc2.dim),
+                                            fontSize: 11, color: jdc2.dim),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -348,7 +351,8 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: JdcColors.of(context).danger),
             child: Text(AppLocalizations.of(context)!.addrDelete),
           ),
         ],
@@ -375,8 +379,10 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
       style: OutlinedButton.styleFrom(
         foregroundColor: color,
         side: BorderSide(color: color),
-        padding: const EdgeInsets.symmetric(horizontal: JdcSpacing.xl, vertical: JdcSpacing.md),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(JdcRadius.small)),
+        padding: const EdgeInsets.symmetric(
+            horizontal: JdcSpacing.xl, vertical: JdcSpacing.md),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(JdcRadius.small)),
       ),
     );
   }
@@ -392,6 +398,8 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
             : AppLocalizations.of(context)!.addrBookTitle),
         backgroundColor: jdc.surface,
         foregroundColor: jdc.text,
+        titleTextStyle:
+            Theme.of(context).textTheme.titleLarge?.copyWith(color: jdc.text),
         shape: Border(bottom: BorderSide(color: jdc.line)),
         iconTheme: IconThemeData(color: jdc.text),
       ),
@@ -400,23 +408,43 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
           : _addresses.isEmpty
               ? _buildEmptyState()
               : _buildAddressList(),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddEditDialog(),
-        icon: const Icon(Icons.add),
-        label: Text(AppLocalizations.of(context)!.addrAddButton),
-        backgroundColor: jdc.cta,
-        foregroundColor: jdc.onCta,
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+          decoration: BoxDecoration(
+            color: jdc.surface,
+            border: Border(top: BorderSide(color: jdc.line)),
+          ),
+          child: SizedBox(
+            height: 54,
+            child: ElevatedButton.icon(
+              onPressed: () => _showAddEditDialog(),
+              icon: const Icon(Icons.add),
+              label: Text(AppLocalizations.of(context)!.addrAddButton),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: jdc.cta,
+                foregroundColor: jdc.onCta,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildEmptyState() {
     final jdc = JdcColors.of(context);
+    // Center คุมให้อยู่กลางจอ, ScrollView กันล้นบนจอเตี้ย/แนวนอน
     return Center(
+      child: SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(JdcSpacing.xl),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               Icons.location_off_rounded,
@@ -457,11 +485,12 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                     'work',
                     AppLocalizations.of(context)!.addrLabelWork,
                     Icons.work_rounded,
-                    jdc.brand),
+                    jdc.link),
               ],
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -488,7 +517,9 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
       decoration: BoxDecoration(
         color: jdc.surface,
         borderRadius: BorderRadius.circular(JdcRadius.card),
-        border: Border.all(color: isDefault ? jdc.brandLine : jdc.line, width: isDefault ? 2 : 1),
+        border: Border.all(
+            color: isDefault ? jdc.brandLine : jdc.line,
+            width: isDefault ? 2 : 1),
       ),
       child: InkWell(
         onTap: widget.pickMode
@@ -519,12 +550,15 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                   Expanded(
                     child: Text(
                       addr.name,
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: jdc.text),
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: jdc.text),
                     ),
                   ),
                   if (isDefault)
                     Text(
-                      'ค่าเริ่มต้น',
+                      AppLocalizations.of(context)!.addrDefaultBadge,
                       style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -559,11 +593,15 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                         side: BorderSide(color: jdc.line),
                         minimumSize: const Size(0, JdcTouch.minTarget),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(JdcRadius.small)),
+                            borderRadius:
+                                BorderRadius.circular(JdcRadius.small)),
                         padding: EdgeInsets.zero,
                       ),
-                      child: Text('แก้ไข',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: jdc.text)),
+                      child: Text(AppLocalizations.of(context)!.addrEditAction,
+                          style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: jdc.text)),
                     ),
                   ),
                   const SizedBox(width: JdcSpacing.sm),
@@ -575,11 +613,15 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                         side: BorderSide(color: jdc.dangerLine),
                         minimumSize: const Size(92, JdcTouch.minTarget),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(JdcRadius.small)),
+                            borderRadius:
+                                BorderRadius.circular(JdcRadius.small)),
                         padding: EdgeInsets.zero,
                       ),
-                      child: Text('ลบ',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: jdc.dangerInk)),
+                      child: Text(AppLocalizations.of(context)!.addrDelete,
+                          style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: jdc.dangerInk)),
                     )
                   else
                     Icon(Icons.chevron_right, color: jdc.muted),

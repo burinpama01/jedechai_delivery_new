@@ -283,7 +283,9 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.editProfileSaveFailed(e.toString())),
+            content: Text(AppLocalizations.of(context)!
+                .editProfileSaveFailed(e.toString()),
+                style: TextStyle(color: JdcColors.of(context).paper)),
             backgroundColor: JdcColors.of(context).danger,
             duration: const Duration(seconds: 3),
           ),
@@ -301,35 +303,72 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: jdc.paper,
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.editProfileTitle),
-        backgroundColor: JdcColors.of(context).cta,
-        foregroundColor: JdcColors.of(context).onCta,
+        backgroundColor: jdc.surface,
+        foregroundColor: jdc.text,
+        titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: jdc.text),
         elevation: 0,
+        shape: Border(bottom: BorderSide(color: jdc.line)),
+      ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+          decoration: BoxDecoration(
+            color: jdc.surface,
+            border: Border(top: BorderSide(color: jdc.line)),
+            boxShadow: jdc.shadowSheet,
+          ),
+          child: SizedBox(
+            height: 52,
+            child: ElevatedButton(
+              onPressed: _isLoading ? null : _submitProfile,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: jdc.cta,
+                foregroundColor: jdc.onCta,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+              ),
+              child: _isLoading
+                  ? SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: jdc.onCta,
+                      ),
+                    )
+                  : Text(AppLocalizations.of(context)!.editProfileSaveBtn),
+            ),
+          ),
+        ),
       ),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
           children: [
             // Shop Photo Upload
             Center(
               child: GestureDetector(
                 onTap: _pickShopPhoto,
                 child: Container(
-                  width: 120,
-                  height: 120,
+                  width: 70,
+                  height: 70,
                   decoration: BoxDecoration(
-                    color: JdcColors.of(context).brandSoft,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: JdcColors.of(context).cta, width: 3),
+                    color: jdc.sunken,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: jdc.line),
                   ),
                   child: Stack(
                     children: [
                       Positioned.fill(
-                        child: ClipOval(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(19),
                           child: _shopPhoto != null
                               ? AppFileImage(
                                   file: _shopPhoto!,
@@ -339,11 +378,13 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
                                   ? AppNetworkImage(
                                       imageUrl: _shopPhotoUrl,
                                       fit: BoxFit.cover,
-                                      backgroundColor: JdcColors.of(context).surface,
+                                      backgroundColor:
+                                          JdcColors.of(context).surface,
                                     )
                                   : GrayscaleLogoPlaceholder(
                                       fit: BoxFit.contain,
-                                      backgroundColor: JdcColors.of(context).surface,
+                                      backgroundColor:
+                                          JdcColors.of(context).surface,
                                     ),
                         ),
                       ),
@@ -372,7 +413,7 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
                     color: colorScheme.onSurfaceVariant,
                   )),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
             // Shop Name Field
             _buildTextField(
@@ -381,7 +422,8 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
               icon: Icons.store,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return AppLocalizations.of(context)!.editProfileShopNameRequired;
+                  return AppLocalizations.of(context)!
+                      .editProfileShopNameRequired;
                 }
                 return null;
               },
@@ -406,7 +448,8 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
               validator: (value) {
                 if (value != null && value.isNotEmpty) {
                   if (value.length < 9 || value.length > 10) {
-                    return AppLocalizations.of(context)!.editProfilePhoneInvalid;
+                    return AppLocalizations.of(context)!
+                        .editProfilePhoneInvalid;
                   }
                 }
                 return null;
@@ -444,14 +487,16 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            AppLocalizations.of(context)!.editProfilePinLocation,
+                            AppLocalizations.of(context)!
+                                .editProfilePinLocation,
                             style: TextStyle(fontWeight: FontWeight.w600),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             (_shopLat != null && _shopLng != null)
                                 ? 'Lat: ${_shopLat!.toStringAsFixed(5)}, Lng: ${_shopLng!.toStringAsFixed(5)}'
-                                : AppLocalizations.of(context)!.editProfileNoLocation,
+                                : AppLocalizations.of(context)!
+                                    .editProfileNoLocation,
                             style: TextStyle(
                               fontSize: 12,
                               color: colorScheme.onSurfaceVariant,
@@ -487,16 +532,16 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
                   label: Text(_weekdayLabels(context)[day] ?? day),
                   selected: isSelected,
                   selectedColor: JdcColors.of(context).brandSoft,
-                  checkmarkColor: JdcColors.of(context).cta,
+                  checkmarkColor: JdcColors.of(context).brandOnSoft,
                   labelStyle: TextStyle(
                     color: isSelected
-                        ? JdcColors.of(context).cta
+                        ? JdcColors.of(context).brandOnSoft
                         : colorScheme.onSurface,
                     fontWeight: FontWeight.w600,
                   ),
                   side: BorderSide(
                     color: isSelected
-                        ? JdcColors.of(context).cta
+                        ? JdcColors.of(context).brandOnSoft
                         : colorScheme.outlineVariant.withValues(alpha: 0.8),
                   ),
                   onSelected: (selected) {
@@ -522,7 +567,8 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
                       final picked = await PlatformAdaptive.pickTime(
                         context: context,
                         initialTime: _shopOpenTime,
-                        title: AppLocalizations.of(context)!.editProfileOpenTime,
+                        title:
+                            AppLocalizations.of(context)!.editProfileOpenTime,
                       );
                       if (picked != null) {
                         setState(() => _shopOpenTime = picked);
@@ -539,7 +585,8 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
                       final picked = await PlatformAdaptive.pickTime(
                         context: context,
                         initialTime: _shopCloseTime,
-                        title: AppLocalizations.of(context)!.editProfileCloseTime,
+                        title:
+                            AppLocalizations.of(context)!.editProfileCloseTime,
                       );
                       if (picked != null) {
                         setState(() => _shopCloseTime = picked);
@@ -550,57 +597,25 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
               ],
             ),
             const SizedBox(height: 24),
-
-            // Save Button
-            SizedBox(
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _isLoading
-                    ? null
-                    : () {
-                        if (_shopOpenDays.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content:
-                                  Text(AppLocalizations.of(context)!.editProfileSelectDayRequired),
-                              backgroundColor: JdcColors.of(context).danger,
-                            ),
-                          );
-                          return;
-                        }
-                        _saveProfile();
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: JdcColors.of(context).cta,
-                  foregroundColor: JdcColors.of(context).onCta,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 2,
-                ),
-                child: _isLoading
-                    ? SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(JdcColors.of(context).onCta),
-                        ),
-                      )
-                    : Text(
-                        AppLocalizations.of(context)!.editProfileSaveBtn,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-              ),
-            ),
           ],
         ),
       ),
     );
+  }
+
+  void _submitProfile() {
+    if (_shopOpenDays.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text(AppLocalizations.of(context)!.editProfileSelectDayRequired,
+                  style: TextStyle(color: JdcColors.of(context).paper)),
+          backgroundColor: JdcColors.of(context).danger,
+        ),
+      );
+      return;
+    }
+    _saveProfile();
   }
 
   Widget _buildTextField({
@@ -612,7 +627,7 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
     int maxLines = 1,
     bool enabled = true,
   }) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return TextFormField(
       controller: controller,
       validator: validator,
@@ -621,40 +636,35 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
       enabled: enabled,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, color: JdcColors.of(context).cta),
+        floatingLabelBehavior: FloatingLabelBehavior.always,
+        labelStyle: TextStyle(color: jdc.muted, fontSize: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         filled: true,
-        fillColor: enabled
-            ? colorScheme.surfaceContainer
-            : colorScheme.surfaceContainerHighest,
+        fillColor: enabled ? jdc.surface : jdc.sunken,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.8),
-          ),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: jdc.line),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.8),
-          ),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: jdc.line),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: JdcColors.of(context).cta, width: 2),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: jdc.cta, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: JdcColors.of(context).danger),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: jdc.danger),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: JdcColors.of(context).danger, width: 2),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: jdc.danger, width: 2),
         ),
         disabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.8),
-          ),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: jdc.line),
         ),
       ),
     );

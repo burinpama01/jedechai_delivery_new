@@ -49,6 +49,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
   StreamSubscription<List<Map<String, dynamic>>>? _ordersStreamSubscription;
   SharedPreferences? _prefs;
   bool _showHistory = false; // Toggle between active and history
+  int _activeOrderTab = 0; // All, new, preparing, ready for pickup.
   Timer? _autoRefreshTimer;
 
   // Alarm notification state variables
@@ -100,14 +101,14 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
               onPressed: () => Navigator.of(context).pop(true),
               style: ElevatedButton.styleFrom(
                 backgroundColor: jdc.danger,
-                foregroundColor: jdc.onCta,
+                foregroundColor: jdc.paper,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(JdcRadius.field),
                 ),
               ),
               child: Text(
                 AppLocalizations.of(context)!.merchantCloseShopConfirm,
-                style: _jt(fontSize: 14, color: jdc.onCta, weight: 600),
+                style: _jt(fontSize: 14, color: jdc.paper, weight: 600),
               ),
             ),
           ],
@@ -695,7 +696,9 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
       if (!mounted) return;
 
       final bool isManualToggle = !triggeredBySchedule;
-      if (isManualToggle && _shopAutoScheduleEnabled && permanentlyDisableSchedule) {
+      if (isManualToggle &&
+          _shopAutoScheduleEnabled &&
+          permanentlyDisableSchedule) {
         setState(() {
           _shopAutoScheduleEnabled = false;
         });
@@ -743,9 +746,9 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                   : (autoDisabled
                       ? AppLocalizations.of(context)!.merchantShopClosedAutoOff
                       : AppLocalizations.of(context)!.merchantShopClosed),
+              style: TextStyle(color: value ? jdc.onPanel : jdc.text),
             ),
-            backgroundColor:
-                value ? jdc.successFill : jdc.offTrack,
+            backgroundColor: value ? jdc.successFill : jdc.offTrack,
             duration: const Duration(seconds: 2),
           ),
         );
@@ -763,7 +766,8 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)!
-                .merchantShopStatusError(e.toString())),
+                .merchantShopStatusError(e.toString()),
+                style: TextStyle(color: JdcColors.of(context).paper)),
             backgroundColor: JdcColors.of(context).danger,
             duration: const Duration(seconds: 3),
           ),
@@ -872,7 +876,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(message),
+          content: Text(message, style: TextStyle(color: JdcColors.of(context).paper)),
           backgroundColor: JdcColors.of(context).successFill,
           duration: const Duration(seconds: 2),
         ),
@@ -957,6 +961,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         foregroundColor: jdc.text,
+        titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: jdc.text),
         actions: [
           // Toggle between active and history
           IconButton(
@@ -1056,7 +1061,11 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
             _buildShopStatusCard(),
             const SizedBox(height: JdcSpacing.xxl),
 
-            // Orders Section
+            // The artboard groups the live queue by the merchant's next step.
+            if (!_showHistory) ...[
+              _buildOrderFilters(),
+              const SizedBox(height: JdcSpacing.lg),
+            ],
             _buildOrdersList(),
           ],
         ),
@@ -1065,8 +1074,17 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
   }
 
   Widget _buildOrdersList() {
+    final visibleOrders = _showHistory
+        ? _orders
+        : filterMerchantOrdersForTab(_orders, _activeOrderTab);
+    if (!_showHistory &&
+        _activeOrderTab != 0 &&
+        _orders.isNotEmpty &&
+        visibleOrders.isEmpty) {
+      return _buildEmptyOrderFilter();
+    }
     return MerchantOrderList(
-      orders: _orders,
+      orders: visibleOrders,
       isLoading: _isLoading,
       error: _error,
       isShopOpen: _isShopOpen,
@@ -1081,6 +1099,87 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
         _setupOrdersStream();
       },
       orderBuilder: _buildOrderCard,
+    );
+  }
+
+  Widget _buildEmptyOrderFilter() {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final label = switch (_activeOrderTab) {
+      1 => l10n.merchantStatusNewOrder,
+      2 => l10n.merchantStatusPreparing,
+      _ => l10n.merchantStatusReadyForPickup,
+    };
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(JdcSpacing.xxl),
+      decoration: BoxDecoration(
+        color: jdc.surface,
+        borderRadius: BorderRadius.circular(JdcRadius.card),
+        border: Border.all(color: jdc.line),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.inbox_outlined, size: 40, color: jdc.dim),
+          const SizedBox(height: JdcSpacing.sm),
+          Text('$label · 0',
+              style: _jt(fontSize: 16, color: jdc.text, weight: 700)),
+          const SizedBox(height: JdcSpacing.sm),
+          TextButton(
+            onPressed: () => setState(() => _activeOrderTab = 0),
+            child: Text(l10n.foodCategoryAll),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOrderFilters() {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final statuses = _orders.map((order) => order['status'] as String? ?? '');
+    final counts = [
+      _orders.length,
+      statuses.where((s) => s == 'pending' || s == 'pending_merchant').length,
+      statuses
+          .where((s) =>
+              s == 'preparing' ||
+              s == 'driver_accepted' ||
+              s == 'arrived_at_merchant')
+          .length,
+      statuses.where((s) => s == 'ready_for_pickup').length,
+    ];
+    final labels = [
+      l10n.foodCategoryAll,
+      l10n.merchantStatusNewOrder,
+      l10n.merchantStatusPreparing,
+      l10n.merchantStatusReadyForPickup,
+    ];
+    return SizedBox(
+      height: JdcTouch.minTarget,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: labels.length,
+        separatorBuilder: (context, index) =>
+            const SizedBox(width: JdcSpacing.sm),
+        itemBuilder: (context, index) {
+          final selected = _activeOrderTab == index;
+          return ChoiceChip(
+            label: Text('${labels[index]} ${counts[index]}'),
+            selected: selected,
+            onSelected: (_) => setState(() => _activeOrderTab = index),
+            labelStyle: _jt(
+              fontSize: 12,
+              color: selected ? jdc.onPanel : jdc.muted,
+              weight: selected ? 700 : 600,
+            ),
+            selectedColor: jdc.panel,
+            backgroundColor: jdc.surface,
+            side: BorderSide(color: selected ? jdc.panel : jdc.line),
+            showCheckmark: false,
+          );
+        },
+      ),
     );
   }
 
@@ -1129,7 +1228,8 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           permanentlyDisable = choice;
         }
 
-        await _toggleShopStatus(value, permanentlyDisableSchedule: permanentlyDisable);
+        await _toggleShopStatus(value,
+            permanentlyDisableSchedule: permanentlyDisable);
       },
     );
   }
@@ -1297,6 +1397,25 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
       );
     }
   }
+}
+
+/// Presentation-only grouping for the active queue. Source order and the
+/// merchant's order state remain unchanged.
+@visibleForTesting
+List<Map<String, dynamic>> filterMerchantOrdersForTab(
+    List<Map<String, dynamic>> orders, int tab) {
+  if (tab == 0) return orders;
+  return orders.where((order) {
+    final status = order['status'] as String? ?? '';
+    return switch (tab) {
+      1 => status == 'pending' || status == 'pending_merchant',
+      2 => status == 'preparing' ||
+          status == 'driver_accepted' ||
+          status == 'arrived_at_merchant',
+      3 => status == 'ready_for_pickup',
+      _ => true,
+    };
+  }).toList();
 }
 
 /// TextStyle มาตรฐานของกลุ่มหน้าออเดอร์ — ผูก fontWeight กับ fontVariations

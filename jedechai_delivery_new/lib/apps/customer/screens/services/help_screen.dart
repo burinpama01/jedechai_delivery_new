@@ -49,9 +49,9 @@ class _HelpScreenState extends State<HelpScreen> {
         : faqs.where((f) => (f['q'] ?? '').toLowerCase().contains(_searchQuery.toLowerCase())).toList();
 
     final topics = [
-      {'tag': 'รถ', 'name': 'การเดินทาง', 'bg': jdc.brandSoft, 'fg': jdc.brandOnSoft},
-      {'tag': 'อาหาร', 'name': 'สั่งอาหาร', 'bg': jdc.successSoft, 'fg': jdc.successInk},
-      {'tag': 'จ่าย', 'name': 'การชำระเงิน', 'bg': jdc.infoSoft, 'fg': jdc.infoInk},
+      {'icon': Icons.directions_car_rounded, 'name': l10n.helpTopicRide, 'bg': jdc.brandSoft, 'fg': jdc.brandOnSoft},
+      {'icon': Icons.restaurant_rounded, 'name': l10n.helpTopicFood, 'bg': jdc.successSoft, 'fg': jdc.successInk},
+      {'icon': Icons.account_balance_wallet_rounded, 'name': l10n.helpTopicPayment, 'bg': jdc.infoSoft, 'fg': jdc.infoInk},
     ];
 
     return Scaffold(
@@ -115,10 +115,14 @@ class _HelpScreenState extends State<HelpScreen> {
                           controller: _searchController,
                           style: TextStyle(fontSize: 14, color: jdc.text),
                           decoration: InputDecoration(
-                            hintText: 'ค้นหาคำถามที่พบบ่อย',
+                            hintText: AppLocalizations.of(context)!.helpSearchHint,
                             hintStyle: TextStyle(color: jdc.muted, fontSize: 14),
                             border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            filled: false,
                             isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 12),
                           ),
                           onChanged: (v) => setState(() => _searchQuery = v),
                         ),
@@ -151,11 +155,11 @@ class _HelpScreenState extends State<HelpScreen> {
                       physics: const NeverScrollableScrollPhysics(),
                       crossAxisSpacing: JdcSpacing.sm,
                       mainAxisSpacing: JdcSpacing.sm,
-                      childAspectRatio: 0.9,
+                      childAspectRatio: 0.78,
                       children: [
                         for (final t in topics)
                           _TopicCard(
-                            tag: t['tag'] as String,
+                            icon: t['icon'] as IconData,
                             name: t['name'] as String,
                             bg: t['bg'] as Color,
                             fg: t['fg'] as Color,
@@ -331,7 +335,7 @@ class _HelpScreenState extends State<HelpScreen> {
                 ),
                 const SizedBox(height: JdcSpacing.sm),
                 Text(
-                  'ทีมงานตอบกลับภายใน 24 ชั่วโมง',
+                  AppLocalizations.of(context)!.helpReplyWithin24h,
                   style: TextStyle(fontSize: 11, color: jdc.muted),
                 ),
               ],
@@ -354,14 +358,14 @@ class _HelpScreenState extends State<HelpScreen> {
 
 class _TopicCard extends StatelessWidget {
   const _TopicCard({
-    required this.tag,
+    required this.icon,
     required this.name,
     required this.bg,
     required this.fg,
     required this.jdc,
   });
 
-  final String tag;
+  final IconData icon;
   final String name;
   final Color bg;
   final Color fg;
@@ -387,10 +391,7 @@ class _TopicCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(JdcRadius.small),
             ),
             alignment: Alignment.center,
-            child: Text(
-              tag,
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: fg),
-            ),
+            child: Icon(icon, size: 20, color: fg),
           ),
           const SizedBox(height: JdcSpacing.sm),
           Text(

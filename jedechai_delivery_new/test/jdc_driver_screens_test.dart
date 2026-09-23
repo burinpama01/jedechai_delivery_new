@@ -100,6 +100,56 @@ SUPABASE_ANON_KEY=test-anon-key
     });
   }
 
+  for (final (size, textScale) in const [
+    (Size(640, 360), 1.0),
+    (Size(640, 480), 1.0),
+    (Size(640, 360), 1.3),
+    (Size(360, 640), 1.3),
+  ]) {
+    testWidgets(
+        'ปุ่มบันทึกประเภทงานเข้าถึงได้ที่ ${size.width}x${size.height} scale $textScale',
+        (tester) async {
+      await pumpAt(
+        tester,
+        size,
+        Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => showModalBottomSheet<List<String>?>(
+                context: context,
+                isScrollControlled: true,
+                builder: (sheetContext) => MediaQuery(
+                  data: MediaQuery.of(sheetContext).copyWith(
+                    textScaler: TextScaler.linear(textScale),
+                  ),
+                  child: const DriverServiceTypeSettings(
+                    initialServiceTypes: ['food'],
+                    driverId: 'test-driver',
+                  ),
+                ),
+              ),
+              child: const Text('Open settings'),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Open settings'));
+      await tester.pumpAndSettle();
+      final sheet = find.byType(DriverServiceTypeSettings);
+      expect(sheet, findsOneWidget);
+      expect(MediaQuery.textScalerOf(tester.element(sheet)).scale(14),
+          closeTo(14 * textScale, 0.001));
+      final label =
+          AppLocalizations.of(tester.element(sheet))!.driverServiceTypeSave;
+      final save = find.text(label);
+      expect(save, findsOneWidget);
+      await tester.ensureVisible(save);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(save.hitTestable(), findsOneWidget);
+    });
+  }
+
   // โหมดมืดต้องครบทุกหน้าที่สร้างเองได้ ไม่ใช่แค่หน้าเดียว
   // (code review จับได้ว่าขาด — Major-2)
   for (final entry in screens.entries) {

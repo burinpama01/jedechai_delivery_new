@@ -701,6 +701,7 @@ class _MerchantOrderDetailScreenState extends State<MerchantOrderDetailScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         foregroundColor: jdc.text,
+        titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: jdc.text),
       ),
       body: _isLoading
           ? Center(

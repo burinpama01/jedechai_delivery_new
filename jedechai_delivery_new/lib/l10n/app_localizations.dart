@@ -101,6 +101,84 @@ abstract class AppLocalizations {
   /// **'JDC Delivery'**
   String get appName;
 
+  /// No description provided for @splashTagline.
+  ///
+  /// In en, this message translates to:
+  /// **'Jedechai Delivery · Khon Kaen'**
+  String get splashTagline;
+
+  /// No description provided for @splashVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version}'**
+  String splashVersion(String version);
+
+  /// No description provided for @customerWalletTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer wallet'**
+  String get customerWalletTitle;
+
+  /// No description provided for @customerWalletBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet balance'**
+  String get customerWalletBalance;
+
+  /// No description provided for @customerWalletMinimumWithdrawal.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum withdrawal {amount}'**
+  String customerWalletMinimumWithdrawal(String amount);
+
+  /// No description provided for @customerWalletPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal requests'**
+  String get customerWalletPending;
+
+  /// No description provided for @customerWalletNoPending.
+  ///
+  /// In en, this message translates to:
+  /// **'No pending requests'**
+  String get customerWalletNoPending;
+
+  /// No description provided for @customerWalletPendingCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} pending requests'**
+  String customerWalletPendingCount(int count);
+
+  /// No description provided for @customerWalletHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction history'**
+  String get customerWalletHistory;
+
+  /// No description provided for @customerWalletNoHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions yet'**
+  String get customerWalletNoHistory;
+
+  /// No description provided for @customerWalletPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Order payment'**
+  String get customerWalletPayment;
+
+  /// No description provided for @customerWalletRefund.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund'**
+  String get customerWalletRefund;
+
+  /// No description provided for @customerWalletAdjustment.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance adjustment'**
+  String get customerWalletAdjustment;
+
   /// No description provided for @language.
   ///
   /// In en, this message translates to:
@@ -7181,6 +7259,102 @@ abstract class AppLocalizations {
   /// **'Delete'**
   String get addrDelete;
 
+  /// No description provided for @accountMenuWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet / Top up'**
+  String get accountMenuWallet;
+
+  /// No description provided for @addrDefaultBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get addrDefaultBadge;
+
+  /// No description provided for @addrEditAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get addrEditAction;
+
+  /// No description provided for @ticketViewConversation.
+  ///
+  /// In en, this message translates to:
+  /// **'View conversation'**
+  String get ticketViewConversation;
+
+  /// No description provided for @ticketViewDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'View details'**
+  String get ticketViewDetail;
+
+  /// No description provided for @referralTierCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current reward tier: tier {tier}'**
+  String referralTierCurrent(String tier);
+
+  /// No description provided for @referralTierReward.
+  ///
+  /// In en, this message translates to:
+  /// **'฿{amount} per successful referral (base ฿{base} × {multiplier})'**
+  String referralTierReward(String amount, String base, String multiplier);
+
+  /// No description provided for @referralTierToNext.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} more to reach the next tier'**
+  String referralTierToNext(String count);
+
+  /// No description provided for @referralTierEarned.
+  ///
+  /// In en, this message translates to:
+  /// **'Rewards earned so far ฿{amount}'**
+  String referralTierEarned(String amount);
+
+  /// No description provided for @referralTierPending.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} pending approval'**
+  String referralTierPending(String count);
+
+  /// No description provided for @referralTierWithdrawNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Rewards go to the system bucket; minimum withdrawal ฿{amount}'**
+  String referralTierWithdrawNote(String amount);
+
+  /// No description provided for @helpSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search FAQs'**
+  String get helpSearchHint;
+
+  /// No description provided for @helpReplyWithin24h.
+  ///
+  /// In en, this message translates to:
+  /// **'Our team replies within 24 hours'**
+  String get helpReplyWithin24h;
+
+  /// No description provided for @helpTopicRide.
+  ///
+  /// In en, this message translates to:
+  /// **'Rides'**
+  String get helpTopicRide;
+
+  /// No description provided for @helpTopicFood.
+  ///
+  /// In en, this message translates to:
+  /// **'Food orders'**
+  String get helpTopicFood;
+
+  /// No description provided for @helpTopicPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments'**
+  String get helpTopicPayment;
+
   /// No description provided for @addrPickTitle.
   ///
   /// In en, this message translates to:
@@ -8188,6 +8362,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Report'**
   String get ticketFab;
+
+  /// No description provided for @ticketFilterActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get ticketFilterActive;
+
+  /// No description provided for @ticketFilterFinished.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved / closed'**
+  String get ticketFilterFinished;
+
+  /// No description provided for @ticketFilterEmptyActive.
+  ///
+  /// In en, this message translates to:
+  /// **'No active reports'**
+  String get ticketFilterEmptyActive;
+
+  /// No description provided for @ticketFilterEmptyFinished.
+  ///
+  /// In en, this message translates to:
+  /// **'No resolved or closed reports'**
+  String get ticketFilterEmptyFinished;
 
   /// No description provided for @ticketEmptyTitle.
   ///
@@ -14164,6 +14362,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Top up'**
   String get shopBudgetReqTopup;
+
+  /// No description provided for @connErrSessionExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Your session has expired. Please sign in again.'**
+  String get connErrSessionExpired;
+
+  /// No description provided for @connErrNoConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot reach the server. Please check your internet connection and try again.'**
+  String get connErrNoConnection;
+
+  /// No description provided for @connErrAuth.
+  ///
+  /// In en, this message translates to:
+  /// **'Authentication failed. Please sign in again.'**
+  String get connErrAuth;
+
+  /// No description provided for @connErrForbidden.
+  ///
+  /// In en, this message translates to:
+  /// **'You do not have permission to access this data.'**
+  String get connErrForbidden;
+
+  /// No description provided for @connErrNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'The requested data was not found.'**
+  String get connErrNotFound;
+
+  /// No description provided for @connErrServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Server error. Please try again later.'**
+  String get connErrServer;
+
+  /// No description provided for @connErrGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong: {detail}'**
+  String connErrGeneric(String detail);
+
+  /// No description provided for @connErrDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection problem'**
+  String get connErrDialogTitle;
+
+  /// No description provided for @connErrTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection error'**
+  String get connErrTitle;
+
+  /// No description provided for @connErrTitleGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get connErrTitleGeneric;
+
+  /// No description provided for @languageSystemShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get languageSystemShort;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

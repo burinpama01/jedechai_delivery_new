@@ -1158,6 +1158,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
       appBar: AppBar(
         backgroundColor: jdc.surface,
         foregroundColor: jdc.text,
+        titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: jdc.text),
         elevation: 0,
         scrolledUnderElevation: 0,
         shape: Border(bottom: BorderSide(color: jdc.line)),

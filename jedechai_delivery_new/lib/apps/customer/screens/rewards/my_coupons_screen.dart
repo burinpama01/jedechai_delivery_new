@@ -7,14 +7,16 @@ import '../../../../common/services/coupon_service.dart';
 
 class MyCouponsScreen extends StatefulWidget {
   final bool isSelectingMode;
-  
-  const MyCouponsScreen({Key? key, this.isSelectingMode = false}) : super(key: key);
+
+  const MyCouponsScreen({Key? key, this.isSelectingMode = false})
+      : super(key: key);
 
   @override
   State<MyCouponsScreen> createState() => _MyCouponsScreenState();
 }
 
-class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProviderStateMixin {
+class _MyCouponsScreenState extends State<MyCouponsScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   final CouponService _couponService = CouponService();
@@ -74,7 +76,8 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.couponClaimSuccess)),
+        SnackBar(
+            content: Text(AppLocalizations.of(context)!.couponClaimSuccess)),
       );
       await _loadCoupons();
     } catch (e) {
@@ -90,23 +93,27 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
+      backgroundColor: jdc.paper,
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.couponScreenTitle),
-        backgroundColor: colorScheme.surface,
-        foregroundColor: colorScheme.onSurface,
+        title: Text(l10n.couponScreenTitle),
+        backgroundColor: jdc.surface,
+        foregroundColor: jdc.text,
+        titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: jdc.text),
         elevation: 0,
+        shape: Border(bottom: BorderSide(color: jdc.line)),
         bottom: TabBar(
           controller: _tabController,
-          labelColor: JdcColors.of(context).cta,
-          unselectedLabelColor: Colors.grey,
-          indicatorColor: JdcColors.of(context).cta,
+          labelColor: jdc.text,
+          unselectedLabelColor: jdc.muted,
+          indicatorColor: jdc.cta,
           tabs: [
-            Tab(text: AppLocalizations.of(context)!.couponTabMine),
-            Tab(text: AppLocalizations.of(context)!.couponTabDiscover),
-            Tab(text: AppLocalizations.of(context)!.couponTabHistory),
+            Tab(text: l10n.couponTabMine),
+            Tab(text: l10n.couponTabDiscover),
+            Tab(text: l10n.couponTabHistory),
           ],
         ),
       ),
@@ -126,7 +133,8 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
       return const Center(child: CircularProgressIndicator());
     }
     if (_myCouponGroups.isEmpty) {
-      return Center(child: Text(AppLocalizations.of(context)!.couponEmptyWallet));
+      return Center(
+          child: Text(AppLocalizations.of(context)!.couponEmptyWallet));
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -135,8 +143,11 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
         final group = _myCouponGroups[index];
         final coupon = group.coupon;
         return GestureDetector(
-          onTap: widget.isSelectingMode ? () => Navigator.pop(context, coupon) : null,
-          child: _buildCouponCard(coupon, isMine: true, quantity: group.quantity),
+          onTap: widget.isSelectingMode
+              ? () => Navigator.pop(context, coupon)
+              : null,
+          child:
+              _buildCouponCard(coupon, isMine: true, quantity: group.quantity),
         );
       },
     );
@@ -147,7 +158,8 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
       return const Center(child: CircularProgressIndicator());
     }
     if (_discoverCoupons.isEmpty) {
-      return Center(child: Text(AppLocalizations.of(context)!.couponEmptyDiscover));
+      return Center(
+          child: Text(AppLocalizations.of(context)!.couponEmptyDiscover));
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -165,7 +177,8 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
     }
 
     if (_usageHistory.isEmpty) {
-      return Center(child: Text(AppLocalizations.of(context)!.couponEmptyHistory));
+      return Center(
+          child: Text(AppLocalizations.of(context)!.couponEmptyHistory));
     }
 
     return ListView.builder(
@@ -174,25 +187,32 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
       itemBuilder: (context, index) {
         final item = _usageHistory[index];
         final coupon = item['coupon'];
-        final couponName = (coupon is Map && coupon['name'] != null) ? coupon['name'].toString() : '-';
-        final couponCode = (coupon is Map && coupon['code'] != null) ? coupon['code'].toString() : '-';
-        final discountAmount = (item['discount_amount'] as num?)?.toDouble() ?? 0;
+        final couponName = (coupon is Map && coupon['name'] != null)
+            ? coupon['name'].toString()
+            : '-';
+        final couponCode = (coupon is Map && coupon['code'] != null)
+            ? coupon['code'].toString()
+            : '-';
+        final discountAmount =
+            (item['discount_amount'] as num?)?.toDouble() ?? 0;
         final usedAt = _formatDate(item['created_at']?.toString() ?? '');
 
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 1,
           child: ListTile(
             title: Text(
               couponName,
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
-            subtitle: Text(AppLocalizations.of(context)!.couponHistoryCode(couponCode, usedAt)),
+            subtitle: Text(AppLocalizations.of(context)!
+                .couponHistoryCode(couponCode, usedAt)),
             trailing: Text(
               '-฿${discountAmount.toStringAsFixed(0)}',
               style: TextStyle(
-                color: Colors.red,
+                color: JdcColors.of(context).danger,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -221,129 +241,131 @@ class _MyCouponsScreenState extends State<MyCouponsScreen> with SingleTickerProv
     return _cachedClaimedCouponIds!;
   }
 
-  Widget _buildCouponCard(Coupon coupon, {required bool isMine, int? quantity}) {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _buildCouponCard(Coupon coupon,
+      {required bool isMine, int? quantity}) {
+    final jdc = JdcColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final alreadyClaimed = _claimedCouponIds.contains(coupon.id);
+    final isFreeDelivery = coupon.discountType == 'free_delivery';
+    final isFixed = coupon.discountType == 'fixed';
+    final value = isFreeDelivery
+        ? l10n.couponTypeFreeDelivery
+        : isFixed
+            ? '฿${coupon.discountValue.toStringAsFixed(0)}'
+            : '${coupon.discountValue.toStringAsFixed(0)}%';
+    final unit = isFreeDelivery
+        ? ''
+        : isFixed
+            ? l10n.couponTypeFixed
+            : l10n.couponTypePercentage;
+    final accent = isFreeDelivery
+        ? jdc.successInk
+        : isFixed
+            ? jdc.brandOnSoft
+            : jdc.infoInk;
+    final accentBg = isFreeDelivery
+        ? jdc.successSoft
+        : isFixed
+            ? jdc.brandSoft
+            : jdc.infoSoft;
 
-    IconData icon;
-    Color iconColor;
-
-    switch (coupon.discountType) {
-      case 'free_delivery':
-        icon = Icons.local_shipping;
-        iconColor = Colors.green;
-        break;
-      case 'fixed':
-        icon = Icons.storefront;
-        iconColor = Colors.orange;
-        break;
-      default:
-        icon = Icons.local_offer;
-        iconColor = JdcColors.of(context).cta;
-    }
-
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: jdc.surface,
+        border: Border.all(color: jdc.line),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: IntrinsicHeight(
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: iconColor, size: 32),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
+              width: 86,
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
+              color: accentBg,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          coupon.name,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                      ),
-                      if (isMine && quantity != null && quantity > 1)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: JdcColors.of(context).cta.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(
-                            'x$quantity',
-                            style: TextStyle(
-                              color: JdcColors.of(context).cta,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    coupon.description ?? '-',
-                    style: TextStyle(
-                      color: colorScheme.onSurface.withValues(alpha: 0.7),
-                      fontSize: 13,
-                    ),
-                  ),
-                  if (isMine && quantity != null && quantity > 1) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      AppLocalizations.of(context)!.couponRemainingUses(quantity.toString()),
+                  Text(value,
+                      textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: colorScheme.onSurface.withValues(alpha: 0.75),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 8),
-                  Text(
-                    AppLocalizations.of(context)!.couponExpiry(coupon.endDate.toString().split(' ').first),
-                    style: TextStyle(color: Colors.red.shade400, fontSize: 12),
-                  ),
+                          color: accent,
+                          fontSize: 19,
+                          fontWeight: FontWeight.w700)),
+                  if (unit.isNotEmpty)
+                    Text(unit,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: accent,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700)),
                 ],
               ),
             ),
-            if (!isMine)
-              ElevatedButton(
-                onPressed: (alreadyClaimed || _claimingCouponId == coupon.id)
-                    ? null
-                    : () => _claimCoupon(coupon),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: JdcColors.of(context).cta,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(coupon.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            color: jdc.text,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700)),
+                    if (coupon.description?.isNotEmpty == true) ...[
+                      const SizedBox(height: 4),
+                      Text(coupon.description!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: jdc.muted, fontSize: 12)),
+                    ],
+                    if (isMine && quantity != null && quantity > 1) ...[
+                      const SizedBox(height: 6),
+                      Text(l10n.couponRemainingUses(quantity.toString()),
+                          style: TextStyle(color: jdc.muted, fontSize: 12)),
+                    ],
+                    if (coupon.endDate != null) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                          l10n.couponExpiry(
+                              coupon.endDate.toString().split(' ').first),
+                          style: TextStyle(color: accent, fontSize: 11)),
+                    ],
+                    if (!isMine) ...[
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: ElevatedButton(
+                          onPressed:
+                              (alreadyClaimed || _claimingCouponId == coupon.id)
+                                  ? null
+                                  : () => _claimCoupon(coupon),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: jdc.cta,
+                            foregroundColor: jdc.onCta,
+                          ),
+                          child: alreadyClaimed
+                              ? Text(l10n.couponClaimed)
+                              : (_claimingCouponId == coupon.id
+                                  ? SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2, color: jdc.onCta),
+                                    )
+                                  : Text(l10n.couponClaim)),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-                child: alreadyClaimed
-                    ? Text(AppLocalizations.of(context)!.couponClaimed)
-                    : (_claimingCouponId == coupon.id
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text(AppLocalizations.of(context)!.couponClaim)),
               ),
+            ),
           ],
         ),
       ),

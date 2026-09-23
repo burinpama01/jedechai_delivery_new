@@ -12,6 +12,51 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appName => 'JDC Delivery';
 
   @override
+  String get splashTagline => 'Jedechai Delivery · Khon Kaen';
+
+  @override
+  String splashVersion(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get customerWalletTitle => 'Customer wallet';
+
+  @override
+  String get customerWalletBalance => 'Wallet balance';
+
+  @override
+  String customerWalletMinimumWithdrawal(String amount) {
+    return 'Minimum withdrawal $amount';
+  }
+
+  @override
+  String get customerWalletPending => 'Withdrawal requests';
+
+  @override
+  String get customerWalletNoPending => 'No pending requests';
+
+  @override
+  String customerWalletPendingCount(int count) {
+    return '$count pending requests';
+  }
+
+  @override
+  String get customerWalletHistory => 'Transaction history';
+
+  @override
+  String get customerWalletNoHistory => 'No transactions yet';
+
+  @override
+  String get customerWalletPayment => 'Order payment';
+
+  @override
+  String get customerWalletRefund => 'Refund';
+
+  @override
+  String get customerWalletAdjustment => 'Balance adjustment';
+
+  @override
   String get language => 'Language';
 
   @override
@@ -3850,6 +3895,66 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addrDelete => 'Delete';
 
   @override
+  String get accountMenuWallet => 'Wallet / Top up';
+
+  @override
+  String get addrDefaultBadge => 'Default';
+
+  @override
+  String get addrEditAction => 'Edit';
+
+  @override
+  String get ticketViewConversation => 'View conversation';
+
+  @override
+  String get ticketViewDetail => 'View details';
+
+  @override
+  String referralTierCurrent(String tier) {
+    return 'Current reward tier: tier $tier';
+  }
+
+  @override
+  String referralTierReward(String amount, String base, String multiplier) {
+    return '฿$amount per successful referral (base ฿$base × $multiplier)';
+  }
+
+  @override
+  String referralTierToNext(String count) {
+    return '$count more to reach the next tier';
+  }
+
+  @override
+  String referralTierEarned(String amount) {
+    return 'Rewards earned so far ฿$amount';
+  }
+
+  @override
+  String referralTierPending(String count) {
+    return '$count pending approval';
+  }
+
+  @override
+  String referralTierWithdrawNote(String amount) {
+    return 'Rewards go to the system bucket; minimum withdrawal ฿$amount';
+  }
+
+  @override
+  String get helpSearchHint => 'Search FAQs';
+
+  @override
+  String get helpReplyWithin24h => 'Our team replies within 24 hours';
+
+  @override
+  String get helpTopicRide => 'Rides';
+
+  @override
+  String get helpTopicFood => 'Food orders';
+
+  @override
+  String get helpTopicPayment => 'Payments';
+
+  @override
   String get addrPickTitle => 'Choose address';
 
   @override
@@ -4378,6 +4483,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ticketFab => 'Report';
+
+  @override
+  String get ticketFilterActive => 'Active';
+
+  @override
+  String get ticketFilterFinished => 'Resolved / closed';
+
+  @override
+  String get ticketFilterEmptyActive => 'No active reports';
+
+  @override
+  String get ticketFilterEmptyFinished => 'No resolved or closed reports';
 
   @override
   String get ticketEmptyTitle => 'No reports yet';
@@ -7582,4 +7699,39 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shopBudgetReqTopup => 'Top up';
+
+  @override
+  String get connErrSessionExpired => 'Your session has expired. Please sign in again.';
+
+  @override
+  String get connErrNoConnection => 'Cannot reach the server. Please check your internet connection and try again.';
+
+  @override
+  String get connErrAuth => 'Authentication failed. Please sign in again.';
+
+  @override
+  String get connErrForbidden => 'You do not have permission to access this data.';
+
+  @override
+  String get connErrNotFound => 'The requested data was not found.';
+
+  @override
+  String get connErrServer => 'Server error. Please try again later.';
+
+  @override
+  String connErrGeneric(String detail) {
+    return 'Something went wrong: $detail';
+  }
+
+  @override
+  String get connErrDialogTitle => 'Connection problem';
+
+  @override
+  String get connErrTitle => 'Connection error';
+
+  @override
+  String get connErrTitleGeneric => 'Error';
+
+  @override
+  String get languageSystemShort => 'Auto';
 }

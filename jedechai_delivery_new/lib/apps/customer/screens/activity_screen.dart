@@ -326,7 +326,8 @@ class _ActivityScreenState extends State<ActivityScreen> {
           });
         } else {
           setState(() {
-            _error = ConnectionHelper.getErrorMessage(supabaseError);
+            _error = ConnectionHelper.getErrorMessage(
+                supabaseError, AppLocalizations.of(context));
             _isLoading = false;
           });
         }
@@ -434,15 +435,18 @@ class _ActivityScreenState extends State<ActivityScreen> {
   @override
   Widget build(BuildContext context) {
     final filteredBookings = _getFilteredBookings();
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: jdc.paper,
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.activityTitle),
-        backgroundColor: colorScheme.surface,
-        foregroundColor: colorScheme.onSurface,
+        title: Text(AppLocalizations.of(context)!.activityTitle,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        backgroundColor: jdc.surface,
+        foregroundColor: jdc.text,
+        titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: jdc.text),
         elevation: 0,
+        shape: Border(bottom: BorderSide(color: jdc.line)),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -472,7 +476,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
         slivers: [
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
               child: Column(
                 children: [
                   _buildDateFilterSection(),
@@ -489,7 +493,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
             )
           else
             SliverPadding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
@@ -506,20 +510,14 @@ class _ActivityScreenState extends State<ActivityScreen> {
   }
 
   Widget _buildDateFilterSection() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.12),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: jdc.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: jdc.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -558,14 +556,14 @@ class _ActivityScreenState extends State<ActivityScreen> {
                     ),
                     selected: _dateFilter == _ActivityDateFilter.custom,
                     onSelected: (_) => _selectCustomDateRange(),
-                    selectedColor: JdcColors.of(context).infoInk,
+                    selectedColor: jdc.panel,
                     labelStyle: TextStyle(
                       color: _dateFilter == _ActivityDateFilter.custom
-                          ? colorScheme.onPrimary
-                          : colorScheme.onSurface,
+                          ? jdc.onPanel
+                          : jdc.text,
                       fontWeight: FontWeight.w600,
                     ),
-                    backgroundColor: colorScheme.surfaceContainerHighest,
+                    backgroundColor: jdc.surface,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -580,7 +578,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
   }
 
   Widget _buildDateFilterChip(_ActivityDateFilter filter, String label) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     final isSelected = _dateFilter == filter;
     return Padding(
       padding: const EdgeInsets.only(right: 8),
@@ -591,12 +589,12 @@ class _ActivityScreenState extends State<ActivityScreen> {
           if (!selected) return;
           setState(() => _dateFilter = filter);
         },
-        selectedColor: JdcColors.of(context).infoInk,
+        selectedColor: jdc.panel,
         labelStyle: TextStyle(
-          color: isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
+          color: isSelected ? jdc.onPanel : jdc.text,
           fontWeight: FontWeight.w600,
         ),
-        backgroundColor: colorScheme.surfaceContainerHighest,
+        backgroundColor: jdc.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
@@ -605,7 +603,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
   }
 
   Widget _buildStatsSection(List<Booking> filteredBookings) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     final totalOrders = filteredBookings.length;
     final completedCount = _getCompletedCount(filteredBookings);
     final cancelledCount = _getCancelledCount(filteredBookings);
@@ -616,22 +614,8 @@ class _ActivityScreenState extends State<ActivityScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            colorScheme.primary,
-            colorScheme.primary.withValues(alpha: 0.78),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: jdc.panel,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.primary.withValues(alpha: 0.28),
-            blurRadius: 12,
-            offset: const Offset(0, 5),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -639,7 +623,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
           Text(
             AppLocalizations.of(context)!.activityOrderStats,
             style: TextStyle(
-              color: colorScheme.onPrimary,
+              color: jdc.onPanel,
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
@@ -648,7 +632,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
           Text(
             AppLocalizations.of(context)!.activityTimePeriod(_getDateFilterText()),
             style: TextStyle(
-              color: colorScheme.onPrimary.withValues(alpha: 0.85),
+              color: jdc.panelDim,
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
@@ -671,11 +655,11 @@ class _ActivityScreenState extends State<ActivityScreen> {
   }
 
   Widget _buildStatChip(String label, String value) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: colorScheme.onPrimary.withValues(alpha: 0.16),
+        color: jdc.panelSoft,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -685,7 +669,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
             label,
             style: TextStyle(
               fontSize: 11,
-              color: colorScheme.onPrimary.withValues(alpha: 0.85),
+              color: jdc.panelDim,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -694,7 +678,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
             value,
             style: TextStyle(
               fontSize: 14,
-              color: colorScheme.onPrimary,
+              color: jdc.onPanel,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -797,25 +781,20 @@ class _ActivityScreenState extends State<ActivityScreen> {
 
   Widget _buildHistoryCard(Booking booking) {
     final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return GestureDetector(
       onTap: () {
         _handleBookingTap(booking);
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
+        margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainer,
+          color: jdc.surface,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.shadow.withValues(alpha: 0.12),
-              blurRadius: 10,
-              spreadRadius: 0,
-            ),
-          ],
+          border: Border.all(color: jdc.line),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -824,17 +803,17 @@ class _ActivityScreenState extends State<ActivityScreen> {
                 children: [
                   // Service Icon
                   Container(
-                    width: 48,
-                    height: 48,
+                    width: 38,
+                    height: 38,
                     decoration: BoxDecoration(
                       color: _getServiceColor(context, booking.serviceType)
                           .withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
                       _getServiceIcon(booking.serviceType),
                       color: _getServiceColor(context, booking.serviceType),
-                      size: 24,
+                      size: 20,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -849,15 +828,15 @@ class _ActivityScreenState extends State<ActivityScreen> {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: _getServiceColor(context, booking.serviceType),
+                            color: jdc.text,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           _formatDateTime(booking.createdAt),
                           style: TextStyle(
-                            fontSize: 14,
-                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 12,
+                            color: jdc.muted,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -883,7 +862,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                 ],
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
               // Destination
               Row(
@@ -898,7 +877,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                     child: Text(
                       _formatAddress(booking.destinationAddress),
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: colorScheme.onSurface,
                       ),
@@ -959,7 +938,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                 ),
               ],
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
 
               // Price and Status Row
               Row(

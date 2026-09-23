@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
+import '../theme/jdc_colors.dart';
 
 /// Connection Helper
 /// 
@@ -18,35 +20,38 @@ class ConnectionHelper {
            errorString.contains('Token has expired');
   }
 
-  static String getErrorMessage(dynamic error) {
+  /// [l10n] ส่งมาเมื่อมี BuildContext เพื่อให้ข้อความตามภาษาที่เลือก;
+  /// ไม่ส่ง = ข้อความไทย (ตรงกับ app_th.arb) สำหรับจุดที่ไม่มี context
+  static String getErrorMessage(dynamic error, [AppLocalizations? l10n]) {
     final errorString = error.toString();
     
     // Handle JWT token expired errors
     if (errorString.contains('InvalidJWTToken') || errorString.contains('Token has expired')) {
-      return 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่';
+      return l10n?.connErrSessionExpired ?? 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่';
     }
     
     if (isConnectionError(error)) {
-      return 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตและลองใหม่';
+      return l10n?.connErrNoConnection ??
+          'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตและลองใหม่';
     }
     
     if (errorString.contains('AuthRetryableFetchException')) {
-      return 'การยืนยันตัวตนผิดพลาด กรุณาลองเข้าสู่ระบบใหม่';
+      return l10n?.connErrAuth ?? 'การยืนยันตัวตนผิดพลาด กรุณาลองเข้าสู่ระบบใหม่';
     }
     
     if (errorString.contains('401') || errorString.contains('Unauthorized')) {
-      return 'คุณไม่มีสิทธิ์เข้าถึงข้อมูลนี้';
+      return l10n?.connErrForbidden ?? 'คุณไม่มีสิทธิ์เข้าถึงข้อมูลนี้';
     }
     
     if (errorString.contains('404') || errorString.contains('Not found')) {
-      return 'ไม่พบข้อมูลที่ร้องขอ';
+      return l10n?.connErrNotFound ?? 'ไม่พบข้อมูลที่ร้องขอ';
     }
     
     if (errorString.contains('500') || errorString.contains('Internal Server Error')) {
-      return 'เซิร์ฟเวอร์ขัดข้อง กรุณาลองใหม่ภายหลัง';
+      return l10n?.connErrServer ?? 'เซิร์ฟเวอร์ขัดข้อง กรุณาลองใหม่ภายหลัง';
     }
     
-    return 'เกิดข้อผิดพลาด: ${error.toString()}';
+    return l10n?.connErrGeneric(errorString) ?? 'เกิดข้อผิดพลาด: $errorString';
   }
 
   static Future<T> withTimeout<T>(
@@ -67,13 +72,13 @@ class ConnectionHelper {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        icon: const Icon(Icons.wifi_off, color: Colors.red, size: 48),
-        title: const Text('การเชื่อมต่อขัดข้อง'),
-        content: Text(getErrorMessage(error)),
+        icon: Icon(Icons.wifi_off, color: JdcColors.of(ctx).danger, size: 48),
+        title: Text(AppLocalizations.of(ctx)!.connErrDialogTitle),
+        content: Text(getErrorMessage(error, AppLocalizations.of(ctx))),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('ตกลง'),
+            child: Text(MaterialLocalizations.of(ctx).okButtonLabel),
           ),
         ],
       ),
@@ -89,15 +94,22 @@ class ConnectionHelper {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            isConnectionError(error) ? Icons.wifi_off : Icons.error_outline,
-            size: 64,
-            color: isConnectionError(error) ? Colors.orange : Colors.red,
+          Builder(
+            builder: (context) => Icon(
+              isConnectionError(error) ? Icons.wifi_off : Icons.error_outline,
+              size: 64,
+              color: isConnectionError(error)
+                  ? JdcColors.of(context).muted
+                  : JdcColors.of(context).danger,
+            ),
           ),
           const SizedBox(height: 16),
           Builder(
             builder: (context) => Text(
-              title ?? (isConnectionError(error) ? 'Connection Error' : 'Error'),
+              title ??
+                  (isConnectionError(error)
+                      ? AppLocalizations.of(context)!.connErrTitle
+                      : AppLocalizations.of(context)!.connErrTitleGeneric),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -108,25 +120,30 @@ class ConnectionHelper {
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Text(
-              getErrorMessage(error),
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
+            child: Builder(
+              builder: (context) => Text(
+                getErrorMessage(error, AppLocalizations.of(context)),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: JdcColors.of(context).muted,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
             ),
           ),
           const SizedBox(height: 16),
-          ElevatedButton.icon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh),
-            label: const Text('Try Again'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF3B82F6),
-              foregroundColor: Colors.white,
-            ),
-          ),
+          Builder(builder: (context) {
+            final jdc = JdcColors.of(context);
+            return ElevatedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: Text(AppLocalizations.of(context)!.accountRetry),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: jdc.cta,
+                foregroundColor: jdc.onCta,
+              ),
+            );
+          }),
         ],
       ),
     );

@@ -1,10 +1,12 @@
-﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
+import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jedechai_delivery_new/theme/jdc_layout.dart';
 import 'package:intl/intl.dart';
 import '../../../l10n/app_localizations.dart';
 import 'driver_wallet_screen.dart';
+import 'wallet_topup_screen.dart';
+import 'wallet_withdrawal_screen.dart';
 import 'driver_job_detail_screen.dart';
 import '../../../common/models/booking.dart';
 import '../../../common/services/wallet_service.dart';
@@ -32,11 +34,19 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
   String? _error;
 
   // Date filter
-  int _selectedPeriod = 0; // 0=วันนี้, 1=สัปดาห์นี้, 2=เดือนนี้, 3=ทั้งหมด, 4=ระบุวันที่
+  int _selectedPeriod =
+      0; // 0=วันนี้, 1=สัปดาห์นี้, 2=เดือนนี้, 3=ทั้งหมด, 4=ระบุวันที่
   List<String> _getPeriodLabels(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return [l10n.earnPeriodToday, l10n.earnPeriodWeek, l10n.earnPeriodMonth, l10n.earnPeriodAll, l10n.earnPeriodCustom];
+    return [
+      l10n.earnPeriodToday,
+      l10n.earnPeriodWeek,
+      l10n.earnPeriodMonth,
+      l10n.earnPeriodAll,
+      l10n.earnPeriodCustom
+    ];
   }
+
   DateTimeRange? _customDateRange;
 
   // Service type filter
@@ -96,11 +106,18 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
   DateTime _getStartDate() {
     final now = DateTime.now();
     switch (_selectedPeriod) {
-      case 0: return DateTime(now.year, now.month, now.day);
-      case 1: return DateTime(now.year, now.month, now.day).subtract(Duration(days: now.weekday - 1));
-      case 2: return DateTime(now.year, now.month, 1);
-      case 4: return _customDateRange?.start ?? DateTime(now.year, now.month, now.day);
-      default: return DateTime(2020, 1, 1);
+      case 0:
+        return DateTime(now.year, now.month, now.day);
+      case 1:
+        return DateTime(now.year, now.month, now.day)
+            .subtract(Duration(days: now.weekday - 1));
+      case 2:
+        return DateTime(now.year, now.month, 1);
+      case 4:
+        return _customDateRange?.start ??
+            DateTime(now.year, now.month, now.day);
+      default:
+        return DateTime(2020, 1, 1);
     }
   }
 
@@ -118,10 +135,12 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
       context: context,
       firstDate: DateTime(2020, 1, 1),
       lastDate: now,
-      initialDateRange: _customDateRange ?? DateTimeRange(
-        start: DateTime(now.year, now.month, now.day).subtract(const Duration(days: 7)),
-        end: now,
-      ),
+      initialDateRange: _customDateRange ??
+          DateTimeRange(
+            start: DateTime(now.year, now.month, now.day)
+                .subtract(const Duration(days: 7)),
+            end: now,
+          ),
       locale: const Locale('th', 'TH'),
       builder: (context, child) {
         final jdc = context.jdc;
@@ -154,7 +173,8 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
     final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
     final response = await Supabase.instance.client
         .from('bookings')
-        .select('updated_at, driver_earnings, service_type, merchant_id, price, delivery_fee')
+        .select(
+            'updated_at, driver_earnings, service_type, merchant_id, price, delivery_fee')
         .eq('driver_id', userId)
         .eq('status', 'completed')
         .gte('updated_at', sevenDaysAgo.toIso8601String());
@@ -164,7 +184,8 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
       final updatedAt = row['updated_at'] as String?;
       if (updatedAt == null) continue;
       final date = DateTime.parse(updatedAt).toLocal();
-      final key = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      final key =
+          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
       final earnings = (row['driver_earnings'] as num?)?.toDouble() ?? 0;
       byDay[key] = (byDay[key] ?? 0) + earnings;
     }
@@ -172,7 +193,10 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
   }
 
   Future<void> _loadData() async {
-    setState(() { _isLoading = true; _error = null; });
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
 
     try {
       final userId = AuthService.userId;
@@ -189,9 +213,13 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
           .eq('driver_id', userId)
           .eq('status', 'completed')
           .gte('updated_at', startStr);
-      if (hasEndFilter) completedQuery = completedQuery.lte('updated_at', endStr);
-      if (_selectedServiceType != null) completedQuery = completedQuery.eq('service_type', _selectedServiceType!);
-      final completedResponse = await completedQuery.order('updated_at', ascending: false);
+      if (hasEndFilter)
+        completedQuery = completedQuery.lte('updated_at', endStr);
+      if (_selectedServiceType != null)
+        completedQuery =
+            completedQuery.eq('service_type', _selectedServiceType!);
+      final completedResponse =
+          await completedQuery.order('updated_at', ascending: false);
 
       // Fetch cancelled bookings in period
       var cancelledQuery = Supabase.instance.client
@@ -200,8 +228,11 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
           .eq('driver_id', userId)
           .eq('status', 'cancelled')
           .gte('updated_at', startStr);
-      if (hasEndFilter) cancelledQuery = cancelledQuery.lte('updated_at', endStr);
-      if (_selectedServiceType != null) cancelledQuery = cancelledQuery.eq('service_type', _selectedServiceType!);
+      if (hasEndFilter)
+        cancelledQuery = cancelledQuery.lte('updated_at', endStr);
+      if (_selectedServiceType != null)
+        cancelledQuery =
+            cancelledQuery.eq('service_type', _selectedServiceType!);
       final cancelledResponse = await cancelledQuery;
 
       // Fetch all jobs in period for history
@@ -210,21 +241,22 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
           .select('*')
           .eq('driver_id', userId)
           .inFilter('status', [
-            'completed',
-            'cancelled',
-            'accepted',
-            'driver_accepted',
-            'matched',
-            'arrived',
-            'arrived_at_merchant',
-            'ready_for_pickup',
-            'picking_up_order',
-            'in_transit',
-          ])
-          .gte('created_at', startStr);
+        'completed',
+        'cancelled',
+        'accepted',
+        'driver_accepted',
+        'matched',
+        'arrived',
+        'arrived_at_merchant',
+        'ready_for_pickup',
+        'picking_up_order',
+        'in_transit',
+      ]).gte('created_at', startStr);
       if (hasEndFilter) allQuery = allQuery.lte('created_at', endStr);
-      if (_selectedServiceType != null) allQuery = allQuery.eq('service_type', _selectedServiceType!);
-      final allJobsResponse = await allQuery.order('created_at', ascending: false).limit(50);
+      if (_selectedServiceType != null)
+        allQuery = allQuery.eq('service_type', _selectedServiceType!);
+      final allJobsResponse =
+          await allQuery.order('created_at', ascending: false).limit(50);
 
       final bookingIds = allJobsResponse
           .map((e) => e['id']?.toString())
@@ -244,11 +276,13 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
             final bookingId = usage['booking_id']?.toString();
             if (bookingId == null || bookingId.isEmpty) continue;
 
-            final discount = (usage['discount_amount'] as num?)?.toDouble() ?? 0.0;
+            final discount =
+                (usage['discount_amount'] as num?)?.toDouble() ?? 0.0;
             couponDiscountMap[bookingId] = discount;
           }
         } catch (e) {
-          debugLog('⚠️ Error loading coupon usages for driver earnings screen: $e');
+          debugLog(
+              '⚠️ Error loading coupon usages for driver earnings screen: $e');
         }
       }
 
@@ -328,8 +362,10 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
           _jobHistory = List<Map<String, dynamic>>.from(allJobsResponse);
           _couponDiscountByBookingId = couponDiscountMap;
           _merchantProfilesById = merchantProfiles;
-          _defaultMerchantSystemRate = configService.merchantGpSystemRateDefault;
-          _defaultMerchantDriverRate = configService.merchantGpDriverRateDefault;
+          _defaultMerchantSystemRate =
+              configService.merchantGpSystemRateDefault;
+          _defaultMerchantDriverRate =
+              configService.merchantGpDriverRateDefault;
           _defaultDeliverySystemRate =
               driverDeliverySystemRateOverride ?? configService.platformFeeRate;
           _standardCommissionRate = configService.commissionRate;
@@ -338,11 +374,15 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
         });
       }
 
-      debugLog('📊 Earnings loaded: Total=$_totalEarnings, Jobs=$_completedJobs');
+      debugLog(
+          '📊 Earnings loaded: Total=$_totalEarnings, Jobs=$_completedJobs');
     } catch (e) {
       debugLog('❌ Error loading earnings: $e');
       if (mounted) {
-        setState(() { _error = e.toString(); _isLoading = false; });
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
       }
     }
   }
@@ -361,7 +401,8 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
     if (serviceType == 'food') {
       final merchantId = job['merchant_id']?.toString();
       final config = MerchantFoodConfigService.resolve(
-        merchantProfile: merchantId == null ? null : merchantProfiles[merchantId],
+        merchantProfile:
+            merchantId == null ? null : merchantProfiles[merchantId],
         defaultMerchantSystemRate: defaultMerchantSystemRate,
         defaultMerchantDriverRate: defaultMerchantDriverRate,
         defaultDeliverySystemRate: defaultDeliverySystemRate,
@@ -382,9 +423,10 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
     }
 
     final price = (job['price'] as num?)?.toDouble() ?? 0;
-    final fallback = (price - (price * (standardCommissionRate / 100)).ceilToDouble())
-        .clamp(0.0, double.infinity)
-        .toDouble();
+    final fallback =
+        (price - (price * (standardCommissionRate / 100)).ceilToDouble())
+            .clamp(0.0, double.infinity)
+            .toDouble();
     if (saved == null || (saved <= 0 && fallback > 0)) return fallback;
     return saved;
   }
@@ -433,36 +475,52 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
     try {
       final date = DateTime.parse(dateStr).toLocal();
       return DateFormat('dd/MM/yy HH:mm').format(date);
-    } catch (_) { return '-'; }
+    } catch (_) {
+      return '-';
+    }
   }
 
   String _getStatusText(String status) {
     switch (status) {
-      case 'completed': return AppLocalizations.of(context)!.earnStatusCompleted;
-      case 'cancelled': return AppLocalizations.of(context)!.earnStatusCancelled;
-      case 'picked_up': return AppLocalizations.of(context)!.earnStatusPickedUp;
-      case 'delivering': return AppLocalizations.of(context)!.earnStatusDelivering;
-      default: return status;
+      case 'completed':
+        return AppLocalizations.of(context)!.earnStatusCompleted;
+      case 'cancelled':
+        return AppLocalizations.of(context)!.earnStatusCancelled;
+      case 'picked_up':
+        return AppLocalizations.of(context)!.earnStatusPickedUp;
+      case 'delivering':
+        return AppLocalizations.of(context)!.earnStatusDelivering;
+      default:
+        return status;
     }
   }
 
   Color _getStatusColor(String status) {
     final jdc = context.jdc;
     switch (status) {
-      case 'completed': return jdc.successInk;
-      case 'cancelled': return jdc.dangerInk;
-      case 'picked_up': return jdc.infoInk;
-      case 'delivering': return jdc.infoInk;
-      default: return jdc.muted;
+      case 'completed':
+        return jdc.successInk;
+      case 'cancelled':
+        return jdc.dangerInk;
+      case 'picked_up':
+        return jdc.infoInk;
+      case 'delivering':
+        return jdc.infoInk;
+      default:
+        return jdc.muted;
     }
   }
 
   String _getServiceIcon(String serviceType) {
     switch (serviceType) {
-      case 'ride': return '🚗';
-      case 'food': return '🍔';
-      case 'parcel': return '📦';
-      default: return '📋';
+      case 'ride':
+        return '🚗';
+      case 'food':
+        return '🍔';
+      case 'parcel':
+        return '📦';
+      default:
+        return '📋';
     }
   }
 
@@ -482,6 +540,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
             )),
         backgroundColor: jdc.surface,
         foregroundColor: jdc.text,
+        titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: jdc.text),
         elevation: 0,
         scrolledUnderElevation: 0,
         shape: Border(bottom: BorderSide(color: jdc.line)),
@@ -490,11 +549,18 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.account_balance_wallet),
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DriverWalletScreen())),
+            onPressed: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const DriverWalletScreen())),
             tooltip: AppLocalizations.of(context)!.earnWalletTooltip,
           ),
-          IconButton(icon: const Icon(Icons.download), onPressed: _exportCsv, tooltip: AppLocalizations.of(context)!.driverEarningsExportCsv),
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData, tooltip: AppLocalizations.of(context)!.earnRefresh),
+          IconButton(
+              icon: const Icon(Icons.download),
+              onPressed: _exportCsv,
+              tooltip: AppLocalizations.of(context)!.driverEarningsExportCsv),
+          IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _loadData,
+              tooltip: AppLocalizations.of(context)!.earnRefresh),
         ],
       ),
       body: _isLoading
@@ -569,7 +635,8 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
     final jdc = context.jdc;
     return Container(
       color: jdc.sunken,
-      padding: const EdgeInsets.symmetric(horizontal: JdcSpacing.lg, vertical: JdcSpacing.md),
+      padding: const EdgeInsets.symmetric(
+          horizontal: JdcSpacing.lg, vertical: JdcSpacing.md),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
@@ -578,7 +645,8 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
             String chipLabel = _getPeriodLabels(context)[index];
             if (index == 4 && _customDateRange != null && isSelected) {
               final fmt = DateFormat('d/M/yy');
-              chipLabel = '${fmt.format(_customDateRange!.start)} - ${fmt.format(_customDateRange!.end)}';
+              chipLabel =
+                  '${fmt.format(_customDateRange!.start)} - ${fmt.format(_customDateRange!.end)}';
             }
             return Padding(
               padding: const EdgeInsets.only(right: 8),
@@ -608,11 +676,13 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                 labelStyle: TextStyle(
                   color: isSelected ? jdc.onCta : jdc.text,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  fontVariations: _w(isSelected ? FontWeight.w600 : FontWeight.w400),
+                  fontVariations:
+                      _w(isSelected ? FontWeight.w600 : FontWeight.w400),
                 ),
                 backgroundColor: jdc.surface,
                 side: BorderSide(color: isSelected ? jdc.cta : jdc.line),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(JdcRadius.chip)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(JdcRadius.chip)),
               ),
             );
           }),
@@ -628,11 +698,14 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
   Widget _buildRevenueSummary() {
     final jdc = context.jdc;
     return Container(
-      margin: EdgeInsets.fromLTRB(context.gutter, JdcSpacing.lg, context.gutter, 0),
-      padding: const EdgeInsets.all(JdcSpacing.xl),
+      width: double.infinity,
+      margin:
+          EdgeInsets.fromLTRB(context.gutter, JdcSpacing.lg, context.gutter, 0),
+      padding: const EdgeInsets.fromLTRB(
+          JdcSpacing.xl, JdcSpacing.xl, JdcSpacing.xl, JdcSpacing.xxl),
       decoration: BoxDecoration(
         gradient: jdc.hero2,
-        borderRadius: BorderRadius.circular(JdcRadius.card),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: jdc.shadowCard,
       ),
       child: Column(
@@ -640,26 +713,28 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.trending_up, color: jdc.onPanel, size: 20),
+              Icon(Icons.trending_up, color: jdc.onPanel, size: 18),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  AppLocalizations.of(context)!.earnRevenueLabel(_getPeriodLabels(context)[_selectedPeriod]),
+                  AppLocalizations.of(context)!.earnRevenueLabel(
+                      _getPeriodLabels(context)[_selectedPeriod]),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: jdc.panelDim, fontSize: 14),
+                  style: TextStyle(color: jdc.panelDim, fontSize: 12),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             _formatCurrency(_totalEarnings),
-            style: _money(size: 32, color: jdc.onPanel),
+            style: _money(size: 38, color: jdc.onPanel),
           ),
           const SizedBox(height: 8),
           Text(
-            AppLocalizations.of(context)!.earnAvgPerJob(_formatCurrency(_avgEarnings)),
+            AppLocalizations.of(context)!
+                .earnAvgPerJob(_formatCurrency(_avgEarnings)),
             style: TextStyle(color: jdc.panelDim, fontSize: 13),
           ),
         ],
@@ -677,17 +752,24 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
       padding: EdgeInsets.symmetric(horizontal: context.gutter),
       child: Row(
         children: [
-          Expanded(child: _buildStatCard(AppLocalizations.of(context)!.earnTotalJobs, '$_totalJobs', Icons.work, jdc.infoInk)),
+          Expanded(
+              child: _buildStatCard(AppLocalizations.of(context)!.earnTotalJobs,
+                  '$_totalJobs', Icons.work, jdc.infoInk)),
           const SizedBox(width: 10),
-          Expanded(child: _buildStatCard(AppLocalizations.of(context)!.earnCompleted, '$_completedJobs', Icons.check_circle, jdc.successInk)),
+          Expanded(
+              child: _buildStatCard(AppLocalizations.of(context)!.earnCompleted,
+                  '$_completedJobs', Icons.check_circle, jdc.successInk)),
           const SizedBox(width: 10),
-          Expanded(child: _buildStatCard(AppLocalizations.of(context)!.earnCancelled, '$_cancelledJobs', Icons.cancel, jdc.dangerInk)),
+          Expanded(
+              child: _buildStatCard(AppLocalizations.of(context)!.earnCancelled,
+                  '$_cancelledJobs', Icons.cancel, jdc.dangerInk)),
         ],
       ),
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String title, String value, IconData icon, Color color) {
     final jdc = context.jdc;
     return Container(
       padding: const EdgeInsets.all(14),
@@ -701,8 +783,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
         children: [
           Icon(icon, size: 24, color: color),
           const SizedBox(height: 8),
-          Text(value,
-              style: _money(size: 22, color: color)),
+          Text(value, style: _money(size: 22, color: color)),
           const SizedBox(height: 4),
           Text(
             title,
@@ -731,68 +812,104 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
         border: Border.all(color: jdc.line),
         boxShadow: jdc.shadowCard,
       ),
-      child: Row(
+      child: Column(
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: jdc.brandSoft,
-              borderRadius: BorderRadius.circular(JdcRadius.small),
+          Row(children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: jdc.brandSoft,
+                borderRadius: BorderRadius.circular(JdcRadius.small),
+              ),
+              child: Icon(Icons.account_balance_wallet,
+                  color: jdc.brandOnSoft, size: 22),
             ),
-            child: Icon(Icons.account_balance_wallet, color: jdc.brandOnSoft, size: 22),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppLocalizations.of(context)!.earnWalletTitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    fontVariations: _w(FontWeight.w600),
-                    color: jdc.muted,
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppLocalizations.of(context)!.earnWalletTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      fontVariations: _w(FontWeight.w600),
+                      color: jdc.muted,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                FutureBuilder<double>(
-                  // session อาจหมดอายุหลังหน้าโหลดเสร็จ ถ้า force-unwrap จะ crash กลางหน้า
-                  future: WalletService().getBalance(AuthService.userId ?? ''),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
+                  const SizedBox(height: 2),
+                  FutureBuilder<double>(
+                    // session อาจหมดอายุหลังหน้าโหลดเสร็จ ถ้า force-unwrap จะ crash กลางหน้า
+                    future:
+                        WalletService().getBalance(AuthService.userId ?? ''),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Text(
+                          AppLocalizations.of(context)!.earnWalletLoading,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: jdc.muted,
+                          ),
+                        );
+                      }
+                      final balance = snapshot.data ?? 0.0;
                       return Text(
-                        AppLocalizations.of(context)!.earnWalletLoading,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: jdc.muted,
-                        ),
+                        AppLocalizations.of(context)!
+                            .earnWalletBaht(balance.toStringAsFixed(2)),
+                        style: _money(
+                            size: 20,
+                            color: balance >= 50
+                                ? jdc.successInk
+                                : jdc.brandOnSoft),
                       );
-                    }
-                    final balance = snapshot.data ?? 0.0;
-                    return Text(
-                      AppLocalizations.of(context)!.earnWalletBaht(balance.toStringAsFixed(2)),
-                      style: _money(
-                          size: 20,
-                          color: balance >= 50 ? jdc.successInk : jdc.brandOnSoft),
-                    );
-                  },
-                ),
-              ],
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DriverWalletScreen())),
-            child: Text(AppLocalizations.of(context)!.earnViewAll,
-                style: TextStyle(
-                    color: jdc.link,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    fontVariations: _w(FontWeight.w600))),
-          ),
+            TextButton(
+              onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const DriverWalletScreen())),
+              child: Text(AppLocalizations.of(context)!.earnViewAll,
+                  style: TextStyle(
+                      color: jdc.link,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      fontVariations: _w(FontWeight.w600))),
+            ),
+          ]),
+          const SizedBox(height: 14),
+          Row(children: [
+            Expanded(
+                child: FilledButton(
+              onPressed: () async {
+                await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const WalletWithdrawalScreen()));
+                if (mounted) setState(() {});
+              },
+              child: Text(AppLocalizations.of(context)!.topupWithdrawTitle),
+            )),
+            const SizedBox(width: 10),
+            Expanded(
+                child: OutlinedButton(
+              onPressed: () async {
+                await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const WalletTopUpScreen()));
+                if (mounted) setState(() {});
+              },
+              child: Text(AppLocalizations.of(context)!.walletTypeTopup),
+            )),
+          ]),
         ],
       ),
     );
@@ -844,7 +961,8 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
               ),
             )
           else
-            ...List.generate(_jobHistory.length, (index) => _buildJobCard(_jobHistory[index])),
+            ...List.generate(_jobHistory.length,
+                (index) => _buildJobCard(_jobHistory[index])),
         ],
       ),
     );
@@ -873,7 +991,9 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
     );
     final createdAt = _formatDate(job['created_at']);
     final bookingId = job['id']?.toString();
-    final couponDiscount = bookingId == null ? 0.0 : (_couponDiscountByBookingId[bookingId] ?? 0.0);
+    final couponDiscount = bookingId == null
+        ? 0.0
+        : (_couponDiscountByBookingId[bookingId] ?? 0.0);
 
     Booking? booking;
     double netCollect = 0.0;
@@ -908,7 +1028,8 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(JdcRadius.small),
@@ -952,14 +1073,15 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                     _formatCurrency(driverEarnings),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: _money(size: 18, color: jdc.cta),
+                    style: _money(size: 18, color: jdc.link),
                   ),
                 ),
                 if (appEarnings > 0) ...[
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(
-                        AppLocalizations.of(context)!.earnAppFee(_formatCurrency(appEarnings)),
+                        AppLocalizations.of(context)!
+                            .earnAppFee(_formatCurrency(appEarnings)),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(fontSize: 12, color: jdc.dangerInk)),
@@ -980,7 +1102,8 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
             ),
 
             // Route info
-            if (job['pickup_address'] != null || job['destination_address'] != null) ...[
+            if (job['pickup_address'] != null ||
+                job['destination_address'] != null) ...[
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -1005,7 +1128,8 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
             if (booking != null && status == 'completed') ...[
               const SizedBox(height: 10),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(
                   color: jdc.sunken,
                   borderRadius: BorderRadius.circular(JdcRadius.small),
@@ -1067,7 +1191,8 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
     } catch (e) {
       debugLog('❌ Error opening job detail: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.earnOpenDetailError)),
+        SnackBar(
+            content: Text(AppLocalizations.of(context)!.earnOpenDetailError)),
       );
     }
   }
@@ -1107,12 +1232,14 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                 labelStyle: TextStyle(
                   color: isSelected ? jdc.onCta : jdc.text,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  fontVariations: _w(isSelected ? FontWeight.w600 : FontWeight.w400),
+                  fontVariations:
+                      _w(isSelected ? FontWeight.w600 : FontWeight.w400),
                   fontSize: 13,
                 ),
                 backgroundColor: jdc.surface,
                 side: BorderSide(color: isSelected ? jdc.cta : jdc.line),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(JdcRadius.chip)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(JdcRadius.chip)),
               ),
             );
           }),
@@ -1131,7 +1258,8 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
     final now = DateTime.now();
     final days = List.generate(
       7,
-      (i) => DateTime(now.year, now.month, now.day).subtract(Duration(days: 6 - i)),
+      (i) => DateTime(now.year, now.month, now.day)
+          .subtract(Duration(days: 6 - i)),
     );
     final dayLabels = [
       l10n.driverEarningsWeekdayMon,
@@ -1144,14 +1272,16 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
     ];
 
     final values = days.map((d) {
-      final key = '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+      final key =
+          '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
       return _weeklyEarnings[key] ?? 0.0;
     }).toList();
 
     final maxVal = values.fold(0.0, (a, b) => a > b ? a : b);
 
     return Container(
-      margin: EdgeInsets.fromLTRB(context.gutter, JdcSpacing.md, context.gutter, 0),
+      margin:
+          EdgeInsets.fromLTRB(context.gutter, JdcSpacing.md, context.gutter, 0),
       padding: const EdgeInsets.all(JdcSpacing.lg),
       decoration: BoxDecoration(
         color: jdc.surface,
@@ -1179,8 +1309,10 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: List.generate(7, (i) {
                 final val = values[i];
-                final barHeight = maxVal > 0 ? (val / maxVal * 88).clamp(4.0, 88.0) : 4.0;
-                final isToday = days[i].day == now.day && days[i].month == now.month;
+                final barHeight =
+                    maxVal > 0 ? (val / maxVal * 88).clamp(4.0, 88.0) : 4.0;
+                final isToday =
+                    days[i].day == now.day && days[i].month == now.month;
                 final dayOfWeek = days[i].weekday - 1;
                 return Expanded(
                   child: Column(
@@ -1188,7 +1320,9 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                     children: [
                       if (val > 0)
                         Text(
-                          val >= 1000 ? '${(val / 1000).toStringAsFixed(1)}k' : val.toInt().toString(),
+                          val >= 1000
+                              ? '${(val / 1000).toStringAsFixed(1)}k'
+                              : val.toInt().toString(),
                           style: TextStyle(fontSize: 9, color: jdc.muted),
                         ),
                       const SizedBox(height: 2),
@@ -1197,7 +1331,8 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                         margin: const EdgeInsets.symmetric(horizontal: 3),
                         decoration: BoxDecoration(
                           color: isToday ? jdc.brand : jdc.trackEmpty,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                          borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(4)),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -1205,8 +1340,10 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                         dayLabels[dayOfWeek],
                         style: TextStyle(
                           fontSize: 11,
-                          fontWeight: isToday ? FontWeight.w700 : FontWeight.w400,
-                          fontVariations: _w(isToday ? FontWeight.w700 : FontWeight.w400),
+                          fontWeight:
+                              isToday ? FontWeight.w700 : FontWeight.w400,
+                          fontVariations:
+                              _w(isToday ? FontWeight.w700 : FontWeight.w400),
                           color: isToday ? jdc.cta : jdc.muted,
                         ),
                       ),
@@ -1248,13 +1385,17 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                 standardCommissionRate: _standardCommissionRate,
               )
             : 0.0;
-        final appEarnings = status == 'completed' ? _appEarningsForJob(job) : 0.0;
-        buf.writeln('$createdAt,$serviceType,$status,$jobId,${driverEarnings.toStringAsFixed(2)},${appEarnings.toStringAsFixed(2)}');
+        final appEarnings =
+            status == 'completed' ? _appEarningsForJob(job) : 0.0;
+        buf.writeln(
+            '$createdAt,$serviceType,$status,$jobId,${driverEarnings.toStringAsFixed(2)},${appEarnings.toStringAsFixed(2)}');
       }
       final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/driver_earnings_${DateTime.now().millisecondsSinceEpoch}.csv');
+      final file = File(
+          '${dir.path}/driver_earnings_${DateTime.now().millisecondsSinceEpoch}.csv');
       await file.writeAsString(buf.toString(), flush: true);
-      await Share.shareXFiles([XFile(file.path)], subject: l10n.driverEarningsCsvShareSubject);
+      await Share.shareXFiles([XFile(file.path)],
+          subject: l10n.driverEarningsCsvShareSubject);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1263,5 +1404,4 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
       }
     }
   }
-
 }

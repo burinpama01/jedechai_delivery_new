@@ -12,6 +12,51 @@ class AppLocalizationsTh extends AppLocalizations {
   String get appName => 'JDC Delivery';
 
   @override
+  String get splashTagline => 'เจเดชัย เดลิเวอรี่ · ขอนแก่น';
+
+  @override
+  String splashVersion(String version) {
+    return 'เวอร์ชัน $version';
+  }
+
+  @override
+  String get customerWalletTitle => 'กระเป๋าเงินลูกค้า';
+
+  @override
+  String get customerWalletBalance => 'ยอดเงินใน Wallet';
+
+  @override
+  String customerWalletMinimumWithdrawal(String amount) {
+    return 'ถอนเงินขั้นต่ำ $amount';
+  }
+
+  @override
+  String get customerWalletPending => 'คำขอถอนเงิน';
+
+  @override
+  String get customerWalletNoPending => 'ไม่มีรายการรอดำเนินการ';
+
+  @override
+  String customerWalletPendingCount(int count) {
+    return 'รอดำเนินการ $count รายการ';
+  }
+
+  @override
+  String get customerWalletHistory => 'ประวัติธุรกรรม';
+
+  @override
+  String get customerWalletNoHistory => 'ยังไม่มีประวัติธุรกรรม';
+
+  @override
+  String get customerWalletPayment => 'ชำระค่าออเดอร์';
+
+  @override
+  String get customerWalletRefund => 'คืนเงิน';
+
+  @override
+  String get customerWalletAdjustment => 'ปรับยอด';
+
+  @override
   String get language => 'ภาษา';
 
   @override
@@ -3850,6 +3895,66 @@ class AppLocalizationsTh extends AppLocalizations {
   String get addrDelete => 'ลบ';
 
   @override
+  String get accountMenuWallet => 'กระเป๋าเงิน / เติมเงิน';
+
+  @override
+  String get addrDefaultBadge => 'ค่าเริ่มต้น';
+
+  @override
+  String get addrEditAction => 'แก้ไข';
+
+  @override
+  String get ticketViewConversation => 'ดูบทสนทนา';
+
+  @override
+  String get ticketViewDetail => 'ดูรายละเอียด';
+
+  @override
+  String referralTierCurrent(String tier) {
+    return 'ขั้นรางวัลปัจจุบัน: ขั้น $tier';
+  }
+
+  @override
+  String referralTierReward(String amount, String base, String multiplier) {
+    return 'ชวนสำเร็จ 1 ราย ได้ ฿$amount (ฐาน ฿$base × $multiplier)';
+  }
+
+  @override
+  String referralTierToNext(String count) {
+    return 'อีก $count รายถึงขั้นถัดไป';
+  }
+
+  @override
+  String referralTierEarned(String amount) {
+    return 'รับรางวัลสะสมแล้ว ฿$amount';
+  }
+
+  @override
+  String referralTierPending(String count) {
+    return 'รออนุมัติ $count รายการ';
+  }
+
+  @override
+  String referralTierWithdrawNote(String amount) {
+    return 'เงินรางวัลเข้ากระเป๋าถังระบบ ถอนได้ขั้นต่ำ ฿$amount';
+  }
+
+  @override
+  String get helpSearchHint => 'ค้นหาคำถามที่พบบ่อย';
+
+  @override
+  String get helpReplyWithin24h => 'ทีมงานตอบกลับภายใน 24 ชั่วโมง';
+
+  @override
+  String get helpTopicRide => 'การเดินทาง';
+
+  @override
+  String get helpTopicFood => 'สั่งอาหาร';
+
+  @override
+  String get helpTopicPayment => 'การชำระเงิน';
+
+  @override
   String get addrPickTitle => 'เลือกที่อยู่';
 
   @override
@@ -4378,6 +4483,18 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get ticketFab => 'แจ้งปัญหา';
+
+  @override
+  String get ticketFilterActive => 'กำลังดำเนินการ';
+
+  @override
+  String get ticketFilterFinished => 'แก้ไขแล้ว / ปิดแล้ว';
+
+  @override
+  String get ticketFilterEmptyActive => 'ไม่มีรายการที่กำลังดำเนินการ';
+
+  @override
+  String get ticketFilterEmptyFinished => 'ไม่มีรายการที่แก้ไขแล้วหรือปิดแล้ว';
 
   @override
   String get ticketEmptyTitle => 'ยังไม่มีรายการแจ้งปัญหา';
@@ -7582,4 +7699,39 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get shopBudgetReqTopup => 'เติมเงิน';
+
+  @override
+  String get connErrSessionExpired => 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่';
+
+  @override
+  String get connErrNoConnection => 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตและลองใหม่';
+
+  @override
+  String get connErrAuth => 'การยืนยันตัวตนผิดพลาด กรุณาลองเข้าสู่ระบบใหม่';
+
+  @override
+  String get connErrForbidden => 'คุณไม่มีสิทธิ์เข้าถึงข้อมูลนี้';
+
+  @override
+  String get connErrNotFound => 'ไม่พบข้อมูลที่ร้องขอ';
+
+  @override
+  String get connErrServer => 'เซิร์ฟเวอร์ขัดข้อง กรุณาลองใหม่ภายหลัง';
+
+  @override
+  String connErrGeneric(String detail) {
+    return 'เกิดข้อผิดพลาด: $detail';
+  }
+
+  @override
+  String get connErrDialogTitle => 'การเชื่อมต่อขัดข้อง';
+
+  @override
+  String get connErrTitle => 'เชื่อมต่อไม่ได้';
+
+  @override
+  String get connErrTitleGeneric => 'เกิดข้อผิดพลาด';
+
+  @override
+  String get languageSystemShort => 'ระบบ';
 }
