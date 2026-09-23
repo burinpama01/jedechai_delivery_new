@@ -21,7 +21,13 @@ ON CONFLICT (service_type) DO NOTHING;
 
 -- ─────────────────────────────────────────────────────────────
 -- 1) driver_locations: ต้องรู้ว่าตำแหน่งสดแค่ไหน
---    (ตาราง DDL เดิมไม่ได้อยู่ใน repo — เพิ่มแบบ idempotent ไม่กระทบของเดิม)
+--    (ตาราง DDL เดิมไม่ได้อยู่ใน repo — ทำแบบ idempotent ไม่กระทบของเดิม)
+--
+--    pre-flight บน production พบว่ามี updated_at + trigger
+--    update_driver_locations_updated_at (เรียก update_updated_at_column())
+--    ที่ตั้ง NEW.updated_at := now() อยู่แล้ว
+--    -> ทั้งสองบล็อกด้านล่างจะเป็น no-op บน production
+--       แต่ยังจำเป็นสำหรับ environment ที่ยังไม่มี (เช่น DB ทดสอบ)
 -- ─────────────────────────────────────────────────────────────
 ALTER TABLE public.driver_locations
   ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();
@@ -37,10 +43,22 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS driver_locations_touch ON public.driver_locations;
-CREATE TRIGGER driver_locations_touch
-  BEFORE UPDATE ON public.driver_locations
-  FOR EACH ROW EXECUTE FUNCTION public.driver_locations_touch_updated_at();
+-- สร้าง trigger เฉพาะเมื่อยังไม่มีตัวไหนดูแล updated_at อยู่
+-- ห้ามเพิ่ม trigger ซ้ำซ้อนบนตารางที่คนขับเขียนตลอดเวลา
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+     WHERE tgrelid = 'public.driver_locations'::regclass
+       AND NOT tgisinternal
+       AND tgtype & 2 = 2          -- BEFORE
+       AND tgtype & 16 = 16        -- UPDATE
+  ) THEN
+    CREATE TRIGGER driver_locations_touch
+      BEFORE UPDATE ON public.driver_locations
+      FOR EACH ROW EXECUTE FUNCTION public.driver_locations_touch_updated_at();
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS driver_locations_online_idx
   ON public.driver_locations (is_online, is_available);

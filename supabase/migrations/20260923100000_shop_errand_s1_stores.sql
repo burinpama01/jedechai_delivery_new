@@ -158,7 +158,10 @@ VALUES
   ('shop_substitution_timeout_min',     '5'),
   -- quote
   ('shop_quote_ttl_sec',                '120')
-ON CONFLICT (key) DO NOTHING;
+-- system_config มี unique เป็น "partial index" (key) WHERE key IS NOT NULL
+-- -> ON CONFLICT ต้องระบุ predicate ให้ตรง ไม่งั้นได้ error
+--    "no unique or exclusion constraint matching the ON CONFLICT specification"
+ON CONFLICT (key) WHERE key IS NOT NULL DO NOTHING;
 
 -- ─────────────────────────────────────────────────────────────
 -- 2) ตารางร้านค้า
