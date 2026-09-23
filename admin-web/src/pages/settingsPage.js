@@ -4,6 +4,12 @@
 // Runtime deps (supabase, escapeHtml, showToast, loadBanners, loadAppAssets,
 // inline onclick globals) still resolve through the shared global scope that
 // app.legacy.js bootstraps — same contract as the other migrated pages.
+import {
+  renderShopSettingsSection,
+  saveShopSettings,
+  SHOP_CONFIG_KEYS,
+} from './shopSettingsSection.js';
+
 let _ctx = null;
 
 // สำเนาจาก legacy (บรรทัด 3796) — กัน module พึ่ง global ordering
@@ -55,6 +61,20 @@ export async function renderSettingsPage(el, ctx) {
     const { data } = await supabase.from('service_rates').select('*').order('service_type');
     rates = data || [];
   } catch(e) {}
+
+  // ── ฝากซื้อ: config + จำนวนร้านที่เปิดใช้งาน (ใช้เตือนก่อนเปิดบริการ) ──
+  let shopKvConfig = {};
+  let shopStoreCount = 0;
+  try {
+    shopKvConfig = await _fetchSystemConfigKeyValues(SHOP_CONFIG_KEYS);
+  } catch(e) { /* ยังไม่ได้รัน migration ฝากซื้อ — ใช้ค่าเริ่มต้นแทน */ }
+  try {
+    const { count } = await supabase
+      .from('shop_stores')
+      .select('id', { count: 'exact', head: true })
+      .eq('is_active', true);
+    shopStoreCount = count || 0;
+  } catch(e) { /* ตารางยังไม่มี */ }
 
   // Group rates by category
   const rideRates = rates.filter(r => r.service_type.startsWith('ride'));
@@ -646,6 +666,8 @@ export async function renderSettingsPage(el, ctx) {
         </button>
       </div>
 
+      ${renderShopSettingsSection(shopKvConfig, shopStoreCount)}
+
       ${otherRates.length ? `
       <!-- ========= อัตราอื่น ๆ ========= -->
       <div class="glass-card p-6">
@@ -971,6 +993,13 @@ export async function renderSettingsPage(el, ctx) {
       </div>
     </div>
   `;
+  // ปุ่มบันทึกในหน้านี้เรียกผ่าน inline onclick -> ต้องผูกเข้า global scope
+  globalThis.saveShopSettings = () =>
+    saveShopSettings({
+      showToast: globalThis.showToast,
+      _upsertSystemConfigKeyValues: globalThis._upsertSystemConfigKeyValues,
+    });
+
   // Load banners and app assets after render
   loadBanners();
   loadAppAssets();
