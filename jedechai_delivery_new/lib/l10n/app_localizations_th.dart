@@ -7003,6 +7003,12 @@ class AppLocalizationsTh extends AppLocalizations {
   String get shopStoreLocationNeeded => 'เปิดตำแหน่งเพื่อดูร้านใกล้คุณ';
 
   @override
+  String get shopStoreOutOfRange => 'ร้านที่เลือกอยู่นอกรัศมีจากที่อยู่นี้ กรุณาเปลี่ยนร้านหรือเปลี่ยนที่อยู่จัดส่ง';
+
+  @override
+  String get shopStoreNeedAddress => 'เลือกที่อยู่จัดส่งด้านบนก่อน แล้วจะแสดงร้านในรัศมีของที่อยู่นั้น';
+
+  @override
   String get shopStoreRetry => 'ลองอีกครั้ง';
 
   @override

@@ -26,7 +26,7 @@ import 'shop_tracking_screen.dart';
 
 /// หน้าสั่งฝากซื้อ/ฝากหิ้ว
 ///
-/// ลำดับ: เลือกร้าน (หมุดที่แอดมินตั้ง) -> พิมพ์รายการ -> ที่อยู่ส่ง -> วงเงิน
+/// ลำดับ: ที่อยู่ส่ง -> เลือกร้าน (หมุดที่แอดมินตั้ง ในรัศมีจากที่อยู่ส่ง) -> พิมพ์รายการ -> วงเงิน
 /// -> ขอราคาจาก server -> dialog สรุปราคา -> ยืนยัน
 ///
 /// ราคาทุกบรรทัดมาจาก RPC `shop_quote` แอปไม่คำนวณเอง
@@ -56,12 +56,18 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
   String _destAddress = '';
 
   /// โหมดที่อยู่จัดส่ง — ใช้ชุดเดียวกับหน้าสั่งอาหาร ('current' | 'pin' | 'saved')
-  /// เพื่อให้ลูกค้าเจอฟอร์มหน้าตาเดียวกันทุกบริการ
-  String _deliveryMode = 'current';
+  /// เพื่อให้ลูกค้าเจอฟอร์มหน้าตาเดียวกันทุกบริการ — null = ยังไม่เลือก
+  /// (ร้านวัดรัศมีจากที่อยู่นี้ จึงต้องเลือกก่อนถึงจะแสดงร้าน)
+  String? _deliveryMode;
   bool _resolvingAddress = false;
 
   /// เปิดรับคำขอเพิ่มร้านอยู่ไหม (แอดมินปิดได้)
   bool _storeRequestEnabled = false;
+
+  /// ร้านที่เลือกไว้ไม่อยู่ในผลค้นหารอบล่าสุด (รัศมีวัดจากที่อยู่จัดส่ง)
+  /// เกิดได้เมื่อลูกค้าเลือกร้านแล้วค่อยเปลี่ยนที่อยู่ไปไกล — server เป็นคนตัดสิน
+  /// ว่าร้านไหนอยู่ในรัศมี แอปแค่ดูว่าร้านยังอยู่ในรายการที่ส่งกลับมาหรือไม่
+  bool _storeOutOfRange = false;
 
   double? _myLat;
   double? _myLng;
@@ -98,7 +104,8 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
   Future<void> _bootstrap() async {
     await _loadLimits();
     await _restoreDraft();
-    await _loadStores();
+    // ร้านต้องวัดรัศมีจากที่อยู่จัดส่ง -> ยังไม่เลือกที่อยู่ก็ยังไม่โหลดร้าน
+    if (_destLat != null && _destLng != null) await _loadStores();
     await _loadStoreRequestFlag();
   }
 
@@ -136,8 +143,8 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
       _destLat = (draft['dest_lat'] as num?)?.toDouble();
       _destLng = (draft['dest_lng'] as num?)?.toDouble();
       _destAddress = (draft['dest_address'] as String?) ?? '';
-      // draft ที่มีที่อยู่ติดมาแล้ว = ลูกค้าเคยเลือกเอง อย่าเขียนทับด้วยตำแหน่งปัจจุบัน
-      if (_destLat != null && _destLng != null && _destAddress.isNotEmpty) {
+      // draft ที่มีที่อยู่ติดมาแล้ว = ลูกค้าเคยเลือกเอง ใช้ต่อได้เลย
+      if (_destLat != null && _destLng != null) {
         _deliveryMode = 'pin';
       }
       final budget = (draft['budget_cap'] as num?)?.toDouble();
@@ -180,31 +187,23 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
     });
 
     try {
-      final pos = await LocationService.getCurrentLocation(context: context);
-      if (pos == null) {
+      // รัศมีวัดจากจุดส่งของ (ร้านต้องใกล้ปลายทาง ไม่ใช่ใกล้ตัวลูกค้าตอนกดสั่ง)
+      // ลูกค้าต้องเลือกที่อยู่ก่อนเสมอ ไม่เดาจาก GPS ให้
+      final centerLat = _destLat;
+      final centerLng = _destLng;
+      if (centerLat == null || centerLng == null) {
         if (!mounted || token != _storeRequestToken) return;
-        setState(() {
-          _loadingStores = false;
-          _storeError = 'location';
-        });
+        setState(() => _loadingStores = false);
         return;
       }
-      _myLat = pos.latitude;
-      _myLng = pos.longitude;
 
       final stores = await _shop.nearbyStores(
-        lat: pos.latitude,
-        lng: pos.longitude,
-        category: _categoryFilter,
+        lat: centerLat,
+        lng: centerLng,
+        // ดึงทุกหมวดเสมอ แล้วกรองหมวดตอนแสดงผล — ไม่งั้นร้านที่เลือกไว้แต่ต่างหมวด
+        // จะหายจากผล แล้วแยกไม่ออกว่าหายเพราะนอกรัศมีหรือเพราะตัวกรอง
+        category: null,
       );
-
-      // ยังไม่ได้เลือกที่อยู่ส่ง -> ใช้ตำแหน่งปัจจุบันเป็นค่าเริ่มต้น
-      _destLat ??= pos.latitude;
-      _destLng ??= pos.longitude;
-      if (_deliveryMode == 'current' && _destAddress.isEmpty) {
-        // ไม่ await เพราะ reverse geocode ช้าและไม่ควรกั้นรายการร้าน
-        unawaited(_resolveCurrentAddress(pos.latitude, pos.longitude));
-      }
 
       if (!mounted || token != _storeRequestToken) return;
 
@@ -225,6 +224,19 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
         _stores = stores;
         _loadingStores = false;
         if (restored != null) _selectedStore = restored;
+        final selected = _selectedStore;
+        if (selected != null) {
+          ShopStore? fresh;
+          for (final s in stores) {
+            if (s.id == selected.id) {
+              fresh = s;
+              break;
+            }
+          }
+          // ได้ระยะใหม่จากที่อยู่ล่าสุดด้วย; ถ้าไม่เจอ = อยู่นอกรัศมี
+          if (fresh != null) _selectedStore = fresh;
+          _storeOutOfRange = fresh == null;
+        }
       });
     } catch (e) {
       debugLog('❌ โหลดร้านฝากซื้อไม่สำเร็จ: $e');
@@ -238,9 +250,12 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
 
   List<ShopStore> get _visibleStores {
     final q = _searchController.text.trim().toLowerCase();
-    if (q.isEmpty) return _stores;
+    final cat = _categoryFilter;
+    if (q.isEmpty && cat == null) return _stores;
     return _stores
+        .where((s) => cat == null || s.category == cat)
         .where((s) =>
+            q.isEmpty ||
             s.name.toLowerCase().contains(q) ||
             (s.address ?? '').toLowerCase().contains(q))
         .toList();
@@ -269,6 +284,7 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
   bool get _canQuote {
     if (_selectedStore == null) return false;
     if (!_selectedStore!.isOpenNow) return false;
+    if (_storeOutOfRange) return false;
     if (_items.every((i) => i.isBlank)) return false;
     if (_destLat == null || _destLng == null) return false;
     final b = _budgetValue;
@@ -293,6 +309,8 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
 
   /// ตัวเลือก 1: ตำแหน่งปัจจุบัน
   Future<void> _useCurrentLocation() async {
+    final prevMode = _deliveryMode;
+    final prevAddress = _destAddress;
     setState(() {
       _deliveryMode = 'current';
       _destAddress = '';
@@ -300,6 +318,11 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
     final pos = await LocationService.getCurrentLocation(context: context);
     if (!mounted) return;
     if (pos == null) {
+      // ขอตำแหน่งไม่ได้ -> คืนตัวเลือกเดิม ไม่ให้ขึ้นว่าเลือก "ปัจจุบัน" ทั้งที่ไม่มีพิกัด
+      setState(() {
+        _deliveryMode = prevMode;
+        _destAddress = prevAddress;
+      });
       _snack(AppLocalizations.of(context)!.shopStoreLocationNeeded);
       return;
     }
@@ -309,6 +332,7 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
       _destLat = pos.latitude;
       _destLng = pos.longitude;
     });
+    unawaited(_loadStores());
     await _resolveCurrentAddress(pos.latitude, pos.longitude);
   }
 
@@ -335,6 +359,7 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
       _destLng = lng;
       _destAddress = result['address']?.toString() ?? '';
     });
+    await _loadStores();
   }
 
   /// ตัวเลือก 3: ที่อยู่ที่บันทึกไว้
@@ -351,6 +376,7 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
       _destLng = result.longitude;
       _destAddress = '${result.name} — ${result.address}';
     });
+    await _loadStores();
   }
 
   // ── รูปตัวอย่างต่อรายการ ──────────────────────────────────────────────
@@ -497,7 +523,10 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
       _snack(_quoteErrorText(l10n, quote));
       // ร้านเพิ่งปิด -> รีเฟรชรายการร้านให้ตรงความจริง
       if (quote.error == 'store_closed') {
-        setState(() => _selectedStore = null);
+        setState(() {
+          _selectedStore = null;
+          _storeOutOfRange = false;
+        });
         await _loadStores();
       }
       return;
@@ -642,16 +671,20 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
+            // ที่อยู่ก่อน: รัศมีร้านวัดจากที่อยู่จัดส่ง
+            _sectionTitle(jdc, l10n.shopStepDelivery),
+            _addressCard(jdc, l10n),
+            const SizedBox(height: 18),
             _sectionTitle(jdc, l10n.shopStepStore),
-            _storePicker(jdc, l10n),
+            if (_destLat == null || _destLng == null)
+              _needAddressCard(jdc, l10n)
+            else
+              _storePicker(jdc, l10n),
             const SizedBox(height: 18),
 
             if (_selectedStore != null) ...[
               _sectionTitle(jdc, l10n.shopStepItems),
               _itemsEditor(jdc, l10n),
-              const SizedBox(height: 18),
-              _sectionTitle(jdc, l10n.shopStepDelivery),
-              _addressCard(jdc, l10n),
               const SizedBox(height: 18),
               _sectionTitle(jdc, l10n.shopStepBudget),
               _budgetCard(jdc, l10n),
@@ -751,7 +784,10 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
               ),
             ),
             TextButton(
-              onPressed: () => setState(() => _selectedStore = null),
+              onPressed: () => setState(() {
+                _selectedStore = null;
+                _storeOutOfRange = false;
+              }),
               child: Text(l10n.shopStoreChange),
             ),
           ],
@@ -775,17 +811,13 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
         child: Column(
           children: [
             Icon(
-              _storeError == 'location'
-                  ? Icons.location_off_rounded
-                  : Icons.error_outline_rounded,
+              Icons.error_outline_rounded,
               color: jdc.muted,
               size: 36,
             ),
             const SizedBox(height: 10),
             Text(
-              _storeError == 'location'
-                  ? l10n.shopStoreLocationNeeded
-                  : l10n.shopErrGeneric,
+              l10n.shopErrGeneric,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: jdc.muted),
             ),
@@ -893,10 +925,8 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: GestureDetector(
-        onTap: () {
-          setState(() => _categoryFilter = value);
-          _loadStores();
-        },
+        // กรองในเครื่องจากผลที่มีอยู่แล้ว (ผลทุกหมวดมาจาก server รอบเดียว)
+        onTap: () => setState(() => _categoryFilter = value),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14),
           alignment: Alignment.center,
@@ -1024,7 +1054,10 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
-        setState(() => _selectedStore = s);
+        setState(() {
+          _selectedStore = s;
+          _storeOutOfRange = false;
+        });
       },
       child: content,
     );
@@ -1220,6 +1253,25 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
         ),
       );
 
+  /// แทนรายการร้านจนกว่าจะเลือกที่อยู่จัดส่ง
+  Widget _needAddressCard(JdcColors jdc, AppLocalizations l10n) => _card(
+        jdc,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            children: [
+              Icon(Icons.storefront_outlined, color: jdc.muted, size: 32),
+              const SizedBox(height: 8),
+              Text(
+                l10n.shopStoreNeedAddress,
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: jdc.muted),
+              ),
+            ],
+          ),
+        ),
+      );
+
   // ── ที่อยู่ + วงเงิน ───────────────────────────────────────────────────
 
   /// ฟอร์มที่อยู่จัดส่ง — ชุดเดียวกับหน้าสั่งอาหาร (ตำแหน่งปัจจุบัน / ปักหมุด / ที่บันทึกไว้)
@@ -1291,6 +1343,31 @@ class _ShopServiceScreenState extends State<ShopServiceScreen> {
               ],
             ),
           ),
+          if (_storeOutOfRange) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: jdc.dangerSoft,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: jdc.dangerLine),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.wrong_location_outlined,
+                      size: 16, color: jdc.dangerInk),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      l10n.shopStoreOutOfRange,
+                      style: TextStyle(fontSize: 12, color: jdc.dangerInk),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

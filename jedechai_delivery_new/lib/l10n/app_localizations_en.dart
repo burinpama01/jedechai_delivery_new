@@ -7003,6 +7003,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shopStoreLocationNeeded => 'Turn on location to see stores near you';
 
   @override
+  String get shopStoreOutOfRange => 'The selected store is out of range for this address. Please change the store or the delivery address.';
+
+  @override
+  String get shopStoreNeedAddress => 'Choose a delivery address above first to see stores near it.';
+
+  @override
   String get shopStoreRetry => 'Try again';
 
   @override

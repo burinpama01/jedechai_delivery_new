@@ -13067,6 +13067,18 @@ abstract class AppLocalizations {
   /// **'Turn on location to see stores near you'**
   String get shopStoreLocationNeeded;
 
+  /// No description provided for @shopStoreOutOfRange.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected store is out of range for this address. Please change the store or the delivery address.'**
+  String get shopStoreOutOfRange;
+
+  /// No description provided for @shopStoreNeedAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a delivery address above first to see stores near it.'**
+  String get shopStoreNeedAddress;
+
   /// No description provided for @shopStoreRetry.
   ///
   /// In en, this message translates to:
