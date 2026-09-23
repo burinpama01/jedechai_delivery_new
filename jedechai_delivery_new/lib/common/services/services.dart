@@ -17,6 +17,7 @@ export 'system_config_service.dart';
 export 'realtime_service.dart';
 export 'menu_option_service.dart';
 export 'parcel_service.dart';
+export 'shop_service.dart';
 export 'image_picker_service.dart';
 export 'withdrawal_service.dart';
 export 'promptpay_service.dart';

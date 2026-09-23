@@ -14,3 +14,6 @@ export 'chat_message.dart';
 export 'coupon.dart';
 export 'support_ticket.dart';
 export 'app_update_policy.dart';
+export 'shop_store.dart';
+export 'shop_order.dart';
+export 'shop_quote.dart';

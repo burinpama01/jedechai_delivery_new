@@ -1696,7 +1696,7 @@
   "parcelDescriptionLabel": "อธิบายสิ่งของ (เช่น เอกสาร, อาหาร, เสื้อผ้า)",
   "parcelDescriptionRequired": "กรุณาอธิบายสิ่งของ",
   "parcelWeightLabel": "น้ำหนักโดยประมาณ (กก.) - ไม่บังคับ",
-  "parcelPhotoTitle": "รูปภาพพัสดุ",
+  "parcelPhotoTitle": "รูปพัสดุ",
   "parcelPhotoHint": "ถ่ายรูปพัสดุเพื่อให้คนขับเห็นสิ่งของ (ไม่บังคับ)",
   "parcelPhotoTap": "แตะเพื่อถ่ายรูปหรือเลือกรูป",
   "parcelEstimatedFee": "ค่าบริการโดยประมาณ",
@@ -1866,6 +1866,15 @@
   "ratingLabel3": "ปานกลาง",
   "ratingLabel4": "ดี",
   "ratingLabel5": "ยอดเยี่ยม",
+  "ratingHeaderTitle": "ส่งถึงแล้ว ให้คะแนนหน่อย",
+  "ratingTagsTitle": "อะไรที่ประทับใจ",
+  "ratingTagFast": "ส่งไว",
+  "ratingTagPolite": "สุภาพ",
+  "ratingTagNeatPacking": "อาหารไม่หก",
+  "ratingTagEasyContact": "ติดต่อง่าย",
+  "ratingTagOnTime": "ตรงเวลา",
+  "ratingCommentTitle": "ความคิดเห็นเพิ่มเติม",
+  "ratingCommentHint": "เล่าให้เราฟังได้เลย (ไม่บังคับ)",
   "cancelReasonWaitTooLong": "รอนานเกินไป",
   "cancelReasonChangedMind": "เปลี่ยนใจ ไม่ต้องการแล้ว",
   "cancelReasonWrongAddress": "ใส่ที่อยู่ผิด",
@@ -1899,6 +1908,14 @@
   "cancelReasonsSubtitle": "กรุณาเลือกเหตุผลเพื่อช่วยเราปรับปรุงบริการ",
   "cancelOtherHint": "โปรดระบุเหตุผล...",
   "cancelButton": "ยกเลิกออเดอร์",
+  "cancelNotCancel": "ไม่ยกเลิกแล้ว",
+  "cancelWarnStartedTitle": "ร้านเริ่มทำอาหารแล้ว",
+  "cancelWarnFee": "ยกเลิกตอนนี้จะมีค่าธรรมเนียม",
+  "cancelRefundTitle": "ยอดที่จะได้คืน",
+  "cancelAmountPaid": "ยอดที่ชำระไป",
+  "cancelFee": "ค่าธรรมเนียมยกเลิก",
+  "cancelRefundToWallet": "คืนเข้า JDC Wallet",
+  "cancelRefundNote": "คืนเข้ากระเป๋าทันทีหลังยืนยัน",
   "addrLabelHome": "บ้าน",
   "addrLabelWork": "ที่ทำงาน",
   "addrLabelOther": "อื่นๆ",
@@ -1963,6 +1980,64 @@
   "confirmCash": "เงินสด",
   "confirmTrackOrder": "ติดตามออเดอร์",
   "confirmBackToHome": "กลับหน้าหลัก",
+  "confirmSent": "ส่งคำขอเรียบร้อย",
+  "confirmMatchingDriver": "เรากำลังจับคู่คนขับให้คุณ",
+  "confirmDetailTitle": "รายละเอียดคำขอ",
+  "confirmOriginLabel": "จุดรับ",
+  "confirmDestLabel": "จุดส่ง",
+  "confirmService": "บริการ",
+  "confirmPaymentLabel": "ชำระด้วย",
+  "confirmInfoText": "เราจะแจ้งเตือนทันทีที่มีคนขับรับงาน ติดตามสถานะได้ที่หน้ากิจกรรม",
+  "confirmTrackStatus": "ติดตามสถานะ",
+  "rideServiceTitle": "ยืนยันการเดินทาง",
+  "rideServiceOriginLabel": "จุดรับ",
+  "rideServiceDestLabel": "จุดส่ง",
+  "rideServiceVehicleTitle": "ประเภทรถ",
+  "rideServiceChange": "เปลี่ยน",
+  "rideServicePaymentTitle": "วิธีชำระเงิน",
+  "rideServicePayWallet": "JDC Wallet",
+  "rideServicePayCash": "เงินสดปลายทาง",
+  "rideServiceFareTitle": "ยอดชำระ",
+  "rideServiceBaseFare": "ค่าโดยสาร",
+  "rideServicePickupFee": "ค่ารับต้นทาง",
+  "rideServiceCallBtn": "เรียกรถเลย",
+  "laundryTitle": "ซักรีด",
+  "laundryPendingLabel": "รอใบเสนอราคา",
+  "laundryPendingNote": "ร้านจะตรวจรูปผ้าแล้วเสนอราคากลับภายใน 30 นาที ยืนยันราคาก่อนจึงจะเริ่มงาน",
+  "laundryPendingChat": "Chat กับร้าน",
+  "laundryShopTitle": "เลือกร้านซักรีด",
+  "laundryAddressTitle": "ที่อยู่รับผ้า",
+  "laundryPhotoTitle": "รูปผ้าที่จะซัก",
+  "laundryPhotoCount": "{count} รูป",
+  "@laundryPhotoCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "laundryWalletLabel": "Wallet (ใช้เมื่อให้คนขับส่งกลับ)",
+  "laundrySubmit": "ส่งคำขอให้ร้านประเมินราคา",
+  "laundryNoMerchants": "ไม่พบร้านซักรีดในพื้นที่",
+  "laundrySelectMerchant": "กรุณาเลือกร้านซักรีด",
+  "laundryPickupAddress": "ที่อยู่จุดรับผ้า",
+  "laundryPickupRequired": "กรุณาระบุที่อยู่รับผ้า",
+  "laundryAddPhoto": "เพิ่มรูป",
+  "laundrySubmitError": "ไม่สามารถส่งคำขอได้: {error}",
+  "@laundrySubmitError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "parcelAddPhoto": "เพิ่มรูป",
+  "parcelNoteLabel": "รายละเอียดพัสดุ",
+  "parcelNoteHint": "เช่น เอกสาร ห้ามพับ / ของแตกง่าย",
+  "parcelOriginLabel": "จุดรับพัสดุ",
+  "parcelDestinationLabel": "จุดส่ง",
+  "parcelCallDriver": "เรียกคนขับมารับ",
+  "parcelSizeSectionTitle": "ขนาดพัสดุ",
   "foodDetAddedToCart": "เพิ่ม {name} ลงตะกร้าแล้ว",
   "@foodDetAddedToCart": {
     "placeholders": {
@@ -2093,6 +2168,10 @@
   "ticketEmptyTitle": "ยังไม่มีรายการแจ้งปัญหา",
   "ticketEmptySubtitle": "หากพบปัญหากดปุ่ม \"แจ้งปัญหา\" ด้านล่าง",
   "mapPickerTitle": "เลือกตำแหน่งจัดส่ง",
+  "mapPickerConfirmLocation": "ยืนยันตำแหน่ง",
+  "mapPickerDetailLabel": "รายละเอียดเพิ่มเติม",
+  "mapPickerDetailHint": "บ้านเลขที่ ชั้น จุดสังเกต",
+  "mapPickerSearchHint": "ค้นหาสถานที่หรือที่อยู่",
   "mapPickerLoadingAddress": "กำลังโหลดที่อยู่...",
   "mapPickerSearching": "กำลังค้นหาที่อยู่...",
   "mapPickerDeliveryLocation": "ตำแหน่งจัดส่ง",
@@ -3302,7 +3381,9 @@
   "foodSvcShopCount": "{count} ร้าน",
   "@foodSvcShopCount": {
     "placeholders": {
-      "count": { "type": "String" }
+      "count": {
+        "type": "String"
+      }
     }
   },
   "driverAssignedFoundHeading": "ได้คนขับแล้ว",
@@ -3313,7 +3394,9 @@
   "driverAssignedEtaMinutes": "~{min} นาที",
   "@driverAssignedEtaMinutes": {
     "placeholders": {
-      "min": { "type": "String" }
+      "min": {
+        "type": "String"
+      }
     }
   },
   "waitingSearchingTitle": "กำลังหาคนขับให้คุณ",
@@ -3341,7 +3424,9 @@
   "b1payConfirm": "ยืนยันชำระ ฿{amount}",
   "@b1payConfirm": {
     "placeholders": {
-      "amount": { "type": "String" }
+      "amount": {
+        "type": "String"
+      }
     }
   },
   "b1payTopup": "เติมเงินเข้ากระเป๋า",
@@ -3361,7 +3446,169 @@
   "b1orderDetailDeliveredAt": "ส่งถึงเมื่อ {time} น.",
   "@b1orderDetailDeliveredAt": {
     "placeholders": {
-      "time": { "type": "String" }
+      "time": {
+        "type": "String"
+      }
     }
-  }
+  },
+  "shopSvcTitle": "ฝากซื้อ / ฝากหิ้ว",
+  "customerHomeServiceShop": "ฝากซื้อ",
+  "shopStepStore": "เลือกร้าน",
+  "shopStepItems": "รายการที่ฝากซื้อ",
+  "shopStepDelivery": "ส่งที่ไหน",
+  "shopStepBudget": "วงเงิน",
+  "shopStoreSearchHint": "ค้นหาชื่อร้าน",
+  "shopStoreAll": "ทั้งหมด",
+  "shopCatGrocery": "ร้านของชำ",
+  "shopCatMall": "ห้าง",
+  "shopCatMarket": "ตลาดสด",
+  "shopCatConvenience": "ร้านสะดวกซื้อ",
+  "shopCatPharmacy": "ร้านขายยา",
+  "shopStoreOpen": "เปิดอยู่",
+  "shopStoreClosed": "ปิดอยู่",
+  "shopStoreNoReceipt": "ไม่มีใบเสร็จ",
+  "shopStoreNoReceiptHint": "ร้านนี้ไม่ออกใบเสร็จ คนขับจะถ่ายรูปสินค้าให้คุณยืนยันก่อนส่ง",
+  "shopStoreEmpty": "ยังไม่มีร้านฝากซื้อในพื้นที่ของคุณ",
+  "shopStoreEmptyHint": "เราจะเพิ่มร้านในพื้นที่ของคุณเร็ว ๆ นี้",
+  "shopStoreLocationNeeded": "เปิดตำแหน่งเพื่อดูร้านใกล้คุณ",
+  "shopStoreRetry": "ลองอีกครั้ง",
+  "shopStoreSelected": "ร้านที่เลือก",
+  "shopStoreChange": "เปลี่ยนร้าน",
+  "shopItemName": "ชื่อสินค้า",
+  "shopItemNameHint": "เช่น นมโฟร์โมสต์",
+  "shopItemQty": "จำนวน",
+  "shopItemQtyHint": "เช่น 2 กล่อง",
+  "shopItemNote": "หมายเหตุ",
+  "shopItemNoteHint": "เช่น เอายี่ห้ออื่นแทนได้",
+  "shopItemAdd": "เพิ่มรายการ",
+  "shopItemRemove": "ลบรายการนี้",
+  "shopItemsRequired": "กรุณาใส่อย่างน้อย 1 รายการ",
+  "shopBudgetLabel": "วงเงินสูงสุดสำหรับค่าสินค้า",
+  "shopBudgetHelp": "ระบบจะกันเงินไว้เท่าวงเงินนี้ จ่ายจริงเท่าไหร่คืนส่วนต่างให้อัตโนมัติ",
+  "shopNoteLabel": "บอกคนขับเพิ่มเติม",
+  "shopNoteHint": "เช่น ถ้าของหมดให้โทรหา",
+  "shopDeliverTo": "ส่งที่",
+  "shopPickAddress": "เลือกที่อยู่ส่ง",
+  "shopGetQuote": "คำนวณราคา",
+  "shopQuoteTitle": "ยืนยันคำสั่งฝากซื้อ",
+  "shopQuoteGoods": "วงเงินค่าสินค้า (สูงสุด)",
+  "shopQuoteDelivery": "ค่าส่ง",
+  "shopQuoteService": "ค่าบริการฝากซื้อ",
+  "shopQuoteFarPickup": "ค่าวิ่งไกล",
+  "shopQuoteHold": "กันไว้จาก Wallet",
+  "shopQuoteWallet": "ยอด Wallet คงเหลือ",
+  "shopQuoteShortfall": "ขาดอีก",
+  "shopQuoteRefundNote": "จ่ายจริงตามใบเสร็จ ส่วนที่เหลือคืนเข้า Wallet อัตโนมัติเมื่อปิดงาน",
+  "shopQuoteConfirm": "ยืนยันสั่ง",
+  "shopQuoteBack": "ย้อนกลับ",
+  "shopQuoteTopupAndOrder": "เติมเงินแล้วสั่ง",
+  "shopQuoteRefresh": "ขอราคาใหม่",
+  "shopQuoteExpired": "ราคาหมดอายุแล้ว กรุณาขอราคาใหม่",
+  "shopCancelWarnTitle": "ก่อนยืนยัน โปรดทราบ",
+  "shopCancelWarnAfterPurchase": "เมื่อคนขับชำระเงินที่ร้านแล้ว จะยกเลิกไม่ได้ เนื่องจากสินค้าคืนร้านไม่ได้",
+  "shopCancelWarnFree": "ยกเลิกก่อนคนขับถึงร้าน ไม่มีค่าใช้จ่าย",
+  "shopCancelAck": "รับทราบ",
+  "shopErrNoDriver": "ขณะนี้ไม่มีคนขับออนไลน์ในพื้นที่ กรุณาลองใหม่อีกครั้งภายหลัง",
+  "shopErrStoreClosed": "ร้านนี้ปิดอยู่ กรุณาเลือกร้านอื่นหรือรอเวลาเปิด",
+  "shopErrShopDisabled": "บริการฝากซื้อยังไม่เปิดให้บริการ",
+  "shopErrGeneric": "ทำรายการไม่สำเร็จ กรุณาลองใหม่",
+  "shopTrackTitle": "ติดตามการฝากซื้อ",
+  "shopTrackFindingDriver": "กำลังหาคนขับ",
+  "shopTrackFindingDriverHint": "ถ้าหาคนขับไม่ได้ ระบบจะคืนเงินที่กันไว้ให้เต็มจำนวนอัตโนมัติ",
+  "shopTrackAccepted": "คนขับรับงานแล้ว กำลังไปที่ร้าน",
+  "shopTrackShopping": "คนขับกำลังเลือกของในร้าน",
+  "shopTrackReceiptReview": "รอคุณยืนยันรูปสินค้า",
+  "shopTrackPurchased": "ซื้อของเรียบร้อย กำลังนำส่ง",
+  "shopTrackDelivering": "กำลังนำส่ง",
+  "shopTrackCompleted": "ส่งเรียบร้อย",
+  "shopTrackCancelled": "ยกเลิกแล้ว",
+  "shopItemsHeader": "รายการที่ฝาก",
+  "shopItemStatusPending": "ยังไม่ได้ซื้อ",
+  "shopItemStatusBought": "ซื้อแล้ว",
+  "shopItemStatusUnavailable": "ของหมด",
+  "shopItemStatusSubstituted": "เปลี่ยนเป็นอย่างอื่น",
+  "shopSubtotalSoFar": "ยอดที่ซื้อแล้ว",
+  "shopProofTitle": "รูปสินค้าจากคนขับ",
+  "shopProofConfirmHint": "ตรวจดูรูปและยอดเงิน ถ้าถูกต้องกดยืนยันเพื่อให้คนขับนำส่ง",
+  "shopProofConfirm": "ยืนยัน ให้ส่งได้เลย",
+  "shopProofContactDriver": "ยังไม่ยืนยัน? ติดต่อคนขับโดยตรงได้เลย",
+  "shopProofCallDriver": "โทรหาคนขับ",
+  "shopProofChatDriver": "แชทกับคนขับ",
+  "shopSummaryTitle": "สรุปค่าใช้จ่าย",
+  "shopSummaryGoodsActual": "ค่าสินค้าจริง",
+  "shopSummaryTotal": "รวมที่ต้องจ่าย",
+  "shopSummaryRefund": "คืนเข้า Wallet",
+  "shopCancelOrder": "ยกเลิกคำสั่ง",
+  "shopCancelConfirmTitle": "ยกเลิกคำสั่งฝากซื้อ?",
+  "shopCancelBlocked": "ยกเลิกไม่ได้แล้วเพราะคนขับชำระเงินที่ร้านไปแล้ว กรุณาติดต่อฝ่ายบริการ",
+  "shopCancelDone": "ยกเลิกคำสั่งแล้ว",
+  "shopDraftRestored": "กู้รายการที่พิมพ์ไว้กลับมาแล้ว",
+  "shopStoreDistance": "ห่าง {km} กม.",
+  "@shopStoreDistance": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "shopStoreNextOpen": "เปิดอีกครั้ง {time}",
+  "@shopStoreNextOpen": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "shopDriverCount": "มีคนขับ {count} คนในพื้นที่",
+  "@shopDriverCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shopFarPickupReason": "คนขับที่ใกล้ที่สุดอยู่ห่างร้าน {km} กม.",
+  "@shopFarPickupReason": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "shopCancelWarnFee": "หากยกเลิกหลังคนขับถึงร้านแล้ว จะมีค่าชดเชยคนขับ {amount}",
+  "@shopCancelWarnFee": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "shopBudgetRange": "ตั้งได้ตั้งแต่ {min} ถึง {max}",
+  "@shopBudgetRange": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "shopMaxItems": "ใส่ได้สูงสุด {count} รายการ",
+  "@shopMaxItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shopProofWaitMinutes": "กรุณายืนยันภายใน {minutes} นาที",
+  "@shopProofWaitMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "parcelEstimatedDistanceShort": "ระยะทางโดยประมาณ"
 }

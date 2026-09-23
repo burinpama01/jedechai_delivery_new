@@ -1696,7 +1696,7 @@
   "parcelDescriptionLabel": "Describe items (e.g. documents, food, clothes)",
   "parcelDescriptionRequired": "Please describe items",
   "parcelWeightLabel": "Estimated weight (kg) - optional",
-  "parcelPhotoTitle": "Parcel photo",
+  "parcelPhotoTitle": "Parcel photos",
   "parcelPhotoHint": "Take a photo of the parcel for the driver (optional)",
   "parcelPhotoTap": "Tap to take or select photo",
   "parcelEstimatedFee": "Estimated service fee",
@@ -1866,6 +1866,15 @@
   "ratingLabel3": "Average",
   "ratingLabel4": "Good",
   "ratingLabel5": "Excellent",
+  "ratingHeaderTitle": "Delivered! Rate your experience",
+  "ratingTagsTitle": "What impressed you",
+  "ratingTagFast": "Fast delivery",
+  "ratingTagPolite": "Polite",
+  "ratingTagNeatPacking": "Neat packing",
+  "ratingTagEasyContact": "Easy to reach",
+  "ratingTagOnTime": "On time",
+  "ratingCommentTitle": "Additional comments",
+  "ratingCommentHint": "Tell us about your experience (optional)",
   "cancelReasonWaitTooLong": "Waited too long",
   "cancelReasonChangedMind": "Changed mind, no longer needed",
   "cancelReasonWrongAddress": "Wrong address",
@@ -1899,6 +1908,14 @@
   "cancelReasonsSubtitle": "Please select a reason to help us improve",
   "cancelOtherHint": "Please specify reason...",
   "cancelButton": "Cancel order",
+  "cancelNotCancel": "Keep my order",
+  "cancelWarnStartedTitle": "Shop has started preparing",
+  "cancelWarnFee": "Cancellation now will incur a fee",
+  "cancelRefundTitle": "Refund estimate",
+  "cancelAmountPaid": "Amount paid",
+  "cancelFee": "Cancellation fee",
+  "cancelRefundToWallet": "Refund to JDC Wallet",
+  "cancelRefundNote": "Refund goes to your wallet immediately after confirmation",
   "addrLabelHome": "Home",
   "addrLabelWork": "Work",
   "addrLabelOther": "Other",
@@ -1963,6 +1980,64 @@
   "confirmCash": "Cash",
   "confirmTrackOrder": "Track order",
   "confirmBackToHome": "Back to home",
+  "confirmSent": "Request submitted",
+  "confirmMatchingDriver": "We are matching a driver for you",
+  "confirmDetailTitle": "Request details",
+  "confirmOriginLabel": "Pickup",
+  "confirmDestLabel": "Drop-off",
+  "confirmService": "Service",
+  "confirmPaymentLabel": "Payment",
+  "confirmInfoText": "We will notify you as soon as a driver accepts. Track status in Activities.",
+  "confirmTrackStatus": "Track status",
+  "rideServiceTitle": "Confirm trip",
+  "rideServiceOriginLabel": "Pickup",
+  "rideServiceDestLabel": "Drop-off",
+  "rideServiceVehicleTitle": "Vehicle type",
+  "rideServiceChange": "Change",
+  "rideServicePaymentTitle": "Payment method",
+  "rideServicePayWallet": "JDC Wallet",
+  "rideServicePayCash": "Cash on delivery",
+  "rideServiceFareTitle": "Total fare",
+  "rideServiceBaseFare": "Base fare",
+  "rideServicePickupFee": "Pickup surcharge",
+  "rideServiceCallBtn": "Request ride",
+  "laundryTitle": "Laundry",
+  "laundryPendingLabel": "Awaiting quote",
+  "laundryPendingNote": "Shop will inspect your photos and quote within 30 min. Confirm price before work starts.",
+  "laundryPendingChat": "Chat with shop",
+  "laundryShopTitle": "Select laundry shop",
+  "laundryAddressTitle": "Pickup address",
+  "laundryPhotoTitle": "Laundry photos",
+  "laundryPhotoCount": "{count} photos",
+  "@laundryPhotoCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "laundryWalletLabel": "Wallet (used when driver returns clothes)",
+  "laundrySubmit": "Send quote request",
+  "laundryNoMerchants": "No laundry shops nearby",
+  "laundrySelectMerchant": "Please select a laundry shop",
+  "laundryPickupAddress": "Pickup address",
+  "laundryPickupRequired": "Please enter pickup address",
+  "laundryAddPhoto": "Add photo",
+  "laundrySubmitError": "Cannot submit request: {error}",
+  "@laundrySubmitError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "parcelAddPhoto": "Add photo",
+  "parcelNoteLabel": "Parcel details",
+  "parcelNoteHint": "e.g. Documents, do not bend / Fragile items",
+  "parcelOriginLabel": "Pickup point",
+  "parcelDestinationLabel": "Drop-off point",
+  "parcelCallDriver": "Request driver pickup",
+  "parcelSizeSectionTitle": "Parcel size",
   "foodDetAddedToCart": "Added {name} to cart",
   "@foodDetAddedToCart": {
     "placeholders": {
@@ -2093,6 +2168,10 @@
   "ticketEmptyTitle": "No reports yet",
   "ticketEmptySubtitle": "If you encounter a problem, press \"Report\" below",
   "mapPickerTitle": "Select delivery location",
+  "mapPickerConfirmLocation": "Confirm location",
+  "mapPickerDetailLabel": "Additional details",
+  "mapPickerDetailHint": "House number, floor, landmark",
+  "mapPickerSearchHint": "Search place or address",
   "mapPickerLoadingAddress": "Loading address...",
   "mapPickerSearching": "Searching for address...",
   "mapPickerDeliveryLocation": "Delivery location",
@@ -3302,7 +3381,9 @@
   "foodSvcShopCount": "{count} shops",
   "@foodSvcShopCount": {
     "placeholders": {
-      "count": { "type": "String" }
+      "count": {
+        "type": "String"
+      }
     }
   },
   "driverAssignedFoundHeading": "Driver found!",
@@ -3313,7 +3394,9 @@
   "driverAssignedEtaMinutes": "~{min} min",
   "@driverAssignedEtaMinutes": {
     "placeholders": {
-      "min": { "type": "String" }
+      "min": {
+        "type": "String"
+      }
     }
   },
   "waitingSearchingTitle": "Finding a driver for you",
@@ -3341,7 +3424,9 @@
   "b1payConfirm": "Confirm pay ฿{amount}",
   "@b1payConfirm": {
     "placeholders": {
-      "amount": { "type": "String" }
+      "amount": {
+        "type": "String"
+      }
     }
   },
   "b1payTopup": "Top up wallet",
@@ -3361,7 +3446,169 @@
   "b1orderDetailDeliveredAt": "Delivered at {time}",
   "@b1orderDetailDeliveredAt": {
     "placeholders": {
-      "time": { "type": "String" }
+      "time": {
+        "type": "String"
+      }
     }
-  }
+  },
+  "shopSvcTitle": "Shop for me",
+  "customerHomeServiceShop": "Shop for me",
+  "shopStepStore": "Choose a store",
+  "shopStepItems": "What to buy",
+  "shopStepDelivery": "Deliver to",
+  "shopStepBudget": "Budget",
+  "shopStoreSearchHint": "Search store name",
+  "shopStoreAll": "All",
+  "shopCatGrocery": "Grocery",
+  "shopCatMall": "Mall",
+  "shopCatMarket": "Fresh market",
+  "shopCatConvenience": "Convenience",
+  "shopCatPharmacy": "Pharmacy",
+  "shopStoreOpen": "Open",
+  "shopStoreClosed": "Closed",
+  "shopStoreNoReceipt": "No receipt",
+  "shopStoreNoReceiptHint": "This store does not issue receipts. The driver will photograph the items for you to confirm before delivery.",
+  "shopStoreEmpty": "No shop-for-me stores in your area yet",
+  "shopStoreEmptyHint": "We are adding stores near you soon",
+  "shopStoreLocationNeeded": "Turn on location to see stores near you",
+  "shopStoreRetry": "Try again",
+  "shopStoreSelected": "Selected store",
+  "shopStoreChange": "Change",
+  "shopItemName": "Item",
+  "shopItemNameHint": "e.g. Milk",
+  "shopItemQty": "Quantity",
+  "shopItemQtyHint": "e.g. 2 boxes",
+  "shopItemNote": "Note",
+  "shopItemNoteHint": "e.g. another brand is fine",
+  "shopItemAdd": "Add item",
+  "shopItemRemove": "Remove this item",
+  "shopItemsRequired": "Please add at least one item",
+  "shopBudgetLabel": "Maximum budget for goods",
+  "shopBudgetHelp": "We hold this amount. You pay only the actual bill and the rest is refunded automatically.",
+  "shopNoteLabel": "Note for the driver",
+  "shopNoteHint": "e.g. call me if something is out of stock",
+  "shopDeliverTo": "Deliver to",
+  "shopPickAddress": "Choose delivery address",
+  "shopGetQuote": "Calculate price",
+  "shopQuoteTitle": "Confirm your order",
+  "shopQuoteGoods": "Goods budget (max)",
+  "shopQuoteDelivery": "Delivery fee",
+  "shopQuoteService": "Shopping fee",
+  "shopQuoteFarPickup": "Long-distance pickup",
+  "shopQuoteHold": "Held from Wallet",
+  "shopQuoteWallet": "Wallet balance",
+  "shopQuoteShortfall": "Short by",
+  "shopQuoteRefundNote": "You pay the actual receipt amount. The remainder returns to your Wallet automatically.",
+  "shopQuoteConfirm": "Place order",
+  "shopQuoteBack": "Back",
+  "shopQuoteTopupAndOrder": "Top up and order",
+  "shopQuoteRefresh": "Refresh price",
+  "shopQuoteExpired": "This price has expired. Please refresh.",
+  "shopCancelWarnTitle": "Before you confirm",
+  "shopCancelWarnAfterPurchase": "Once the driver has paid at the store, the order cannot be cancelled because goods cannot be returned.",
+  "shopCancelWarnFree": "Cancelling before the driver reaches the store is free",
+  "shopCancelAck": "Got it",
+  "shopErrNoDriver": "No drivers are online in your area right now. Please try again later.",
+  "shopErrStoreClosed": "This store is closed. Choose another store or wait until it opens.",
+  "shopErrShopDisabled": "Shop-for-me is not available yet",
+  "shopErrGeneric": "Something went wrong. Please try again.",
+  "shopTrackTitle": "Track your order",
+  "shopTrackFindingDriver": "Finding a driver",
+  "shopTrackFindingDriverHint": "If no driver takes the job, the held amount is refunded in full automatically.",
+  "shopTrackAccepted": "Driver accepted and is heading to the store",
+  "shopTrackShopping": "Driver is picking your items",
+  "shopTrackReceiptReview": "Waiting for you to confirm the photos",
+  "shopTrackPurchased": "Items purchased, on the way",
+  "shopTrackDelivering": "On the way",
+  "shopTrackCompleted": "Delivered",
+  "shopTrackCancelled": "Cancelled",
+  "shopItemsHeader": "Your list",
+  "shopItemStatusPending": "Not bought yet",
+  "shopItemStatusBought": "Bought",
+  "shopItemStatusUnavailable": "Out of stock",
+  "shopItemStatusSubstituted": "Substituted",
+  "shopSubtotalSoFar": "Bought so far",
+  "shopProofTitle": "Photos from the driver",
+  "shopProofConfirmHint": "Check the photos and amount. Confirm so the driver can deliver.",
+  "shopProofConfirm": "Confirm, go ahead",
+  "shopProofContactDriver": "Not confirmed yet? Contact the driver directly.",
+  "shopProofCallDriver": "Call driver",
+  "shopProofChatDriver": "Chat with driver",
+  "shopSummaryTitle": "Cost summary",
+  "shopSummaryGoodsActual": "Actual goods",
+  "shopSummaryTotal": "Total charged",
+  "shopSummaryRefund": "Refunded to Wallet",
+  "shopCancelOrder": "Cancel order",
+  "shopCancelConfirmTitle": "Cancel this order?",
+  "shopCancelBlocked": "This order can no longer be cancelled because the driver already paid at the store. Please contact support.",
+  "shopCancelDone": "Order cancelled",
+  "shopDraftRestored": "Restored the list you were typing",
+  "shopStoreDistance": "{km} km away",
+  "@shopStoreDistance": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "shopStoreNextOpen": "Opens again {time}",
+  "@shopStoreNextOpen": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "shopDriverCount": "{count} drivers nearby",
+  "@shopDriverCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shopFarPickupReason": "Nearest driver is {km} km from the store",
+  "@shopFarPickupReason": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "shopCancelWarnFee": "Cancelling after the driver reaches the store costs {amount}",
+  "@shopCancelWarnFee": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "shopBudgetRange": "Between {min} and {max}",
+  "@shopBudgetRange": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "shopMaxItems": "Up to {count} items",
+  "@shopMaxItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shopProofWaitMinutes": "Please confirm within {minutes} minutes",
+  "@shopProofWaitMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "parcelEstimatedDistanceShort": "Approx. distance"
 }

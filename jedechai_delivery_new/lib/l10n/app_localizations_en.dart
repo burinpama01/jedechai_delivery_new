@@ -3352,7 +3352,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get parcelWeightLabel => 'Estimated weight (kg) - optional';
 
   @override
-  String get parcelPhotoTitle => 'Parcel photo';
+  String get parcelPhotoTitle => 'Parcel photos';
 
   @override
   String get parcelPhotoHint => 'Take a photo of the parcel for the driver (optional)';
@@ -3664,6 +3664,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ratingLabel5 => 'Excellent';
 
   @override
+  String get ratingHeaderTitle => 'Delivered! Rate your experience';
+
+  @override
+  String get ratingTagsTitle => 'What impressed you';
+
+  @override
+  String get ratingTagFast => 'Fast delivery';
+
+  @override
+  String get ratingTagPolite => 'Polite';
+
+  @override
+  String get ratingTagNeatPacking => 'Neat packing';
+
+  @override
+  String get ratingTagEasyContact => 'Easy to reach';
+
+  @override
+  String get ratingTagOnTime => 'On time';
+
+  @override
+  String get ratingCommentTitle => 'Additional comments';
+
+  @override
+  String get ratingCommentHint => 'Tell us about your experience (optional)';
+
+  @override
   String get cancelReasonWaitTooLong => 'Waited too long';
 
   @override
@@ -3735,6 +3762,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cancelButton => 'Cancel order';
+
+  @override
+  String get cancelNotCancel => 'Keep my order';
+
+  @override
+  String get cancelWarnStartedTitle => 'Shop has started preparing';
+
+  @override
+  String get cancelWarnFee => 'Cancellation now will incur a fee';
+
+  @override
+  String get cancelRefundTitle => 'Refund estimate';
+
+  @override
+  String get cancelAmountPaid => 'Amount paid';
+
+  @override
+  String get cancelFee => 'Cancellation fee';
+
+  @override
+  String get cancelRefundToWallet => 'Refund to JDC Wallet';
+
+  @override
+  String get cancelRefundNote => 'Refund goes to your wallet immediately after confirmation';
 
   @override
   String get addrLabelHome => 'Home';
@@ -3875,6 +3926,142 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get confirmBackToHome => 'Back to home';
+
+  @override
+  String get confirmSent => 'Request submitted';
+
+  @override
+  String get confirmMatchingDriver => 'We are matching a driver for you';
+
+  @override
+  String get confirmDetailTitle => 'Request details';
+
+  @override
+  String get confirmOriginLabel => 'Pickup';
+
+  @override
+  String get confirmDestLabel => 'Drop-off';
+
+  @override
+  String get confirmService => 'Service';
+
+  @override
+  String get confirmPaymentLabel => 'Payment';
+
+  @override
+  String get confirmInfoText => 'We will notify you as soon as a driver accepts. Track status in Activities.';
+
+  @override
+  String get confirmTrackStatus => 'Track status';
+
+  @override
+  String get rideServiceTitle => 'Confirm trip';
+
+  @override
+  String get rideServiceOriginLabel => 'Pickup';
+
+  @override
+  String get rideServiceDestLabel => 'Drop-off';
+
+  @override
+  String get rideServiceVehicleTitle => 'Vehicle type';
+
+  @override
+  String get rideServiceChange => 'Change';
+
+  @override
+  String get rideServicePaymentTitle => 'Payment method';
+
+  @override
+  String get rideServicePayWallet => 'JDC Wallet';
+
+  @override
+  String get rideServicePayCash => 'Cash on delivery';
+
+  @override
+  String get rideServiceFareTitle => 'Total fare';
+
+  @override
+  String get rideServiceBaseFare => 'Base fare';
+
+  @override
+  String get rideServicePickupFee => 'Pickup surcharge';
+
+  @override
+  String get rideServiceCallBtn => 'Request ride';
+
+  @override
+  String get laundryTitle => 'Laundry';
+
+  @override
+  String get laundryPendingLabel => 'Awaiting quote';
+
+  @override
+  String get laundryPendingNote => 'Shop will inspect your photos and quote within 30 min. Confirm price before work starts.';
+
+  @override
+  String get laundryPendingChat => 'Chat with shop';
+
+  @override
+  String get laundryShopTitle => 'Select laundry shop';
+
+  @override
+  String get laundryAddressTitle => 'Pickup address';
+
+  @override
+  String get laundryPhotoTitle => 'Laundry photos';
+
+  @override
+  String laundryPhotoCount(int count) {
+    return '$count photos';
+  }
+
+  @override
+  String get laundryWalletLabel => 'Wallet (used when driver returns clothes)';
+
+  @override
+  String get laundrySubmit => 'Send quote request';
+
+  @override
+  String get laundryNoMerchants => 'No laundry shops nearby';
+
+  @override
+  String get laundrySelectMerchant => 'Please select a laundry shop';
+
+  @override
+  String get laundryPickupAddress => 'Pickup address';
+
+  @override
+  String get laundryPickupRequired => 'Please enter pickup address';
+
+  @override
+  String get laundryAddPhoto => 'Add photo';
+
+  @override
+  String laundrySubmitError(String error) {
+    return 'Cannot submit request: $error';
+  }
+
+  @override
+  String get parcelAddPhoto => 'Add photo';
+
+  @override
+  String get parcelNoteLabel => 'Parcel details';
+
+  @override
+  String get parcelNoteHint => 'e.g. Documents, do not bend / Fragile items';
+
+  @override
+  String get parcelOriginLabel => 'Pickup point';
+
+  @override
+  String get parcelDestinationLabel => 'Drop-off point';
+
+  @override
+  String get parcelCallDriver => 'Request driver pickup';
+
+  @override
+  String get parcelSizeSectionTitle => 'Parcel size';
 
   @override
   String foodDetAddedToCart(Object name) {
@@ -4171,6 +4358,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mapPickerTitle => 'Select delivery location';
+
+  @override
+  String get mapPickerConfirmLocation => 'Confirm location';
+
+  @override
+  String get mapPickerDetailLabel => 'Additional details';
+
+  @override
+  String get mapPickerDetailHint => 'House number, floor, landmark';
+
+  @override
+  String get mapPickerSearchHint => 'Search place or address';
 
   @override
   String get mapPickerLoadingAddress => 'Loading address...';
@@ -6710,4 +6909,323 @@ class AppLocalizationsEn extends AppLocalizations {
   String b1orderDetailDeliveredAt(String time) {
     return 'Delivered at $time';
   }
+
+  @override
+  String get shopSvcTitle => 'Shop for me';
+
+  @override
+  String get customerHomeServiceShop => 'Shop for me';
+
+  @override
+  String get shopStepStore => 'Choose a store';
+
+  @override
+  String get shopStepItems => 'What to buy';
+
+  @override
+  String get shopStepDelivery => 'Deliver to';
+
+  @override
+  String get shopStepBudget => 'Budget';
+
+  @override
+  String get shopStoreSearchHint => 'Search store name';
+
+  @override
+  String get shopStoreAll => 'All';
+
+  @override
+  String get shopCatGrocery => 'Grocery';
+
+  @override
+  String get shopCatMall => 'Mall';
+
+  @override
+  String get shopCatMarket => 'Fresh market';
+
+  @override
+  String get shopCatConvenience => 'Convenience';
+
+  @override
+  String get shopCatPharmacy => 'Pharmacy';
+
+  @override
+  String get shopStoreOpen => 'Open';
+
+  @override
+  String get shopStoreClosed => 'Closed';
+
+  @override
+  String get shopStoreNoReceipt => 'No receipt';
+
+  @override
+  String get shopStoreNoReceiptHint => 'This store does not issue receipts. The driver will photograph the items for you to confirm before delivery.';
+
+  @override
+  String get shopStoreEmpty => 'No shop-for-me stores in your area yet';
+
+  @override
+  String get shopStoreEmptyHint => 'We are adding stores near you soon';
+
+  @override
+  String get shopStoreLocationNeeded => 'Turn on location to see stores near you';
+
+  @override
+  String get shopStoreRetry => 'Try again';
+
+  @override
+  String get shopStoreSelected => 'Selected store';
+
+  @override
+  String get shopStoreChange => 'Change';
+
+  @override
+  String get shopItemName => 'Item';
+
+  @override
+  String get shopItemNameHint => 'e.g. Milk';
+
+  @override
+  String get shopItemQty => 'Quantity';
+
+  @override
+  String get shopItemQtyHint => 'e.g. 2 boxes';
+
+  @override
+  String get shopItemNote => 'Note';
+
+  @override
+  String get shopItemNoteHint => 'e.g. another brand is fine';
+
+  @override
+  String get shopItemAdd => 'Add item';
+
+  @override
+  String get shopItemRemove => 'Remove this item';
+
+  @override
+  String get shopItemsRequired => 'Please add at least one item';
+
+  @override
+  String get shopBudgetLabel => 'Maximum budget for goods';
+
+  @override
+  String get shopBudgetHelp => 'We hold this amount. You pay only the actual bill and the rest is refunded automatically.';
+
+  @override
+  String get shopNoteLabel => 'Note for the driver';
+
+  @override
+  String get shopNoteHint => 'e.g. call me if something is out of stock';
+
+  @override
+  String get shopDeliverTo => 'Deliver to';
+
+  @override
+  String get shopPickAddress => 'Choose delivery address';
+
+  @override
+  String get shopGetQuote => 'Calculate price';
+
+  @override
+  String get shopQuoteTitle => 'Confirm your order';
+
+  @override
+  String get shopQuoteGoods => 'Goods budget (max)';
+
+  @override
+  String get shopQuoteDelivery => 'Delivery fee';
+
+  @override
+  String get shopQuoteService => 'Shopping fee';
+
+  @override
+  String get shopQuoteFarPickup => 'Long-distance pickup';
+
+  @override
+  String get shopQuoteHold => 'Held from Wallet';
+
+  @override
+  String get shopQuoteWallet => 'Wallet balance';
+
+  @override
+  String get shopQuoteShortfall => 'Short by';
+
+  @override
+  String get shopQuoteRefundNote => 'You pay the actual receipt amount. The remainder returns to your Wallet automatically.';
+
+  @override
+  String get shopQuoteConfirm => 'Place order';
+
+  @override
+  String get shopQuoteBack => 'Back';
+
+  @override
+  String get shopQuoteTopupAndOrder => 'Top up and order';
+
+  @override
+  String get shopQuoteRefresh => 'Refresh price';
+
+  @override
+  String get shopQuoteExpired => 'This price has expired. Please refresh.';
+
+  @override
+  String get shopCancelWarnTitle => 'Before you confirm';
+
+  @override
+  String get shopCancelWarnAfterPurchase => 'Once the driver has paid at the store, the order cannot be cancelled because goods cannot be returned.';
+
+  @override
+  String get shopCancelWarnFree => 'Cancelling before the driver reaches the store is free';
+
+  @override
+  String get shopCancelAck => 'Got it';
+
+  @override
+  String get shopErrNoDriver => 'No drivers are online in your area right now. Please try again later.';
+
+  @override
+  String get shopErrStoreClosed => 'This store is closed. Choose another store or wait until it opens.';
+
+  @override
+  String get shopErrShopDisabled => 'Shop-for-me is not available yet';
+
+  @override
+  String get shopErrGeneric => 'Something went wrong. Please try again.';
+
+  @override
+  String get shopTrackTitle => 'Track your order';
+
+  @override
+  String get shopTrackFindingDriver => 'Finding a driver';
+
+  @override
+  String get shopTrackFindingDriverHint => 'If no driver takes the job, the held amount is refunded in full automatically.';
+
+  @override
+  String get shopTrackAccepted => 'Driver accepted and is heading to the store';
+
+  @override
+  String get shopTrackShopping => 'Driver is picking your items';
+
+  @override
+  String get shopTrackReceiptReview => 'Waiting for you to confirm the photos';
+
+  @override
+  String get shopTrackPurchased => 'Items purchased, on the way';
+
+  @override
+  String get shopTrackDelivering => 'On the way';
+
+  @override
+  String get shopTrackCompleted => 'Delivered';
+
+  @override
+  String get shopTrackCancelled => 'Cancelled';
+
+  @override
+  String get shopItemsHeader => 'Your list';
+
+  @override
+  String get shopItemStatusPending => 'Not bought yet';
+
+  @override
+  String get shopItemStatusBought => 'Bought';
+
+  @override
+  String get shopItemStatusUnavailable => 'Out of stock';
+
+  @override
+  String get shopItemStatusSubstituted => 'Substituted';
+
+  @override
+  String get shopSubtotalSoFar => 'Bought so far';
+
+  @override
+  String get shopProofTitle => 'Photos from the driver';
+
+  @override
+  String get shopProofConfirmHint => 'Check the photos and amount. Confirm so the driver can deliver.';
+
+  @override
+  String get shopProofConfirm => 'Confirm, go ahead';
+
+  @override
+  String get shopProofContactDriver => 'Not confirmed yet? Contact the driver directly.';
+
+  @override
+  String get shopProofCallDriver => 'Call driver';
+
+  @override
+  String get shopProofChatDriver => 'Chat with driver';
+
+  @override
+  String get shopSummaryTitle => 'Cost summary';
+
+  @override
+  String get shopSummaryGoodsActual => 'Actual goods';
+
+  @override
+  String get shopSummaryTotal => 'Total charged';
+
+  @override
+  String get shopSummaryRefund => 'Refunded to Wallet';
+
+  @override
+  String get shopCancelOrder => 'Cancel order';
+
+  @override
+  String get shopCancelConfirmTitle => 'Cancel this order?';
+
+  @override
+  String get shopCancelBlocked => 'This order can no longer be cancelled because the driver already paid at the store. Please contact support.';
+
+  @override
+  String get shopCancelDone => 'Order cancelled';
+
+  @override
+  String get shopDraftRestored => 'Restored the list you were typing';
+
+  @override
+  String shopStoreDistance(String km) {
+    return '$km km away';
+  }
+
+  @override
+  String shopStoreNextOpen(String time) {
+    return 'Opens again $time';
+  }
+
+  @override
+  String shopDriverCount(int count) {
+    return '$count drivers nearby';
+  }
+
+  @override
+  String shopFarPickupReason(String km) {
+    return 'Nearest driver is $km km from the store';
+  }
+
+  @override
+  String shopCancelWarnFee(String amount) {
+    return 'Cancelling after the driver reaches the store costs $amount';
+  }
+
+  @override
+  String shopBudgetRange(String min, String max) {
+    return 'Between $min and $max';
+  }
+
+  @override
+  String shopMaxItems(int count) {
+    return 'Up to $count items';
+  }
+
+  @override
+  String shopProofWaitMinutes(int minutes) {
+    return 'Please confirm within $minutes minutes';
+  }
+
+  @override
+  String get parcelEstimatedDistanceShort => 'Approx. distance';
 }

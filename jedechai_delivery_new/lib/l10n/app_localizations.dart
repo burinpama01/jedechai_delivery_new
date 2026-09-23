@@ -6260,7 +6260,7 @@ abstract class AppLocalizations {
   /// No description provided for @parcelPhotoTitle.
   ///
   /// In en, this message translates to:
-  /// **'Parcel photo'**
+  /// **'Parcel photos'**
   String get parcelPhotoTitle;
 
   /// No description provided for @parcelPhotoHint.
@@ -6821,6 +6821,60 @@ abstract class AppLocalizations {
   /// **'Excellent'**
   String get ratingLabel5;
 
+  /// No description provided for @ratingHeaderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered! Rate your experience'**
+  String get ratingHeaderTitle;
+
+  /// No description provided for @ratingTagsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What impressed you'**
+  String get ratingTagsTitle;
+
+  /// No description provided for @ratingTagFast.
+  ///
+  /// In en, this message translates to:
+  /// **'Fast delivery'**
+  String get ratingTagFast;
+
+  /// No description provided for @ratingTagPolite.
+  ///
+  /// In en, this message translates to:
+  /// **'Polite'**
+  String get ratingTagPolite;
+
+  /// No description provided for @ratingTagNeatPacking.
+  ///
+  /// In en, this message translates to:
+  /// **'Neat packing'**
+  String get ratingTagNeatPacking;
+
+  /// No description provided for @ratingTagEasyContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Easy to reach'**
+  String get ratingTagEasyContact;
+
+  /// No description provided for @ratingTagOnTime.
+  ///
+  /// In en, this message translates to:
+  /// **'On time'**
+  String get ratingTagOnTime;
+
+  /// No description provided for @ratingCommentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Additional comments'**
+  String get ratingCommentTitle;
+
+  /// No description provided for @ratingCommentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us about your experience (optional)'**
+  String get ratingCommentHint;
+
   /// No description provided for @cancelReasonWaitTooLong.
   ///
   /// In en, this message translates to:
@@ -6958,6 +7012,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cancel order'**
   String get cancelButton;
+
+  /// No description provided for @cancelNotCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep my order'**
+  String get cancelNotCancel;
+
+  /// No description provided for @cancelWarnStartedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop has started preparing'**
+  String get cancelWarnStartedTitle;
+
+  /// No description provided for @cancelWarnFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancellation now will incur a fee'**
+  String get cancelWarnFee;
+
+  /// No description provided for @cancelRefundTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund estimate'**
+  String get cancelRefundTitle;
+
+  /// No description provided for @cancelAmountPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount paid'**
+  String get cancelAmountPaid;
+
+  /// No description provided for @cancelFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancellation fee'**
+  String get cancelFee;
+
+  /// No description provided for @cancelRefundToWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund to JDC Wallet'**
+  String get cancelRefundToWallet;
+
+  /// No description provided for @cancelRefundNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund goes to your wallet immediately after confirmation'**
+  String get cancelRefundNote;
 
   /// No description provided for @addrLabelHome.
   ///
@@ -7222,6 +7324,270 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Back to home'**
   String get confirmBackToHome;
+
+  /// No description provided for @confirmSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Request submitted'**
+  String get confirmSent;
+
+  /// No description provided for @confirmMatchingDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'We are matching a driver for you'**
+  String get confirmMatchingDriver;
+
+  /// No description provided for @confirmDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Request details'**
+  String get confirmDetailTitle;
+
+  /// No description provided for @confirmOriginLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup'**
+  String get confirmOriginLabel;
+
+  /// No description provided for @confirmDestLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop-off'**
+  String get confirmDestLabel;
+
+  /// No description provided for @confirmService.
+  ///
+  /// In en, this message translates to:
+  /// **'Service'**
+  String get confirmService;
+
+  /// No description provided for @confirmPaymentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment'**
+  String get confirmPaymentLabel;
+
+  /// No description provided for @confirmInfoText.
+  ///
+  /// In en, this message translates to:
+  /// **'We will notify you as soon as a driver accepts. Track status in Activities.'**
+  String get confirmInfoText;
+
+  /// No description provided for @confirmTrackStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Track status'**
+  String get confirmTrackStatus;
+
+  /// No description provided for @rideServiceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm trip'**
+  String get rideServiceTitle;
+
+  /// No description provided for @rideServiceOriginLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup'**
+  String get rideServiceOriginLabel;
+
+  /// No description provided for @rideServiceDestLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop-off'**
+  String get rideServiceDestLabel;
+
+  /// No description provided for @rideServiceVehicleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle type'**
+  String get rideServiceVehicleTitle;
+
+  /// No description provided for @rideServiceChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get rideServiceChange;
+
+  /// No description provided for @rideServicePaymentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment method'**
+  String get rideServicePaymentTitle;
+
+  /// No description provided for @rideServicePayWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'JDC Wallet'**
+  String get rideServicePayWallet;
+
+  /// No description provided for @rideServicePayCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash on delivery'**
+  String get rideServicePayCash;
+
+  /// No description provided for @rideServiceFareTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Total fare'**
+  String get rideServiceFareTitle;
+
+  /// No description provided for @rideServiceBaseFare.
+  ///
+  /// In en, this message translates to:
+  /// **'Base fare'**
+  String get rideServiceBaseFare;
+
+  /// No description provided for @rideServicePickupFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup surcharge'**
+  String get rideServicePickupFee;
+
+  /// No description provided for @rideServiceCallBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Request ride'**
+  String get rideServiceCallBtn;
+
+  /// No description provided for @laundryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Laundry'**
+  String get laundryTitle;
+
+  /// No description provided for @laundryPendingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting quote'**
+  String get laundryPendingLabel;
+
+  /// No description provided for @laundryPendingNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop will inspect your photos and quote within 30 min. Confirm price before work starts.'**
+  String get laundryPendingNote;
+
+  /// No description provided for @laundryPendingChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat with shop'**
+  String get laundryPendingChat;
+
+  /// No description provided for @laundryShopTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select laundry shop'**
+  String get laundryShopTitle;
+
+  /// No description provided for @laundryAddressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup address'**
+  String get laundryAddressTitle;
+
+  /// No description provided for @laundryPhotoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Laundry photos'**
+  String get laundryPhotoTitle;
+
+  /// No description provided for @laundryPhotoCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} photos'**
+  String laundryPhotoCount(int count);
+
+  /// No description provided for @laundryWalletLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet (used when driver returns clothes)'**
+  String get laundryWalletLabel;
+
+  /// No description provided for @laundrySubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Send quote request'**
+  String get laundrySubmit;
+
+  /// No description provided for @laundryNoMerchants.
+  ///
+  /// In en, this message translates to:
+  /// **'No laundry shops nearby'**
+  String get laundryNoMerchants;
+
+  /// No description provided for @laundrySelectMerchant.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a laundry shop'**
+  String get laundrySelectMerchant;
+
+  /// No description provided for @laundryPickupAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup address'**
+  String get laundryPickupAddress;
+
+  /// No description provided for @laundryPickupRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter pickup address'**
+  String get laundryPickupRequired;
+
+  /// No description provided for @laundryAddPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Add photo'**
+  String get laundryAddPhoto;
+
+  /// No description provided for @laundrySubmitError.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot submit request: {error}'**
+  String laundrySubmitError(String error);
+
+  /// No description provided for @parcelAddPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Add photo'**
+  String get parcelAddPhoto;
+
+  /// No description provided for @parcelNoteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Parcel details'**
+  String get parcelNoteLabel;
+
+  /// No description provided for @parcelNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Documents, do not bend / Fragile items'**
+  String get parcelNoteHint;
+
+  /// No description provided for @parcelOriginLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup point'**
+  String get parcelOriginLabel;
+
+  /// No description provided for @parcelDestinationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop-off point'**
+  String get parcelDestinationLabel;
+
+  /// No description provided for @parcelCallDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'Request driver pickup'**
+  String get parcelCallDriver;
+
+  /// No description provided for @parcelSizeSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Parcel size'**
+  String get parcelSizeSectionTitle;
 
   /// No description provided for @foodDetAddedToCart.
   ///
@@ -7786,6 +8152,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Select delivery location'**
   String get mapPickerTitle;
+
+  /// No description provided for @mapPickerConfirmLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm location'**
+  String get mapPickerConfirmLocation;
+
+  /// No description provided for @mapPickerDetailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Additional details'**
+  String get mapPickerDetailLabel;
+
+  /// No description provided for @mapPickerDetailHint.
+  ///
+  /// In en, this message translates to:
+  /// **'House number, floor, landmark'**
+  String get mapPickerDetailHint;
+
+  /// No description provided for @mapPickerSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search place or address'**
+  String get mapPickerSearchHint;
 
   /// No description provided for @mapPickerLoadingAddress.
   ///
@@ -12496,6 +12886,612 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delivered at {time}'**
   String b1orderDetailDeliveredAt(String time);
+
+  /// No description provided for @shopSvcTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop for me'**
+  String get shopSvcTitle;
+
+  /// No description provided for @customerHomeServiceShop.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop for me'**
+  String get customerHomeServiceShop;
+
+  /// No description provided for @shopStepStore.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a store'**
+  String get shopStepStore;
+
+  /// No description provided for @shopStepItems.
+  ///
+  /// In en, this message translates to:
+  /// **'What to buy'**
+  String get shopStepItems;
+
+  /// No description provided for @shopStepDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Deliver to'**
+  String get shopStepDelivery;
+
+  /// No description provided for @shopStepBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget'**
+  String get shopStepBudget;
+
+  /// No description provided for @shopStoreSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search store name'**
+  String get shopStoreSearchHint;
+
+  /// No description provided for @shopStoreAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get shopStoreAll;
+
+  /// No description provided for @shopCatGrocery.
+  ///
+  /// In en, this message translates to:
+  /// **'Grocery'**
+  String get shopCatGrocery;
+
+  /// No description provided for @shopCatMall.
+  ///
+  /// In en, this message translates to:
+  /// **'Mall'**
+  String get shopCatMall;
+
+  /// No description provided for @shopCatMarket.
+  ///
+  /// In en, this message translates to:
+  /// **'Fresh market'**
+  String get shopCatMarket;
+
+  /// No description provided for @shopCatConvenience.
+  ///
+  /// In en, this message translates to:
+  /// **'Convenience'**
+  String get shopCatConvenience;
+
+  /// No description provided for @shopCatPharmacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Pharmacy'**
+  String get shopCatPharmacy;
+
+  /// No description provided for @shopStoreOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get shopStoreOpen;
+
+  /// No description provided for @shopStoreClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get shopStoreClosed;
+
+  /// No description provided for @shopStoreNoReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'No receipt'**
+  String get shopStoreNoReceipt;
+
+  /// No description provided for @shopStoreNoReceiptHint.
+  ///
+  /// In en, this message translates to:
+  /// **'This store does not issue receipts. The driver will photograph the items for you to confirm before delivery.'**
+  String get shopStoreNoReceiptHint;
+
+  /// No description provided for @shopStoreEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No shop-for-me stores in your area yet'**
+  String get shopStoreEmpty;
+
+  /// No description provided for @shopStoreEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'We are adding stores near you soon'**
+  String get shopStoreEmptyHint;
+
+  /// No description provided for @shopStoreLocationNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on location to see stores near you'**
+  String get shopStoreLocationNeeded;
+
+  /// No description provided for @shopStoreRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get shopStoreRetry;
+
+  /// No description provided for @shopStoreSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected store'**
+  String get shopStoreSelected;
+
+  /// No description provided for @shopStoreChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get shopStoreChange;
+
+  /// No description provided for @shopItemName.
+  ///
+  /// In en, this message translates to:
+  /// **'Item'**
+  String get shopItemName;
+
+  /// No description provided for @shopItemNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Milk'**
+  String get shopItemNameHint;
+
+  /// No description provided for @shopItemQty.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get shopItemQty;
+
+  /// No description provided for @shopItemQtyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 2 boxes'**
+  String get shopItemQtyHint;
+
+  /// No description provided for @shopItemNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get shopItemNote;
+
+  /// No description provided for @shopItemNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. another brand is fine'**
+  String get shopItemNoteHint;
+
+  /// No description provided for @shopItemAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add item'**
+  String get shopItemAdd;
+
+  /// No description provided for @shopItemRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this item'**
+  String get shopItemRemove;
+
+  /// No description provided for @shopItemsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please add at least one item'**
+  String get shopItemsRequired;
+
+  /// No description provided for @shopBudgetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum budget for goods'**
+  String get shopBudgetLabel;
+
+  /// No description provided for @shopBudgetHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'We hold this amount. You pay only the actual bill and the rest is refunded automatically.'**
+  String get shopBudgetHelp;
+
+  /// No description provided for @shopNoteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Note for the driver'**
+  String get shopNoteLabel;
+
+  /// No description provided for @shopNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. call me if something is out of stock'**
+  String get shopNoteHint;
+
+  /// No description provided for @shopDeliverTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Deliver to'**
+  String get shopDeliverTo;
+
+  /// No description provided for @shopPickAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose delivery address'**
+  String get shopPickAddress;
+
+  /// No description provided for @shopGetQuote.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculate price'**
+  String get shopGetQuote;
+
+  /// No description provided for @shopQuoteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm your order'**
+  String get shopQuoteTitle;
+
+  /// No description provided for @shopQuoteGoods.
+  ///
+  /// In en, this message translates to:
+  /// **'Goods budget (max)'**
+  String get shopQuoteGoods;
+
+  /// No description provided for @shopQuoteDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery fee'**
+  String get shopQuoteDelivery;
+
+  /// No description provided for @shopQuoteService.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping fee'**
+  String get shopQuoteService;
+
+  /// No description provided for @shopQuoteFarPickup.
+  ///
+  /// In en, this message translates to:
+  /// **'Long-distance pickup'**
+  String get shopQuoteFarPickup;
+
+  /// No description provided for @shopQuoteHold.
+  ///
+  /// In en, this message translates to:
+  /// **'Held from Wallet'**
+  String get shopQuoteHold;
+
+  /// No description provided for @shopQuoteWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet balance'**
+  String get shopQuoteWallet;
+
+  /// No description provided for @shopQuoteShortfall.
+  ///
+  /// In en, this message translates to:
+  /// **'Short by'**
+  String get shopQuoteShortfall;
+
+  /// No description provided for @shopQuoteRefundNote.
+  ///
+  /// In en, this message translates to:
+  /// **'You pay the actual receipt amount. The remainder returns to your Wallet automatically.'**
+  String get shopQuoteRefundNote;
+
+  /// No description provided for @shopQuoteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Place order'**
+  String get shopQuoteConfirm;
+
+  /// No description provided for @shopQuoteBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get shopQuoteBack;
+
+  /// No description provided for @shopQuoteTopupAndOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Top up and order'**
+  String get shopQuoteTopupAndOrder;
+
+  /// No description provided for @shopQuoteRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh price'**
+  String get shopQuoteRefresh;
+
+  /// No description provided for @shopQuoteExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'This price has expired. Please refresh.'**
+  String get shopQuoteExpired;
+
+  /// No description provided for @shopCancelWarnTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Before you confirm'**
+  String get shopCancelWarnTitle;
+
+  /// No description provided for @shopCancelWarnAfterPurchase.
+  ///
+  /// In en, this message translates to:
+  /// **'Once the driver has paid at the store, the order cannot be cancelled because goods cannot be returned.'**
+  String get shopCancelWarnAfterPurchase;
+
+  /// No description provided for @shopCancelWarnFree.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelling before the driver reaches the store is free'**
+  String get shopCancelWarnFree;
+
+  /// No description provided for @shopCancelAck.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get shopCancelAck;
+
+  /// No description provided for @shopErrNoDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'No drivers are online in your area right now. Please try again later.'**
+  String get shopErrNoDriver;
+
+  /// No description provided for @shopErrStoreClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'This store is closed. Choose another store or wait until it opens.'**
+  String get shopErrStoreClosed;
+
+  /// No description provided for @shopErrShopDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop-for-me is not available yet'**
+  String get shopErrShopDisabled;
+
+  /// No description provided for @shopErrGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get shopErrGeneric;
+
+  /// No description provided for @shopTrackTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track your order'**
+  String get shopTrackTitle;
+
+  /// No description provided for @shopTrackFindingDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'Finding a driver'**
+  String get shopTrackFindingDriver;
+
+  /// No description provided for @shopTrackFindingDriverHint.
+  ///
+  /// In en, this message translates to:
+  /// **'If no driver takes the job, the held amount is refunded in full automatically.'**
+  String get shopTrackFindingDriverHint;
+
+  /// No description provided for @shopTrackAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver accepted and is heading to the store'**
+  String get shopTrackAccepted;
+
+  /// No description provided for @shopTrackShopping.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver is picking your items'**
+  String get shopTrackShopping;
+
+  /// No description provided for @shopTrackReceiptReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for you to confirm the photos'**
+  String get shopTrackReceiptReview;
+
+  /// No description provided for @shopTrackPurchased.
+  ///
+  /// In en, this message translates to:
+  /// **'Items purchased, on the way'**
+  String get shopTrackPurchased;
+
+  /// No description provided for @shopTrackDelivering.
+  ///
+  /// In en, this message translates to:
+  /// **'On the way'**
+  String get shopTrackDelivering;
+
+  /// No description provided for @shopTrackCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered'**
+  String get shopTrackCompleted;
+
+  /// No description provided for @shopTrackCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get shopTrackCancelled;
+
+  /// No description provided for @shopItemsHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Your list'**
+  String get shopItemsHeader;
+
+  /// No description provided for @shopItemStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Not bought yet'**
+  String get shopItemStatusPending;
+
+  /// No description provided for @shopItemStatusBought.
+  ///
+  /// In en, this message translates to:
+  /// **'Bought'**
+  String get shopItemStatusBought;
+
+  /// No description provided for @shopItemStatusUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Out of stock'**
+  String get shopItemStatusUnavailable;
+
+  /// No description provided for @shopItemStatusSubstituted.
+  ///
+  /// In en, this message translates to:
+  /// **'Substituted'**
+  String get shopItemStatusSubstituted;
+
+  /// No description provided for @shopSubtotalSoFar.
+  ///
+  /// In en, this message translates to:
+  /// **'Bought so far'**
+  String get shopSubtotalSoFar;
+
+  /// No description provided for @shopProofTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos from the driver'**
+  String get shopProofTitle;
+
+  /// No description provided for @shopProofConfirmHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the photos and amount. Confirm so the driver can deliver.'**
+  String get shopProofConfirmHint;
+
+  /// No description provided for @shopProofConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm, go ahead'**
+  String get shopProofConfirm;
+
+  /// No description provided for @shopProofContactDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'Not confirmed yet? Contact the driver directly.'**
+  String get shopProofContactDriver;
+
+  /// No description provided for @shopProofCallDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'Call driver'**
+  String get shopProofCallDriver;
+
+  /// No description provided for @shopProofChatDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat with driver'**
+  String get shopProofChatDriver;
+
+  /// No description provided for @shopSummaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost summary'**
+  String get shopSummaryTitle;
+
+  /// No description provided for @shopSummaryGoodsActual.
+  ///
+  /// In en, this message translates to:
+  /// **'Actual goods'**
+  String get shopSummaryGoodsActual;
+
+  /// No description provided for @shopSummaryTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total charged'**
+  String get shopSummaryTotal;
+
+  /// No description provided for @shopSummaryRefund.
+  ///
+  /// In en, this message translates to:
+  /// **'Refunded to Wallet'**
+  String get shopSummaryRefund;
+
+  /// No description provided for @shopCancelOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel order'**
+  String get shopCancelOrder;
+
+  /// No description provided for @shopCancelConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel this order?'**
+  String get shopCancelConfirmTitle;
+
+  /// No description provided for @shopCancelBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'This order can no longer be cancelled because the driver already paid at the store. Please contact support.'**
+  String get shopCancelBlocked;
+
+  /// No description provided for @shopCancelDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Order cancelled'**
+  String get shopCancelDone;
+
+  /// No description provided for @shopDraftRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Restored the list you were typing'**
+  String get shopDraftRestored;
+
+  /// No description provided for @shopStoreDistance.
+  ///
+  /// In en, this message translates to:
+  /// **'{km} km away'**
+  String shopStoreDistance(String km);
+
+  /// No description provided for @shopStoreNextOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens again {time}'**
+  String shopStoreNextOpen(String time);
+
+  /// No description provided for @shopDriverCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} drivers nearby'**
+  String shopDriverCount(int count);
+
+  /// No description provided for @shopFarPickupReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearest driver is {km} km from the store'**
+  String shopFarPickupReason(String km);
+
+  /// No description provided for @shopCancelWarnFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelling after the driver reaches the store costs {amount}'**
+  String shopCancelWarnFee(String amount);
+
+  /// No description provided for @shopBudgetRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Between {min} and {max}'**
+  String shopBudgetRange(String min, String max);
+
+  /// No description provided for @shopMaxItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to {count} items'**
+  String shopMaxItems(int count);
+
+  /// No description provided for @shopProofWaitMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Please confirm within {minutes} minutes'**
+  String shopProofWaitMinutes(int minutes);
+
+  /// No description provided for @parcelEstimatedDistanceShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Approx. distance'**
+  String get parcelEstimatedDistanceShort;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

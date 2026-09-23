@@ -3352,7 +3352,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get parcelWeightLabel => 'น้ำหนักโดยประมาณ (กก.) - ไม่บังคับ';
 
   @override
-  String get parcelPhotoTitle => 'รูปภาพพัสดุ';
+  String get parcelPhotoTitle => 'รูปพัสดุ';
 
   @override
   String get parcelPhotoHint => 'ถ่ายรูปพัสดุเพื่อให้คนขับเห็นสิ่งของ (ไม่บังคับ)';
@@ -3664,6 +3664,33 @@ class AppLocalizationsTh extends AppLocalizations {
   String get ratingLabel5 => 'ยอดเยี่ยม';
 
   @override
+  String get ratingHeaderTitle => 'ส่งถึงแล้ว ให้คะแนนหน่อย';
+
+  @override
+  String get ratingTagsTitle => 'อะไรที่ประทับใจ';
+
+  @override
+  String get ratingTagFast => 'ส่งไว';
+
+  @override
+  String get ratingTagPolite => 'สุภาพ';
+
+  @override
+  String get ratingTagNeatPacking => 'อาหารไม่หก';
+
+  @override
+  String get ratingTagEasyContact => 'ติดต่อง่าย';
+
+  @override
+  String get ratingTagOnTime => 'ตรงเวลา';
+
+  @override
+  String get ratingCommentTitle => 'ความคิดเห็นเพิ่มเติม';
+
+  @override
+  String get ratingCommentHint => 'เล่าให้เราฟังได้เลย (ไม่บังคับ)';
+
+  @override
   String get cancelReasonWaitTooLong => 'รอนานเกินไป';
 
   @override
@@ -3735,6 +3762,30 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get cancelButton => 'ยกเลิกออเดอร์';
+
+  @override
+  String get cancelNotCancel => 'ไม่ยกเลิกแล้ว';
+
+  @override
+  String get cancelWarnStartedTitle => 'ร้านเริ่มทำอาหารแล้ว';
+
+  @override
+  String get cancelWarnFee => 'ยกเลิกตอนนี้จะมีค่าธรรมเนียม';
+
+  @override
+  String get cancelRefundTitle => 'ยอดที่จะได้คืน';
+
+  @override
+  String get cancelAmountPaid => 'ยอดที่ชำระไป';
+
+  @override
+  String get cancelFee => 'ค่าธรรมเนียมยกเลิก';
+
+  @override
+  String get cancelRefundToWallet => 'คืนเข้า JDC Wallet';
+
+  @override
+  String get cancelRefundNote => 'คืนเข้ากระเป๋าทันทีหลังยืนยัน';
 
   @override
   String get addrLabelHome => 'บ้าน';
@@ -3875,6 +3926,142 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get confirmBackToHome => 'กลับหน้าหลัก';
+
+  @override
+  String get confirmSent => 'ส่งคำขอเรียบร้อย';
+
+  @override
+  String get confirmMatchingDriver => 'เรากำลังจับคู่คนขับให้คุณ';
+
+  @override
+  String get confirmDetailTitle => 'รายละเอียดคำขอ';
+
+  @override
+  String get confirmOriginLabel => 'จุดรับ';
+
+  @override
+  String get confirmDestLabel => 'จุดส่ง';
+
+  @override
+  String get confirmService => 'บริการ';
+
+  @override
+  String get confirmPaymentLabel => 'ชำระด้วย';
+
+  @override
+  String get confirmInfoText => 'เราจะแจ้งเตือนทันทีที่มีคนขับรับงาน ติดตามสถานะได้ที่หน้ากิจกรรม';
+
+  @override
+  String get confirmTrackStatus => 'ติดตามสถานะ';
+
+  @override
+  String get rideServiceTitle => 'ยืนยันการเดินทาง';
+
+  @override
+  String get rideServiceOriginLabel => 'จุดรับ';
+
+  @override
+  String get rideServiceDestLabel => 'จุดส่ง';
+
+  @override
+  String get rideServiceVehicleTitle => 'ประเภทรถ';
+
+  @override
+  String get rideServiceChange => 'เปลี่ยน';
+
+  @override
+  String get rideServicePaymentTitle => 'วิธีชำระเงิน';
+
+  @override
+  String get rideServicePayWallet => 'JDC Wallet';
+
+  @override
+  String get rideServicePayCash => 'เงินสดปลายทาง';
+
+  @override
+  String get rideServiceFareTitle => 'ยอดชำระ';
+
+  @override
+  String get rideServiceBaseFare => 'ค่าโดยสาร';
+
+  @override
+  String get rideServicePickupFee => 'ค่ารับต้นทาง';
+
+  @override
+  String get rideServiceCallBtn => 'เรียกรถเลย';
+
+  @override
+  String get laundryTitle => 'ซักรีด';
+
+  @override
+  String get laundryPendingLabel => 'รอใบเสนอราคา';
+
+  @override
+  String get laundryPendingNote => 'ร้านจะตรวจรูปผ้าแล้วเสนอราคากลับภายใน 30 นาที ยืนยันราคาก่อนจึงจะเริ่มงาน';
+
+  @override
+  String get laundryPendingChat => 'Chat กับร้าน';
+
+  @override
+  String get laundryShopTitle => 'เลือกร้านซักรีด';
+
+  @override
+  String get laundryAddressTitle => 'ที่อยู่รับผ้า';
+
+  @override
+  String get laundryPhotoTitle => 'รูปผ้าที่จะซัก';
+
+  @override
+  String laundryPhotoCount(int count) {
+    return '$count รูป';
+  }
+
+  @override
+  String get laundryWalletLabel => 'Wallet (ใช้เมื่อให้คนขับส่งกลับ)';
+
+  @override
+  String get laundrySubmit => 'ส่งคำขอให้ร้านประเมินราคา';
+
+  @override
+  String get laundryNoMerchants => 'ไม่พบร้านซักรีดในพื้นที่';
+
+  @override
+  String get laundrySelectMerchant => 'กรุณาเลือกร้านซักรีด';
+
+  @override
+  String get laundryPickupAddress => 'ที่อยู่จุดรับผ้า';
+
+  @override
+  String get laundryPickupRequired => 'กรุณาระบุที่อยู่รับผ้า';
+
+  @override
+  String get laundryAddPhoto => 'เพิ่มรูป';
+
+  @override
+  String laundrySubmitError(String error) {
+    return 'ไม่สามารถส่งคำขอได้: $error';
+  }
+
+  @override
+  String get parcelAddPhoto => 'เพิ่มรูป';
+
+  @override
+  String get parcelNoteLabel => 'รายละเอียดพัสดุ';
+
+  @override
+  String get parcelNoteHint => 'เช่น เอกสาร ห้ามพับ / ของแตกง่าย';
+
+  @override
+  String get parcelOriginLabel => 'จุดรับพัสดุ';
+
+  @override
+  String get parcelDestinationLabel => 'จุดส่ง';
+
+  @override
+  String get parcelCallDriver => 'เรียกคนขับมารับ';
+
+  @override
+  String get parcelSizeSectionTitle => 'ขนาดพัสดุ';
 
   @override
   String foodDetAddedToCart(Object name) {
@@ -4171,6 +4358,18 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get mapPickerTitle => 'เลือกตำแหน่งจัดส่ง';
+
+  @override
+  String get mapPickerConfirmLocation => 'ยืนยันตำแหน่ง';
+
+  @override
+  String get mapPickerDetailLabel => 'รายละเอียดเพิ่มเติม';
+
+  @override
+  String get mapPickerDetailHint => 'บ้านเลขที่ ชั้น จุดสังเกต';
+
+  @override
+  String get mapPickerSearchHint => 'ค้นหาสถานที่หรือที่อยู่';
 
   @override
   String get mapPickerLoadingAddress => 'กำลังโหลดที่อยู่...';
@@ -6710,4 +6909,323 @@ class AppLocalizationsTh extends AppLocalizations {
   String b1orderDetailDeliveredAt(String time) {
     return 'ส่งถึงเมื่อ $time น.';
   }
+
+  @override
+  String get shopSvcTitle => 'ฝากซื้อ / ฝากหิ้ว';
+
+  @override
+  String get customerHomeServiceShop => 'ฝากซื้อ';
+
+  @override
+  String get shopStepStore => 'เลือกร้าน';
+
+  @override
+  String get shopStepItems => 'รายการที่ฝากซื้อ';
+
+  @override
+  String get shopStepDelivery => 'ส่งที่ไหน';
+
+  @override
+  String get shopStepBudget => 'วงเงิน';
+
+  @override
+  String get shopStoreSearchHint => 'ค้นหาชื่อร้าน';
+
+  @override
+  String get shopStoreAll => 'ทั้งหมด';
+
+  @override
+  String get shopCatGrocery => 'ร้านของชำ';
+
+  @override
+  String get shopCatMall => 'ห้าง';
+
+  @override
+  String get shopCatMarket => 'ตลาดสด';
+
+  @override
+  String get shopCatConvenience => 'ร้านสะดวกซื้อ';
+
+  @override
+  String get shopCatPharmacy => 'ร้านขายยา';
+
+  @override
+  String get shopStoreOpen => 'เปิดอยู่';
+
+  @override
+  String get shopStoreClosed => 'ปิดอยู่';
+
+  @override
+  String get shopStoreNoReceipt => 'ไม่มีใบเสร็จ';
+
+  @override
+  String get shopStoreNoReceiptHint => 'ร้านนี้ไม่ออกใบเสร็จ คนขับจะถ่ายรูปสินค้าให้คุณยืนยันก่อนส่ง';
+
+  @override
+  String get shopStoreEmpty => 'ยังไม่มีร้านฝากซื้อในพื้นที่ของคุณ';
+
+  @override
+  String get shopStoreEmptyHint => 'เราจะเพิ่มร้านในพื้นที่ของคุณเร็ว ๆ นี้';
+
+  @override
+  String get shopStoreLocationNeeded => 'เปิดตำแหน่งเพื่อดูร้านใกล้คุณ';
+
+  @override
+  String get shopStoreRetry => 'ลองอีกครั้ง';
+
+  @override
+  String get shopStoreSelected => 'ร้านที่เลือก';
+
+  @override
+  String get shopStoreChange => 'เปลี่ยนร้าน';
+
+  @override
+  String get shopItemName => 'ชื่อสินค้า';
+
+  @override
+  String get shopItemNameHint => 'เช่น นมโฟร์โมสต์';
+
+  @override
+  String get shopItemQty => 'จำนวน';
+
+  @override
+  String get shopItemQtyHint => 'เช่น 2 กล่อง';
+
+  @override
+  String get shopItemNote => 'หมายเหตุ';
+
+  @override
+  String get shopItemNoteHint => 'เช่น เอายี่ห้ออื่นแทนได้';
+
+  @override
+  String get shopItemAdd => 'เพิ่มรายการ';
+
+  @override
+  String get shopItemRemove => 'ลบรายการนี้';
+
+  @override
+  String get shopItemsRequired => 'กรุณาใส่อย่างน้อย 1 รายการ';
+
+  @override
+  String get shopBudgetLabel => 'วงเงินสูงสุดสำหรับค่าสินค้า';
+
+  @override
+  String get shopBudgetHelp => 'ระบบจะกันเงินไว้เท่าวงเงินนี้ จ่ายจริงเท่าไหร่คืนส่วนต่างให้อัตโนมัติ';
+
+  @override
+  String get shopNoteLabel => 'บอกคนขับเพิ่มเติม';
+
+  @override
+  String get shopNoteHint => 'เช่น ถ้าของหมดให้โทรหา';
+
+  @override
+  String get shopDeliverTo => 'ส่งที่';
+
+  @override
+  String get shopPickAddress => 'เลือกที่อยู่ส่ง';
+
+  @override
+  String get shopGetQuote => 'คำนวณราคา';
+
+  @override
+  String get shopQuoteTitle => 'ยืนยันคำสั่งฝากซื้อ';
+
+  @override
+  String get shopQuoteGoods => 'วงเงินค่าสินค้า (สูงสุด)';
+
+  @override
+  String get shopQuoteDelivery => 'ค่าส่ง';
+
+  @override
+  String get shopQuoteService => 'ค่าบริการฝากซื้อ';
+
+  @override
+  String get shopQuoteFarPickup => 'ค่าวิ่งไกล';
+
+  @override
+  String get shopQuoteHold => 'กันไว้จาก Wallet';
+
+  @override
+  String get shopQuoteWallet => 'ยอด Wallet คงเหลือ';
+
+  @override
+  String get shopQuoteShortfall => 'ขาดอีก';
+
+  @override
+  String get shopQuoteRefundNote => 'จ่ายจริงตามใบเสร็จ ส่วนที่เหลือคืนเข้า Wallet อัตโนมัติเมื่อปิดงาน';
+
+  @override
+  String get shopQuoteConfirm => 'ยืนยันสั่ง';
+
+  @override
+  String get shopQuoteBack => 'ย้อนกลับ';
+
+  @override
+  String get shopQuoteTopupAndOrder => 'เติมเงินแล้วสั่ง';
+
+  @override
+  String get shopQuoteRefresh => 'ขอราคาใหม่';
+
+  @override
+  String get shopQuoteExpired => 'ราคาหมดอายุแล้ว กรุณาขอราคาใหม่';
+
+  @override
+  String get shopCancelWarnTitle => 'ก่อนยืนยัน โปรดทราบ';
+
+  @override
+  String get shopCancelWarnAfterPurchase => 'เมื่อคนขับชำระเงินที่ร้านแล้ว จะยกเลิกไม่ได้ เนื่องจากสินค้าคืนร้านไม่ได้';
+
+  @override
+  String get shopCancelWarnFree => 'ยกเลิกก่อนคนขับถึงร้าน ไม่มีค่าใช้จ่าย';
+
+  @override
+  String get shopCancelAck => 'รับทราบ';
+
+  @override
+  String get shopErrNoDriver => 'ขณะนี้ไม่มีคนขับออนไลน์ในพื้นที่ กรุณาลองใหม่อีกครั้งภายหลัง';
+
+  @override
+  String get shopErrStoreClosed => 'ร้านนี้ปิดอยู่ กรุณาเลือกร้านอื่นหรือรอเวลาเปิด';
+
+  @override
+  String get shopErrShopDisabled => 'บริการฝากซื้อยังไม่เปิดให้บริการ';
+
+  @override
+  String get shopErrGeneric => 'ทำรายการไม่สำเร็จ กรุณาลองใหม่';
+
+  @override
+  String get shopTrackTitle => 'ติดตามการฝากซื้อ';
+
+  @override
+  String get shopTrackFindingDriver => 'กำลังหาคนขับ';
+
+  @override
+  String get shopTrackFindingDriverHint => 'ถ้าหาคนขับไม่ได้ ระบบจะคืนเงินที่กันไว้ให้เต็มจำนวนอัตโนมัติ';
+
+  @override
+  String get shopTrackAccepted => 'คนขับรับงานแล้ว กำลังไปที่ร้าน';
+
+  @override
+  String get shopTrackShopping => 'คนขับกำลังเลือกของในร้าน';
+
+  @override
+  String get shopTrackReceiptReview => 'รอคุณยืนยันรูปสินค้า';
+
+  @override
+  String get shopTrackPurchased => 'ซื้อของเรียบร้อย กำลังนำส่ง';
+
+  @override
+  String get shopTrackDelivering => 'กำลังนำส่ง';
+
+  @override
+  String get shopTrackCompleted => 'ส่งเรียบร้อย';
+
+  @override
+  String get shopTrackCancelled => 'ยกเลิกแล้ว';
+
+  @override
+  String get shopItemsHeader => 'รายการที่ฝาก';
+
+  @override
+  String get shopItemStatusPending => 'ยังไม่ได้ซื้อ';
+
+  @override
+  String get shopItemStatusBought => 'ซื้อแล้ว';
+
+  @override
+  String get shopItemStatusUnavailable => 'ของหมด';
+
+  @override
+  String get shopItemStatusSubstituted => 'เปลี่ยนเป็นอย่างอื่น';
+
+  @override
+  String get shopSubtotalSoFar => 'ยอดที่ซื้อแล้ว';
+
+  @override
+  String get shopProofTitle => 'รูปสินค้าจากคนขับ';
+
+  @override
+  String get shopProofConfirmHint => 'ตรวจดูรูปและยอดเงิน ถ้าถูกต้องกดยืนยันเพื่อให้คนขับนำส่ง';
+
+  @override
+  String get shopProofConfirm => 'ยืนยัน ให้ส่งได้เลย';
+
+  @override
+  String get shopProofContactDriver => 'ยังไม่ยืนยัน? ติดต่อคนขับโดยตรงได้เลย';
+
+  @override
+  String get shopProofCallDriver => 'โทรหาคนขับ';
+
+  @override
+  String get shopProofChatDriver => 'แชทกับคนขับ';
+
+  @override
+  String get shopSummaryTitle => 'สรุปค่าใช้จ่าย';
+
+  @override
+  String get shopSummaryGoodsActual => 'ค่าสินค้าจริง';
+
+  @override
+  String get shopSummaryTotal => 'รวมที่ต้องจ่าย';
+
+  @override
+  String get shopSummaryRefund => 'คืนเข้า Wallet';
+
+  @override
+  String get shopCancelOrder => 'ยกเลิกคำสั่ง';
+
+  @override
+  String get shopCancelConfirmTitle => 'ยกเลิกคำสั่งฝากซื้อ?';
+
+  @override
+  String get shopCancelBlocked => 'ยกเลิกไม่ได้แล้วเพราะคนขับชำระเงินที่ร้านไปแล้ว กรุณาติดต่อฝ่ายบริการ';
+
+  @override
+  String get shopCancelDone => 'ยกเลิกคำสั่งแล้ว';
+
+  @override
+  String get shopDraftRestored => 'กู้รายการที่พิมพ์ไว้กลับมาแล้ว';
+
+  @override
+  String shopStoreDistance(String km) {
+    return 'ห่าง $km กม.';
+  }
+
+  @override
+  String shopStoreNextOpen(String time) {
+    return 'เปิดอีกครั้ง $time';
+  }
+
+  @override
+  String shopDriverCount(int count) {
+    return 'มีคนขับ $count คนในพื้นที่';
+  }
+
+  @override
+  String shopFarPickupReason(String km) {
+    return 'คนขับที่ใกล้ที่สุดอยู่ห่างร้าน $km กม.';
+  }
+
+  @override
+  String shopCancelWarnFee(String amount) {
+    return 'หากยกเลิกหลังคนขับถึงร้านแล้ว จะมีค่าชดเชยคนขับ $amount';
+  }
+
+  @override
+  String shopBudgetRange(String min, String max) {
+    return 'ตั้งได้ตั้งแต่ $min ถึง $max';
+  }
+
+  @override
+  String shopMaxItems(int count) {
+    return 'ใส่ได้สูงสุด $count รายการ';
+  }
+
+  @override
+  String shopProofWaitMinutes(int minutes) {
+    return 'กรุณายืนยันภายใน $minutes นาที';
+  }
+
+  @override
+  String get parcelEstimatedDistanceShort => 'ระยะทางโดยประมาณ';
 }

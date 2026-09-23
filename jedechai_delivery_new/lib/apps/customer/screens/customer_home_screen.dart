@@ -18,6 +18,8 @@ import 'ride/ride_home_screen.dart';
 import 'services/food_home_screen.dart';
 import 'services/laundry_service_screen.dart';
 import 'services/parcel_service_screen.dart';
+import 'services/shop_service_screen.dart';
+import '../../../common/services/shop_service.dart';
 import 'services/customer_order_detail_screen.dart';
 import 'services/tracking_screen.dart';
 import 'services/saved_addresses_screen.dart';
@@ -54,6 +56,14 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
   Timer? _bannerTimer;
 
   bool _didCheckReferralRewardDialog = false;
+  // ฝากซื้อ: ซ่อนไว้จนกว่าแอดมินจะเปิด shop_enabled
+  bool _shopEnabled = false;
+
+  Future<void> _loadShopEnabled() async {
+    final enabled = await ShopService().isEnabled();
+    if (!mounted) return;
+    setState(() => _shopEnabled = enabled);
+  }
 
   Future<Map<String, Map<String, dynamic>>> _fetchCouponUsageMap(List<String> bookingIds) async {
     if (bookingIds.isEmpty) return {};
@@ -111,6 +121,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
   @override
   void initState() {
     super.initState();
+    _loadShopEnabled();
     WidgetsBinding.instance.addObserver(this);
     _loadUserProfile();
     _loadWalletSummary();
@@ -563,8 +574,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
   Widget _buildB1ServiceIcons() {
     final l10n = AppLocalizations.of(context)!;
     final jdc = JdcColors.of(context);
-    return Row(
-      children: [
+    final tiles = <Widget>[
         _b1ServiceIcon(
           icon: Icons.restaurant_rounded,
           label: l10n.customerHomeServiceFood,
@@ -572,7 +582,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
           iconColor: jdc.link,
           onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FoodHomeScreen())),
         ),
-        const SizedBox(width: 10),
         _b1ServiceIcon(
           icon: Icons.directions_car_rounded,
           label: l10n.customerHomeCallRide,
@@ -580,7 +589,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
           iconColor: jdc.infoInk,
           onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => RideHomeScreen())),
         ),
-        const SizedBox(width: 10),
         _b1ServiceIcon(
           icon: Icons.inventory_2_rounded,
           label: l10n.customerHomeSendParcel,
@@ -588,7 +596,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
           iconColor: jdc.successInk,
           onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ParcelServiceScreen())),
         ),
-        const SizedBox(width: 10),
         _b1ServiceIcon(
           icon: Icons.local_laundry_service_rounded,
           label: l10n.customerHomeServiceLaundry,
@@ -596,8 +603,42 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
           iconColor: jdc.text,
           onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LaundryServiceScreen())),
         ),
+      if (_shopEnabled)
+        _b1ServiceIcon(
+          icon: Icons.shopping_basket_rounded,
+          label: l10n.customerHomeServiceShop,
+          bgColor: jdc.infoSoft,
+          iconColor: jdc.infoInk,
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ShopServiceScreen())),
+        ),
+    ];
+
+    // 5 ไอคอนในแถวเดียวจะแคบเกินไปบนจอเล็ก -> ตัดเป็น 2 แถวแทน
+    if (tiles.length <= 4) {
+      return Row(children: _withGaps(tiles));
+    }
+    final half = (tiles.length / 2).ceil();
+    return Column(
+      children: [
+        Row(children: _withGaps(tiles.sublist(0, half))),
+        const SizedBox(height: 10),
+        Row(children: _withGaps(tiles.sublist(half), pad: half * 2 - tiles.length)),
       ],
     );
+  }
+
+  /// ใส่ช่องว่างระหว่างไอคอน + เติมช่องเปล่าให้แถวสุดท้ายกว้างเท่ากัน
+  List<Widget> _withGaps(List<Widget> items, {int pad = 0}) {
+    final out = <Widget>[];
+    for (var i = 0; i < items.length; i++) {
+      if (i > 0) out.add(const SizedBox(width: 10));
+      out.add(items[i]);
+    }
+    for (var i = 0; i < pad; i++) {
+      out.add(const SizedBox(width: 10));
+      out.add(const Expanded(child: SizedBox.shrink()));
+    }
+    return out;
   }
 
   Widget _b1ServiceIcon({
