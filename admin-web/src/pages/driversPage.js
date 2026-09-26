@@ -1,3 +1,4 @@
+import { mountPageTabs } from './pageTabs.js';
 let _ctx = null;
 
 function _deps() {
@@ -63,7 +64,7 @@ export async function renderDriversPage(el, ctx) {
 
   el.innerHTML = `
     <div class="fade-in space-y-5">
-      <div class="glass-card p-4 flex gap-2 flex-wrap items-center">
+      <div data-tab="list" class="glass-card p-4 flex gap-2 flex-wrap items-center">
         <button onclick="filterDriversByStatus('')" class="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">ทั้งหมด (${(drivers || []).length})</button>
         <button onclick="filterDriversByStatus('pending')" class="px-4 py-2 bg-amber-50 border border-amber-200 rounded-xl text-sm font-semibold text-amber-600 hover:bg-amber-100 transition-colors">รออนุมัติ (${(drivers || []).filter((d) => d.approval_status === 'pending').length})</button>
         <button onclick="filterDriversByStatus('approved')" class="px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-xl text-sm font-semibold text-emerald-600 hover:bg-emerald-100 transition-colors">อนุมัติแล้ว (${(drivers || []).filter((d) => d.approval_status === 'approved').length})</button>
@@ -76,12 +77,12 @@ export async function renderDriversPage(el, ctx) {
         <button onclick="exportDriversExcel()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200 hover:bg-cyan-100 transition-colors">Export Excel</button>
         <button onclick="showAddDriverForm()" class="px-5 py-2 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-indigo-200 flex items-center gap-1.5" style="background:linear-gradient(135deg,#6366f1,#818cf8);"><span class="material-icons-round text-sm">add</span> เพิ่มคนขับ</button>
       </div>
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div data-tab="overview" class="grid grid-cols-1 lg:grid-cols-2 gap-5">
         ${renderMiniBarChart('สรุปสถานะการอนุมัติคนขับ', 'ภาพรวมทั้งหมด', statusRows.map((r) => ({ ...r, displayValue: fmt(r.value) })), '#6366f1')}
         ${renderMiniBarChart('สรุปสถานะออนไลน์คนขับ', 'ออนไลน์/ออฟไลน์', onlineRows.map((r) => ({ ...r, displayValue: fmt(r.value) })), '#10b981')}
       </div>
-      <div id="driverFormContainer"></div>
-      <div class="glass-card overflow-hidden">
+      <div data-tab="list" id="driverFormContainer"></div>
+      <div data-tab="list" class="glass-card overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead><tr class="bg-gray-50/80">
@@ -102,6 +103,14 @@ export async function renderDriversPage(el, ctx) {
       </div>
     </div>
   `;
+  mountPageTabs(el.querySelector('.fade-in'), {
+    key: 'adminDriversTab',
+    tabs: [
+      { id: 'list', label: 'รายการคนขับ', icon: 'directions_car',
+        badge: (drivers || []).filter((d) => d.approval_status === 'pending').length },
+      { id: 'overview', label: 'ภาพรวม', icon: 'bar_chart' },
+    ],
+  });
 
   globalThis._allDrivers = drivers || [];
   globalThis._filteredDrivers = drivers || [];

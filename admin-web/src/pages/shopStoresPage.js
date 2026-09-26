@@ -1,3 +1,5 @@
+import { mountPageTabs } from "./pageTabs.js";
+
 // หน้าจัดการร้านฝากซื้อ/ฝากหิ้ว
 //
 // ตำแหน่งร้าน ชื่อ และเวลาเปิด-ปิด แอดมินเป็นคนตั้งเท่านั้น (ลูกค้า/คนขับ SELECT อย่างเดียว)
@@ -376,7 +378,7 @@ export async function renderShopStoresPage(el, ctx) {
     <div class="fade-in space-y-5">
       ${
         noHours.length
-          ? `<div class="glass-card p-4 border-l-4 border-amber-400 bg-amber-50/50">
+          ? `<div data-tab="list" class="glass-card p-4 border-l-4 border-amber-400 bg-amber-50/50">
                <div class="flex items-start gap-2">
                  <span class="material-icons-round text-amber-500">warning</span>
                  <div class="text-sm text-amber-800">
@@ -388,9 +390,9 @@ export async function renderShopStoresPage(el, ctx) {
           : ""
       }
 
-      ${renderStoreRequestsCard(requests, escapeHtml)}
+      <div data-tab="requests">${renderStoreRequestsCard(requests, escapeHtml) || '<div class="glass-card p-8 text-center text-sm text-gray-400">ไม่มีคำขอเพิ่มร้านที่รอตรวจ</div>'}</div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div data-tab="overview" class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="glass-card p-4">
           <div class="text-xs text-gray-400 mb-1">ร้านที่เปิดใช้งาน</div>
           <div class="text-2xl font-bold text-gray-800">${active.length}</div>
@@ -405,7 +407,7 @@ export async function renderShopStoresPage(el, ctx) {
         </div>
       </div>
 
-      <div class="glass-card p-4 flex flex-wrap gap-3 items-center justify-between">
+      <div data-tab="list" class="glass-card p-4 flex flex-wrap gap-3 items-center justify-between">
         <div class="text-sm text-gray-500">
           ตำแหน่งและเวลาเปิด-ปิดของร้าน แอดมินเป็นผู้ตั้งเท่านั้น
         </div>
@@ -439,8 +441,17 @@ export async function renderShopStoresPage(el, ctx) {
         </table>
       </div>
 
-      <div id="shopStoreDialog"></div>
+      <div data-tab="*" id="shopStoreDialog"></div>
     </div>`;
+
+  mountPageTabs(el.querySelector('.fade-in'), {
+    key: 'adminShopStoresTab',
+    tabs: [
+      { id: 'list', label: 'รายการร้าน', icon: 'storefront' },
+      { id: 'requests', label: 'คำขอเพิ่มร้าน', icon: 'add_business', badge: requests.length },
+      { id: 'overview', label: 'ภาพรวม', icon: 'bar_chart' },
+    ],
+  });
 
   globalThis._allShopStores = list;
   globalThis.editShopStore = editShopStore;

@@ -1,3 +1,4 @@
+import { mountPageTabs } from './pageTabs.js';
 import { renderAdminNote, renderOrderItemRows } from '../utils/orderItems.js';
 
 let _ctx = null;
@@ -369,39 +370,43 @@ export async function refreshPendingOrders(ctx) {
     return `<button onclick="showPendingQuickFilter('${target}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">${label}</button>`;
   }
 
+  // แท็บตามประเภทงานค้าง (+ จำนวน) — จำแท็บไว้แม้หน้ารีเฟรชทุก 15 วินาที
   contentEl.innerHTML = `
     <div class="space-y-5">
-      <div class="glass-card px-4 py-3 flex flex-wrap items-center gap-2">
-        <span class="text-xs font-semibold text-gray-400 mr-1">Quick filter</span>
-        ${quickFilterButton('ทั้งหมด', 'all')}
-        ${quickFilterButton('รอคนขับ', 'driver')}
-        ${quickFilterButton('รอร้านค้า', 'merchant')}
-        ${quickFilterButton('ค้างนาน >30น.', 'stuck')}
-      </div>
-      ${tableSection(
+      <div data-tab="driver">${tableSection(
         'hourglass_empty', 'bg-red-50 text-red-500',
         'ออเดอร์รอคนขับ', `${noDriver.length} รายการ — ต้องการมอบหมายคนขับ`,
         noDriver,
         `<button onclick=\"navigateTo('map')\" class=\"px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors\">🗺 ดูบนแผนที่</button>`
-      )}
-      ${waitingMerchant.length ? tableSection(
+      )}</div>
+      <div data-tab="merchant">${tableSection(
         'store', 'bg-amber-50 text-amber-500',
         'รอร้านค้ายืนยัน', `${waitingMerchant.length} รายการ — ร้านค้ายังไม่ตอบรับ`,
         waitingMerchant
-      ) : ''}
-      ${stuckLong.length ? tableSection(
+      )}</div>
+      <div data-tab="stuck">${tableSection(
         'warning', 'bg-purple-50 text-purple-500',
         'ออเดอร์ค้างนาน (>30 นาที)', `${stuckLong.length} รายการ — อาจต้องติดตามหรือยกเลิก`,
         stuckLong
-      ) : ''}
-      ${laundrySection(laundryAttention)}
+      )}</div>
+      <div data-tab="laundry">${laundrySection(laundryAttention) || '<div class="glass-card p-8 text-center text-sm text-gray-400">ไม่มีงาน Laundry รอจัดการ</div>'}</div>
       ${totalPending === 0 && laundryAttention.length === 0 ? `
-        <div class=\"glass-card p-12 text-center\">
+        <div data-tab=\"*\" class=\"glass-card p-12 text-center\">
           <span class=\"material-icons-round text-5xl text-green-400\">check_circle</span>
           <p class=\"mt-3 font-bold text-gray-700\">ไม่มีออเดอร์ที่รอจัดการ</p>
           <p class=\"text-sm text-gray-400 mt-1\">ระบบจะอัปเดตอัตโนมัติทุก 15 วินาที</p>
         </div>` : ''}
     </div>`;
+
+  mountPageTabs(contentEl.firstElementChild, {
+    key: 'adminPendingOrdersTab',
+    tabs: [
+      { id: 'driver', label: 'รอคนขับ', icon: 'hourglass_empty', badge: noDriver.length },
+      { id: 'merchant', label: 'รอร้านค้า', icon: 'store', badge: waitingMerchant.length },
+      { id: 'stuck', label: 'ค้างนาน >30น.', icon: 'warning', badge: stuckLong.length },
+      { id: 'laundry', label: 'Laundry', icon: 'local_laundry_service', badge: laundryAttention.length },
+    ],
+  });
 
   globalThis._pendingQuickFilterRows = {
     all: allPendingForFilter,

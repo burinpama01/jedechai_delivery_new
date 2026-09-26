@@ -1,3 +1,4 @@
+import { mountPageTabs } from './pageTabs.js';
 let _ctx = null;
 let _promoFilter = 'all';
 let _promoMerchants = [];
@@ -60,11 +61,11 @@ export async function renderPromosPage(el, ctx) {
 
   el.innerHTML = `
     <div class="fade-in space-y-6">
-      <div class="glass-card p-4 flex flex-wrap gap-3 items-center justify-end">
+      <div data-tab="list" class="glass-card p-4 flex flex-wrap gap-3 items-center justify-end">
         <button onclick="exportPromosCsv()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors">Export CSV</button>
         <button onclick="exportPromosExcel()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200 hover:bg-cyan-100 transition-colors">Export Excel</button>
       </div>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-5">
+      <div data-tab="list" class="grid grid-cols-2 md:grid-cols-4 gap-5">
         <div class="glass-card p-5 cursor-pointer group" onclick="setPromoFilter('all')">
           <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">ทั้งหมด</p>
           <p class="text-2xl font-extrabold text-gray-800 mt-1">${stats.total}</p>
@@ -83,7 +84,7 @@ export async function renderPromosPage(el, ctx) {
         </div>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div data-tab="overview" class="grid grid-cols-1 lg:grid-cols-2 gap-5">
         ${renderMiniBarChart('สรุปสถานะโค้ดส่วนลด', 'ทั้งหมด ' + fmt(stats.total) + ' โค้ด', [
           { label: 'ใช้งานอยู่', value: stats.active, displayValue: fmt(stats.active) },
           { label: 'หมดอายุ', value: stats.expired, displayValue: fmt(stats.expired) },
@@ -97,7 +98,7 @@ export async function renderPromosPage(el, ctx) {
         ], '#6366f1')}
       </div>
 
-      <div class="glass-card p-6">
+      <div data-tab="create" class="glass-card p-6">
         <div class="flex items-center gap-3 mb-5">
           <div class="w-10 h-10 bg-pink-50 rounded-xl flex items-center justify-center"><span class="material-icons-round text-pink-500">add_circle</span></div>
           <div>
@@ -223,7 +224,7 @@ export async function renderPromosPage(el, ctx) {
         </button>
       </div>
 
-      <div class="glass-card p-6">
+      <div data-tab="list" class="glass-card p-6">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-3">
             <div class="w-9 h-9 bg-violet-50 rounded-xl flex items-center justify-center"><span class="material-icons-round text-violet-500 text-lg">list</span></div>
@@ -242,6 +243,14 @@ export async function renderPromosPage(el, ctx) {
       </div>
     </div>
   `;
+  mountPageTabs(el.querySelector('.fade-in'), {
+    key: 'adminPromosTab',
+    tabs: [
+      { id: 'list', label: 'รายการโค้ด', icon: 'list' },
+      { id: 'create', label: 'สร้างโค้ดใหม่', icon: 'add_circle' },
+      { id: 'overview', label: 'ภาพรวม', icon: 'bar_chart' },
+    ],
+  });
 
   const nowLocal = new Date();
   const startStr = new Date(nowLocal.getTime() - nowLocal.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
@@ -381,6 +390,8 @@ export async function createPromoCode() {
     await callAdminAction({ action: 'create_coupon', coupon_data: insertData });
 
     showToast('สร้างโค้ดส่วนลดสำเร็จ!', 'success');
+    // สร้างเสร็จแล้วพากลับไปดูรายการ (แท็บจำไว้ใน localStorage)
+    try { globalThis.localStorage?.setItem('adminPromosTab', 'list'); } catch { /* ไม่จำก็ได้ */ }
     refreshCurrentPage();
   } catch (e) {
     if (e.message && (e.message.includes('duplicate') || e.message.includes('unique'))) {

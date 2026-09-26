@@ -1,3 +1,4 @@
+import { mountPageTabs } from './pageTabs.js';
 let _ctx = null;
 
 function _deps() {
@@ -267,7 +268,7 @@ export async function loadRevenue(ctx) {
   }));
 
   rc.innerHTML = `
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+    <div data-tab="overview" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mt-6">
       ${statCard('payments', 'ยอดรวมทั้งหมด', '฿' + fmt(Math.round(totalRevenue)), 'bg-green-500')}
       ${statCard('account_balance', 'GP ระบบ', '฿' + fmt(Math.round(platformIncome)), 'bg-blue-500')}
       ${statCard('restaurant', 'อาหาร', '฿' + fmt(Math.round(byType.food.revenue)) + ' (' + byType.food.count + ')', 'bg-orange-500')}
@@ -279,7 +280,7 @@ export async function loadRevenue(ctx) {
       ${renderMiniBarChart('สรุปกระเป๋าคนขับ', `${selectedDriverId ? 'รายบุคคล' : 'ทุกคนขับ'}`, walletChartRows, '#06b6d4')}
     </div>
 
-    <div class="glass-card p-6 mt-6">
+    <div data-tab="wallet" class="glass-card p-6 mt-6">
       <div class="flex items-center gap-3 mb-5">
         <div class="w-10 h-10 bg-cyan-50 rounded-xl flex items-center justify-center"><span class="material-icons-round text-cyan-600">account_balance_wallet</span></div>
         <div>
@@ -329,7 +330,7 @@ export async function loadRevenue(ctx) {
       </div>
     </div>
 
-    <div class="glass-card p-6 mt-6">
+    <div data-tab="gp" class="glass-card p-6 mt-6">
       <div class="flex items-center gap-3 mb-5">
         <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center"><span class="material-icons-round text-blue-500">analytics</span></div>
         <div>
@@ -368,7 +369,7 @@ export async function loadRevenue(ctx) {
       </div>
     </div>
 
-    <div class="glass-card overflow-hidden mt-6">
+    <div data-tab="daily" class="glass-card overflow-hidden mt-6">
       <div class="px-6 py-5 flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center"><span class="material-icons-round text-emerald-500">bar_chart</span></div>
@@ -406,6 +407,16 @@ export async function loadRevenue(ctx) {
       </div>
     </div>
   `;
+  // แบ่งแท็บ — แถบเลือกช่วงวันที่/คนขับอยู่นอก rc จึงแสดงทุกแท็บอยู่แล้ว
+  mountPageTabs(rc, {
+    key: 'adminRevenueTab',
+    tabs: [
+      { id: 'overview', label: 'ภาพรวม', icon: 'insights' },
+      { id: 'wallet', label: 'Wallet คนขับ', icon: 'account_balance_wallet' },
+      { id: 'gp', label: 'GP ระบบ', icon: 'analytics' },
+      { id: 'daily', label: 'รายวัน', icon: 'calendar_month' },
+    ],
+  });
 }
 
 export function exportRevenueCsv(ctx) {

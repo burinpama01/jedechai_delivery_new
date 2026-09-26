@@ -1,3 +1,4 @@
+import { mountPageTabs, selectPageTab } from './pageTabs.js';
 let _ctx = null;
 
 function _deps() {
@@ -76,7 +77,7 @@ export async function renderMerchantsPage(el, ctx) {
 
   el.innerHTML = `
     <div class="fade-in space-y-5">
-      <div class="glass-card p-4 flex gap-2 flex-wrap items-center">
+      <div data-tab="list" class="glass-card p-4 flex gap-2 flex-wrap items-center">
         <button onclick="filterMerchantsByStatus('')" class="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">ทั้งหมด (${(merchants || []).length})</button>
         <button onclick="filterMerchantsByStatus('pending')" class="px-4 py-2 bg-amber-50 border border-amber-200 rounded-xl text-sm font-semibold text-amber-600 hover:bg-amber-100 transition-colors">รออนุมัติ (${(merchants || []).filter((m) => m.approval_status === 'pending').length})</button>
         <button onclick="filterMerchantsByStatus('approved')" class="px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-xl text-sm font-semibold text-emerald-600 hover:bg-emerald-100 transition-colors">อนุมัติแล้ว (${(merchants || []).filter((m) => m.approval_status === 'approved').length})</button>
@@ -87,15 +88,15 @@ export async function renderMerchantsPage(el, ctx) {
         </div>
         <button onclick="exportMerchantsCsv()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors">Export CSV</button>
         <button onclick="exportMerchantsExcel()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200 hover:bg-cyan-100 transition-colors">Export Excel</button>
-        <button onclick="showGpPlansManager()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-orange-50 text-orange-700 border border-orange-200 hover:bg-orange-100 transition-colors flex items-center gap-1.5"><span class="material-icons-round text-sm">percent</span> แพ็กเกจ GP</button>
+        <button onclick="openGpPlansTab()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-orange-50 text-orange-700 border border-orange-200 hover:bg-orange-100 transition-colors flex items-center gap-1.5"><span class="material-icons-round text-sm">percent</span> แพ็กเกจ GP</button>
         <button onclick="showAddMerchantForm()" class="px-5 py-2 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-indigo-200 flex items-center gap-1.5" style="background:linear-gradient(135deg,#6366f1,#818cf8);"><span class="material-icons-round text-sm">add</span> เพิ่มร้านค้า</button>
       </div>
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div data-tab="overview" class="grid grid-cols-1 lg:grid-cols-2 gap-5">
         ${renderMiniBarChart('สรุปสถานะการอนุมัติร้านค้า', 'ภาพรวมทั้งหมด', statusRows.map((r) => ({ ...r, displayValue: fmt(r.value) })), '#f97316')}
         ${renderMiniBarChart('สรุปสถานะออนไลน์ร้านค้า', 'ออนไลน์/ออฟไลน์', onlineRows.map((r) => ({ ...r, displayValue: fmt(r.value) })), '#06b6d4')}
       </div>
-      <div id="merchantFormContainer"></div>
-      <div class="glass-card overflow-hidden">
+      <div data-tab="list" id="merchantFormContainer"></div>
+      <div data-tab="list" class="glass-card overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead><tr class="bg-gray-50/80">
@@ -115,8 +116,20 @@ export async function renderMerchantsPage(el, ctx) {
           </table>
         </div>
       </div>
+      <div data-tab="gp" id="gpPlansTabHost"></div>
     </div>
   `;
+  mountPageTabs(el.querySelector('.fade-in'), {
+    key: 'adminMerchantsTab',
+    tabs: [
+      { id: 'list', label: 'รายการร้าน', icon: 'store',
+        badge: (merchants || []).filter((m) => m.approval_status === 'pending').length },
+      { id: 'overview', label: 'ภาพรวม', icon: 'bar_chart' },
+      { id: 'gp', label: 'แพ็กเกจ GP', icon: 'percent' },
+    ],
+    // โหลดแพ็กเกจ GP เมื่อเปิดแท็บ (ไม่ดึงข้อมูลถ้าไม่ได้ดู)
+    onChange: (id) => { if (id === 'gp') showGpPlansManager(); },
+  });
 
   globalThis._allMerchants = merchants || [];
   globalThis._filteredMerchants = merchants || [];
@@ -137,6 +150,7 @@ export async function renderMerchantsPage(el, ctx) {
   globalThis.uploadMerchantImage = uploadMerchantImage;
   globalThis.toggleMerchantShopStatus = toggleMerchantShopStatus;
   globalThis.showGpPlansManager = showGpPlansManager;
+  globalThis.openGpPlansTab = openGpPlansTab;
   globalThis.showGpPlanForm = showGpPlanForm;
   globalThis.submitGpPlan = submitGpPlan;
   globalThis.deleteGpPlan = deleteGpPlan;
@@ -865,11 +879,19 @@ export function applyGpPlanToMerchantForm() {
   set('editMrcDeliveryFee', ''); // แพ็กเกจคิดค่าส่งตามระยะ ไม่ใช้ค่าส่งคงที่
 }
 
+/** ปุ่ม "แพ็กเกจ GP" บนแถบเครื่องมือ → สลับไปแท็บแพ็กเกจ GP (onChange โหลดข้อมูลให้) */
+export function openGpPlansTab() {
+  const container = document.querySelector('[data-page-tab="gp"]')?.parentElement;
+  if (container) selectPageTab(container, 'gp');
+  else showGpPlansManager();
+}
+
 export async function showGpPlansManager(ctx) {
   _ctx = ctx || _ctx;
   const { supabase, escapeHtml, showToast } = _deps();
-  const c = document.getElementById('merchantFormContainer');
+  const c = document.getElementById('gpPlansTabHost') || document.getElementById('merchantFormContainer');
   if (!c) return;
+  const inTab = c.id === 'gpPlansTabHost';
 
   c.innerHTML = '<div class="glass-card p-6 text-sm text-gray-500">กำลังโหลดแพ็กเกจ GP...</div>';
 
@@ -910,7 +932,7 @@ export async function showGpPlansManager(ctx) {
         <h4 class="font-bold text-gray-800">แพ็กเกจ GP (ร้านเลือกเองตอนสมัคร)</h4>
         <div class="flex gap-2">
           <button onclick="showGpPlanForm()" class="px-4 py-2 text-white rounded-xl text-xs font-semibold hover:opacity-90 shadow-md" style="background:linear-gradient(135deg,#f97316,#fb923c);">+ เพิ่มแพ็กเกจ</button>
-          <button onclick="document.getElementById('merchantFormContainer').innerHTML=''" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium hover:bg-gray-200">ปิด</button>
+          ${inTab ? '' : `<button onclick="document.getElementById('merchantFormContainer').innerHTML=''" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium hover:bg-gray-200">ปิด</button>`}
         </div>
       </div>
       <p class="text-xs text-gray-500 mb-4">ร้านที่สมัครใหม่จะเห็นรายการนี้ให้เลือก — แก้ไข/ลบมีผลกับการสมัครครั้งถัดไป ค่า GP ของร้านที่เลือกไปแล้วไม่เปลี่ยน (ร้านที่รออนุมัติและแพลนถูกลบ จะถูกให้เลือกแพลนใหม่)</p>
@@ -1037,6 +1059,7 @@ export function wireMerchantsBridge() {
 
   globalThis.copyMerchantIdForStoreOs = copyMerchantIdForStoreOs;
   globalThis.showGpPlansManager = showGpPlansManager;
+  globalThis.openGpPlansTab = openGpPlansTab;
   globalThis.showGpPlanForm = showGpPlanForm;
   globalThis.submitGpPlan = submitGpPlan;
   globalThis.deleteGpPlan = deleteGpPlan;

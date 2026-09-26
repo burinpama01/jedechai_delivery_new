@@ -1,3 +1,4 @@
+import { mountPageTabs } from "./pageTabs.js";
 function _deps(ctx) {
   return {
     supabase: ctx?.supabase || globalThis.supabase,
@@ -428,7 +429,7 @@ function renderLaundryPackageManager(merchants, packages, selectedMerchantId, es
     .join("");
 
   return `
-    <section class="rounded-2xl border border-gray-100 bg-gray-50 p-4 mb-5">
+    <section data-tab="packages" class="rounded-2xl border border-gray-100 bg-gray-50 p-4 mb-5">
       <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
         <div>
           <h3 class="text-base font-bold text-gray-900">แพ็กเกจซักผ้า</h3>
@@ -1030,7 +1031,7 @@ export async function renderLaundryPage(el, ctx) {
     const pendingCount = orders.filter((order) => LAUNDRY_ACTIVE_STATUSES.includes(order.status)).length;
 
     content.innerHTML = `
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+      <div data-tab="requests" class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         <div class="rounded-2xl bg-gray-50 p-4">
           <p class="text-xs text-gray-500">คำขอทั้งหมด (100 ล่าสุด)</p>
           <p class="text-2xl font-bold text-gray-900">${orders.length}</p>
@@ -1049,7 +1050,7 @@ export async function renderLaundryPage(el, ctx) {
         </div>
       </div>
       ${renderLaundryPackageManager(laundryPackageMerchants, laundryPackages, selectedPackageMerchantId, escapeHtml)}
-      <div class="overflow-x-auto">
+      <div data-tab="requests" class="overflow-x-auto">
         <table class="min-w-full text-sm">
           <thead>
             <tr class="text-left text-xs uppercase tracking-wide text-gray-400 border-b border-gray-100">
@@ -1099,6 +1100,14 @@ export async function renderLaundryPage(el, ctx) {
         </table>
       </div>
     `;
+    mountPageTabs(content, {
+      key: "adminLaundryTab",
+      navClass: "mb-5",
+      tabs: [
+        { id: "requests", label: "คำขอซักผ้า", icon: "local_laundry_service", badge: pendingCount },
+        { id: "packages", label: "แพ็กเกจซักผ้า", icon: "inventory_2" },
+      ],
+    });
 
     const ordersById = Object.fromEntries(orders.map((order) => [order.id, order]));
     const actionCtx = { ...ctx, render };

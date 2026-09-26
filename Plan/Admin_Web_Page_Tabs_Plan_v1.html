@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>แผนแบ่งแท็บ admin-web v1</title>
+<style>
+:root{--bg:#f7f7f5;--card:#fff;--ink:#1f2328;--muted:#646a73;--line:#e3e3df;--accent:#4f46e5}
+@media (prefers-color-scheme:dark){:root{--bg:#161719;--card:#1f2124;--ink:#e8e8e6;--muted:#9aa0a6;--line:#33363a;--accent:#8b87ff}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Thai","Leelawadee UI",Tahoma,sans-serif;line-height:1.6}
+main{max-width:920px;margin:0 auto;padding:28px 16px 60px}
+h1{font-size:1.6rem;margin:0 0 4px}.meta{color:var(--muted);font-size:.9rem}
+h2{margin-top:32px;font-size:1.15rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:12px 0}
+table{width:100%;border-collapse:collapse;font-size:.92rem}th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600}.wrap{overflow-x:auto}code{font-size:.88em}
+</style>
+</head>
+<body><main>
+<h1>แผนแบ่งแท็บหน้า admin-web v1</h1>
+<p class="meta">2026-09-26 · ต่อจากหน้า Settings แบบแท็บ (admin-web 1.14.1) · ผู้ใช้เลือก "แบ่งแท็บหน้าที่ยาว" เรียงตามที่เสนอ</p>
+
+<h2>หลักการ</h2>
+<div class="card"><ul>
+<li>helper กลาง <code>src/pages/pageTabs.js</code> — ทุกหน้าใช้ตัวเดียวกัน (Settings ย้ายมาใช้ด้วย)</li>
+<li>การ์ดชั้นบนติด <code>data-tab="&lt;id&gt;"</code> ในโค้ดหน้า (ชัดกว่าเดาจากหัวข้อ) · ไม่ติด = ตามการ์ดก่อนหน้า · <code>data-tab="*"</code> = แสดงทุกแท็บ</li>
+<li>ซ่อนด้วย class <code>hidden</code> เท่านั้น — ฟอร์ม/ตาราง/ปุ่ม/ฟังก์ชันเดิมยังอยู่ใน DOM ทำงานเหมือนเดิม</li>
+<li>แท็บแสดงจำนวน (badge) ได้ เช่น ออเดอร์รอคนขับ 3 · จำแท็บล่าสุดต่อหน้า (localStorage) · จอเล็กแถบแท็บปัดได้</li>
+<li>หน้าที่เป็น "รายการ" ล้วน (เมนู, ออเดอร์, ผู้ใช้, รีวิว, ถอน/เติมเงิน) และหน้าที่มีชิปกรองอยู่แล้ว (ออเดอร์ฝากซื้อ) <b>ไม่แบ่ง</b></li>
+</ul></div>
+
+<h2>หน้าที่จะแบ่ง (ตามลำดับ)</h2>
+<div class="card wrap"><table>
+<thead><tr><th>#</th><th>หน้า</th><th>แท็บ</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>โค้ดส่วนลด (promos)</td><td>รายการโค้ด · สร้างโค้ดใหม่ · ภาพรวม</td></tr>
+<tr><td>2</td><td>รายได้ (revenue)</td><td>ภาพรวม · Wallet คนขับ · GP ระบบ · รายวัน (แถบเลือกช่วงวันที่แสดงทุกแท็บ)</td></tr>
+<tr><td>3</td><td>ออเดอร์รอจัดการ</td><td>รอคนขับ · รอร้านค้า · ค้างนาน · Laundry (+ จำนวนในแท็บ)</td></tr>
+<tr><td>4</td><td>Laundry</td><td>คำขอซักผ้า · แพ็กเกจซักผ้า</td></tr>
+<tr><td>5</td><td>AI นำเข้าเมนู</td><td>ภาพรวม &amp; ตั้งค่า · ประวัติการนำเข้า · แม่แบบตัวเลือก</td></tr>
+<tr><td>6</td><td>ร้านค้า</td><td>รายการร้าน · ภาพรวม (กราฟ) · แพ็กเกจ GP</td></tr>
+<tr><td>7</td><td>คนขับ</td><td>รายการคนขับ · ภาพรวม (กราฟ)</td></tr>
+<tr><td>8</td><td>ร้านฝากซื้อ</td><td>รายการร้าน · คำขอเพิ่มร้าน (+ จำนวน) · ภาพรวม</td></tr>
+</tbody></table></div>
+
+<h2>Verification</h2>
+<div class="card"><ul>
+<li>unit test ของ pageTabs (จัดแท็บ, สืบทอด, pinned, badge) + test เดิมของทุกหน้าต้องผ่าน</li>
+<li>harness (scratchpad) render หน้าจริงด้วย supabase จำลอง ตรวจว่าทุกการ์ดอยู่ในแท็บ ไม่มีส่วนหาย สลับแท็บได้</li>
+<li>code_reviewer ก่อน commit · bump admin-web 1.15.0 · deploy เมื่อผู้ใช้สั่ง</li>
+</ul></div>
+</main></body></html>

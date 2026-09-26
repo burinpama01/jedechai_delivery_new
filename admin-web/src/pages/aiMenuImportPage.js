@@ -1,3 +1,5 @@
+import { mountPageTabs } from "./pageTabs.js";
+
 // หน้า AI นำเข้าเมนู (แผน Plan/JDC_AI_Merchant_Quick_Setup_Plan_v7.html)
 //
 // - เปิด/ปิด feature + allowlist ช่วงทดลอง + โควตา (system_config key/value)
@@ -232,7 +234,7 @@ export async function renderAiMenuImportPage(el, ctx) {
 
   el.innerHTML = `
     <div class="fade-in space-y-5">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div data-tab="overview" class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div class="glass-card p-4"><div class="text-xs text-gray-400 mb-1">เรียก AI (30 วัน)</div><div class="text-2xl font-bold text-gray-800">${stats.calls}</div>
           <div class="text-[11px] text-red-400">${stats.errors ? `ผิดพลาด ${stats.errors}` : ""}</div></div>
         <div class="glass-card p-4"><div class="text-xs text-gray-400 mb-1">Token เข้า / ออก</div><div class="text-lg font-bold text-gray-800">${stats.tokensIn.toLocaleString()} / ${stats.tokensOut.toLocaleString()}</div></div>
@@ -257,7 +259,7 @@ export async function renderAiMenuImportPage(el, ctx) {
         <div class="mt-4 text-right"><button onclick="saveAiImportConfig()" class="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700">บันทึกการตั้งค่า</button></div>
       </div>
 
-      <div class="glass-card overflow-x-auto">
+      <div data-tab="history" class="glass-card overflow-x-auto">
         <div class="p-4 font-bold text-gray-800">ประวัติการนำเข้า</div>
         <table class="w-full text-left">
           <thead><tr class="text-xs text-gray-400 uppercase border-b border-gray-100">
@@ -268,7 +270,7 @@ export async function renderAiMenuImportPage(el, ctx) {
         </table>
       </div>
 
-      <div class="glass-card overflow-x-auto">
+      <div data-tab="templates" class="glass-card overflow-x-auto">
         <div class="p-4 flex items-center justify-between">
           <div><div class="font-bold text-gray-800">แม่แบบชุดตัวเลือกแนะนำ</div>
             <div class="text-xs text-gray-400">ร้านเห็นเป็นข้อเสนอ ต้องติ๊กใช้เอง · ราคาในแม่แบบเป็นค่าตั้งต้นที่ร้านแก้ได้</div></div>
@@ -282,8 +284,18 @@ export async function renderAiMenuImportPage(el, ctx) {
         </table>
       </div>
 
-      <div id="aiImportDialog"></div>
+      <div data-tab="*" id="aiImportDialog"></div>
     </div>`;
+
+  mountPageTabs(el.querySelector(".fade-in"), {
+    key: "adminAiImportTab",
+    tabs: [
+      { id: "overview", label: "ภาพรวม & ตั้งค่า", icon: "tune" },
+      { id: "history", label: "ประวัติการนำเข้า", icon: "history",
+        badge: jobs.filter((j) => j.status === "review_required" || j.status === "ready").length },
+      { id: "templates", label: "แม่แบบตัวเลือก", icon: "checklist" },
+    ],
+  });
 
   globalThis.saveAiImportConfig = saveAiImportConfig;
   globalThis.hideAiImportItems = hideAiImportItems;
