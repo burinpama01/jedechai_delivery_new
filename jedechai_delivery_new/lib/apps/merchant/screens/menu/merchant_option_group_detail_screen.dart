@@ -168,9 +168,9 @@ class _MerchantOptionGroupDetailScreenState
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content:
-              Text(AppLocalizations.of(context)!.optGroupOptionNameRequired,
-                  style: TextStyle(color: JdcColors.of(context).paper)),
+          content: Text(
+              AppLocalizations.of(context)!.optGroupOptionNameRequired,
+              style: TextStyle(color: JdcColors.of(context).paper)),
           backgroundColor: JdcColors.of(context).danger,
         ),
       );
@@ -181,9 +181,9 @@ class _MerchantOptionGroupDetailScreenState
     if (price < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content:
-              Text(AppLocalizations.of(context)!.optGroupOptionPriceNegative,
-                  style: TextStyle(color: JdcColors.of(context).paper)),
+          content: Text(
+              AppLocalizations.of(context)!.optGroupOptionPriceNegative,
+              style: TextStyle(color: JdcColors.of(context).paper)),
           backgroundColor: JdcColors.of(context).danger,
         ),
       );
@@ -242,7 +242,10 @@ class _MerchantOptionGroupDetailScreenState
         backgroundColor: JdcColors.of(context).surface,
         foregroundColor: JdcColors.of(context).text,
         iconTheme: IconThemeData(color: JdcColors.of(context).text),
-        titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: JdcColors.of(context).text),
+        titleTextStyle: Theme.of(context)
+            .textTheme
+            .titleLarge
+            ?.copyWith(color: JdcColors.of(context).text),
         elevation: 0,
         shape: Border(bottom: BorderSide(color: JdcColors.of(context).line)),
         actions: [
@@ -268,12 +271,13 @@ class _MerchantOptionGroupDetailScreenState
                     _buildGroupInfoSection(),
                     const SizedBox(height: 24),
 
-                    // Add Option Section
-                    _buildAddOptionSection(),
-                    const SizedBox(height: 24),
-
                     // Options List
                     _buildOptionsList(),
+                    const SizedBox(height: 24),
+
+                    // Keep the existing add controls below saved options so
+                    // merchants can review the group before adding another.
+                    _buildAddOptionSection(),
                     const SizedBox(height: JdcSpacing.xl),
                   ],
                 ),
@@ -561,16 +565,18 @@ class _MerchantOptionGroupDetailScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        Wrap(
+          spacing: JdcSpacing.sm,
+          runSpacing: JdcSpacing.xs,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Text(
               AppLocalizations.of(context)!.optGroupAllOptionsTitle,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const Spacer(),
             Text(
               AppLocalizations.of(context)!
                   .optGroupItemCount(_options.length.toString()),
@@ -657,8 +663,9 @@ class _MerchantOptionGroupDetailScreenState
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppLocalizations.of(context)!
-                  .optLibDeleteFailed(e.toString()),
+              content: Text(
+                  AppLocalizations.of(context)!
+                      .optLibDeleteFailed(e.toString()),
                   style: TextStyle(color: JdcColors.of(context).paper)),
               backgroundColor: JdcColors.of(context).danger,
             ),

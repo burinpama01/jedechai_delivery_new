@@ -8,10 +8,12 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jedechai_delivery_new/apps/customer/screens/auth/forgot_password_screen.dart';
 import 'package:jedechai_delivery_new/apps/merchant/screens/menu/merchant_option_library_screen.dart';
+import 'package:jedechai_delivery_new/apps/merchant/screens/menu/merchant_option_group_detail_screen.dart';
 import 'package:jedechai_delivery_new/apps/merchant/screens/merchant_coupon_management_screen.dart';
 import 'package:jedechai_delivery_new/apps/merchant/screens/merchant_gp_plan_screen.dart';
 import 'package:jedechai_delivery_new/apps/merchant/screens/merchant_settings_screen.dart';
 import 'package:jedechai_delivery_new/apps/merchant/screens/profile/merchant_profile_screen.dart';
+import 'package:jedechai_delivery_new/apps/merchant/screens/profile/edit_merchant_profile_screen.dart';
 import 'package:jedechai_delivery_new/common/config/env_config.dart';
 import 'package:jedechai_delivery_new/common/models/coupon.dart';
 import 'package:jedechai_delivery_new/common/models/menu_option.dart';
@@ -235,6 +237,26 @@ class _SizedPreview extends StatelessWidget {
   }
 }
 
+/// Fixture สำหรับ MerchantSettingsScreen — ข้อมูลสมจริงโดยไม่ต้อง login
+Map<String, dynamic> _settingsProfileFixture() => {
+  'full_name': 'ครัวป้าน้อย',
+  'phone_number': '081-234-5678',
+  'email': 'panoi.kitchen@example.com',
+  'shop_address': '12/3 ถ.พระราม 9 แขวงห้วยขวาง กรุงเทพฯ 10320',
+  'shop_status': true,
+  'shop_open_time': '09:00',
+  'shop_close_time': '21:00',
+  'shop_open_days': ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'],
+  'order_accept_mode': 'manual',
+  'shop_auto_schedule_enabled': true,
+  'min_order_amount': 80.0,
+  'approval_status': 'approved',
+  'merchant_service_types': ['food'],
+  'avatar_url': null,
+  'shop_photo_url': null,
+  'fcm_token': null,
+};
+
 // ── Preview Screen ─────────────────────────────────────────────────────────────
 
 class _PreviewScreen extends StatelessWidget {
@@ -247,6 +269,10 @@ class _PreviewScreen extends StatelessWidget {
             merchantId: 'demo',
             fixtureGroups: _optionGroupsFixture(),
           ),
+        'OptionGroup' => MerchantOptionGroupDetailScreen(
+            merchantId: 'demo',
+            group: _optionGroupsFixture().first,
+          ),
         'Coupons' => MerchantCouponManagementScreen(
             fixtureCoupons: _couponsFixture(),
           ),
@@ -254,10 +280,13 @@ class _PreviewScreen extends StatelessWidget {
             fixturePlans: _gpPlansFixture(),
             fixtureStatus: _gpStatusFixture(),
           ),
-        // b5merchant batch 2 screens — ต้องการ auth session จริง
-        // (merchant_settings + merchant_profile ใช้ ProfileService ดึงข้อมูลจาก Supabase)
-        'Settings' => const MerchantSettingsScreen(),
+        // b5merchant3: Settings ใช้ fixture แทน auth session
+        'Settings' => MerchantSettingsScreen(previewProfile: _settingsProfileFixture()),
         'Profile' => const MerchantProfileScreen(),
+        'EditProfile' => const EditMerchantProfileScreen(
+            currentName: 'ครัวป้าน้อย',
+            currentEmail: 'merchant@example.com',
+          ),
         'ForgotPassword' => const ForgotPasswordScreen(),
         _ => Scaffold(
             body: Center(

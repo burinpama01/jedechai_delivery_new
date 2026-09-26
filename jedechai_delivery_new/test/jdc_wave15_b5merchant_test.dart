@@ -253,6 +253,35 @@ SUPABASE_ANON_KEY=test-anon-key
       expect(find.text('หมดอายุ'), findsOneWidget);
     });
 
+    testWidgets('เงื่อนไขคูปองแสดงวันหมดอายุได้สองบรรทัด', (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(_wrap(screen()));
+      await tester.pump();
+      final condition = tester.widget<Text>(find.textContaining('ซื้อครบ ฿150'));
+      expect(condition.data, contains('30/09'));
+      expect(condition.maxLines, 2);
+      expect(tester.takeException(), isNull);
+    });
+
+    for (final dark in [false, true]) {
+      testWidgets('แบนเนอร์ข้อมูลคอนทราสต์จากสีที่ render ${dark ? 'มืด' : 'สว่าง'}', (tester) async {
+        tester.view.physicalSize = const Size(390, 844);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
+        await tester.pumpWidget(_wrap(screen(), dark: dark));
+        await tester.pump();
+        final noteFinder = find.textContaining('คูปองส่งฟรีของร้าน');
+        final note = tester.widget<Text>(noteFinder);
+        final banner = tester.widget<Container>(
+          find.ancestor(of: noteFinder, matching: find.byType(Container)).first,
+        );
+        final background = (banner.decoration! as BoxDecoration).color!;
+        expect(_contrast(note.style!.color!, background), greaterThanOrEqualTo(4.5));
+      });
+    }
+
     testWidgets('contrast ข้อความหลัก ≥4.5:1 โหมดสว่าง', (tester) async {
       tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1.0;

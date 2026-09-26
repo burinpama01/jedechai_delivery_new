@@ -15,6 +15,7 @@ import '../../../common/services/account_deletion_service.dart';
 import '../../../common/services/merchant_order_service.dart';
 import '../../../common/utils/platform_adaptive.dart';
 import '../../../common/widgets/app_network_image.dart';
+import '../../../common/screens/notification_settings_screen.dart';
 import '../../../common/widgets/language_switcher.dart';
 import '../../../common/widgets/reviews_screen.dart';
 import '../../customer/screens/auth/login_screen.dart';
@@ -27,7 +28,10 @@ import 'profile/edit_merchant_profile_screen.dart';
 
 /// Merchant Settings Screen — Account & Settings
 class MerchantSettingsScreen extends StatefulWidget {
-  const MerchantSettingsScreen({super.key});
+  /// [previewProfile]: ส่ง fixture map เพื่อแสดงข้อมูลโดยไม่ต้อง login (dev_preview เท่านั้น)
+  const MerchantSettingsScreen({super.key, this.previewProfile});
+
+  final Map<String, dynamic>? previewProfile;
 
   @override
   State<MerchantSettingsScreen> createState() => _MerchantSettingsScreenState();
@@ -89,7 +93,12 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchUserProfile();
+    if (widget.previewProfile != null) {
+      _userProfile = Map<String, dynamic>.from(widget.previewProfile!);
+      _isLoading = false;
+    } else {
+      _fetchUserProfile();
+    }
     _loadAppVersion();
   }
 
@@ -623,7 +632,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              l10n.accountTitle,
+              l10n.mchSetSettingsTitle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: _txt(jdc.text, 17, w: 700),
@@ -640,7 +649,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
         backgroundColor: jdc.surface,
         foregroundColor: jdc.text,
         iconTheme: IconThemeData(color: jdc.text),
-        titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: jdc.text),
+        titleTextStyle:
+            Theme.of(context).textTheme.titleLarge?.copyWith(color: jdc.text),
         elevation: 0,
         shape: Border(
           bottom: BorderSide(color: jdc.line),
@@ -705,7 +715,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
 
   Widget _buildContent() {
     final approvalStatus = _userProfile?['approval_status'] as String?;
-    final showPendingBanner = approvalStatus != null && approvalStatus != 'approved';
+    final showPendingBanner =
+        approvalStatus != null && approvalStatus != 'approved';
     return ListView(
       padding: const EdgeInsets.only(
         top: JdcSpacing.md,
@@ -720,6 +731,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                 _buildPendingApprovalBanner(),
                 const SizedBox(height: JdcSpacing.md),
               ],
+              _buildOperationCard(),
+              const SizedBox(height: JdcSpacing.md),
               _buildProfileHeader(),
               const SizedBox(height: JdcSpacing.md),
               _buildInfoCard(),
@@ -849,7 +862,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                     decoration: BoxDecoration(
                       color: _accent,
                       shape: BoxShape.circle,
-                      border: Border.all(color: JdcColors.of(context).panelLine, width: 2),
+                      border: Border.all(
+                          color: JdcColors.of(context).panelLine, width: 2),
                     ),
                     child: Icon(
                       PlatformAdaptive.icon(
@@ -900,13 +914,6 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
   // ============================================================
 
   Widget _buildInfoCard() {
-    final shopStatus = _userProfile?['shop_status'] as bool?;
-    final shopOpenDays = _extractShopOpenDays(_userProfile?['shop_open_days']);
-    final orderAcceptMode =
-        (_userProfile?['order_accept_mode'] as String?) ?? _acceptModeManual;
-    final autoScheduleEnabled =
-        (_userProfile?['shop_auto_schedule_enabled'] as bool?) ?? true;
-
     return _card(
       title: AppLocalizations.of(context)!.mchSetShopInfoTitle,
       children: [
@@ -953,6 +960,32 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
           null,
         ),
         _divider(),
+        _infoRow(
+          PlatformAdaptive.icon(
+            android: Icons.shopping_cart_checkout,
+            ios: CupertinoIcons.cart,
+          ),
+          'ยอดสั่งซื้อขั้นต่ำ',
+          _formatMinOrderText(_currentMinOrderAmount()),
+          _showEditMinOrderDialog,
+        ),
+      ],
+    );
+  }
+
+  /// แสดงการตั้งค่าการรับงานก่อนข้อมูลโปรไฟล์ เพื่อให้เข้าถึงงานหลักเร็วขึ้น
+  /// โดยคงจุดแก้ไขและสถานะเดิมทั้งหมด
+  Widget _buildOperationCard() {
+    final shopStatus = _userProfile?['shop_status'] as bool?;
+    final shopOpenDays = _extractShopOpenDays(_userProfile?['shop_open_days']);
+    final orderAcceptMode =
+        (_userProfile?['order_accept_mode'] as String?) ?? _acceptModeManual;
+    final autoScheduleEnabled =
+        (_userProfile?['shop_auto_schedule_enabled'] as bool?) ?? true;
+
+    return _card(
+      title: AppLocalizations.of(context)!.mchSetOperationsTitle,
+      children: [
         _infoRow(
           shopStatus == true
               ? PlatformAdaptive.icon(
@@ -1011,16 +1044,6 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
               : AppLocalizations.of(context)!.mchSetAutoScheduleOff,
           _showEditShopHoursDialog,
         ),
-        _divider(),
-        _infoRow(
-          PlatformAdaptive.icon(
-            android: Icons.shopping_cart_checkout,
-            ios: CupertinoIcons.cart,
-          ),
-          'ยอดสั่งซื้อขั้นต่ำ',
-          _formatMinOrderText(_currentMinOrderAmount()),
-          _showEditMinOrderDialog,
-        ),
       ],
     );
   }
@@ -1041,8 +1064,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
     final current = _currentMinOrderAmount();
     final controller = TextEditingController(
       text: current > 0
-          ? current.toStringAsFixed(
-              current.truncateToDouble() == current ? 0 : 2)
+          ? current
+              .toStringAsFixed(current.truncateToDouble() == current ? 0 : 2)
           : '',
     );
     final result = await showDialog<double>(
@@ -1202,6 +1225,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
           builder: (context, setDialogState) {
             final colorScheme = Theme.of(context).colorScheme;
             return AlertDialog(
+              scrollable: true,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -1236,7 +1260,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                   ),
                   const Divider(),
                   ListTile(
-                    leading: Icon(Icons.nights_stay, color: JdcColors.of(context).infoInk),
+                    leading: Icon(Icons.nights_stay,
+                        color: JdcColors.of(context).infoInk),
                     title: Text(AppLocalizations.of(context)!.mchSetCloseTime),
                     trailing: Text(
                       formatTime(selectedClose),
@@ -1284,7 +1309,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                           fontWeight: FontWeight.w600,
                         ),
                         side: BorderSide(
-                          color: isSelected ? _accent : JdcColors.of(context).line,
+                          color:
+                              isSelected ? _accent : JdcColors.of(context).line,
                         ),
                         onSelected: (selected) {
                           setDialogState(() {
@@ -1373,7 +1399,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                               .mchSetAutoScheduleOnDesc
                           : AppLocalizations.of(context)!
                               .mchSetAutoScheduleOffDesc,
-                      style: TextStyle(fontSize: 12, color: JdcColors.of(context).muted),
+                      style: TextStyle(
+                          fontSize: 12, color: JdcColors.of(context).muted),
                     ),
                     onChanged: (value) {
                       setDialogState(() {
@@ -1468,7 +1495,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
   // ============================================================
 
   Widget _buildStoreOsConnectCard() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     final merchantId = AuthService.userId ?? '';
 
     return _card(
@@ -1476,71 +1503,44 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
       children: [
         Text(
           'ใช้ merchant_id นี้กรอกใน StoreOS เพื่อเชื่อมร้านกับ JDC',
-          style: TextStyle(
-            fontSize: 13,
-            height: 1.4,
-            color: colorScheme.onSurfaceVariant,
-          ),
+          style: _txt(jdc.muted, 13, height: 1.4),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: JdcSpacing.md),
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(JdcSpacing.md),
           decoration: BoxDecoration(
-            color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: colorScheme.outlineVariant.withValues(alpha: 0.7),
-            ),
+            color: jdc.surface,
+            borderRadius: BorderRadius.circular(JdcRadius.small),
+            border: Border.all(color: jdc.line),
           ),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(JdcSpacing.sm),
                 decoration: BoxDecoration(
                   color: _accent.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(JdcRadius.small),
                 ),
-                child: Icon(
-                  Icons.key_outlined,
-                  color: _accent,
-                  size: 20,
-                ),
+                child: Icon(Icons.key_outlined, color: _accent, size: 20),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: JdcSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'merchant_id',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
+                    Text('merchant_id', style: _txt(jdc.muted, 12, w: 600)),
                     const SizedBox(height: 4),
                     if (merchantId.isEmpty)
-                      Text(
-                        'ไม่พบ merchant_id',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: colorScheme.error,
-                        ),
-                      )
+                      Text('ไม่พบ merchant_id', style: _txt(jdc.danger, 13))
                     else
                       SelectableText(
                         merchantId,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.onSurface,
-                        ),
+                        style: _txt(jdc.text, 13, w: 600),
                       ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: JdcSpacing.sm),
               IconButton(
                 tooltip: 'คัดลอก merchant_id',
                 onPressed: merchantId.isEmpty
@@ -1625,15 +1625,11 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
         _menuItem(
           Icons.notifications_outlined,
           AppLocalizations.of(context)!.accountMenuNotifications,
-          () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  AppLocalizations.of(context)!.accountFeatureComingSoon,
-                ),
-              ),
-            );
-          },
+          () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const NotificationSettingsScreen(),
+              )),
         ),
         _divider(),
         _menuItem(
@@ -1740,11 +1736,15 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
           const SizedBox(height: 10),
           Row(
             children: [
-              Text(
-                AppLocalizations.of(context)!.accountVersionLabel,
-                style: TextStyle(fontSize: 13, color: JdcColors.of(context).muted),
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(context)!.accountVersionLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      fontSize: 13, color: JdcColors.of(context).muted),
+                ),
               ),
-              const Spacer(),
               GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () {
@@ -1766,7 +1766,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                       const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
                   child: Text(
                     _appVersion ?? AppLocalizations.of(context)!.accountLoading,
-                    style: TextStyle(fontSize: 13, color: JdcColors.of(context).dim),
+                    style: TextStyle(
+                        fontSize: 13, color: JdcColors.of(context).dim),
                   ),
                 ),
               ),
@@ -1779,8 +1780,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
               Expanded(
                 child: Text(
                   AppLocalizations.of(context)!.accountDevelopedByLabel,
-                  style:
-                      TextStyle(fontSize: 13, color: JdcColors.of(context).muted),
+                  style: TextStyle(
+                      fontSize: 13, color: JdcColors.of(context).muted),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -1788,7 +1789,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
               const SizedBox(width: 8),
               Text(
                 'Jedechai Team',
-                style: TextStyle(fontSize: 13, color: JdcColors.of(context).dim),
+                style:
+                    TextStyle(fontSize: 13, color: JdcColors.of(context).dim),
               ),
             ],
           ),
@@ -1857,16 +1859,17 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
   // ============================================================
 
   Widget _card({required String title, required List<Widget> children}) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(JdcSpacing.lg),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
+        color: jdc.surface,
+        borderRadius: BorderRadius.circular(JdcRadius.card),
+        border: Border.all(color: jdc.line),
         boxShadow: [
           BoxShadow(
-            color: JdcColors.of(context).sunken,
+            color: jdc.sunken,
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -1875,15 +1878,8 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 12),
+          Text(title, style: _txt(jdc.text, 16, w: 700)),
+          const SizedBox(height: JdcSpacing.md),
           ...children,
         ],
       ),
@@ -1896,19 +1892,19 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
     String value,
     VoidCallback? onTap,
   ) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(JdcRadius.small),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(JdcSpacing.sm),
               decoration: BoxDecoration(
                 color: _accent.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(JdcRadius.small),
               ),
               child: Icon(icon, color: _accent, size: 20),
             ),
@@ -1917,23 +1913,9 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+                  Text(label, style: _txt(jdc.muted, 12, w: 500)),
                   const SizedBox(height: 2),
-                  Text(
-                    value,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
+                  Text(value, style: _txt(jdc.text, 14, w: 500)),
                 ],
               ),
             ),
@@ -1943,7 +1925,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                   android: Icons.chevron_right,
                   ios: CupertinoIcons.chevron_forward,
                 ),
-                color: colorScheme.onSurfaceVariant,
+                color: jdc.dim,
                 size: 20,
               ),
           ],
@@ -1953,32 +1935,31 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
   }
 
   Widget _menuItem(IconData icon, String label, VoidCallback onTap) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final jdc = JdcColors.of(context);
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(JdcRadius.small),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: Row(
           children: [
-            Icon(icon, color: colorScheme.onSurfaceVariant, size: 22),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: colorScheme.onSurface,
-                ),
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: jdc.sunken,
+                borderRadius: BorderRadius.circular(JdcRadius.small),
               ),
+              child: Icon(icon, color: jdc.dim, size: 20),
             ),
+            const SizedBox(width: 14),
+            Expanded(child: Text(label, style: _txt(jdc.text, 14, w: 500))),
             Icon(
               PlatformAdaptive.icon(
                 android: Icons.chevron_right,
                 ios: CupertinoIcons.chevron_forward,
               ),
-              color: colorScheme.onSurfaceVariant,
+              color: jdc.muted,
               size: 20,
             ),
           ],
@@ -1988,10 +1969,6 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
   }
 
   Widget _divider() {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Divider(
-      height: 1,
-      color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-    );
+    return Divider(height: 1, color: JdcColors.of(context).line);
   }
 }

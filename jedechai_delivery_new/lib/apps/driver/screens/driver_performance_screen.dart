@@ -69,7 +69,7 @@ class _DriverPerformanceScreenState extends State<DriverPerformanceScreen> {
       case 'Platinum': return jdc.infoInk;
       case 'Gold': return jdc.brandOnSoft;
       case 'Silver': return jdc.muted;
-      default: return jdc.cta;
+      default: return jdc.link;
     }
   }
 

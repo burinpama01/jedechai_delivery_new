@@ -95,4 +95,51 @@ void main() {
     expect(find.text('20'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+      'existing choices stay reachable before the add form on a narrow screen',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final now = DateTime(2026, 9, 25);
+    final group = MenuOptionGroup(
+      id: 'group-test',
+      merchantId: 'merchant-test',
+      name: 'Spice',
+      minSelection: 0,
+      maxSelection: 1,
+      createdAt: now,
+      updatedAt: now,
+      options: [
+        MenuOption(
+          id: 'option-test',
+          groupId: 'group-test',
+          name: 'Mild',
+          price: 10,
+          isAvailable: true,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      ],
+    );
+    await tester.pumpWidget(MaterialApp(
+      locale: const Locale('en'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: MerchantOptionGroupDetailScreen(
+        merchantId: 'merchant-test',
+        group: group,
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Mild'));
+    expect(tester.takeException(), isNull);
+    await tester.ensureVisible(find.byIcon(Icons.add));
+    expect(tester.getTopLeft(find.text('Mild')).dy,
+        lessThan(tester.getTopLeft(find.byIcon(Icons.add)).dy));
+    expect(tester.takeException(), isNull);
+  });
 }

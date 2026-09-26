@@ -372,7 +372,7 @@ class _MerchantCouponManagementScreenState
     );
   }
 
-  /// แบนเนอร์ข้อมูล: สีเขียวอ่อน + icon shield ตาม artboard (ใช้ successSoft เป็น closest เพราะ JdcColors ไม่มี teal)
+  /// แบนเนอร์ข้อมูลสี teal ตาม artboard
   Widget _buildInfoBanner() {
     final jdc = JdcColors.of(context);
     final l10n = AppLocalizations.of(context)!;
@@ -380,19 +380,19 @@ class _MerchantCouponManagementScreenState
       padding: const EdgeInsets.symmetric(
           horizontal: JdcSpacing.md, vertical: JdcSpacing.md),
       decoration: BoxDecoration(
-        color: jdc.successSoft,
+        color: jdc.infoSoft,
         borderRadius: BorderRadius.circular(JdcRadius.small),
         border: Border.all(color: jdc.line),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.shield_outlined, size: 18, color: jdc.successInk),
+          Icon(Icons.shield_outlined, size: 18, color: jdc.infoInk),
           const SizedBox(width: JdcSpacing.sm),
           Expanded(
             child: Text(
               l10n.merchantCouponInfoNote,
-              style: _txt(jdc.successInk, 12, height: 1.5),
+              style: _txt(jdc.infoInk, 12, height: 1.5),
             ),
           ),
         ],
@@ -549,7 +549,7 @@ class _MerchantCouponManagementScreenState
                       const SizedBox(height: 2),
                       Text(
                         _buildConditionText(coupon),
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: _txt(jdc.muted, 12),
                       ),
