@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>แผนแก้จอจากภาพ 25 ก.ย. 2026</title>
+<style>body{font:16px/1.6 system-ui,sans-serif;background:#f4f7f6;color:#15312d;margin:0}main{max-width:960px;margin:auto;padding:32px 18px}h1{line-height:1.2}section{background:white;border:1px solid #d7e4de;border-radius:16px;margin:16px 0;padding:20px;box-shadow:0 4px 16px #15312d0b}.tag{display:inline-block;background:#fff2d6;color:#714500;border-radius:99px;padding:3px 10px}li{margin:8px 0}.mock{display:flex;gap:12px;flex-wrap:wrap}.tile{border:1px solid #bdd2c8;border-radius:12px;padding:12px;min-width:150px;background:#f8fbf9}</style></head><body><main>
+<h1>แก้จอจากภาพผู้ใช้</h1><p class="tag">โค้ดแก้แล้ว · รอทดสอบบนอุปกรณ์และบัญชีจริง</p>
+<section><h2>จุดที่แก้</h2><ol><li>หน้าเข้าสู่ระบบ: จัดโลโก้และข้อความต้อนรับกึ่งกลาง</li><li>หน้าแรกลูกค้า: ใช้ตำแหน่งปัจจุบันเมื่ออนุญาต และแนะนำร้านจริงที่อนุมัติ เปิดอยู่ และอยู่ในรัศมีบริการ</li><li>หน้าปักหมุดร่วม: ป้องกันที่อยู่เก่าหลังเลื่อนแผนที่ ไม่ยืนยันตำแหน่งเมื่อยังหาไม่สำเร็จ; ใช้ร่วมกับอาหาร พัสดุ ที่อยู่บันทึก และฝากซื้อ</li><li>คนขับ: แสดงประเภทฝากซื้อเมื่อแอดมินเปิดบริการ</li><li>สมัครร้าน: ตรวจข้อมูลที่บันทึกจริงก่อนแจ้งสำเร็จ และรีเฟรชสถานะของหน้าหลักโดยตรง</li></ol></section>
+<section><h2>ภาพรวมการไหลของหน้าสมัครร้าน</h2><div class="mock"><div class="tile">กรอกข้อมูลร้าน<br>เลือกแพ็กเกจ</div><div class="tile">บันทึกและอ่านข้อมูลจริง</div><div class="tile">ครบ → หน้าร้าน<br>ไม่ครบ → แจ้งสาเหตุ</div></div></section>
+<section><h2>การตรวจที่ยังต้องทำ</h2><ul><li>บัญชีร้านใหม่จริง: บันทึกแล้วเปลี่ยนหน้า และแพ็กเกจ GP ยังคงอยู่</li><li>อุปกรณ์จริง: อนุญาต/ปฏิเสธตำแหน่ง, ปักหมุดทุกจุดที่เรียกหน้าร่วม, สลับโหมดมืด/สว่าง</li><li>ร้านเปิด/ปิดจริงและรัศมีที่ Admin ตั้ง: รายการแนะนำเปลี่ยนตามสถานะ</li><li>ประเภทฝากซื้อ: เปิด/ปิด shop_enabled และตรวจการรับงานตามค่าคนขับ</li></ul></section>
+</main></body></html>

@@ -20,12 +20,17 @@ class DriverServiceTypeSettings extends StatefulWidget {
       _DriverServiceTypeSettingsState();
 }
 
-class _DriverServiceTypeSettingsState
-    extends State<DriverServiceTypeSettings> {
+class _DriverServiceTypeSettingsState extends State<DriverServiceTypeSettings> {
   late Set<String> _selected;
   bool _isSaving = false;
+  bool _shopEnabled = false;
+  bool _shopFlagLoaded = false;
 
-  static const _serviceTypes = ['food', 'ride', 'parcel', 'laundry'];
+  static const _baseServiceTypes = ['food', 'ride', 'parcel', 'laundry'];
+  List<String> get _serviceTypes => [
+        ..._baseServiceTypes,
+        if (_shopEnabled) 'shop',
+      ];
 
   /// ชื่อและคำอธิบายแต่ละประเภท แปลตาม locale (ห้าม hardcode ไทย — จะทำให้
   /// ผู้ใช้ที่ตั้งเครื่องเป็นอังกฤษเห็นภาษาผสม)
@@ -33,6 +38,7 @@ class _DriverServiceTypeSettingsState
         'food' => l10n.driverServiceTypeFood,
         'ride' => l10n.driverServiceTypeRide,
         'parcel' => l10n.driverServiceTypeParcel,
+        'shop' => l10n.driverServiceTypeShop,
         _ => l10n.driverServiceTypeLaundry,
       };
 
@@ -40,6 +46,7 @@ class _DriverServiceTypeSettingsState
         'food' => l10n.driverServiceTypeFoodDesc,
         'ride' => l10n.driverServiceTypeRideDesc,
         'parcel' => l10n.driverServiceTypeParcelDesc,
+        'shop' => l10n.driverServiceTypeShopDesc,
         _ => l10n.driverServiceTypeLaundryDesc,
       };
   static const _icons = {
@@ -47,6 +54,7 @@ class _DriverServiceTypeSettingsState
     'ride': Icons.directions_car_rounded,
     'parcel': Icons.inventory_2_rounded,
     'laundry': Icons.local_laundry_service_rounded,
+    'shop': Icons.shopping_basket_rounded,
   };
 
   @override
@@ -54,19 +62,35 @@ class _DriverServiceTypeSettingsState
     super.initState();
     _selected = widget.initialServiceTypes != null
         ? Set<String>.from(widget.initialServiceTypes!)
-        : Set<String>.from(_serviceTypes);
+        : Set<String>.from(_baseServiceTypes);
+    _loadShopEnabled();
+  }
+
+  Future<void> _loadShopEnabled() async {
+    final enabled = await ShopService().isEnabled();
+    if (!mounted) return;
+    setState(() {
+      _shopEnabled = enabled;
+      _shopFlagLoaded = true;
+      if (enabled && widget.initialServiceTypes == null) {
+        _selected.add('shop');
+      } else if (!enabled) {
+        _selected.remove('shop');
+      }
+    });
   }
 
   Future<void> _save() async {
     setState(() => _isSaving = true);
     try {
-      final types = _selected.length == _serviceTypes.length
+      final types = _shopEnabled &&
+              _selected.containsAll(_serviceTypes) &&
+              _selected.length == _serviceTypes.length
           ? null
-          : _selected.toList();
+          : _selected.where(_serviceTypes.contains).toList();
       await SupabaseService.client
           .from('profiles')
-          .update({'accepted_service_types': types})
-          .eq('id', widget.driverId);
+          .update({'accepted_service_types': types}).eq('id', widget.driverId);
 
       if (mounted) {
         Navigator.of(context).pop(types ?? []);
@@ -112,7 +136,7 @@ class _DriverServiceTypeSettingsState
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
-            JdcSpacing.xl, JdcSpacing.md, JdcSpacing.xl, JdcSpacing.xl),
+              JdcSpacing.xl, JdcSpacing.md, JdcSpacing.xl, JdcSpacing.xl),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -150,7 +174,8 @@ class _DriverServiceTypeSettingsState
                         width: double.infinity,
                         height: JdcTouch.button,
                         child: ElevatedButton(
-                          onPressed: _isSaving ? null : _save,
+                          onPressed:
+                              _isSaving || !_shopFlagLoaded ? null : _save,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: jdc.cta,
                             foregroundColor: jdc.onCta,
@@ -168,7 +193,7 @@ class _DriverServiceTypeSettingsState
                                   width: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: jdc.onCta,
+                                    color: jdc.brandOnSoft,
                                   ),
                                 )
                               : Text(l10n.driverServiceTypeSave,
@@ -232,7 +257,8 @@ class _DriverServiceTypeSettingsState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(_label(l10n, type), style: _txt(jdc.text, 14, w: 700)),
+                      Text(_label(l10n, type),
+                          style: _txt(jdc.text, 14, w: 700)),
                       const SizedBox(height: 2),
                       Text(
                         _subtitle(l10n, type),
@@ -258,7 +284,8 @@ class _DriverServiceTypeSettingsState
                   activeTrackColor: jdc.successFill,
                   inactiveTrackColor: jdc.offTrack,
                   thumbColor: WidgetStatePropertyAll(jdc.knob),
-                  trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
+                  trackOutlineColor:
+                      const WidgetStatePropertyAll(Colors.transparent),
                 ),
               ],
             ),

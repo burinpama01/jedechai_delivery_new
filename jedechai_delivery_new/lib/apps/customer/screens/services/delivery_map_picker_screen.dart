@@ -35,12 +35,16 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _detailController = TextEditingController();
   bool _isSearching = false;
+  bool _isCameraMoving = false;
+  bool _hasValidPosition = false;
+  int _geocodeRequest = 0;
 
   @override
   void initState() {
     super.initState();
     if (widget.initialPosition != null) {
       _selectedPosition = widget.initialPosition!;
+      _hasValidPosition = true;
       _isLoadingLocation = false;
       _reverseGeocode(_selectedPosition);
     } else {
@@ -56,7 +60,6 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
       }
       if (permission == LocationPermission.deniedForever) {
         if (mounted) setState(() => _isLoadingLocation = false);
-        _reverseGeocode(_selectedPosition);
         return;
       }
       final position = await Geolocator.getCurrentPosition(
@@ -65,6 +68,7 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
       if (!mounted) return;
       setState(() {
         _selectedPosition = LatLng(position.latitude, position.longitude);
+        _hasValidPosition = true;
         _isLoadingLocation = false;
       });
       _mapController?.animateCamera(CameraUpdate.newLatLng(_selectedPosition));
@@ -73,12 +77,12 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
       debugLog('❌ Error getting current location: $e');
       if (!mounted) return;
       setState(() => _isLoadingLocation = false);
-      _reverseGeocode(_selectedPosition);
     }
   }
 
   Future<void> _reverseGeocode(LatLng position) async {
     if (!mounted) return;
+    final request = ++_geocodeRequest;
     if (_lastGeocodedPosition != null) {
       final dist = Geolocator.distanceBetween(
         _lastGeocodedPosition!.latitude,
@@ -86,7 +90,7 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
         position.latitude,
         position.longitude,
       );
-      if (dist < 50) return;
+      if (dist < 50 && _addressText.isNotEmpty) return;
     }
     _lastGeocodedPosition = position;
     setState(() => _isLoadingAddress = true);
@@ -100,7 +104,7 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
       );
 
       final response = await http.get(url);
-      if (!mounted) return;
+      if (!mounted || request != _geocodeRequest) return;
       final data = json.decode(response.body);
 
       if (data['status'] == 'OK' && (data['results'] as List).isNotEmpty) {
@@ -124,25 +128,33 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
       }
     } catch (e) {
       debugLog('❌ Reverse geocode error: $e');
-      if (mounted) {
+      if (mounted && request == _geocodeRequest) {
         setState(() => _addressText = AppLocalizations.of(context)!
             .mapPickerPosition(position.latitude.toStringAsFixed(5),
                 position.longitude.toStringAsFixed(5)));
       }
     } finally {
-      if (mounted) {
+      if (mounted && request == _geocodeRequest) {
         setState(() => _isLoadingAddress = false);
       }
     }
   }
 
   void _onCameraIdle() {
-    _reverseGeocode(_selectedPosition);
+    setState(() {
+      _isCameraMoving = false;
+    });
+    if (_hasValidPosition) _reverseGeocode(_selectedPosition);
   }
 
   void _onCameraMove(CameraPosition position) {
+    _geocodeRequest++;
     setState(() {
       _selectedPosition = position.target;
+      _hasValidPosition = true;
+      _isCameraMoving = true;
+      _addressText = '';
+      _lastGeocodedPosition = null;
     });
   }
 
@@ -169,8 +181,10 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
         );
         setState(() {
           _selectedPosition = target;
-          _addressText =
-              data['results'][0]['formatted_address'] as String? ?? _addressText;
+          _hasValidPosition = true;
+          _isCameraMoving = false;
+          _addressText = data['results'][0]['formatted_address'] as String? ??
+              _addressText;
           _lastGeocodedPosition = target;
         });
         await _mapController?.animateCamera(
@@ -191,6 +205,12 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
   }
 
   void _confirmLocation() {
+    if (!_hasValidPosition ||
+        _isCameraMoving ||
+        _isLoadingAddress ||
+        _addressText.isEmpty) {
+      return;
+    }
     final detail = _detailController.text.trim();
     Navigator.of(context).pop({
       'lat': _selectedPosition.latitude,
@@ -300,7 +320,8 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
                           height: JdcTouch.minTarget,
                           decoration: BoxDecoration(
                             color: jdc.surface,
-                            borderRadius: BorderRadius.circular(JdcRadius.small),
+                            borderRadius:
+                                BorderRadius.circular(JdcRadius.small),
                             boxShadow: [
                               BoxShadow(
                                 color: jdc.text.withValues(alpha: 0.1),
@@ -308,17 +329,20 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
                               ),
                             ],
                           ),
-                          child: Icon(Icons.chevron_left, color: jdc.text, size: 26),
+                          child: Icon(Icons.chevron_left,
+                              color: jdc.text, size: 26),
                         ),
                       ),
                       const SizedBox(width: JdcSpacing.sm),
                       Expanded(
                         child: Container(
                           height: JdcTouch.minTarget,
-                          padding: const EdgeInsets.symmetric(horizontal: JdcSpacing.lg),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: JdcSpacing.lg),
                           decoration: BoxDecoration(
                             color: jdc.surface,
-                            borderRadius: BorderRadius.circular(JdcRadius.small),
+                            borderRadius:
+                                BorderRadius.circular(JdcRadius.small),
                             boxShadow: [
                               BoxShadow(
                                 color: jdc.text.withValues(alpha: 0.1),
@@ -335,10 +359,12 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
                                   controller: _searchController,
                                   textInputAction: TextInputAction.search,
                                   onSubmitted: _searchAddress,
-                                  style: TextStyle(fontSize: 13, color: jdc.text),
+                                  style:
+                                      TextStyle(fontSize: 13, color: jdc.text),
                                   decoration: InputDecoration(
                                     hintText: l10n.mapPickerSearchHint,
-                                    hintStyle: TextStyle(color: jdc.muted, fontSize: 13),
+                                    hintStyle: TextStyle(
+                                        color: jdc.muted, fontSize: 13),
                                     border: InputBorder.none,
                                     isDense: true,
                                   ),
@@ -406,10 +432,11 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
                       children: [
                         Text(
                           l10n.mapPickerConfirmLocation,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: jdc.text,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: jdc.text,
+                                  ),
                         ),
                         const SizedBox(height: JdcSpacing.md),
                         Container(
@@ -422,7 +449,8 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(Icons.location_on, color: jdc.link, size: 20),
+                              Icon(Icons.location_on,
+                                  color: jdc.link, size: 20),
                               const SizedBox(width: JdcSpacing.md),
                               Expanded(
                                 child: Column(
@@ -442,14 +470,18 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
                                           const SizedBox(width: JdcSpacing.sm),
                                           Text(
                                             l10n.mapPickerSearching,
-                                            style: TextStyle(color: jdc.muted, fontSize: 13),
+                                            style: TextStyle(
+                                                color: jdc.muted, fontSize: 13),
                                           ),
                                         ],
                                       ),
                                     ] else ...[
                                       Text(
                                         _addressText.isNotEmpty
-                                            ? _addressText.split(',').first.trim()
+                                            ? _addressText
+                                                .split(',')
+                                                .first
+                                                .trim()
                                             : l10n.mapPickerDeliveryLocation,
                                         style: TextStyle(
                                           fontSize: 14,
@@ -461,9 +493,12 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
                                       ),
                                       if (_addressText.contains(','))
                                         Text(
-                                          _addressText.substring(
-                                              _addressText.indexOf(',') + 1).trim(),
-                                          style: TextStyle(fontSize: 12, color: jdc.muted),
+                                          _addressText
+                                              .substring(
+                                                  _addressText.indexOf(',') + 1)
+                                              .trim(),
+                                          style: TextStyle(
+                                              fontSize: 12, color: jdc.muted),
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
                                         ),
@@ -482,11 +517,13 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
                             labelText: l10n.mapPickerDetailLabel,
                             hintText: l10n.mapPickerDetailHint,
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(JdcRadius.small),
+                              borderRadius:
+                                  BorderRadius.circular(JdcRadius.small),
                               borderSide: BorderSide(color: jdc.line),
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(JdcRadius.small),
+                              borderRadius:
+                                  BorderRadius.circular(JdcRadius.small),
                               borderSide: BorderSide(color: jdc.line),
                             ),
                             contentPadding: const EdgeInsets.symmetric(
@@ -501,18 +538,25 @@ class _DeliveryMapPickerScreenState extends State<DeliveryMapPickerScreen> {
                           width: double.infinity,
                           height: JdcTouch.button,
                           child: ElevatedButton(
-                            onPressed: _isLoadingAddress ? null : _confirmLocation,
+                            onPressed: !_hasValidPosition ||
+                                    _isCameraMoving ||
+                                    _isLoadingAddress ||
+                                    _addressText.isEmpty
+                                ? null
+                                : _confirmLocation,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: jdc.cta,
                               foregroundColor: jdc.onCta,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(JdcRadius.card),
+                                borderRadius:
+                                    BorderRadius.circular(JdcRadius.card),
                               ),
                               elevation: 0,
                             ),
                             child: Text(
                               l10n.mapPickerConfirm,
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                              style: const TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w700),
                             ),
                           ),
                         ),

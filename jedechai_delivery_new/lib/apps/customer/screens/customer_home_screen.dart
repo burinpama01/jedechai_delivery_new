@@ -1,14 +1,17 @@
-﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
+import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
 
 import '../../../theme/jdc_colors.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../common/services/auth_service.dart';
 import '../../../common/services/profile_service.dart';
 import '../../../common/services/notification_service.dart';
 import '../../../common/models/booking.dart';
+import '../../../common/models/saved_address.dart';
 import '../../../common/services/supabase_service.dart';
 import '../../../common/services/wallet_service.dart';
 import '../../../common/utils/order_code_formatter.dart';
@@ -16,10 +19,13 @@ import '../../../common/utils/role_amount_calculator.dart';
 import '../../../common/widgets/app_network_image.dart';
 import 'ride/ride_home_screen.dart';
 import 'services/food_home_screen.dart';
+import 'services/restaurant_detail_screen.dart';
 import 'services/laundry_service_screen.dart';
 import 'services/parcel_service_screen.dart';
 import 'services/shop_service_screen.dart';
 import '../../../common/services/shop_service.dart';
+import '../../../common/services/system_config_service.dart';
+import '../../../common/utils/shop_schedule.dart';
 import 'services/customer_order_detail_screen.dart';
 import 'services/tracking_screen.dart';
 import 'services/saved_addresses_screen.dart';
@@ -27,7 +33,7 @@ import 'customer_wallet_screen.dart';
 import '../../../common/screens/notification_center_screen.dart';
 
 /// Customer Home Screen
-/// 
+///
 /// Service selector dashboard for customer app
 class CustomerHomeScreen extends StatefulWidget {
   const CustomerHomeScreen({super.key});
@@ -58,6 +64,105 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
   bool _didCheckReferralRewardDialog = false;
   // ฝากซื้อ: ซ่อนไว้จนกว่าแอดมินจะเปิด shop_enabled
   bool _shopEnabled = false;
+  Position? _currentPosition;
+  SavedAddress? _selectedDeliveryAddress;
+  String? _currentAddress;
+  Map<String, dynamic>? _recommendedRestaurant;
+  int _recommendationRequest = 0;
+
+  Future<void> _loadCurrentLocationAndRestaurant() async {
+    try {
+      final permission = await Geolocator.checkPermission();
+      if (permission != LocationPermission.always &&
+          permission != LocationPermission.whileInUse) {
+        return;
+      }
+      final position = await Geolocator.getCurrentPosition();
+      String? address;
+      try {
+        final places = await placemarkFromCoordinates(
+            position.latitude, position.longitude);
+        if (places.isNotEmpty) {
+          final place = places.first;
+          address = [place.street, place.subLocality, place.locality]
+              .whereType<String>()
+              .where((part) => part.trim().isNotEmpty)
+              .toSet()
+              .join(' ');
+        }
+      } catch (e) {
+        debugLog('⚠️ Current address lookup failed: $e');
+      }
+      if (!mounted) return;
+      setState(() {
+        _currentPosition = position;
+        _currentAddress = address;
+      });
+      await _loadRecommendedRestaurant();
+    } catch (e) {
+      debugLog('⚠️ Current location unavailable: $e');
+    }
+  }
+
+  Future<void> _loadRecommendedRestaurant() async {
+    final request = ++_recommendationRequest;
+    final latitude =
+        _selectedDeliveryAddress?.latitude ?? _currentPosition?.latitude;
+    final longitude =
+        _selectedDeliveryAddress?.longitude ?? _currentPosition?.longitude;
+    if (latitude == null || longitude == null) return;
+    try {
+      final config = SystemConfigService();
+      await config.fetchSettings();
+      final radiusMetres = config.customerToMerchantRadiusKm * 1000;
+      final rows = await SupabaseService.client
+          .from('profiles')
+          .select(
+              'id, full_name, shop_status, shop_open_time, shop_close_time, shop_open_days, shop_auto_schedule_enabled, latitude, longitude')
+          .eq('role', 'merchant')
+          .eq('approval_status', 'approved')
+          .contains('merchant_service_types', ['food']);
+      final nearby = rows
+          .where(isShopOpenNow)
+          .where((shop) => shop['latitude'] is num && shop['longitude'] is num)
+          .where((shop) =>
+              Geolocator.distanceBetween(
+                latitude,
+                longitude,
+                (shop['latitude'] as num).toDouble(),
+                (shop['longitude'] as num).toDouble(),
+              ) <=
+              radiusMetres)
+          .toList();
+      nearby.sort((a, b) {
+        double distance(Map<String, dynamic> shop) =>
+            Geolocator.distanceBetween(
+                latitude,
+                longitude,
+                (shop['latitude'] as num).toDouble(),
+                (shop['longitude'] as num).toDouble());
+        return distance(a).compareTo(distance(b));
+      });
+      if (!mounted || request != _recommendationRequest) return;
+      setState(
+          () => _recommendedRestaurant = nearby.isEmpty ? null : nearby.first);
+    } catch (e) {
+      debugLog('⚠️ Recommended restaurant unavailable: $e');
+    }
+  }
+
+  Future<void> _chooseDeliveryAddress() async {
+    final address = await Navigator.of(context).push<SavedAddress>(
+      MaterialPageRoute(
+          builder: (_) => const SavedAddressesScreen(pickMode: true)),
+    );
+    if (!mounted || address == null) return;
+    setState(() {
+      _selectedDeliveryAddress = address;
+      _recommendedRestaurant = null;
+    });
+    await _loadRecommendedRestaurant();
+  }
 
   Future<void> _loadShopEnabled() async {
     final enabled = await ShopService().isEnabled();
@@ -65,7 +170,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
     setState(() => _shopEnabled = enabled);
   }
 
-  Future<Map<String, Map<String, dynamic>>> _fetchCouponUsageMap(List<String> bookingIds) async {
+  Future<Map<String, Map<String, dynamic>>> _fetchCouponUsageMap(
+      List<String> bookingIds) async {
     if (bookingIds.isEmpty) return {};
 
     try {
@@ -122,6 +228,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
   void initState() {
     super.initState();
     _loadShopEnabled();
+    _loadCurrentLocationAndRestaurant();
     WidgetsBinding.instance.addObserver(this);
     _loadUserProfile();
     _loadWalletSummary();
@@ -178,6 +285,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
       // แอดมินเปิด/ปิดบริการได้ตลอดเวลา ถ้าอ่านแค่ตอน initState
       // ผู้ใช้ที่เปิดแอปค้างไว้จะไม่เห็นบริการใหม่จนกว่าจะปิดแอปแล้วเปิดใหม่
       _loadShopEnabled();
+      _loadCurrentLocationAndRestaurant();
     }
   }
 
@@ -207,7 +315,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
           _bannerTimer = Timer.periodic(const Duration(seconds: 5), (_) {
             if (!mounted || _banners.isEmpty) return;
             final next = (_currentBannerIndex + 1) % _banners.length;
-            _bannerController.animateToPage(next, duration: const Duration(milliseconds: 400), curve: Curves.easeInOut);
+            _bannerController.animateToPage(next,
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeInOut);
           });
         }
       }
@@ -278,9 +388,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
           .order('created_at', ascending: false)
           .limit(5);
 
-      final bookings = (response as List)
-          .map((json) => Booking.fromJson(json))
-          .toList();
+      final bookings =
+          (response as List).map((json) => Booking.fromJson(json)).toList();
       final couponUsageByBookingId = await _fetchCouponUsageMap(
         bookings.map((b) => b.id).toList(),
       );
@@ -312,41 +421,41 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
         .eq('customer_id', userId)
         .order('created_at', ascending: false)
         .listen((data) async {
-      final activeBookings = data
-          .where((item) {
-            final status = item['status'] as String? ?? '';
-            return [
-              'pending',
-              'searching',
-              'confirmed',
-              'accepted',
-              'pending_merchant',
-              'preparing',
-              'ready_for_pickup',
-              'driver_assigned',
-              'driver_accepted',
-              'matched',
-              'arrived_at_merchant',
-              'picking_up_order',
-              'in_progress',
-              'in_transit',
-              'arrived',
-            ].contains(status);
-          })
-          .map((json) => Booking.fromJson(json))
-          .toList();
+          final activeBookings = data
+              .where((item) {
+                final status = item['status'] as String? ?? '';
+                return [
+                  'pending',
+                  'searching',
+                  'confirmed',
+                  'accepted',
+                  'pending_merchant',
+                  'preparing',
+                  'ready_for_pickup',
+                  'driver_assigned',
+                  'driver_accepted',
+                  'matched',
+                  'arrived_at_merchant',
+                  'picking_up_order',
+                  'in_progress',
+                  'in_transit',
+                  'arrived',
+                ].contains(status);
+              })
+              .map((json) => Booking.fromJson(json))
+              .toList();
 
-      final couponUsageByBookingId = await _fetchCouponUsageMap(
-        activeBookings.map((b) => b.id).toList(),
-      );
+          final couponUsageByBookingId = await _fetchCouponUsageMap(
+            activeBookings.map((b) => b.id).toList(),
+          );
 
-      if (mounted) {
-        setState(() {
-          _activeBookings = activeBookings;
-          _couponUsageByBookingId = couponUsageByBookingId;
+          if (mounted) {
+            setState(() {
+              _activeBookings = activeBookings;
+              _couponUsageByBookingId = couponUsageByBookingId;
+            });
+          }
         });
-      }
-    });
   }
 
   // ─── Wave 1.5 / b1food: new build follows Main artboard ─────────────────────
@@ -405,7 +514,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
   Widget _buildB1HeroHeader() {
     final jdc = JdcColors.of(context);
     final l10n = AppLocalizations.of(context)!;
-    final address = _userProfile?['default_address'] as String? ??
+    final address = _selectedDeliveryAddress?.address ??
+        _currentAddress ??
+        _userProfile?['default_address'] as String? ??
         _userProfile?['address'] as String? ??
         '—';
     return Container(
@@ -428,19 +539,21 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
                   Expanded(
                     child: GestureDetector(
                       behavior: HitTestBehavior.opaque,
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const SavedAddressesScreen()),
-                      ),
+                      onTap: _chooseDeliveryAddress,
                       child: Row(
                         children: [
-                          Icon(Icons.location_on_rounded, color: jdc.brandHi, size: 20),
+                          Icon(Icons.location_on_rounded,
+                              color: jdc.brandHi, size: 20),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  l10n.customerHomeDeliverTo,
+                                  _selectedDeliveryAddress != null ||
+                                          _currentPosition == null
+                                      ? l10n.customerHomeDeliverTo
+                                      : l10n.customerHomeCurrentLocation,
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
@@ -461,7 +574,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
                               ],
                             ),
                           ),
-                          Icon(Icons.keyboard_arrow_down_rounded, color: jdc.onPanel, size: 18),
+                          Icon(Icons.keyboard_arrow_down_rounded,
+                              color: jdc.onPanel, size: 18),
                         ],
                       ),
                     ),
@@ -469,7 +583,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
                   const SizedBox(width: 10),
                   GestureDetector(
                     onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const NotificationCenterScreen(role: 'customer')),
+                      MaterialPageRoute(
+                          builder: (_) =>
+                              const NotificationCenterScreen(role: 'customer')),
                     ),
                     child: Container(
                       width: 44,
@@ -479,7 +595,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
                         borderRadius: BorderRadius.circular(14),
                         color: jdc.panelSoft2,
                       ),
-                      child: Icon(Icons.notifications_none_rounded, color: jdc.onPanel, size: 20),
+                      child: Icon(Icons.notifications_none_rounded,
+                          color: jdc.onPanel, size: 20),
                     ),
                   ),
                 ],
@@ -540,7 +657,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
                 color: jdc.brandSoft,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(Icons.account_balance_wallet_outlined, color: jdc.brandOnSoft, size: 21),
+              child: Icon(Icons.account_balance_wallet_outlined,
+                  color: jdc.brandOnSoft, size: 21),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -549,11 +667,19 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
                 children: [
                   Text(
                     'JDC Wallet',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: jdc.muted),
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: jdc.muted),
                   ),
                   Text(
-                    _isLoadingWallet ? '...' : '฿${_walletBalance.toStringAsFixed(2)}',
-                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700, color: jdc.text),
+                    _isLoadingWallet
+                        ? '...'
+                        : '฿${_walletBalance.toStringAsFixed(2)}',
+                    style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w700,
+                        color: jdc.text),
                   ),
                 ],
               ),
@@ -569,7 +695,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
               child: Center(
                 child: Text(
                   l10n.customerHomeTopUp,
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: jdc.link),
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: jdc.link),
                 ),
               ),
             ),
@@ -584,41 +713,46 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
     final l10n = AppLocalizations.of(context)!;
     final jdc = JdcColors.of(context);
     final tiles = <Widget>[
-        _b1ServiceIcon(
-          icon: Icons.restaurant_rounded,
-          label: l10n.customerHomeServiceFood,
-          bgColor: jdc.brandSoft,
-          iconColor: jdc.link,
-          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FoodHomeScreen())),
-        ),
-        _b1ServiceIcon(
-          icon: Icons.directions_car_rounded,
-          label: l10n.customerHomeCallRide,
-          bgColor: jdc.infoSoft,
-          iconColor: jdc.infoInk,
-          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => RideHomeScreen())),
-        ),
-        _b1ServiceIcon(
-          icon: Icons.inventory_2_rounded,
-          label: l10n.customerHomeSendParcel,
-          bgColor: jdc.successSoft,
-          iconColor: jdc.successInk,
-          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ParcelServiceScreen())),
-        ),
-        _b1ServiceIcon(
-          icon: Icons.local_laundry_service_rounded,
-          label: l10n.customerHomeServiceLaundry,
-          bgColor: jdc.sunken,
-          iconColor: jdc.text,
-          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LaundryServiceScreen())),
-        ),
+      _b1ServiceIcon(
+        icon: Icons.restaurant_rounded,
+        label: l10n.customerHomeServiceFood,
+        bgColor: jdc.brandSoft,
+        iconColor: jdc.link,
+        onTap: () => Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => const FoodHomeScreen())),
+      ),
+      _b1ServiceIcon(
+        icon: Icons.directions_car_rounded,
+        label: l10n.customerHomeCallRide,
+        bgColor: jdc.infoSoft,
+        iconColor: jdc.infoInk,
+        onTap: () => Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => RideHomeScreen())),
+      ),
+      _b1ServiceIcon(
+        icon: Icons.inventory_2_rounded,
+        label: l10n.customerHomeSendParcel,
+        bgColor: jdc.successSoft,
+        iconColor: jdc.successInk,
+        onTap: () => Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => ParcelServiceScreen())),
+      ),
+      _b1ServiceIcon(
+        icon: Icons.local_laundry_service_rounded,
+        label: l10n.customerHomeServiceLaundry,
+        bgColor: jdc.sunken,
+        iconColor: jdc.text,
+        onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const LaundryServiceScreen())),
+      ),
       if (_shopEnabled)
         _b1ServiceIcon(
           icon: Icons.shopping_basket_rounded,
           label: l10n.customerHomeServiceShop,
           bgColor: jdc.infoSoft,
           iconColor: jdc.infoInk,
-          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ShopServiceScreen())),
+          onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ShopServiceScreen())),
         ),
     ];
 
@@ -631,7 +765,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
       children: [
         Row(children: _withGaps(tiles.sublist(0, half))),
         const SizedBox(height: 10),
-        Row(children: _withGaps(tiles.sublist(half), pad: half * 2 - tiles.length)),
+        Row(
+            children:
+                _withGaps(tiles.sublist(half), pad: half * 2 - tiles.length)),
       ],
     );
   }
@@ -683,7 +819,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
               const SizedBox(height: 8),
               Text(
                 label,
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: jdc.text),
+                style: TextStyle(
+                    fontSize: 12, fontWeight: FontWeight.w600, color: jdc.text),
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -700,26 +837,36 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
     final jdc = JdcColors.of(context);
     final l10n = AppLocalizations.of(context)!;
     final trackingStatuses = {
-      'driver_assigned', 'driver_accepted', 'arrived_at_merchant',
-      'picking_up_order', 'in_transit', 'arrived',
+      'driver_assigned',
+      'driver_accepted',
+      'arrived_at_merchant',
+      'picking_up_order',
+      'in_transit',
+      'arrived',
     };
     final isTracking = trackingStatuses.contains(booking.status);
     // ยอดสุทธิที่ลูกค้าต้องจ่าย (หักคูปองแล้ว) — เดิมการ์ดนี้เดาจำนวนรายการจากราคา ซึ่งไม่ใช่ข้อมูลจริง
-    final couponDiscount = (_couponUsageByBookingId[booking.id]?['discount_amount'] as num?)?.toDouble() ?? 0;
+    final couponDiscount =
+        (_couponUsageByBookingId[booking.id]?['discount_amount'] as num?)
+                ?.toDouble() ??
+            0;
     final netTotal = RoleAmountCalculator.netDisplayTotalForService(
       serviceType: booking.serviceType,
       price: booking.price,
       deliveryFee: booking.deliveryFee,
       couponDiscountAmount: couponDiscount,
     );
-    final orderId = OrderCodeFormatter.formatByServiceType(booking.id, serviceType: booking.serviceType);
+    final orderId = OrderCodeFormatter.formatByServiceType(booking.id,
+        serviceType: booking.serviceType);
 
     return GestureDetector(
       onTap: () {
         if (isTracking) {
-          Navigator.of(context).push(MaterialPageRoute(builder: (_) => TrackingScreen(booking: booking)));
+          Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => TrackingScreen(booking: booking)));
         } else {
-          Navigator.of(context).push(MaterialPageRoute(builder: (_) => CustomerOrderDetailScreen(booking: booking)));
+          Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => CustomerOrderDetailScreen(booking: booking)));
         }
       },
       child: Container(
@@ -734,25 +881,36 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
             Row(
               children: [
                 Container(
-                  width: 8, height: 8,
-                  decoration: BoxDecoration(color: jdc.brandHi, shape: BoxShape.circle),
+                  width: 8,
+                  height: 8,
+                  decoration:
+                      BoxDecoration(color: jdc.brandHi, shape: BoxShape.circle),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     _getStatusText(booking.status),
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: jdc.onPanel),
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: jdc.onPanel),
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: jdc.panelSoft2,
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    isTracking ? l10n.customerHomeTrack : _getStatusText(booking.status),
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: jdc.brandHi),
+                    isTracking
+                        ? l10n.customerHomeTrack
+                        : _getStatusText(booking.status),
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: jdc.brandHi),
                   ),
                 ),
               ],
@@ -786,7 +944,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
                 ),
                 Text(
                   l10n.customerHomeTrack,
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: jdc.onPanel),
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: jdc.onPanel),
                 ),
                 const SizedBox(width: 4),
                 Icon(Icons.chevron_right_rounded, color: jdc.onPanel, size: 16),
@@ -825,6 +986,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
 
   // ── Restaurant recommendations section ────────────────────────────────────
   Widget _buildB1RestaurantSection() {
+    final restaurant = _recommendedRestaurant;
+    if (restaurant == null) return const SizedBox.shrink();
     final jdc = JdcColors.of(context);
     final l10n = AppLocalizations.of(context)!;
     // Show limited restaurants from the food home service (reuse existing data if available)
@@ -836,24 +999,31 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
             Expanded(
               child: Text(
                 l10n.customerHomeRecommendedNearby,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: jdc.text),
+                style: TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.w700, color: jdc.text),
               ),
             ),
             GestureDetector(
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FoodHomeScreen())),
+              onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const FoodHomeScreen())),
               child: Text(
                 l10n.customerHomeSeeAll,
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: jdc.link),
+                style: TextStyle(
+                    fontSize: 12, fontWeight: FontWeight.w700, color: jdc.link),
               ),
             ),
           ],
         ),
         const SizedBox(height: 10),
         _buildB1RestaurantCard(
-          name: 'ร้านอาหารใกล้คุณ',
-          category: 'ตามสั่ง',
-          isPlaceholder: true,
-          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FoodHomeScreen())),
+          name: (restaurant['full_name'] as String?) ?? '',
+          category: 'เปิดรับออเดอร์',
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => RestaurantDetailScreen(
+              merchantId: restaurant['id'] as String,
+              merchantName: (restaurant['full_name'] as String?) ?? '',
+            ),
+          )),
         ),
       ],
     );
@@ -862,7 +1032,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
   Widget _buildB1RestaurantCard({
     required String name,
     required String category,
-    bool isPlaceholder = false,
     required VoidCallback onTap,
   }) {
     final jdc = JdcColors.of(context);
@@ -884,26 +1053,23 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
                 color: jdc.brandSoft,
                 borderRadius: BorderRadius.circular(13),
               ),
-              child: Icon(Icons.restaurant_rounded, color: jdc.brandOnSoft, size: 28),
+              child: Icon(Icons.restaurant_rounded,
+                  color: jdc.brandOnSoft, size: 28),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: jdc.text)),
+                  Text(name,
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: jdc.text)),
                   const SizedBox(height: 3),
-                  Text(category, style: TextStyle(fontSize: 12, color: jdc.muted)),
+                  Text(category,
+                      style: TextStyle(fontSize: 12, color: jdc.muted)),
                   const SizedBox(height: 3),
-                  Row(
-                    children: [
-                      Icon(Icons.star_rounded, size: 13, color: jdc.brandOnSoft),
-                      const SizedBox(width: 4),
-                      Text('4.5', style: TextStyle(fontSize: 12, color: jdc.brandOnSoft, fontWeight: FontWeight.w700)),
-                      const SizedBox(width: 10),
-                      Text('15–25 นาที', style: TextStyle(fontSize: 12, color: jdc.muted)),
-                    ],
-                  ),
                 ],
               ),
             ),
@@ -942,7 +1108,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
               final couponCode = b['coupon_code'] as String?;
               return GestureDetector(
                 onTap: couponCode != null && couponCode.isNotEmpty
-                    ? () => _showBannerPromoCode(couponCode, b['title'] as String?)
+                    ? () =>
+                        _showBannerPromoCode(couponCode, b['title'] as String?)
                     : null,
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),
@@ -953,7 +1120,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
                       borderRadius: BorderRadius.circular(16),
                       gradient: imageUrl == null
                           ? LinearGradient(
-                              colors: [JdcColors.of(context).brand, JdcColors.of(context).danger],
+                              colors: [
+                                JdcColors.of(context).brand,
+                                JdcColors.of(context).danger
+                              ],
                             )
                           : null,
                     ),
@@ -968,8 +1138,13 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
                           )
                         : Center(
                             child: Text(
-                              b['title'] ?? AppLocalizations.of(context)!.customerHomePromotions,
-                              style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                              b['title'] ??
+                                  AppLocalizations.of(context)!
+                                      .customerHomePromotions,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold),
                             ),
                           ),
                   ),
@@ -983,16 +1158,20 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
             padding: const EdgeInsets.only(top: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(_banners.length, (i) => AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                width: i == _currentBannerIndex ? 20 : 6,
-                height: 6,
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                decoration: BoxDecoration(
-                  color: i == _currentBannerIndex ? JdcColors.of(context).cta : JdcColors.of(context).line,
-                  borderRadius: BorderRadius.circular(3),
-                ),
-              )),
+              children: List.generate(
+                  _banners.length,
+                  (i) => AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        width: i == _currentBannerIndex ? 20 : 6,
+                        height: 6,
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        decoration: BoxDecoration(
+                          color: i == _currentBannerIndex
+                              ? JdcColors.of(context).cta
+                              : JdcColors.of(context).line,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      )),
             ),
           ),
       ],
@@ -1006,9 +1185,14 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            Icon(Icons.confirmation_number, color: JdcColors.of(context).cta, size: 28),
+            Icon(Icons.confirmation_number,
+                color: JdcColors.of(context).cta, size: 28),
             const SizedBox(width: 8),
-            Expanded(child: Text(AppLocalizations.of(context)!.customerHomeDiscountCode, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+            Expanded(
+                child: Text(
+                    AppLocalizations.of(context)!.customerHomeDiscountCode,
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold))),
           ],
         ),
         content: Column(
@@ -1017,7 +1201,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
             if (title != null && title.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: Text(title, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                child: Text(title,
+                    style: const TextStyle(fontSize: 14, color: Colors.grey)),
               ),
             Container(
               width: double.infinity,
@@ -1025,7 +1210,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
               decoration: BoxDecoration(
                 color: JdcColors.of(context).cta.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: JdcColors.of(context).cta.withValues(alpha: 0.3), style: BorderStyle.solid),
+                border: Border.all(
+                    color: JdcColors.of(context).cta.withValues(alpha: 0.3),
+                    style: BorderStyle.solid),
               ),
               child: Text(
                 code,
@@ -1039,7 +1226,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
               ),
             ),
             const SizedBox(height: 8),
-            Text(AppLocalizations.of(context)!.customerHomePromoCodeHint, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+            Text(AppLocalizations.of(context)!.customerHomePromoCodeHint,
+                style: const TextStyle(fontSize: 12, color: Colors.grey)),
           ],
         ),
         actions: [
@@ -1053,7 +1241,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(AppLocalizations.of(context)!.customerHomeCopiedCode(code)),
+                  content: Text(AppLocalizations.of(context)!
+                      .customerHomeCopiedCode(code)),
                   backgroundColor: JdcColors.of(context).cta,
                   duration: const Duration(seconds: 2),
                 ),
@@ -1064,7 +1253,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
             style: ElevatedButton.styleFrom(
               backgroundColor: JdcColors.of(context).cta,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
           ),
         ],
@@ -1108,5 +1298,4 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
         return status;
     }
   }
-
 }

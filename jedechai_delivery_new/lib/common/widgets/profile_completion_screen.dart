@@ -276,6 +276,24 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
         }
       }
 
+      // The auth gate decides which screen to show from the persisted profile.
+      // Check that same state before claiming completion or calling onCompleted.
+      final savedProfile = await Supabase.instance.client
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+      if (!isProfileCompleteForRole(savedProfile)) {
+        if (widget.role == 'merchant' &&
+            savedProfile['gp_plan_id'] == null &&
+            _selectedMerchantServiceType == 'food') {
+          throw StateError(
+              'ยังไม่พบแพ็กเกจ GP ที่บันทึกไว้ กรุณาเลือกแพ็กเกจอีกครั้ง');
+        }
+        throw StateError(
+            'ข้อมูลร้านยังไม่ครบ กรุณาตรวจสอบข้อมูลแล้วบันทึกอีกครั้ง');
+      }
+
       debugLog('✅ Profile completed for $userId');
 
       if (mounted) {
@@ -637,8 +655,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
           const SizedBox(height: 6),
           Text(
             'ตัวเลขในแต่ละแพ็กเกจด้านล่างจะอัปเดตตามที่กรอก',
-            style: TextStyle(
-                fontSize: 11, color: colorScheme.onSurfaceVariant),
+            style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
           ),
         ],
       ),
@@ -752,8 +769,9 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color:
-                isSelected ? JdcColors.of(context).cta : colorScheme.outlineVariant,
+            color: isSelected
+                ? JdcColors.of(context).cta
+                : colorScheme.outlineVariant,
             width: isSelected ? 2 : 1,
           ),
           color: isSelected
@@ -1018,7 +1036,9 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: hasFile ? JdcColors.of(context).cta : colorScheme.outlineVariant,
+            color: hasFile
+                ? JdcColors.of(context).cta
+                : colorScheme.outlineVariant,
             width: hasFile ? 2 : 1,
           ),
           color: hasFile
