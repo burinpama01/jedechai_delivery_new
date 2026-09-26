@@ -246,11 +246,18 @@ async function sendFcmMessage(
 ) {
   const accessToken = await getAccessToken();
   const channelId = androidChannelFor(data);
+  // FCM ปฏิเสธทั้งข้อความถ้า data มีค่าที่ไม่ใช่ string (เช่น boolean false)
+  // -> "Invalid value at 'message.data[0].value' (TYPE_STRING)"
+  const stringData: Record<string, string> = {};
+  for (const [key, value] of Object.entries(data ?? {})) {
+    if (value === null || value === undefined) continue;
+    stringData[key] = typeof value === "string" ? value : JSON.stringify(value);
+  }
   const message = {
     message: {
       token,
       notification: { title, body },
-      data: data ?? {},
+      data: stringData,
       android: {
         priority: "high",
         notification: {

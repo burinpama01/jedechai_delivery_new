@@ -88,9 +88,58 @@ serve(async (request) => {
   for (let offset = 0; offset < pending.length; offset += 25) {
     outcomes.push(...await Promise.all(pending.slice(offset, offset + 25).map(processOffer)));
   }
+  // ── outbox: แจ้งเตือนที่ฐานข้อมูลสร้างเอง (รางวัลแนะนำ, ยกเลิกออเดอร์ ฯลฯ) ──
+  // แถวพวกนี้ไม่เคยถูกส่ง push มาก่อน; send-fcm-notification บันทึก notification_deliveries
+  // ให้เองทุกครั้ง แถวที่ส่งแล้วจึงไม่ถูกดึงซ้ำ (ดู 20260926090400)
+  const { data: dbNotifications, error: outboxError } = await db.rpc(
+    "claim_pending_notification_pushes", { p_limit: 50 });
+  if (outboxError) console.error("notification outbox claim failed", outboxError.message);
+  const pushDbNotification = async (n: NonNullable<typeof dbNotifications>[number]) => {
+    // FCM รับ data เป็น string เท่านั้น
+    const data: Record<string, string> = {};
+    for (const [key, value] of Object.entries(n.data ?? {})) {
+      if (value === null || value === undefined) continue;
+      data[key] = typeof value === "string" ? value : JSON.stringify(value);
+    }
+    if (n.type && !data.type) data.type = n.type;
+    data.notification_id = n.notification_id;
+    try {
+      const response = await fetch(`${url}/functions/v1/send-fcm-notification`, {
+        method: "POST",
+        signal: AbortSignal.timeout(6000),
+        headers: {
+          Authorization: `Bearer ${serviceKey}`,
+          apikey: serviceKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_ids: [n.user_id],
+          title: n.title ?? "JDC Delivery",
+          message: n.body ?? "",
+          notification_id: n.notification_id,
+          persist_in_app: false,
+          data,
+        }),
+      });
+      const result = await response.json();
+      return response.ok && result.results?.[0]?.success === true ? "sent" : "failed";
+    } catch (error) {
+      console.error("notification outbox push exception", n.notification_id, String(error));
+      return "failed";
+    }
+  };
+  const outboxOutcomes: string[] = [];
+  const outbox = dbNotifications ?? [];
+  for (let offset = 0; offset < outbox.length; offset += 25) {
+    outboxOutcomes.push(...await Promise.all(outbox.slice(offset, offset + 25).map(pushDbNotification)));
+  }
+
   return json({ processed: pending.length,
     sent: outcomes.filter((value) => value === "sent").length,
     failed: outcomes.filter((value) => value === "failed").length,
     expired: outcomes.filter((value) => value === "expired").length,
+    notifications_processed: outbox.length,
+    notifications_sent: outboxOutcomes.filter((value) => value === "sent").length,
+    notifications_failed: outboxOutcomes.filter((value) => value === "failed").length,
     duration_ms: Date.now() - startedAt });
 });
