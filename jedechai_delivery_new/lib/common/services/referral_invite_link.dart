@@ -1,6 +1,11 @@
 /// Public invite URL encoded in the referral QR and share message.
 class ReferralInviteLink {
-  static const host = 'jedechai-delivery.vercel.app';
+  /// โดเมน production ปัจจุบันของ admin-web/หน้าเชิญ (ย้ายจาก jedechai-delivery.vercel.app
+  /// เมื่อ 2026-09-26 — โดเมนเก่าตอบ DEPLOYMENT_NOT_FOUND แล้ว)
+  // ไม่รับโดเมนเก่า: *.vercel.app ที่ปล่อยแล้วคนอื่นเอาไปใช้ได้ -> ปลอมลิงก์ใส่รหัสตัวเอง
+  // (QR/ลิงก์เชิญเริ่มในแอป 1.24 ซึ่งยังไม่เคยปล่อยบนโดเมนเก่า จึงไม่มีลิงก์เก่าค้างอยู่)
+  static const host = 'jdc-delivery.vercel.app';
+
   static final RegExp _codePattern = RegExp(r'^[A-Z0-9][A-Z0-9-]{0,31}$');
 
   static bool isValidCode(String code) =>

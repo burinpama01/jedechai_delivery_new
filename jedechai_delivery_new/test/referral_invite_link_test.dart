@@ -5,7 +5,7 @@ void main() {
   test('invite URL carries a normalized referral code', () {
     final url = ReferralInviteLink.build(' ref-ab12 ');
     expect(url.toString(),
-        'https://jedechai-delivery.vercel.app/invite?code=REF-AB12');
+        'https://jdc-delivery.vercel.app/invite?code=REF-AB12');
     expect(ReferralInviteLink.codeFromUri(url), 'REF-AB12');
   });
 
@@ -20,9 +20,26 @@ void main() {
         ReferralInviteLink.codeFromUri(
             Uri.parse('https://other.example/invite?code=REF-AB12')),
         isNull);
+    // โดเมนเก่าถูกปล่อยแล้ว คนอื่นอาจยึดไปปลอมลิงก์ -> ไม่รับ
     expect(
         ReferralInviteLink.codeFromUri(Uri.parse(
-            'https://jedechai-delivery.vercel.app/invite?code=REF-AB12&code=EVIL')),
+            'https://jedechai-delivery.vercel.app/invite?code=REF-AB12')),
+        isNull);
+    expect(
+        ReferralInviteLink.codeFromUri(
+            Uri.parse('http://jdc-delivery.vercel.app/invite?code=REF-AB12')),
+        isNull);
+    expect(
+        ReferralInviteLink.codeFromUri(Uri.parse(
+            'https://jdc-delivery.vercel.app/invite/extra?code=REF-AB12')),
+        isNull);
+    expect(
+        ReferralInviteLink.codeFromUri(
+            Uri.parse('https://jdc-delivery.vercel.app/invite?code=')),
+        isNull);
+    expect(
+        ReferralInviteLink.codeFromUri(Uri.parse(
+            'https://jdc-delivery.vercel.app/invite?code=REF-AB12&code=EVIL')),
         isNull);
   });
 }
