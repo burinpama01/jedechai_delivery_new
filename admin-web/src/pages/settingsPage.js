@@ -10,6 +10,7 @@ import {
   SHOP_CONFIG_KEYS,
 } from './shopSettingsSection.js';
 import { renderAiSettingsSection, loadAiSettingsSection } from './aiSettingsSection.js';
+import { applySettingsTabs } from './settingsTabs.js';
 
 let _ctx = null;
 
@@ -673,6 +674,16 @@ export async function renderSettingsPage(el, ctx) {
         ` : '<p class="text-gray-400 text-sm">ยังไม่มีข้อมูล — กรุณา run SQL migration</p>'}
       </div>
 
+      ${otherRates.length ? `
+      <!-- ========= อัตราอื่น ๆ ========= -->
+      <div class="glass-card p-6">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center"><span class="material-icons-round text-gray-500">more_horiz</span></div>
+          <h3 class="font-bold text-gray-800">อัตราอื่น ๆ</h3>
+        </div>
+        ${otherRates.map(r => rateInputs(r)).join('')}
+      </div>` : ''}
+
       <div class="flex justify-end">
         <button onclick="saveServiceRatesSettings()" class="px-5 py-2.5 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-blue-200" style="background:linear-gradient(135deg,#3b82f6,#60a5fa);">
           <span class="material-icons-round text-sm align-middle mr-1">save</span> บันทึกอัตราค่าบริการ
@@ -683,15 +694,6 @@ export async function renderSettingsPage(el, ctx) {
 
       ${renderAiSettingsSection()}
 
-      ${otherRates.length ? `
-      <!-- ========= อัตราอื่น ๆ ========= -->
-      <div class="glass-card p-6">
-        <div class="flex items-center gap-3 mb-5">
-          <div class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center"><span class="material-icons-round text-gray-500">more_horiz</span></div>
-          <h3 class="font-bold text-gray-800">อัตราอื่น ๆ</h3>
-        </div>
-        ${otherRates.map(r => rateInputs(r)).join('')}
-      </div>` : ''}
 
       <!-- ========= ป้ายโปรโมชั่น ========= -->
       <div class="glass-card p-6">
@@ -997,7 +999,7 @@ export async function renderSettingsPage(el, ctx) {
         </div>
       </div>
 
-      <div class="glass-card p-5">
+      <div class="glass-card p-5" data-settings-pinned>
         <div class="flex items-center gap-3">
           <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center"><span class="material-icons-round text-gray-400 text-sm">info</span></div>
           <div class="flex-1 flex flex-wrap gap-6 text-xs text-gray-400">
@@ -1008,6 +1010,9 @@ export async function renderSettingsPage(el, ctx) {
       </div>
     </div>
   `;
+  // แบ่งเป็นแท็บตามหมวด (ซ่อนด้วย class — input ยังอยู่ใน DOM ครบ)
+  applySettingsTabs(el.querySelector('.fade-in'));
+
   // ปุ่มบันทึกในหน้านี้เรียกผ่าน inline onclick -> ต้องผูกเข้า global scope
   globalThis.saveShopSettings = () =>
     saveShopSettings({
