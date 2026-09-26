@@ -43,6 +43,8 @@ $$;
 INSERT INTO public.system_config VALUES (0, '{"driver_to_order_km":20}');
 
 \ir ../supabase/migrations/20260926090000_driver_sequential_offers.sql
+-- ทดสอบสถานะหลัง cutover (ปิดเส้นทางเดิมแล้ว)
+\ir ../supabase/migrations/20260926090200_driver_offer_legacy_cutover.sql
 
 INSERT INTO public.profiles VALUES
   ('00000000-0000-0000-0000-000000000001','driver','approved',ARRAY['parcel'],NULL),
@@ -182,3 +184,31 @@ DO $$ BEGIN
     RAISE EXCEPTION 'ride offered to driver without matching vehicle type';
   END IF;
 END $$;
+
+-- หลัง cutover: accept_booking ไม่มี offer ต้องถูกปฏิเสธ และเขียน driver_id ตรงไม่ได้
+INSERT INTO public.bookings(id,customer_id,service_type,status,origin_lat,origin_lng)
+VALUES ('00000000-0000-0000-0000-000000000020','00000000-0000-0000-0000-000000000099','parcel','pending',60.0,10.0);
+SET request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002';
+DO $$
+DECLARE v_result jsonb;
+BEGIN
+  v_result := public.accept_booking('00000000-0000-0000-0000-000000000020',
+    '00000000-0000-0000-0000-000000000002', 'pending');
+  IF v_result->>'error' <> 'not_offered' THEN
+    RAISE EXCEPTION 'cutover: accept_booking without offer returned %', v_result;
+  END IF;
+END $$;
+GRANT SELECT, UPDATE ON public.bookings TO authenticated;
+SET ROLE authenticated;
+DO $$
+BEGIN
+  BEGIN
+    UPDATE public.bookings SET driver_id = '00000000-0000-0000-0000-000000000002'
+     WHERE id = '00000000-0000-0000-0000-000000000020';
+    RAISE EXCEPTION 'cutover: direct driver claim was allowed';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM <> 'use_accept_driver_job_offer' THEN RAISE; END IF;
+  END;
+END $$;
+RESET ROLE;
+\echo 'driver offer cutover fixture passed'

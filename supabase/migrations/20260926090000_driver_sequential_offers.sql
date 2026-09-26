@@ -1,5 +1,18 @@
--- Driver offers are the sole route for a driver to claim an unassigned job.
--- A separate cron migration activates the queue after the application and worker are deployed.
+-- คิวเสนองานคนขับทีละคน — ช่วงเปลี่ยนผ่าน (compat)
+--
+-- ไฟล์นี้ "เพิ่ม" คิว offer โดยไม่ปิดเส้นทางเดิม เพื่อให้แอปคนขับเวอร์ชันเก่า
+-- (ก่อน 1.24.0) ยังเห็นงานรอรับและกดรับผ่าน accept_booking ได้เหมือนเดิม
+--   * แอปใหม่: เห็นเฉพาะงานที่ถูกเสนอให้ตัวเอง + รับผ่าน accept_booking -> offer
+--   * แอปเก่า: เห็นงานรอรับตาม policy เดิม + รับผ่าน accept_booking แบบเดิม
+--   * ใครรับก่อนได้งาน; รับงานแล้ว offer ที่ค้างของงานนั้นถูกยกเลิกอัตโนมัติ
+--
+-- การปิดเส้นทางเดิม (drop policy, ปิด get_nearby_bookings, ห้ามรับงานนอก offer,
+-- หยุด broadcast) แยกไปไว้ที่ 20260926090200_driver_offer_legacy_cutover.sql
+-- apply ไฟล์นั้นเมื่อคนขับเกือบทั้งหมดอัปเดตแอปแล้วเท่านั้น
+--
+-- cron ที่ขับคิวอยู่ใน 20260926090100 (ต้อง deploy worker + Vault secret ก่อน)
+BEGIN;
+
 ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS driver_dispatch_next_at timestamptz DEFAULT now();
 CREATE TABLE public.driver_job_offers (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -202,24 +215,43 @@ $$;
 REVOKE ALL ON FUNCTION public.skip_driver_job_offer(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.skip_driver_job_offer(uuid) TO authenticated;
 
--- Keep the legacy RPC name, but prevent clients from bypassing the offer queue
--- or claiming a booking in another driver's name.
+-- ชื่อ RPC เดิม ใช้ได้ทั้งแอปเก่าและแอปใหม่
+--   * มี offer ที่ยังไม่หมดเวลาของคนขับคนนี้ -> รับผ่าน offer (ตรวจ busy/wallet/online)
+--   * ไม่มี offer -> พฤติกรรมเดิมทุกอย่าง (status driver_accepted) เพื่อให้แอปเก่าใช้ได้
+-- ทั้งสองทางห้ามรับงานแทนคนขับคนอื่น (เดิมไม่ได้ตรวจ p_driver_id กับ auth.uid())
 CREATE OR REPLACE FUNCTION public.accept_booking(
   p_booking_id uuid, p_driver_id uuid, p_expected_status text DEFAULT 'pending')
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE v_offer uuid; v_status text;
+DECLARE v_offer uuid; v_status text; v_rows integer;
 BEGIN
   IF p_driver_id IS DISTINCT FROM auth.uid() THEN
     RETURN jsonb_build_object('success',false,'error','driver_mismatch');
   END IF;
-  SELECT status INTO v_status FROM public.bookings WHERE id = p_booking_id;
-  IF v_status IS DISTINCT FROM p_expected_status THEN
-    RETURN jsonb_build_object('success',false,'error','status_changed');
-  END IF;
+
   SELECT id INTO v_offer FROM public.driver_job_offers
-   WHERE booking_id = p_booking_id AND driver_id = auth.uid() AND status = 'offered';
-  IF v_offer IS NULL THEN RETURN jsonb_build_object('success',false,'error','not_offered'); END IF;
-  RETURN public.accept_driver_job_offer(v_offer);
+   WHERE booking_id = p_booking_id AND driver_id = auth.uid()
+     AND status = 'offered' AND expires_at > now();
+  IF v_offer IS NOT NULL THEN
+    SELECT status INTO v_status FROM public.bookings WHERE id = p_booking_id;
+    IF v_status IS DISTINCT FROM p_expected_status THEN
+      RETURN jsonb_build_object('success',false,'error','status_changed');
+    END IF;
+    RETURN public.accept_driver_job_offer(v_offer);
+  END IF;
+
+  -- legacy path: เหมือน 20260630055943 ทุกอย่าง
+  -- ตั้งใจใช้ 'driver_accepted' ทุกประเภทงานแบบเดิม (ทาง offer ใช้ 'accepted' กับ ride/parcel)
+  -- ทั้งแอปเก่าและแอปใหม่รองรับทั้งสองสถานะอยู่แล้ว
+  UPDATE public.bookings
+     SET driver_id = p_driver_id, status = 'driver_accepted', status_origin = 'jdc',
+         assigned_at = now(), updated_at = now()
+   WHERE id = p_booking_id AND driver_id IS NULL AND status = p_expected_status;
+  GET DIAGNOSTICS v_rows = ROW_COUNT;
+  IF v_rows = 0 THEN
+    RETURN jsonb_build_object('success',false,'error','already_taken',
+      'message','งานนี้ถูกรับไปแล้ว หรือสถานะเปลี่ยนไปแล้ว');
+  END IF;
+  RETURN jsonb_build_object('success',true,'booking_id',p_booking_id);
 END;
 $$;
 REVOKE ALL ON FUNCTION public.accept_booking(uuid,uuid,text) FROM PUBLIC, anon;
@@ -318,33 +350,21 @@ $$;
 REVOKE ALL ON FUNCTION public.admin_assign_driver_job(uuid,uuid) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_assign_driver_job(uuid,uuid) TO service_role;
 
--- Preserve the existing assigned-driver notification behavior while preventing
--- the old candidate broadcast from racing against the sequential offer queue.
-ALTER FUNCTION public.notify_driver_visible_job(uuid,text,text,double precision)
-  RENAME TO notify_driver_visible_job_broadcast_legacy;
-REVOKE ALL ON FUNCTION public.notify_driver_visible_job_broadcast_legacy(uuid,text,text,double precision)
-  FROM PUBLIC, anon, authenticated, service_role;
-CREATE OR REPLACE FUNCTION public.notify_driver_visible_job(
-  p_booking_id uuid, p_title text DEFAULT NULL, p_body text DEFAULT NULL,
-  p_radius_km double precision DEFAULT 5.0)
-RETURNS TABLE(driver_id uuid, notification_id uuid)
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE v_assigned_driver uuid;
-BEGIN
-  SELECT b.driver_id INTO v_assigned_driver FROM public.bookings b WHERE b.id=p_booking_id;
-  IF v_assigned_driver IS NULL THEN RETURN; END IF;
-  RETURN QUERY SELECT * FROM public.notify_driver_visible_job_broadcast_legacy(
-    p_booking_id,p_title,p_body,p_radius_km);
-END;
-$$;
-REVOKE ALL ON FUNCTION public.notify_driver_visible_job(uuid,text,text,double precision)
-  FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.notify_driver_visible_job(uuid,text,text,double precision)
-  TO authenticated, service_role;
-
+-- เริ่มเสนองานเมื่อมีงานใหม่/สถานะพร้อมให้คนขับ
+-- และยกเลิก offer ที่ค้างเมื่องานถูกรับไปแล้ว (เช่นคนขับแอปเก่ากดรับจากรายการ)
+-- หรือสถานะไม่อยู่ในช่วงหาคนขับแล้ว (เช่นลูกค้ายกเลิก)
 CREATE OR REPLACE FUNCTION public.start_driver_job_offer_on_booking()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
+  IF TG_OP = 'UPDATE' AND (
+       NEW.driver_id IS NOT NULL OR
+       NOT ((NEW.service_type IN ('ride','parcel','laundry') AND NEW.status = 'pending')
+         OR (NEW.service_type = 'food' AND NEW.status IN ('preparing','ready_for_pickup')))) THEN
+    UPDATE public.driver_job_offers
+       SET status = 'cancelled', ended_at = now()
+     WHERE booking_id = NEW.id AND status = 'offered'
+       AND driver_id IS DISTINCT FROM NEW.driver_id;
+  END IF;
   IF NEW.driver_id IS NULL THEN
     PERFORM public.dispatch_next_driver_job_offer(NEW.id);
   END IF;
@@ -355,38 +375,13 @@ CREATE TRIGGER start_driver_job_offer
 AFTER INSERT OR UPDATE OF status, driver_id ON public.bookings
 FOR EACH ROW EXECUTE FUNCTION public.start_driver_job_offer_on_booking();
 
--- Older clients must not discover or claim every unassigned booking through
--- permissive legacy policies or the SECURITY DEFINER nearby-bookings RPC.
-DROP POLICY IF EXISTS "Drivers can view pending bookings" ON public.bookings;
-DROP POLICY IF EXISTS "bookings_select_driver" ON public.bookings;
-DROP POLICY IF EXISTS "bookings_update_driver" ON public.bookings;
-CREATE POLICY "bookings_update_driver" ON public.bookings
-  FOR UPDATE USING (driver_id = auth.uid())
-  WITH CHECK (driver_id = auth.uid());
+-- เพิ่มสิทธิ์ให้คนขับอ่านงานที่ถูกเสนอให้ตัวเอง (policy เดิมยังอยู่ครบ)
+DROP POLICY IF EXISTS "bookings_select_offered_driver" ON public.bookings;
 CREATE POLICY "bookings_select_offered_driver" ON public.bookings
   FOR SELECT USING (EXISTS (
     SELECT 1 FROM public.driver_job_offers o
     WHERE o.booking_id = bookings.id AND o.driver_id = auth.uid()
       AND o.status = 'offered' AND o.expires_at > now()
   ));
-DO $$ BEGIN
-  IF to_regprocedure('public.get_nearby_bookings(double precision,double precision,double precision,text[])') IS NOT NULL THEN
-    REVOKE ALL ON FUNCTION public.get_nearby_bookings(
-      double precision, double precision, double precision, text[])
-      FROM PUBLIC, anon, authenticated;
-  END IF;
-END $$;
 
-CREATE OR REPLACE FUNCTION public.guard_direct_driver_claim()
-RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path = public AS $$
-BEGIN
-  IF current_user = 'authenticated' AND OLD.driver_id IS NULL
-     AND NEW.driver_id IS NOT NULL THEN
-    RAISE EXCEPTION 'use_accept_driver_job_offer';
-  END IF;
-  RETURN NEW;
-END;
-$$;
-CREATE TRIGGER zz_guard_direct_driver_claim
-BEFORE UPDATE OF driver_id ON public.bookings
-FOR EACH ROW EXECUTE FUNCTION public.guard_direct_driver_claim();
+COMMIT;
