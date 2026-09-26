@@ -2016,11 +2016,14 @@ async function handleAssignOrder(supabase, body) {
   if (bookingError) return errorResponse(bookingError.message);
   if (!booking) return errorResponse("Booking not found", 404);
 
-  const { error } = await supabase
-    .from("bookings")
-    .update({ driver_id, status: "driver_accepted", assigned_at: nowIso, updated_at: nowIso })
-    .eq("id", order_id);
+  const { data: assignResult, error } = await supabase.rpc("admin_assign_driver_job", {
+    p_booking_id: order_id,
+    p_driver_id: driver_id,
+  });
   if (error) return errorResponse(error.message);
+  if (assignResult?.success !== true) {
+    return errorResponse(assignResult?.error ?? "Booking or driver unavailable", 409);
+  }
 
   if (booking.service_type === "laundry" && booking.laundry_order_id) {
     const nextLaundryStatus =

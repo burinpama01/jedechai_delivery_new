@@ -3,6 +3,16 @@ import 'package:jedechai_delivery_new/common/utils/notification_payload_policy.d
 
 void main() {
   group('NotificationPayloadPolicy routing', () {
+    test('driver offer push opens dashboard and uses driver alert channel', () {
+      final payload = {
+        'type': 'driver.job.offer',
+        'booking_id': 'offer-booking-1',
+        'offer_id': 'offer-1',
+      };
+      expect(NotificationPayloadPolicy.isDriverJobAvailable(payload), isTrue);
+      final target = NotificationPayloadPolicy.resolveNavigationTarget(payload);
+      expect(target?.routeName, '/driver_dashboard');
+    });
     test('routes customer booking payloads by service type with booking id',
         () {
       final target = NotificationPayloadPolicy.resolveNavigationTarget({

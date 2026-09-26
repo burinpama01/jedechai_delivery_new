@@ -14,10 +14,7 @@ import '../../../../common/services/booking_service.dart';
 import '../../../../common/services/fare_adjustment_service.dart';
 import '../../../../common/services/supabase_service.dart';
 import '../../../../common/services/system_config_service.dart';
-import '../../../../common/models/booking.dart';
-import '../../../../common/services/notification_sender.dart';
 import '../../../../common/config/env_config.dart';
-import '../../../../common/utils/notification_payload_policy.dart';
 import '../../../../common/widgets/location_disclosure_dialog.dart';
 import '../../../../common/widgets/coupon_entry_widget.dart';
 import '../../../../common/models/coupon.dart';
@@ -806,7 +803,7 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
       _showMessage(l10n.rideSearchingDriver, JdcColors.of(context).cta);
 
       // Send notification to matching vehicle type drivers only
-      await _notifyDriversAboutNewRide(booking, vehicleName, l10n: l10n);
+      // Booking trigger queues one driver offer; the worker sends its push.
 
       // Navigate to waiting screen
       if (!mounted) return;
@@ -819,118 +816,6 @@ class _RideHomeScreenState extends State<RideHomeScreen> {
       if (mounted) _showMessage(l10n.rideError(e.toString()), errorColor);
     } finally {
       if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  /// Send notification to drivers with matching vehicle type
-  Future<void> _notifyDriversAboutNewRide(Booking booking, String vehicleType,
-      {required AppLocalizations l10n}) async {
-    try {
-      debugLog(
-          '📢 Notifying $vehicleType drivers about new ride: ${booking.id}');
-
-      final nearbyLocations = await SupabaseService.client
-          .from('driver_locations')
-          .select('driver_id, location_lat, location_lng')
-          .eq('is_online', true)
-          .eq('is_available', true);
-
-      final nearbyDriverIds = <String>[];
-      for (final row in nearbyLocations) {
-        final driverId = row['driver_id'] as String?;
-        final lat = (row['location_lat'] as num?)?.toDouble();
-        final lng = (row['location_lng'] as num?)?.toDouble();
-        if (driverId == null || lat == null || lng == null ||
-            (lat == 0.0 && lng == 0.0)) continue;
-
-        if (_isWithinDriverSearchRadius(
-            lat, lng, booking.originLat, booking.originLng)) {
-          nearbyDriverIds.add(driverId);
-        }
-      }
-
-      if (nearbyDriverIds.isEmpty) {
-        debugLog(
-            '⚠️ No nearby online drivers within ${_driverSearchRadiusKm.toStringAsFixed(0)} km');
-        return;
-      }
-
-      // Get nearby online drivers with matching vehicle type
-      final driversResponse = await SupabaseService.client
-          .from('profiles')
-          .select('id, full_name, fcm_token, vehicle_type')
-          .inFilter('id', nearbyDriverIds)
-          .not('fcm_token', 'is', null);
-
-      // Filter by vehicle type (normalize both sides)
-      final matchingDrivers = driversResponse.where((d) {
-        final driverVt = _normalizeVehicleType(d['vehicle_type'] as String?);
-        return driverVt == vehicleType;
-      }).toList();
-
-      debugLog(
-          '👤 Found ${driversResponse.length} online drivers, ${matchingDrivers.length} match $vehicleType');
-
-      if (matchingDrivers.isEmpty) {
-        debugLog('⚠️ No matching $vehicleType drivers found');
-        return;
-      }
-
-      // Send notification to each matching driver
-      int successCount = 0;
-      for (final driver in matchingDrivers) {
-        final driverId = driver['id'] as String;
-        final driverToken = driver['fcm_token'] as String?;
-
-        if (driverToken != null && driverToken.isNotEmpty) {
-          final success = await NotificationSender.sendNotification(
-            targetUserId: driverId,
-            title: l10n.rideNotifTitle,
-            body: l10n.rideNotifBody(
-                booking.pickupAddress ?? l10n.rideNotifPickupFallback,
-                booking.destinationAddress ?? l10n.rideNotifDestFallback,
-                booking.price.toString()),
-            data: NotificationPayloadPolicy.buildBookingPayload(
-              type: NotificationTypes.driverJobAvailable,
-              recipientRole: NotificationRoles.driver,
-              bookingId: booking.id,
-              serviceType: 'ride',
-              route: '/driver_job_detail',
-              routeArgs: {
-                'booking_id': booking.id,
-                'service_type': 'ride',
-                'vehicle_type': vehicleType,
-              },
-              extra: {
-                'legacy_type': NotificationTypes.legacyNewRideRequest,
-                'customer_id': booking.customerId,
-                'vehicle_type': vehicleType,
-                'pickup_address': booking.pickupAddress ?? '',
-                'destination_address': booking.destinationAddress ?? '',
-                'price': booking.price.toString(),
-                'distance_km': booking.distanceKm.toString(),
-                'timestamp': DateTime.now().toIso8601String(),
-              },
-            ),
-          );
-
-          if (success) {
-            successCount++;
-            debugLog('✅ Notified driver: ${driver['full_name'] ?? 'Unknown'}');
-          } else {
-            debugLog(
-                '❌ Failed to notify driver: ${driver['full_name'] ?? 'Unknown'}');
-          }
-        } else {
-          debugLog(
-              '⚠️ Driver ${driver['full_name'] ?? 'Unknown'} has no FCM token');
-        }
-      }
-
-      debugLog(
-          '📊 Ride notification summary: $successCount/${driversResponse.length} drivers notified');
-    } catch (e) {
-      debugLog('❌ Error notifying drivers: $e');
     }
   }
 

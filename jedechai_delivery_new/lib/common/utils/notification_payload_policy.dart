@@ -5,6 +5,7 @@ class NotificationTypes {
   static const customerBookingDriverAssigned =
       'customer.booking.driver_assigned';
   static const driverJobAvailable = 'driver.job.available';
+  static const driverJobOffer = 'driver.job.offer';
   static const driverJobAssigned = 'driver.job.assigned';
   static const merchantOrderCreated = 'merchant.order.created';
   static const merchantOrderAdminAction = 'merchant.order.admin_action';
@@ -69,7 +70,8 @@ class NotificationPayloadPolicy {
 
   static bool isDriverJobAvailable(Map<String, dynamic> data) {
     final type = _type(data);
-    return type == NotificationTypes.driverJobAvailable ||
+    return type == NotificationTypes.driverJobOffer ||
+        type == NotificationTypes.driverJobAvailable ||
         type == NotificationTypes.legacyDriverJobAvailable ||
         type == NotificationTypes.legacyNewBooking ||
         type == NotificationTypes.legacyNewRideRequest;
@@ -140,6 +142,8 @@ class NotificationPayloadPolicy {
 
     final type = _type(data);
     switch (type) {
+      case NotificationTypes.driverJobOffer:
+        return '/driver_dashboard';
       case NotificationTypes.driverJobAvailable:
       case NotificationTypes.driverJobAssigned:
       case NotificationTypes.legacyNewBooking:
@@ -252,6 +256,7 @@ class NotificationPayloadPolicy {
   static String? _roleFromType(Map<String, dynamic> data) {
     final type = _type(data);
     switch (type) {
+      case NotificationTypes.driverJobOffer:
       case NotificationTypes.driverJobAvailable:
       case NotificationTypes.driverJobAssigned:
       case NotificationTypes.legacyNewBooking:

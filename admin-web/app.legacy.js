@@ -5953,6 +5953,8 @@ window._autoDispatchState = window._autoDispatchState || {}; // orderId -> { end
 window._autoDispatchTickTimer = window._autoDispatchTickTimer || null;
 
 function _autoDispatchIsEligible(order) {
+  // The server-owned sequential offer queue now handles dispatch.
+  return false;
   if (!order) return false;
   if (order.service_type !== 'food') return false;
   // Flow update: merchant accepts first, then waits for driver to accept before marking ready_for_pickup.

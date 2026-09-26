@@ -291,6 +291,15 @@ export async function refreshMapData(ctx) {
       .in('status', activeStatuses)
       .order('created_at', { ascending: false });
 
+    const { data: activeOffers, error: offerError } = await supabase
+      .from('driver_job_offers')
+      .select('booking_id, driver_id, expires_at')
+      .eq('status', 'offered')
+      .gt('expires_at', new Date().toISOString());
+    if (offerError) throw offerError;
+    const offerByBooking = new Map((activeOffers || []).map(offer => [offer.booking_id, offer]));
+    const driverNameById = new Map((drivers || []).map(driver => [driver.id, driver.full_name || '-']));
+
     const driverIds = [...new Set((activeOrders || []).filter(o => o.driver_id).map(o => o.driver_id))];
     let driverNamesMap = {};
     if (driverIds.length) {
@@ -514,6 +523,9 @@ export async function refreshMapData(ctx) {
       ...o,
       driverName: o.driver_id ? (driverNamesMap[o.driver_id] || '-') : null,
       merchantName: o.merchant_id ? (merchantsMap[o.merchant_id]?.full_name || '-') : null,
+      offerDriverName: offerByBooking.has(o.id)
+        ? (driverNameById.get(offerByBooking.get(o.id).driver_id) || '-') : null,
+      offerExpiresAt: offerByBooking.get(o.id)?.expires_at || null,
     }));
     globalThis._mapOrderFilter = globalThis._mapOrderFilter || 'active';
     globalThis._mapPendingOrders = globalThis._mapAllOrders.filter(o => dispatchableStatuses.includes(o.status) && !o.driver_id);
@@ -687,10 +699,10 @@ export function renderMapOrderList() {
     const hasLoc = o.origin_lat && o.origin_lng;
     const timeDiff = _timeAgo(o.created_at);
 
-    const isAuto = typeof globalThis._autoDispatchIsEligible === 'function' ? globalThis._autoDispatchIsEligible(o) : false;
-    const left = isAuto && typeof globalThis._autoDispatchSecondsLeft === 'function' ? globalThis._autoDispatchSecondsLeft(o.id) : null;
-    const countdownBadge = isAuto && left !== null
-      ? `<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-100 text-purple-700">⏳ ${left}s</span>`
+    const offerLeft = o.offerExpiresAt
+      ? Math.max(0, Math.ceil((Date.parse(o.offerExpiresAt) - Date.now()) / 1000)) : null;
+    const countdownBadge = offerLeft !== null
+      ? `<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-100 text-purple-700">เสนอ ${escapeHtml(o.offerDriverName || '-')} · ${offerLeft}s</span>`
       : '';
 
     return `

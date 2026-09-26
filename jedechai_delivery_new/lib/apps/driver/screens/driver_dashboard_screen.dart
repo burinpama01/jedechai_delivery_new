@@ -1,5 +1,7 @@
 import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../theme/jdc_layout.dart';
 import 'dart:async';
 import 'package:geolocator/geolocator.dart';
@@ -9,7 +11,6 @@ import '../../../common/utils/order_code_formatter.dart';
 import '../../../common/widgets/location_disclosure_dialog.dart';
 import '../../../common/widgets/app_network_image.dart';
 import '../../../common/services/driver_foreground_service.dart';
-import '../../../common/utils/driver_job_visibility_policy.dart';
 import '../../../common/utils/notification_payload_policy.dart';
 import '../../../common/utils/app_time.dart';
 import '../../../common/utils/role_amount_calculator.dart';
@@ -42,11 +43,15 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   bool _isOnline = true; // Online/Offline toggle state
   bool _isRefreshing = false; // Manual refresh state
   List<Booking> _availableJobs = [];
-  StreamSubscription<List<Booking>>? _jobStreamSubscription;
+  RealtimeChannel? _jobChannel;
   bool _jobStreamConnecting = false;
   Object? _jobStreamError;
   Timer? _autoRefreshTimer;
   Timer? _heartbeatTimer;
+  RealtimeChannel? _offerChannel;
+  Timer? _offerCountdownTimer;
+  Map<String, dynamic>? _activeOffer;
+  bool _offerSoundPlaying = false;
   List<Booking> _previousJobs = []; // Track previous jobs for notification
   final Set<String> _seenNotifiedJobIds = {};
 
@@ -91,6 +96,17 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     _loadUserRole();
     _loadEarningsData(); // Load earnings data
     _setupJobStream();
+    _setupOfferChannel();
+    unawaited(_loadActiveOffer());
+    _offerCountdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted || _activeOffer == null) return;
+      if (_offerSecondsLeft == 0) {
+        unawaited(_stopOfferSound());
+        unawaited(_loadActiveOffer());
+      } else {
+        setState(() {});
+      }
+    });
     _startAutoRefresh();
     _loadScheduledJobs();
 
@@ -142,30 +158,6 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     return double.tryParse(value.toString());
   }
 
-  bool _isWithinDriverOrderRadius(Map<String, dynamic> bookingJson) {
-    if (_driverLat == null || _driverLng == null) {
-      return false;
-    }
-
-    final originLat = _toDouble(bookingJson['origin_lat']) ??
-        _toDouble(bookingJson['originLat']);
-    final originLng = _toDouble(bookingJson['origin_lng']) ??
-        _toDouble(bookingJson['originLng']);
-    if (originLat == null || originLng == null) {
-      return false;
-    }
-
-    final distanceKm = Geolocator.distanceBetween(
-          _driverLat!,
-          _driverLng!,
-          originLat,
-          originLng,
-        ) /
-        1000;
-
-    return distanceKm <= _driverOrderDetectionRadiusKm;
-  }
-
   Future<void> _loadDriverOrderDetectionRadius() async {
     try {
       final configService = SystemConfigService();
@@ -189,8 +181,15 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     WidgetsBinding.instance.removeObserver(this);
     _autoRefreshTimer?.cancel();
     _heartbeatTimer?.cancel();
+    _offerCountdownTimer?.cancel();
+    if (_offerChannel != null) {
+      SupabaseService.client.removeChannel(_offerChannel!);
+    }
+    unawaited(_stopOfferSound());
     _driverLocationSub?.cancel();
-    _jobStreamSubscription?.cancel();
+    if (_jobChannel != null) {
+      SupabaseService.client.removeChannel(_jobChannel!);
+    }
     super.dispose();
   }
 
@@ -199,9 +198,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
+      unawaited(_stopOfferSound());
       // App ถูกปิดหรือไปอยู่ background — ไม่ set offline (เพื่อให้คนขับยังออนไลน์อยู่)
       debugLog('📱 App lifecycle: $state — keeping online status');
     } else if (state == AppLifecycleState.resumed) {
+      unawaited(_loadActiveOffer());
       // กลับมา foreground — ใช้ addPostFrameCallback เพื่อรอ widget tree rebuild ก่อน
       debugLog('📱 App resumed — refreshing status');
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -217,6 +218,87 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
           _stopHeartbeat();
         }
       });
+    }
+  }
+
+  int get _offerSecondsLeft {
+    final expiry = DateTime.tryParse(_activeOffer?['expires_at']?.toString() ?? '');
+    if (expiry == null) return 0;
+    return expiry.difference(DateTime.now()).inSeconds.clamp(0, 60).toInt();
+  }
+
+  void _setupOfferChannel() {
+    final driverId = AuthService.userId;
+    if (driverId == null) return;
+    _offerChannel = SupabaseService.client
+        .channel('driver_offer_$driverId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'driver_job_offers',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'driver_id',
+            value: driverId,
+          ),
+          callback: (_) {
+            if (mounted) unawaited(_loadActiveOffer());
+          },
+        )
+        .subscribe();
+  }
+
+  Future<void> _loadActiveOffer() async {
+    final driverId = AuthService.userId;
+    if (driverId == null) return;
+    try {
+      final offer = await SupabaseService.client
+          .from('driver_job_offers')
+          .select('id, booking_id, expires_at')
+          .eq('driver_id', driverId)
+          .eq('status', 'offered')
+          .gt('expires_at', DateTime.now().toUtc().toIso8601String())
+          .order('offered_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+      if (!mounted) return;
+      final previousId = _activeOffer?['id']?.toString();
+      final nextId = offer?['id']?.toString();
+      if (nextId != previousId) {
+        await _stopOfferSound();
+        if (!mounted) return;
+        setState(() => _activeOffer = offer);
+        if (offer != null && _isOnline &&
+            WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
+          unawaited(_startOfferSound());
+        }
+      } else if (offer != null && _isOnline && !_offerSoundPlaying &&
+          WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
+        unawaited(_startOfferSound());
+      }
+      await _loadAvailableJobsFromRpc();
+    } catch (error) {
+      debugLog('❌ Driver offer refresh failed: $error');
+    }
+  }
+
+  Future<void> _startOfferSound() async {
+    if (_offerSoundPlaying || _activeOffer == null || _offerSecondsLeft == 0) return;
+    try {
+      await FlutterRingtonePlayer().playRingtone(looping: true);
+      _offerSoundPlaying = true;
+    } catch (error) {
+      debugLog('❌ Driver offer sound failed: $error');
+    }
+  }
+
+  Future<void> _stopOfferSound() async {
+    if (!_offerSoundPlaying) return;
+    _offerSoundPlaying = false;
+    try {
+      await FlutterRingtonePlayer().stop();
+    } catch (error) {
+      debugLog('❌ Driver offer sound stop failed: $error');
     }
   }
 
@@ -567,139 +649,70 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   }
 
   void _setupJobStream() {
-    // Cancel old subscription before creating new one (ISSUE-039)
-    _jobStreamSubscription?.cancel();
-    _jobStreamSubscription = null;
-
-    debugLog('🔄 Setting up real-time job stream...');
-    if (mounted)
-      setState(() {
-        _jobStreamConnecting = true;
-        _jobStreamError = null;
-      });
-
-    final stream = SupabaseService.client
-        .from('bookings')
-        .stream(primaryKey: ['id'])
-        .inFilter('status', [
-          'pending',
-          'pending_merchant',
-          'preparing',
-          'matched',
-          'ready_for_pickup',
-          'accepted',
-          'driver_accepted',
-          'arrived',
-          'arrived_at_merchant',
-          'picking_up_order',
-          'in_transit',
-        ])
-        .order('created_at', ascending: false)
-        .execute()
-        .map((data) {
-          debugLog('📡 Stream update: ${data.length} items');
-          final driverId = AuthService.userId;
-          final myVehicleType =
-              _normalizeVehicleType(_driverProfile?['vehicle_type'] as String?);
-
-          final availableJobs = data.where((item) {
-            final serviceType = item['service_type'] as String?;
-            final status = item['status'] as String?;
-            final itemDriverId = item['driver_id'] as String?;
-            final isAssignedToThisDriver =
-                itemDriverId?.toString() == driverId?.toString();
-            final locationReady = _driverLat != null && _driverLng != null;
-            final isWithinRadius =
-                isAssignedToThisDriver || _isWithinDriverOrderRadius(item);
-            final jobVehicle =
-                _normalizeVehicleType(item['vehicle_type'] as String?);
-            final visibility = DriverJobVisibilityPolicy.evaluate(
-              serviceType: serviceType,
-              status: status,
-              driverId: itemDriverId,
-              currentDriverId: driverId,
-              isOnline: _isOnline,
-              isWithinRadius: isWithinRadius,
-              acceptedServiceTypes: _acceptedServiceTypes,
-              locationReady: locationReady,
-              jobVehicleType: jobVehicle,
-              driverVehicleType: myVehicleType,
-            );
-            debugLog(
-                '🔍 Job: ${item['id']} - $serviceType/$status - show:${visibility.visible} reason:${visibility.reason}');
-            return visibility.visible;
-          }).toList();
-
-          return availableJobs.map((item) => Booking.fromJson(item)).toList();
-        });
-
-    _jobStreamSubscription = stream.listen(
-      (jobs) {
-        debugLog('📊 Real-time jobs: ${jobs.length}');
-        if (mounted) {
-          setState(() {
-            _availableJobs = jobs;
-            _jobStreamConnecting = false;
-          });
-          _loadCouponDiscountsForJobs(jobs);
-          _checkForNewJobs(jobs);
-        }
-      },
-      onError: (Object error) {
-        debugLog('❌ Stream error: $error');
-        if (mounted)
-          setState(() {
-            _jobStreamConnecting = false;
-            _jobStreamError = error;
-          });
-      },
-    );
-
-    debugLog('✅ Job stream setup complete');
+    if (_jobChannel != null) SupabaseService.client.removeChannel(_jobChannel!);
+    final driverId = AuthService.userId;
+    if (driverId == null) return;
+    _jobChannel = SupabaseService.client
+        .channel('driver_bookings_$driverId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'bookings',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'driver_id',
+            value: driverId,
+          ),
+          callback: (_) {
+            if (mounted) unawaited(_loadAvailableJobsFromRpc());
+          },
+        )
+        .subscribe();
+    unawaited(_loadAvailableJobsFromRpc());
   }
 
-  /// Load available jobs using get_nearby_bookings RPC (Postgres proximity filter)
+  /// Load only jobs already assigned to this driver or actively offered to them.
   Future<void> _loadAvailableJobsFromRpc() async {
-    if (_driverLat == null || _driverLng == null) return;
-    if (!_isOnline) return;
-
+    final driverId = AuthService.userId;
+    if (driverId == null) return;
     try {
-      final params = <String, dynamic>{
-        'p_driver_lat': _driverLat,
-        'p_driver_lng': _driverLng,
-        'p_radius_km': _driverOrderDetectionRadiusKm,
-      };
-      if (_acceptedServiceTypes != null) {
-        params['p_service_types'] = _acceptedServiceTypes;
+      final assignedResult = await SupabaseService.client
+          .from('bookings')
+          .select()
+          .eq('driver_id', driverId)
+          .inFilter('status', [
+            'matched', 'ready_for_pickup', 'accepted', 'driver_accepted',
+            'arrived', 'arrived_at_merchant', 'picking_up_order', 'in_transit',
+          ])
+          .order('created_at', ascending: false)
+          .limit(50);
+      final assignedJobs = assignedResult.map((item) => Booking.fromJson(item)).toList();
+      Booking? offeredJob;
+      final offeredBookingId = _activeOffer?['booking_id']?.toString();
+      if (offeredBookingId != null && _offerSecondsLeft > 0 && _isOnline) {
+        final item = await SupabaseService.client.from('bookings')
+            .select().eq('id', offeredBookingId).maybeSingle();
+        if (item != null && item['driver_id'] == null) {
+          offeredJob = Booking.fromJson(item);
+        }
       }
-
-      final result = await SupabaseService.client.rpc(
-        'get_nearby_bookings',
-        params: params,
-      );
-
-      final rpcJobs = (result as List)
-          .map((item) => Booking.fromJson(item as Map<String, dynamic>))
-          .toList();
-
-      final driverId = AuthService.userId;
-      final assignedJobs =
-          _availableJobs.where((j) => j.driverId == driverId).toList();
-
       final seenIds = <String>{};
       final merged = <Booking>[];
-      for (final j in [...rpcJobs, ...assignedJobs]) {
+      for (final j in [if (offeredJob != null) offeredJob, ...assignedJobs]) {
         if (seenIds.add(j.id)) merged.add(j);
       }
 
       if (mounted) {
-        setState(() => _availableJobs = merged);
+        setState(() {
+          _availableJobs = merged;
+          _jobStreamConnecting = false;
+          _jobStreamError = null;
+        });
         _loadCouponDiscountsForJobs(merged);
         _checkForNewJobs(merged);
       }
 
-      debugLog(
-          '📡 RPC nearby jobs: ${rpcJobs.length}, assigned: ${assignedJobs.length}');
+      debugLog('📡 Driver jobs: offered=${offeredJob == null ? 0 : 1}, assigned=${assignedJobs.length}');
     } catch (e) {
       debugLog('❌ Error loading nearby jobs from RPC: $e');
     }
@@ -710,9 +723,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     debugLog('🕐 Starting auto-refresh fallback timer (10 seconds)...');
 
     _autoRefreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
-      if (mounted && !_isRefreshing) {
-        _manualRefresh();
-      }
+      if (mounted && !_isRefreshing) unawaited(_loadActiveOffer());
     });
   }
 
@@ -839,8 +850,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       // Refresh jobs stream
       _setupJobStream();
 
-      // Load nearby jobs via RPC (proximity filter)
-      await _loadAvailableJobsFromRpc();
+      // Refresh the current server-owned offer and assigned jobs.
+      await _loadActiveOffer();
 
       // Refresh earnings data
       await _loadEarningsData();
@@ -924,6 +935,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       // Use BookingService to accept the job (includes wallet check)
       final bookingService = BookingService();
       await bookingService.acceptBooking(bookingId);
+      await _stopOfferSound();
+      if (mounted) setState(() => _activeOffer = null);
 
       // Send FCM notifications to customer and merchant
       try {
@@ -972,6 +985,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       }
     } catch (e) {
       debugLog('❌ Failed to accept job: $e');
+      if (!mounted) return;
 
       // Handle specific wallet balance error
       if (e.toString().contains('ยอดเงินในกระเป๋าไม่พอ')) {
@@ -1008,6 +1022,27 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
         _showErrorDialog(
             AppLocalizations.of(context)!.driverDashCannotAccept, e.toString());
       }
+    } finally {
+      if (mounted) setState(() => _isAcceptingJob = false);
+    }
+  }
+
+  Future<void> _skipOffer() async {
+    final offerId = _activeOffer?['id']?.toString();
+    if (offerId == null || _isAcceptingJob) return;
+    setState(() => _isAcceptingJob = true);
+    await _stopOfferSound();
+    try {
+      final result = await SupabaseService.client.rpc(
+        'skip_driver_job_offer', params: {'p_offer_id': offerId});
+      if (result is! Map || result['success'] != true) {
+        throw Exception(result is Map ? result['error'] : 'skip_failed');
+      }
+      if (mounted) setState(() => _activeOffer = null);
+      await _loadActiveOffer();
+    } catch (error) {
+      if (mounted) _showErrorDialog('ข้ามงานไม่ได้', error.toString());
+      await _loadActiveOffer();
     } finally {
       if (mounted) setState(() => _isAcceptingJob = false);
     }
@@ -1570,7 +1605,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
       unawaited(_startDriverLocationTracking());
       unawaited(DriverForegroundService.start());
       _startHeartbeat();
+      unawaited(_loadActiveOffer());
     } else {
+      unawaited(_stopOfferSound());
+      setState(() => _activeOffer = null);
       unawaited(_stopDriverLocationTracking());
       unawaited(DriverForegroundService.stop());
       _stopHeartbeat();
@@ -1902,6 +1940,34 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     final isMine = job.driverId != null &&
         job.driverId!.isNotEmpty &&
         job.driverId == currentDriverId;
+
+    if (!isMine) {
+      if (_activeOffer?['booking_id']?.toString() != job.id ||
+          _offerSecondsLeft == 0) {
+        return const SizedBox.shrink();
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('งานนี้เสนอให้คุณ · เหลือ $_offerSecondsLeft วินาที',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleSmall),
+          const SizedBox(height: 8),
+          Row(children: [
+            Expanded(child: OutlinedButton(
+              onPressed: _isAcceptingJob ? null : _skipOffer,
+              child: const Text('ข้ามงาน'),
+            )),
+            const SizedBox(width: 8),
+            Expanded(child: ElevatedButton(
+              onPressed: (_isAcceptingJob || isScheduledLocked)
+                  ? null : () => _acceptJob(job.id),
+              child: const Text('รับงาน'),
+            )),
+          ]),
+        ],
+      );
+    }
 
     switch (job.status) {
       case 'pending':

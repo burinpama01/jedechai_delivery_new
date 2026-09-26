@@ -105,7 +105,7 @@ function androidChannelFor(data?: Record<string, string>) {
   ) {
     return "merchant_new_order_channel_v1";
   }
-  if (type === "driver.job.available" || type === "driver_job_available" || type === "new_booking" || type === "new_ride_request") {
+  if (type === "driver.job.offer" || type === "driver.job.available" || type === "driver_job_available" || type === "new_booking" || type === "new_ride_request") {
     return "driver_job_available_channel_v1";
   }
   return "jedechai_channel";

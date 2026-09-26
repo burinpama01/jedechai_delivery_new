@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>แบบระบบเสนอออเดอร์ให้คนขับทีละคน v1</title>
+  <style>
+    body{font-family:system-ui,sans-serif;background:#f4f7fb;color:#17243b;margin:0;padding:32px;line-height:1.65}
+    main{max-width:1000px;margin:auto}h1{margin-bottom:0}small{color:#52627b}
+    section{background:white;border:1px solid #dbe4ef;border-radius:16px;padding:22px;margin:18px 0;box-shadow:0 4px 20px #2135500a}
+    .flow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.step{background:#e7f0ff;border-radius:10px;padding:10px 14px;font-weight:650}
+    .arrow{font-size:24px;color:#4266a8}.risk{border-left:4px solid #ee9a42;padding-left:12px}
+    table{border-collapse:collapse;width:100%}th,td{text-align:left;border-bottom:1px solid #dbe4ef;padding:10px;vertical-align:top}th{background:#f3f7fc}
+  </style>
+</head>
+<body><main>
+  <h1>ระบบเสนอออเดอร์ให้คนขับทีละคน</h1>
+  <small>v1 · 26 กันยายน 2026 · สถานะ: อนุมัติพฤติกรรมหลักแล้ว, รอ implementation และ verification</small>
+  <section><h2>เป้าหมายและภาพตัวอย่าง</h2>
+    <p>เมื่อออเดอร์พร้อมหาคนขับ ให้เสนอแก่คนขับที่ว่างและใกล้จุดรับที่สุดหนึ่งรายนาน 60 วินาที คนขับกดรับหรือกดข้ามงานได้ หากกดข้าม ให้หยุดเสียงและเสนอรายถัดไปทันทีโดยไม่รอหมดเวลา; หากหมดเวลา ให้เสนอรายถัดไปเช่นกัน โดยไม่วนกลับหาคนเดิมในรอบนั้น</p>
+    <div class="flow"><div class="step">งานรอคนขับ</div><div class="arrow">→</div><div class="step">เสนอ ก: 60 วินาที</div><div class="arrow">→</div><div class="step">กดข้าม: เสนอ ข ทันที</div><div class="arrow">→</div><div class="step">กดรับ: จองงาน</div></div>
+  </section>
+  <section><h2>ทางเลือกที่พิจารณา</h2><table><tr><th>ทางเลือก</th><th>ผล</th></tr><tr><td>คิวฝั่ง server + transaction (เลือก)</td><td>ทนการปิดแอป/หน้าแอดมิน และคุมการชนกันของหลายออเดอร์</td></tr><tr><td>จับเวลาในแอปหรือหน้าแอดมิน</td><td>ทำง่ายกว่า แต่ timer หยุดหรือรีเซ็ตเมื่อปิดหน้า</td></tr><tr><td>มอบหมายทันที</td><td>เร็ว แต่คนขับไม่มีโอกาสรับหรือปฏิเสธ</td></tr></table></section>
+  <section><h2>ขอบเขตข้อมูลและสถานะ</h2>
+    <ul><li>ตารางข้อเสนอเก็บ booking, driver, เวลาเริ่ม/หมดอายุ, สถานะ offered/accepted/skipped/expired และเลขลำดับการเสนอ; มีข้อเสนอ active ได้หนึ่งรายการต่อ booking และหนึ่งรายการต่อ driver</li>
+    <li>จัดอันดับคนขับจากตำแหน่งและ heartbeat ที่ยังใหม่, online/available, ประเภทงานที่รับ, vehicle type, ไม่มีงาน active และไม่มีข้อเสนอ active; เรียงระยะใกล้ก่อนและมี tie-break ที่แน่นอน</li>
+    <li>หากไม่มีคนขับที่เหมาะสม งานคงสถานะรอและมีการ retry แบบ idempotent พร้อมสัญญาณให้แอดมินติดตาม</li>
+    <li>การรับงานตรวจ auth.uid(), ข้อเสนอที่ยัง active, เวลาหมดอายุ, booking ยังว่าง, capacity และเงื่อนไข wallet ที่ server ก่อนอัปเดตใน transaction เดียว</li></ul>
+  </section>
+  <section><h2>การแจ้งเตือน</h2><p>ส่ง push เมื่อออกข้อเสนอและแสดงเวลา 60 วินาทีพร้อมปุ่ม “รับงาน” และ “ข้ามงาน” ในแอปคนขับ เมื่อแอปอยู่ด้านหน้าให้เล่นเสียงเตือนซ้ำจนกว่าจะรับ ข้าม หมดเวลา หรือข้อเสนอถูกยกเลิก เมื่อแอปอยู่เบื้องหลังให้ใช้ push มีเสียงตามข้อจำกัด Android/iOS; ไม่รับประกันเสียงวนต่อเนื่องเมื่อ OS ระงับแอป</p></section>
+  <section><h2>การย้ายระบบและความปลอดภัย</h2><p>ปิดตัวเลือกคนขับและ timer 120 วินาทีใน browser แอดมินหลัง worker ใหม่พร้อมใช้งาน แอดมินมอบหมายเองผ่าน RPC ที่ตรวจ expected state และ audit reason เท่านั้น จำกัดสิทธิ์อ่าน/เขียนข้อเสนอด้วย RLS/GRANT และคงงานที่กำลังดำเนินอยู่ไว้โดยไม่ย้ายคนขับอัตโนมัติ</p></section>
+  <section><h2>เกณฑ์ตรวจรับ</h2><ul><li>ข้อเสนอหนึ่งงานไปทีละคน ครบ 60 วินาทีจึงเสนอรายถัดไปถ้าไม่มีคำตอบ; กดข้ามแล้วเสนอรายถัดไปทันที</li><li>หลายออเดอร์เข้าพร้อมกันไม่จองคนขับคนเดียวซ้ำเกิน capacity และไม่แย่งออเดอร์เดียวกัน</li><li>แอป/หน้าแอดมินปิดแล้วยังหมดเวลาและเดินคิวต่อได้</li><li>รับ/ข้าม/หมดเวลา หยุดเสียงและซ่อนข้อเสนอที่ใช้ไม่ได้</li><li>ผ่าน unit/integration concurrency test, static checks และ code review ก่อนขออนุมัติ migration/deploy แยกต่างหาก</li></ul></section>
+  <section class="risk"><h2>ข้อจำกัดที่ต้องยืนยันด้วย runtime</h2><p>ยังไม่ตรวจ production schema, FCM delivery และเสียงบนอุปกรณ์จริง จึงยังไม่อ้างว่า production พร้อมใช้งานจากผลทดสอบในเครื่อง</p></section>
+</main></body></html>
