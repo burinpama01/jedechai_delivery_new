@@ -23,6 +23,7 @@ import { renderReviewsPage } from "./reviewsPage.js";
 import { renderBroadcastPage } from "./broadcastPage.js";
 import { renderShopStoresPage } from "./shopStoresPage.js";
 import { renderShopOrdersPage } from "./shopOrdersPage.js";
+import { renderAiMenuImportPage } from "./aiMenuImportPage.js";
 
 export function registerInitialPages(reg) {
   if (typeof reg !== "function") return;
@@ -51,6 +52,7 @@ export function registerInitialPages(reg) {
     ["broadcast", renderBroadcastPage],
     ["shop_stores", renderShopStoresPage],
     ["shop_orders", renderShopOrdersPage],
+    ["ai_menu_import", renderAiMenuImportPage],
   ];
 
   for (const [name, renderer, dispose] of pages) {

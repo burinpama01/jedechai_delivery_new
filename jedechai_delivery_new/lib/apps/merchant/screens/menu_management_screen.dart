@@ -7,6 +7,8 @@ import 'menu/merchant_add_edit_menu_screen.dart';
 import 'menu/merchant_menu_categories_screen.dart';
 import 'menu/merchant_option_library_screen.dart';
 import '../../../common/widgets/app_network_image.dart';
+import '../../../common/services/ai_menu_import_service.dart';
+import 'ai_menu_import/ai_menu_import_start_screen.dart';
 
 /// ค่าพิเศษของตัวกรองหมวด — แสดงเฉพาะเมนูที่ปิดขาย (ตาม artboard: ชิป "หมด N")
 const String _kSoldOutFilter = '__soldout__';
@@ -34,6 +36,9 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   String _searchQuery = '';
   String? _categoryFilter;
 
+  /// สิทธิ์ AI Menu Import (null = ยังไม่โหลด/ปิดอยู่ → ไม่แสดงปุ่ม)
+  AiImportStatus? _aiStatus;
+
   @override
   void initState() {
     super.initState();
@@ -41,6 +46,25 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     // จึงต้องรอให้ initState จบก่อน ไม่งั้นชน assertion ของ Flutter
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _fetchMenuItems();
+    });
+    if (widget.fixtureMenuItems == null) _loadAiStatus();
+  }
+
+  Future<void> _loadAiStatus() async {
+    try {
+      final status = await AiMenuImportService().fetchStatus();
+      if (mounted) setState(() => _aiStatus = status);
+    } catch (_) {
+      // ไม่มี RPC (ยังไม่ deploy) หรือ network — แค่ไม่แสดงปุ่ม
+    }
+  }
+
+  void _openAiImport() {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const AiMenuImportStartScreen()))
+        .then((_) {
+      _fetchMenuItems();
+      _loadAiStatus();
     });
   }
 
@@ -369,6 +393,10 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                     onPressed: _fetchMenuItems,
                   ),
                   const SizedBox(width: JdcSpacing.xs),
+                  if (_aiStatus?.visible ?? false) ...[
+                    _buildAiImportButton(AppLocalizations.of(context)!),
+                    const SizedBox(width: JdcSpacing.sm),
+                  ],
                   _buildOptionLibraryButton(AppLocalizations.of(context)!),
                 ],
               ),
@@ -377,6 +405,37 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
               const SizedBox(height: JdcSpacing.md + 2),
               _buildFilterChips(),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// ปุ่ม "เพิ่มเมนูด้วย AI" — แสดงเมื่อเปิด feature ให้ร้านนี้
+  Widget _buildAiImportButton(AppLocalizations l10n) {
+    final jdc = JdcColors.of(context);
+    return SizedBox(
+      height: 40,
+      child: Material(
+        color: jdc.brandSoft,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(JdcRadius.small),
+          side: BorderSide(color: jdc.brandLine),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(JdcRadius.small),
+          onTap: _openAiImport,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 11),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.auto_awesome, size: 16, color: jdc.brandOnSoft),
+                const SizedBox(width: 4),
+                Text(l10n.aiImpMenuButton,
+                    style: _txt(jdc.brandOnSoft, 12, w: 700)),
+              ],
+            ),
           ),
         ),
       ),
@@ -590,6 +649,14 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                   textAlign: TextAlign.center,
                   style: _txt(jdc.muted, 14),
                 ),
+                if (_aiStatus?.visible ?? false) ...[
+                  const SizedBox(height: JdcSpacing.xl),
+                  FilledButton.icon(
+                    onPressed: _openAiImport,
+                    icon: const Icon(Icons.auto_awesome, size: 18),
+                    label: Text(AppLocalizations.of(context)!.aiImpEmptyCta),
+                  ),
+                ],
               ],
             ),
           ),

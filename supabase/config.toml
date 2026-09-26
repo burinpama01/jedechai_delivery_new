@@ -36,3 +36,6 @@ verify_jwt = false
 
 [functions.beam-webhook]
 verify_jwt = false
+
+[functions.merchant-ai-menu-import]
+verify_jwt = false

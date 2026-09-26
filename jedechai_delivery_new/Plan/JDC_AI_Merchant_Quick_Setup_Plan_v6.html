@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Merchant Quick Setup v6</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fbfaf7;--surface:#ffffff;--ink:#1d1b17;--muted:#6b665c;--line:#e6e1d6;
+  --accent:#b8860b;--accent-soft:#fbf3dc;--danger:#b42318;--danger-soft:#fdecea;
+  --ok:#1e7a46;--ok-soft:#e7f5ec;--warn:#9a5b00;--warn-soft:#fff4e0;--code:#f4f1ea;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15140f;--surface:#1e1c17;--ink:#eeeae0;--muted:#a39d90;--line:#35322a;
+    --accent:#e0b44a;--accent-soft:#2c2616;--danger:#f0877c;--danger-soft:#3a1d1a;
+    --ok:#6fcf97;--ok-soft:#16291e;--warn:#f2b35a;--warn-soft:#33260f;--code:#262319;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15140f;--surface:#1e1c17;--ink:#eeeae0;--muted:#a39d90;--line:#35322a;
+  --accent:#e0b44a;--accent-soft:#2c2616;--danger:#f0877c;--danger-soft:#3a1d1a;
+  --ok:#6fcf97;--ok-soft:#16291e;--warn:#f2b35a;--warn-soft:#33260f;--code:#262319;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.7 "IBM Plex Sans Thai",system-ui,sans-serif}
+main{max-width:980px;margin:0 auto;padding:40px 16px 80px}
+h1{font-size:2rem;line-height:1.25;margin:0 0 6px}
+h2{font-size:1.35rem;margin:48px 0 12px;padding-top:12px;border-top:1px solid var(--line)}
+h3{font-size:1.08rem;margin:28px 0 8px}
+p,li{max-width:74ch}
+.meta{color:var(--muted);font-size:.92rem}
+code,pre{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:.86em}
+code{background:var(--code);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+pre{background:var(--code);padding:14px 16px;border-radius:8px;overflow-x:auto;line-height:1.5;border:1px solid var(--line)}
+pre code{background:none;padding:0}
+.table-wrap{overflow-x:auto;margin:12px 0}
+table{border-collapse:collapse;width:100%;font-size:.93rem;background:var(--surface)}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-weight:600}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.callout{border-left:4px solid var(--accent);background:var(--accent-soft);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0}
+.callout.danger{border-color:var(--danger);background:var(--danger-soft)}
+.callout.ok{border-color:var(--ok);background:var(--ok-soft)}
+.callout.warn{border-color:var(--warn);background:var(--warn-soft)}
+.callout strong:first-child{display:block;margin-bottom:4px}
+.tag{display:inline-block;font-size:.75rem;font-weight:600;padding:1px 8px;border-radius:999px;border:1px solid currentColor;margin-right:4px;white-space:nowrap}
+.tag.new{color:var(--accent)}.tag.done{color:var(--ok)}.tag.p0{color:var(--danger)}.tag.dec{color:var(--warn)}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:16px 0}
+.plan{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.plan h4{margin:0 0 4px;font-size:1rem}
+.plan .gp{font-size:1.8rem;font-weight:700;color:var(--accent);line-height:1.2}
+.plan ul{margin:6px 0 0;padding-left:18px;font-size:.92rem}
+.calc{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;margin:16px 0}
+.calc label{font-size:.92rem;color:var(--muted);margin-right:8px}
+.calc input{font:inherit;width:90px;padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:12px 0}
+.flow span{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:4px 10px;font-size:.9rem}
+.flow span.hl{border-color:var(--accent);background:var(--accent-soft);font-weight:600}
+.flow i{color:var(--muted);font-style:normal}
+nav.toc{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 18px;margin:24px 0}
+nav.toc ol{margin:0;padding-left:20px;columns:2;column-gap:32px;font-size:.93rem}
+@media (max-width:640px){nav.toc ol{columns:1}h1{font-size:1.6rem}}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<main>
+
+<h1>JDC Delivery — AI Merchant Quick Setup</h1>
+<p class="meta">Version 6.0 · 2026-09-26 · ต่อจาก v5 (เก็บไว้ ไม่แก้ทับ) — บันทึกการตัดสินใจ D10–D11</p>
+
+<div class="callout ok">
+<strong>สิ่งที่เปลี่ยนจาก v5 (ผู้ใช้ตัดสินใจ 2026-09-26)</strong>
+<ul>
+<li><b>D10</b> ใช้ราคาตั้งต้นตามตารางข้อ 11.2 + ป้าย “ราคาจากแม่แบบ ตรวจก่อน” ทุกตัวเลือกที่มีราคา <span class="tag done">ตัดสินแล้ว</span></li>
+<li><b>D11</b> ไม่ติ๊กแม่แบบให้ล่วงหน้า — ร้านกดใช้เอง <span class="tag done">ตัดสินแล้ว</span></li>
+</ul>
+</div>
+
+<div class="callout">
+<strong>สิ่งที่เปลี่ยนจาก v4 (v5)</strong>
+<ul>
+<li><span class="tag new">ใหม่</span> <b>ชุดตัวเลือกแนะนำ</b> (<a href="#templates">ข้อ 11</a>) — แก้ปัญหาร้านที่ป้ายเมนูไม่ได้เขียนตัวเลือก (ความหวาน, ระดับเผ็ด, ไข่ดาว +10) ทำให้ AI สร้างตัวเลือกให้ไม่ได้</li>
+<li>แม่แบบเป็นชุดที่<b>แอดมินดูแล</b> แยกตามประเภทร้าน · AI ทำแค่<b>เดาประเภทร้าน</b> (ร้านยืนยัน) · การจับคู่แม่แบบ↔เมนูเป็นกฎตายตัว ไม่ใช่ AI · <b>ร้านต้องติ๊กเลือกเอง</b> ไม่ติ๊กให้ล่วงหน้า</li>
+<li>ยังคงหลัก “AI ห้ามเติมข้อเท็จจริง” — ตัวเลือกที่อ่านได้จากรูปมาก่อนแม่แบบเสมอ</li>
+<li>เพิ่มงาน T1–T7, DoD, D10–D11 และความเสี่ยงเรื่องราคาจากแม่แบบ · เลขข้อ 11–15 เดิมเลื่อนเป็น 12–16</li>
+</ul>
+</div>
+
+<div class="callout">
+<strong>สิ่งที่เปลี่ยนจาก v3 (v4)</strong>
+<ul>
+<li>ร้านเก่า (อนุมัติแล้ว) ใช้ AI สแกนภาพเมนูเพื่อเพิ่มเมนูใหม่ได้ — โหมด <code>append</code> (<a href="#existing">ข้อ 10</a>) · ปิด D4 · เพิ่ม D8/D9</li>
+</ul>
+</div>
+
+<div class="callout ok">
+<strong>สิ่งที่เปลี่ยนจาก v2 (ผู้ใช้ตัดสินใจ 2026-09-19)</strong>
+<ul>
+<li><b>D1</b> แก้ secret ในแอปแล้ว <span class="tag done">ทำแล้ว</span> — <b>ยังไม่ rotate key</b> เพราะยังไม่เปิดตัวเต็มรูปแบบ (ต้องระวังในการอัปเดตหลังจากนี้) · <b>Omise จะถูกแทนด้วย Beam ทั้งหมด</b> (Omise ไม่ผ่านอนุมัติ) — ฝั่งแอปปิด flow Omise ที่ใช้ secret แล้ว</li>
+<li><b>D2</b> ผูกแพ็กเกจเฉพาะร้านที่ค่าตรงกับแพ็กเกจ (dry-run พบ 6 ร้าน: รูปแบบที่ 1 × 4, รูปแบบที่ 2 × 2) ที่เหลือเป็นดีลตรง ปล่อยไว้ <span class="tag done">migration พร้อม</span></li>
+<li><b>D3</b> ร้านเปลี่ยนเองได้เดือนละ 1 ครั้ง (30 วัน) พร้อมนับถอยหลัง · แอดมินตั้งค่าให้ไม่นับ cooldown <span class="tag done">ทำแล้ว</span></li>
+<li><span class="tag p0">ใหม่</span> พบช่องโหว่ RLS: ผู้ใช้แก้ <code>role</code>/<code>approval_status</code> ของตัวเองได้ (ตั้งตัวเองเป็น admin ได้) — ต้องแก้ก่อนเปิดตัว</li>
+</ul>
+</div>
+
+<div class="callout">
+<strong>สิ่งที่เปลี่ยนจาก v0.1</strong>
+<ul>
+<li>ใช้ <b>OpenAI</b> เป็น Vision provider ผ่าน Edge Function เท่านั้น</li>
+<li><span class="tag new">ใหม่</span> ร้านเลือก <b>แพ็กเกจ GP</b> เองตอนสมัคร (ตามโปสเตอร์ 15/20/25%) แอดมินไม่ต้องตั้งค่าให้ภายหลัง</li>
+<li>ปรับ data model ให้ตรง schema จริง (<code>menu_items</code>, <code>menu_option_groups</code>, <code>profiles</code>) ไม่มีตาราง variants แยก</li>
+<li>หั่น scope V1 ให้เป็น MVP จริง แก้ความขัดกันเรื่อง Bulk Approve / Duplicate ระหว่าง V1 กับ V1.1</li>
+<li>ประมวลผลแบบ async job + Publish ผ่าน RPC transaction</li>
+<li><span class="tag p0">P0</span> เพิ่มงานแก้ความปลอดภัยเรื่อง secret ใน <code>.env</code> เป็นเงื่อนไขก่อนเริ่ม</li>
+</ul>
+</div>
+
+<nav class="toc"><ol>
+<li><a href="#p0">P0 — แก้ secret ก่อนเริ่ม</a></li>
+<li><a href="#goal">เป้าหมายและหลักการ</a></li>
+<li><a href="#flow">Onboarding Flow ใหม่</a></li>
+<li><a href="#gp">ร้านเลือกแพ็กเกจ GP เอง</a></li>
+<li><a href="#schema">Mapping กับ schema จริง</a></li>
+<li><a href="#arch">Architecture (OpenAI)</a></li>
+<li><a href="#db">Database / Storage</a></li>
+<li><a href="#ai">AI Output Schema + Confidence</a></li>
+<li><a href="#review">Review / Publish</a></li>
+<li><a href="#existing">ร้านเก่าเพิ่มเมนูด้วย AI</a> <span class="tag new">v4</span></li>
+<li><a href="#templates">ชุดตัวเลือกแนะนำ</a> <span class="tag new">v5</span></li>
+<li><a href="#sec">Security / Cost</a></li>
+<li><a href="#phase">Phases และ Task</a></li>
+<li><a href="#dod">Definition of Done</a></li>
+<li><a href="#decide">สิ่งที่ต้องตัดสินใจ</a></li>
+<li><a href="#risk">ความเสี่ยง</a></li>
+</ol></nav>
+
+<!-- ─────────────────────────────── -->
+<h2 id="p0">1. P0 — แก้ secret ที่หลุดไปกับแอปก่อนเริ่มงาน</h2>
+
+<div class="callout danger">
+<strong>พบระหว่างวิเคราะห์ (ยืนยันแล้ว 2026-09-19)</strong>
+<code>jedechai_delivery_new/pubspec.yaml</code> ประกาศ <code>.env</code> เป็น Flutter asset → ไฟล์ถูก bundle เข้าแอป
+ตรวจ <code>build/app/outputs/bundle/release/app-release.aab</code> พบ <code>base/assets/flutter_assets/.env</code> ซึ่งมีตัวแปร
+<code>SUPABASE_SERVICE_KEY</code>, <code>SUPABASE_DATABASE_URL</code>, <code>FIREBASE_PRIVATE_KEY</code>, <code>OMISE_SECRET_KEY</code>, <code>PAYMENT_SECRET_KEY</code> ฯลฯ
+ใครแตก APK/AAB ก็ได้สิทธิ์เต็มฐานข้อมูลและระบบชำระเงิน
+ถ้าเพิ่ม <code>OPENAI_API_KEY</code> ในไฟล์เดียวกันแล้ว build ใหม่ คีย์ OpenAI จะหลุดด้วย (build ล่าสุดยังไม่มีคีย์นี้)
+</div>
+
+<p>งานที่ต้องทำก่อนเริ่ม AI Quick Setup (ต้องให้ผู้ใช้อนุมัติทุกข้อ เพราะกระทบ production):</p>
+<ol>
+<li><b>อย่าอัปโหลด AAB 1.10.1+118 ตัวปัจจุบัน</b> ขึ้น Play Store</li>
+<li>แยกไฟล์: <code>.env.client</code> (เฉพาะ <code>SUPABASE_URL</code>, <code>SUPABASE_ANON_KEY</code>, <code>GOOGLE_MAPS_API_KEY</code> แบบจำกัด package/SHA) เป็น asset ส่วน secret ที่เหลืออยู่ในไฟล์ที่ไม่ bundle</li>
+<li>ย้าย secret ฝั่ง server ไป <code>supabase secrets set</code> (รวม <code>OPENAI_API_KEY</code>)</li>
+<li><b>ย้ายการเรียก Omise ที่ใช้ secret ออกจากแอป</b> — <code>lib/common/services/omise_service.dart</code> (บรรทัด ~91, ~135) อ่าน <code>EnvConfig.omiseSecretKey</code> ฝั่ง client อยู่จริง ต้องทำ Edge Function แทนก่อน ไม่งั้นพอ rotate แล้วการชำระเงินจะพัง (<code>supabaseServiceKey</code> มี getter ใน <code>supabase_config.dart</code> แต่ไม่พบจุดเรียกใช้ — ลบทิ้งได้)</li>
+<li><b>Rotate ทุก key ที่เคยหลุด</b>: service role / JWT secret, รหัส DB, Firebase service account, Omise secret, Vercel token, Resend, SMS — เพราะแอปเวอร์ชันเก่าที่อยู่บนเครื่องผู้ใช้ยังมี key เดิม</li>
+<li>เพิ่ม check ใน build script: fail ถ้า asset มีคำว่า <code>SERVICE</code>, <code>SECRET</code>, <code>PRIVATE_KEY</code>, <code>DATABASE_URL</code></li>
+</ol>
+
+<!-- ─────────────────────────────── -->
+<h2 id="goal">2. เป้าหมายและหลักการ</h2>
+<p>ข้อความหลัก: <b>“มีแค่รูปเมนู ก็เปิดร้านบน JDC ได้”</b> — สมัคร → เลือกแพ็กเกจ → ถ่ายรูปเมนู → ตรวจ → ส่งเปิดร้าน ภายในครั้งเดียวโดยแอดมินแค่กดอนุมัติ</p>
+<p>หลักการที่คงไว้จาก v0.1:</p>
+<ul>
+<li><b>Draft-first</b> — AI ไม่เขียนลง <code>menu_*</code> ตรง ๆ ทุกอย่างผ่านตาราง import แล้ว Publish ผ่าน RPC</li>
+<li><b>ห้าม AI เลือกเองเมื่อข้อมูลขัดกัน</b> (ราคาต่างกันระหว่างรูป, logo) ร้านต้องเลือก</li>
+<li><b>Server derive ตัวตนร้าน</b> จาก JWT (<code>auth.uid()</code> = <code>profiles.id</code>) ไม่เชื่อ <code>merchant_id</code> ที่ client ส่ง</li>
+<li><b>ไม่มี secret ใน Flutter</b> — OpenAI เรียกจาก Edge Function เท่านั้น</li>
+<li><b>ห้าม AI เติมข้อเท็จจริง</b> (Organic, 100% Arabica) ที่ไม่มีในเมนู</li>
+</ul>
+
+<!-- ─────────────────────────────── -->
+<h2 id="flow">3. Onboarding Flow ใหม่</h2>
+<div class="flow">
+<span>สมัคร</span><i>→</i><span>ข้อมูลพื้นฐาน</span><i>→</i><span>ปักหมุดร้าน</span><i>→</i><span class="hl">เลือกแพ็กเกจ GP</span><i>→</i><span class="hl">AI Quick Setup</span><i>→</i><span>Review</span><i>→</i><span>Preview</span><i>→</i><span>Publish เมนู</span><i>→</i><span>แอดมินอนุมัติร้าน</span><i>→</i><span>ร้านขึ้นหน้าลูกค้า</span>
+</div>
+<ul>
+<li>ขั้น <b>ข้อมูลพื้นฐาน / ปักหมุด / เลือก GP</b> ใช้ของเดิมใน <code>profile_completion_screen.dart</code> (มีอยู่แล้ว)</li>
+<li>ร้าน <code>pending</code> เข้าแอปได้แล้ว (ตาม <code>auth_gate</code> ปัจจุบัน) จึงทำ AI Quick Setup ได้ทันทีโดยไม่ต้องรออนุมัติ</li>
+<li>Publish เมนูได้ตั้งแต่ยังไม่อนุมัติ — ลูกค้ายังไม่เห็นเพราะฝั่ง customer กรอง <code>approval_status = 'approved'</code> อยู่แล้ว แอดมินจึงเห็นร้านพร้อมขายตอนกดอนุมัติ</li>
+<li><span class="tag new">v4</span> <b>ทางเข้าที่ 2 — ร้านเก่า</b>: หน้าจัดการเมนู → “เพิ่มเมนูด้วย AI” → ถ่าย/อัปโหลด → Review (เทียบกับเมนูเดิม) → Preview → Publish ต่อท้าย (รายละเอียด <a href="#existing">ข้อ 10</a>)</li>
+<li>หน้าเข้า AI Quick Setup: <code>[📷 ถ่ายรูปเมนู] [🖼 อัปโหลดรูป] [✍️ กรอกเอง] [ข้ามไปก่อน]</code> — PDF / Excel ยังไม่อยู่ใน V1</li>
+</ul>
+
+<!-- ─────────────────────────────── -->
+<h2 id="gp">4. ร้านเลือกแพ็กเกจ GP เอง <span class="tag new">ใหม่ใน v2</span></h2>
+
+<h3>4.1 แพ็กเกจตามโปสเตอร์</h3>
+<p>ร้านเลือกได้ว่าจะให้ JDC หัก GP มากขึ้นเพื่อแลกกับค่าส่งที่ถูกลงสำหรับลูกค้า (ยิ่ง GP สูง ค่าส่งยิ่งถูก ลูกค้ายิ่งสั่งง่าย)</p>
+<div class="plans">
+<div class="plan"><h4>รูปแบบที่ 1</h4><div class="gp">หัก 15%</div>
+<ul><li>ค่าส่ง <b>10 ฿</b> ในระยะ 5 กม. จากร้าน</li><li>เกินระยะคิด <b>3 ฿/กม.</b></li><li>เหมาะ: ร้านที่อยากเก็บกำไรต่อจานสูง</li></ul></div>
+<div class="plan"><h4>รูปแบบที่ 2</h4><div class="gp">หัก 20%</div>
+<ul><li>ค่าส่ง <b>5 ฿</b> ในระยะ 7 กม. จากร้าน</li><li>เกินระยะคิด <b>2 ฿/กม.</b></li><li>เหมาะ: ร้านทั่วไป สมดุล</li></ul></div>
+<div class="plan"><h4>รูปแบบที่ 3</h4><div class="gp">หัก 25%</div>
+<ul><li>ค่าส่ง <b>0 ฿</b> (ส่งฟรี) ในระยะ 10 กม.</li><li>เกินระยะคิด <b>1 ฿/กม.</b></li><li>เหมาะ: ร้านที่อยากได้ยอดขายและลูกค้าไกล</li></ul></div>
+</div>
+
+<div class="calc" id="calc">
+<b>ตัวอย่างคำนวณ (ให้ใส่ในหน้าเลือกแพ็กเกจของแอปด้วย)</b><br>
+<label>ยอดอาหาร (฿) <input id="cAmt" type="number" value="100" min="0"></label>
+<label>ระยะลูกค้า (กม.) <input id="cKm" type="number" value="8" min="0" step="0.5"></label>
+<div class="table-wrap"><table>
+<thead><tr><th>แพ็กเกจ</th><th class="num">ร้านได้รับ</th><th class="num">ลูกค้าจ่ายค่าส่ง</th></tr></thead>
+<tbody id="cBody"></tbody></table></div>
+<p class="meta" style="margin:0">ค่าส่ง = ค่าเริ่มต้น + (ระยะเกิน × ฿/กม.) — ตัวอย่างนี้คิดระยะเกินเป็นทศนิยมตรง ๆ ส่วนการปัดเศษจริงให้ยึดสูตรใน <code>merchant_food_config_service.dart</code> / checkout ไม่รวมส่วนลดหรือโปรโมชัน</p>
+</div>
+
+<h3>4.2 สถานะปัจจุบันในระบบ (ตรวจแล้ว 2026-09-19)</h3>
+<div class="callout ok">
+<strong>ส่วนใหญ่มีอยู่แล้ว — commit <code>211891f</code> (app 1.10.0+117, admin-web 1.4.0) และ deploy ขึ้น DB แล้ว</strong>
+<ul>
+<li>ตาราง <code>gp_plans</code> มี 3 แพลนตรงโปสเตอร์ทุกค่า (15%/10฿/5กม./3฿ · 20%/5฿/7กม./2฿ · 25%/0฿/10กม./1฿) — active ทั้งหมด</li>
+<li>RPC <code>merchant_select_gp_plan(p_plan_id)</code> copy ค่าจากแพลนลง <code>profiles</code> ฝั่ง server (<code>gp_rate</code>, <code>merchant_gp_system_rate</code>, <code>merchant_gp_driver_rate</code>, <code>custom_base_fare</code>, <code>custom_base_distance</code>, <code>custom_per_km</code>)</li>
+<li>Trigger <code>trg_guard_profile_gp_columns</code> กัน client แก้คอลัมน์ GP เอง — มีใน DB แล้ว</li>
+<li>ขั้นเลือกแพ็กเกจใน <code>profile_completion_screen.dart</code> (เฉพาะร้าน food ที่ยังไม่ approved) และแอดมินจัดการแพลนได้ใน admin-web</li>
+<li>ร้านในระบบตอนนี้: <b>22 ร้าน approved ทั้งหมด และยังไม่มี <code>gp_plan_id</code></b> (ร้านเก่าก่อนมีฟีเจอร์ ค่า GP ตั้งโดยแอดมิน)</li>
+</ul>
+</div>
+
+<h3>4.3 ช่องว่างที่ต้องปิด เพื่อให้แอดมิน “ไม่ต้องตั้งค่า GP อีก”</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>งาน</th><th>รายละเอียด</th><th>ฝั่ง</th></tr></thead>
+<tbody>
+<tr><td>G1</td><td>Guard ตอนอนุมัติ</td><td><code>admin-actions</code> → <code>approve_merchant</code> ตอนนี้ไม่เช็ค GP ถ้าร้าน food ยังไม่มี <code>gp_plan_id</code> ให้ return error <code>gp_plan_required</code> (เลี่ยงได้ด้วย flag <code>override_gp</code> ที่ต้องกรอกค่าเองและลง audit)</td><td>Edge fn</td></tr>
+<tr><td>G2</td><td>แอดมินเห็นแพลนที่ร้านเลือก</td><td>หน้ารออนุมัติใน admin-web แสดงชื่อแพลน + ค่า GP/ค่าส่งแบบอ่านอย่างเดียว ไม่ต้องกรอกอะไร กดอนุมัติได้เลย</td><td>admin-web</td></tr>
+<tr><td>G3</td><td>UI เลือกแพ็กเกจแบบการ์ด + ตัวอย่างคำนวณ</td><td>ปรับขั้นเดิมให้เป็นการ์ด 3 ใบแบบโปสเตอร์ + ช่อง “ถ้าขาย 100 ฿ ลูกค้าห่าง 8 กม.” ตาม 4.1 + ติ๊ก “ยอมรับเงื่อนไข GP”</td><td>Flutter</td></tr>
+<tr><td>G4</td><td>บันทึกการยอมรับเงื่อนไข</td><td>ตาราง <code>merchant_gp_plan_history</code> (merchant_id, plan_id, snapshot jsonb ของค่าแพลน ณ เวลานั้น, accepted_at, changed_by, source = self/admin) — เขียนจากใน RPC ใน transaction เดียวกัน เป็นหลักฐานทางการเงิน</td><td>DB</td></tr>
+<tr><td>G5</td><td>แผนสำหรับร้านเก่า 22 ร้าน</td><td>ดู <a href="#decide">ข้อตัดสินใจ D2</a> — แนะนำ backfill <code>gp_plan_id</code> เฉพาะร้านที่ค่า GP + ค่าส่งตรงกับแพลนทุกค่า ที่เหลือคง custom ไว้ (<code>gp_plan_id</code> = NULL = “แพ็กเกจพิเศษ”)</td><td>Migration</td></tr>
+<tr><td>G6</td><td>เปลี่ยนแพ็กเกจหลังอนุมัติ</td><td>ตอนนี้ RPC บล็อก (<code>already_approved_contact_admin</code>) ดู <a href="#decide">D3</a> — แนะนำให้ร้าน “ขอเปลี่ยน” ได้เอง เดือนละ 1 ครั้ง มีผลกับออเดอร์ใหม่เท่านั้น</td><td>DB + Flutter</td></tr>
+<tr><td>G7</td><td>แหล่งความจริงซ้ำซ้อน</td><td><code>MerchantFoodConfig</code> มี <code>_presets</code> hard-code จับคู่จาก <code>gp_rate</code> — ถ้าแอดมินแก้ค่าแพลนใน <code>gp_plans</code> ค่า preset ในแอปอาจไม่ตรง ให้ยึดค่าที่ copy ลง <code>profiles</code> เป็นหลัก (ปัจจุบัน profile ชนะอยู่แล้ว) และเขียน test ยืนยัน</td><td>Flutter</td></tr>
+<tr><td>G8</td><td>แก้แพลนไม่กระทบร้านเดิม</td><td>ระบุใน UI แอดมินว่า “แก้แพลนมีผลกับร้านที่เลือกใหม่เท่านั้น” (ค่าถูก copy ลง profile แล้ว) — ถ้าต้องการ migrate ร้านเดิมทั้งหมดต้องเป็น action แยกที่มี audit</td><td>admin-web</td></tr>
+</tbody></table></div>
+
+<!-- ─────────────────────────────── -->
+<h2 id="schema">5. Mapping ผล AI → schema จริง</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>ผลจาก AI</th><th>ปลายทางจริง</th><th>กฎ</th></tr></thead>
+<tbody>
+<tr><td>category</td><td><code>menu_categories</code> (merchant_id, name, sort_order) + <code>menu_items.category</code> (text) + <code>menu_items.category_id</code></td><td>match หมวดเดิมของร้านก่อน (normalize ช่องว่าง/ตัวพิมพ์ + synonym เช่น Coffee↔กาแฟ) เขียนทั้ง text และ id</td></tr>
+<tr><td>name, description, price</td><td><code>menu_items.name / description / price</code></td><td><code>price</code> = ราคาต่ำสุดของ variant (base) เป็นจำนวนเต็มบาท</td></tr>
+<tr><td>variants (เย็น/ปั่น, S/M/L)</td><td><code>menu_option_groups</code> <code>min_selection=1, max_selection=1</code> + <code>menu_options</code> (price = ส่วนต่างจาก base) + <code>menu_item_option_links</code></td><td>ไม่มีตาราง variants — ใช้รูปแบบเดียวกับ <code>connect_upsert_menu</code> (StoreOS)</td></tr>
+<tr><td>add-ons (เพิ่มช็อต +15)</td><td>option group <code>min=0, max=จำนวนตัวเลือก</code></td><td>ต้องมีคำบ่งชี้ “เพิ่ม/+/ท็อปปิ้ง” ในเมนู</td></tr>
+<tr><td>ตัวเลือกที่ซ้ำกันหลายเมนู (ความหวาน)</td><td>option group เดียว link หลายเมนู</td><td>dedupe group ด้วย (ชื่อ group + ชุดตัวเลือก + ราคา) ก่อน Publish</td></tr>
+<tr><td>prep time ต่อหมวด</td><td><code>menu_items.prep_time_minutes</code> (default 15)</td><td>V1.1 — ใส่ต่อรายการตามหมวด</td></tr>
+<tr><td>เวลาเปิด-ปิด</td><td><code>profiles.shop_open_time / shop_close_time / shop_open_days</code></td><td>schema รองรับแค่ช่วงเดียวทุกวันที่เปิด — AI ต้องส่งในรูปแบบนี้ ถ้าร้านพูดเวลาหลายช่วงให้แจ้งว่ายังไม่รองรับ (V1.2)</td></tr>
+</tbody></table></div>
+<p>ให้ย้ายฟังก์ชัน parse option group จาก <code>supabase/functions/connect_upsert_menu/index.ts</code> ไปไว้ใน <code>supabase/functions/_shared/menu-options.ts</code> เพื่อให้ StoreOS import และ AI import ใช้ logic เดียวกัน</p>
+
+<!-- ─────────────────────────────── -->
+<h2 id="arch">6. Architecture (OpenAI)</h2>
+<pre><code>Flutter (merchant)
+  │ 1. ย่อรูป ≤ 2048px, JPEG q≈80, auto-rotate EXIF
+  │ 2. upload → Storage bucket "merchant-imports" (private, path = {uid}/{job_id}/n.jpg)
+  │ 3. supabase.functions.invoke('merchant-ai-menu-import', {job_id, mode})   ← JWT
+  │    mode = 'onboarding' | 'append'  (append = ร้านเดิมเพิ่มเมนู, v4)
+  ▼
+Edge fn: merchant-ai-menu-import         (ตอบกลับทันที 202 + job_id)
+  │ - verify JWT, role = merchant, ownership ของ path ใน storage
+  │ - rate limit / quota (ai_import_quota)
+  │ - job.status = 'queued'
+  ▼
+Worker: merchant-ai-menu-worker          (EdgeRuntime.waitUntil หรือ pg_cron ทุกนาที แบบ claim-pattern
+  │                                        เหมือน notify-admin-events)
+  │ - signed URL ของรูป (อายุสั้น) → OpenAI Responses API
+  │   · input: image(s) + system prompt ภาษาไทย
+  │   · (append) แนบรายชื่อหมวดเดิมของร้าน เพื่อให้ AI เลือกหมวดที่มีอยู่ก่อน
+  │     — ไม่ส่งรายการเมนูเดิมทั้งหมด (ประหยัด token) dedupe ทำฝั่ง server
+  │   · text.format = json_schema (strict) → บังคับ output ตาม schema ข้อ 8
+  │ - validate schema อีกรอบฝั่ง server (zod/ajv)
+  │ - คำนวณ confidence เสริม + duplicate detection + category matching
+  │ - (append) เทียบกับ menu_items / menu_categories / menu_option_groups เดิมของร้าน
+  │   → ติด match_type + suggested action ต่อรายการ (ข้อ 10.3)
+  │ - insert merchant_import_items / option drafts
+  │ - บันทึก ai_runs (tokens, cost, latency)
+  │ - job.status = 'review_required' | 'ready' | 'failed'
+  ▼
+Flutter ฟัง Realtime ของ merchant_import_jobs (row ของตัวเอง) → เปิดหน้า Review
+  ▼
+RPC merchant_publish_import(p_job_id, p_visibility)   (SECURITY DEFINER, transaction เดียว)
+  → menu_categories / menu_items / menu_option_groups / menu_options / links
+  → (append) INSERT อย่างเดียว ไม่ UPDATE/DELETE เมนูเดิม</code></pre>
+
+<h3>6.1 การตั้งค่า OpenAI</h3>
+<ul>
+<li>คีย์: <code>supabase secrets set OPENAI_API_KEY=…</code> (อ่านด้วย <code>Deno.env.get</code>) — <b>ห้ามอยู่ใน <code>.env</code> ของ Flutter</b> (ดูข้อ 1)</li>
+<li>Model: ตั้งเป็น secret <code>OPENAI_VISION_MODEL</code> เพื่อเปลี่ยนได้โดยไม่ต้อง deploy ใหม่ — เลือกรุ่นที่รองรับ image input + Structured Outputs แล้ว <b>วัดผลกับ golden set (ข้อ 13) ก่อนล็อกรุ่น</b> เริ่มทดสอบจากรุ่น mini เทียบกับรุ่นเต็ม</li>
+<li>ใช้ <code>temperature</code> ต่ำ / ค่า default ของ reasoning ต่ำ, <code>store: false</code>, ตั้ง timeout 60 วินาทีต่อรูป, retry 1 ครั้งเมื่อ 429/5xx</li>
+<li>ส่งทีละ 1–2 รูปต่อ request แล้วรวมผลฝั่ง server (ง่ายต่อการผูก <code>source_id</code> และลดโอกาส timeout)</li>
+<li>ยังไม่ต้องทำ <code>ai-gateway</code> ใน V1 — เขียน helper <code>_shared/openai.ts</code> ที่บันทึก <code>ai_runs</code> ทุกครั้ง แล้วค่อยยกเป็น gateway เมื่อมี feature AI ที่ 2</li>
+</ul>
+
+<!-- ─────────────────────────────── -->
+<h2 id="db">7. Database / Storage</h2>
+<pre><code>-- ai_runs: log ทุกการเรียก AI (อ่านได้เฉพาะแอดมิน)
+ai_runs(id uuid pk, feature text, provider text default 'openai', model text,
+        merchant_id uuid → profiles, import_job_id uuid null,
+        input_tokens int, output_tokens int, estimated_cost_usd numeric(10,5),
+        latency_ms int, status text, error text, created_at timestamptz)
+
+merchant_import_jobs(id uuid pk, merchant_id uuid → profiles,
+        source_type text check in ('image','manual'),
+        mode text not null default 'onboarding'
+             check in ('onboarding','append'),          -- v4
+        visibility text check in ('hidden','live'),       -- v4: ตัวเลือกตอน publish
+        existing_menu_count int,                          -- v4: จำนวนเมนูเดิม ณ ตอนสร้าง job
+        status text check in ('uploading','queued','processing','review_required',
+                              'ready','publishing','published','failed','cancelled'),
+        attempts int default 0, locked_at timestamptz, error text,
+        total_files int, total_items int, low_confidence_items int,
+        created_at, completed_at, published_at)
+
+merchant_import_sources(id, import_job_id, storage_path, original_filename,
+        width int, height int, created_at)
+
+merchant_import_items(id, import_job_id, source_id,
+        category text, name text, description text, price numeric,
+        variants_json jsonb, addons_json jsonb,
+        confidence_json jsonb,          -- {name, price, category, overall}
+        issues text[],                  -- ['price_conflict','low_price_conf',...]
+        conflict_json jsonb,            -- ราคาทางเลือกเมื่อรูปขัดกัน
+        status text check in ('draft','approved','edited','rejected','published'),
+        published_menu_item_id uuid null,
+        -- v4: เทียบกับเมนูเดิมของร้าน
+        match_type text check in ('new','exact_dup','price_changed','similar'),
+        matched_menu_item_id uuid null → menu_items,
+        matched_price numeric null,
+        action text check in ('create','skip') default 'create',
+        created_at, updated_at)
+
+merchant_import_audit(id, import_job_id, actor_id, action, item_id, diff jsonb, created_at)
+merchant_gp_plan_history(...)            -- ข้อ 4.3 G4
+
+-- v4: ติดป้ายที่มาของเมนู เพื่อซ่อนทั้งชุด / รายงาน
+alter table menu_items add column source_import_job_id uuid null
+      references merchant_import_jobs(id) on delete set null;</code></pre>
+<ul>
+<li><b>RLS</b>: merchant อ่าน/แก้ได้เฉพาะ job ที่ <code>merchant_id = auth.uid()</code>, แก้ได้แค่คอลัมน์ที่ review ได้ (name/price/category/description/variants/status) ผ่าน RPC ดีกว่า update ตรง; แอดมินอ่านได้ทั้งหมด; <code>ai_runs</code> ไม่ให้ merchant อ่าน</li>
+<li><b>Storage</b> bucket <code>merchant-imports</code> private, policy: เขียนได้เฉพาะ prefix <code>{auth.uid()}/</code>, ชนิด jpeg/png/webp, ≤ 10 MB</li>
+<li><b>Retention</b>: ลบรูปต้นทางหลัง publish 30 วัน หรือหลัง job ถูกยกเลิก 7 วัน (pg_cron) — เรื่อง PDPA</li>
+<li>Deploy migration ด้วยวิธีเดิมที่ใช้ได้ (node + pg ต่อ DB ตรง) เพราะ <code>supabase db push</code> history desync</li>
+</ul>
+
+<!-- ─────────────────────────────── -->
+<h2 id="ai">8. AI Output Schema + Confidence</h2>
+<pre><code>{
+  "items": [{
+    "category": "กาแฟ",
+    "name": "ชาเขียว",
+    "description": null,
+    "variants": [ {"label":"เย็น","price":55}, {"label":"ปั่น","price":65} ],
+    "base_price": 55,
+    "addons": [ {"group":"ท็อปปิ้ง","label":"ไข่มุก","price_delta":10} ],
+    "confidence": {"name":0.98,"price":0.93,"category":0.9},
+    "price_text_raw": "เย็น 55 / ปั่น 65"
+  }],
+  "unreadable_regions": ["มุมขวาล่าง เลือนราง"],
+  "store_type_guess": {"value": "cafe", "confidence": 0.86},   // v5: ใช้เลือกแม่แบบเท่านั้น
+  "logo_detected": false
+}</code></pre>
+<ul>
+<li>ให้ AI ส่ง <code>price_text_raw</code> (ข้อความราคาตามที่เห็น) เพื่อให้ server ตรวจซ้ำว่าตัวเลขตรงกับ <code>price</code></li>
+<li><b>Confidence สุดท้าย</b> = ค่าจาก AI ปรับด้วยกฎฝั่ง server (ไม่เชื่อค่า AI อย่างเดียว):
+  <ul>
+  <li>ราคาไม่ใช่จำนวนเต็ม / &lt; 5 ฿ / &gt; 2,000 ฿ / ไม่ตรงกับ <code>price_text_raw</code> → ลด price เป็น ≤ 0.6</li>
+  <li>variant ไม่เรียงราคา หรือ base_price ≠ ราคาต่ำสุด → ติด issue</li>
+  <li>ราคาขัดกันระหว่างรูป → <code>price_conflict</code> บังคับให้ร้านเลือก (ห้าม auto)</li>
+  </ul></li>
+<li>เกณฑ์: <b>ราคา</b> ≥ 0.95 ปกติ / 0.80–0.94 แนะนำตรวจ / &lt; 0.80 ต้องตรวจ · <b>ชื่อ/หมวด</b> ≥ 0.90 / 0.70–0.89 / &lt; 0.70</li>
+<li>Duplicate: normalize ชื่อ (ตัดช่องว่าง, lowercase, ตัดคำ “เมนู”) + ราคาเท่ากัน → merge; ชื่อตรงแต่ราคาต่าง → conflict; ตรวจกับเมนูเดิมของร้านด้วย — กติกาเต็มอยู่ใน <a href="#existing">ข้อ 10.3</a> (D4 ปิดแล้ว)</li>
+</ul>
+
+<!-- ─────────────────────────────── -->
+<h2 id="review">9. Review / Publish</h2>
+<ul>
+<li>หัวสรุป: <code>พบ 32 รายการ · ✓ พร้อม 25 · ⚠️ ต้องตรวจ 5 · ❌ อ่านไม่ได้ 2</code> + filter (ทั้งหมด/ต้องตรวจ/พร้อม/แก้แล้ว/ไม่ใช้)</li>
+<li>การ์ดรายการ: ชื่อ ราคา หมวด ตัวเลือก + badge confidence + ปุ่ม [แก้ไข] [ไม่ใช้] + ปุ่ม “ดูรูปต้นทาง” (V1 เปิดรูปทั้งหน้า ยังไม่ทำ bounding box)</li>
+<li><b>อนุมัติทั้งหมดที่พร้อม</b> อยู่ใน V1 (ไม่ใช่ V1.1 ตามที่ v0.1 เขียนขัดกัน) — รายการที่มี issue ต้องแก้หรือกด “ยืนยัน” ทีละรายการ</li>
+<li><b>Preview</b>: แสดงหน้าร้านแบบที่ลูกค้าเห็น (reuse widget ของ <code>restaurant_detail_screen</code>) ก่อนกด Publish</li>
+<li><b>Publish</b> = RPC <code>merchant_publish_import(p_job_id)</code>: lock job (<code>FOR UPDATE</code>), เช็ค owner + ทุกรายการไม่มี issue ค้าง, สร้างหมวด → option groups (dedupe) → items → links ใน transaction เดียว, เขียน <code>published_menu_item_id</code> + audit, idempotent (กดซ้ำไม่สร้างซ้ำ)</li>
+<li><span class="tag new">v5</span> หลังตรวจรายการเสร็จ มีขั้น “ชุดตัวเลือกแนะนำ” (ข้าม ได้) ก่อน Preview — ดู <a href="#templates">ข้อ 11</a></li>
+<li>V1 = <b>เพิ่มต่อท้าย</b> เมนูเดิม ไม่ลบ/แทนที่ (D4 ตัดสินแล้ว) — ใช้กับทั้งร้านใหม่และร้านเก่า</li>
+<li>Error: “อ่านไม่ได้บางส่วน” → [ถ่ายใหม่] [อัปโหลดเพิ่ม] [กรอกเอง] ไม่บังคับ retry AI</li>
+</ul>
+
+<!-- ─────────────────────────────── -->
+<h2 id="existing">10. ร้านเก่าเพิ่มเมนูใหม่ด้วย AI (โหมด append) <span class="tag new">ใหม่ใน v4</span></h2>
+<div class="callout">
+<strong>โจทย์:</strong> ร้านที่เปิดขายอยู่แล้ว (รวม 22 ร้านเดิม) มีเมนูใหม่หรือเปลี่ยนป้ายเมนู อยากถ่ายรูปแล้วเพิ่มเข้าระบบได้เลย ไม่ต้องกรอกทีละรายการ
+</div>
+
+<h3>10.1 ใครใช้ได้ / ทางเข้า</h3>
+<ul>
+<li>ร้าน food ทุกสถานะ (<code>pending</code> / <code>approved</code>) ที่เปิด feature flag · ร้านซักรีดตาม D6 (ไม่ใน V1)</li>
+<li>ทางเข้า: <code>lib/apps/merchant/screens/menu_management_screen.dart</code> — ปุ่ม “เพิ่มเมนูด้วย AI” ข้างปุ่มเพิ่มเมนูเดิม และใน empty state · หลัง Publish กลับมา refresh รายการ</li>
+<li>ใช้หน้าถ่าย/อัปโหลด, สถานะ realtime, Review, Preview ชุดเดียวกับ Quick Setup — ต่างกันแค่ <code>mode = 'append'</code></li>
+</ul>
+
+<h3>10.2 ความต่างจากโหมดร้านใหม่</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>เรื่อง</th><th>onboarding (ร้านใหม่)</th><th>append (ร้านเก่า)</th></tr></thead>
+<tbody>
+<tr><td>เมนูเดิม</td><td>ส่วนใหญ่ว่าง</td><td>มีแล้ว ต้องเทียบรายการซ้ำ (10.3)</td></tr>
+<tr><td>หมวดหมู่</td><td>สร้างใหม่ตามที่ AI เสนอ</td><td>จับคู่หมวดเดิมก่อน · หมวดใหม่ต้องให้ร้านกดยืนยัน · <code>sort_order</code> ต่อท้าย</td></tr>
+<tr><td>option group</td><td>สร้างใหม่ + dedupe ภายใน job</td><td>ใช้ group เดิมในคลังตัวเลือกของร้านเมื่อ (ชื่อ + ชุดตัวเลือก + ราคา) ตรงกันทุกค่า · <b>ห้ามแก้ group เดิม</b> เพราะผูกกับเมนูอื่นอยู่ — ถ้าไม่ตรงให้สร้าง group ใหม่</td></tr>
+<tr><td>ลูกค้าเห็นเมื่อไร</td><td>หลังแอดมินอนุมัติร้าน</td><td><b>ทันทีหลัง Publish</b> (ร้าน approved) — ไม่มีแอดมินกั้น จึงต้องมีกติกา 10.4</td></tr>
+<tr><td>โควตา</td><td>ตาม D5</td><td>โควตารายเดือนแยก (D5)</td></tr>
+</tbody></table></div>
+
+<h3>10.3 เทียบกับเมนูเดิม (duplicate กับของเดิม)</h3>
+<p>Server เทียบทุกรายการกับ <code>menu_items</code> ของร้าน <b>รวมรายการที่ซ่อนอยู่</b> (<code>is_available = false</code>) ด้วยชื่อที่ normalize แล้ว (ตัดช่องว่าง/ตัวพิมพ์/คำว่า “เมนู”)</p>
+<div class="table-wrap"><table>
+<thead><tr><th>match_type</th><th>เงื่อนไข</th><th>ค่าเริ่มต้นในหน้า Review</th><th>ร้านทำอะไรได้ (V1)</th></tr></thead>
+<tbody>
+<tr><td><code>new</code></td><td>ไม่เจอชื่อที่ตรงหรือคล้าย</td><td>เพิ่ม</td><td>แก้ / ไม่ใช้</td></tr>
+<tr><td><code>exact_dup</code></td><td>ชื่อตรง + ราคาเท่ากัน</td><td>badge “มีอยู่แล้ว” · <b>ข้าม</b></td><td>ข้าม (เพิ่มซ้ำไม่ได้)</td></tr>
+<tr><td><code>price_changed</code></td><td>ชื่อตรง แต่ราคาต่าง</td><td>แสดง “ราคาเดิม 50 ฿ → ในรูป 55 ฿” · <b>ข้าม</b></td><td>ข้าม / เพิ่มเป็นรายการใหม่ (ต้องเปลี่ยนชื่อ) · การอัปเดตราคารายการเดิมเป็น V1.1 (D9)</td></tr>
+<tr><td><code>similar</code></td><td>ชื่อคล้ายกัน (เช่น similarity ≥ 0.8 หรือต่างแค่คำขยาย ร้อน/เย็น)</td><td>⚠️ ต้องยืนยัน</td><td>ยืนยันว่าเป็นเมนูใหม่ / ข้าม</td></tr>
+</tbody></table></div>
+<ul>
+<li>หัวสรุปของโหมด append: <code>พบ 18 รายการ · ใหม่ 11 · มีอยู่แล้ว 5 · ราคาเปลี่ยน 2</code> + filter “เฉพาะเมนูใหม่”</li>
+<li>ตอน Publish ให้ RPC <b>เทียบซ้ำอีกรอบกับเมนูปัจจุบัน</b> (ร้านอาจเพิ่มเมนูเองระหว่าง Review) ถ้าเจอซ้ำใหม่ → ไม่ publish และให้กลับไป Review</li>
+</ul>
+
+<h3>10.4 กติกาความปลอดภัยสำหรับร้านที่อนุมัติแล้ว</h3>
+<ul>
+<li><b>RPC โหมด append ทำได้แค่ INSERT</b> — ไม่ UPDATE/DELETE <code>menu_items</code>, <code>menu_categories</code>, <code>menu_option_groups</code> เดิม (มี test ยืนยัน)</li>
+<li>Preview บังคับ + ติ๊ก “ตรวจชื่อและราคาแล้ว” ก่อนปุ่ม Publish จะกดได้ · รายการที่มี issue ค้างยัง publish ไม่ได้เหมือนเดิม</li>
+<li>ตอน Publish ให้เลือก <b>“ซ่อนไว้ก่อน”</b> (<code>is_available = false</code>) หรือ <b>“เปิดขายทันที”</b> — ค่าเริ่มต้นตาม D8</li>
+<li>ทุกเมนูที่สร้างติด <code>source_import_job_id</code> → มีปุ่ม <b>“ซ่อนเมนูชุดนี้ทั้งหมด”</b> ในประวัติการนำเข้า (RPC <code>merchant_hide_import_items(p_job_id)</code> ตั้ง <code>is_available = false</code> เฉพาะรายการของ job นั้น ไม่ลบ ไม่กระทบออเดอร์เก่า)</li>
+<li>ล็อกต่อร้านตอน Publish (<code>pg_advisory_xact_lock</code> ด้วย merchant_id) กันกดจาก 2 เครื่องพร้อมกัน · ยังใช้กติกา 1 job processing ต่อร้าน</li>
+<li>แจ้งแอดมินผ่าน outbox เดิมเมื่อร้าน approved publish ผ่าน AI (จำนวนรายการ + ลิงก์ดู job) · admin-web ดูประวัติ import และสั่งซ่อนทั้งชุดแทนร้านได้</li>
+</ul>
+
+<h3>10.5 งานเพิ่มจาก v3</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>งาน</th><th>ฝั่ง</th></tr></thead>
+<tbody>
+<tr><td>E1</td><td>คอลัมน์ <code>mode</code>, <code>visibility</code>, <code>existing_menu_count</code> ใน job + <code>match_type</code> / <code>matched_menu_item_id</code> / <code>matched_price</code> / <code>action</code> ใน item + <code>menu_items.source_import_job_id</code></td><td>DB</td></tr>
+<tr><td>E2</td><td>Worker: จับคู่กับเมนู/หมวด/option group เดิม (ข้อ 10.3) + ส่งรายชื่อหมวดเดิมให้ AI</td><td>Edge fn</td></tr>
+<tr><td>E3</td><td><code>merchant_publish_import</code> รองรับ append (insert-only, re-check duplicate, advisory lock, visibility) + <code>merchant_hide_import_items</code></td><td>DB/RPC</td></tr>
+<tr><td>E4</td><td>ปุ่ม “เพิ่มเมนูด้วย AI” ใน <code>menu_management_screen.dart</code> + Review โหมด append (badge มีอยู่แล้ว/ราคาเปลี่ยน/คล้าย) + ตัวเลือกซ่อน/เปิดขาย + ประวัติการนำเข้า</td><td>Flutter</td></tr>
+<tr><td>E5</td><td>แจ้งแอดมิน + หน้า/แท็บประวัติ import ใน admin-web พร้อมปุ่มซ่อนทั้งชุด</td><td>Edge fn + admin-web</td></tr>
+<tr><td>E6</td><td>Test: append ไม่แตะเมนูเดิม, re-check ซ้ำตอน publish, ซ่อนทั้งชุดเฉพาะของ job ตัวเอง, ร้านอื่นเรียกไม่ได้, golden set เพิ่ม 5 เคส “ร้านมีเมนูอยู่แล้ว”</td><td>QA</td></tr>
+</tbody></table></div>
+
+<!-- ─────────────────────────────── -->
+<h2 id="templates">11. ชุดตัวเลือกแนะนำ (Option Templates) <span class="tag new">ใหม่ใน v5</span></h2>
+<div class="callout">
+<strong>ปัญหา:</strong> ป้ายเมนูส่วนใหญ่ไม่ได้เขียนตัวเลือกที่ร้านใช้จริง (หวานน้อย, เผ็ดมาก, ไข่ดาว +10, เส้นเล็ก/ใหญ่) AI จึงสร้างให้ไม่ได้เพราะห้ามเดา → ร้านต้องไปสร้างเองทีละชุดในคลังตัวเลือก<br>
+<strong>ทางแก้:</strong> ระบบเสนอ “แม่แบบ” ที่แอดมินเตรียมไว้ตามประเภทร้าน ให้ร้านติ๊กใช้และเลือกเมนูที่จะผูกเอง — ไม่ใช่ AI เติมข้อมูล
+</div>
+
+<h3>11.1 หลักการ</h3>
+<ul>
+<li><b>แม่แบบมาจากแอดมิน ไม่ใช่ AI สร้างสด</b> — เนื้อหาคงที่ ตรวจได้ แก้จาก admin-web</li>
+<li><b>AI ทำหน้าที่เดียว:</b> เดาประเภทร้าน (<code>store_type_guess</code>) จากรูปเมนู เพื่อเลือกชุดแม่แบบที่จะแสดง — ร้านเปลี่ยนประเภทได้ในหน้าเดียวกัน</li>
+<li><b>จับคู่แม่แบบ↔เมนูด้วยกฎตายตัว</b> (คำในชื่อ/หมวด เช่น กาแฟ|ชา|นม|โกโก้ → ความหวาน) ไม่เรียก AI เพิ่ม ไม่มีค่าใช้จ่าย AI</li>
+<li><b>Opt-in ทั้งหมด:</b> ไม่ติ๊กให้ล่วงหน้า (D11 ตัดสินแล้ว) — ร้านกด “ใช้” เอง และเห็นรายชื่อเมนูที่จะถูกผูกก่อนยืนยัน</li>
+<li><b>ตัวเลือกจากรูปมาก่อน:</b> ถ้าเมนูนั้นมีกลุ่มตัวเลือกจากรูปที่ชื่อ/ความหมายเดียวกันแล้ว (เช่น รูปเขียน “หวาน 0/50/100”) จะไม่เสนอแม่แบบซ้ำให้เมนูนั้น</li>
+<li><b>ราคาในแม่แบบเป็นค่าตั้งต้น</b> — ร้านต้องเห็นและแก้ได้ทุกราคาก่อน Publish ตัวเลือกที่มีราคาติดป้าย “ราคาจากแม่แบบ ตรวจก่อน” (D10 ตัดสินแล้ว: ใช้ราคาตามตาราง 11.2)</li>
+</ul>
+
+<h3>11.2 ชุดแม่แบบเริ่มต้น (seed — แอดมินแก้ได้)</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>ประเภทร้าน</th><th>แม่แบบ</th><th>รูปแบบ</th><th>จับคู่เมนูอัตโนมัติ (เสนอ)</th></tr></thead>
+<tbody>
+<tr><td rowspan="3">คาเฟ่ / เครื่องดื่ม (<code>cafe</code>)</td><td>ระดับความหวาน: ไม่หวาน · หวานน้อย · ปกติ · หวานมาก (0 ฿)</td><td>ต้องเลือก 1</td><td>ชื่อ/หมวดมี กาแฟ ชา นม โกโก้ มัทฉะ ปั่น สมูทตี้</td></tr>
+<tr><td>ท็อปปิ้ง: ไข่มุก · บุก · วิปครีม (+10 ฿)</td><td>ไม่บังคับ เลือกได้หลายอย่าง</td><td>ชา นม โกโก้ ปั่น</td></tr>
+<tr><td>เพิ่มช็อต (+15 ฿) · เปลี่ยนนม: นมโอ๊ต (+15 ฿)</td><td>ไม่บังคับ</td><td>กาแฟ ลาเต้ อเมริกาโน่ มอคค่า</td></tr>
+<tr><td rowspan="3">อาหารตามสั่ง (<code>made_to_order</code>)</td><td>ระดับเผ็ด: ไม่เผ็ด · เผ็ดน้อย · กลาง · เผ็ดมาก (0 ฿)</td><td>ต้องเลือก 1</td><td>กะเพรา ผัด แกง ยำ ต้มยำ พริก</td></tr>
+<tr><td>ไข่: ไข่ดาว (+10) · ไข่เจียว (+15) · ไข่ดาวไม่สุก (+10)</td><td>ไม่บังคับ</td><td>ข้าว… · กะเพรา · ผัด…ราดข้าว</td></tr>
+<tr><td>พิเศษ (+10) · เพิ่มข้าว (+10)</td><td>ไม่บังคับ</td><td>หมวดอาหารจานเดียว</td></tr>
+<tr><td rowspan="2">ก๋วยเตี๋ยว (<code>noodle</code>)</td><td>เส้น: เส้นเล็ก · เส้นใหญ่ · เส้นหมี่ · บะหมี่ · วุ้นเส้น (0 ฿)</td><td>ต้องเลือก 1</td><td>ก๋วยเตี๋ยว เย็นตาโฟ ต้มยำ(เส้น) เกาเหลา*</td></tr>
+<tr><td>แบบ: น้ำใส · น้ำตก · ต้มยำ · แห้ง (0 ฿) · พิเศษ (+10)</td><td>ต้องเลือก 1 / ไม่บังคับ</td><td>ก๋วยเตี๋ยว</td></tr>
+<tr><td>ส้มตำ / อีสาน (<code>isan</code>)</td><td>พริก: 0 · 1 · 3 · 5 เม็ด ขึ้นไป (0 ฿) · ใส่ปูดอง / ปลาร้า (0 ฿)</td><td>ต้องเลือก 1 / ไม่บังคับ</td><td>ตำ ยำ ลาบ น้ำตก</td></tr>
+<tr><td>ของหวาน / เบเกอรี่ (<code>dessert</code>)</td><td>ท็อปปิ้งเพิ่ม (+10) · อุ่น/ไม่อุ่น (0 ฿)</td><td>ไม่บังคับ / ต้องเลือก 1</td><td>บิงซู เค้ก ขนมปัง โทสต์</td></tr>
+<tr><td>อื่น ๆ (<code>other</code>)</td><td>ระดับเผ็ด (ทั่วไป)</td><td>ต้องเลือก 1</td><td>ไม่จับคู่อัตโนมัติ — ร้านเลือกเมนูเอง</td></tr>
+</tbody></table></div>
+<p class="meta">* เกาเหลาไม่มีเส้น — ตัวอย่างว่ากฎจับคู่ต้องมี “คำยกเว้น” (exclude keywords) ด้วย · ราคาในตารางเป็นค่าตั้งต้นที่ใช้จริงใน seed (D10 ตัดสินแล้ว) ร้านแก้ได้ทุกราคาก่อน Publish</p>
+
+<h3>11.3 หน้าจอในแอป (ขั้นหลัง Review ก่อน Preview)</h3>
+<pre><code>ชุดตัวเลือกแนะนำ  ·  ร้านของคุณ: [คาเฟ่ / เครื่องดื่ม ▾]   ← AI เดา, ร้านเปลี่ยนได้
+─────────────────────────────────────────────
+☐ ระดับความหวาน            ต้องเลือก 1 · 4 ตัวเลือก · ฟรี
+    ใช้กับ 14 เมนู (กาแฟ, ชา, นม…)   [ดู/แก้เมนู] [แก้ตัวเลือก]
+☐ ท็อปปิ้ง                  ไม่บังคับ · 3 ตัวเลือก · +10 ฿  ⚠ ราคาจากแม่แบบ ตรวจก่อน
+    ใช้กับ 6 เมนู                     [ดู/แก้เมนู] [แก้ตัวเลือก]
+☐ เพิ่มช็อต                  (ข้ามแล้ว 3 เมนูที่มีตัวเลือกนี้จากรูปอยู่แล้ว)
+─────────────────────────────────────────────
+                        [ข้ามขั้นนี้]   [ถัดไป: ดูตัวอย่างร้าน]</code></pre>
+<ul>
+<li>“แก้ตัวเลือก” = เปลี่ยนชื่อ/ราคา/ลบ/เพิ่มตัวเลือก และ min/max ได้ ก่อนสร้างจริง</li>
+<li>“ดู/แก้เมนู” = รายชื่อเมนูที่กฎจับคู่ให้ ติ๊กออก/เพิ่มเมนูอื่นได้</li>
+<li>Preview (ข้อ 9) แสดงตัวเลือกจากแม่แบบบนหน้าเมนูแบบที่ลูกค้าเห็น</li>
+</ul>
+
+<h3>11.4 Data / Publish</h3>
+<pre><code>-- แม่แบบ (แอดมินดูแล, ร้านอ่านได้เฉพาะ is_active)
+option_templates(id uuid pk, store_type text,        -- cafe | made_to_order | noodle | isan | dessert | other
+        name text, min_selection int, max_selection int,
+        options jsonb,                              -- [{label, price}]
+        match_keywords text[], exclude_keywords text[],
+        sort_order int, is_active bool, version int, updated_at)
+
+-- สิ่งที่ร้านเลือกใน job (แก้ได้ก่อน publish)
+merchant_import_template_selections(id, import_job_id, template_id, template_version,
+        name text, min_selection int, max_selection int,
+        options jsonb,                              -- ค่าหลังร้านแก้
+        import_item_ids uuid[],                     -- รายการ draft ที่จะผูก
+        created_at, updated_at)
+
+merchant_import_jobs + store_type text                -- ค่าที่ร้านยืนยัน</code></pre>
+<ul>
+<li><code>merchant_publish_import</code> สร้าง <code>menu_option_groups</code> + <code>menu_options</code> + links จาก selections <b>ใน transaction เดียวกับเมนู</b> · dedupe กับ group ที่สร้างจากรูปใน job เดียวกัน (ชื่อ + ชุดตัวเลือก + ราคา)</li>
+<li>โหมด append (ข้อ 10): ถ้าคลังตัวเลือกของร้านมี group ที่ตรงทุกค่าแล้ว → ผูก group เดิม ไม่สร้างใหม่ · ถ้าชื่อเหมือนแต่ค่าต่าง → สร้างใหม่ (ห้ามแก้ group เดิม) และแจ้งร้าน</li>
+<li>บันทึก <code>template_id</code> + <code>template_version</code> ลง audit เพื่อรู้ว่าตัวเลือกไหนมาจากแม่แบบ</li>
+<li>ประเภทร้านเก็บใน job ก่อน (V1) · ยังไม่เพิ่มคอลัมน์ใน <code>profiles</code> — ค่อยพิจารณาเมื่อใช้ในฟีเจอร์อื่น</li>
+</ul>
+
+<h3>11.5 งานเพิ่มจาก v4</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>งาน</th><th>ฝั่ง</th></tr></thead>
+<tbody>
+<tr><td>T1</td><td>Migration <code>option_templates</code> + <code>merchant_import_template_selections</code> + <code>merchant_import_jobs.store_type</code> + RLS + seed ตามข้อ 11.2</td><td>DB</td></tr>
+<tr><td>T2</td><td>เพิ่ม <code>store_type_guess</code> ใน JSON schema ของ AI + validate enum ฝั่ง server</td><td>Edge fn</td></tr>
+<tr><td>T3</td><td>Rule matcher (keywords/exclude + ข้ามเมนูที่มี group จากรูปแล้ว) — เขียนใน <code>_shared/</code> + unit test ภาษาไทย</td><td>Edge fn</td></tr>
+<tr><td>T4</td><td>RPC บันทึก/แก้ selections + ต่อเข้า <code>merchant_publish_import</code> (รวม dedupe/reuse group ในโหมด append)</td><td>DB/RPC</td></tr>
+<tr><td>T5</td><td>Flutter: ขั้น “ชุดตัวเลือกแนะนำ” + เลือกประเภทร้าน + แก้ตัวเลือก/เมนู + ป้ายราคาจากแม่แบบ + แสดงใน Preview</td><td>Flutter</td></tr>
+<tr><td>T6</td><td>admin-web: จัดการแม่แบบ (CRUD, เปิด/ปิด, keywords, เวอร์ชัน)</td><td>admin-web</td></tr>
+<tr><td>T7</td><td>Test: ไม่ติ๊กล่วงหน้า, ไม่เสนอซ้ำกับ group จากรูป, คำยกเว้นทำงาน, publish atomic, append reuse group เดิมโดยไม่แก้</td><td>QA</td></tr>
+</tbody></table></div>
+
+<!-- ─────────────────────────────── -->
+<h2 id="sec">12. Security / Cost</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>เรื่อง</th><th>V1</th></tr></thead>
+<tbody>
+<tr><td>Auth</td><td>JWT + <code>role = 'merchant'</code> + ownership ของ job/path; <code>merchant_id</code> มาจาก <code>auth.uid()</code> เท่านั้น</td></tr>
+<tr><td>ไฟล์</td><td>JPEG/PNG/WebP, ≤ 10 MB ต่อรูป (หลังย่อควรเหลือ &lt; 1 MB), ≤ 8 รูปต่อ job, ตรวจ magic bytes ไม่เชื่อ extension</td></tr>
+<tr><td>Quota</td><td>onboarding: 3 job ที่ประมวลผลสำเร็จต่อร้าน · <span class="tag new">v4</span> append: 5 job ต่อร้านต่อเดือน (ข้อเสนอ D5) — ตั้งใน <code>system_config</code> ทั้งคู่ · 1 job ที่กำลัง processing ต่อร้าน · แอดมินเพิ่มโควตาได้</td></tr>
+<tr><td>ร้านที่อนุมัติแล้ว <span class="tag new">v4</span></td><td>append เป็น insert-only, Preview + ติ๊กยืนยันบังคับ, ซ่อนทั้งชุดย้อนหลังได้, แจ้งแอดมิน (ข้อ 10.4)</td></tr>
+<tr><td>Prompt injection</td><td>รูปเมนูอาจมีข้อความสั่ง AI — system prompt ระบุว่าข้อความในรูปเป็นข้อมูลเท่านั้น + output ถูกบังคับด้วย schema + server validate</td></tr>
+<tr><td>Cost</td><td>บันทึก <code>ai_runs</code> ทุกครั้ง, dashboard รายวันใน admin-web (V1.1), แจ้งเตือน Telegram เมื่อค่าใช้จ่ายรายวันเกินเกณฑ์ (ใช้ outbox เดิม)</td></tr>
+<tr><td>PDPA</td><td>แจ้งในหน้าอัปโหลดว่ารูปจะถูกส่งให้ผู้ให้บริการ AI เพื่ออ่านเมนู + retention ตามข้อ 7</td></tr>
+</tbody></table></div>
+
+<!-- ─────────────────────────────── -->
+<h2 id="phase">13. Phases และ Task</h2>
+
+<h3>Phase 0 — ความปลอดภัย (บังคับก่อน)</h3>
+<ol><li>แยก <code>.env</code> client/server + rotate key + build check (ข้อ 1)</li><li>ตั้ง <code>OPENAI_API_KEY</code>, <code>OPENAI_VISION_MODEL</code> เป็น Supabase secret</li></ol>
+
+<h3>Phase 1 — GP self-service ให้ครบ</h3>
+<p><span class="tag done">ทำแล้ว</span> G4 ประวัติ (<code>merchant_gp_plan_history</code>), G5 backfill, G6 เปลี่ยนเอง + cooldown + นับถอยหลัง (<code>merchant_gp_plan_screen.dart</code>), G8 invariant แพลน↔ค่า, admin-web เลือกแพ็กเกจแทนร้าน — migration <code>20260919235000_gp_plan_self_change_cooldown.sql</code> ผ่าน dry-run แล้ว <b>ยังไม่ apply production</b> · เหลือ G1 (guard ตอนอนุมัติ), G2, G3 (การ์ด+ตัวคำนวณในขั้นสมัคร), G7</p>
+<ol><li>G1 guard ใน <code>approve_merchant</code></li><li>G4 <code>merchant_gp_plan_history</code> + แก้ RPC ให้เขียน history</li><li>G2 admin-web แสดงแพลนในหน้ารออนุมัติ</li><li>G3 UI การ์ด + ตัวอย่างคำนวณ + ติ๊กยอมรับ</li><li>G5 backfill ร้านเก่า (ตาม D2) · G7 test</li></ol>
+
+<h3>Phase 2 — AI Menu Import V1</h3>
+<ol>
+<li>Golden set: รูปเมนูไทยจริง 30 ใบ (พิมพ์, ลายมือ, กระดาน, ไวนิล, มี variant) + คำตอบที่ถูก → script วัด price/name accuracy · v4: เพิ่ม 5 เคสร้านที่มีเมนูอยู่แล้ว (มีรายการซ้ำ/ราคาเปลี่ยน)</li>
+<li>Migration: ai_runs, import tables, audit, bucket + RLS + policy test</li>
+<li><code>_shared/openai.ts</code>, <code>_shared/menu-options.ts</code> (ย้ายจาก connect_upsert_menu)</li>
+<li>Edge fn <code>merchant-ai-menu-import</code> + worker + schema validation + confidence/duplicate/category</li>
+<li>RPC <code>merchant_publish_import</code> + test (idempotent, rollback เมื่อล้ม, ไม่ใช่เจ้าของเรียกไม่ได้)</li>
+<li>Flutter: หน้าเข้า Quick Setup, ถ่าย/เลือกรูป + ย่อรูป, สถานะ realtime, Review, Preview, Publish</li>
+<li><span class="tag new">v4</span> โหมด append สำหรับร้านเก่า: งาน E1–E6 (ข้อ 10.5) — ทำพร้อมกับข้อ 2–6 เพราะใช้ตาราง/worker/RPC ชุดเดียวกัน</li>
+<li><span class="tag new">v5</span> ชุดตัวเลือกแนะนำ: งาน T1–T7 (ข้อ 11.5) — ทำหลัง RPC publish หลักเสร็จ ใช้ตาราง/หน้า Review ชุดเดียวกัน</li>
+<li>เปิดทดลองกับร้านใหม่ 5–10 ร้าน <b>+ ร้านเก่า 3–5 ร้านที่ร่วมมือ</b> (feature flag ใน <code>system_config</code> แยก <code>ai_import_onboarding_enabled</code> / <code>ai_import_append_enabled</code> + allowlist ร้าน)</li>
+</ol>
+
+<h3>Phase 3 — V1.1</h3>
+<p><span class="tag new">v5</span> ปุ่ม “เพิ่มจากแม่แบบ” ในหน้าคลังตัวเลือกของร้าน (ใช้แม่แบบนอก AI import ได้) · <span class="tag new">v4</span> อัปเดตราคารายการเดิมจากรูปเมนูใหม่ (D9: ร้านเลือกทีละรายการ + audit ราคาเดิม/ใหม่), PDF (render ฝั่ง Flutter เป็นรูป), Store Setup Wizard (เช็คสิ่งที่ขาด), เวลาเปิด-ปิดจากภาษาพูด (แสดง preview ก่อนบันทึก), prep time ต่อหมวด, คำอธิบายเมนูด้วย AI (optional), dashboard ต้นทุน AI</p>
+
+<h3>Phase 4 — V1.2+</h3>
+<p>Excel/CSV, แทนที่เมนูทั้งร้าน (replace) จากรูปชุดใหม่, logo detection, bounding box ต้นทาง, Admin-assisted onboarding (ต้องออกแบบการสร้างร้านแทนเมื่อยังไม่มี auth user), เวลาเปิดหลายช่วงต่อวัน, Onboarding Agent แบบสนทนา</p>
+
+<h3>การแบ่งงานให้ agent</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>งาน</th><th>Agent</th></tr></thead>
+<tbody>
+<tr><td>Migration, RPC, Edge functions, OpenAI integration</td><td><code>backend_dev</code></td></tr>
+<tr><td>Flutter (Quick Setup, Review, GP card, ปุ่มเพิ่มเมนูด้วย AI + ประวัติ import, ขั้นชุดตัวเลือกแนะนำ)</td><td><code>mobile_dev</code></td></tr>
+<tr><td>admin-web (หน้าอนุมัติ, dashboard ต้นทุน, ประวัติ import + ซ่อนทั้งชุด, จัดการแม่แบบตัวเลือก)</td><td><code>frontend_web</code></td></tr>
+<tr><td>Golden set + accuracy script + test cases</td><td><code>qa_engineer</code></td></tr>
+<tr><td>ตรวจทุก phase ก่อน commit</td><td><code>code_reviewer</code></td></tr>
+</tbody></table></div>
+
+<!-- ─────────────────────────────── -->
+<h2 id="dod">14. Definition of Done</h2>
+<h3>GP self-service (Phase 1)</h3>
+<ul>
+<li>ร้าน food ใหม่เลือกแพ็กเกจเองได้ เห็นตัวอย่างคำนวณ และติ๊กยอมรับเงื่อนไข</li>
+<li>แอดมินอนุมัติร้านได้โดยไม่ต้องกรอก GP; ร้าน food ที่ไม่มีแพลนอนุมัติไม่ได้ (ยกเว้น override พร้อม audit)</li>
+<li>มี history การเลือก/เปลี่ยนแพลนพร้อม snapshot ค่า</li>
+<li>ออเดอร์แรกของร้านใหม่คิด GP และค่าส่งตรงกับแพลน (ทดสอบ 3 แพลน × ระยะในเกณฑ์/เกินเกณฑ์)</li>
+</ul>
+<h3>AI Menu Import V1 (Phase 2)</h3>
+<ul>
+<li>อัปโหลดได้ 1–8 รูป, ประมวลผลแบบ async, เห็นสถานะ realtime</li>
+<li>Golden set: <b>ราคาถูกต้อง ≥ 95%</b> ของรายการที่อ่านได้, ชื่อ ≥ 90%, ไม่มีรายการราคาผิดที่ติดสถานะ “พร้อม” (false-ready = 0 ใน golden set)</li>
+<li>Variant/add-on แปลงเป็น option group ถูกต้องตาม schema จริง, group ซ้ำถูก dedupe</li>
+<li>แก้ / ไม่ใช้ / อนุมัติทั้งหมดที่พร้อม / เลือกราคาเมื่อขัดกันได้</li>
+<li>Preview ก่อน Publish; Publish atomic และ idempotent</li>
+<li>มี <code>ai_runs</code> และ audit ครบ; โควตาทำงาน</li>
+<li>ไม่มี secret ใดใน Flutter asset (มี build check)</li>
+<li>ผ่าน <code>code_reviewer</code> + policy test + smoke test</li>
+</ul>
+<h3>ร้านเก่าเพิ่มเมนูด้วย AI (Phase 2, v4)</h3>
+<ul>
+<li>ร้าน approved เข้า “เพิ่มเมนูด้วย AI” จากหน้าจัดการเมนูได้ และเมนูใหม่ต่อท้ายเมนูเดิมถูกหมวด</li>
+<li>รายการที่มีอยู่แล้วถูกติด “มีอยู่แล้ว/ราคาเปลี่ยน/คล้าย” ถูกต้องใน golden set 5 เคส และไม่มีเมนูซ้ำหลุดเข้าไป</li>
+<li>Publish โหมด append ไม่แก้/ลบเมนู หมวด หรือ option group เดิม (ตรวจด้วย test ก่อน/หลัง)</li>
+<li>เลือกซ่อน/เปิดขายตอน Publish ได้ และ “ซ่อนเมนูชุดนี้ทั้งหมด” ซ่อนเฉพาะรายการของ job นั้น</li>
+<li>แอดมินได้รับแจ้งและดูประวัติ import ของร้านได้</li>
+</ul>
+<h3>ชุดตัวเลือกแนะนำ (Phase 2, v5)</h3>
+<ul>
+<li>ร้านที่ป้ายเมนูไม่มีตัวเลือก ได้รับข้อเสนอแม่แบบตามประเภทร้าน และเลือกเมนูที่จะผูกได้</li>
+<li>ไม่มีแม่แบบใดถูกติ๊กหรือสร้างโดยร้านไม่ได้กดยืนยัน</li>
+<li>ไม่เสนอแม่แบบให้เมนูที่มีตัวเลือกความหมายเดียวกันจากรูปแล้ว · คำยกเว้นทำงาน (เช่น เกาเหลาไม่ได้แม่แบบเส้น)</li>
+<li>ร้านแก้ชื่อ/ราคา/ตัวเลือกได้ก่อน Publish และเห็นใน Preview · Publish สร้าง group + links ใน transaction เดียวกับเมนู</li>
+<li>โหมด append ผูก group เดิมที่ตรงทุกค่าได้โดยไม่แก้ group เดิม</li>
+<li>แอดมินเพิ่ม/แก้/ปิดแม่แบบได้จาก admin-web</li>
+</ul>
+
+<!-- ─────────────────────────────── -->
+<h2 id="decide">15. การตัดสินใจ</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>เรื่อง</th><th>ผลการตัดสินใจ / สถานะ</th></tr></thead>
+<tbody>
+<tr><td>D1</td><td>แก้ secret ในแอป</td><td><span class="tag done">ทำแล้ว</span> app 1.11.0+119 bundle เฉพาะ <code>.env.client</code> (5 key สาธารณะ) + test กัน secret กลับเข้า asset · <b>ไม่ rotate key ตอนนี้</b> — ต้อง rotate ก่อนเปิดตัวเต็ม · ห้ามอัปโหลด AAB 1.10.1+118 · ต้องสร้าง <code>.env.client</code> บนเครื่อง Mac ก่อน build iOS</td></tr>
+<tr><td>D1b</td><td>ระบบชำระเงิน</td><td>เปลี่ยน Omise → <b>Beam</b> ทั้งหมด (ทำผ่าน Edge Function, secret อยู่ใน Supabase secrets) — งานแยก ยังไม่เริ่ม</td></tr>
+<tr><td>D2</td><td>ร้านเก่า 22 ร้าน</td><td>ผูกเฉพาะร้านที่ GP% + ค่าส่ง (เริ่มต้น/ระยะ/ต่อ กม.) ตรงกับแพ็กเกจ และไม่มีค่าส่งคงที่ → 6 ร้าน · ส่วน GP split ภายใน (ระบบ/คนขับ) ของร้านเดิมคงไว้ ไม่เปลี่ยนเงิน</td></tr>
+<tr><td>D3</td><td>เปลี่ยนแพ็กเกจหลังอนุมัติ</td><td>ร้านเปลี่ยนเองได้ทุก 30 วัน (นับจากการเปลี่ยนเองครั้งล่าสุดหลังอนุมัติ) มีนับถอยหลังในแอป · การเปลี่ยนโดยแอดมิน/backfill ไม่นับและไม่รีเซ็ต · ร้านดีลตรงเปลี่ยนเองไม่ได้ · ห้ามเปลี่ยนระหว่างมีออเดอร์ค้าง · ถ้าแอดมินแก้ค่าให้ต่างจากแพ็กเกจ ร้านกลายเป็นดีลตรงอัตโนมัติ</td></tr>
+<tr><td>D4</td><td>ร้านที่มีเมนูอยู่แล้ว import ซ้ำ</td><td><span class="tag done">ตัดสินแล้ว 2026-09-26</span> ร้านเก่าใช้ AI เพิ่มเมนูใหม่ได้ · V1 = เพิ่มต่อท้ายเท่านั้น (insert-only) + ตรวจซ้ำกับเมนูเดิม ค่าเริ่มต้น “ข้าม” (ข้อ 10)</td></tr>
+<tr><td>D5</td><td>โควตาฟรีต่อร้าน</td><td>รอตัดสินใจ (ข้อเสนอ: onboarding 3 job ครั้งเดียว + append 5 job/เดือน)</td></tr>
+<tr><td>D6</td><td>ร้านซักรีดใช้ Quick Setup</td><td>รอตัดสินใจ (ข้อเสนอ: ไม่ใน V1)</td></tr>
+<tr><td>D7</td><td>แก้ช่องโหว่ RLS profiles (role/approval_status)</td><td><span class="tag p0">รออนุมัติ</span> critical — ต้องแก้ก่อนเปิดตัว (ตามบันทึกโปรเจกต์ แก้แล้ว 2026-09-20 commit <code>78f9ffb</code> — ตรวจยืนยันอีกครั้งก่อนเริ่ม Phase 2)</td></tr>
+<tr><td>D8</td><td>ร้าน approved publish เมนูจาก AI แล้วขายทันทีหรือไม่ <span class="tag new">v4</span></td><td>รอตัดสินใจ (ข้อเสนอ: ค่าเริ่มต้น “ซ่อนไว้ก่อน” ร้านเปลี่ยนเป็น “เปิดขายทันที” ได้ในหน้า Publish)</td></tr>
+<tr><td>D9</td><td>ให้ AI อัปเดตราคาเมนูเดิมเมื่อป้ายเปลี่ยนราคา <span class="tag new">v4</span></td><td>รอตัดสินใจ (ข้อเสนอ: ไม่ใน V1 — V1.1 ให้ร้านกดเลือกทีละรายการ + audit ราคาเดิม/ใหม่)</td></tr>
+<tr><td>D10</td><td>ราคาตั้งต้นในแม่แบบ (ไข่ดาว +10, ท็อปปิ้ง +10, เพิ่มช็อต +15 ฯลฯ) <span class="tag new">v5</span></td><td><span class="tag done">ตัดสินแล้ว 2026-09-26</span> ใช้ราคาตามตารางข้อ 11.2 เป็นค่าตั้งต้นใน seed + ติดป้าย “ราคาจากแม่แบบ ตรวจก่อน” ทุกตัวเลือกที่มีราคา ร้านแก้ได้ก่อน Publish</td></tr>
+<tr><td>D11</td><td>ติ๊กแม่แบบให้ล่วงหน้าหรือไม่ <span class="tag new">v5</span></td><td><span class="tag done">ตัดสินแล้ว 2026-09-26</span> <b>ไม่ติ๊ก</b> — ร้านกด “ใช้” เองทุกแม่แบบ</td></tr>
+</tbody></table></div>
+
+<!-- ─────────────────────────────── -->
+<h2 id="risk">16. ความเสี่ยง</h2>
+<ul>
+<li><b>ราคาอ่านผิดแล้วหลุดขึ้นขาย</b> — ความเสี่ยงสูงสุด: ลดด้วยเกณฑ์ราคาเข้มกว่า, <code>price_text_raw</code> cross-check, Preview บังคับ, และแอดมินยังเป็นด่านสุดท้ายตอนอนุมัติร้าน</li>
+<li><span class="tag new">v4</span> <b>ร้าน approved ไม่มีแอดมินกั้นก่อนขึ้นขาย</b> — ราคาผิดถึงลูกค้าทันที: insert-only, Preview + ติ๊กยืนยันบังคับ, ค่าเริ่มต้นซ่อนไว้ก่อน (D8), ซ่อนทั้งชุดย้อนหลัง, แจ้งแอดมิน</li>
+<li><span class="tag new">v4</span> <b>เมนูซ้ำ/หมวดกระจัดกระจายในร้านเดิม</b> — จับคู่หมวดเดิมก่อน, หมวดใหม่ต้องยืนยัน, ตรวจซ้ำรวมรายการที่ซ่อน และ re-check ตอน publish</li>
+<li><span class="tag new">v5</span> <b>ราคาจากแม่แบบไม่ตรงราคาจริงของร้าน</b> — ร้านขาดทุนหรือลูกค้าจ่ายเกิน: ไม่ติ๊กล่วงหน้า, ป้าย “ราคาจากแม่แบบ ตรวจก่อน”, แสดงใน Preview, แก้ได้ทุกราคา</li>
+<li><span class="tag new">v5</span> <b>กฎจับคู่ผิดเมนู</b> (เช่น เกาเหลาได้ตัวเลือกเส้น) — คำยกเว้น, ร้านเห็นและติ๊กออกได้ก่อนยืนยัน, test ชุดคำภาษาไทย</li>
+<li><b>ต้นทุน AI บานปลาย</b> — ย่อรูปฝั่ง client, โควตา, ai_runs + แจ้งเตือน</li>
+<li><b>Edge Function timeout / memory</b> — async worker, ≤ 2 รูปต่อ request, claim-pattern + retry</li>
+<li><b>ตัวเลข confidence จาก LLM ไม่ calibrate</b> — วัดกับ golden set แล้วปรับเกณฑ์ก่อนเปิดจริง</li>
+<li><b>เงื่อนไข GP ที่ร้านเลือกเองเป็นข้อผูกพันทางการเงิน</b> — ต้องมีหลักฐานการยอมรับ (G4) และข้อความเงื่อนไขที่ตรวจโดยเจ้าของธุรกิจ</li>
+<li><b>Secret หลุดใน build เก่า</b> — rotate แล้วแอปเก่าที่ใช้ service key (ถ้ามีจุดใดใช้) จะพัง ต้องตรวจก่อนว่าโค้ด Flutter อ่าน secret ตัวใดจริงบ้าง</li>
+</ul>
+
+</main>
+<script>
+(function(){
+  var plans=[{n:'รูปแบบที่ 1',gp:.15,base:10,km:5,per:3},{n:'รูปแบบที่ 2',gp:.20,base:5,km:7,per:2},{n:'รูปแบบที่ 3',gp:.25,base:0,km:10,per:1}];
+  var a=document.getElementById('cAmt'),k=document.getElementById('cKm'),b=document.getElementById('cBody');
+  function fmt(x){return (Math.round(x*100)/100).toLocaleString('th-TH')+' ฿'}
+  function render(){
+    var amt=Math.max(0,parseFloat(a.value)||0),km=Math.max(0,parseFloat(k.value)||0);
+    b.innerHTML=plans.map(function(p){
+      var fee=p.base+Math.max(0,km-p.km)*p.per;
+      return '<tr><td>'+p.n+' (หัก '+(p.gp*100)+'%)</td><td class="num">'+fmt(amt*(1-p.gp))+'</td><td class="num">'+fmt(fee)+'</td></tr>';
+    }).join('');
+  }
+  a.addEventListener('input',render);k.addEventListener('input',render);render();
+})();
+</script>
+</body>
+</html>

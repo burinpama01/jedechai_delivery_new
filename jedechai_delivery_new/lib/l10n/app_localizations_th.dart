@@ -8201,4 +8201,559 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get forgotPwdBackToLogin => 'กลับไปเข้าสู่ระบบ';
+
+  @override
+  String get aiImpMenuButton => 'เพิ่มด้วย AI';
+
+  @override
+  String get aiImpEmptyCta => 'สแกนป้ายเมนูด้วย AI';
+
+  @override
+  String get aiImpTitleOnboarding => 'สแกนเมนูด้วย AI';
+
+  @override
+  String get aiImpTitleAppend => 'เพิ่มเมนูด้วย AI';
+
+  @override
+  String get aiImpStartSubtitle => 'ถ่ายรูปป้ายเมนู แล้วตรวจก่อนขึ้นร้าน';
+
+  @override
+  String get aiImpStep1 => 'ถ่ายหรือเลือกรูปป้ายเมนูให้ชัด เห็นชื่อและราคาครบ';
+
+  @override
+  String get aiImpStep2 => 'AI อ่านเป็นรายการแบบร่าง — คุณตรวจ แก้ และยืนยันทุกรายการ';
+
+  @override
+  String get aiImpStep3Onboarding => 'เลือกชุดตัวเลือกแนะนำ ดูตัวอย่าง แล้วบันทึกเมนู';
+
+  @override
+  String get aiImpStep3Append => 'เมนูใหม่จะเพิ่มต่อท้ายเมนูเดิม เมนูที่มีอยู่แล้วจะถูกข้าม';
+
+  @override
+  String aiImpQuotaOnboarding(int used, int limit) {
+    return 'ใช้ไปแล้ว $used/$limit ครั้ง';
+  }
+
+  @override
+  String aiImpQuotaAppend(int used, int limit) {
+    return 'เดือนนี้ใช้ไปแล้ว $used/$limit ครั้ง';
+  }
+
+  @override
+  String aiImpQuotaFullOnboarding(int limit) {
+    return 'ใช้ครบ $limit ครั้งแล้ว ติดต่อแอดมินหากต้องการเพิ่ม';
+  }
+
+  @override
+  String aiImpQuotaFullAppend(int limit) {
+    return 'เดือนนี้ใช้ครบ $limit ครั้งแล้ว ใช้ได้อีกครั้งเดือนหน้า';
+  }
+
+  @override
+  String get aiImpActiveJob => 'มีงานที่กำลังอ่านเมนูอยู่ แตะเพื่อดู';
+
+  @override
+  String aiImpPhotosTitle(int count, int max) {
+    return 'รูปเมนู $count/$max';
+  }
+
+  @override
+  String get aiImpPhotosHint => 'ถ่ายตรง ๆ ไม่เอียง แสงพอ แยกรูปละหน้า';
+
+  @override
+  String get aiImpNoPhotos => 'ยังไม่มีรูป';
+
+  @override
+  String get aiImpTakePhoto => 'ถ่ายรูป';
+
+  @override
+  String get aiImpPickGallery => 'เลือกจากคลัง';
+
+  @override
+  String get aiImpPrivacyNote => 'รูปจะถูกส่งให้ผู้ให้บริการ AI เพื่ออ่านเมนูเท่านั้น และเก็บไว้ชั่วคราว ข้อมูลที่ AI อ่านเป็นแบบร่าง คุณต้องตรวจราคาก่อนบันทึก';
+
+  @override
+  String get aiImpStartButtonEmpty => 'เพิ่มรูปก่อน';
+
+  @override
+  String aiImpStartButton(int count) {
+    return 'ให้ AI อ่าน $count รูป';
+  }
+
+  @override
+  String get aiImpRetry => 'ลองใหม่';
+
+  @override
+  String get aiImpHistoryTitle => 'ประวัติการนำเข้าเมนู';
+
+  @override
+  String get aiImpReviewTitle => 'ตรวจรายการเมนู';
+
+  @override
+  String aiImpReviewSummary(int total, int confirmed, int review, int existing) {
+    return 'พบ $total · ยืนยัน $confirmed · ต้องตรวจ $review · มีอยู่แล้ว $existing';
+  }
+
+  @override
+  String aiImpApproveAllReady(int count) {
+    return 'ยืนยันที่พร้อม ($count)';
+  }
+
+  @override
+  String aiImpPendingLeft(int count) {
+    return 'เหลือรอยืนยัน $count';
+  }
+
+  @override
+  String get aiImpNextTemplates => 'ถัดไป: ชุดตัวเลือก';
+
+  @override
+  String aiImpProcessing(int count) {
+    return 'AI กำลังอ่านเมนูจาก $count รูป\nใช้เวลาประมาณ 1–2 นาที ออกจากหน้านี้ได้ กลับมาดูที่ประวัติ';
+  }
+
+  @override
+  String get aiImpProcessingSlow => 'ใช้เวลานานกว่าปกติ ลองรีเฟรชอีกครั้ง';
+
+  @override
+  String get aiImpFailed => 'อ่านเมนูไม่สำเร็จ ลองใหม่ หรือถ่ายรูปให้ชัดขึ้น';
+
+  @override
+  String get aiImpCancelJob => 'ยกเลิกงานนี้';
+
+  @override
+  String get aiImpAlreadyPublished => 'บันทึกเมนูจากงานนี้แล้ว';
+
+  @override
+  String get aiImpCancelled => 'งานนี้ถูกยกเลิกแล้ว';
+
+  @override
+  String get aiImpNoItems => 'ไม่พบรายการเมนูในรูป ลองถ่ายใหม่ให้เห็นชื่อและราคาชัดขึ้น';
+
+  @override
+  String aiImpUnreadable(String regions) {
+    return 'ส่วนที่อ่านไม่ได้: $regions';
+  }
+
+  @override
+  String get aiImpFilterEmpty => 'ไม่มีรายการในหมวดนี้';
+
+  @override
+  String aiImpFilterAll(int count) {
+    return 'ทั้งหมด $count';
+  }
+
+  @override
+  String aiImpFilterReview(int count) {
+    return 'ต้องตรวจ $count';
+  }
+
+  @override
+  String aiImpFilterReady(int count) {
+    return 'พร้อม $count';
+  }
+
+  @override
+  String aiImpFilterExisting(int count) {
+    return 'มีอยู่แล้ว $count';
+  }
+
+  @override
+  String aiImpFilterRejected(int count) {
+    return 'ไม่ใช้ $count';
+  }
+
+  @override
+  String get aiImpIssueMissingPrice => 'ไม่พบราคา';
+
+  @override
+  String get aiImpIssuePriceRange => 'ราคาดูผิดปกติ';
+
+  @override
+  String get aiImpIssuePriceText => 'ราคาไม่ตรงกับข้อความในรูป';
+
+  @override
+  String get aiImpIssueLowPrice => 'AI ไม่มั่นใจราคา';
+
+  @override
+  String get aiImpIssueCheckPrice => 'แนะนำตรวจราคา';
+
+  @override
+  String get aiImpIssueLowName => 'AI ไม่มั่นใจชื่อเมนู';
+
+  @override
+  String get aiImpIssueCheckName => 'แนะนำตรวจชื่อเมนู';
+
+  @override
+  String get aiImpIssueVariant => 'ราคาตัวเลือก (เย็น/ปั่น/ขนาด) ไม่ครบหรือไม่ตรง';
+
+  @override
+  String get aiImpIssueConflict => 'รูปต่างกันให้ราคาไม่ตรงกัน เลือกราคาที่ถูก';
+
+  @override
+  String get aiImpIssueSimilar => 'ชื่อคล้ายเมนูเดิมของร้าน ยืนยันว่าเป็นเมนูใหม่';
+
+  @override
+  String get aiImpBadgePriceChanged => 'ราคาเปลี่ยน';
+
+  @override
+  String get aiImpBadgeExisting => 'มีอยู่แล้ว';
+
+  @override
+  String get aiImpBadgeRejected => 'ไม่ใช้';
+
+  @override
+  String get aiImpBadgeConfirmed => 'ยืนยันแล้ว';
+
+  @override
+  String get aiImpBadgeNeedsReview => 'ต้องตรวจ';
+
+  @override
+  String get aiImpBadgeReady => 'พร้อม';
+
+  @override
+  String get aiImpBadgeNewCategory => 'หมวดใหม่';
+
+  @override
+  String aiImpBadgeAddons(int count) {
+    return 'ของเพิ่ม $count';
+  }
+
+  @override
+  String aiImpPriceChangedLine(String old, String newPrice) {
+    return 'ราคาเดิม $old → ในรูป $newPrice (ข้ามไว้ อัปเดตราคาเดิมได้ในหน้าแก้เมนู)';
+  }
+
+  @override
+  String get aiImpExistingLine => 'มีเมนูนี้ในร้านแล้ว — ข้าม';
+
+  @override
+  String aiImpPriceSeen(String text) {
+    return 'ราคาในรูป: $text';
+  }
+
+  @override
+  String get aiImpChoosePrice => 'เลือกราคาที่ถูกต้อง';
+
+  @override
+  String get aiImpAddAsNew => 'เพิ่มเป็นเมนูใหม่';
+
+  @override
+  String get aiImpRestore => 'นำกลับมาใช้';
+
+  @override
+  String get aiImpEdit => 'แก้ไข';
+
+  @override
+  String get aiImpConfirm => 'ยืนยัน';
+
+  @override
+  String get aiImpReject => 'ไม่ใช้';
+
+  @override
+  String get aiImpSkip => 'ข้าม';
+
+  @override
+  String get aiImpEditTitle => 'แก้ไขรายการ';
+
+  @override
+  String get aiImpFieldName => 'ชื่อเมนู';
+
+  @override
+  String get aiImpFieldPrice => 'ราคา (บาท)';
+
+  @override
+  String get aiImpFieldCategory => 'หมวด';
+
+  @override
+  String get aiImpFieldDescription => 'คำอธิบาย (ไม่บังคับ)';
+
+  @override
+  String get aiImpVariantsTitle => 'แบบ / ขนาด';
+
+  @override
+  String get aiImpVariantsHint => 'ใส่ 2 แบบขึ้นไป ราคาเมนูจะเป็นราคาต่ำสุด ลูกค้าต้องเลือก 1';
+
+  @override
+  String get aiImpFieldVariantGroup => 'ชื่อกลุ่ม เช่น แบบ, ขนาด';
+
+  @override
+  String get aiImpFieldOptionLabel => 'ตัวเลือก';
+
+  @override
+  String get aiImpAddVariant => 'เพิ่มตัวเลือก';
+
+  @override
+  String get aiImpAddonsTitle => 'ของเพิ่ม (ไม่บังคับเลือก)';
+
+  @override
+  String get aiImpFieldAddonGroup => 'กลุ่ม';
+
+  @override
+  String get aiImpFieldAddPrice => '+ บาท';
+
+  @override
+  String get aiImpAddAddon => 'เพิ่มของเพิ่ม';
+
+  @override
+  String get aiImpSaveConfirm => 'บันทึกและยืนยัน';
+
+  @override
+  String get aiImpErrVariantPrice => 'ใส่ราคาให้ครบทุกแบบ';
+
+  @override
+  String get aiImpTemplatesTitle => 'ชุดตัวเลือกแนะนำ';
+
+  @override
+  String get aiImpTemplatesSubtitle => 'ติ๊กชุดที่ร้านใช้จริง แล้วตรวจราคาก่อน';
+
+  @override
+  String get aiImpSkipStep => 'ข้ามขั้นนี้';
+
+  @override
+  String get aiImpNextPreview => 'ถัดไป: ดูตัวอย่าง';
+
+  @override
+  String aiImpNextPreviewWith(int count) {
+    return 'ใช้ $count ชุด · ดูตัวอย่าง';
+  }
+
+  @override
+  String get aiImpStoreTypeLabel => 'ร้านของคุณ';
+
+  @override
+  String aiImpStoreTypeGuess(String type) {
+    return 'AI คาดว่าเป็นร้าน: $type';
+  }
+
+  @override
+  String get aiImpStoreCafe => 'คาเฟ่ / เครื่องดื่ม';
+
+  @override
+  String get aiImpStoreMadeToOrder => 'อาหารตามสั่ง';
+
+  @override
+  String get aiImpStoreNoodle => 'ก๋วยเตี๋ยว';
+
+  @override
+  String get aiImpStoreIsan => 'ส้มตำ / อีสาน';
+
+  @override
+  String get aiImpStoreDessert => 'ของหวาน / เบเกอรี่';
+
+  @override
+  String get aiImpStoreOther => 'อื่น ๆ';
+
+  @override
+  String get aiImpNoTemplates => 'ยังไม่มีชุดแนะนำสำหรับประเภทร้านนี้';
+
+  @override
+  String aiImpRuleRequired(int count) {
+    return 'ลูกค้าต้องเลือก $count';
+  }
+
+  @override
+  String aiImpRuleOptional(int count) {
+    return 'ไม่บังคับ · เลือกได้ $count';
+  }
+
+  @override
+  String get aiImpTemplatePriceBadge => 'ราคาจากแม่แบบ ตรวจก่อน';
+
+  @override
+  String get aiImpTemplateNoItems => 'ยังไม่ได้เลือกเมนู — แตะ “เลือกเมนู”';
+
+  @override
+  String aiImpTemplateItems(int count, String names) {
+    return 'ใช้กับ $count เมนู ($names)';
+  }
+
+  @override
+  String aiImpTemplateSkipped(int count) {
+    return 'ข้าม $count เมนูที่มีตัวเลือกนี้จากรูปแล้ว';
+  }
+
+  @override
+  String get aiImpEditItems => 'เลือกเมนู';
+
+  @override
+  String get aiImpEditOptions => 'แก้ตัวเลือก';
+
+  @override
+  String aiImpEditItemsTitle(String name) {
+    return 'ใช้ “$name” กับเมนู';
+  }
+
+  @override
+  String get aiImpDone => 'เสร็จ';
+
+  @override
+  String get aiImpFieldGroupName => 'ชื่อชุดตัวเลือก';
+
+  @override
+  String get aiImpRequiredOne => 'ลูกค้าต้องเลือก 1 อย่าง';
+
+  @override
+  String get aiImpMaxSelect => 'เลือกได้สูงสุด';
+
+  @override
+  String get aiImpErrOptions => 'ใส่ชื่อชุดและตัวเลือกอย่างน้อย 1';
+
+  @override
+  String get aiImpPreviewTitle => 'ตัวอย่างหน้าร้าน';
+
+  @override
+  String aiImpPreviewSubtitle(int count) {
+    return '$count เมนูที่จะเพิ่ม — แบบที่ลูกค้าเห็น';
+  }
+
+  @override
+  String get aiImpDefaultVariantGroup => 'ตัวเลือก';
+
+  @override
+  String get aiImpDefaultAddonGroup => 'เพิ่มเติม';
+
+  @override
+  String get aiImpVisibilityTitle => 'หลังบันทึก';
+
+  @override
+  String get aiImpVisibilityHidden => 'ซ่อนไว้ก่อน';
+
+  @override
+  String get aiImpVisibilityHiddenHint => 'เปิดขายทีละเมนูเองในหน้าเมนู';
+
+  @override
+  String get aiImpVisibilityLive => 'เปิดขายทันที';
+
+  @override
+  String get aiImpVisibilityLiveHintAppend => 'ลูกค้าเห็นทันที — ตรวจราคาให้ถูกก่อน';
+
+  @override
+  String get aiImpVisibilityLiveHintOnboarding => 'ลูกค้าเห็นเมื่อร้านได้รับอนุมัติ';
+
+  @override
+  String get aiImpConfirmChecked => 'ฉันตรวจชื่อและราคาทุกรายการแล้ว';
+
+  @override
+  String aiImpPublishButton(int count) {
+    return 'บันทึก $count เมนู';
+  }
+
+  @override
+  String aiImpPublishedLive(int count) {
+    return 'เพิ่ม $count เมนูและเปิดขายแล้ว';
+  }
+
+  @override
+  String aiImpPublishedHidden(int count) {
+    return 'เพิ่ม $count เมนูแล้ว (ซ่อนไว้)';
+  }
+
+  @override
+  String get aiImpDupFoundTitle => 'พบเมนูซ้ำ';
+
+  @override
+  String aiImpDupFoundBody(String names) {
+    return 'ร้านมีเมนูเหล่านี้แล้ว: $names\nระบบตั้งเป็น “ข้าม” ให้ กลับไปตรวจอีกครั้ง';
+  }
+
+  @override
+  String get aiImpBackToReview => 'กลับไปตรวจ';
+
+  @override
+  String get aiImpHistoryEmpty => 'ยังไม่เคยนำเข้าเมนูด้วย AI';
+
+  @override
+  String aiImpHistoryLine(int files, int items) {
+    return '$files รูป · $items รายการ';
+  }
+
+  @override
+  String get aiImpHistoryHidden => 'ซ่อนทั้งชุดแล้ว';
+
+  @override
+  String get aiImpHideAll => 'ซ่อนเมนูชุดนี้ทั้งหมด';
+
+  @override
+  String get aiImpHideAllTitle => 'ซ่อนเมนูชุดนี้?';
+
+  @override
+  String get aiImpHideAllBody => 'เมนูที่เพิ่มจากงานนี้จะถูกปิดขายทั้งหมด (ไม่ลบ ออเดอร์เดิมไม่กระทบ)';
+
+  @override
+  String aiImpHiddenCount(int count) {
+    return 'ซ่อน $count เมนูแล้ว';
+  }
+
+  @override
+  String get aiImpCancel => 'ยกเลิก';
+
+  @override
+  String get aiImpStatusProcessing => 'กำลังอ่าน';
+
+  @override
+  String get aiImpStatusReview => 'รอตรวจ';
+
+  @override
+  String get aiImpStatusPublished => 'บันทึกแล้ว';
+
+  @override
+  String get aiImpStatusFailed => 'ไม่สำเร็จ';
+
+  @override
+  String get aiImpStatusCancelled => 'ยกเลิก';
+
+  @override
+  String get aiImpErrQuota => 'ใช้ครบโควตาแล้ว';
+
+  @override
+  String get aiImpErrNotAllowed => 'ร้านนี้ยังใช้ฟีเจอร์นี้ไม่ได้';
+
+  @override
+  String get aiImpErrInProgress => 'มีงานที่กำลังอ่านอยู่ รอให้เสร็จก่อน';
+
+  @override
+  String get aiImpErrNotConfigured => 'ระบบ AI ยังไม่พร้อม ลองใหม่ภายหลัง';
+
+  @override
+  String get aiImpErrPending => 'ยังมีรายการที่ต้องยืนยัน';
+
+  @override
+  String get aiImpErrNothing => 'ไม่มีรายการที่จะเพิ่ม';
+
+  @override
+  String get aiImpErrDupInImport => 'มีชื่อเมนูซ้ำกันในรายการ แก้ชื่อหรือเลือกไม่ใช้';
+
+  @override
+  String get aiImpErrDupItem => 'เมนูนี้มีอยู่แล้วในร้าน';
+
+  @override
+  String get aiImpErrConflict => 'เลือกราคาที่ถูกต้องก่อน';
+
+  @override
+  String get aiImpErrPrice => 'ใส่ราคาให้ถูกต้อง';
+
+  @override
+  String get aiImpErrName => 'ใส่ชื่อเมนู';
+
+  @override
+  String get aiImpErrMaxAttempts => 'ลองครบจำนวนครั้งแล้ว เริ่มงานใหม่ด้วยรูปที่ชัดขึ้น';
+
+  @override
+  String get aiImpErrConfirm => 'ติ๊กยืนยันว่าตรวจแล้วก่อน';
+
+  @override
+  String get aiImpErrNotEditable => 'งานนี้แก้ไขไม่ได้แล้ว';
+
+  @override
+  String get aiImpErrGeneric => 'เกิดข้อผิดพลาด ลองใหม่อีกครั้ง';
+
+  @override
+  String get aiImpChangeTypeTitle => 'เปลี่ยนประเภทร้าน?';
+
+  @override
+  String get aiImpChangeTypeBody => 'ชุดตัวเลือกที่ติ๊กหรือแก้ไว้จะหายไป แล้วแสดงชุดแนะนำของประเภทใหม่แทน';
+
+  @override
+  String get aiImpChangeTypeConfirm => 'เปลี่ยน';
 }

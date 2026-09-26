@@ -15262,6 +15262,984 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Back to sign in'**
   String get forgotPwdBackToLogin;
+
+  /// No description provided for @aiImpMenuButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Add with AI'**
+  String get aiImpMenuButton;
+
+  /// No description provided for @aiImpEmptyCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan your menu with AI'**
+  String get aiImpEmptyCta;
+
+  /// No description provided for @aiImpTitleOnboarding.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan menu with AI'**
+  String get aiImpTitleOnboarding;
+
+  /// No description provided for @aiImpTitleAppend.
+  ///
+  /// In en, this message translates to:
+  /// **'Add menu with AI'**
+  String get aiImpTitleAppend;
+
+  /// No description provided for @aiImpStartSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Snap your menu board, review before it goes live'**
+  String get aiImpStartSubtitle;
+
+  /// No description provided for @aiImpStep1.
+  ///
+  /// In en, this message translates to:
+  /// **'Take or pick clear photos showing every name and price'**
+  String get aiImpStep1;
+
+  /// No description provided for @aiImpStep2.
+  ///
+  /// In en, this message translates to:
+  /// **'AI turns them into drafts — you review, edit and confirm'**
+  String get aiImpStep2;
+
+  /// No description provided for @aiImpStep3Onboarding.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick suggested options, preview, then save the menu'**
+  String get aiImpStep3Onboarding;
+
+  /// No description provided for @aiImpStep3Append.
+  ///
+  /// In en, this message translates to:
+  /// **'New items are added after your menu; existing ones are skipped'**
+  String get aiImpStep3Append;
+
+  /// No description provided for @aiImpQuotaOnboarding.
+  ///
+  /// In en, this message translates to:
+  /// **'Used {used}/{limit} scans'**
+  String aiImpQuotaOnboarding(int used, int limit);
+
+  /// No description provided for @aiImpQuotaAppend.
+  ///
+  /// In en, this message translates to:
+  /// **'Used {used}/{limit} scans this month'**
+  String aiImpQuotaAppend(int used, int limit);
+
+  /// No description provided for @aiImpQuotaFullOnboarding.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve used all {limit} scans. Contact admin for more'**
+  String aiImpQuotaFullOnboarding(int limit);
+
+  /// No description provided for @aiImpQuotaFullAppend.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve used all {limit} scans this month'**
+  String aiImpQuotaFullAppend(int limit);
+
+  /// No description provided for @aiImpActiveJob.
+  ///
+  /// In en, this message translates to:
+  /// **'A menu scan is in progress — tap to view'**
+  String get aiImpActiveJob;
+
+  /// No description provided for @aiImpPhotosTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu photos {count}/{max}'**
+  String aiImpPhotosTitle(int count, int max);
+
+  /// No description provided for @aiImpPhotosHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Shoot straight on, good light, one page per photo'**
+  String get aiImpPhotosHint;
+
+  /// No description provided for @aiImpNoPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'No photos yet'**
+  String get aiImpNoPhotos;
+
+  /// No description provided for @aiImpTakePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get aiImpTakePhoto;
+
+  /// No description provided for @aiImpPickGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get aiImpPickGallery;
+
+  /// No description provided for @aiImpPrivacyNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos are sent to an AI provider only to read the menu and kept temporarily. Results are drafts — check prices before saving'**
+  String get aiImpPrivacyNote;
+
+  /// No description provided for @aiImpStartButtonEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Add photos first'**
+  String get aiImpStartButtonEmpty;
+
+  /// No description provided for @aiImpStartButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Read {count} photos with AI'**
+  String aiImpStartButton(int count);
+
+  /// No description provided for @aiImpRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get aiImpRetry;
+
+  /// No description provided for @aiImpHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu import history'**
+  String get aiImpHistoryTitle;
+
+  /// No description provided for @aiImpReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review menu items'**
+  String get aiImpReviewTitle;
+
+  /// No description provided for @aiImpReviewSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{total} found · {confirmed} confirmed · {review} to check · {existing} existing'**
+  String aiImpReviewSummary(int total, int confirmed, int review, int existing);
+
+  /// No description provided for @aiImpApproveAllReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm ready ({count})'**
+  String aiImpApproveAllReady(int count);
+
+  /// No description provided for @aiImpPendingLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} left to confirm'**
+  String aiImpPendingLeft(int count);
+
+  /// No description provided for @aiImpNextTemplates.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: options'**
+  String get aiImpNextTemplates;
+
+  /// No description provided for @aiImpProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'AI is reading {count} photos\nThis takes 1–2 minutes. You can leave and check history later'**
+  String aiImpProcessing(int count);
+
+  /// No description provided for @aiImpProcessingSlow.
+  ///
+  /// In en, this message translates to:
+  /// **'Taking longer than usual. Try refreshing'**
+  String get aiImpProcessingSlow;
+
+  /// No description provided for @aiImpFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read the menu. Try again or retake clearer photos'**
+  String get aiImpFailed;
+
+  /// No description provided for @aiImpCancelJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel this import'**
+  String get aiImpCancelJob;
+
+  /// No description provided for @aiImpAlreadyPublished.
+  ///
+  /// In en, this message translates to:
+  /// **'This import has been saved'**
+  String get aiImpAlreadyPublished;
+
+  /// No description provided for @aiImpCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'This import was cancelled'**
+  String get aiImpCancelled;
+
+  /// No description provided for @aiImpNoItems.
+  ///
+  /// In en, this message translates to:
+  /// **'No menu items found. Retake photos with clear names and prices'**
+  String get aiImpNoItems;
+
+  /// No description provided for @aiImpUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unreadable parts: {regions}'**
+  String aiImpUnreadable(String regions);
+
+  /// No description provided for @aiImpFilterEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here'**
+  String get aiImpFilterEmpty;
+
+  /// No description provided for @aiImpFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All {count}'**
+  String aiImpFilterAll(int count);
+
+  /// No description provided for @aiImpFilterReview.
+  ///
+  /// In en, this message translates to:
+  /// **'To check {count}'**
+  String aiImpFilterReview(int count);
+
+  /// No description provided for @aiImpFilterReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready {count}'**
+  String aiImpFilterReady(int count);
+
+  /// No description provided for @aiImpFilterExisting.
+  ///
+  /// In en, this message translates to:
+  /// **'Existing {count}'**
+  String aiImpFilterExisting(int count);
+
+  /// No description provided for @aiImpFilterRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Not used {count}'**
+  String aiImpFilterRejected(int count);
+
+  /// No description provided for @aiImpIssueMissingPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'No price found'**
+  String get aiImpIssueMissingPrice;
+
+  /// No description provided for @aiImpIssuePriceRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Price looks unusual'**
+  String get aiImpIssuePriceRange;
+
+  /// No description provided for @aiImpIssuePriceText.
+  ///
+  /// In en, this message translates to:
+  /// **'Price doesn\'t match the photo text'**
+  String get aiImpIssuePriceText;
+
+  /// No description provided for @aiImpIssueLowPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'AI isn\'t sure about the price'**
+  String get aiImpIssueLowPrice;
+
+  /// No description provided for @aiImpIssueCheckPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Please double-check the price'**
+  String get aiImpIssueCheckPrice;
+
+  /// No description provided for @aiImpIssueLowName.
+  ///
+  /// In en, this message translates to:
+  /// **'AI isn\'t sure about the name'**
+  String get aiImpIssueLowName;
+
+  /// No description provided for @aiImpIssueCheckName.
+  ///
+  /// In en, this message translates to:
+  /// **'Please double-check the name'**
+  String get aiImpIssueCheckName;
+
+  /// No description provided for @aiImpIssueVariant.
+  ///
+  /// In en, this message translates to:
+  /// **'Option prices (size/type) incomplete or inconsistent'**
+  String get aiImpIssueVariant;
+
+  /// No description provided for @aiImpIssueConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos show different prices — pick the right one'**
+  String get aiImpIssueConflict;
+
+  /// No description provided for @aiImpIssueSimilar.
+  ///
+  /// In en, this message translates to:
+  /// **'Similar to an existing item — confirm it\'s new'**
+  String get aiImpIssueSimilar;
+
+  /// No description provided for @aiImpBadgePriceChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Price changed'**
+  String get aiImpBadgePriceChanged;
+
+  /// No description provided for @aiImpBadgeExisting.
+  ///
+  /// In en, this message translates to:
+  /// **'Existing'**
+  String get aiImpBadgeExisting;
+
+  /// No description provided for @aiImpBadgeRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Not used'**
+  String get aiImpBadgeRejected;
+
+  /// No description provided for @aiImpBadgeConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed'**
+  String get aiImpBadgeConfirmed;
+
+  /// No description provided for @aiImpBadgeNeedsReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Check'**
+  String get aiImpBadgeNeedsReview;
+
+  /// No description provided for @aiImpBadgeReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get aiImpBadgeReady;
+
+  /// No description provided for @aiImpBadgeNewCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'New category'**
+  String get aiImpBadgeNewCategory;
+
+  /// No description provided for @aiImpBadgeAddons.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} add-ons'**
+  String aiImpBadgeAddons(int count);
+
+  /// No description provided for @aiImpPriceChangedLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Current {old} → photo {newPrice} (skipped; update it in the menu editor)'**
+  String aiImpPriceChangedLine(String old, String newPrice);
+
+  /// No description provided for @aiImpExistingLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Already on your menu — skipped'**
+  String get aiImpExistingLine;
+
+  /// No description provided for @aiImpPriceSeen.
+  ///
+  /// In en, this message translates to:
+  /// **'Price in photo: {text}'**
+  String aiImpPriceSeen(String text);
+
+  /// No description provided for @aiImpChoosePrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the correct price'**
+  String get aiImpChoosePrice;
+
+  /// No description provided for @aiImpAddAsNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Add as new item'**
+  String get aiImpAddAsNew;
+
+  /// No description provided for @aiImpRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Use again'**
+  String get aiImpRestore;
+
+  /// No description provided for @aiImpEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get aiImpEdit;
+
+  /// No description provided for @aiImpConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get aiImpConfirm;
+
+  /// No description provided for @aiImpReject.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t use'**
+  String get aiImpReject;
+
+  /// No description provided for @aiImpSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get aiImpSkip;
+
+  /// No description provided for @aiImpEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit item'**
+  String get aiImpEditTitle;
+
+  /// No description provided for @aiImpFieldName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get aiImpFieldName;
+
+  /// No description provided for @aiImpFieldPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Price (฿)'**
+  String get aiImpFieldPrice;
+
+  /// No description provided for @aiImpFieldCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get aiImpFieldCategory;
+
+  /// No description provided for @aiImpFieldDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description (optional)'**
+  String get aiImpFieldDescription;
+
+  /// No description provided for @aiImpVariantsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Types / sizes'**
+  String get aiImpVariantsTitle;
+
+  /// No description provided for @aiImpVariantsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add 2+ types; menu price becomes the lowest; customer picks one'**
+  String get aiImpVariantsHint;
+
+  /// No description provided for @aiImpFieldVariantGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Group name e.g. Type, Size'**
+  String get aiImpFieldVariantGroup;
+
+  /// No description provided for @aiImpFieldOptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Option'**
+  String get aiImpFieldOptionLabel;
+
+  /// No description provided for @aiImpAddVariant.
+  ///
+  /// In en, this message translates to:
+  /// **'Add option'**
+  String get aiImpAddVariant;
+
+  /// No description provided for @aiImpAddonsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add-ons (optional)'**
+  String get aiImpAddonsTitle;
+
+  /// No description provided for @aiImpFieldAddonGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Group'**
+  String get aiImpFieldAddonGroup;
+
+  /// No description provided for @aiImpFieldAddPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'+ ฿'**
+  String get aiImpFieldAddPrice;
+
+  /// No description provided for @aiImpAddAddon.
+  ///
+  /// In en, this message translates to:
+  /// **'Add add-on'**
+  String get aiImpAddAddon;
+
+  /// No description provided for @aiImpSaveConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Save & confirm'**
+  String get aiImpSaveConfirm;
+
+  /// No description provided for @aiImpErrVariantPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a price for every type'**
+  String get aiImpErrVariantPrice;
+
+  /// No description provided for @aiImpTemplatesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested options'**
+  String get aiImpTemplatesTitle;
+
+  /// No description provided for @aiImpTemplatesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tick the ones you actually offer and check prices'**
+  String get aiImpTemplatesSubtitle;
+
+  /// No description provided for @aiImpSkipStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get aiImpSkipStep;
+
+  /// No description provided for @aiImpNextPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: preview'**
+  String get aiImpNextPreview;
+
+  /// No description provided for @aiImpNextPreviewWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Use {count} · preview'**
+  String aiImpNextPreviewWith(int count);
+
+  /// No description provided for @aiImpStoreTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Your shop'**
+  String get aiImpStoreTypeLabel;
+
+  /// No description provided for @aiImpStoreTypeGuess.
+  ///
+  /// In en, this message translates to:
+  /// **'AI guessed: {type}'**
+  String aiImpStoreTypeGuess(String type);
+
+  /// No description provided for @aiImpStoreCafe.
+  ///
+  /// In en, this message translates to:
+  /// **'Café / drinks'**
+  String get aiImpStoreCafe;
+
+  /// No description provided for @aiImpStoreMadeToOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Made-to-order'**
+  String get aiImpStoreMadeToOrder;
+
+  /// No description provided for @aiImpStoreNoodle.
+  ///
+  /// In en, this message translates to:
+  /// **'Noodles'**
+  String get aiImpStoreNoodle;
+
+  /// No description provided for @aiImpStoreIsan.
+  ///
+  /// In en, this message translates to:
+  /// **'Som tam / Isan'**
+  String get aiImpStoreIsan;
+
+  /// No description provided for @aiImpStoreDessert.
+  ///
+  /// In en, this message translates to:
+  /// **'Dessert / bakery'**
+  String get aiImpStoreDessert;
+
+  /// No description provided for @aiImpStoreOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get aiImpStoreOther;
+
+  /// No description provided for @aiImpNoTemplates.
+  ///
+  /// In en, this message translates to:
+  /// **'No suggestions for this shop type yet'**
+  String get aiImpNoTemplates;
+
+  /// No description provided for @aiImpRuleRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer must pick {count}'**
+  String aiImpRuleRequired(int count);
+
+  /// No description provided for @aiImpRuleOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional · up to {count}'**
+  String aiImpRuleOptional(int count);
+
+  /// No description provided for @aiImpTemplatePriceBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Template price — please check'**
+  String get aiImpTemplatePriceBadge;
+
+  /// No description provided for @aiImpTemplateNoItems.
+  ///
+  /// In en, this message translates to:
+  /// **'No items yet — tap “Choose items”'**
+  String get aiImpTemplateNoItems;
+
+  /// No description provided for @aiImpTemplateItems.
+  ///
+  /// In en, this message translates to:
+  /// **'For {count} items ({names})'**
+  String aiImpTemplateItems(int count, String names);
+
+  /// No description provided for @aiImpTemplateSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped {count} items that already have this from the photo'**
+  String aiImpTemplateSkipped(int count);
+
+  /// No description provided for @aiImpEditItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose items'**
+  String get aiImpEditItems;
+
+  /// No description provided for @aiImpEditOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit options'**
+  String get aiImpEditOptions;
+
+  /// No description provided for @aiImpEditItemsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Use “{name}” for'**
+  String aiImpEditItemsTitle(String name);
+
+  /// No description provided for @aiImpDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get aiImpDone;
+
+  /// No description provided for @aiImpFieldGroupName.
+  ///
+  /// In en, this message translates to:
+  /// **'Option group name'**
+  String get aiImpFieldGroupName;
+
+  /// No description provided for @aiImpRequiredOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer must pick one'**
+  String get aiImpRequiredOne;
+
+  /// No description provided for @aiImpMaxSelect.
+  ///
+  /// In en, this message translates to:
+  /// **'Max selections'**
+  String get aiImpMaxSelect;
+
+  /// No description provided for @aiImpErrOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name and at least one option'**
+  String get aiImpErrOptions;
+
+  /// No description provided for @aiImpPreviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop preview'**
+  String get aiImpPreviewTitle;
+
+  /// No description provided for @aiImpPreviewSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items to add — as customers see them'**
+  String aiImpPreviewSubtitle(int count);
+
+  /// No description provided for @aiImpDefaultVariantGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Options'**
+  String get aiImpDefaultVariantGroup;
+
+  /// No description provided for @aiImpDefaultAddonGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Extras'**
+  String get aiImpDefaultAddonGroup;
+
+  /// No description provided for @aiImpVisibilityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'After saving'**
+  String get aiImpVisibilityTitle;
+
+  /// No description provided for @aiImpVisibilityHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep hidden'**
+  String get aiImpVisibilityHidden;
+
+  /// No description provided for @aiImpVisibilityHiddenHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn items on yourself in the menu page'**
+  String get aiImpVisibilityHiddenHint;
+
+  /// No description provided for @aiImpVisibilityLive.
+  ///
+  /// In en, this message translates to:
+  /// **'Sell right away'**
+  String get aiImpVisibilityLive;
+
+  /// No description provided for @aiImpVisibilityLiveHintAppend.
+  ///
+  /// In en, this message translates to:
+  /// **'Customers see them immediately — check prices first'**
+  String get aiImpVisibilityLiveHintAppend;
+
+  /// No description provided for @aiImpVisibilityLiveHintOnboarding.
+  ///
+  /// In en, this message translates to:
+  /// **'Customers see them once your shop is approved'**
+  String get aiImpVisibilityLiveHintOnboarding;
+
+  /// No description provided for @aiImpConfirmChecked.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'ve checked every name and price'**
+  String get aiImpConfirmChecked;
+
+  /// No description provided for @aiImpPublishButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Save {count} items'**
+  String aiImpPublishButton(int count);
+
+  /// No description provided for @aiImpPublishedLive.
+  ///
+  /// In en, this message translates to:
+  /// **'Added {count} items and put them on sale'**
+  String aiImpPublishedLive(int count);
+
+  /// No description provided for @aiImpPublishedHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Added {count} items (hidden)'**
+  String aiImpPublishedHidden(int count);
+
+  /// No description provided for @aiImpDupFoundTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicates found'**
+  String get aiImpDupFoundTitle;
+
+  /// No description provided for @aiImpDupFoundBody.
+  ///
+  /// In en, this message translates to:
+  /// **'These are already on your menu: {names}\nThey were set to skip — please review again'**
+  String aiImpDupFoundBody(String names);
+
+  /// No description provided for @aiImpBackToReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to review'**
+  String get aiImpBackToReview;
+
+  /// No description provided for @aiImpHistoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No AI imports yet'**
+  String get aiImpHistoryEmpty;
+
+  /// No description provided for @aiImpHistoryLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{files} photos · {items} items'**
+  String aiImpHistoryLine(int files, int items);
+
+  /// No description provided for @aiImpHistoryHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden'**
+  String get aiImpHistoryHidden;
+
+  /// No description provided for @aiImpHideAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide all items from this import'**
+  String get aiImpHideAll;
+
+  /// No description provided for @aiImpHideAllTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide these items?'**
+  String get aiImpHideAllTitle;
+
+  /// No description provided for @aiImpHideAllBody.
+  ///
+  /// In en, this message translates to:
+  /// **'All items from this import will be turned off (not deleted; past orders unaffected)'**
+  String get aiImpHideAllBody;
+
+  /// No description provided for @aiImpHiddenCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Hid {count} items'**
+  String aiImpHiddenCount(int count);
+
+  /// No description provided for @aiImpCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get aiImpCancel;
+
+  /// No description provided for @aiImpStatusProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading'**
+  String get aiImpStatusProcessing;
+
+  /// No description provided for @aiImpStatusReview.
+  ///
+  /// In en, this message translates to:
+  /// **'To review'**
+  String get aiImpStatusReview;
+
+  /// No description provided for @aiImpStatusPublished.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get aiImpStatusPublished;
+
+  /// No description provided for @aiImpStatusFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get aiImpStatusFailed;
+
+  /// No description provided for @aiImpStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get aiImpStatusCancelled;
+
+  /// No description provided for @aiImpErrQuota.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan quota used up'**
+  String get aiImpErrQuota;
+
+  /// No description provided for @aiImpErrNotAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'This feature isn\'t available for your shop yet'**
+  String get aiImpErrNotAllowed;
+
+  /// No description provided for @aiImpErrInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Another scan is in progress'**
+  String get aiImpErrInProgress;
+
+  /// No description provided for @aiImpErrNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'AI isn\'t ready yet. Try again later'**
+  String get aiImpErrNotConfigured;
+
+  /// No description provided for @aiImpErrPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Some items still need confirming'**
+  String get aiImpErrPending;
+
+  /// No description provided for @aiImpErrNothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to add'**
+  String get aiImpErrNothing;
+
+  /// No description provided for @aiImpErrDupInImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate names in the list — rename or drop one'**
+  String get aiImpErrDupInImport;
+
+  /// No description provided for @aiImpErrDupItem.
+  ///
+  /// In en, this message translates to:
+  /// **'This item already exists'**
+  String get aiImpErrDupItem;
+
+  /// No description provided for @aiImpErrConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the correct price first'**
+  String get aiImpErrConflict;
+
+  /// No description provided for @aiImpErrPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid price'**
+  String get aiImpErrPrice;
+
+  /// No description provided for @aiImpErrName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name'**
+  String get aiImpErrName;
+
+  /// No description provided for @aiImpErrMaxAttempts.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry limit reached — start again with clearer photos'**
+  String get aiImpErrMaxAttempts;
+
+  /// No description provided for @aiImpErrConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Tick the confirmation first'**
+  String get aiImpErrConfirm;
+
+  /// No description provided for @aiImpErrNotEditable.
+  ///
+  /// In en, this message translates to:
+  /// **'This import can no longer be edited'**
+  String get aiImpErrNotEditable;
+
+  /// No description provided for @aiImpErrGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again'**
+  String get aiImpErrGeneric;
+
+  /// No description provided for @aiImpChangeTypeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change shop type?'**
+  String get aiImpChangeTypeTitle;
+
+  /// No description provided for @aiImpChangeTypeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Options you ticked or edited will be cleared and replaced with suggestions for the new type'**
+  String get aiImpChangeTypeBody;
+
+  /// No description provided for @aiImpChangeTypeConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get aiImpChangeTypeConfirm;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

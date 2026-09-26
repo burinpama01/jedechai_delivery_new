@@ -8201,4 +8201,559 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get forgotPwdBackToLogin => 'Back to sign in';
+
+  @override
+  String get aiImpMenuButton => 'Add with AI';
+
+  @override
+  String get aiImpEmptyCta => 'Scan your menu with AI';
+
+  @override
+  String get aiImpTitleOnboarding => 'Scan menu with AI';
+
+  @override
+  String get aiImpTitleAppend => 'Add menu with AI';
+
+  @override
+  String get aiImpStartSubtitle => 'Snap your menu board, review before it goes live';
+
+  @override
+  String get aiImpStep1 => 'Take or pick clear photos showing every name and price';
+
+  @override
+  String get aiImpStep2 => 'AI turns them into drafts — you review, edit and confirm';
+
+  @override
+  String get aiImpStep3Onboarding => 'Pick suggested options, preview, then save the menu';
+
+  @override
+  String get aiImpStep3Append => 'New items are added after your menu; existing ones are skipped';
+
+  @override
+  String aiImpQuotaOnboarding(int used, int limit) {
+    return 'Used $used/$limit scans';
+  }
+
+  @override
+  String aiImpQuotaAppend(int used, int limit) {
+    return 'Used $used/$limit scans this month';
+  }
+
+  @override
+  String aiImpQuotaFullOnboarding(int limit) {
+    return 'You\'ve used all $limit scans. Contact admin for more';
+  }
+
+  @override
+  String aiImpQuotaFullAppend(int limit) {
+    return 'You\'ve used all $limit scans this month';
+  }
+
+  @override
+  String get aiImpActiveJob => 'A menu scan is in progress — tap to view';
+
+  @override
+  String aiImpPhotosTitle(int count, int max) {
+    return 'Menu photos $count/$max';
+  }
+
+  @override
+  String get aiImpPhotosHint => 'Shoot straight on, good light, one page per photo';
+
+  @override
+  String get aiImpNoPhotos => 'No photos yet';
+
+  @override
+  String get aiImpTakePhoto => 'Camera';
+
+  @override
+  String get aiImpPickGallery => 'Gallery';
+
+  @override
+  String get aiImpPrivacyNote => 'Photos are sent to an AI provider only to read the menu and kept temporarily. Results are drafts — check prices before saving';
+
+  @override
+  String get aiImpStartButtonEmpty => 'Add photos first';
+
+  @override
+  String aiImpStartButton(int count) {
+    return 'Read $count photos with AI';
+  }
+
+  @override
+  String get aiImpRetry => 'Try again';
+
+  @override
+  String get aiImpHistoryTitle => 'Menu import history';
+
+  @override
+  String get aiImpReviewTitle => 'Review menu items';
+
+  @override
+  String aiImpReviewSummary(int total, int confirmed, int review, int existing) {
+    return '$total found · $confirmed confirmed · $review to check · $existing existing';
+  }
+
+  @override
+  String aiImpApproveAllReady(int count) {
+    return 'Confirm ready ($count)';
+  }
+
+  @override
+  String aiImpPendingLeft(int count) {
+    return '$count left to confirm';
+  }
+
+  @override
+  String get aiImpNextTemplates => 'Next: options';
+
+  @override
+  String aiImpProcessing(int count) {
+    return 'AI is reading $count photos\nThis takes 1–2 minutes. You can leave and check history later';
+  }
+
+  @override
+  String get aiImpProcessingSlow => 'Taking longer than usual. Try refreshing';
+
+  @override
+  String get aiImpFailed => 'Couldn\'t read the menu. Try again or retake clearer photos';
+
+  @override
+  String get aiImpCancelJob => 'Cancel this import';
+
+  @override
+  String get aiImpAlreadyPublished => 'This import has been saved';
+
+  @override
+  String get aiImpCancelled => 'This import was cancelled';
+
+  @override
+  String get aiImpNoItems => 'No menu items found. Retake photos with clear names and prices';
+
+  @override
+  String aiImpUnreadable(String regions) {
+    return 'Unreadable parts: $regions';
+  }
+
+  @override
+  String get aiImpFilterEmpty => 'Nothing here';
+
+  @override
+  String aiImpFilterAll(int count) {
+    return 'All $count';
+  }
+
+  @override
+  String aiImpFilterReview(int count) {
+    return 'To check $count';
+  }
+
+  @override
+  String aiImpFilterReady(int count) {
+    return 'Ready $count';
+  }
+
+  @override
+  String aiImpFilterExisting(int count) {
+    return 'Existing $count';
+  }
+
+  @override
+  String aiImpFilterRejected(int count) {
+    return 'Not used $count';
+  }
+
+  @override
+  String get aiImpIssueMissingPrice => 'No price found';
+
+  @override
+  String get aiImpIssuePriceRange => 'Price looks unusual';
+
+  @override
+  String get aiImpIssuePriceText => 'Price doesn\'t match the photo text';
+
+  @override
+  String get aiImpIssueLowPrice => 'AI isn\'t sure about the price';
+
+  @override
+  String get aiImpIssueCheckPrice => 'Please double-check the price';
+
+  @override
+  String get aiImpIssueLowName => 'AI isn\'t sure about the name';
+
+  @override
+  String get aiImpIssueCheckName => 'Please double-check the name';
+
+  @override
+  String get aiImpIssueVariant => 'Option prices (size/type) incomplete or inconsistent';
+
+  @override
+  String get aiImpIssueConflict => 'Photos show different prices — pick the right one';
+
+  @override
+  String get aiImpIssueSimilar => 'Similar to an existing item — confirm it\'s new';
+
+  @override
+  String get aiImpBadgePriceChanged => 'Price changed';
+
+  @override
+  String get aiImpBadgeExisting => 'Existing';
+
+  @override
+  String get aiImpBadgeRejected => 'Not used';
+
+  @override
+  String get aiImpBadgeConfirmed => 'Confirmed';
+
+  @override
+  String get aiImpBadgeNeedsReview => 'Check';
+
+  @override
+  String get aiImpBadgeReady => 'Ready';
+
+  @override
+  String get aiImpBadgeNewCategory => 'New category';
+
+  @override
+  String aiImpBadgeAddons(int count) {
+    return '$count add-ons';
+  }
+
+  @override
+  String aiImpPriceChangedLine(String old, String newPrice) {
+    return 'Current $old → photo $newPrice (skipped; update it in the menu editor)';
+  }
+
+  @override
+  String get aiImpExistingLine => 'Already on your menu — skipped';
+
+  @override
+  String aiImpPriceSeen(String text) {
+    return 'Price in photo: $text';
+  }
+
+  @override
+  String get aiImpChoosePrice => 'Choose the correct price';
+
+  @override
+  String get aiImpAddAsNew => 'Add as new item';
+
+  @override
+  String get aiImpRestore => 'Use again';
+
+  @override
+  String get aiImpEdit => 'Edit';
+
+  @override
+  String get aiImpConfirm => 'Confirm';
+
+  @override
+  String get aiImpReject => 'Don\'t use';
+
+  @override
+  String get aiImpSkip => 'Skip';
+
+  @override
+  String get aiImpEditTitle => 'Edit item';
+
+  @override
+  String get aiImpFieldName => 'Name';
+
+  @override
+  String get aiImpFieldPrice => 'Price (฿)';
+
+  @override
+  String get aiImpFieldCategory => 'Category';
+
+  @override
+  String get aiImpFieldDescription => 'Description (optional)';
+
+  @override
+  String get aiImpVariantsTitle => 'Types / sizes';
+
+  @override
+  String get aiImpVariantsHint => 'Add 2+ types; menu price becomes the lowest; customer picks one';
+
+  @override
+  String get aiImpFieldVariantGroup => 'Group name e.g. Type, Size';
+
+  @override
+  String get aiImpFieldOptionLabel => 'Option';
+
+  @override
+  String get aiImpAddVariant => 'Add option';
+
+  @override
+  String get aiImpAddonsTitle => 'Add-ons (optional)';
+
+  @override
+  String get aiImpFieldAddonGroup => 'Group';
+
+  @override
+  String get aiImpFieldAddPrice => '+ ฿';
+
+  @override
+  String get aiImpAddAddon => 'Add add-on';
+
+  @override
+  String get aiImpSaveConfirm => 'Save & confirm';
+
+  @override
+  String get aiImpErrVariantPrice => 'Enter a price for every type';
+
+  @override
+  String get aiImpTemplatesTitle => 'Suggested options';
+
+  @override
+  String get aiImpTemplatesSubtitle => 'Tick the ones you actually offer and check prices';
+
+  @override
+  String get aiImpSkipStep => 'Skip';
+
+  @override
+  String get aiImpNextPreview => 'Next: preview';
+
+  @override
+  String aiImpNextPreviewWith(int count) {
+    return 'Use $count · preview';
+  }
+
+  @override
+  String get aiImpStoreTypeLabel => 'Your shop';
+
+  @override
+  String aiImpStoreTypeGuess(String type) {
+    return 'AI guessed: $type';
+  }
+
+  @override
+  String get aiImpStoreCafe => 'Café / drinks';
+
+  @override
+  String get aiImpStoreMadeToOrder => 'Made-to-order';
+
+  @override
+  String get aiImpStoreNoodle => 'Noodles';
+
+  @override
+  String get aiImpStoreIsan => 'Som tam / Isan';
+
+  @override
+  String get aiImpStoreDessert => 'Dessert / bakery';
+
+  @override
+  String get aiImpStoreOther => 'Other';
+
+  @override
+  String get aiImpNoTemplates => 'No suggestions for this shop type yet';
+
+  @override
+  String aiImpRuleRequired(int count) {
+    return 'Customer must pick $count';
+  }
+
+  @override
+  String aiImpRuleOptional(int count) {
+    return 'Optional · up to $count';
+  }
+
+  @override
+  String get aiImpTemplatePriceBadge => 'Template price — please check';
+
+  @override
+  String get aiImpTemplateNoItems => 'No items yet — tap “Choose items”';
+
+  @override
+  String aiImpTemplateItems(int count, String names) {
+    return 'For $count items ($names)';
+  }
+
+  @override
+  String aiImpTemplateSkipped(int count) {
+    return 'Skipped $count items that already have this from the photo';
+  }
+
+  @override
+  String get aiImpEditItems => 'Choose items';
+
+  @override
+  String get aiImpEditOptions => 'Edit options';
+
+  @override
+  String aiImpEditItemsTitle(String name) {
+    return 'Use “$name” for';
+  }
+
+  @override
+  String get aiImpDone => 'Done';
+
+  @override
+  String get aiImpFieldGroupName => 'Option group name';
+
+  @override
+  String get aiImpRequiredOne => 'Customer must pick one';
+
+  @override
+  String get aiImpMaxSelect => 'Max selections';
+
+  @override
+  String get aiImpErrOptions => 'Enter a name and at least one option';
+
+  @override
+  String get aiImpPreviewTitle => 'Shop preview';
+
+  @override
+  String aiImpPreviewSubtitle(int count) {
+    return '$count items to add — as customers see them';
+  }
+
+  @override
+  String get aiImpDefaultVariantGroup => 'Options';
+
+  @override
+  String get aiImpDefaultAddonGroup => 'Extras';
+
+  @override
+  String get aiImpVisibilityTitle => 'After saving';
+
+  @override
+  String get aiImpVisibilityHidden => 'Keep hidden';
+
+  @override
+  String get aiImpVisibilityHiddenHint => 'Turn items on yourself in the menu page';
+
+  @override
+  String get aiImpVisibilityLive => 'Sell right away';
+
+  @override
+  String get aiImpVisibilityLiveHintAppend => 'Customers see them immediately — check prices first';
+
+  @override
+  String get aiImpVisibilityLiveHintOnboarding => 'Customers see them once your shop is approved';
+
+  @override
+  String get aiImpConfirmChecked => 'I\'ve checked every name and price';
+
+  @override
+  String aiImpPublishButton(int count) {
+    return 'Save $count items';
+  }
+
+  @override
+  String aiImpPublishedLive(int count) {
+    return 'Added $count items and put them on sale';
+  }
+
+  @override
+  String aiImpPublishedHidden(int count) {
+    return 'Added $count items (hidden)';
+  }
+
+  @override
+  String get aiImpDupFoundTitle => 'Duplicates found';
+
+  @override
+  String aiImpDupFoundBody(String names) {
+    return 'These are already on your menu: $names\nThey were set to skip — please review again';
+  }
+
+  @override
+  String get aiImpBackToReview => 'Back to review';
+
+  @override
+  String get aiImpHistoryEmpty => 'No AI imports yet';
+
+  @override
+  String aiImpHistoryLine(int files, int items) {
+    return '$files photos · $items items';
+  }
+
+  @override
+  String get aiImpHistoryHidden => 'Hidden';
+
+  @override
+  String get aiImpHideAll => 'Hide all items from this import';
+
+  @override
+  String get aiImpHideAllTitle => 'Hide these items?';
+
+  @override
+  String get aiImpHideAllBody => 'All items from this import will be turned off (not deleted; past orders unaffected)';
+
+  @override
+  String aiImpHiddenCount(int count) {
+    return 'Hid $count items';
+  }
+
+  @override
+  String get aiImpCancel => 'Cancel';
+
+  @override
+  String get aiImpStatusProcessing => 'Reading';
+
+  @override
+  String get aiImpStatusReview => 'To review';
+
+  @override
+  String get aiImpStatusPublished => 'Saved';
+
+  @override
+  String get aiImpStatusFailed => 'Failed';
+
+  @override
+  String get aiImpStatusCancelled => 'Cancelled';
+
+  @override
+  String get aiImpErrQuota => 'Scan quota used up';
+
+  @override
+  String get aiImpErrNotAllowed => 'This feature isn\'t available for your shop yet';
+
+  @override
+  String get aiImpErrInProgress => 'Another scan is in progress';
+
+  @override
+  String get aiImpErrNotConfigured => 'AI isn\'t ready yet. Try again later';
+
+  @override
+  String get aiImpErrPending => 'Some items still need confirming';
+
+  @override
+  String get aiImpErrNothing => 'Nothing to add';
+
+  @override
+  String get aiImpErrDupInImport => 'Duplicate names in the list — rename or drop one';
+
+  @override
+  String get aiImpErrDupItem => 'This item already exists';
+
+  @override
+  String get aiImpErrConflict => 'Choose the correct price first';
+
+  @override
+  String get aiImpErrPrice => 'Enter a valid price';
+
+  @override
+  String get aiImpErrName => 'Enter a name';
+
+  @override
+  String get aiImpErrMaxAttempts => 'Retry limit reached — start again with clearer photos';
+
+  @override
+  String get aiImpErrConfirm => 'Tick the confirmation first';
+
+  @override
+  String get aiImpErrNotEditable => 'This import can no longer be edited';
+
+  @override
+  String get aiImpErrGeneric => 'Something went wrong. Please try again';
+
+  @override
+  String get aiImpChangeTypeTitle => 'Change shop type?';
+
+  @override
+  String get aiImpChangeTypeBody => 'Options you ticked or edited will be cleared and replaced with suggestions for the new type';
+
+  @override
+  String get aiImpChangeTypeConfirm => 'Change';
 }

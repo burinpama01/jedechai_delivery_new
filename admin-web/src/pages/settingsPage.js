@@ -9,6 +9,7 @@ import {
   saveShopSettings,
   SHOP_CONFIG_KEYS,
 } from './shopSettingsSection.js';
+import { renderAiSettingsSection, loadAiSettingsSection } from './aiSettingsSection.js';
 
 let _ctx = null;
 
@@ -680,6 +681,8 @@ export async function renderSettingsPage(el, ctx) {
 
       ${renderShopSettingsSection(shopKvConfig, shopStoreCount)}
 
+      ${renderAiSettingsSection()}
+
       ${otherRates.length ? `
       <!-- ========= อัตราอื่น ๆ ========= -->
       <div class="glass-card p-6">
@@ -1011,6 +1014,13 @@ export async function renderSettingsPage(el, ctx) {
       showToast: globalThis.showToast,
       _upsertSystemConfigKeyValues: globalThis._upsertSystemConfigKeyValues,
     });
+
+  // AI settings โหลดแยก (RPC แอดมิน) — ไม่ให้หน้า Settings ช้าตาม
+  loadAiSettingsSection({
+    ...(ctx || {}),
+    supabase: ctx?.supabase || supabase,
+    _upsertSystemConfigKeyValues: globalThis._upsertSystemConfigKeyValues,
+  }).catch((e) => console.warn('loadAiSettingsSection failed', e));
 
   // Load banners and app assets after render
   loadBanners();
