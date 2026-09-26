@@ -71,8 +71,6 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       debugLog('🎭 AuthProvider: role = $_userRole');
 
-      // Save FCM token when authenticated
-      await FCMNotificationService().saveToken();
     } catch (e) {
       debugLog('❌ AuthProvider: Error fetching role: $e');
     }

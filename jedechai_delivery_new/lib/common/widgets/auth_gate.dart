@@ -2,11 +2,13 @@ import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
 
 import '../../theme/jdc_colors.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:async';
 import '../services/auth_service.dart';
 import '../services/fcm_notification_service.dart';
+import '../services/notification_consent_store.dart';
 import '../services/system_config_service.dart';
 import '../services/account_deletion_service.dart';
 import '../utils/profile_completion_policy.dart';
@@ -16,6 +18,7 @@ import 'pending_deletion_screen.dart';
 import 'profile_completion_screen.dart';
 import 'app_network_image.dart';
 import 'location_disclosure_dialog.dart';
+import 'notification_consent_dialog.dart';
 import '../../apps/customer/customer.dart';
 import '../../apps/driver/driver.dart';
 import '../../apps/merchant/merchant.dart';
@@ -48,6 +51,7 @@ class _AuthGateState extends State<AuthGate> {
   bool _profileCompleted = true; // Default true for customers/admin
   Map<String, dynamic>? _userProfile;
   String? _logoUrl;
+  bool _notificationPromptPending = false;
 
   @override
   void initState() {
@@ -75,6 +79,7 @@ class _AuthGateState extends State<AuthGate> {
         _isAuthenticated = isAuth;
         _isLoading = false;
       });
+      if (isAuth) _scheduleNotificationConsent();
     }
 
     // Listen to auth state changes
@@ -89,6 +94,7 @@ class _AuthGateState extends State<AuthGate> {
           // If user just logged in, fetch their role
           if (state.session != null) {
             _fetchUserRole();
+            _scheduleNotificationConsent();
           }
         }
       },
@@ -112,14 +118,56 @@ class _AuthGateState extends State<AuthGate> {
       // Check approval/suspension status for all roles
       await _fetchApprovalStatus();
 
-      // Save FCM token when user is authenticated
-      await FCMNotificationService().saveToken();
-
       // Request location permission early
       await _requestLocationPermission();
     } catch (e) {
       debugLog('❌ Error fetching user role: $e');
       // Keep default role on error
+    }
+  }
+
+  void _scheduleNotificationConsent() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(_offerNotificationConsent());
+    });
+  }
+
+  Future<void> _offerNotificationConsent() async {
+    if (_notificationPromptPending || !_isAuthenticated) return;
+    final userId = AuthService.userId;
+    if (userId == null) return;
+    _notificationPromptPending = true;
+    try {
+      final store = NotificationConsentStore(userId);
+      final decision = await store.decision();
+      if (decision == true) {
+        await FCMNotificationService().saveToken();
+        return;
+      }
+      if (decision == false) {
+        await FCMNotificationService().disableForCurrentUser();
+        return;
+      }
+      if (!mounted || !_isAuthenticated) return;
+
+      final accepted = await showNotificationConsentDialog(context);
+      if (accepted == null || !mounted || AuthService.userId != userId) return;
+      if (accepted) {
+        await store.saveDecision(true);
+        final active = await FCMNotificationService().saveToken();
+        if (!active && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+                AppLocalizations.of(context)!.notificationSettingsNotReady),
+          ));
+        }
+      } else {
+        await FCMNotificationService().disableForCurrentUser();
+      }
+    } catch (error) {
+      debugLog('Notification consent flow failed: $error');
+    } finally {
+      _notificationPromptPending = false;
     }
   }
 
@@ -224,8 +272,9 @@ class _AuthGateState extends State<AuthGate> {
   }
 
   void _onProfileCompleted() {
-    // Re-fetch role and profile to refresh the state
-    _fetchUserRole();
+    // The role is already known. Refresh the persisted profile that controls
+    // this gate directly, without waiting for unrelated FCM/location work.
+    _fetchApprovalStatus();
   }
 
   @override

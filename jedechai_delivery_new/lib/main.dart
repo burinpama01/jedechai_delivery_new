@@ -8,6 +8,8 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'l10n/app_localizations.dart';
 import 'common/config/env_config.dart';
+import 'common/utils/optional_startup_task.dart';
+import 'utils/debug_logger.dart';
 import 'common/providers/auth_provider.dart';
 import 'common/providers/language_provider.dart';
 import 'common/services/services.dart';
@@ -18,6 +20,7 @@ import 'theme/jdc_layout.dart';
 import 'theme/theme_gallery_screen.dart';
 import 'common/widgets/auth_gate.dart';
 import 'common/widgets/app_update_guard.dart';
+import 'common/widgets/referral_link_gate.dart';
 import 'common/screens/notification_center_screen.dart';
 import 'apps/customer/customer.dart';
 import 'apps/driver/driver.dart';
@@ -38,8 +41,15 @@ void main() async {
     final mapsImplementation = GoogleMapsFlutterPlatform.instance;
     if (mapsImplementation is GoogleMapsFlutterAndroid) {
       mapsImplementation.useAndroidViewSurface = true;
-      await mapsImplementation
-          .initializeWithRenderer(AndroidMapRenderer.latest);
+      await runOptionalStartupTask(
+        () async {
+          await mapsImplementation
+              .initializeWithRenderer(AndroidMapRenderer.latest);
+        },
+        timeout: const Duration(seconds: 4),
+        onFailure: (error) =>
+            debugLog('⚠️ Maps renderer startup skipped: $error'),
+      );
     }
   }
 
@@ -69,10 +79,10 @@ void main() async {
   // Initialize Thai locale for date formatting
   await initializeDateFormatting('th');
 
-  // Initialize FCM Notification Service
-  await FCMNotificationService().initialize();
-
   runApp(const MyApp());
+
+  // Notification setup begins only after the signed-in user accepts the
+  // in-app explanation in AuthGate.
 }
 
 class MyApp extends StatefulWidget {
@@ -117,7 +127,9 @@ class _MyAppState extends State<MyApp> {
             locale: languageProvider.localeOverride,
             supportedLocales: AppLocalizations.supportedLocales,
             localizationsDelegates: AppLocalizations.localizationsDelegates,
-            home: const AppUpdateGuard(child: AuthGate()),
+            home: const ReferralLinkGate(
+              child: AppUpdateGuard(child: AuthGate()),
+            ),
             routes: {
               '/landing': (context) => const PublicLandingScreen(),
               '/dev/theme': (context) => const ThemeGalleryScreen(),

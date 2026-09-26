@@ -14,16 +14,21 @@ import '../../../../common/services/storage_service.dart';
 import '../../../../common/services/account_deletion_service.dart';
 import '../../../../common/utils/platform_adaptive.dart';
 import '../../../../common/screens/profile_screen.dart';
+import '../../../../common/screens/notification_settings_screen.dart';
 import '../../../../common/widgets/app_network_image.dart';
 import '../../../../common/widgets/language_switcher.dart';
 import '../../../../theme/jdc_colors.dart';
 import '../../../../theme/jdc_layout.dart';
 import '../../../customer/screens/auth/login_screen.dart';
+import '../../../customer/screens/rewards/referral_screen.dart';
 import '../../../../l10n/app_localizations.dart';
 
 /// Driver Profile Screen — Account & Settings
 class DriverProfileScreen extends StatefulWidget {
-  const DriverProfileScreen({super.key});
+  const DriverProfileScreen({super.key, this.previewProfile});
+
+  /// ใช้เฉพาะ dev preview/widget test เพื่อแสดงเมนูโดยไม่เรียกข้อมูลจริง
+  final Map<String, dynamic>? previewProfile;
 
   @override
   State<DriverProfileScreen> createState() => _DriverProfileScreenState();
@@ -58,7 +63,12 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchUserProfile();
+    if (widget.previewProfile != null) {
+      _userProfile = widget.previewProfile;
+      _isLoading = false;
+    } else {
+      _fetchUserProfile();
+    }
     _loadAppVersion();
   }
 
@@ -204,7 +214,9 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                         const SizedBox(height: 8),
                         const Text('DB profiles.fcm_token:'),
                         SelectableText(
-                          profileToken?.isNotEmpty == true ? profileToken! : '-',
+                          profileToken?.isNotEmpty == true
+                              ? profileToken!
+                              : '-',
                         ),
                       ],
                     ],
@@ -373,7 +385,8 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(AppLocalizations.of(context)!.drvProfileUpdateSuccess),
+                content:
+                    Text(AppLocalizations.of(context)!.drvProfileUpdateSuccess),
                 backgroundColor: context.jdc.successFill,
               ),
             );
@@ -383,7 +396,8 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(AppLocalizations.of(context)!.drvProfileUpdateError(e.toString())),
+                content: Text(AppLocalizations.of(context)!
+                    .drvProfileUpdateError(e.toString())),
                 backgroundColor: context.jdc.danger,
               ),
             );
@@ -847,7 +861,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
         bottom: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
-            JdcSpacing.xl, JdcSpacing.lg, JdcSpacing.xl, JdcSpacing.xl),
+              JdcSpacing.xl, JdcSpacing.lg, JdcSpacing.xl, JdcSpacing.xl),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1099,11 +1113,25 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
             ios: CupertinoIcons.bell,
           ),
           l10n.accountMenuNotifications,
-          () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(l10n.accountFeatureComingSoon)),
-            );
-          },
+          () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const NotificationSettingsScreen(),
+              )),
+        ),
+        _divider(),
+        _menuItem(
+          PlatformAdaptive.icon(
+            android: Icons.people_alt_outlined,
+            ios: CupertinoIcons.person_2,
+          ),
+          l10n.accountMenuReferral,
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const ReferralScreen(forDriver: true),
+            ),
+          ),
         ),
         _divider(),
         _menuItem(

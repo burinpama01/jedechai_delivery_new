@@ -16,6 +16,7 @@ import '../../../common/services/storage_service.dart';
 import '../../../common/services/account_deletion_service.dart';
 import '../../../common/utils/platform_adaptive.dart';
 import '../../../common/screens/profile_screen.dart';
+import '../../../common/screens/notification_settings_screen.dart';
 import '../../../common/widgets/app_network_image.dart';
 import '../../../common/widgets/language_switcher.dart';
 import '../../../l10n/app_localizations.dart';
@@ -641,7 +642,8 @@ class _AccountScreenState extends State<AccountScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 64, color: JdcColors.of(context).danger),
+            Icon(Icons.error_outline,
+                size: 64, color: JdcColors.of(context).danger),
             const SizedBox(height: 16),
             Text(
               l10n.accountErrorTitle,
@@ -783,7 +785,9 @@ class _AccountScreenState extends State<AccountScreen> {
                   _userProfile?['full_name'] ?? l10n.accountUserFallback,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold,
+                  style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
                       color: jdc.onPanel),
                 ),
                 const SizedBox(height: 3),
@@ -804,7 +808,8 @@ class _AccountScreenState extends State<AccountScreen> {
             style: IconButton.styleFrom(
               backgroundColor: jdc.panelSoft2,
               side: BorderSide(color: jdc.panelLine),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
             ),
             icon: const Icon(Icons.edit_outlined),
           ),
@@ -916,6 +921,16 @@ class _AccountScreenState extends State<AccountScreen> {
         ),
         _divider(),
         _menuItem(
+          Icons.notifications_outlined,
+          l10n.notificationSettingsTitle,
+          () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const NotificationSettingsScreen(),
+              )),
+        ),
+        _divider(),
+        _menuItem(
           PlatformAdaptive.icon(
             android: Icons.help_outline,
             ios: CupertinoIcons.question_circle,
@@ -1010,7 +1025,8 @@ class _AccountScreenState extends State<AccountScreen> {
           const SizedBox(height: 6),
           Row(
             children: [
-              Expanded(child: Text(
+              Expanded(
+                  child: Text(
                 l10n.accountDevelopedByLabel,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,

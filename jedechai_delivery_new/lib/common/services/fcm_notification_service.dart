@@ -9,6 +9,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app_navigation_service.dart';
 import '../utils/notification_payload_policy.dart';
+import '../utils/single_flight.dart';
+import 'notification_consent_store.dart';
 
 const String _kDefaultChannelId = 'jedechai_channel';
 const String _kDefaultChannelName = 'JDC Notifications';
@@ -254,14 +256,23 @@ class FCMNotificationService {
   factory FCMNotificationService() => _instance;
   FCMNotificationService._internal();
 
+  final SingleFlight _initialization = SingleFlight();
+  bool _initialized = false;
+
   FirebaseMessaging? _firebaseMessaging;
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
   String? _fcmToken;
+  bool _tokenSaved = false;
+  bool _disablingNotifications = false;
   StreamSubscription<String>? _tokenRefreshSubscription;
 
   /// Initialize FCM service
-  Future<void> initialize() async {
+  Future<void> initialize() => _initialized
+      ? Future<void>.value()
+      : _initialization.run(_initializeCore);
+
+  Future<void> _initializeCore() async {
     debugLog('🔔 Initializing FCM Notification Service...');
     debugLog('   └─ Timestamp: ${DateTime.now()}');
 
@@ -316,6 +327,7 @@ class FCMNotificationService {
 
       debugLog('✅ FCM Notification Service initialized successfully');
       debugLog('   └─ All steps completed');
+      _initialized = true;
     } catch (e) {
       debugLog('❌ Error initializing FCM service: $e');
       debugLog('   └─ Stack trace: ${StackTrace.current}');
@@ -404,6 +416,12 @@ class FCMNotificationService {
   /// Get FCM token and save to Supabase
   Future<void> _getFCMToken() async {
     try {
+      _tokenSaved = false;
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId == null ||
+          !await NotificationConsentStore(userId).isAllowed()) {
+        return;
+      }
       debugLog('🔔 Getting FCM token...');
       debugLog('   └─ Attempting to get token from Firebase...');
 
@@ -428,6 +446,7 @@ class FCMNotificationService {
       final currentStatus = settings?.authorizationStatus;
       debugLog('📋 Current permission status: $currentStatus');
       if (currentStatus == AuthorizationStatus.denied) {
+        _fcmToken = null;
         debugLog('❌ Permission denied. Skip token fetch.');
         return;
       }
@@ -476,7 +495,7 @@ class FCMNotificationService {
         debugLog('   └─ Timestamp: ${DateTime.now()}');
 
         debugLog('💾 Saving token to database...');
-        await _saveFCMTokenToSupabase(_fcmToken!);
+        _tokenSaved = await _saveFCMTokenToSupabase(_fcmToken!);
       } else {
         debugLog('❌ Failed to get FCM token');
         debugLog('   └─ Token is null');
@@ -489,8 +508,9 @@ class FCMNotificationService {
   }
 
   /// Save FCM token to Supabase profiles table
-  Future<void> _saveFCMTokenToSupabase(String token) async {
+  Future<bool> _saveFCMTokenToSupabase(String token) async {
     try {
+      if (_disablingNotifications) return false;
       debugLog('💾 Saving FCM token to Supabase...');
       debugLog('   └─ Token length: ${token.length} characters');
 
@@ -498,7 +518,10 @@ class FCMNotificationService {
       if (currentUser == null) {
         debugLog('❌ No authenticated user found');
         debugLog('   └─ User not logged in');
-        return;
+        return false;
+      }
+      if (!await NotificationConsentStore(currentUser.id).isAllowed()) {
+        return false;
       }
 
       debugLog('👤 Current user: ${currentUser.email}');
@@ -508,13 +531,16 @@ class FCMNotificationService {
       await Supabase.instance.client
           .from('profiles')
           .update({'fcm_token': token}).eq('id', currentUser.id);
+      if (_disablingNotifications) return false;
 
       debugLog('✅ FCM token saved to Supabase successfully');
       debugLog('   └─ Updated user: ${currentUser.id}');
       debugLog('   └─ Token saved: ${token.substring(0, 20)}...');
+      return true;
     } catch (e) {
       debugLog('❌ Error saving FCM token to Supabase: $e');
       debugLog('   └─ Stack trace: ${StackTrace.current}');
+      return false;
     }
   }
 
@@ -642,6 +668,12 @@ class FCMNotificationService {
 
   /// Show local notification (head-up notification)
   Future<void> _showLocalNotification(RemoteMessage message) async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null ||
+        _disablingNotifications ||
+        !await NotificationConsentStore(userId).isAllowed()) {
+      return;
+    }
     debugLog('🔔 ===== SHOWING LOCAL NOTIFICATION =====');
     debugLog('📱 Creating local notification for foreground message');
     debugLog('📋 Message ID: ${message.messageId}');
@@ -724,15 +756,43 @@ class FCMNotificationService {
   String? get fcmToken => _fcmToken;
 
   /// Save FCM token (compatibility method)
-  Future<void> saveToken() async {
+  Future<bool> saveToken() async {
     try {
-      if (_firebaseMessaging == null) {
-        debugLog('🔄 saveToken: FirebaseMessaging not ready, initializing...');
-        await initialize();
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId == null ||
+          !await NotificationConsentStore(userId).isAllowed()) {
+        return false;
       }
+      await initialize();
+      if (!_initialized) return false;
       await _getFCMToken();
+      final status = await _firebaseMessaging!.getNotificationSettings();
+      return _tokenSaved &&
+          (status.authorizationStatus == AuthorizationStatus.authorized ||
+              status.authorizationStatus == AuthorizationStatus.provisional);
     } catch (e) {
       debugLog('❌ saveToken failed: $e');
+      return false;
+    }
+  }
+
+  Future<void> disableForCurrentUser() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
+    _disablingNotifications = true;
+    try {
+      await Supabase.instance.client
+          .from('profiles')
+          .update({'fcm_token': null}).eq('id', userId);
+      if (_firebaseMessaging != null) {
+        await _firebaseMessaging!.setAutoInitEnabled(false);
+        await _firebaseMessaging!.deleteToken();
+      }
+      _fcmToken = null;
+      _tokenSaved = false;
+      await NotificationConsentStore(userId).saveDecision(false);
+    } finally {
+      _disablingNotifications = false;
     }
   }
 }
