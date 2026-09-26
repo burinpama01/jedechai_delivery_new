@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f4d45">
+  <title>รับคำชวนเข้า JDC Delivery</title>
+  <style>
+    :root{color-scheme:light dark;font-family:system-ui,sans-serif}
+    *{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px;background:#f4f7f5;color:#152620}
+    main{width:min(440px,100%);padding:28px;border:1px solid #cbd9d1;border-radius:20px;background:#fff;box-shadow:0 14px 36px #0b2d1e1a}
+    .mark{font-weight:800;letter-spacing:.08em;color:#0f6859}h1{font-size:26px;line-height:1.25;margin:16px 0 8px}p{line-height:1.5;color:#42554b}
+    .code{margin:20px 0;padding:16px;border:1px solid #a6cdb9;border-radius:12px;background:#e8f5ed;color:#123e2f;text-align:center;font-size:24px;font-weight:800;letter-spacing:.08em;overflow-wrap:anywhere}
+    .actions{display:grid;gap:10px}.button{display:block;width:100%;padding:13px 16px;border:1px solid #0f6859;border-radius:11px;text-align:center;text-decoration:none;font-size:16px;font-weight:700;cursor:pointer}
+    .primary{background:#0f6859;color:#fff}.secondary{background:#fff;color:#0f6859}.stores{display:flex;gap:12px;margin-top:20px}.stores a{color:#0d594c;font-weight:700}
+    .note{font-size:13px}.error{color:#a22929}button:focus-visible,a:focus-visible{outline:3px solid #e99a19;outline-offset:2px}
+    @media(prefers-color-scheme:dark){body{background:#0b1712;color:#edf8f0}main{background:#152820;border-color:#476451}p{color:#c4d5c8}.code{background:#183b2b;border-color:#74ac89;color:#fff}.secondary{background:#152820;color:#dbffec;border-color:#7ec49a}.stores a{color:#a9e6bc}}
+  </style>
+</head>
+<body><main>
+  <div class="mark">JDC DELIVERY</div>
+  <h1>เพื่อนชวนคุณมาร่วม JDC Delivery</h1>
+  <p id="message">กำลังเปิดหน้าสมัครพร้อมโค้ดแนะนำ…</p>
+  <div id="code" class="code" aria-label="โค้ดแนะนำ"></div>
+  <div class="actions">
+    <a id="open-app" class="button primary" href="#">เปิดแอปและสมัคร</a>
+    <button id="copy-code" class="button secondary" type="button">คัดลอกโค้ด</button>
+  </div>
+  <p class="note">ถ้ายังไม่มีแอป ให้ติดตั้งก่อน แล้วใช้โค้ดที่แสดงเมื่อสมัคร</p>
+  <div class="stores"><a href="https://play.google.com/store/apps/details?id=com.jedechai.delivery">Google Play</a><a href="https://apps.apple.com/th/app/jdc-delivery/id6759666672">App Store</a></div>
+  <script>
+    const values = new URLSearchParams(location.search).getAll('code');
+    const code = values.length === 1 ? values[0].trim().toUpperCase() : '';
+    const valid = /^[A-Z0-9][A-Z0-9-]{0,31}$/.test(code);
+    const message = document.getElementById('message');
+    const open = document.getElementById('open-app');
+    const copy = document.getElementById('copy-code');
+    if (!valid) {
+      message.textContent = 'ลิงก์คำชวนไม่ถูกต้อง กรุณาขอโค้ดใหม่จากเพื่อน';
+      message.classList.add('error');
+      document.getElementById('code').hidden = true;
+      open.hidden = true;
+      copy.hidden = true;
+    } else {
+      document.getElementById('code').textContent = code;
+      const appUrl = 'jdc://invite?code=' + encodeURIComponent(code);
+      open.href = appUrl;
+      copy.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(code);
+          message.textContent = 'คัดลอกโค้ดแล้ว';
+        } catch (_) {
+          message.textContent = 'คัดลอกไม่สำเร็จ กรุณาจดโค้ดที่แสดง';
+        }
+      });
+      setTimeout(() => { location.href = appUrl; }, 250);
+      setTimeout(() => {
+        if (!document.hidden) message.textContent = 'หากแอปไม่เปิด ให้กดปุ่มด้านล่าง หรือคัดลอกโค้ดไว้ก่อน';
+      }, 1800);
+    }
+  </script>
+</main></body></html>

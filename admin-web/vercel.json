@@ -3,6 +3,8 @@
     { "source": "/", "destination": "/landing.html" },
     { "source": "/admin", "destination": "/admin.html" },
     { "source": "/admin/", "destination": "/admin.html" },
+    { "source": "/invite", "destination": "/invite.html" },
+    { "source": "/invite/", "destination": "/invite.html" },
     { "source": "/reset-password", "destination": "/reset-password.html" },
     { "source": "/reset-password/", "destination": "/reset-password.html" },
     { "source": "/refund-policy", "destination": "/refund-policy.html" },

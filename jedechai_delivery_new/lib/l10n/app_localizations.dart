@@ -3923,6 +3923,60 @@ abstract class AppLocalizations {
   /// **'Notifications'**
   String get accountMenuNotifications;
 
+  /// No description provided for @notificationConsentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on notifications?'**
+  String get notificationConsentTitle;
+
+  /// No description provided for @notificationConsentBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Get updates about your orders, jobs, and important status changes. You can change this later.'**
+  String get notificationConsentBody;
+
+  /// No description provided for @notificationConsentAllow.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on notifications'**
+  String get notificationConsentAllow;
+
+  /// No description provided for @notificationConsentNotNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get notificationConsentNotNow;
+
+  /// No description provided for @notificationSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification settings'**
+  String get notificationSettingsTitle;
+
+  /// No description provided for @notificationSettingsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Receive job and status updates on this device'**
+  String get notificationSettingsDescription;
+
+  /// No description provided for @notificationSettingsSystemHint.
+  ///
+  /// In en, this message translates to:
+  /// **'If permission is blocked on your phone, enable notifications for this app in your phone settings too.'**
+  String get notificationSettingsSystemHint;
+
+  /// No description provided for @notificationSettingsError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not change this setting. Please try again.'**
+  String get notificationSettingsError;
+
+  /// No description provided for @notificationSettingsNotReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled in the app, but notifications are not ready on this device. Check phone permissions or your connection.'**
+  String get notificationSettingsNotReady;
+
   /// No description provided for @accountMenuPrivacyPolicy.
   ///
   /// In en, this message translates to:
@@ -7259,6 +7313,102 @@ abstract class AppLocalizations {
   /// **'View details'**
   String get ticketViewDetail;
 
+  /// No description provided for @driverReferralRulesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Earn when your invite succeeds'**
+  String get driverReferralRulesTitle;
+
+  /// No description provided for @driverReferralHeroTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite friends to JDC Delivery and earn Wallet rewards'**
+  String get driverReferralHeroTitle;
+
+  /// No description provided for @driverReferralHeroSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rewards are earned when your friend meets the condition for their role'**
+  String get driverReferralHeroSubtitle;
+
+  /// No description provided for @driverReferralShareMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Join JDC Delivery with my referral code: {code}'**
+  String driverReferralShareMessage(String code);
+
+  /// No description provided for @driverReferralCodeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask your friend to sign up through the QR or enter this code'**
+  String get driverReferralCodeHint;
+
+  /// No description provided for @driverReferralMerchantTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite a merchant'**
+  String get driverReferralMerchantTitle;
+
+  /// No description provided for @driverReferralMerchantCondition.
+  ///
+  /// In en, this message translates to:
+  /// **'A new merchant uses your code and is approved by an admin'**
+  String get driverReferralMerchantCondition;
+
+  /// No description provided for @driverReferralCustomerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite a customer'**
+  String get driverReferralCustomerTitle;
+
+  /// No description provided for @referralCustomerFirstJobCondition.
+  ///
+  /// In en, this message translates to:
+  /// **'A new customer uses your code and completes their first booking'**
+  String get referralCustomerFirstJobCondition;
+
+  /// No description provided for @driverReferralDriverTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite a driver'**
+  String get driverReferralDriverTitle;
+
+  /// No description provided for @driverReferralDriverCondition.
+  ///
+  /// In en, this message translates to:
+  /// **'A new driver uses your code and completes their first job; both drivers then earn a reward'**
+  String get driverReferralDriverCondition;
+
+  /// No description provided for @driverReferralYouEarn.
+  ///
+  /// In en, this message translates to:
+  /// **'You earn ฿{amount} at your current tier'**
+  String driverReferralYouEarn(String amount);
+
+  /// No description provided for @driverReferralNewDriverEarn.
+  ///
+  /// In en, this message translates to:
+  /// **'The new driver earns ฿{amount} after their first completed job'**
+  String driverReferralNewDriverEarn(String amount);
+
+  /// No description provided for @driverReferralTierTableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reward tiers'**
+  String get driverReferralTierTableTitle;
+
+  /// No description provided for @driverReferralTierRow.
+  ///
+  /// In en, this message translates to:
+  /// **'{from}–{to} successful invites ×{multiplier}'**
+  String driverReferralTierRow(String from, String to, String multiplier);
+
+  /// No description provided for @driverReferralTierOpenRow.
+  ///
+  /// In en, this message translates to:
+  /// **'From {from} successful invites ×{multiplier}'**
+  String driverReferralTierOpenRow(String from, String multiplier);
+
   /// No description provided for @referralTierCurrent.
   ///
   /// In en, this message translates to:
@@ -7270,6 +7420,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'฿{amount} per successful referral (base ฿{base} × {multiplier})'**
   String referralTierReward(String amount, String base, String multiplier);
+
+  /// No description provided for @referralTierMultiplier.
+  ///
+  /// In en, this message translates to:
+  /// **'Current tier multiplier ×{multiplier} · base reward depends on invite type'**
+  String referralTierMultiplier(String multiplier);
 
   /// No description provided for @referralTierToNext.
   ///
@@ -8624,13 +8780,13 @@ abstract class AppLocalizations {
   /// No description provided for @referralHeroTitle.
   ///
   /// In en, this message translates to:
-  /// **'Invite friends to use the app\nBoth get coupons!'**
+  /// **'Invite friends to JDC Delivery'**
   String get referralHeroTitle;
 
   /// No description provided for @referralHeroSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Get a ฿20 discount coupon instantly\nwhen your friend completes their first order'**
+  /// **'Rewards depend on the invitee\'s role and the conditions for each invitation'**
   String get referralHeroSubtitle;
 
   /// No description provided for @referralMyCodeLabel.
@@ -8645,6 +8801,36 @@ abstract class AppLocalizations {
   /// **'Share with friends'**
   String get referralShareButton;
 
+  /// No description provided for @referralQrHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan to open sign-up with the referral code filled in'**
+  String get referralQrHint;
+
+  /// No description provided for @customerReferralMerchantTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite a merchant'**
+  String get customerReferralMerchantTitle;
+
+  /// No description provided for @customerReferralCustomerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite a customer'**
+  String get customerReferralCustomerTitle;
+
+  /// No description provided for @customerReferralDriverTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite a driver'**
+  String get customerReferralDriverTitle;
+
+  /// No description provided for @customerReferralDriverCondition.
+  ///
+  /// In en, this message translates to:
+  /// **'A new driver uses your code and completes their first job; the referrer earns the reward'**
+  String get customerReferralDriverCondition;
+
   /// No description provided for @referralHaveCode.
   ///
   /// In en, this message translates to:
@@ -8654,7 +8840,7 @@ abstract class AppLocalizations {
   /// No description provided for @referralEnterCodeHint.
   ///
   /// In en, this message translates to:
-  /// **'Enter the code from your friend to get a welcome coupon'**
+  /// **'Enter your friend\'s code to link their invitation'**
   String get referralEnterCodeHint;
 
   /// No description provided for @referralCodePlaceholder.
@@ -8687,6 +8873,30 @@ abstract class AppLocalizations {
   /// **'Code used successfully!'**
   String get referralCodeSuccess;
 
+  /// No description provided for @referralApplyFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not apply referral code'**
+  String get referralApplyFailedTitle;
+
+  /// No description provided for @referralApplyFailedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The code has not been saved. Try again or enter the app without it.'**
+  String get referralApplyFailedBody;
+
+  /// No description provided for @referralRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Go back and retry'**
+  String get referralRetry;
+
+  /// No description provided for @referralContinueWithoutCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue without code'**
+  String get referralContinueWithoutCode;
+
   /// No description provided for @referralOk.
   ///
   /// In en, this message translates to:
@@ -8702,19 +8912,19 @@ abstract class AppLocalizations {
   /// No description provided for @referralHowTitle.
   ///
   /// In en, this message translates to:
-  /// **'How does it work?'**
+  /// **'Invite a customer'**
   String get referralHowTitle;
 
   /// No description provided for @referralStep1Title.
   ///
   /// In en, this message translates to:
-  /// **'Share code with friends'**
+  /// **'Share a link or QR with friends'**
   String get referralStep1Title;
 
   /// No description provided for @referralStep1Desc.
   ///
   /// In en, this message translates to:
-  /// **'Send your code to friends who haven\'t used the app yet'**
+  /// **'Send your invite link and code to friends new to the app'**
   String get referralStep1Desc;
 
   /// No description provided for @referralStep2Title.
@@ -8732,13 +8942,13 @@ abstract class AppLocalizations {
   /// No description provided for @referralStep3Title.
   ///
   /// In en, this message translates to:
-  /// **'Get discount coupon!'**
+  /// **'Earn a Wallet reward'**
   String get referralStep3Title;
 
   /// No description provided for @referralStep3Desc.
   ///
   /// In en, this message translates to:
-  /// **'You\'ll get a discount coupon sent directly to your wallet'**
+  /// **'The referrer earns the configured base reward at their current tier'**
   String get referralStep3Desc;
 
   /// No description provided for @driverAssignedTitle.
@@ -9772,6 +9982,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Press back again to exit'**
   String get merchantPressBackAgain;
+
+  /// No description provided for @mchSetSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop Settings'**
+  String get mchSetSettingsTitle;
+
+  /// No description provided for @mchSetOperationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Order settings'**
+  String get mchSetOperationsTitle;
 
   /// No description provided for @mchSetShopInfoTitle.
   ///
@@ -11843,6 +12065,12 @@ abstract class AppLocalizations {
   /// **'Laundry pickup & return'**
   String get driverServiceTypeLaundry;
 
+  /// No description provided for @driverServiceTypeShop.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping errands'**
+  String get driverServiceTypeShop;
+
   /// No description provided for @driverServiceTypeFoodDesc.
   ///
   /// In en, this message translates to:
@@ -11866,6 +12094,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pick up laundry from customers and return it'**
   String get driverServiceTypeLaundryDesc;
+
+  /// No description provided for @driverServiceTypeShopDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy requested items and deliver them to the customer'**
+  String get driverServiceTypeShopDesc;
 
   /// No description provided for @driverServiceTypeSave.
   ///

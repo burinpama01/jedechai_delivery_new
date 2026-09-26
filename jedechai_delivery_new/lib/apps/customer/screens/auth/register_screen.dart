@@ -1,4 +1,4 @@
-﻿import 'package:jedechai_delivery_new/utils/debug_logger.dart';
+import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../theme/jdc_colors.dart';
@@ -11,7 +11,9 @@ import 'login_screen.dart';
 /// Register Screen
 /// Allows users to create an account with role selection
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  const RegisterScreen({super.key, this.initialReferralCode});
+
+  final String? initialReferralCode;
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -26,38 +28,45 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _confirmPasswordController = TextEditingController();
   final _referralCodeController = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    _referralCodeController.text = widget.initialReferralCode ?? '';
+  }
+
   String _selectedRole = 'customer'; // Default role
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
   List<Map<String, dynamic>> _getRoles(AppLocalizations l10n) => [
-    {
-      'value': 'customer',
-      'label': l10n.accountRoleCustomer,
-      'icon': Icons.person,
-      'color': JdcColors.of(context).cta,
-    },
-    {
-      'value': 'driver',
-      'label': l10n.accountRoleDriver,
-      'icon': Icons.local_taxi,
-      'color': JdcColors.of(context).infoInk,
-    },
-    {
-      'value': 'merchant',
-      'label': l10n.accountRoleMerchant,
-      'icon': Icons.store,
-      'color': JdcColors.of(context).brand,
-    },
-  ];
+        {
+          'value': 'customer',
+          'label': l10n.accountRoleCustomer,
+          'icon': Icons.person,
+          'color': JdcColors.of(context).cta,
+        },
+        {
+          'value': 'driver',
+          'label': l10n.accountRoleDriver,
+          'icon': Icons.local_taxi,
+          'color': JdcColors.of(context).infoInk,
+        },
+        {
+          'value': 'merchant',
+          'label': l10n.accountRoleMerchant,
+          'icon': Icons.store,
+          'color': JdcColors.of(context).brand,
+        },
+      ];
 
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
 
     // Check if passwords match
     if (_passwordController.text != _confirmPasswordController.text) {
-      _showErrorDialog(AppLocalizations.of(context)!.registerErrorPasswordMismatch);
+      _showErrorDialog(
+          AppLocalizations.of(context)!.registerErrorPasswordMismatch);
       return;
     }
 
@@ -66,7 +75,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       final email = _emailController.text.trim();
       final phone = _phoneController.text.trim();
-      
+
       // ── ตรวจสอบข้อมูลซ้ำก่อนสมัคร ──
       try {
         // ตรวจสอบเบอร์โทรซ้ำ
@@ -76,10 +85,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
             .eq('phone_number', phone)
             .maybeSingle();
         if (phoneCheck != null) {
-          _showErrorDialog(AppLocalizations.of(context)!.registerErrorPhoneUsed);
+          if (!mounted) return;
+          _showErrorDialog(
+              AppLocalizations.of(context)!.registerErrorPhoneUsed);
           return;
         }
-        
+
         // ตรวจสอบอีเมลซ้ำใน profiles
         final emailCheck = await Supabase.instance.client
             .from('profiles')
@@ -87,7 +98,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             .eq('email', email)
             .maybeSingle();
         if (emailCheck != null) {
-          _showErrorDialog(AppLocalizations.of(context)!.registerErrorEmailUsed);
+          if (!mounted) return;
+          _showErrorDialog(
+              AppLocalizations.of(context)!.registerErrorEmailUsed);
           return;
         }
       } catch (dupCheckError) {
@@ -95,32 +108,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
         // Supabase auth จะตรวจ email ซ้ำเอง
         debugLog('⚠️ Duplicate check error (non-blocking): $dupCheckError');
       }
-      
+
       final userData = {
         'full_name': _fullNameController.text.trim(),
         'phone_number': phone,
         'role': _selectedRole,
       };
-      
+
       debugLog('═══════════════════════════════════════');
       debugLog('🚀 เริ่มสมัครสมาชิก');
       debugLog('📧 Email: $email');
       debugLog('👤 Role: $_selectedRole');
       debugLog('📋 UserData: $userData');
       debugLog('═══════════════════════════════════════');
-      
+
       // 1. Sign up with AuthService
       final response = await AuthService.signUpWithEmail(
         email: _emailController.text.trim(),
         password: _passwordController.text,
         userData: userData,
       );
-      
+
       debugLog('═══════════════════════════════════════');
       debugLog('📦 SignUp Response:');
       debugLog('   user: ${response.user?.id}');
       debugLog('   email: ${response.user?.email}');
-      debugLog('   session: ${response.session != null ? "มี session" : "ไม่มี session (email confirmation?)"}');
+      debugLog(
+          '   session: ${response.session != null ? "มี session" : "ไม่มี session (email confirmation?)"}');
       debugLog('   metadata: ${response.user?.userMetadata}');
       debugLog('═══════════════════════════════════════');
 
@@ -136,11 +150,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
             .select('id, role, approval_status')
             .eq('id', response.user!.id)
             .maybeSingle();
-        
+
         if (profileCheck != null) {
           debugLog('✅ Profile ถูกสร้างเรียบร้อย: $profileCheck');
         } else {
-          debugLog('⚠️ Profile ยังไม่ถูกสร้าง — อาจต้องรอ trigger หรือสร้างตอน login');
+          debugLog(
+              '⚠️ Profile ยังไม่ถูกสร้าง — อาจต้องรอ trigger หรือสร้างตอน login');
         }
       } catch (checkError) {
         debugLog('⚠️ ไม่สามารถตรวจสอบ profile ได้: $checkError');
@@ -168,15 +183,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   String _getLocalizedErrorMessage(String error) {
     final l10n = AppLocalizations.of(context)!;
-    if (error.contains('already registered') || error.contains('already exists') || error.contains('User already registered')) {
+    if (error.contains('already registered') ||
+        error.contains('already exists') ||
+        error.contains('User already registered')) {
       return l10n.registerErrorEmailAlreadyRegistered;
     } else if (error.contains('weak password') || error.contains('Password')) {
       return l10n.registerErrorWeakPassword;
-    } else if (error.contains('invalid email') || error.contains('Invalid email')) {
+    } else if (error.contains('invalid email') ||
+        error.contains('Invalid email')) {
       return l10n.registerErrorInvalidEmail;
-    } else if (error.contains('SocketException') || error.contains('Failed host lookup') || error.contains('เชื่อมต่อ')) {
+    } else if (error.contains('SocketException') ||
+        error.contains('Failed host lookup') ||
+        error.contains('เชื่อมต่อ')) {
       return l10n.registerErrorCannotConnect;
-    } else if (error.contains('Too many requests') || error.contains('rate_limit')) {
+    } else if (error.contains('Too many requests') ||
+        error.contains('rate_limit')) {
       return l10n.registerErrorTooManyRequests;
     }
     return l10n.registerErrorGeneric;
@@ -207,10 +228,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: JdcColors.of(context).cta,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              child: Text(l10n.commonOk, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              child: Text(l10n.commonOk,
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w600)),
             ),
           ),
         ],
@@ -226,7 +250,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        icon: Icon(Icons.check_circle, color: JdcColors.of(context).cta, size: 48),
+        icon: Icon(Icons.check_circle,
+            color: JdcColors.of(context).cta, size: 48),
         title: Text(
           l10n.registerSuccessTitle,
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
@@ -245,17 +270,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Navigator.of(context).pop();
                 Navigator.of(this.context).pushReplacement(
                   MaterialPageRoute(
-                    builder: (_) => LoginScreen(initialReferralCode: referralCode),
+                    builder: (_) =>
+                        LoginScreen(initialReferralCode: referralCode),
                   ),
                 );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: JdcColors.of(context).cta,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              child: Text(l10n.registerSuccessGoToLogin, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              child: Text(l10n.registerSuccessGoToLogin,
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w600)),
             ),
           ),
         ],
@@ -294,7 +323,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Align(
                 alignment: Alignment.centerRight,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: colorScheme.surfaceContainer,
                     borderRadius: BorderRadius.circular(10),
@@ -303,7 +333,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
               const SizedBox(height: 32),
-              
+
               // Welcome Text
               Text(
                 l10n.registerHeader,
@@ -345,13 +375,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         color: role['color'] as Color,
                         isSelected: isSelected,
                         onTap: () {
-                          debugLog('🔄 Role selected: ${role['value']} (was: $_selectedRole)');
+                          debugLog(
+                              '🔄 Role selected: ${role['value']} (was: $_selectedRole)');
                           setState(() {
                             _selectedRole = role['value'] as String;
                           });
-                          if (_selectedRole == 'merchant') {
-                            _referralCodeController.clear();
-                          }
                           debugLog('✅ Role updated to: $_selectedRole');
                         },
                       ),
@@ -365,7 +393,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextFormField(
                 controller: _fullNameController,
                 decoration: InputDecoration(
-                  labelText: _selectedRole == 'merchant' ? l10n.registerShopNameLabel : l10n.registerFullNameLabel,
+                  labelText: _selectedRole == 'merchant'
+                      ? l10n.registerShopNameLabel
+                      : l10n.registerFullNameLabel,
                   prefixIcon: const Icon(Icons.person_outline),
                 ),
                 textCapitalization: TextCapitalization.words,
@@ -441,7 +471,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   prefixIcon: const Icon(Icons.lock_outlined),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                      _obscurePassword
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                     ),
                     onPressed: () {
                       setState(() {
@@ -506,7 +538,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           width: 24,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
                       : Text(
@@ -533,7 +566,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   TextButton(
                     onPressed: () {
                       Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => LoginScreen(
+                            initialReferralCode:
+                                _referralCodeController.text.trim(),
+                          ),
+                        ),
                       );
                     },
                     child: Text(

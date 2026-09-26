@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { saveReferralSettings } from "./settingsActionsBridge.js";
 
 const legacySettingsSource = readFileSync(
   new URL("../../app.legacy.js", import.meta.url),
@@ -78,6 +79,9 @@ test("Beam actions go through admin-actions and never write keys to system_confi
 test("settings page exposes referral reward + withdrawal minimum controls", () => {
   assert.match(settingsPageSource, /id="settRefBaseDriverMerchant"/);
   assert.match(settingsPageSource, /id="settRefBaseCustomerMerchant"/);
+  assert.match(settingsPageSource, /id="settRefBaseCustomerCustomer"/);
+  assert.match(settingsPageSource, /id="settRefBaseDriverCustomer"/);
+  assert.match(settingsPageSource, /id="settRefBaseCustomerDriver"/);
   assert.match(settingsPageSource, /id="settRefBaseDriverDriverReferrer"/);
   assert.match(settingsPageSource, /id="settRefBaseDriverDriverNew"/);
   assert.match(settingsPageSource, /id="settRefTiers"/);
@@ -89,7 +93,48 @@ test("settings page exposes referral reward + withdrawal minimum controls", () =
 
 test("referral settings save validates tiers and pays pending rewards via admin-actions", () => {
   assert.match(actionsSource, /referral_reward_base_driver_invite_merchant/);
+  assert.match(actionsSource, /referral_reward_base_customer_invite_customer/);
+  assert.match(actionsSource, /referral_reward_base_driver_invite_customer/);
+  assert.match(actionsSource, /referral_reward_base_customer_invite_driver/);
   assert.match(actionsSource, /referral_reward_tiers/);
   assert.match(actionsSource, /multiplier ต้องมากกว่า 0/);
   assert.match(actionsSource, /action: 'release_referral_reward', reward_id: rewardId/);
+});
+
+test("new cross-role reward values are saved and invalid amounts are rejected", async () => {
+  const previousDocument = globalThis.document;
+  const values = {
+    settRefBaseCustomerCustomer: "10",
+    settRefBaseDriverCustomer: "20",
+    settRefBaseCustomerDriver: "10",
+    settRefTiers: '[{"from":1,"to":null,"multiplier":1}]',
+  };
+  const box = { innerHTML: "" };
+  globalThis.document = {
+    getElementById(id) {
+      if (id === "referralPendingReviewBox") return box;
+      return id in values ? { value: values[id] } : null;
+    },
+  };
+  const saved = [];
+  const toasts = [];
+  const ctx = {
+    _upsertSystemConfigKeyValues: async (payload) => saved.push(payload),
+    _fetchSystemConfigKeyValues: async () => ({}),
+    supabase: { from: () => ({ select: () => ({ eq: () => ({ order: () => ({ limit: async () => ({ data: [] }) }) }) }) }) },
+    showToast: (message, kind) => toasts.push({ message, kind }),
+  };
+  try {
+    await saveReferralSettings(ctx);
+    assert.equal(saved.length, 1);
+    assert.equal(saved[0].referral_reward_base_customer_invite_customer, "10");
+    assert.equal(saved[0].referral_reward_base_driver_invite_customer, "20");
+    assert.equal(saved[0].referral_reward_base_customer_invite_driver, "10");
+    values.settRefBaseCustomerCustomer = "-1";
+    await saveReferralSettings(ctx);
+    assert.equal(saved.length, 1);
+    assert.equal(toasts.at(-1).kind, "error");
+  } finally {
+    globalThis.document = previousDocument;
+  }
 });

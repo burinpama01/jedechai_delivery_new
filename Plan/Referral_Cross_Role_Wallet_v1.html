@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>แผนรางวัลชวนเพื่อนข้ามบทบาท v1</title>
+<style>
+body{font-family:system-ui,sans-serif;margin:0;background:#f5f7fb;color:#172337;line-height:1.55}main{max-width:980px;margin:auto;padding:28px 18px 64px}h1{margin:0 0 8px;font-size:28px}.sub{color:#56647a}.card{background:#fff;border:1px solid #dce3ee;border-radius:16px;padding:20px;margin:16px 0;box-shadow:0 4px 18px #1520340b}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px;border-bottom:1px solid #e5eaf2}th{background:#eef3fa}.tag{display:inline-block;background:#fff4db;color:#7b5200;border-radius:99px;padding:3px 10px;font-weight:700}code{background:#edf2f8;padding:2px 4px;border-radius:4px}.mock{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.tile{border:1px solid #dce3ee;border-radius:12px;padding:12px;background:#fbfdff}.muted{color:#637089;font-size:14px}
+</style>
+</head>
+<body><main>
+<h1>รางวัลชวนเพื่อนข้ามบทบาท</h1><p class="sub">25 กันยายน 2026 · <span class="tag">กำลังดำเนินการ — รอ verification</span></p>
+<section class="card"><h2>ขอบเขต</h2><p>เพิ่ม QR โค้ดแนะนำ และทำให้แอดมินกำหนดฐานรางวัลแต่ละคู่ได้ โดยใช้สถานะรางวัลและขั้นบันไดที่มีอยู่ ผู้ใช้กำหนดว่ารางวัลฝั่งลูกค้าเริ่มที่ 10 บาท</p><div class="mock"><div class="tile"><strong>หน้าแอป</strong><p class="muted">QR โค้ด + เงื่อนไขตามบทบาทและค่าที่แอดมินตั้งจริง</p></div><div class="tile"><strong>หน้า Admin</strong><p class="muted">ช่องฐานรางวัลของแต่ละคู่ พร้อมตรวจค่าก่อนบันทึก</p></div><div class="tile"><strong>ฐานข้อมูล</strong><p class="muted">จ่ายครั้งเดียวเมื่อเงื่อนไขสำเร็จ และไม่ให้ trigger เก่าจ่ายซ้ำ</p></div></div></section>
+<section class="card"><h2>คู่แนะนำ</h2><table><thead><tr><th>ผู้ชวน → ผู้ถูกชวน</th><th>เงื่อนไข</th><th>ฐานรางวัลผู้ชวน</th></tr></thead><tbody><tr><td>ลูกค้า → ลูกค้า</td><td>ลูกค้าใหม่จบงานแรก</td><td>10 บาท; ลูกค้าใหม่ไม่ได้รับ</td></tr><tr><td>คนขับ → ลูกค้า</td><td>ลูกค้าใหม่จบงานแรก</td><td>20 บาท; ลูกค้าใหม่ไม่ได้รับ</td></tr><tr><td>ลูกค้า → คนขับ</td><td>คนขับใหม่จบงานแรก</td><td>10 บาท; คนขับใหม่ไม่ได้รับ</td></tr><tr><td>ลูกค้า → ร้าน</td><td>ร้านได้รับอนุมัติ</td><td>10 บาทสำหรับค่าใหม่; ฐานข้อมูลเดิมคงค่าที่ตั้งไว้และต้องตรวจใน Admin</td></tr><tr><td>คนขับ → ร้าน</td><td>ร้านได้รับอนุมัติ</td><td>ใช้ค่าที่ตั้งอยู่แล้ว</td></tr></tbody></table><p class="muted">ฐานรางวัลผู้ชวนคูณขั้นปัจจุบัน; ค่าเริ่มต้นแก้ได้ใน Admin</p></section>
+<section class="card"><h2>ลำดับทำงานและเกณฑ์ตรวจ</h2><ol><li>เพิ่มช่องตั้งค่า Admin และ migration ที่แยกกติกาเก่าออกจากกติกาใหม่อย่างปลอดภัย</li><li>ทำ QR ลิงก์ <code>/invite?code=</code> ให้เปิดหน้าสมัครในแอปพร้อมโค้ด; ผู้ยังไม่มีแอปเห็นโค้ดและลิงก์ติดตั้ง</li><li>เพิ่มเงื่อนไขหน้าแอปจาก <code>my_referral_summary</code> และทดสอบ UI/SQL</li><li>ทดสอบ migration บน staging, ทดสอบสมัครและจ่ายจริงก่อนเปิดใช้ production</li></ol><p class="muted">ยังไม่อนุญาตให้รัน migration หรือเปลี่ยนรางวัล production จากแผนนี้</p></section>
+</main></body></html>
+

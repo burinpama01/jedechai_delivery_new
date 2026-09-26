@@ -838,6 +838,9 @@ export async function copyBeamWebhookUrl() {
 const REFERRAL_KEYS = {
   settRefBaseDriverMerchant: 'referral_reward_base_driver_invite_merchant',
   settRefBaseCustomerMerchant: 'referral_reward_base_customer_invite_merchant',
+  settRefBaseCustomerCustomer: 'referral_reward_base_customer_invite_customer',
+  settRefBaseDriverCustomer: 'referral_reward_base_driver_invite_customer',
+  settRefBaseCustomerDriver: 'referral_reward_base_customer_invite_driver',
   settRefBaseDriverDriverReferrer: 'referral_reward_base_driver_invite_driver_referrer',
   settRefBaseDriverDriverNew: 'referral_reward_base_driver_invite_driver_newdriver',
   settRefMaxPerMonth: 'referral_max_rewards_per_month',
@@ -903,6 +906,10 @@ export async function saveReferralSettings(ctx) {
     Object.entries(REFERRAL_KEYS).forEach(([id, key]) => {
       const raw = document.getElementById(id)?.value;
       if (raw == null || String(raw).trim() === '') return;
+      if (id !== 'settRefTiers' &&
+          (!Number.isFinite(Number(raw)) || Number(raw) < 0)) {
+        throw new Error('จำนวนรางวัลและขั้นต่ำถอนต้องเป็นเลขไม่ติดลบ');
+      }
       payload[key] = String(raw).trim();
     });
     await _upsertSystemConfigKeyValues(payload);

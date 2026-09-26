@@ -24,6 +24,8 @@ dependencies:
   geolocator: 11.0.0
   geocoding: ^3.0.0
   google_maps_flutter: ^2.14.2
+  google_maps_flutter_android: ^2.14.0
+  google_maps_flutter_platform_interface: ^2.14.1
   
   # HTTP and Polyline
   http: ^1.2.0
@@ -63,6 +65,8 @@ dependencies:
 
   # Native Splash (must be in dependencies for Android plugin registration)
   flutter_native_splash: ^2.4.0
+  app_links: 7.0.0
+  qr_flutter: 4.1.0
 
 dev_dependencies:
   flutter_test:

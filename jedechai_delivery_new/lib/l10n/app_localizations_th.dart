@@ -2079,6 +2079,33 @@ class AppLocalizationsTh extends AppLocalizations {
   String get accountMenuNotifications => 'การแจ้งเตือน';
 
   @override
+  String get notificationConsentTitle => 'เปิดการแจ้งเตือนหรือไม่';
+
+  @override
+  String get notificationConsentBody => 'รับแจ้งเตือนเกี่ยวกับออเดอร์ งาน และสถานะสำคัญของคุณ คุณเปลี่ยนการตั้งค่านี้ภายหลังได้';
+
+  @override
+  String get notificationConsentAllow => 'เปิดการแจ้งเตือน';
+
+  @override
+  String get notificationConsentNotNow => 'ยังไม่เปิด';
+
+  @override
+  String get notificationSettingsTitle => 'ตั้งค่าการแจ้งเตือน';
+
+  @override
+  String get notificationSettingsDescription => 'รับแจ้งเตือนงานและสถานะสำคัญบนอุปกรณ์นี้';
+
+  @override
+  String get notificationSettingsSystemHint => 'หากปิดสิทธิ์ไว้ในโทรศัพท์ ให้เปิดสิทธิ์การแจ้งเตือนของแอปในตั้งค่าโทรศัพท์ด้วย';
+
+  @override
+  String get notificationSettingsError => 'เปลี่ยนการตั้งค่าไม่สำเร็จ กรุณาลองอีกครั้ง';
+
+  @override
+  String get notificationSettingsNotReady => 'เปิดในแอปแล้ว แต่การแจ้งเตือนบนเครื่องนี้ยังไม่พร้อม กรุณาตรวจสิทธิ์ในตั้งค่าโทรศัพท์หรือการเชื่อมต่อ';
+
+  @override
   String get accountMenuPrivacyPolicy => 'นโยบายความเป็นส่วนตัว';
 
   @override
@@ -3895,6 +3922,64 @@ class AppLocalizationsTh extends AppLocalizations {
   String get ticketViewDetail => 'ดูรายละเอียด';
 
   @override
+  String get driverReferralRulesTitle => 'รับรางวัลเมื่อชวนสำเร็จ';
+
+  @override
+  String get driverReferralHeroTitle => 'ชวนเพื่อนร่วม JDC Delivery รับ Wallet';
+
+  @override
+  String get driverReferralHeroSubtitle => 'รางวัลเกิดเมื่อเพื่อนทำตามเงื่อนไขของบทบาทที่สมัคร';
+
+  @override
+  String driverReferralShareMessage(String code) {
+    return 'สมัคร JDC Delivery ด้วยโค้ดแนะนำของฉัน: $code';
+  }
+
+  @override
+  String get driverReferralCodeHint => 'ให้เพื่อนสมัครผ่าน QR หรือกรอกโค้ดนี้ตอนสมัคร';
+
+  @override
+  String get driverReferralMerchantTitle => 'ชวนร้านค้า';
+
+  @override
+  String get driverReferralMerchantCondition => 'ร้านใหม่ใช้โค้ดของคุณและผ่านการอนุมัติจากแอดมิน';
+
+  @override
+  String get driverReferralCustomerTitle => 'ชวนลูกค้า';
+
+  @override
+  String get referralCustomerFirstJobCondition => 'ลูกค้าใหม่ใช้โค้ดของคุณและจบรายการแรกสำเร็จ';
+
+  @override
+  String get driverReferralDriverTitle => 'ชวนคนขับ';
+
+  @override
+  String get driverReferralDriverCondition => 'คนขับใหม่ใช้โค้ดของคุณและส่งงานแรกสำเร็จ ทั้งสองฝ่ายจึงได้รับรางวัล';
+
+  @override
+  String driverReferralYouEarn(String amount) {
+    return 'คุณรับ ฿$amount ตามขั้นปัจจุบัน';
+  }
+
+  @override
+  String driverReferralNewDriverEarn(String amount) {
+    return 'คนขับใหม่รับ ฿$amount หลังงานแรกสำเร็จ';
+  }
+
+  @override
+  String get driverReferralTierTableTitle => 'ขั้นบันไดรางวัล';
+
+  @override
+  String driverReferralTierRow(String from, String to, String multiplier) {
+    return 'ชวนสำเร็จ $from–$to ราย ×$multiplier';
+  }
+
+  @override
+  String driverReferralTierOpenRow(String from, String multiplier) {
+    return 'ชวนสำเร็จตั้งแต่ $from ราย ×$multiplier';
+  }
+
+  @override
   String referralTierCurrent(String tier) {
     return 'ขั้นรางวัลปัจจุบัน: ขั้น $tier';
   }
@@ -3902,6 +3987,11 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String referralTierReward(String amount, String base, String multiplier) {
     return 'ชวนสำเร็จ 1 ราย ได้ ฿$amount (ฐาน ฿$base × $multiplier)';
+  }
+
+  @override
+  String referralTierMultiplier(String multiplier) {
+    return 'ตัวคูณขั้นปัจจุบัน ×$multiplier · ฐานรางวัลขึ้นอยู่กับประเภทคำชวน';
   }
 
   @override
@@ -4626,10 +4716,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get referralTitle => 'ชวนเพื่อนรับรางวัล';
 
   @override
-  String get referralHeroTitle => 'ชวนเพื่อนใช้แอป\nรับคูปองทั้งคู่!';
+  String get referralHeroTitle => 'ชวนเพื่อนร่วม JDC Delivery';
 
   @override
-  String get referralHeroSubtitle => 'รับคูปองส่วนลด 20 บาท ทันที\nเมื่อเพื่อนของคุณสั่งอาหารครั้งแรกสำเร็จ';
+  String get referralHeroSubtitle => 'รางวัลขึ้นอยู่กับประเภทผู้สมัครและเงื่อนไขของแต่ละคำชวน';
 
   @override
   String get referralMyCodeLabel => 'โค้ดชวนเพื่อนของคุณ';
@@ -4638,10 +4728,25 @@ class AppLocalizationsTh extends AppLocalizations {
   String get referralShareButton => 'แชร์ให้เพื่อน';
 
   @override
+  String get referralQrHint => 'สแกนเพื่อเปิดหน้าสมัครพร้อมโค้ดแนะนำ';
+
+  @override
+  String get customerReferralMerchantTitle => 'ชวนร้านค้า';
+
+  @override
+  String get customerReferralCustomerTitle => 'ชวนลูกค้า';
+
+  @override
+  String get customerReferralDriverTitle => 'ชวนคนขับ';
+
+  @override
+  String get customerReferralDriverCondition => 'คนขับใหม่ใช้โค้ดของคุณและจบงานแรกสำเร็จ ผู้ชวนได้รับรางวัล';
+
+  @override
   String get referralHaveCode => 'มีโค้ดชวนเพื่อนไหม?';
 
   @override
-  String get referralEnterCodeHint => 'กรอกโค้ดจากเพื่อนเพื่อรับคูปองต้อนรับทันที';
+  String get referralEnterCodeHint => 'กรอกโค้ดจากเพื่อนเพื่อผูกคำชวน';
 
   @override
   String get referralCodePlaceholder => 'กรอกโค้ดที่นี่';
@@ -4659,19 +4764,31 @@ class AppLocalizationsTh extends AppLocalizations {
   String get referralCodeSuccess => 'ใช้โค้ดสำเร็จ!';
 
   @override
+  String get referralApplyFailedTitle => 'ผูกโค้ดแนะนำไม่สำเร็จ';
+
+  @override
+  String get referralApplyFailedBody => 'โค้ดยังไม่ถูกบันทึก คุณสามารถกลับไปลองใหม่ หรือเข้าแอปโดยไม่ใช้โค้ด';
+
+  @override
+  String get referralRetry => 'กลับไปลองใหม่';
+
+  @override
+  String get referralContinueWithoutCode => 'เข้าแอปโดยไม่ใช้โค้ด';
+
+  @override
   String get referralOk => 'ตกลง';
 
   @override
   String get referralSuccessful => 'ชวนสำเร็จ';
 
   @override
-  String get referralHowTitle => 'ทำงานอย่างไร?';
+  String get referralHowTitle => 'เงื่อนไขชวนลูกค้า';
 
   @override
-  String get referralStep1Title => 'แชร์โค้ดให้เพื่อน';
+  String get referralStep1Title => 'แชร์ลิงก์หรือ QR ให้เพื่อน';
 
   @override
-  String get referralStep1Desc => 'ส่งโค้ดของคุณให้เพื่อนที่ยังไม่เคยใช้แอป';
+  String get referralStep1Desc => 'ส่งลิงก์พร้อมโค้ดของคุณให้เพื่อนที่ยังไม่เคยใช้แอป';
 
   @override
   String get referralStep2Title => 'เพื่อนสั่งอาหารครั้งแรก';
@@ -4680,10 +4797,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get referralStep2Desc => 'เพื่อนสมัครและสั่งอาหารสำเร็จเป็นครั้งแรก';
 
   @override
-  String get referralStep3Title => 'รับคูปองส่วนลด!';
+  String get referralStep3Title => 'รับรางวัลเข้า Wallet';
 
   @override
-  String get referralStep3Desc => 'คุณจะได้คูปองส่วนลดส่งตรงเข้ากระเป๋าทันที';
+  String get referralStep3Desc => 'ผู้ชวนได้รับรางวัลตามฐานที่แอดมินตั้งและขั้นปัจจุบัน';
 
   @override
   String get driverAssignedTitle => 'คนขับรับงานแล้ว';
@@ -5238,6 +5355,12 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get merchantPressBackAgain => 'กดอีกครั้งเพื่อออกจากแอป';
+
+  @override
+  String get mchSetSettingsTitle => 'ตั้งค่าร้าน';
+
+  @override
+  String get mchSetOperationsTitle => 'การรับออร์เดอร์';
 
   @override
   String get mchSetShopInfoTitle => 'ข้อมูลร้านค้า';
@@ -6345,6 +6468,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get driverServiceTypeLaundry => 'รับส่งผ้าซักรีด';
 
   @override
+  String get driverServiceTypeShop => 'ฝากซื้อ';
+
+  @override
   String get driverServiceTypeFoodDesc => 'ออเดอร์จากร้านในระบบ';
 
   @override
@@ -6355,6 +6481,9 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get driverServiceTypeLaundryDesc => 'รับผ้าจากลูกค้าไปร้าน และส่งคืน';
+
+  @override
+  String get driverServiceTypeShopDesc => 'รับซื้อสินค้าตามรายการและจัดส่งให้ลูกค้า';
 
   @override
   String get driverServiceTypeSave => 'บันทึกการตั้งค่า';

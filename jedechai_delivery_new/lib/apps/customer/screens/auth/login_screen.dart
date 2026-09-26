@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../../theme/jdc_colors.dart';
 import 'package:flutter/services.dart';
@@ -65,11 +65,37 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final referralCode = widget.initialReferralCode?.trim() ?? '';
       if (referralCode.isNotEmpty) {
-        try {
-          await _referralService.submitReferralCode(referralCode);
-        } catch (e) {
-          // Do not block login if referral code fails.
-          debugLog('⚠️ submitReferralCode after login failed: $e');
+        while (mounted) {
+          try {
+            await _referralService.submitReferralCode(referralCode);
+            break;
+          } catch (e) {
+            debugLog('⚠️ submitReferralCode after login failed: $e');
+            if (!mounted) return;
+            final retry = await showDialog<bool>(
+              context: context,
+              barrierDismissible: false,
+              builder: (dialogContext) => AlertDialog(
+                title: Text(
+                    AppLocalizations.of(context)!.referralApplyFailedTitle),
+                content:
+                    Text(AppLocalizations.of(context)!.referralApplyFailedBody),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(true),
+                    child: Text(AppLocalizations.of(context)!.referralRetry),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(false),
+                    child: Text(AppLocalizations.of(context)!
+                        .referralContinueWithoutCode),
+                  ),
+                ],
+              ),
+            );
+            if (!mounted) return;
+            if (retry == false) break;
+          }
         }
       }
 
@@ -81,7 +107,7 @@ class _LoginScreenState extends State<LoginScreen> {
             backgroundColor: JdcColors.of(context).cta,
           ),
         );
-        
+
         // Navigate to AuthGate and let it handle role-based navigation
         Navigator.of(context).pushNamedAndRemoveUntil(
           '/',
@@ -108,7 +134,8 @@ class _LoginScreenState extends State<LoginScreen> {
       return l10n.loginErrorEmailNotConfirmed;
     } else if (error.contains('User not found')) {
       return l10n.loginErrorUserNotFound;
-    } else if (error.contains('Too many requests') || error.contains('rate_limit')) {
+    } else if (error.contains('Too many requests') ||
+        error.contains('rate_limit')) {
       return l10n.loginErrorTooManyRequests;
     } else if (error.contains('SocketException') ||
         error.contains('Failed host lookup') ||
@@ -145,12 +172,14 @@ class _LoginScreenState extends State<LoginScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: JdcColors.of(context).cta,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
               child: Text(
                 l10n.commonOk,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ),
           ),
@@ -194,225 +223,226 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       },
       child: Scaffold(
-      backgroundColor: jdc.surface,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(28, 8, 28, 28),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainer,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const LanguageSwitcher(),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                
-                // Logo
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: jdc.brandSoft,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: AppNetworkImage(
-                        imageUrl: _logoUrl,
-                        width: 56,
-                        height: 56,
-                        fit: BoxFit.contain,
-                        backgroundColor: jdc.brandSoft,
+        backgroundColor: jdc.surface,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(28, 8, 28, 28),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainer,
+                        borderRadius: BorderRadius.circular(10),
                       ),
+                      child: const LanguageSwitcher(),
                     ),
                   ),
-                ),
-                const SizedBox(height: 20),
+                  const SizedBox(height: 24),
 
-                // Welcome Text
-                Text(
-                  l10n.loginWelcomeTitle,
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: onSurface,
-                  ),
-                  textAlign: TextAlign.left,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.loginWelcomeSubtitle,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    fontSize: 14,
-                    color: secondaryText,
-                  ),
-                  textAlign: TextAlign.left,
-                ),
-                const SizedBox(height: 28),
-
-                // Email Field
-                TextFormField(
-                  controller: _emailController,
-                  decoration: InputDecoration(
-                    labelText: l10n.loginEmailLabel,
-                    prefixIcon: const Icon(Icons.email_outlined),
-                    filled: true,
-                    fillColor: jdc.paper,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return l10n.loginValidationEmailRequired;
-                    }
-                    if (!value.contains('@') || !value.contains('.')) {
-                      return l10n.loginValidationEmailInvalid;
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Password Field
-                TextFormField(
-                  controller: _passwordController,
-                  decoration: InputDecoration(
-                    labelText: l10n.loginPasswordLabel,
-                    prefixIcon: const Icon(Icons.lock_outlined),
-                    filled: true,
-                    fillColor: jdc.paper,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                    ),
-                  ),
-                  obscureText: _obscurePassword,
-                  textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => _signIn(),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return l10n.loginValidationPasswordRequired;
-                    }
-                    if (value.length < 6) {
-                      return l10n.loginValidationPasswordMinLength;
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 8),
-
-                // Forgot Password Link
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: _isLoading
-                        ? null
-                        : () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const ForgotPasswordScreen(),
-                              ),
-                            );
-                          },
-                    child: Text(
-                      l10n.loginForgotPassword,
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Login Button
-                SizedBox(
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _signIn,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: jdc.cta,
-                      foregroundColor: jdc.onCta,
-                      shape: RoundedRectangleBorder(
+                  // Logo
+                  Align(
+                    alignment: Alignment.center,
+                    child: Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: jdc.brandSoft,
                         borderRadius: BorderRadius.circular(16),
                       ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: AppNetworkImage(
+                          imageUrl: _logoUrl,
+                          width: 56,
+                          height: 56,
+                          fit: BoxFit.contain,
+                          backgroundColor: jdc.brandSoft,
+                        ),
+                      ),
                     ),
-                    child: _isLoading
-                        ? SizedBox(
-                            height: 24,
-                            width: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(jdc.onCta),
-                            ),
-                          )
-                        : Text(
-                            l10n.loginButton,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
                   ),
-                ),
-                const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
-                // Register Link
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      l10n.loginNoAccountPrefix,
-                      style: TextStyle(color: secondaryText),
+                  // Welcome Text
+                  Text(
+                    l10n.loginWelcomeTitle,
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: onSurface,
                     ),
-                    TextButton(
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.loginWelcomeSubtitle,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontSize: 14,
+                      color: secondaryText,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 28),
+
+                  // Email Field
+                  TextFormField(
+                    controller: _emailController,
+                    decoration: InputDecoration(
+                      labelText: l10n.loginEmailLabel,
+                      prefixIcon: const Icon(Icons.email_outlined),
+                      filled: true,
+                      fillColor: jdc.paper,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return l10n.loginValidationEmailRequired;
+                      }
+                      if (!value.contains('@') || !value.contains('.')) {
+                        return l10n.loginValidationEmailInvalid;
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Password Field
+                  TextFormField(
+                    controller: _passwordController,
+                    decoration: InputDecoration(
+                      labelText: l10n.loginPasswordLabel,
+                      prefixIcon: const Icon(Icons.lock_outlined),
+                      filled: true,
+                      fillColor: jdc.paper,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
+                    ),
+                    obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) => _signIn(),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return l10n.loginValidationPasswordRequired;
+                      }
+                      if (value.length < 6) {
+                        return l10n.loginValidationPasswordMinLength;
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Forgot Password Link
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
                       onPressed: _isLoading
                           ? null
                           : () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) => const RegisterScreen(),
+                                  builder: (_) => const ForgotPasswordScreen(),
                                 ),
                               );
                             },
                       child: Text(
-                        l10n.loginRegisterButton,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        l10n.loginForgotPassword,
+                        style: const TextStyle(fontSize: 14),
                       ),
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Login Button
+                  SizedBox(
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _signIn,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: jdc.cta,
+                        foregroundColor: jdc.onCta,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: _isLoading
+                          ? SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(jdc.onCta),
+                              ),
+                            )
+                          : Text(
+                              l10n.loginButton,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Register Link
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        l10n.loginNoAccountPrefix,
+                        style: TextStyle(color: secondaryText),
+                      ),
+                      TextButton(
+                        onPressed: _isLoading
+                            ? null
+                            : () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const RegisterScreen(),
+                                  ),
+                                );
+                              },
+                        child: Text(
+                          l10n.loginRegisterButton,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ),
     );
   }
 }

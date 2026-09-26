@@ -4,13 +4,26 @@ import '../../../../theme/jdc_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:intl/intl.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../common/services/referral_service.dart';
+import '../../../../common/services/referral_invite_link.dart';
 import '../../../../common/services/notification_service.dart';
 import '../../../../common/services/auth_service.dart';
 
 class ReferralScreen extends StatefulWidget {
-  const ReferralScreen({Key? key}) : super(key: key);
+  const ReferralScreen({
+    super.key,
+    this.forDriver = false,
+    this.referralCodeFixture,
+    this.referralSummaryFixture,
+  });
+
+  final bool forDriver;
+
+  /// ใช้เฉพาะ dev preview/widget test; production โหลดโค้ดจาก ReferralService
+  final String? referralCodeFixture;
+  final Map<String, dynamic>? referralSummaryFixture;
 
   @override
   State<ReferralScreen> createState() => _ReferralScreenState();
@@ -27,11 +40,32 @@ class _ReferralScreenState extends State<ReferralScreen> {
   bool _didCheckReferralRewardDialog = false;
   Map<String, dynamic>? _referralSummary;
 
+  bool get _hasShareableCode {
+    final code = myReferralCode.trim();
+    return ReferralInviteLink.isValidCode(code);
+  }
+
+  String _rewardAmount(double base, double multiplier) {
+    final amount = double.parse((base * multiplier).toStringAsFixed(2));
+    return amount == amount.roundToDouble()
+        ? amount.toStringAsFixed(0)
+        : amount.toStringAsFixed(2);
+  }
+
   @override
   void initState() {
     super.initState();
-    _loadReferralData();
-    _loadReferralSummary();
+    if (widget.referralCodeFixture != null) {
+      myReferralCode = widget.referralCodeFixture!;
+      _referralSummary = widget.referralSummaryFixture;
+      totalReferrals =
+          (widget.referralSummaryFixture?['successful_referrals'] as num?)
+                  ?.toInt() ??
+              0;
+    } else {
+      _loadReferralData();
+      _loadReferralSummary();
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAndShowReferralRewardDialogIfAny();
     });
@@ -101,15 +135,20 @@ class _ReferralScreenState extends State<ReferralScreen> {
   }
 
   void _copyToClipboard() {
-    Clipboard.setData(ClipboardData(text: myReferralCode));
+    if (!_hasShareableCode) return;
+    Clipboard.setData(ClipboardData(text: myReferralCode.trim()));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(AppLocalizations.of(context)!.referralCopied)),
     );
   }
 
   void _shareReferralCode() {
+    if (!_hasShareableCode) return;
     final l10n = AppLocalizations.of(context)!;
-    Share.share('${l10n.referralShareMessage} $myReferralCode');
+    final message = widget.forDriver
+        ? l10n.driverReferralShareMessage(myReferralCode.trim())
+        : '${l10n.referralShareMessage} ${myReferralCode.trim()}';
+    Share.share('$message\n${ReferralInviteLink.build(myReferralCode)}');
   }
 
   void _submitCode() async {
@@ -132,8 +171,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
         SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
       );
     } finally {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -153,10 +191,12 @@ class _ReferralScreenState extends State<ReferralScreen> {
           children: [
             _buildHeroSection(),
             _buildMyCodeSection(),
+            if (widget.forDriver) _buildDriverInviteSection(),
+            if (!widget.forDriver) _buildCustomerInviteSection(),
             _buildTierSection(),
             _buildStatsSection(),
-            _buildEnterCodeSection(),
-            _buildHowItWorks(),
+            if (!widget.forDriver) _buildEnterCodeSection(),
+            if (!widget.forDriver) _buildHowItWorks(),
           ],
         ),
       ),
@@ -174,7 +214,9 @@ class _ReferralScreenState extends State<ReferralScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            AppLocalizations.of(context)!.referralHeroTitle,
+            widget.forDriver
+                ? AppLocalizations.of(context)!.driverReferralHeroTitle
+                : AppLocalizations.of(context)!.referralHeroTitle,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -183,7 +225,9 @@ class _ReferralScreenState extends State<ReferralScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            AppLocalizations.of(context)!.referralHeroSubtitle,
+            widget.forDriver
+                ? AppLocalizations.of(context)!.driverReferralHeroSubtitle
+                : AppLocalizations.of(context)!.referralHeroSubtitle,
             style: TextStyle(
               fontSize: 12,
               color: jdc.panelDim,
@@ -193,8 +237,11 @@ class _ReferralScreenState extends State<ReferralScreen> {
           Text(
             earned == null
                 ? '—'
-                : NumberFormat.currency(locale: 'th_TH', symbol: '฿', decimalDigits: 2).format(earned),
-            style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: jdc.onPanel),
+                : NumberFormat.currency(
+                        locale: 'th_TH', symbol: '฿', decimalDigits: 2)
+                    .format(earned),
+            style: TextStyle(
+                fontSize: 36, fontWeight: FontWeight.bold, color: jdc.onPanel),
           ),
           const SizedBox(height: 4),
           Text(
@@ -210,74 +257,299 @@ class _ReferralScreenState extends State<ReferralScreen> {
     final jdc = JdcColors.of(context);
 
     return Container(
-        margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: jdc.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: jdc.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            AppLocalizations.of(context)!.referralMyCodeLabel,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: jdc.text,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: jdc.brandSoft,
+              borderRadius: BorderRadius.circular(13),
+              border: Border.all(color: jdc.brandLine),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                    child: Text(
+                  myReferralCode,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: jdc.brandOnSoft,
+                    letterSpacing: 2,
+                  ),
+                )),
+                IconButton(
+                  icon: Icon(Icons.copy, color: jdc.brandOnSoft),
+                  onPressed: _hasShareableCode ? _copyToClipboard : null,
+                  constraints: const BoxConstraints(),
+                  padding: EdgeInsets.zero,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (_hasShareableCode) ...[
+            Center(
+              child: Container(
+                key: const Key('referral-qr'),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: jdc.line),
+                ),
+                child: QrImageView(
+                  data: ReferralInviteLink.build(myReferralCode).toString(),
+                  version: QrVersions.auto,
+                  size: 180,
+                  backgroundColor: Colors.white,
+                  errorCorrectionLevel: QrErrorCorrectLevel.M,
+                  semanticsLabel: myReferralCode.trim(),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Center(
+              child: Text(
+                AppLocalizations.of(context)!.referralQrHint,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: jdc.muted, fontSize: 12),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _hasShareableCode ? _shareReferralCode : null,
+              icon: const Icon(Icons.share),
+              label: Text(AppLocalizations.of(context)!.referralShareButton),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: jdc.cta,
+                foregroundColor: jdc.onCta,
+                minimumSize: const Size.fromHeight(50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDriverInviteSection() {
+    final l10n = AppLocalizations.of(context)!;
+    final jdc = JdcColors.of(context);
+    final summary = _referralSummary;
+    final base = summary?['base'];
+    final multiplier = (summary?['current_multiplier'] as num?)?.toDouble();
+    final merchantBase = base is Map
+        ? (base['driver_invite_merchant'] as num?)?.toDouble()
+        : null;
+    final customerBase = base is Map
+        ? (base['driver_invite_customer'] as num?)?.toDouble()
+        : null;
+    final driverBase = base is Map
+        ? (base['driver_invite_driver_referrer'] as num?)?.toDouble()
+        : null;
+    final newDriverBase = base is Map
+        ? (base['driver_invite_driver_newdriver'] as num?)?.toDouble()
+        : null;
+    final configuredTiers = summary?['tiers'];
+
+    Widget inviteCard(String title, String condition, List<String> rewards) {
+      return Container(
+        width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: jdc.surface,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: jdc.line),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              AppLocalizations.of(context)!.referralMyCodeLabel,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: jdc.text,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: jdc.brandSoft,
-                borderRadius: BorderRadius.circular(13),
-                border: Border.all(color: jdc.brandLine),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(child: Text(
-                    myReferralCode,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: jdc.brandOnSoft,
-                      letterSpacing: 2,
-                    ),
-                  )),
-                  IconButton(
-                    icon: Icon(Icons.copy, color: jdc.brandOnSoft),
-                    onPressed: _copyToClipboard,
-                    constraints: const BoxConstraints(),
-                    padding: EdgeInsets.zero,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _shareReferralCode,
-                icon: const Icon(Icons.share),
-                label: Text(AppLocalizations.of(context)!.referralShareButton),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: jdc.cta,
-                  foregroundColor: jdc.onCta,
-                  minimumSize: const Size.fromHeight(50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-              ),
-            ),
+            Text(title,
+                style: TextStyle(
+                    color: jdc.text,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold)),
+            const SizedBox(height: 6),
+            Text(condition, style: TextStyle(color: jdc.muted, fontSize: 14)),
+            for (final reward in rewards) ...[
+              const SizedBox(height: 8),
+              Text(reward,
+                  style: TextStyle(
+                      color: jdc.brandOnSoft, fontWeight: FontWeight.w600)),
+            ],
           ],
         ),
       );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.driverReferralRulesTitle,
+              style: TextStyle(
+                  color: jdc.text, fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 6),
+          Text(l10n.driverReferralCodeHint,
+              style: TextStyle(color: jdc.muted, fontSize: 14)),
+          const SizedBox(height: 12),
+          inviteCard(
+            l10n.driverReferralMerchantTitle,
+            l10n.driverReferralMerchantCondition,
+            [
+              if (merchantBase != null && multiplier != null)
+                l10n.driverReferralYouEarn(
+                    _rewardAmount(merchantBase, multiplier)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          inviteCard(
+            l10n.driverReferralCustomerTitle,
+            l10n.referralCustomerFirstJobCondition,
+            [
+              if (customerBase != null && multiplier != null)
+                l10n.driverReferralYouEarn(
+                    _rewardAmount(customerBase, multiplier)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          inviteCard(
+            l10n.driverReferralDriverTitle,
+            l10n.driverReferralDriverCondition,
+            [
+              if (driverBase != null && multiplier != null)
+                l10n.driverReferralYouEarn(
+                    _rewardAmount(driverBase, multiplier)),
+              if (newDriverBase != null)
+                l10n.driverReferralNewDriverEarn(
+                    newDriverBase.toStringAsFixed(0)),
+            ],
+          ),
+          if (configuredTiers is List && configuredTiers.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text(l10n.driverReferralTierTableTitle,
+                style: TextStyle(
+                    color: jdc.text,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            for (final tier in configuredTiers)
+              if (tier is Map &&
+                  tier['from'] is num &&
+                  tier['multiplier'] is num)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    tier['to'] is num
+                        ? l10n.driverReferralTierRow(
+                            '${tier['from']}',
+                            '${tier['to']}',
+                            (tier['multiplier'] as num).toStringAsFixed(2),
+                          )
+                        : l10n.driverReferralTierOpenRow(
+                            '${tier['from']}',
+                            (tier['multiplier'] as num).toStringAsFixed(2),
+                          ),
+                    style: TextStyle(color: jdc.muted, fontSize: 13),
+                  ),
+                ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCustomerInviteSection() {
+    final l10n = AppLocalizations.of(context)!;
+    final jdc = JdcColors.of(context);
+    final summary = _referralSummary;
+    final base = summary?['base'];
+    final merchantBase = base is Map
+        ? (base['customer_invite_merchant'] as num?)?.toDouble()
+        : null;
+    final customerBase = base is Map
+        ? (base['customer_invite_customer'] as num?)?.toDouble()
+        : null;
+    final driverBase = base is Map
+        ? (base['customer_invite_driver'] as num?)?.toDouble()
+        : null;
+    final multiplier = (summary?['current_multiplier'] as num?)?.toDouble();
+
+    Widget inviteCard(String title, String condition, double? reward) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: jdc.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: jdc.line),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title,
+                style: TextStyle(
+                    color: jdc.text,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold)),
+            const SizedBox(height: 6),
+            Text(condition, style: TextStyle(color: jdc.muted, fontSize: 14)),
+            if (reward != null && multiplier != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                l10n.driverReferralYouEarn(_rewardAmount(reward, multiplier)),
+                style: TextStyle(
+                    color: jdc.brandOnSoft, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          inviteCard(l10n.customerReferralCustomerTitle,
+              l10n.referralCustomerFirstJobCondition, customerBase),
+          const SizedBox(height: 10),
+          inviteCard(l10n.customerReferralDriverTitle,
+              l10n.customerReferralDriverCondition, driverBase),
+          const SizedBox(height: 10),
+          inviteCard(l10n.customerReferralMerchantTitle,
+              l10n.driverReferralMerchantCondition, merchantBase),
+        ],
+      ),
+    );
   }
 
   Widget _buildEnterCodeSection() {
@@ -374,13 +646,9 @@ class _ReferralScreenState extends State<ReferralScreen> {
     final tier = s['current_tier'];
     final multiplier = (s['current_multiplier'] as num?)?.toDouble() ?? 1;
     final toNext = s['referrals_to_next_tier'];
-    // ฐานรางวัลตามบทบาทผู้ชวน: คนขับ = S1, ลูกค้า = S2
-    final baseKey = AuthService.currentUserRole == 'driver'
-        ? 'driver_invite_merchant'
-        : 'customer_invite_merchant';
-    final base = (s['base'] is Map)
-        ? ((s['base'][baseKey] as num?)?.toDouble() ?? 20)
-        : 20.0;
+    if (s['current_tier'] == null || s['current_multiplier'] == null) {
+      return const SizedBox.shrink();
+    }
     final earned = (s['total_earned'] as num?)?.toDouble() ?? 0;
     final pending = (s['pending_review'] as num?)?.toInt() ?? 0;
 
@@ -392,7 +660,8 @@ class _ReferralScreenState extends State<ReferralScreen> {
         decoration: BoxDecoration(
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colorScheme.outline.withValues(alpha: 0.12)),
+          border:
+              Border.all(color: colorScheme.outline.withValues(alpha: 0.12)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -401,21 +670,19 @@ class _ReferralScreenState extends State<ReferralScreen> {
               children: [
                 Icon(Icons.stairs, color: colorScheme.primary),
                 const SizedBox(width: 8),
-                Text(
-                    AppLocalizations.of(context)!
-                        .referralTierCurrent('${tier ?? 1}'),
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                Expanded(
+                  child: Text(
+                      AppLocalizations.of(context)!
+                          .referralTierCurrent('${tier ?? 1}'),
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                ),
               ],
             ),
             const SizedBox(height: 6),
-            Text(AppLocalizations.of(context)!.referralTierReward(
-                (base * multiplier).toStringAsFixed(0),
-                base.toStringAsFixed(0),
-                multiplier.toStringAsFixed(2))),
+            Text(AppLocalizations.of(context)!
+                .referralTierMultiplier(multiplier.toStringAsFixed(2))),
             if (toNext != null)
-              Text(
-                  AppLocalizations.of(context)!
-                      .referralTierToNext('$toNext'),
+              Text(AppLocalizations.of(context)!.referralTierToNext('$toNext'),
                   style: TextStyle(
                       fontSize: 12,
                       color: colorScheme.onSurface.withValues(alpha: 0.7))),
@@ -427,13 +694,20 @@ class _ReferralScreenState extends State<ReferralScreen> {
                     fontSize: 12,
                     color: colorScheme.onSurface.withValues(alpha: 0.7))),
             const SizedBox(height: 6),
-            Text(
-                AppLocalizations.of(context)!.referralTierWithdrawNote(
-                    ((s['withdrawal_min'] is Map ? (s['withdrawal_min']['system'] as num?)?.toDouble() : null) ?? 200)
-                        .toStringAsFixed(0)),
-                style: TextStyle(
-                    fontSize: 11,
-                    color: colorScheme.onSurface.withValues(alpha: 0.6))),
+            if (!widget.forDriver ||
+                (s['withdrawal_min'] is Map &&
+                    s['withdrawal_min']['system'] is num))
+              Text(
+                  AppLocalizations.of(context)!.referralTierWithdrawNote(
+                      ((s['withdrawal_min'] is Map
+                                  ? (s['withdrawal_min']['system'] as num?)
+                                      ?.toDouble()
+                                  : null) ??
+                              200)
+                          .toStringAsFixed(0)),
+                  style: TextStyle(
+                      fontSize: 11,
+                      color: colorScheme.onSurface.withValues(alpha: 0.6))),
           ],
         ),
       ),
@@ -451,7 +725,8 @@ class _ReferralScreenState extends State<ReferralScreen> {
         decoration: BoxDecoration(
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colorScheme.outline.withValues(alpha: 0.12)),
+          border:
+              Border.all(color: colorScheme.outline.withValues(alpha: 0.12)),
         ),
         child: Column(
           children: [
@@ -538,7 +813,8 @@ class _ReferralScreenState extends State<ReferralScreen> {
                 const SizedBox(height: 4),
                 Text(
                   desc,
-                  style: TextStyle(color: JdcColors.of(context).muted, fontSize: 14),
+                  style: TextStyle(
+                      color: JdcColors.of(context).muted, fontSize: 14),
                 ),
               ],
             ),

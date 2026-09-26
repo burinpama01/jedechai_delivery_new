@@ -26,7 +26,7 @@ packages:
     source: hosted
     version: "2.0.3"
   app_links:
-    dependency: "direct overridden"
+    dependency: "direct main"
     description:
       name: app_links
       sha256: "3462d9defc61565fde4944858b59bec5be2b9d5b05f20aed190adb3ad08a7abc"
@@ -598,7 +598,7 @@ packages:
     source: hosted
     version: "2.14.2"
   google_maps_flutter_android:
-    dependency: "direct overridden"
+    dependency: "direct main"
     description:
       name: google_maps_flutter_android
       sha256: a1aeca23cdd499496fb3271fb039a3c660d69e3cb8234df141d1c650844c01e0
@@ -614,7 +614,7 @@ packages:
     source: hosted
     version: "2.16.1"
   google_maps_flutter_platform_interface:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: google_maps_flutter_platform_interface
       sha256: e8b1232419fcdd35c1fdafff96843f5a40238480365599d8ca661dde96d283dd
@@ -1021,6 +1021,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.0"
+  qr:
+    dependency: transitive
+    description:
+      name: qr
+      sha256: "5a1d2586170e172b8a8c8470bbbffd5eb0cd38a66c0d77155ea138d3af3a4445"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.2"
+  qr_flutter:
+    dependency: "direct main"
+    description:
+      name: qr_flutter
+      sha256: "5095f0fc6e3f71d08adef8feccc8cea4f12eec18a2e31c2e8d82cb6019f4b097"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.1.0"
   realtime_client:
     dependency: transitive
     description:

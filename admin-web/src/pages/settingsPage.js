@@ -321,7 +321,19 @@ export async function renderSettingsPage(el, ctx) {
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1.5">ฐานรางวัล: ลูกค้าชวนร้าน (฿)</label>
-            <input type="number" id="settRefBaseCustomerMerchant" min="0" step="1" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50">
+            <input type="number" id="settRefBaseCustomerMerchant" min="0" step="1" value="10" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5">ฐานรางวัล: ลูกค้าชวนลูกค้า — ผู้ชวน (฿)</label>
+            <input type="number" id="settRefBaseCustomerCustomer" min="0" step="1" value="10" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5">ฐานรางวัล: คนขับชวนลูกค้า — ผู้ชวน (฿)</label>
+            <input type="number" id="settRefBaseDriverCustomer" min="0" step="1" value="20" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5">ฐานรางวัล: ลูกค้าชวนคนขับ — ผู้ชวน (฿)</label>
+            <input type="number" id="settRefBaseCustomerDriver" min="0" step="1" value="10" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50">
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1.5">ฐานรางวัล: คนขับชวนคนขับ — ผู้ชวน (฿)</label>

@@ -2079,6 +2079,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountMenuNotifications => 'Notifications';
 
   @override
+  String get notificationConsentTitle => 'Turn on notifications?';
+
+  @override
+  String get notificationConsentBody => 'Get updates about your orders, jobs, and important status changes. You can change this later.';
+
+  @override
+  String get notificationConsentAllow => 'Turn on notifications';
+
+  @override
+  String get notificationConsentNotNow => 'Not now';
+
+  @override
+  String get notificationSettingsTitle => 'Notification settings';
+
+  @override
+  String get notificationSettingsDescription => 'Receive job and status updates on this device';
+
+  @override
+  String get notificationSettingsSystemHint => 'If permission is blocked on your phone, enable notifications for this app in your phone settings too.';
+
+  @override
+  String get notificationSettingsError => 'Could not change this setting. Please try again.';
+
+  @override
+  String get notificationSettingsNotReady => 'Enabled in the app, but notifications are not ready on this device. Check phone permissions or your connection.';
+
+  @override
   String get accountMenuPrivacyPolicy => 'Privacy policy';
 
   @override
@@ -3895,6 +3922,64 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ticketViewDetail => 'View details';
 
   @override
+  String get driverReferralRulesTitle => 'Earn when your invite succeeds';
+
+  @override
+  String get driverReferralHeroTitle => 'Invite friends to JDC Delivery and earn Wallet rewards';
+
+  @override
+  String get driverReferralHeroSubtitle => 'Rewards are earned when your friend meets the condition for their role';
+
+  @override
+  String driverReferralShareMessage(String code) {
+    return 'Join JDC Delivery with my referral code: $code';
+  }
+
+  @override
+  String get driverReferralCodeHint => 'Ask your friend to sign up through the QR or enter this code';
+
+  @override
+  String get driverReferralMerchantTitle => 'Invite a merchant';
+
+  @override
+  String get driverReferralMerchantCondition => 'A new merchant uses your code and is approved by an admin';
+
+  @override
+  String get driverReferralCustomerTitle => 'Invite a customer';
+
+  @override
+  String get referralCustomerFirstJobCondition => 'A new customer uses your code and completes their first booking';
+
+  @override
+  String get driverReferralDriverTitle => 'Invite a driver';
+
+  @override
+  String get driverReferralDriverCondition => 'A new driver uses your code and completes their first job; both drivers then earn a reward';
+
+  @override
+  String driverReferralYouEarn(String amount) {
+    return 'You earn ฿$amount at your current tier';
+  }
+
+  @override
+  String driverReferralNewDriverEarn(String amount) {
+    return 'The new driver earns ฿$amount after their first completed job';
+  }
+
+  @override
+  String get driverReferralTierTableTitle => 'Reward tiers';
+
+  @override
+  String driverReferralTierRow(String from, String to, String multiplier) {
+    return '$from–$to successful invites ×$multiplier';
+  }
+
+  @override
+  String driverReferralTierOpenRow(String from, String multiplier) {
+    return 'From $from successful invites ×$multiplier';
+  }
+
+  @override
   String referralTierCurrent(String tier) {
     return 'Current reward tier: tier $tier';
   }
@@ -3902,6 +3987,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String referralTierReward(String amount, String base, String multiplier) {
     return '฿$amount per successful referral (base ฿$base × $multiplier)';
+  }
+
+  @override
+  String referralTierMultiplier(String multiplier) {
+    return 'Current tier multiplier ×$multiplier · base reward depends on invite type';
   }
 
   @override
@@ -4626,10 +4716,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get referralTitle => 'Invite Friends & Get Rewards';
 
   @override
-  String get referralHeroTitle => 'Invite friends to use the app\nBoth get coupons!';
+  String get referralHeroTitle => 'Invite friends to JDC Delivery';
 
   @override
-  String get referralHeroSubtitle => 'Get a ฿20 discount coupon instantly\nwhen your friend completes their first order';
+  String get referralHeroSubtitle => 'Rewards depend on the invitee\'s role and the conditions for each invitation';
 
   @override
   String get referralMyCodeLabel => 'Your referral code';
@@ -4638,10 +4728,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get referralShareButton => 'Share with friends';
 
   @override
+  String get referralQrHint => 'Scan to open sign-up with the referral code filled in';
+
+  @override
+  String get customerReferralMerchantTitle => 'Invite a merchant';
+
+  @override
+  String get customerReferralCustomerTitle => 'Invite a customer';
+
+  @override
+  String get customerReferralDriverTitle => 'Invite a driver';
+
+  @override
+  String get customerReferralDriverCondition => 'A new driver uses your code and completes their first job; the referrer earns the reward';
+
+  @override
   String get referralHaveCode => 'Have a referral code?';
 
   @override
-  String get referralEnterCodeHint => 'Enter the code from your friend to get a welcome coupon';
+  String get referralEnterCodeHint => 'Enter your friend\'s code to link their invitation';
 
   @override
   String get referralCodePlaceholder => 'Enter code here';
@@ -4659,19 +4764,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get referralCodeSuccess => 'Code used successfully!';
 
   @override
+  String get referralApplyFailedTitle => 'Could not apply referral code';
+
+  @override
+  String get referralApplyFailedBody => 'The code has not been saved. Try again or enter the app without it.';
+
+  @override
+  String get referralRetry => 'Go back and retry';
+
+  @override
+  String get referralContinueWithoutCode => 'Continue without code';
+
+  @override
   String get referralOk => 'OK';
 
   @override
   String get referralSuccessful => 'Successful referrals';
 
   @override
-  String get referralHowTitle => 'How does it work?';
+  String get referralHowTitle => 'Invite a customer';
 
   @override
-  String get referralStep1Title => 'Share code with friends';
+  String get referralStep1Title => 'Share a link or QR with friends';
 
   @override
-  String get referralStep1Desc => 'Send your code to friends who haven\'t used the app yet';
+  String get referralStep1Desc => 'Send your invite link and code to friends new to the app';
 
   @override
   String get referralStep2Title => 'Friend places first order';
@@ -4680,10 +4797,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get referralStep2Desc => 'Friend registers and completes their first food order';
 
   @override
-  String get referralStep3Title => 'Get discount coupon!';
+  String get referralStep3Title => 'Earn a Wallet reward';
 
   @override
-  String get referralStep3Desc => 'You\'ll get a discount coupon sent directly to your wallet';
+  String get referralStep3Desc => 'The referrer earns the configured base reward at their current tier';
 
   @override
   String get driverAssignedTitle => 'Driver Accepted';
@@ -5238,6 +5355,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get merchantPressBackAgain => 'Press back again to exit';
+
+  @override
+  String get mchSetSettingsTitle => 'Shop Settings';
+
+  @override
+  String get mchSetOperationsTitle => 'Order settings';
 
   @override
   String get mchSetShopInfoTitle => 'Shop Information';
@@ -6345,6 +6468,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get driverServiceTypeLaundry => 'Laundry pickup & return';
 
   @override
+  String get driverServiceTypeShop => 'Shopping errands';
+
+  @override
   String get driverServiceTypeFoodDesc => 'Orders from restaurants in the system';
 
   @override
@@ -6355,6 +6481,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get driverServiceTypeLaundryDesc => 'Pick up laundry from customers and return it';
+
+  @override
+  String get driverServiceTypeShopDesc => 'Buy requested items and deliver them to the customer';
 
   @override
   String get driverServiceTypeSave => 'Save settings';
