@@ -138,12 +138,14 @@ serve(async (req) => {
   const rows = (events || []) as QueueRow[];
   if (!rows.length) return json(200, { success: true, drained: 0 });
 
-  // อ่าน config ช่องทางครั้งเดียวต่อ batch
-  const { data: config } = await supabase
+  // อ่าน config ช่องทางครั้งเดียวต่อ batch — แถว id=1 เท่านั้น (ตารางมีแถว key/value ปนอยู่
+  // limit(1) เดิมได้แถวอื่นที่ช่องทางเป็น false ทั้งหมด → ปิดงานเงียบโดยไม่ส่ง)
+  const { data: config, error: configError } = await supabase
     .from("system_config")
     .select("admin_telegram_enabled, admin_telegram_chat_id, admin_line_enabled, admin_line_recipient_id, admin_notification_email, admin_notification_email_cc")
-    .limit(1)
+    .eq("id", 1)
     .maybeSingle();
+  if (configError) return json(500, { error: `config: ${configError.message}` });
 
   const telegramChatId = config?.admin_telegram_enabled === true
     ? (String(config?.admin_telegram_chat_id || "").trim() ||
@@ -189,11 +191,14 @@ serve(async (req) => {
     }
 
     if (!telegramChatId && !lineTo && !useEmail) {
-      // ไม่มีช่องทางเปิดอยู่ — ปิดงานเลย กันคิวค้าง/วนซ้ำไม่รู้จบ
+      // ไม่มีช่องทางเปิดอยู่ — ปิดงานเลย กันคิวค้าง/วนซ้ำไม่รู้จบ แต่บันทึกไว้ว่าไม่ได้ส่ง
       await supabase.rpc("mark_admin_external_event", {
         p_id: event.id,
         p_error: null,
       });
+      await supabase.from("admin_event_external_queue")
+        .update({ last_error: "no_channel: ไม่มีช่องทางที่เปิดใช้งาน (ไม่ได้ส่ง)" })
+        .eq("id", event.id);
       skippedNoChannel += 1;
       continue;
     }
