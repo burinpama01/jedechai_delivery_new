@@ -6,12 +6,25 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
   headers: { "Content-Type": "application/json; charset=utf-8" },
 });
 
+// เทียบ secret แบบเวลาคงที่ (ความยาว secret ตายตัว การคืนเร็วเมื่อความยาวต่างจึงไม่รั่วข้อมูล)
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
 serve(async (request) => {
   if (request.method !== "POST") return json({ error: "method_not_allowed" }, 405);
   const url = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!url || !serviceKey) return json({ error: "server_config_missing" }, 500);
-  if (request.headers.get("Authorization") !== `Bearer ${serviceKey}`) {
+  // ยืนยันตัวด้วย x-cron-secret แบบเดียวกับ notify-admin-events
+  // (เทียบ Bearer กับ SUPABASE_SERVICE_ROLE_KEY ใช้กับ cron ไม่ได้ เพราะ runtime ไม่ได้ฉีด
+  //  legacy JWT ตัวที่ Dashboard แสดง -> 401 ทุกครั้ง)
+  const cronSecret = Deno.env.get("DRIVER_OFFER_CRON_SECRET")?.trim() ?? "";
+  const providedSecret = request.headers.get("x-cron-secret")?.trim() ?? "";
+  if (cronSecret.length < 32 || !timingSafeEqual(providedSecret, cronSecret)) {
     return json({ error: "unauthorized" }, 401);
   }
 
