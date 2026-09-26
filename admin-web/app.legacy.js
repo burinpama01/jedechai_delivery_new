@@ -348,7 +348,16 @@ function showMainApp() {
   try {
     window.__adminWebBridge?.initAdminNotifBell?.({ supabase, currentUser: { id: currentUser?.id }, escapeHtml, showToast });
   } catch (_) {}
-  navigateTo('dashboard');
+  // ลิงก์จากแจ้งเตือน (Telegram/LINE/อีเมล) เปิดตรงหน้าได้: /admin?page=merchants
+  // รับเฉพาะชื่อหน้าที่มีเมนูใน sidebar จริง
+  let startPage = 'dashboard';
+  try {
+    const requested = new URLSearchParams(window.location.search).get('page') || '';
+    if (/^[a-z_]{2,40}$/.test(requested) && document.querySelector(`.sidebar-link[data-page="${requested}"]`)) {
+      startPage = requested;
+    }
+  } catch (_) {}
+  navigateTo(startPage);
 }
 
 // --- Check existing session on load ---

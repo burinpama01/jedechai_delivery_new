@@ -1,4 +1,8 @@
-// notify-admin-events — drain admin_event_external_queue → Telegram/LINE
+// notify-admin-events — drain admin_event_external_queue → Telegram/LINE (+ อีเมลเฉพาะเรื่องสมาชิกใหม่)
+//
+// อีเมล: event ใน EMAIL_EVENT_TYPES → system_config.admin_notification_email (+ _cc)
+//   ผ่าน Resend (env RESEND_API_KEY, RESEND_FROM) · ไม่มีคีย์/อีเมล = ข้ามช่องนี้
+// ลิงก์: data.admin_page → ADMIN_WEB_URL (env, ค่าเริ่มต้น production) + ?page=<หน้า>
 //
 // เรียกโดย pg_cron ทุกนาที (migration 20260718234500) ด้วย header x-cron-secret
 // เทียบกับ secret: supabase secrets set ADMIN_EVENTS_CRON_SECRET=...
@@ -10,6 +14,13 @@
 // retry สูงสุด 5 ครั้ง, re-claim ได้หลัง 5 นาที) → mark_admin_external_event
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  adminPageLink,
+  EMAIL_EVENT_TYPES,
+  formatChatText,
+  formatEmail,
+  parseEmailList,
+} from "../_shared/admin-event-format.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -73,6 +84,30 @@ async function sendLine(to: string, text: string) {
   }
 }
 
+async function sendEmail(to: string[], subject: string, html: string) {
+  const apiKey = Deno.env.get("RESEND_API_KEY")?.trim();
+  if (!apiKey) return { ok: false, error: "RESEND_API_KEY not configured" };
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        from: Deno.env.get("RESEND_FROM") || "Jedechai Admin <noreply@jedechai.com>",
+        to,
+        subject,
+        html,
+      }),
+    });
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      return { ok: false, error: `email_${res.status}:${errText.slice(0, 120)}` };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: `email_fetch:${(e as Error)?.message || e}` };
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
@@ -106,7 +141,7 @@ serve(async (req) => {
   // อ่าน config ช่องทางครั้งเดียวต่อ batch
   const { data: config } = await supabase
     .from("system_config")
-    .select("admin_telegram_enabled, admin_telegram_chat_id, admin_line_enabled, admin_line_recipient_id")
+    .select("admin_telegram_enabled, admin_telegram_chat_id, admin_line_enabled, admin_line_recipient_id, admin_notification_email, admin_notification_email_cc")
     .limit(1)
     .maybeSingle();
 
@@ -119,12 +154,19 @@ serve(async (req) => {
       Deno.env.get("LINE_ADMIN_TO")?.trim() || "")
     : "";
 
+  const emailTo = Deno.env.get("RESEND_API_KEY")?.trim()
+    ? parseEmailList(config?.admin_notification_email, config?.admin_notification_email_cc)
+    : [];
+  const adminWebUrl = Deno.env.get("ADMIN_WEB_URL")?.trim() || undefined;
+
   let sent = 0;
   let failed = 0;
   let skippedNoChannel = 0;
 
   for (const event of rows) {
-    const text = `🔔 ${event.title}\n${event.body}`;
+    const link = adminPageLink(event, adminWebUrl);
+    const text = formatChatText(event, link);
+    const useEmail = emailTo.length > 0 && EMAIL_EVENT_TYPES.has(event.event_type);
     const errors: string[] = [];
     let delivered = false;
 
@@ -139,7 +181,14 @@ serve(async (req) => {
       else errors.push(r.error || "line_failed");
     }
 
-    if (!telegramChatId && !lineTo) {
+    if (useEmail) {
+      const mail = formatEmail(event, link);
+      const r = await sendEmail(emailTo, mail.subject, mail.html);
+      if (r.ok) delivered = true;
+      else errors.push(r.error || "email_failed");
+    }
+
+    if (!telegramChatId && !lineTo && !useEmail) {
       // ไม่มีช่องทางเปิดอยู่ — ปิดงานเลย กันคิวค้าง/วนซ้ำไม่รู้จบ
       await supabase.rpc("mark_admin_external_event", {
         p_id: event.id,
@@ -151,6 +200,12 @@ serve(async (req) => {
 
     if (delivered) {
       await supabase.rpc("mark_admin_external_event", { p_id: event.id, p_error: null });
+      // ส่งถึงอย่างน้อย 1 ช่อง = ปิดงาน (ไม่ retry ซ้ำช่องที่ส่งแล้ว) แต่เก็บ error ช่องที่ล้มไว้ตรวจย้อนหลัง
+      if (errors.length) {
+        await supabase.from("admin_event_external_queue")
+          .update({ last_error: `partial: ${errors.join(" | ")}`.slice(0, 500) })
+          .eq("id", event.id);
+      }
       sent += 1;
     } else {
       await supabase.rpc("mark_admin_external_event", {
@@ -167,6 +222,6 @@ serve(async (req) => {
     sent,
     failed,
     skipped_no_channel: skippedNoChannel,
-    channels: { telegram: !!telegramChatId, line: !!lineTo },
+    channels: { telegram: !!telegramChatId, line: !!lineTo, email: emailTo.length > 0 },
   });
 });

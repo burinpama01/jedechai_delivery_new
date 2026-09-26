@@ -17,11 +17,19 @@ const PAGE_BY_TYPE = {
   "admin.stale_laundry": "laundry",
   "admin.stale_order": "pending_orders",
   "admin.broadcast": "broadcast",
+  "admin.daily_signup_summary": "users",
+  ai_menu_import: "ai_menu_import",
 };
 
 function pageForNotification(item) {
   if (item?.type === "admin.applicant_pending") {
     return item?.data?.role === "driver" ? "drivers" : "merchants";
+  }
+  // event ใหม่ระบุหน้าเองได้ผ่าน data.admin_page (เช่นสรุปรายวันที่มีคนรออนุมัติ)
+  const page = item?.data?.admin_page;
+  if (typeof page === "string" && /^[a-z_]{2,40}$/.test(page)
+    && globalThis.document?.querySelector?.(`.sidebar-link[data-page="${page}"]`)) {
+    return page;
   }
   if (PAGE_BY_TYPE[item?.type]) return PAGE_BY_TYPE[item.type];
   if (String(item?.type || "").startsWith("laundry.")) return "laundry";
