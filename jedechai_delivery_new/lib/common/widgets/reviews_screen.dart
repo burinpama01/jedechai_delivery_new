@@ -286,10 +286,10 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
             // Header: name + date
             Row(
               children: [
-                // Review ยังไม่มีฟิลด์รูปลูกค้า → โลโก้ระบบสีเทา (มาตรฐานทุกช่องรูป ห้ามใช้ตัวย่อ)
+                // Review ยังไม่มีฟิลด์รูปลูกค้า → โลโก้ระบบสีจริง (มาตรฐานทุกช่องรูป ห้ามใช้ตัวย่อ)
                 // ถ้าเพิ่มรูปลูกค้าในอนาคต ให้ใช้ AppNetworkImage แล้ว fallback เป็นโลโก้นี้
                 ClipOval(
-                  child: GrayscaleLogoPlaceholder(
+                  child: AppLogoPlaceholder(
                     width: 36,
                     height: 36,
                     padding: const EdgeInsets.all(4),

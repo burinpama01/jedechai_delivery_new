@@ -108,8 +108,8 @@ class _AppFileImageState extends State<AppFileImage> {
   }
 }
 
-class GrayscaleLogoPlaceholder extends StatelessWidget {
-  const GrayscaleLogoPlaceholder({
+class AppLogoPlaceholder extends StatelessWidget {
+  const AppLogoPlaceholder({
     super.key,
     this.width,
     this.height,
@@ -131,27 +131,13 @@ class GrayscaleLogoPlaceholder extends StatelessWidget {
       height: height,
       color: backgroundColor ?? Colors.transparent,
       padding: padding,
-      // โลโก้ระบบแบบสีเทา — ใช้แทนรูปทุกจุดที่ไม่มีรูป (ห้ามใช้ตัวย่อชื่อ)
-      child: Opacity(
-        opacity: 0.7,
-        child: ColorFiltered(
-          colorFilter: _grayscale,
-          child: Image.asset(
-            'assets/images/logo_bg.png',
-            fit: fit,
-          ),
-        ),
+      // ใช้โลโก้สีจริงแทนรูปที่ยังไม่มี (ห้ามใช้ตัวย่อชื่อ)
+      child: Image.asset(
+        'assets/images/logo_bg.png',
+        fit: fit,
       ),
     );
   }
-
-  /// เมทริกซ์ luminance (Rec. 709) — แปลงเป็นเฉดเทา คงค่า alpha เดิม
-  static const ColorFilter _grayscale = ColorFilter.matrix(<double>[
-    0.2126, 0.7152, 0.0722, 0, 0, //
-    0.2126, 0.7152, 0.0722, 0, 0, //
-    0.2126, 0.7152, 0.0722, 0, 0, //
-    0, 0, 0, 1, 0,
-  ]);
 }
 
 class AppNetworkImage extends StatefulWidget {
@@ -250,7 +236,7 @@ class _AppNetworkImageState extends State<AppNetworkImage> {
   }
 
   Widget _buildPlaceholder() {
-    return widget.placeholder ?? GrayscaleLogoPlaceholder(
+    return widget.placeholder ?? AppLogoPlaceholder(
       width: widget.width,
       height: widget.height,
       fit: BoxFit.contain,

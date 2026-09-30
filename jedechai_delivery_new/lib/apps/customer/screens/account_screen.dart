@@ -745,7 +745,7 @@ class _AccountScreenState extends State<AccountScreen> {
                             fit: BoxFit.cover,
                             backgroundColor: jdc.panelSoft3,
                           )
-                        : GrayscaleLogoPlaceholder(
+                        : AppLogoPlaceholder(
                             width: 56,
                             height: 56,
                             fit: BoxFit.contain,

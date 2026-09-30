@@ -823,7 +823,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     );
   }
 
-  /// รูปเมนู 46x46 — ถ้ามีรูปจริงใช้รูป ถ้าไม่มีใช้โลโก้ระบบสีเทา (มาตรฐานทุกช่องรูป ห้ามใช้ตัวย่อ)
+  /// รูปเมนู 46x46 — ถ้ามีรูปจริงใช้รูป ถ้าไม่มีใช้โลโก้ระบบสีจริง (มาตรฐานทุกช่องรูป ห้ามใช้ตัวย่อ)
   Widget _buildMenuThumb(Map<String, dynamic> item, {required bool hasImage}) {
     final jdc = JdcColors.of(context);
     if (hasImage) {
@@ -842,7 +842,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     }
     return ClipRRect(
       borderRadius: BorderRadius.circular(JdcRadius.small),
-      child: GrayscaleLogoPlaceholder(
+      child: AppLogoPlaceholder(
         width: 46,
         height: 46,
         padding: const EdgeInsets.all(5),

@@ -109,8 +109,8 @@ class _DriverAssignedScreenState extends State<DriverAssignedScreen> {
                                 shape: BoxShape.circle,
                               ),
                               clipBehavior: Clip.antiAlias,
-                              // มาตรฐาน Wave 1.5: ช่องรูปที่ไม่มีรูป = โลโก้เทา ห้ามใช้ตัวย่อชื่อ
-                              child: const GrayscaleLogoPlaceholder(
+                              // ช่องรูปที่ไม่มีรูป = โลโก้สีจริง ห้ามใช้ตัวย่อชื่อ
+                              child: const AppLogoPlaceholder(
                                 padding: EdgeInsets.all(10),
                               ),
                             ),

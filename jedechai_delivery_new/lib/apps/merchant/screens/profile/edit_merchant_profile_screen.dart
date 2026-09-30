@@ -382,7 +382,7 @@ class _EditMerchantProfileScreenState extends State<EditMerchantProfileScreen> {
                                       backgroundColor:
                                           JdcColors.of(context).surface,
                                     )
-                                  : GrayscaleLogoPlaceholder(
+                                  : AppLogoPlaceholder(
                                       fit: BoxFit.contain,
                                       backgroundColor:
                                           JdcColors.of(context).surface,

@@ -311,7 +311,7 @@ class _B1RestaurantCard extends StatelessWidget {
                         fit: BoxFit.cover,
                         backgroundColor: jdc.brandSoft,
                       )
-                    : GrayscaleLogoPlaceholder(
+                    : AppLogoPlaceholder(
                         width: 58,
                         height: 58,
                         backgroundColor: jdc.brandSoft,

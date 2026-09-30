@@ -383,7 +383,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             fit: BoxFit.cover,
                             backgroundColor: Colors.white,
                           )
-                        : const GrayscaleLogoPlaceholder(
+                        : const AppLogoPlaceholder(
                             width: 100,
                             height: 100,
                             fit: BoxFit.contain,

@@ -1285,7 +1285,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
   }
 
   /// Avatar มุมซ้ายบน — ใช้รูปโปรไฟล์จริงเมื่อมี avatar_url
-  /// ถ้าไม่มีใช้โลโก้ระบบสีเทา
+  /// ถ้าไม่มีใช้โลโก้ระบบสีจริง
   Widget _buildHeroAvatar() {
     final jdc = context.jdc;
     final avatarUrl = _driverProfile?['avatar_url'] as String?;
@@ -1308,8 +1308,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                 fit: BoxFit.cover,
                 backgroundColor: jdc.panelSoft3,
               )
-            // ไม่มีรูป: โลโก้ระบบสีเทา (มาตรฐานทุกช่องรูป ห้ามใช้ตัวย่อ)
-            : GrayscaleLogoPlaceholder(
+            // ไม่มีรูป: โลโก้ระบบสีจริง (มาตรฐานทุกช่องรูป ห้ามใช้ตัวย่อ)
+            : AppLogoPlaceholder(
                 width: 42,
                 height: 42,
                 padding: const EdgeInsets.all(4),

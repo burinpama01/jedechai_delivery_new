@@ -797,7 +797,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                                   .colorScheme
                                   .surfaceContainerHighest,
                             )
-                          : GrayscaleLogoPlaceholder(
+                          : AppLogoPlaceholder(
                               width: double.infinity,
                               height: 120,
                               fit: BoxFit.contain,
@@ -938,7 +938,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                                       colorScheme.surfaceContainerHighest,
                                 )
                               else
-                                GrayscaleLogoPlaceholder(fit: BoxFit.contain),
+                                AppLogoPlaceholder(fit: BoxFit.contain),
                               // Badge อันดับ
                               Positioned(
                                 top: 6,
@@ -1541,8 +1541,8 @@ class _RestaurantRow extends StatelessWidget {
                             height: 60,
                             backgroundColor: jdc.sunken,
                           )
-                        // ไม่มีรูป: ใช้โลโก้ระบบสีเทา (มาตรฐานทุกช่องรูป ห้ามใช้ตัวย่อ)
-                        : GrayscaleLogoPlaceholder(
+                        // ไม่มีรูป: ใช้โลโก้ระบบสีจริง (มาตรฐานทุกช่องรูป ห้ามใช้ตัวย่อ)
+                        : AppLogoPlaceholder(
                             width: 60,
                             height: 60,
                             padding: const EdgeInsets.all(6),
@@ -1957,7 +1957,7 @@ class _CartItemRow extends StatelessWidget {
   }
 
   Widget _placeholder(BuildContext context) {
-    return GrayscaleLogoPlaceholder(
+    return AppLogoPlaceholder(
       fit: BoxFit.contain,
       backgroundColor: JdcColors.of(context).paper,
       padding: EdgeInsets.all(8),

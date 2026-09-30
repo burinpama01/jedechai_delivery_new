@@ -906,7 +906,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                                     fit: BoxFit.cover,
                                     backgroundColor: jdc.surface,
                                   )
-                                : GrayscaleLogoPlaceholder(
+                                : AppLogoPlaceholder(
                                     width: 64,
                                     height: 64,
                                     fit: BoxFit.contain,

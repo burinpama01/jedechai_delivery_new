@@ -846,7 +846,7 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
                             fit: BoxFit.cover,
                             backgroundColor: JdcColors.of(context).knob,
                           )
-                        : GrayscaleLogoPlaceholder(
+                        : AppLogoPlaceholder(
                             width: 80,
                             height: 80,
                             fit: BoxFit.contain,

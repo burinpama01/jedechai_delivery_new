@@ -894,7 +894,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                                         backgroundColor:
                                             colorScheme.surfaceContainerHighest,
                                       )
-                                    : const GrayscaleLogoPlaceholder(
+                                    : const AppLogoPlaceholder(
                                         fit: BoxFit.contain),
                               ),
                             ),
@@ -1227,7 +1227,7 @@ class _MenuItemCard extends StatelessWidget {
   }
 
   Widget _placeholder() {
-    return const GrayscaleLogoPlaceholder(
+    return const AppLogoPlaceholder(
       fit: BoxFit.contain,
       padding: EdgeInsets.all(10),
     );

@@ -712,7 +712,7 @@ class _WaitingForDriverScreenState extends State<WaitingForDriverScreen>
                                   borderRadius: BorderRadius.circular(13),
                                 ),
                                 clipBehavior: Clip.antiAlias,
-                                child: const GrayscaleLogoPlaceholder(),
+                                child: const AppLogoPlaceholder(),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
