@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- resource ที่ Dart อ้างด้วยชื่อ string (shrinker มองไม่เห็น) — กันไม่ให้ isShrinkResources ตัดทิ้ง -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@raw/alert_new_order" />
