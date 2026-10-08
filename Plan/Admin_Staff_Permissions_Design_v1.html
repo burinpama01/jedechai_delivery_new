@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ทีมแอดมินและสิทธิ์</title>
+<style>
+:root{--bg:#f7f6f2;--card:#fff;--text:#1d1d1b;--muted:#6b6a64;--line:#e4e2da;--brand:#c8102e;--ok:#1f7a4d;--warn:#a55a00;--soft:#f1efe8;--code:#efede6}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151514;--card:#1e1e1c;--text:#ecebe6;--muted:#a3a29b;--line:#34332f;--brand:#ff5a6e;--ok:#5fcf98;--warn:#f0a65a;--soft:#262623;--code:#2a2926}}
+:root[data-theme="dark"]{--bg:#151514;--card:#1e1e1c;--text:#ecebe6;--muted:#a3a29b;--line:#34332f;--brand:#ff5a6e;--ok:#5fcf98;--warn:#f0a65a;--soft:#262623;--code:#2a2926}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.7 "Noto Sans Thai",system-ui,sans-serif}
+main{max-width:980px;margin:0 auto;padding:28px 16px 80px}
+h1{font-size:26px;margin:0 0 4px}h2{font-size:19px;margin:34px 0 10px;padding-top:6px;border-top:1px solid var(--line)}h3{font-size:16px;margin:20px 0 6px}
+.sub{color:var(--muted);margin:0 0 18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:12px 0}
+.tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:999px;background:var(--soft);border:1px solid var(--line);margin-right:4px}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.brand{color:var(--brand)}
+code{background:var(--code);padding:1px 5px;border-radius:5px;font-size:13px}
+pre{background:var(--code);padding:12px;border-radius:10px;overflow:auto;font-size:13px;line-height:1.5}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:8px 0}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{background:var(--soft)}
+ul,ol{padding-left:22px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+</style>
+</head>
+<body>
+<main>
+<h1>ทีมแอดมินและสิทธิ์การเข้าถึง — แบบร่าง v1</h1>
+<p class="sub">jedechai_delivery_new · admin-web · 2026-10-08 · สถานะ: <b class="warn">รอผู้ใช้ทบทวนก่อนลงมือ</b></p>
+
+<div class="card">
+<b>ขอบเขตที่ตกลงแล้ว</b>
+<ul>
+<li>superadmin แต่งตั้ง / ระงับผู้ช่วยแอดมินได้ · บัญชีแอดมินเดิม (1 บัญชี) = superadmin · มี superadmin ได้หลายคน แต่ระบบห้ามลดจนไม่เหลือ</li>
+<li>การอนุมัติ <b>ทั้งสองแบบ</b>: ลำดับขั้น (superadmin › หัวหน้า › ผู้ช่วย) + งานสำคัญที่ผู้ช่วยทำได้แค่ "ส่งขออนุมัติ" ให้ขั้นสูงกว่ายืนยัน</li>
+<li>สิทธิ์ <b>3 ชั้น</b>: บทบาทสำเร็จรูป → ระดับรายหน้า (ไม่เห็น/ดู/แก้ไข/อนุมัติ) → ปรับราย action เป็นรายคน</li>
+<li>ใช้ใน <b>admin-web อย่างเดียว</b> — หน้าจอแอดมินในแอปมือถือยังเป็นของ superadmin</li>
+</ul>
+</div>
+
+<h2>1. สภาพปัจจุบัน (สำรวจ 2026-10-08)</h2>
+<div class="tw"><table>
+<tr><th>จุด</th><th>ตรวจสิทธิ์อย่างไร</th><th>ขนาด</th></tr>
+<tr><td>RLS ใน DB</td><td><code>is_admin()</code> (= <code>profiles.role = 'admin'</code>) หรือเช็ค role ในตัว policy</td><td>73 policy / 62 ตาราง</td></tr>
+<tr><td>edge function <code>admin-actions</code></td><td><code>verifyAdmin()</code> → role = admin</td><td>73 action (อนุมัติคนขับ/ร้าน, ถอนเงิน, เติมเงิน, ปรับกระเป๋า, ออเดอร์, เมนู, คูปอง, ตั้งค่า …)</td></tr>
+<tr><td>admin-web</td><td><code>authService.js</code> ยอมเฉพาะ role = admin · อ่านตารางตรงผ่าน RLS</td><td>24 หน้า · RPC 10 ตัว · เขียนตารางตรงอย่างน้อย 5 จุด</td></tr>
+<tr><td>แอป Flutter</td><td><code>auth_gate.dart</code> role admin → AdminMainScreen, role อื่น/ไม่รู้จัก → หน้าลูกค้า</td><td>—</td></tr>
+</table></div>
+
+<h2>2. หลักการออกแบบ</h2>
+<div class="grid">
+<div class="card"><b class="ok">ปลอดภัยไว้ก่อน (deny by default)</b><br>ผู้ช่วยใช้ role ใหม่ <code>staff</code> — policy 73 จุด, <code>verifyAdmin</code> และหน้าแอดมินใน Flutter ไม่รู้จัก role นี้ จึงไม่ได้สิทธิ์อะไรเลยจนกว่าจะเปิดทีละหน้า</div>
+<div class="card"><b class="ok">superadmin ไม่เปลี่ยน</b><br>role <code>admin</code> เดิมทำงานเหมือนเดิมทุกจุด (DB, edge function, admin-web, แอปมือถือ) — ไม่ต้องแก้ policy เดิม</div>
+<div class="card"><b class="ok">เขียนข้อมูลผ่านประตูเดียว</b><br>staff เขียนได้ผ่าน <code>admin-actions</code> เท่านั้น (ตรวจสิทธิ์ + ส่งขออนุมัติ + บันทึก audit ที่จุดเดียว) — ไม่เปิดสิทธิ์เขียนตารางตรงให้ staff</div>
+<div class="card"><b class="ok">ตรวจสิทธิ์ที่ server ทุกครั้ง</b><br>การซ่อนเมนู/ปุ่มใน UI เป็นแค่ความสะดวก สิทธิ์จริงตรวจใน DB (อ่าน) และ edge function (เขียน) ทุก request — ระงับบัญชีแล้วมีผลทันที</div>
+</div>
+
+<h2>3. โมเดลสิทธิ์</h2>
+<h3>3.1 ระดับในทีม (tier)</h3>
+<div class="tw"><table>
+<tr><th>tier</th><th>profiles.role</th><th>ทำอะไรได้</th></tr>
+<tr><td><b>superadmin</b></td><td><code>admin</code> (เดิม)</td><td>ทุกอย่าง · จัดการทีม/บทบาท/สิทธิ์ · อนุมัติทุกคำขอ · แต่งตั้ง superadmin เพิ่ม</td></tr>
+<tr><td><b>หัวหน้า (lead)</b></td><td><code>staff</code></td><td>ตามสิทธิ์ที่ได้ + <b>อนุมัติคำขอของผู้ช่วย</b> ในหน้าที่ตัวเองมีระดับ "อนุมัติ"</td></tr>
+<tr><td><b>ผู้ช่วย (assistant)</b></td><td><code>staff</code></td><td>ตามสิทธิ์ที่ได้ · งานสำคัญส่งขออนุมัติ</td></tr>
+</table></div>
+
+<h3>3.2 ระดับรายหน้า</h3>
+<p><span class="tag">ไม่เห็น</span> <span class="tag">ดู</span> อ่านข้อมูลในหน้า <span class="tag">แก้ไข</span> ทำ action ทั่วไปในหน้า <span class="tag">อนุมัติ</span> ทำ action สำคัญได้เอง + อนุมัติคำขอของคนอื่นในหน้านั้น (ใช้ได้กับหัวหน้าขึ้นไป)</p>
+
+<h3>3.3 สามชั้นรวมกันอย่างไร</h3>
+<pre>สิทธิ์จริงของ action X ในหน้า P สำหรับคน U
+  1) ถ้า U มี override ราย action ของ X  → ใช้ค่านั้น (อนุญาต / ห้าม / ต้องขออนุมัติ)
+  2) ไม่งั้นดูระดับหน้า P ของ U (override รายหน้า ทับ บทบาทสำเร็จรูป)
+       action ทั่วไป : ต้องการ "แก้ไข"
+       action สำคัญ  : "อนุมัติ" = ทำได้เลย · "แก้ไข" = ส่งขออนุมัติ · ต่ำกว่า = ห้าม
+  3) superadmin ข้ามทุกขั้น</pre>
+
+<h3>3.4 บทบาทสำเร็จรูปตั้งต้น (แก้/เพิ่มได้)</h3>
+<div class="tw"><table>
+<tr><th>บทบาท</th><th>หน้าหลัก (แก้ไข)</th><th>ดูอย่างเดียว</th></tr>
+<tr><td>ฝ่ายบัญชี/การเงิน</td><td>เติมเงิน, ถอนเงิน, กระเป๋าลูกค้า, รายได้</td><td>ผู้ใช้, ออเดอร์</td></tr>
+<tr><td>ฝ่ายดูแลร้าน</td><td>ร้านค้า, เมนู, AI นำเข้าเมนู, ร้านฝากซื้อ</td><td>ออเดอร์, รีวิว</td></tr>
+<tr><td>ฝ่ายดูแลคนขับ</td><td>คนขับ, แผนที่</td><td>ออเดอร์</td></tr>
+<tr><td>ฝ่ายบริการลูกค้า</td><td>ร้องเรียน, ออเดอร์, ออเดอร์ค้าง, ออเดอร์ฝากซื้อ, ซักรีด, รีวิว</td><td>ผู้ใช้, คนขับ, ร้านค้า</td></tr>
+<tr><td>ฝ่ายการตลาด</td><td>โปรโมชัน, บรอดแคสต์, แนะนำเพื่อน</td><td>แดชบอร์ด</td></tr>
+</table></div>
+<p>หน้า <b>ตั้งค่าระบบ</b>, <b>ทีมแอดมิน</b> และ <b>ลบบัญชีผู้ใช้</b> ตั้งต้นเป็นของ superadmin เท่านั้น (เปิดให้ทีละคนได้ด้วย override ยกเว้นทีมแอดมิน)</p>
+
+<h3>3.5 action สำคัญ (ตั้งต้น — ผู้ช่วยต้องขออนุมัติ)</h3>
+<p><code>approve_withdrawal</code> <code>approve_withdrawal_with_slip</code> <code>wallet_adjust</code> <code>manual_topup</code> <code>approve_topup</code> <code>delete_user</code> <code>approve_account_deletion</code> <code>force_cancel_order</code> <code>suspend_user</code> <code>approve_driver</code> <code>approve_merchant</code> <code>edit_merchant</code> (GP/ค่าส่ง) <code>admin_review_gp_proposal</code> <code>release_referral_reward</code> <code>admin_broadcast_notification</code> <code>upsert_gp_plan</code> <code>delete_gp_plan</code> · ทุก action ของหน้าตั้งค่า (<code>upsert_system_config*</code>, <code>save_beam_settings</code>, <code>set_topup_mode</code>) = superadmin เท่านั้น</p>
+
+<h2>4. ข้อมูล (ตารางใหม่)</h2>
+<pre>admin_staff                user_id PK → profiles · tier (lead|assistant) · template_id · active · created_by · created_at
+admin_role_templates       id · name · page_levels jsonb {page: none|view|edit|approve} · is_system
+admin_staff_page_overrides user_id · page · level              (ทับบทบาทรายหน้า)
+admin_staff_action_overrides user_id · action · effect (allow|deny|require_approval)
+admin_approval_requests    id · requester_id · page · action · payload jsonb · summary · status
+                           (pending|approved|rejected|cancelled|expired|executed|failed)
+                           · decided_by · decision_note · result jsonb · created_at · expires_at (48 ชม.)
+admin_audit_log            id · actor_id · actor_tier · action · page · target · summary · outcome · request_id · at
+แคตตาล็อก (ในโค้ด + ตาราง)   action → page + สำคัญหรือไม่  (73 action ของ admin-actions + RPC ของ admin-web)</pre>
+<p>ฟังก์ชัน SQL: <code>staff_page_level(page)</code>, <code>staff_can_view(page)</code> (SECURITY DEFINER, ใช้ใน policy อ่าน) · ทุกตารางใหม่ RLS: superadmin จัดการ, staff อ่านได้เฉพาะแถวของตัวเอง/คำขอที่ตัวเองเกี่ยวข้อง</p>
+
+<h2>5. การบังคับสิทธิ์</h2>
+<h3>5.1 เขียน — ประตู admin-actions</h3>
+<ol>
+<li><code>verifyAdminOrStaff()</code>: role admin → superadmin · role staff + <code>admin_staff.active</code> → staff · อื่น ๆ 403</li>
+<li>หา action ในแคตตาล็อก → คำนวณสิทธิ์จริง (ข้อ 3.3) <b>ทุก request ไม่ cache</b></li>
+<li>อนุญาต → ทำงาน + audit · ต้องขออนุมัติ → บันทึก <code>admin_approval_requests</code> (payload ที่ตรวจรูปแบบแล้ว) แจ้งผู้อนุมัติ ตอบ <code>{pending_approval: id}</code> · ห้าม → 403 + audit</li>
+<li>action ใหม่ <code>decide_approval</code>: ผู้อนุมัติ (superadmin หรือ lead ที่มีระดับอนุมัติในหน้านั้น) ≠ ผู้ขอ · ตรวจสิทธิ์ผู้อนุมัติ ณ เวลาอนุมัติ · ล็อกแถว (FOR UPDATE) กันอนุมัติซ้ำ · รัน payload เดิมในนามผู้อนุมัติ · เก็บผลลัพธ์</li>
+<li>RPC ที่ admin-web เรียก (เช่น <code>admin_review_gp_proposal</code>, <code>shop_admin_set_trusted</code>) และการเขียนตารางตรง (<code>shop_stores</code>, <code>option_templates</code>, <code>merchant_ai_import_quota</code>) → ย้ายมาผ่าน admin-actions หรือให้ RPC ตรวจสิทธิ์ staff เอง</li>
+</ol>
+<h3>5.2 อ่าน — RLS เพิ่ม policy SELECT สำหรับ staff</h3>
+<p>เพิ่ม policy <code>FOR SELECT TO authenticated USING (staff_can_view('&lt;page&gt;'))</code> บนตารางที่แต่ละหน้าใช้ (ทำตาราง map หน้า→ตารางระหว่างลงมือ) · <b>ไม่แตะ policy เดิมของ superadmin</b> · ตารางที่ staff ไม่ควรเห็นเลย: <code>system_config_private</code>, ตารางทีม/สิทธิ์ของคนอื่น, Vault</p>
+<h3>5.3 UI admin-web</h3>
+<ul>
+<li>ล็อกอิน: ยอม role admin หรือ staff ที่ active · โหลดสิทธิ์ตัวเองครั้งเดียวต่อหน้า</li>
+<li>ซ่อนเมนูที่ "ไม่เห็น" · ปุ่มที่ต้องขออนุมัติขึ้นป้าย "ส่งขออนุมัติ" · ปุ่มที่ห้ามซ่อน</li>
+<li>หน้าใหม่ <b>ทีมแอดมิน</b> (superadmin): เพิ่มสมาชิก, เลือก tier/บทบาท, ตารางสิทธิ์รายหน้า, override ราย action, ระงับ/เปิด, ประวัติการเปลี่ยนแปลง</li>
+<li>หน้าใหม่ <b>คำขออนุมัติ</b>: คิวของผู้อนุมัติ (badge จำนวนรอ) · ผู้ขอเห็นสถานะ/เหตุผลตีกลับ · กรองตามหน้า/สถานะ</li>
+<li>หน้า <b>บันทึกการทำงาน</b> (audit) สำหรับ superadmin</li>
+</ul>
+
+<h2>6. กฎความปลอดภัย</h2>
+<ul>
+<li>ต้องเหลือ superadmin ที่ใช้งานได้อย่างน้อย 1 คนเสมอ (ตรวจใน DB)</li>
+<li>เฉพาะ superadmin จัดการทีม/บทบาท/สิทธิ์ · staff แก้สิทธิ์ตัวเองไม่ได้ · ห้ามอนุมัติคำขอของตัวเอง</li>
+<li>คำขอหมดอายุ 48 ชม. · payload ถูกตรวจและแช่แข็งตอนส่ง ผู้อนุมัติเห็นสรุปที่อ่านง่ายก่อนกด</li>
+<li>ทุก action ของ staff และทุกการเปลี่ยนสิทธิ์ บันทึก audit (ไม่เก็บข้อมูลลับใน summary)</li>
+<li>เปลี่ยน role ผู้ใช้เป็น staff/admin ได้ผ่าน admin-actions ของ superadmin เท่านั้น (ตรวจว่า trigger กันยกระดับ role ใน profiles ยังครอบคลุม role ใหม่)</li>
+</ul>
+
+<h2>7. แบ่งเฟส</h2>
+<div class="tw"><table>
+<tr><th>เฟส</th><th>เนื้อหา</th><th>ผลที่ได้</th></tr>
+<tr><td>P1 ฐาน</td><td>role <code>staff</code> + ตารางใหม่ + ฟังก์ชันสิทธิ์ + แคตตาล็อก action · ประตู admin-actions (อนุญาต/ห้าม/ขออนุมัติ) + <code>decide_approval</code> + audit · หน้า ทีมแอดมิน / คำขออนุมัติ · ล็อกอิน staff + ซ่อนเมนู/ปุ่ม</td><td>สร้างทีมและสิทธิ์ได้ แต่ staff ยังเห็นได้แค่หน้าที่ทำ policy อ่านแล้ว</td></tr>
+<tr><td>P2 หน้าหลัก</td><td>policy อ่าน + ย้าย RPC/เขียนตรง สำหรับ: ออเดอร์, ออเดอร์ค้าง, คนขับ, ร้านค้า, ผู้ใช้, เติมเงิน, ถอนเงิน, ร้องเรียน</td><td>บทบาทบัญชี / ดูแลร้าน / ดูแลคนขับ / บริการลูกค้า ใช้งานได้จริง</td></tr>
+<tr><td>P3 หน้าที่เหลือ</td><td>เมนู, AI นำเข้าเมนู, ฝากซื้อ, ซักรีด, โปรโมชัน, บรอดแคสต์, แนะนำเพื่อน, รีวิว, รายได้, แผนที่, แดชบอร์ด, ลบบัญชี, แจ้งเตือน</td><td>ครบ 24 หน้า</td></tr>
+</table></div>
+<p>แต่ละเฟส: migration ทดสอบใน PostgreSQL แยก + BEGIN/ROLLBACK บน prod ก่อน apply · test สิทธิ์ (superadmin/lead/assistant/ระงับ/ไม่ใช่ทีม) ทุก action ที่เปิด · code_reviewer · deploy edge function ก่อน migration ที่ต้องพึ่ง</p>
+
+<h2>8. ความเสี่ยงและข้อจำกัด</h2>
+<ul>
+<li><code>admin-actions</code> ใน working tree มีงาน GP Proposal ที่ยังไม่ขึ้น production — <b class="brand">ต้อง merge/deploy งาน GP ก่อน หรือแยก branch ให้ชัด</b> ก่อนแก้ประตูสิทธิ์ (ไม่อย่างนั้น deploy แล้วงาน GP จะหลุดขึ้นไปด้วย)</li>
+<li>staff ที่มีสิทธิ์ "ดู" จะเห็นข้อมูลส่วนตัวลูกค้า/คนขับตามหน้า — เป็นไปตามที่ superadmin ตั้ง แต่ควรมี audit การเปิดดูหน้า (P3 ถ้าต้องการ)</li>
+<li>การ map หน้า→ตาราง อาจตกหล่น ทำให้หน้าบางส่วนว่างสำหรับ staff (ไม่รั่ว แค่ใช้ไม่ได้) — ทดสอบด้วยบัญชี staff จริงทุกหน้า</li>
+<li>หน้าแอดมินในแอปมือถือไม่ครอบคลุม (ตามขอบเขต) — staff ล็อกอินแอปจะเห็นหน้าลูกค้า</li>
+</ul>
+
+<h2>9. คำถามที่ต้องตัดสินใจก่อนเริ่ม P1</h2>
+<ol>
+<li><b>สร้างบัญชีผู้ช่วยอย่างไร</b> — (ก) แปลงบัญชีที่สมัครแล้วด้วยอีเมล (ข) superadmin สร้างบัญชีใหม่ + ส่งลิงก์ตั้งรหัสผ่าน (ค) ได้ทั้งสองแบบ</li>
+<li><b>หัวหน้าอนุมัติได้แค่หน้าที่ตัวเองมีระดับ "อนุมัติ"</b> หรือให้อนุมัติได้ทุกคำขอของผู้ช่วยในทีม</li>
+<li><b>แจ้งผู้อนุมัติเมื่อมีคำขอใหม่</b> — ใช้คิว Telegram/LINE เดิม (notify-admin-events) ด้วยไหม</li>
+<li>บทบาทสำเร็จรูปตั้งต้น 5 บทบาทในข้อ 3.4 / รายการ action สำคัญในข้อ 3.5 ใช้ได้ไหม</li>
+<li>งาน GP Proposal ใน working tree — ให้ commit/deploy ให้จบก่อนเริ่มงานนี้ไหม</li>
+</ol>
+</main>
+</body>
+</html>

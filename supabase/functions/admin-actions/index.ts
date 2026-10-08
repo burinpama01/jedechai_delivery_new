@@ -365,7 +365,7 @@ async function handleApproveProfile(supabase, body, role: string) {
   if (role === "merchant") {
     const { data: profile, error: profileErr } = await supabase
       .from("profiles")
-      .select("gp_plan_id, merchant_service_types, gp_rate")
+      .select("gp_plan_id, merchant_service_types, gp_rate, gp_proposal_id, gp_proposal_status")
       .eq("id", id)
       .maybeSingle();
     if (profileErr) return errorResponse(profileErr.message);
@@ -375,7 +375,11 @@ async function handleApproveProfile(supabase, body, role: string) {
       ? profile.merchant_service_types
       : [];
     const isFood = serviceTypes.length === 0 || serviceTypes.includes("food");
-    if (isFood && !profile.gp_plan_id && override_gp !== true) {
+    if (isFood && profile.gp_proposal_id && profile.gp_proposal_status !== "approved") {
+      return jsonResponse({ success: false, error: "gp_proposal_pending",
+        message: "ต้องอนุมัติข้อเสนอ GP และค่าส่งก่อนอนุมัติเปิดร้าน" });
+    }
+    if (isFood && !profile.gp_plan_id && profile.gp_proposal_status !== "approved" && override_gp !== true) {
       // ตอบ 200 เพื่อให้ admin-web อ่าน payload ได้ (callAdminAction throw เมื่อ non-2xx)
       return jsonResponse({
         success: false,
