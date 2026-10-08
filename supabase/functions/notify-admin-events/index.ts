@@ -1,6 +1,7 @@
 // notify-admin-events — drain admin_event_external_queue → Telegram/LINE (+ อีเมลเฉพาะเรื่องสมาชิกใหม่)
 //
-// อีเมล: event ใน EMAIL_EVENT_TYPES → system_config.admin_notification_email (+ _cc)
+// อีเมล: event ใน EMAIL_EVENT_TYPES → admin_notification_email (+ _cc)
+// ค่าปลายทาง (อีเมล/chat id/recipient) อยู่ใน system_config_private — อ่านผ่าน withAdminPrivateConfig
 //   ผ่าน Resend (env RESEND_API_KEY, RESEND_FROM) · ไม่มีคีย์/อีเมล = ข้ามช่องนี้
 // ลิงก์: data.admin_page → ADMIN_WEB_URL (env, ค่าเริ่มต้น production) + ?page=<หน้า>
 //
@@ -14,6 +15,7 @@
 // retry สูงสุด 5 ครั้ง, re-claim ได้หลัง 5 นาที) → mark_admin_external_event
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { withAdminPrivateConfig } from "../_shared/admin-private-config.ts";
 import {
   adminPageLink,
   EMAIL_EVENT_TYPES,
@@ -140,12 +142,13 @@ serve(async (req) => {
 
   // อ่าน config ช่องทางครั้งเดียวต่อ batch — แถว id=1 เท่านั้น (ตารางมีแถว key/value ปนอยู่
   // limit(1) เดิมได้แถวอื่นที่ช่องทางเป็น false ทั้งหมด → ปิดงานเงียบโดยไม่ส่ง)
-  const { data: config, error: configError } = await supabase
+  const { data: publicConfig, error: configError } = await supabase
     .from("system_config")
     .select("admin_telegram_enabled, admin_telegram_chat_id, admin_line_enabled, admin_line_recipient_id, admin_notification_email, admin_notification_email_cc")
     .eq("id", 1)
     .maybeSingle();
   if (configError) return json(500, { error: `config: ${configError.message}` });
+  const config = await withAdminPrivateConfig(supabase, publicConfig);
 
   const telegramChatId = config?.admin_telegram_enabled === true
     ? (String(config?.admin_telegram_chat_id || "").trim() ||

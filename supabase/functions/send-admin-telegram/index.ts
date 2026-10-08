@@ -10,6 +10,7 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { withAdminPrivateConfig } from "../_shared/admin-private-config.ts";
 import { corsHeaders, errorResponse, jsonResponse } from "../_shared/admin-auth.ts";
 
 type TelegramConfig = {
@@ -195,12 +196,13 @@ async function getTelegramConfig(supabaseAdmin: ReturnType<typeof createClient>)
   const envChatId = Deno.env.get("TELEGRAM_ADMIN_CHAT_ID")?.trim() || null;
 
   try {
-    const { data, error } = await supabaseAdmin
+    const { data: publicConfig, error } = await supabaseAdmin
       .from("system_config")
       .select("admin_telegram_enabled, admin_telegram_chat_id")
       .eq("id", 1)
       .maybeSingle();
     if (error) throw error;
+    const data = await withAdminPrivateConfig(supabaseAdmin, publicConfig);
 
     const configuredChatId = String(data?.admin_telegram_chat_id || "").trim();
     return {

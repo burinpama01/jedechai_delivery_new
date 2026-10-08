@@ -46,6 +46,13 @@ export async function renderSettingsPage(el, ctx) {
     config = data || {};
   } catch(e) { /* might not exist */ }
   try {
+    // ค่าลับ (อีเมล/LINE/Telegram/บัญชี Slip2Go) อยู่ใน system_config_private — แอดมินเท่านั้นอ่านได้
+    const { data: privateConfig } = await supabase.from('system_config_private').select('*').eq('id', 1).maybeSingle();
+    for (const [k, v] of Object.entries(privateConfig || {})) {
+      if (k !== 'id' && k !== 'updated_at' && v != null && v !== '') config[k] = v;
+    }
+  } catch(e) { /* ก่อน apply migration 20261008120000 ยังไม่มีตาราง */ }
+  try {
     kvConfig = await _fetchSystemConfigKeyValues([
       'ride_far_pickup_threshold_km',
       'ride_far_pickup_rate_per_km_motorcycle',

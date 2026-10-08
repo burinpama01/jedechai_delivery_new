@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { withAdminPrivateConfig } from "../_shared/admin-private-config.ts";
 import { corsHeaders, errorResponse, jsonResponse } from "../_shared/admin-auth.ts";
 
 const SLIP2GO_ENDPOINT =
@@ -460,7 +461,7 @@ async function notifyTopupVerificationEvent(
   },
 ) {
   try {
-    const { data: config, error } = await supabaseAdmin
+    const { data: publicConfig, error } = await supabaseAdmin
       .from("system_config")
       .select(
         "admin_line_enabled, admin_line_recipient_id, admin_telegram_enabled, admin_telegram_chat_id",
@@ -470,6 +471,10 @@ async function notifyTopupVerificationEvent(
     if (error) {
       console.warn("topup notification config lookup failed:", error.message);
     }
+    // อ่าน system_config ไม่ได้ → คง null ไว้ให้ใช้ env fallback (!config) เหมือนเดิม
+    const config = publicConfig
+      ? await withAdminPrivateConfig(supabaseAdmin, publicConfig)
+      : publicConfig;
 
     const lineTo = String(
       config?.admin_line_recipient_id || Deno.env.get("LINE_ADMIN_TO") || "",
@@ -769,11 +774,12 @@ serve(async (req) => {
       );
     }
 
-    const { data: config } = await supabaseAdmin
+    const { data: receiverConfig } = await supabaseAdmin
       .from("system_config")
       .select("slip2go_receiver_account, slip2go_allow_masked_receiver_account")
       .eq("id", 1)
       .maybeSingle();
+    const config = await withAdminPrivateConfig(supabaseAdmin, receiverConfig);
     const expectedReceiver = config?.slip2go_receiver_account ?? null;
     const allowMaskedReceiver =
       config?.slip2go_allow_masked_receiver_account === true;

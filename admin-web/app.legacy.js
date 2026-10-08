@@ -3404,7 +3404,8 @@ async function saveTopupModeSettings() {
 
   try {
     await _upsertSystemConfig({
-      slip2go_receiver_account: document.getElementById('settSlip2goReceiverAccount')?.value?.trim() || null,
+      // '' = ล้างค่า — trigger ใน DB ย้ายค่าลับไป system_config_private (migration 20261008120000)
+      slip2go_receiver_account: document.getElementById('settSlip2goReceiverAccount')?.value?.trim() ?? null,
       slip2go_allow_masked_receiver_account: document.getElementById('settSlip2goAllowMaskedReceiver')?.checked === true,
     });
     showToast('บันทึกการตรวจสลิปสำเร็จ', 'success');
@@ -3608,8 +3609,8 @@ async function saveAdminEmail() {
 
   try {
     await _upsertSystemConfig({
-      admin_notification_email: adminEmail || null,
-      admin_notification_email_cc: adminEmailCC || null,
+      admin_notification_email: adminEmail || '',
+      admin_notification_email_cc: adminEmailCC || '',
     });
 
     showToast('บันทึกอีเมลสำเร็จ!', 'success');
@@ -3680,7 +3681,7 @@ async function saveAdminLine() {
   try {
     await _upsertSystemConfig({
       admin_line_enabled: enabled,
-      admin_line_recipient_id: recipientId || null,
+      admin_line_recipient_id: recipientId || '',
     });
     showToast('บันทึก LINE แจ้งเตือนแอดมินสำเร็จ', 'success');
   } catch (e) {
@@ -3735,7 +3736,7 @@ async function saveAdminTelegram() {
   try {
     await _upsertSystemConfig({
       admin_telegram_enabled: enabled,
-      admin_telegram_chat_id: chatId || null,
+      admin_telegram_chat_id: chatId || '',
     });
     showToast('บันทึก Telegram แจ้งเตือนแอดมินสำเร็จ', 'success');
   } catch (e) {
