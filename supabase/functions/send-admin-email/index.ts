@@ -1,22 +1,21 @@
 // Supabase Edge Function: send-admin-email
-// ส่งอีเมลแจ้งเตือนไปยัง admin
+// ส่งอีเมลจากหลังบ้าน (ปุ่ม "ทดสอบอีเมล" ใน admin-web Settings)
+//
+// ISSUE-20261008-001: เดิมผู้ใช้ที่ล็อกอินคนไหนก็ได้ส่ง `to`/`html` เอง = open relay
+// ตอนนี้เรียกได้เฉพาะแอดมิน (verifyAdmin) — แจ้งเตือนแอดมินจากเหตุการณ์ในระบบ
+// ให้ไปทางคิว notify-admin-events (server อ่านปลายทางจาก system_config_private เอง)
 //
 // วิธี deploy:
 //   supabase functions deploy send-admin-email
-//
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { corsHeaders, errorResponse, jsonResponse, verifyAdmin } from "../_shared/admin-auth.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-// In-memory rate limiter per authenticated user
+// In-memory rate limiter per admin (ต่อ instance — พอสำหรับปุ่มทดสอบของแอดมิน)
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_MAX = 5; // max 5 emails per minute per user
+const RATE_LIMIT_MAX = 5; // max 5 emails per minute per admin
 const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const EMAIL_PATTERN = /^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$/;
 
 function isRateLimited(userId: string): boolean {
   const now = Date.now();
@@ -36,53 +35,23 @@ serve(async (req) => {
   }
 
   try {
-    // 1. Authenticate user
-    const authorization = req.headers.get("authorization") ?? req.headers.get("Authorization") ?? "";
-    const token = authorization.toLowerCase().startsWith("bearer ") ? authorization.slice(7).trim() : "";
-
-    if (!token) {
-      return new Response(
-        JSON.stringify({ error: "Missing authorization token" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    if (!supabaseUrl || !serviceRoleKey) {
-      return new Response(
-        JSON.stringify({ error: "Server misconfigured (missing env variables)" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const supabaseAuth = createClient(supabaseUrl, serviceRoleKey, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    });
-
-    const { data: { user }, error: userError } = await supabaseAuth.auth.getUser(token);
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Invalid or expired token" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    // 1. แอดมินเท่านั้น
+    const auth = await verifyAdmin(req);
+    if (auth instanceof Response) return auth;
 
     // 2. Check Rate Limiting
-    if (isRateLimited(user.id)) {
-      return new Response(
-        JSON.stringify({ error: "Too many email requests. Please wait a minute." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (isRateLimited(auth.adminId)) {
+      return errorResponse("Too many email requests. Please wait a minute.", 429);
     }
 
     const { to, subject, html } = await req.json();
+    const recipient = typeof to === "string" ? to.trim() : "";
 
-    if (!to || !subject) {
-      return new Response(
-        JSON.stringify({ error: "Missing required fields: to, subject" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (!recipient || !subject) {
+      return errorResponse("Missing required fields: to, subject", 400);
+    }
+    if (!EMAIL_PATTERN.test(recipient)) {
+      return errorResponse("Invalid recipient email", 400);
     }
 
     // ส่งอีเมลผ่าน Resend API
@@ -96,36 +65,27 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           from: Deno.env.get("RESEND_FROM") || "Jedechai Admin <noreply@jedechai.com>",
-          to: [to],
+          to: [recipient],
           subject,
           html: html || subject,
         }),
       });
 
       const data = await res.json();
-      console.log("Resend response:", JSON.stringify(data));
+      // ไม่ log ทั้งก้อน — response ของ Resend มีอีเมลผู้รับ
+      console.log("Resend response:", res.status, data?.id ?? data?.name ?? "");
 
-      return new Response(
-        JSON.stringify({ success: true, provider: "resend", data }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({ success: true, provider: "resend", data });
     }
 
-    // Fallback: บันทึกลง email_queue table
-    console.log(`📧 Email queued: to=${to}, subject=${subject}`);
-    return new Response(
-      JSON.stringify({
-        success: true,
-        provider: "queue",
-        message: "Email queued (no email provider configured). Set RESEND_API_KEY to enable.",
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    console.log(`📧 Email not sent (no RESEND_API_KEY): admin=${auth.adminId}`);
+    return jsonResponse({
+      success: true,
+      provider: "queue",
+      message: "Email queued (no email provider configured). Set RESEND_API_KEY to enable.",
+    });
   } catch (error) {
     console.error("Error:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return errorResponse((error as Error)?.message || "internal_error", 500);
   }
 });

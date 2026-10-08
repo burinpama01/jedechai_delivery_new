@@ -16,6 +16,10 @@ verify_jwt = false
 [functions.send-admin-telegram]
 verify_jwt = false
 
+# ตรวจสิทธิ์แอดมินในโค้ดเอง (verifyAdmin) — ค่าเดียวกับที่ deploy อยู่
+[functions.send-admin-email]
+verify_jwt = false
+
 [functions.notify-laundry-quote-request]
 verify_jwt = false
 
