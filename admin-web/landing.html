@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="JDC delivery แอปท้องถิ่นสำหรับสั่งอาหาร เรียกรถ และส่งพัสดุในพื้นที่เจดีย์ชัย" />
+  <meta name="description" content="JDC delivery แอปท้องถิ่นสำหรับสั่งอาหาร เรียกรถ และส่งพัสดุในพื้นที่ใกล้บ้านคุณ" />
   <meta name="theme-color" content="#080b0a" />
   <title>JDC delivery | สั่งอาหาร เรียกรถ ส่งพัสดุ</title>
 
@@ -1126,7 +1126,7 @@
           <div class="hero-copy">
             <div class="hero-eyebrow" id="heroBadge">
               <span class="eyebrow-dot"></span>
-              <span>เปิดบริการแล้วในตำบลเจดีย์ชัย</span>
+              <span id="heroBadgeText">เปิดให้บริการแล้วในหลายพื้นที่</span>
             </div>
             <h1 class="hero-title" id="heroTitle">
               สั่งอาหาร&nbsp;<span class="gold">เรียกรถ</span><br>ส่งพัสดุ ในแอปเดียว
@@ -1249,7 +1249,7 @@
               <li>เลือกร้านและเมนูจากแอปได้เลย</li>
               <li>ชำระด้วยเครดิตในระบบ</li>
               <li>ติดตามสถานะออเดอร์แบบเรียลไทม์</li>
-              <li>รองรับร้านค้าในตำบลเจดีย์ชัย</li>
+              <li>รองรับร้านค้าในทุกพื้นที่ที่เปิดให้บริการ</li>
             </ul>
           </article>
           <article class="service-card" data-reveal="fade-up" data-delay="2">
@@ -1293,7 +1293,7 @@
           <div data-reveal="fade-up">
             <span class="section-label">ดูตัวอย่างจริง</span>
             <h2 class="section-title">แอปที่ใช้งานได้จริงในชุมชน</h2>
-            <p class="section-sub">ดูประสบการณ์จริงของลูกค้า ร้านค้า และคนขับในพื้นที่เจดีย์ชัย ตั้งแต่สั่งจนถึงรับของ</p>
+            <p class="section-sub">ดูประสบการณ์จริงของลูกค้า ร้านค้า และคนขับในพื้นที่ให้บริการ ตั้งแต่สั่งจนถึงรับของ</p>
             <div style="margin-top:28px; display:flex; gap:10px; flex-wrap:wrap;">
               <a class="nav-cta" href="#download" style="display:inline-flex;align-items:center;gap:8px;font-size:14px;">
                 ดาวน์โหลดแอป
@@ -1443,7 +1443,7 @@
         <div class="download-band" data-reveal="fade-up">
           <div class="download-text">
             <h2>พร้อมใช้งาน<br><span class="gold">JDC delivery</span> แล้วหรือยัง?</h2>
-            <p>ดาวน์โหลดแอปเพื่อเริ่มสั่งอาหาร เรียกรถ หรือส่งพัสดุในพื้นที่เจดีย์ชัย</p>
+            <p>ดาวน์โหลดแอปเพื่อเริ่มสั่งอาหาร เรียกรถ หรือส่งพัสดุในพื้นที่ใกล้บ้านคุณ</p>
             <div class="download-actions">
               <a id="ctaPlayStoreBtn" class="store-btn dark-bg"
                  href="https://play.google.com/store/apps/details?id=com.jedechai.delivery"
@@ -1532,7 +1532,10 @@
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
     const DEF = {
       brand_name:    'JDC delivery',
-      badge_text:    'เปิดบริการแล้วในตำบลเจดีย์ชัย',
+      badge_text:    'เปิดให้บริการแล้วในหลายพื้นที่',
+      // *คำ* = ตัวสีทอง, ขึ้นบรรทัดใหม่ = <br>
+      hero_title:    'สั่งอาหาร *เรียกรถ*\nส่งพัสดุ ในแอปเดียว',
+      hero_subtitle: 'JDC delivery คือแพลตฟอร์มบริการท้องถิ่นสำหรับคนในพื้นที่ เลือกร้านอาหาร เรียกรถ หรือนัดส่งพัสดุ พร้อมติดตามสถานะเรียลไทม์',
       play_store_url:'https://play.google.com/store/apps/details?id=com.jedechai.delivery',
       app_store_url: 'https://apps.apple.com/th/app/jdc-delivery/id6759666672',
       logo_url: '',
@@ -1541,6 +1544,14 @@
       try { const u = new URL(v); return u.protocol === 'http:' || u.protocol === 'https:'; } catch { return false; }
     }
     function setText(id, v) { const el = document.getElementById(id); if (el && v?.trim()) el.textContent = v; }
+    function esc(v) { return String(v).replace(/[&<>"']/g, ch => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[ch])); }
+    function setHeroTitle(v) {
+      const el = document.getElementById('heroTitle');
+      if (!el || !v?.trim()) return;
+      el.innerHTML = esc(v.trim())
+        .replace(/\*([^*\n]+)\*/g, '<span class="gold">$1</span>')
+        .replace(/\r?\n/g, '<br>');
+    }
     function setHref(ids, v, fb) {
       const h = isUrl(v) ? v : fb;
       ids.forEach(id => { const el = document.getElementById(id); if (el) el.href = h; });
@@ -1548,11 +1559,12 @@
     function apply(raw, logo) {
       const c = { ...DEF, ...(raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {}) };
       if (!c.logo_url && isUrl(logo)) c.logo_url = logo;
-      setText('brandName', c.brand_name); setText('footerBrand', c.brand_name); setText('heroBadge', c.badge_text);
+      setText('brandName', c.brand_name); setText('footerBrand', c.brand_name); setText('heroBadgeText', c.badge_text);
+      setHeroTitle(c.hero_title); setText('heroSubtitle', c.hero_subtitle);
       setHref(['playStoreBtn','ctaPlayStoreBtn'], c.play_store_url, DEF.play_store_url);
       setHref(['appStoreBtn', 'ctaAppStoreBtn'],  c.app_store_url,  DEF.app_store_url);
       const m = document.getElementById('brandMark');
-      if (m && isUrl(c.logo_url)) m.innerHTML = `<img src="${c.logo_url}" alt="${c.brand_name} logo">`;
+      if (m && isUrl(c.logo_url)) m.innerHTML = `<img src="${esc(c.logo_url)}" alt="${esc(c.brand_name)} logo">`;
     }
     async function load() {
       const url = window.JEDECHAI_CONFIG?.SUPABASE_URL || '';
@@ -1560,7 +1572,7 @@
       if (!url || !key || key === 'your-anon-key-here') { apply(DEF); return; }
       try {
         const sb = createClient(url, key, { auth: { detectSessionInUrl: false } });
-        const { data, error } = await sb.from('system_config').select('landing_config,logo_url').maybeSingle();
+        const { data, error } = await sb.from('system_config').select('landing_config,logo_url').eq('id', 1).maybeSingle();
         if (error) throw error;
         apply(data?.landing_config, data?.logo_url);
       } catch (e) { console.warn('Config load failed:', e); apply(DEF); }

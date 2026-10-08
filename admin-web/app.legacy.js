@@ -3047,13 +3047,14 @@ async function rejectDeletion(id) {
 // Settings Page
 // ============================================
 const DEFAULT_LANDING_CONFIG = Object.freeze({
-  brand_name: 'JDC Delivery',
-  badge_text: 'บริการขนส่งครบวงจรในจังหวัดน่าน',
-  hero_title: 'ส่งไว เรียกง่าย จบในแอปเดียว',
+  brand_name: 'JDC delivery',
+  badge_text: 'เปิดให้บริการแล้วในหลายพื้นที่',
+  // *คำ* = ตัวสีทอง, ขึ้นบรรทัดใหม่ = <br> (landing.html setHeroTitle)
+  hero_title: 'สั่งอาหาร *เรียกรถ*\nส่งพัสดุ ในแอปเดียว',
   hero_subtitle:
-    'JDC Delivery รวมบริการเรียกรถ ส่งอาหาร และพัสดุแบบเรียลไทม์ ให้ลูกค้า คนขับ และร้านค้า ทำงานร่วมกันได้ในแพลตฟอร์มเดียว พร้อมระบบติดตามที่โปร่งใสทุกขั้นตอน',
+    'JDC delivery คือแพลตฟอร์มบริการท้องถิ่นสำหรับคนในพื้นที่ เลือกร้านอาหาร เรียกรถ หรือนัดส่งพัสดุ พร้อมติดตามสถานะเรียลไทม์',
   play_store_url: 'https://play.google.com/store/apps/details?id=com.jedechai.delivery',
-  app_store_url: 'https://apps.apple.com/th/',
+  app_store_url: 'https://apps.apple.com/th/app/jdc-delivery/id6759666672',
   ride_icon: '🛵',
   food_icon: '🍲',
   parcel_icon: '📦',

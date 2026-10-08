@@ -731,22 +731,23 @@ export async function renderSettingsPage(el, ctx) {
           <div class="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center"><span class="material-icons-round text-amber-500">public</span></div>
           <div>
             <h3 class="font-bold text-gray-800">Landing Page (เว็บสาธารณะ)</h3>
-            <p class="text-xs text-gray-400">ปรับข้อความ สีไอคอน รีวิว และลิงก์ดาวน์โหลดแอปได้จากหน้านี้</p>
+            <p class="text-xs text-gray-400">หน้าแรกใช้: ชื่อแบรนด์, Badge, หัวข้อหลัก, คำอธิบายหลัก, ลิงก์สโตร์ และโลโก้ (ไอคอน/รีวิว/ภาพ Hero ยังไม่แสดงบนหน้าแรก)</p>
           </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">ชื่อแบรนด์</label>
-            <input type="text" id="settLandingBrandName" value="${escapeForInput(landingConfig.brand_name)}" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all" placeholder="เช่น JDC Delivery">
+            <input type="text" id="settLandingBrandName" value="${escapeForInput(landingConfig.brand_name)}" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all" placeholder="เช่น JDC delivery">
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">ข้อความ Badge</label>
-            <input type="text" id="settLandingBadgeText" value="${escapeForInput(landingConfig.badge_text)}" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all" placeholder="เช่น บริการขนส่งครบวงจรในจังหวัดน่าน">
+            <input type="text" id="settLandingBadgeText" value="${escapeForInput(landingConfig.badge_text)}" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all" placeholder="เช่น เปิดให้บริการแล้วในหลายพื้นที่">
           </div>
           <div class="md:col-span-2">
             <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">หัวข้อหลัก</label>
-            <input type="text" id="settLandingHeroTitle" value="${escapeForInput(landingConfig.hero_title)}" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all" placeholder="เช่น ส่งไว เรียกง่าย จบในแอปเดียว">
+            <textarea id="settLandingHeroTitle" rows="2" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 transition-all" placeholder="เช่น สั่งอาหาร *เรียกรถ*">${escapeForInput(landingConfig.hero_title)}</textarea>
+            <p class="text-xs text-gray-400 mt-1">ครอบคำด้วย *ดอกจัน* = ตัวสีทอง · กด Enter = ขึ้นบรรทัดใหม่</p>
           </div>
           <div class="md:col-span-2">
             <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">คำอธิบายหลัก</label>
