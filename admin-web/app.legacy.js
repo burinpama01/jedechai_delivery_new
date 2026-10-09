@@ -299,7 +299,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
     // Check admin role via RLS-protected query
     const { data: profile } = await supabase.from('profiles').select('role, full_name').eq('id', data.user.id).single();
-    if (profile?.role !== 'admin') {
+    // ทีมแอดมิน: superadmin (admin) หรือ staff — สิทธิ์รายหน้าตรวจต่อใน showMainApp
+    if (profile?.role !== 'admin' && profile?.role !== 'staff') {
       await supabaseAuth.auth.signOut();
       _inMemorySession = null;
       throw new Error('บัญชีนี้ไม่มีสิทธิ์ Admin');
@@ -336,7 +337,25 @@ async function logout() {
   document.getElementById('loginScreen').classList.remove('hidden');
 }
 
-function showMainApp() {
+async function showMainApp() {
+  // ทีมแอดมิน: โหลดสิทธิ์ก่อนแสดงหน้า — staff ที่ถูกระงับ/ไม่มีสิทธิ์ ออกจากระบบทันที
+  try {
+    const loadAccess = window.__adminWebBridge?.loadAdminAccess;
+    if (typeof loadAccess === 'function') {
+      const result = await loadAccess({ supabase, role: currentUser?.profile?.role });
+      if (!result?.ok) {
+        showToast(result?.message || 'บัญชีนี้ไม่มีสิทธิ์ Admin', 'error');
+        await logout();
+        return;
+      }
+    } else if (currentUser?.profile?.role !== 'admin') {
+      await logout();
+      return;
+    }
+  } catch (_) {
+    await logout();
+    return;
+  }
   initializeResponsiveShell();
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('mainApp').classList.remove('hidden');
@@ -350,6 +369,7 @@ function showMainApp() {
   } catch (_) {}
   // ลิงก์จากแจ้งเตือน (Telegram/LINE/อีเมล) เปิดตรงหน้าได้: /admin?page=merchants
   // รับเฉพาะชื่อหน้าที่มีเมนูใน sidebar จริง
+  try { window.__adminWebBridge?.applySidebarAccess?.(document); } catch (_) {}
   let startPage = 'dashboard';
   try {
     const requested = new URLSearchParams(window.location.search).get('page') || '';
@@ -382,7 +402,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     const { data: { session } } = await supabaseAuth.auth.getSession();
     if (session) {
       const { data: profile } = await supabase.from('profiles').select('role, full_name').eq('id', session.user.id).single();
-      if (profile?.role === 'admin') {
+      if (profile?.role === 'admin' || profile?.role === 'staff') {
         currentUser = { ...session.user, profile };
         showMainApp();
       }
@@ -402,6 +422,14 @@ document.getElementById('sidebarNav').addEventListener('click', (e) => {
 });
 
 function navigateTo(page) {
+  // ทีมแอดมิน: หน้าที่ไม่มีสิทธิ์ → ไปหน้าแรกที่เปิดได้ (สิทธิ์จริงตรวจที่ server)
+  try {
+    const canView = window.__adminWebBridge?.canViewPage;
+    if (typeof canView === 'function' && !canView(page)) {
+      const links = Array.from(document.querySelectorAll('.sidebar-link[data-page]')).map((l) => l.dataset.page);
+      page = window.__adminWebBridge.firstAllowedPage(links);
+    }
+  } catch (_) {}
   currentPage = page;
   document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
   document.querySelector(`[data-page="${page}"]`)?.classList.add('active');

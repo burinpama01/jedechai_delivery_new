@@ -60,5 +60,18 @@ export async function callAdminAction({ supabaseAuth, supabaseUrl, supabaseAnonK
     throw new Error(data?.error || `http_${res.status}`);
   }
 
+  // ทีมแอดมิน: งานสำคัญของผู้ช่วยถูกเก็บเป็นคำขออนุมัติ ยังไม่ได้ทำจริง
+  // โยน error ให้หน้าที่เรียกไม่แสดงว่า "สำเร็จ" และแจ้งผู้ใช้ด้วย toast ข้อมูล
+  if (data?.pending_approval) {
+    const message = data?.message || "ส่งคำขออนุมัติแล้ว — รอผู้มีสิทธิ์อนุมัติ";
+    try {
+      (globalThis.showToast || globalThis.__adminWebBridge?.showToast)?.(message, "info");
+    } catch (_) {}
+    const err = new Error(message);
+    err.pendingApproval = true;
+    err.requestId = data?.request_id || null;
+    throw err;
+  }
+
   return data;
 }

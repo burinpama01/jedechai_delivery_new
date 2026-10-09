@@ -28,7 +28,8 @@ export async function checkExistingAdminSession({ supabase, supabaseAuth }) {
       .eq("id", session.user.id)
       .single();
 
-    if (profile?.role !== "admin") return { ok: false, reason: "not_admin" };
+    // ทีมแอดมิน: superadmin (admin) หรือ staff — สิทธิ์จริงโหลดต่อด้วย my_admin_access
+    if (profile?.role !== "admin" && profile?.role !== "staff") return { ok: false, reason: "not_admin" };
     return { ok: true, session, user: session.user, profile };
   } catch (_) {
     return { ok: false, reason: "error" };

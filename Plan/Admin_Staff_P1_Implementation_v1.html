@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ทีมแอดมิน P1</title>
+<style>
+:root{--bg:#f7f6f2;--card:#fff;--text:#1d1d1b;--muted:#6b6a64;--line:#e4e2da;--soft:#f1efe8;--code:#efede6;--ok:#1f7a4d}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151514;--card:#1e1e1c;--text:#ecebe6;--muted:#a3a29b;--line:#34332f;--soft:#262623;--code:#2a2926;--ok:#5fcf98}}
+:root[data-theme="dark"]{--bg:#151514;--card:#1e1e1c;--text:#ecebe6;--muted:#a3a29b;--line:#34332f;--soft:#262623;--code:#2a2926;--ok:#5fcf98}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.7 "Noto Sans Thai",system-ui,sans-serif}
+main{max-width:940px;margin:0 auto;padding:28px 16px 80px}h1{font-size:24px;margin:0 0 4px}h2{font-size:18px;margin:28px 0 8px;border-top:1px solid var(--line);padding-top:8px}
+.sub{color:var(--muted)}code{background:var(--code);padding:1px 5px;border-radius:5px;font-size:13px}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}th{background:var(--soft)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:10px 0}
+</style>
+</head>
+<body><main>
+<h1>ทีมแอดมิน — แผนลงมือ P1</h1>
+<p class="sub">อ้างอิงแบบ <code>Plan/Admin_Staff_Permissions_Design_v1.html</code> · 2026-10-09 · สถานะ: กำลังทำ</p>
+
+<div class="card"><b>เป้าหมาย P1:</b> superadmin สร้าง/จัดการทีมและสิทธิ์ได้, staff ล็อกอิน admin-web ได้และเห็นเฉพาะเมนูที่มีสิทธิ์, ทุก action ของ staff ผ่านประตูสิทธิ์ใน <code>admin-actions</code> (อนุญาต / ห้าม / ส่งขออนุมัติ), ผู้อนุมัติพิจารณาคำขอได้, มี audit log · <b>ยังไม่เปิด policy อ่านตารางให้ staff</b> (P2)</div>
+
+<h2>1. ฐานข้อมูล — <code>supabase/migrations/20261009100000_admin_staff_p1.sql</code></h2>
+<ul>
+<li><code>profiles_role_check</code> เพิ่ม <code>staff</code> · trigger กันลด superadmin จนเหลือ 0 คน</li>
+<li>ตาราง: <code>admin_role_templates</code>, <code>admin_staff</code>, <code>admin_staff_page_overrides</code>, <code>admin_staff_action_overrides</code>, <code>admin_approval_requests</code>, <code>admin_audit_log</code> · RLS: superadmin อ่าน/เขียนผ่าน RLS ไม่ได้ (เขียนผ่าน admin-actions เท่านั้น) อ่านได้ · staff อ่านแถวตัวเอง / คำขอที่ตัวเองขอหรืออนุมัติได้</li>
+<li>ฟังก์ชัน: <code>admin_staff_access(uuid)</code> (service_role), <code>my_admin_access()</code> (ผู้ใช้ปัจจุบัน), <code>staff_page_level(text)</code>, <code>admin_approvers_for_page(text[])</code>, <code>admin_find_user_by_email(text)</code> (service_role)</li>
+<li>บทบาทตั้งต้น 5 บทบาท (is_system)</li>
+</ul>
+
+<h2>2. Edge function</h2>
+<ul>
+<li><code>_shared/admin-permissions.ts</code> (pure): แคตตาล็อก action → หน้า/ชนิด (read/write/sensitive/super) + <code>decideAccess()</code> · ทดสอบด้วย node</li>
+<li><code>_shared/admin-auth.ts</code>: <code>verifyAdminOrStaff()</code> (ของเดิม <code>verifyAdmin</code> คงไว้ให้ function อื่น)</li>
+<li><code>admin-actions</code>: แยก switch เป็น <code>runAction()</code> · ประตูสิทธิ์ก่อนรัน · action ใหม่ <code>team_add_existing</code>, <code>team_create_account</code>, <code>team_update</code>, <code>team_remove</code>, <code>superadmin_grant</code>, <code>superadmin_revoke</code>, <code>template_upsert</code>, <code>template_delete</code>, <code>approval_decide</code>, <code>approval_cancel</code> · audit ทุก action · แจ้งผู้อนุมัติ (notifications + คิว Telegram/LINE)</li>
+</ul>
+
+<h2>3. admin-web</h2>
+<ul>
+<li>ล็อกอินรับ role <code>staff</code> ที่ active · โหลด <code>my_admin_access()</code> · ซ่อนเมนูที่ไม่มีสิทธิ์ · กันเปิดหน้าที่ไม่มีสิทธิ์</li>
+<li>หน้าใหม่: <b>คำขออนุมัติ</b> (ทุกคนในทีม), <b>ทีมแอดมิน</b> และ <b>บันทึกการทำงาน</b> (superadmin)</li>
+<li><code>callAdminAction</code> รู้จักผล <code>pending_approval</code></li>
+</ul>
+
+<h2>4. ลำดับ rollout</h2>
+<ol>
+<li>ทดสอบ: unit (decideAccess/แคตตาล็อก), node --check, BEGIN/ROLLBACK บน prod (สิทธิ์ทุก tier, กันลด superadmin, RLS ตารางใหม่)</li>
+<li>code_reviewer</li>
+<li>apply migration (additive — admin-actions เดิมยังใช้ได้) → deploy admin-actions → deploy admin-web</li>
+<li>ทดสอบหลัง deploy: superadmin ทำงานเดิมได้ (เรียก action อ่านอย่างเดียว), staff ทดสอบ (ถ้าผู้ใช้ให้บัญชีทดสอบ)</li>
+</ol>
+
+<h2>5. นอกขอบเขต P1</h2>
+<p>policy อ่านตารางสำหรับ staff, ซ่อนปุ่มราย action ในแต่ละหน้า, RPC/การเขียนตรงของ admin-web (5 จุด) ให้ staff ใช้ได้ — ทั้งหมดอยู่ใน P2/P3 · ระหว่างนี้ staff เขียนตรง/RPC ไม่ได้เลย (deny by default)</p>
+</main></body></html>

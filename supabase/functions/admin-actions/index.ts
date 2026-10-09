@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import {
-  verifyAdmin,
+  verifyAdminOrStaff,
   corsHeaders,
   jsonResponse,
   errorResponse,
@@ -14,6 +14,15 @@ import {
   maskSecret,
   testBeamConnection,
 } from "../_shared/beam.ts";
+import { ACTION_CATALOG, decideAccess } from "../_shared/admin-permissions.ts";
+import {
+  createApprovalRequest,
+  guardProfileMutation,
+  runApprovalAction,
+  runTeamAction,
+  writeAudit,
+  type StaffContext,
+} from "./staff.ts";
 
 // Phase 7: Simple in-memory rate limiter (per admin user)
 const _rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -44,6 +53,7 @@ function withCors(res: Response) {
 }
 
 serve(async (req) => {
+  let action = "";
   try {
     if (req.method === "OPTIONS") {
       return withCors(new Response(null, { status: 204, headers: corsHeaders }));
@@ -53,14 +63,14 @@ serve(async (req) => {
       return withCors(errorResponse("Method not allowed", 405));
     }
 
-    // Verify admin authentication
-    const authResult = await verifyAdmin(req);
+    // ทีมแอดมิน: superadmin (role admin) หรือ staff ที่ active — สิทธิ์ราย action ตัดสินด้านล่าง
+    const authResult = await verifyAdminOrStaff(req);
     if (authResult instanceof Response) return withCors(authResult);
 
-    const { adminId, supabaseAdmin } = authResult;
+    const { actorId, access, actorName, supabaseAdmin } = authResult;
 
     // Phase 7: Rate limit check
-    if (!checkRateLimit(adminId)) {
+    if (!checkRateLimit(actorId)) {
       return withCors(errorResponse("Rate limit exceeded. Please wait a moment.", 429));
     }
 
@@ -71,9 +81,43 @@ serve(async (req) => {
       return withCors(errorResponse("Invalid JSON body"));
     }
 
-    const action = body.action as string;
+    action = String(body?.action || "");
     if (!action) return withCors(errorResponse("Missing 'action' field"));
 
+    const ctx: StaffContext = { actorId, access, actorName, supabaseAdmin };
+    const entry = ACTION_CATALOG[action];
+    const decision = decideAccess(access, action);
+
+    if (decision === "deny") {
+      await writeAudit(ctx, action, entry, body, "denied");
+      return withCors(errorResponse("Forbidden: ไม่มีสิทธิ์ทำรายการนี้", 403));
+    }
+    if (decision === "approval") {
+      return withCors(await createApprovalRequest(ctx, action, entry, body));
+    }
+
+    let result: Response;
+    if (entry?.kind === "team") {
+      result = await runTeamAction(ctx, action, body);
+    } else if (entry?.kind === "approval") {
+      result = await runApprovalAction(ctx, action, body, runAction);
+    } else {
+      result = (await guardProfileMutation(supabaseAdmin, action, body, access.tier === "superadmin"))
+        ?? await runAction(supabaseAdmin, body, actorId);
+    }
+    if (entry?.kind !== "read" && entry?.kind !== "approval") {
+      await writeAudit(ctx, action, entry, body, result.ok ? "allowed" : "error");
+    }
+    return withCors(result);
+  } catch (e) {
+    console.error(`admin-actions error [${action}]:`, e);
+    return withCors(errorResponse(e?.message || "Internal error", 500));
+  }
+});
+
+// switch เดิมทั้งหมด — เรียกจากประตูสิทธิ์ และตอนอนุมัติคำขอ (ในนามผู้อนุมัติ)
+async function runAction(supabaseAdmin, body: Record<string, unknown>, adminId: string): Promise<Response> {
+  const action = String(body?.action || "");
     let result: Response;
     switch (action) {
       // ─── Driver / Merchant Approval ───
@@ -348,12 +392,8 @@ serve(async (req) => {
         result = errorResponse(`Unknown action: ${action}`);
         break;
     }
-    return withCors(result);
-  } catch (e) {
-    console.error(`admin-actions error [${action}]:`, e);
-    return withCors(errorResponse(e?.message || "Internal error", 500));
-  }
-});
+    return result;
+}
 
 // ─── Handlers ───────────────────────────────────────────
 
@@ -510,8 +550,8 @@ async function handleDeleteUser(supabase, body) {
     .eq("id", id)
     .maybeSingle();
   if (profileErr) return errorResponse(profileErr.message);
-  if (profile?.role === "admin") {
-    return errorResponse("ไม่อนุญาตให้ลบบัญชีแอดมิน", 403);
+  if (profile?.role === "admin" || profile?.role === "staff") {
+    return errorResponse("บัญชีทีมแอดมินจัดการที่หน้า \"ทีมแอดมิน\" เท่านั้น (นำออกจากทีมก่อน)", 403);
   }
 
   // Delete profile

@@ -85,6 +85,69 @@ export async function verifyAdmin(
 }
 
 /**
+ * ทีมแอดมิน: ยอมทั้ง superadmin (role admin) และ staff ที่ active
+ * คืน access (tier/pages/actions จาก admin_staff_access) ให้ประตูสิทธิ์ใน admin-actions ตัดสินต่อ
+ * function อื่นที่ต้องการ superadmin เท่านั้นให้ใช้ verifyAdmin ตามเดิม
+ */
+export async function verifyAdminOrStaff(
+  req: Request,
+): Promise<
+  | {
+    actorId: string;
+    access: { tier: "superadmin" | "lead" | "assistant"; active: boolean; pages?: Record<string, string>; actions?: Record<string, string>; template_name?: string | null };
+    actorName: string;
+    supabaseAdmin: SupabaseClient;
+    supabaseAuth: SupabaseClient;
+  }
+  | Response
+> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !serviceRoleKey) {
+    return errorResponse("Server misconfigured", 500);
+  }
+
+  const authorization = req.headers.get("authorization") ?? req.headers.get("Authorization") ?? "";
+  const token = authorization.toLowerCase().startsWith("bearer ") ? authorization.slice(7).trim() : "";
+  if (!token) {
+    return errorResponse("Missing authorization token", 401);
+  }
+
+  const supabaseAuth = createClient(supabaseUrl, serviceRoleKey, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const { data: { user }, error: userError } = await supabaseAuth.auth.getUser(token);
+  if (userError || !user) {
+    return errorResponse("Invalid or expired token", 401);
+  }
+
+  const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+  const [{ data: access, error: accessError }, { data: profile }] = await Promise.all([
+    supabaseAdmin.rpc("admin_staff_access", { p_user: user.id }),
+    supabaseAdmin.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
+  ]);
+
+  if (accessError) {
+    // ก่อน apply migration ทีมแอดมิน: ถอยไปตรวจแบบเดิม (role admin เท่านั้น)
+    const { data: legacy } = await supabaseAdmin.from("profiles").select("role").eq("id", user.id).maybeSingle();
+    if (legacy?.role !== "admin") return errorResponse("Forbidden: admin role required", 403);
+    return {
+      actorId: user.id,
+      access: { tier: "superadmin", active: true },
+      actorName: profile?.full_name || "",
+      supabaseAdmin,
+      supabaseAuth,
+    };
+  }
+
+  if (!access || access.active !== true) {
+    return errorResponse("Forbidden: admin role required", 403);
+  }
+
+  return { actorId: user.id, access, actorName: profile?.full_name || "", supabaseAdmin, supabaseAuth };
+}
+
+/**
  * Insert notification rows for admin actions and trigger FCM push.
  * DB insert failure only warns — FCM is still attempted independently.
  */
