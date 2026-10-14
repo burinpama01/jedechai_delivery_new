@@ -8,6 +8,8 @@ import '../../../common/models/booking.dart';
 import '../../../common/utils/app_time.dart';
 import '../../../common/utils/order_code_formatter.dart';
 import '../../../common/widgets/status_badge.dart';
+import '../../../common/services/app_ad_service.dart';
+import '../../../common/widgets/app_ad_widgets.dart';
 import '../../../utils/connection_helper.dart';
 import 'services/waiting_for_driver_screen.dart';
 import 'services/customer_order_detail_screen.dart';
@@ -459,6 +461,11 @@ class _ActivityScreenState extends State<ActivityScreen> {
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
               child: Column(
                 children: [
+                  const AppAdCarousel(
+                    placement: AppAdPlacement.customerCardActivity,
+                    height: 110,
+                    padding: EdgeInsets.only(bottom: 12),
+                  ),
                   _buildDateFilterSection(),
                   const SizedBox(height: 12),
                   _buildStatsSection(filteredBookings),

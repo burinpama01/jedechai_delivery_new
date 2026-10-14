@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../common/services/app_ad_service.dart';
+import '../../../common/widgets/app_ad_widgets.dart';
 import '../../../common/widgets/main_navigation_screen.dart';
 import '../../../common/screens/notification_center_screen.dart';
 import 'driver_dashboard_screen.dart';
@@ -13,11 +15,14 @@ class DriverMainScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DriverMainNavigationScreen(
-      dashboardScreen: const DriverDashboardScreen(),
-      earningsScreen: const DriverEarningsScreen(),
-      notificationScreen: const NotificationCenterScreen(role: 'driver'),
-      profileScreen: const DriverProfileScreen(),
+    return AppAdPopupHost(
+      placement: AppAdPlacement.driverPopup,
+      child: DriverMainNavigationScreen(
+        dashboardScreen: const DriverDashboardScreen(),
+        earningsScreen: const DriverEarningsScreen(),
+        notificationScreen: const NotificationCenterScreen(role: 'driver'),
+        profileScreen: const DriverProfileScreen(),
+      ),
     );
   }
 }

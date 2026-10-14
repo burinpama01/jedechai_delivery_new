@@ -10,6 +10,8 @@ import '../../../common/models/models.dart';
 import '../../../common/utils/order_code_formatter.dart';
 import '../../../common/widgets/location_disclosure_dialog.dart';
 import '../../../common/widgets/app_network_image.dart';
+import '../../../common/services/app_ad_service.dart';
+import '../../../common/widgets/app_ad_widgets.dart';
 import '../../../common/services/driver_foreground_service.dart';
 import '../../../common/utils/notification_payload_policy.dart';
 import '../../../common/utils/app_time.dart';
@@ -36,6 +38,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   final user = AuthService.currentUser;
   final ProfileService _profileService = ProfileService();
+  // เพิ่มทุกครั้งที่ดึงลงรีเฟรช → สไลด์โฆษณาโหลดใหม่
+  int _adRefreshSeq = 0;
   // ignore: unused_field
   String? _userRole;
   Map<String, dynamic>? _driverProfile;
@@ -839,6 +843,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
     if (_isRefreshing) return; // Prevent multiple simultaneous refreshes
 
     if (!mounted) return;
+    AppAdService.invalidate(AppAdPlacement.driverHome);
+    setState(() => _adRefreshSeq++);
 
     setState(() {
       _isRefreshing = true;
@@ -1099,6 +1105,13 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 _buildQuickActionRow(),
+                                AppAdCarousel(
+                                  key: ValueKey('ad_driver_$_adRefreshSeq'),
+                                  placement: AppAdPlacement.driverHome,
+                                  height: 140,
+                                  padding:
+                                      const EdgeInsets.only(top: JdcSpacing.lg),
+                                ),
                                 const SizedBox(height: JdcSpacing.lg),
                                 _buildJobFeedHeader(),
                                 const SizedBox(height: JdcSpacing.lg),

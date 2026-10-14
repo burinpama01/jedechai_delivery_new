@@ -146,6 +146,7 @@ export const ACTION_CATALOG: Record<string, CatalogEntry> = {
   upsert_system_config: e(["settings"], "super", "บันทึกตั้งค่าระบบ"),
   upsert_system_config_kv: e(["settings"], "super", "บันทึกตั้งค่าระบบ"),
   create_banner: e(["settings"], "super", "สร้างแบนเนอร์"),
+  update_banner: e(["settings"], "super", "แก้ไขแบนเนอร์"),
   toggle_banner: e(["settings"], "super", "เปิด/ปิดแบนเนอร์"),
   delete_banner: e(["settings"], "super", "ลบแบนเนอร์"),
   // ทีมแอดมิน (superadmin เสมอ)

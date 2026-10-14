@@ -1364,6 +1364,7 @@
     }
   },
   "customerHomeCopyCode": "Copy code",
+  "appAdOpenLinkFailed": "Couldn't open the link",
   "customerHomeOrderCode": "Order {code}",
   "@customerHomeOrderCode": {
     "placeholders": {

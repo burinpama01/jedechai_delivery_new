@@ -2780,6 +2780,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get customerHomeCopyCode => 'Copy code';
 
   @override
+  String get appAdOpenLinkFailed => 'Couldn\'t open the link';
+
+  @override
   String customerHomeOrderCode(Object code) {
     return 'Order $code';
   }

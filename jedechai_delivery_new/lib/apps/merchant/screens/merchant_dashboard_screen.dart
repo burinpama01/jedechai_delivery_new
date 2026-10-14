@@ -2,7 +2,9 @@ import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../common/services/app_ad_service.dart';
 import '../../../common/services/auth_service.dart';
+import '../../../common/widgets/app_ad_widgets.dart';
 import '../../../common/services/report_export_service.dart';
 import '../../../common/services/system_config_service.dart';
 import '../../../common/services/merchant_food_config_service.dart';
@@ -60,6 +62,8 @@ class MerchantDashboardScreen extends StatefulWidget {
 class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
   bool _isLoading = true;
   String? _error;
+  // เพิ่มทุกครั้งที่ดึงลงรีเฟรช → สไลด์โฆษณาโหลดใหม่
+  int _adRefreshSeq = 0;
 
   // Date filter
   int _selectedPeriod =
@@ -166,6 +170,12 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
       });
       _loadData();
     }
+  }
+
+  Future<void> _refreshAll() async {
+    AppAdService.invalidate(AppAdPlacement.merchantHome);
+    setState(() => _adRefreshSeq++);
+    await _loadData();
   }
 
   Future<void> _loadData() async {
@@ -537,7 +547,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
                     _buildHeader(),
                     Expanded(
                       child: RefreshIndicator(
-                        onRefresh: _loadData,
+                        onRefresh: _refreshAll,
                         color: jdc.cta,
                         child: SingleChildScrollView(
                           physics: const AlwaysScrollableScrollPhysics(),
@@ -550,6 +560,16 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  if (widget.fixtureData == null)
+                                    AppAdCarousel(
+                                      key: ValueKey(
+                                          'ad_merchant_$_adRefreshSeq'),
+                                      placement: AppAdPlacement.merchantHome,
+                                      height: 140,
+                                      padding: const EdgeInsets.only(
+                                          bottom: JdcSpacing.lg),
+                                    ),
+
                                   // Period Filter
                                   _buildPeriodFilter(),
 

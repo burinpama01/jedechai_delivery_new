@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jedechai_delivery_new/utils/debug_logger.dart';
@@ -8,10 +7,11 @@ import '../../../../theme/jdc_colors.dart';
 import '../../../../theme/jdc_layout.dart';
 import '../../providers/cart_provider.dart';
 import 'package:geolocator/geolocator.dart';
-import '../../../../common/services/supabase_service.dart';
 import '../../../../common/services/system_config_service.dart';
 import '../../../../common/services/customer_favorite_service.dart';
 import '../../../../common/widgets/app_network_image.dart';
+import '../../../../common/services/app_ad_service.dart';
+import '../../../../common/widgets/app_ad_widgets.dart';
 import '../../../../common/widgets/location_disclosure_dialog.dart';
 import '../../../../common/utils/shop_schedule.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -34,10 +34,6 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
   String _searchQuery = '';
   String _selectedCategory = 'all';
   final TextEditingController _searchController = TextEditingController();
-  List<Map<String, dynamic>> _foodBanners = [];
-  int _currentBannerIndex = 0;
-  final PageController _bannerController = PageController();
-  Timer? _bannerTimer;
   Timer? _scheduleRefreshTimer;
   List<Map<String, dynamic>> _allRadiusRestaurants = [];
   List<Map<String, dynamic>> _topSellingItems = [];
@@ -86,7 +82,6 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
   void initState() {
     super.initState();
     _initializeContextAndLoadRestaurants();
-    _loadFoodBanners();
   }
 
   Future<void> _initializeContextAndLoadRestaurants() async {
@@ -184,39 +179,9 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
   @override
   void dispose() {
     _searchController.dispose();
-    _bannerTimer?.cancel();
     _scheduleRefreshTimer?.cancel();
-    _bannerController.dispose();
     _scrollController.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadFoodBanners() async {
-    try {
-      final response = await SupabaseService.client
-          .from('banners')
-          .select('*')
-          .eq('is_active', true)
-          .eq('page', 'food')
-          .order('sort_order');
-      if (mounted) {
-        setState(() {
-          _foodBanners = List<Map<String, dynamic>>.from(response);
-        });
-        _bannerTimer?.cancel();
-        if (_foodBanners.length > 1) {
-          _bannerTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-            if (!mounted || _foodBanners.isEmpty) return;
-            final next = (_currentBannerIndex + 1) % _foodBanners.length;
-            _bannerController.animateToPage(next,
-                duration: const Duration(milliseconds: 400),
-                curve: Curves.easeInOut);
-          });
-        }
-      }
-    } catch (e) {
-      debugLog('⚠️ Error loading food banners: $e');
-    }
   }
 
   Future<void> _fetchTopSellingItems() async {
@@ -523,7 +488,15 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                       ),
                     ),
                   ),
-                  SliverToBoxAdapter(child: _buildPromoBanner()),
+                  const SliverToBoxAdapter(
+                    child: JdcContentFrame(
+                      child: AppAdCarousel(
+                        placement: AppAdPlacement.customerFood,
+                        height: 120,
+                        padding: EdgeInsets.only(top: JdcSpacing.lg),
+                      ),
+                    ),
+                  ),
                   SliverToBoxAdapter(
                     child: KeyedSubtree(
                       key: _shopSectionKey,
@@ -748,94 +721,6 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
     );
   }
 
-  Widget _buildPromoBanner() {
-    if (_foodBanners.isEmpty) return const SizedBox.shrink();
-
-    return JdcContentFrame(
-      child: Padding(
-        padding: const EdgeInsets.only(top: JdcSpacing.lg),
-        child: Column(
-          children: [
-            SizedBox(
-              height: 120,
-              child: PageView.builder(
-                controller: _bannerController,
-                itemCount: _foodBanners.length,
-                onPageChanged: (i) => setState(() => _currentBannerIndex = i),
-                itemBuilder: (_, i) {
-                  final b = _foodBanners[i];
-                  final imageUrl = b['image_url'] as String?;
-                  final couponCode = b['coupon_code'] as String?;
-                  return GestureDetector(
-                    onTap: couponCode != null && couponCode.isNotEmpty
-                        ? () => _showBannerPromoCode(
-                            couponCode, b['title'] as String?)
-                        : null,
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 4),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        gradient: imageUrl == null
-                            ? LinearGradient(
-                                colors: [
-                                  JdcColors.of(context).brand,
-                                  JdcColors.of(context)
-                                      .brand
-                                      .withValues(alpha: 0.72),
-                                ],
-                              )
-                            : null,
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: imageUrl != null
-                          ? AppNetworkImage(
-                              imageUrl: imageUrl,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: 120,
-                              backgroundColor: Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerHighest,
-                            )
-                          : AppLogoPlaceholder(
-                              width: double.infinity,
-                              height: 120,
-                              fit: BoxFit.contain,
-                              backgroundColor: JdcColors.of(context).surface,
-                            ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            if (_foodBanners.length > 1)
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(
-                    _foodBanners.length,
-                    (i) => AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      width: i == _currentBannerIndex ? 16 : 6,
-                      height: 6,
-                      margin: const EdgeInsets.symmetric(horizontal: 2),
-                      decoration: BoxDecoration(
-                        color: i == _currentBannerIndex
-                            ? JdcColors.of(context).brand
-                            : JdcColors.of(context).line,
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildTopSellingSection() {
     final colorScheme = Theme.of(context).colorScheme;
     final jdc = JdcColors.of(context);
@@ -1041,95 +926,6 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  void _showBannerPromoCode(String code, String? title) {
-    final colorScheme = Theme.of(context).colorScheme;
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(Icons.confirmation_number,
-                color: JdcColors.of(context).brand, size: 28),
-            const SizedBox(width: 8),
-            Expanded(
-                child: Text(AppLocalizations.of(context)!.foodPromoCodeTitle,
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold))),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (title != null && title.isNotEmpty)
-              Padding(
-                padding: EdgeInsets.only(bottom: 12),
-                child: Text(title,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: colorScheme.onSurfaceVariant,
-                    )),
-              ),
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-              decoration: BoxDecoration(
-                color: JdcColors.of(context).brand.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                    color: JdcColors.of(context).brand.withValues(alpha: 0.3)),
-              ),
-              child: Text(
-                code,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: JdcColors.of(context).brand,
-                  letterSpacing: 2,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(AppLocalizations.of(context)!.foodPromoCodeHint,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colorScheme.onSurfaceVariant,
-                )),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(AppLocalizations.of(context)!.foodPromoCodeClose),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: code));
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                      AppLocalizations.of(context)!.foodPromoCodeCopied(code)),
-                  backgroundColor: JdcColors.of(context).brand,
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            },
-            icon: Icon(Icons.copy, size: 16),
-            label: Text(AppLocalizations.of(context)!.foodPromoCodeCopy),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: JdcColors.of(context).brand,
-              foregroundColor: colorScheme.onPrimary,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-          ),
-        ],
-      ),
     );
   }
 

@@ -2780,6 +2780,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get customerHomeCopyCode => 'คัดลอกโค้ด';
 
   @override
+  String get appAdOpenLinkFailed => 'เปิดลิงก์ไม่สำเร็จ';
+
+  @override
   String customerHomeOrderCode(Object code) {
     return 'ออเดอร์ $code';
   }

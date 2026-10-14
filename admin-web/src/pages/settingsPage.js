@@ -928,51 +928,78 @@ export async function renderSettingsPage(el, ctx) {
           <div class="w-10 h-10 bg-violet-50 rounded-xl flex items-center justify-center"><span class="material-icons-round text-violet-500">view_carousel</span></div>
           <div>
             <h3 class="font-bold text-gray-800">จัดการ Banner โปรโมชั่น</h3>
-            <p class="text-xs text-gray-400">รูป 16:9, ไม่เกิน 2MB — เลือกหน้าที่ต้องการแสดง</p>
+            <p class="text-xs text-gray-400">โฆษณาในแอพ ลูกค้า / คนขับ / ร้านค้า — สไลด์ ป๊อปอัป การ์ด · รูปไม่เกิน 2MB</p>
           </div>
         </div>
-        
-        <!-- Banner filter tabs -->
+
+        <!-- Banner filter tabs (ตามฝั่ง) -->
         <div class="flex gap-2 mb-4 flex-wrap">
           <button onclick="filterBanners('all')" id="bannerFilterAll" class="px-3.5 py-1.5 text-white rounded-xl text-xs font-semibold" style="background:linear-gradient(135deg,#6366f1,#818cf8);">ทั้งหมด</button>
-          <button onclick="filterBanners('home')" id="bannerFilterHome" class="px-3.5 py-1.5 bg-gray-100 text-gray-600 rounded-xl text-xs font-semibold hover:bg-gray-200 transition-colors">หน้าแรก</button>
-          <button onclick="filterBanners('food')" id="bannerFilterFood" class="px-3.5 py-1.5 bg-gray-100 text-gray-600 rounded-xl text-xs font-semibold hover:bg-gray-200 transition-colors">สั่งอาหาร</button>
-          <button onclick="filterBanners('ride')" id="bannerFilterRide" class="px-3.5 py-1.5 bg-gray-100 text-gray-600 rounded-xl text-xs font-semibold hover:bg-gray-200 transition-colors">เรียกรถ</button>
-          <button onclick="filterBanners('parcel')" id="bannerFilterParcel" class="px-3.5 py-1.5 bg-gray-100 text-gray-600 rounded-xl text-xs font-semibold hover:bg-gray-200 transition-colors">ส่งพัสดุ</button>
+          <button onclick="filterBanners('customer')" id="bannerFilterCustomer" class="px-3.5 py-1.5 bg-gray-100 text-gray-600 rounded-xl text-xs font-semibold hover:bg-gray-200 transition-colors">ลูกค้า</button>
+          <button onclick="filterBanners('driver')" id="bannerFilterDriver" class="px-3.5 py-1.5 bg-gray-100 text-gray-600 rounded-xl text-xs font-semibold hover:bg-gray-200 transition-colors">คนขับ</button>
+          <button onclick="filterBanners('merchant')" id="bannerFilterMerchant" class="px-3.5 py-1.5 bg-gray-100 text-gray-600 rounded-xl text-xs font-semibold hover:bg-gray-200 transition-colors">ร้านค้า</button>
         </div>
 
         <div id="bannerList" class="space-y-3 mb-4">
           <p class="text-gray-400 text-sm">กำลังโหลด...</p>
         </div>
-        <div class="bg-gray-50/70 rounded-xl border border-gray-100 p-5">
-          <h4 class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2"><span class="material-icons-round text-indigo-400 text-sm">add_photo_alternate</span> เพิ่ม Banner ใหม่</h4>
+        <div id="bannerFormCard" class="bg-gray-50/70 rounded-xl border border-gray-100 p-5">
+          <h4 class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2"><span class="material-icons-round text-indigo-400 text-sm">add_photo_alternate</span> <span id="bannerFormTitle">เพิ่มโฆษณาใหม่</span></h4>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
+              <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">แสดงให้ฝั่ง</label>
+              <select id="bannerAudience" onchange="onBannerFormChange()" class="text-sm border border-gray-200 rounded-xl px-3.5 py-2 w-full bg-white transition-all"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">ตำแหน่งแสดง</label>
+              <select id="bannerPage" onchange="onBannerFormChange()" class="text-sm border border-gray-200 rounded-xl px-3.5 py-2 w-full bg-white transition-all"></select>
+            </div>
+            <div>
               <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">รูปภาพ</label>
-              <input type="file" id="bannerFileInput" accept="image/*,video/mp4,image/gif" class="text-sm border border-gray-200 rounded-xl px-3.5 py-2 w-full bg-white transition-all" />
+              <input type="file" id="bannerFileInput" accept="image/png,image/jpeg,image/webp,image/gif" class="text-sm border border-gray-200 rounded-xl px-3.5 py-2 w-full bg-white transition-all" />
+              <p id="bannerSizeHint" class="text-[10px] text-gray-400 mt-0.5"></p>
             </div>
             <div>
-              <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">ชื่อ Banner</label>
-              <input type="text" id="bannerTitle" placeholder="ชื่อ Banner (ถ้ามี)" class="text-sm border border-gray-200 rounded-xl px-3.5 py-2 w-full bg-white transition-all" />
+              <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">ชื่อโฆษณา</label>
+              <input type="text" id="bannerTitle" maxlength="120" placeholder="ใช้ในหลังบ้าน + คำอธิบายรูป" class="text-sm border border-gray-200 rounded-xl px-3.5 py-2 w-full bg-white transition-all" />
             </div>
             <div>
-              <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">แสดงในหน้า</label>
-              <select id="bannerPage" class="text-sm border border-gray-200 rounded-xl px-3.5 py-2 w-full bg-white transition-all">
-                <option value="home">หน้าแรก</option>
-                <option value="food">สั่งอาหาร</option>
-                <option value="ride">เรียกรถ</option>
-                <option value="parcel">ส่งพัสดุ</option>
-              </select>
+              <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">กดแล้ว</label>
+              <select id="bannerAction" onchange="onBannerFormChange()" class="text-sm border border-gray-200 rounded-xl px-3.5 py-2 w-full bg-white transition-all"></select>
             </div>
-            <div>
-              <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">โค้ดส่วนลด (ถ้ามี)</label>
+            <div id="bannerCouponWrap" class="hidden">
+              <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">โค้ดส่วนลด</label>
               <select id="bannerCoupon" class="text-sm border border-gray-200 rounded-xl px-3.5 py-2 w-full bg-white transition-all">
-                <option value="">ไม่ผูกโค้ด</option>
+                <option value="">— เลือกโค้ด —</option>
               </select>
-              <p class="text-[10px] text-gray-400 mt-0.5">ลูกค้ากดป้ายจะเห็นโค้ดส่วนลด</p>
             </div>
-            <div class="flex items-end">
-              <button onclick="uploadBanner()" class="w-full py-2.5 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-indigo-200" style="background:linear-gradient(135deg,#6366f1,#818cf8);">อัปโหลด</button>
+            <div id="bannerUrlWrap" class="hidden">
+              <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">ลิงก์ (https://)</label>
+              <input type="url" id="bannerUrl" placeholder="https://line.me/..." class="text-sm border border-gray-200 rounded-xl px-3.5 py-2 w-full bg-white transition-all" />
+            </div>
+            <div id="bannerScreenWrap" class="hidden">
+              <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">หน้าในแอพ</label>
+              <select id="bannerScreen" class="text-sm border border-gray-200 rounded-xl px-3.5 py-2 w-full bg-white transition-all"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">เริ่มแสดง (เว้นว่าง = ทันที)</label>
+              <input type="datetime-local" id="bannerStartsAt" class="text-sm border border-gray-200 rounded-xl px-3.5 py-2 w-full bg-white transition-all" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">หยุดแสดง (เว้นว่าง = ไม่กำหนด)</label>
+              <input type="datetime-local" id="bannerEndsAt" class="text-sm border border-gray-200 rounded-xl px-3.5 py-2 w-full bg-white transition-all" />
+            </div>
+            <div id="bannerPopupFreqWrap" class="hidden">
+              <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">ความถี่ป๊อปอัป</label>
+              <select id="bannerPopupFreq" class="text-sm border border-gray-200 rounded-xl px-3.5 py-2 w-full bg-white transition-all"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">ลำดับ (น้อยขึ้นก่อน)</label>
+              <input type="number" id="bannerSortOrder" value="0" class="text-sm border border-gray-200 rounded-xl px-3.5 py-2 w-full bg-white transition-all" />
+            </div>
+            <div class="flex items-end gap-2 md:col-span-2">
+              <button id="bannerSubmitBtn" onclick="uploadBanner()" class="flex-1 py-2.5 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-indigo-200" style="background:linear-gradient(135deg,#6366f1,#818cf8);">อัปโหลด</button>
+              <button id="bannerCancelEditBtn" onclick="cancelBannerEdit()" class="hidden px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-200">ยกเลิกแก้ไข</button>
             </div>
           </div>
         </div>

@@ -1364,6 +1364,7 @@
     }
   },
   "customerHomeCopyCode": "คัดลอกโค้ด",
+  "appAdOpenLinkFailed": "เปิดลิงก์ไม่สำเร็จ",
   "customerHomeOrderCode": "ออเดอร์ {code}",
   "@customerHomeOrderCode": {
     "placeholders": {

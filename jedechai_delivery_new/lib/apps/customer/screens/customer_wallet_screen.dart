@@ -4,7 +4,9 @@ import '../../../theme/jdc_colors.dart';
 import '../../../l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 
+import '../../../common/services/app_ad_service.dart';
 import '../../../common/services/auth_service.dart';
+import '../../../common/widgets/app_ad_widgets.dart';
 import '../../../common/services/wallet_service.dart';
 import '../../../common/services/withdrawal_service.dart';
 import '../../driver/screens/wallet_topup_screen.dart';
@@ -111,6 +113,11 @@ class _CustomerWalletScreenState extends State<CustomerWalletScreen> {
                       children: [
                         _buildMinimumNotice(),
                         const SizedBox(height: 14),
+                        const AppAdCarousel(
+                          placement: AppAdPlacement.customerCardWallet,
+                          height: 110,
+                          padding: EdgeInsets.only(bottom: 14),
+                        ),
                         _buildWithdrawalSummary(),
                         const SizedBox(height: 20),
                         _buildTransactionHistory(),
