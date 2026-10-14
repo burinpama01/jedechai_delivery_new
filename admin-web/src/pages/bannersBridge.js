@@ -11,15 +11,19 @@ import {
   localInputToIso,
   placementOf,
 } from './bannerAdsConfig.js';
+import { compressImageIfNeeded } from './imageCompress.js';
 
 let _ctx = null;
 
 function _deps() {
-  const supabase = _ctx?.supabase || globalThis.supabase;
-  const callAdminAction = _ctx?.callAdminAction || globalThis.callAdminAction;
-  const showToast = _ctx?.showToast || globalThis.showToast;
-  const escapeHtml = _ctx?.escapeHtml || globalThis.escapeHtml || _escape;
-  const fmtDate = _ctx?.fmtDate || globalThis.fmtDate || ((d) => d || '');
+  // app.legacy.js เรียก bridge โดยไม่ส่ง ctx และ `supabase` ของ legacy เป็น `let` (ไม่อยู่บน globalThis)
+  // → ใช้ ctx ที่ settingsPage เก็บไว้ใน __adminWebContext ตอน render
+  const ctx = _ctx || globalThis.__adminWebContext || {};
+  const supabase = ctx.supabase || globalThis.supabase;
+  const callAdminAction = ctx.callAdminAction || globalThis.callAdminAction;
+  const showToast = ctx.showToast || globalThis.showToast;
+  const escapeHtml = ctx.escapeHtml || globalThis.escapeHtml || _escape;
+  const fmtDate = ctx.fmtDate || globalThis.fmtDate || ((d) => d || '');
 
   return {
     supabase,
@@ -271,8 +275,9 @@ function _readForm() {
 
 function _validate(data, file, isEdit) {
   if (!isEdit && !file) return 'กรุณาเลือกรูปภาพ';
-  if (file && !/^image\//.test(file.type)) return 'รองรับเฉพาะไฟล์รูปภาพ (JPG/PNG/WebP/GIF)';
-  if (file && file.size > MAX_IMAGE_BYTES) return 'รูปต้องไม่เกิน 2MB';
+  if (file && !/^image\/(png|jpeg|webp|gif)$/.test(file.type)) return 'รองรับเฉพาะไฟล์ JPG / PNG / WebP / GIF';
+  // ไฟล์ใหญ่ถูกบีบอัดอัตโนมัติตอนอัปโหลด — GIF บีบไม่ได้ (จะเสียภาพเคลื่อนไหว)
+  if (file && file.type === 'image/gif' && file.size > MAX_IMAGE_BYTES) return 'GIF ต้องไม่เกิน 2MB';
   if (data.action_type === 'coupon' && !data.coupon_code) return 'เลือกโค้ดคูปอง';
   if (data.action_type === 'url' && !/^https:\/\/\S+$/i.test(data.action_value || '')) return 'ลิงก์ต้องขึ้นต้นด้วย https://';
   if (data.starts_at && data.ends_at && Date.parse(data.ends_at) <= Date.parse(data.starts_at)) return 'วันสิ้นสุดต้องหลังวันเริ่ม';
@@ -351,11 +356,22 @@ export async function uploadBanner(ctx) {
   if (btn) btn.disabled = true;
   try {
     if (file) {
-      const ext = (file.name.split('.').pop() || 'png').toLowerCase().replace(/[^a-z0-9]/g, '') || 'png';
+      if (btn) btn.textContent = 'กำลังเตรียมรูป...';
+      const fmt = AD_PLACEMENTS[data.page]?.format;
+      const { file: upFile, compressed, originalSize, finalSize } = await compressImageIfNeeded(file, {
+        maxBytes: MAX_IMAGE_BYTES,
+        maxDim: fmt === 'popup' ? 1350 : 1600,
+      });
+      if (compressed) {
+        const mb = (n) => (n / 1024 / 1024).toFixed(2) + 'MB';
+        showToast('บีบอัดรูปอัตโนมัติ ' + mb(originalSize) + ' → ' + mb(finalSize), 'success');
+      }
+      if (btn) btn.textContent = 'กำลังอัปโหลด...';
+      const ext = (upFile.name.split('.').pop() || 'png').toLowerCase().replace(/[^a-z0-9]/g, '') || 'png';
       const path = 'banners/banner_' + Date.now() + '.' + ext;
       const { error } = await supabase.storage
         .from('admin-uploads')
-        .upload(path, file, { upsert: false, contentType: file.type });
+        .upload(path, upFile, { upsert: false, contentType: upFile.type });
       if (error) throw error;
       const { data: urlData } = supabase.storage.from('admin-uploads').getPublicUrl(path);
       if (!urlData?.publicUrl) throw new Error('ไม่สามารถดึง URL ได้');
@@ -377,7 +393,10 @@ export async function uploadBanner(ctx) {
     } catch (_) {}
     showToast('เกิดข้อผิดพลาด: ' + (e?.message || e), 'error');
   } finally {
-    if (btn) btn.disabled = false;
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = globalThis._bannerEditingId ? 'บันทึกการแก้ไข' : 'อัปโหลด';
+    }
   }
 }
 

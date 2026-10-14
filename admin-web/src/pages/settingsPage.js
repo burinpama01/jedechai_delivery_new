@@ -928,7 +928,7 @@ export async function renderSettingsPage(el, ctx) {
           <div class="w-10 h-10 bg-violet-50 rounded-xl flex items-center justify-center"><span class="material-icons-round text-violet-500">view_carousel</span></div>
           <div>
             <h3 class="font-bold text-gray-800">จัดการ Banner โปรโมชั่น</h3>
-            <p class="text-xs text-gray-400">โฆษณาในแอพ ลูกค้า / คนขับ / ร้านค้า — สไลด์ ป๊อปอัป การ์ด · รูปไม่เกิน 2MB</p>
+            <p class="text-xs text-gray-400">โฆษณาในแอพ ลูกค้า / คนขับ / ร้านค้า — สไลด์ ป๊อปอัป การ์ด · รูปเกิน 2MB บีบอัดให้อัตโนมัติ</p>
           </div>
         </div>
 

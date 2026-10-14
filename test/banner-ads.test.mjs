@@ -118,3 +118,15 @@ test("Flutter รู้จักทุกตำแหน่งและทุก
     }
   }
 });
+
+test("บีบอัดรูป: ย่อด้านยาวสุดคงอัตราส่วน และเลือกบีบเฉพาะที่จำเป็น", async () => {
+  const { fitWithin, needsCompression } = await import("../admin-web/src/pages/imageCompress.js");
+  assert.deepEqual(fitWithin(4000, 3000, 1600), { width: 1600, height: 1200 });
+  assert.deepEqual(fitWithin(1080, 1920, 1350), { width: 759, height: 1350 });
+  assert.deepEqual(fitWithin(800, 400, 1600), { width: 800, height: 400 }); // ไม่ขยาย
+  const lim = { maxBytes: 2 * 1024 * 1024, maxDim: 1600 };
+  assert.equal(needsCompression({ type: "image/png", size: 3e6, width: 1200, height: 600 }, lim), true);
+  assert.equal(needsCompression({ type: "image/jpeg", size: 5e5, width: 4000, height: 2000 }, lim), true);
+  assert.equal(needsCompression({ type: "image/jpeg", size: 5e5, width: 1280, height: 720 }, lim), false);
+  assert.equal(needsCompression({ type: "image/gif", size: 9e6, width: 4000, height: 2000 }, lim), false);
+});
