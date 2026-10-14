@@ -10,7 +10,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'package:vibration/vibration.dart';
+import '../../../common/services/app_ad_service.dart';
 import '../../../common/services/auth_service.dart';
+import '../../../common/widgets/app_ad_widgets.dart';
 import '../../../common/services/booking_service.dart';
 import '../../../common/services/location_service.dart';
 import '../../../common/services/merchant_order_service.dart';
@@ -1060,6 +1062,11 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           children: [
             // Shop Status Card
             _buildShopStatusCard(),
+            const AppAdCarousel(
+              placement: AppAdPlacement.merchantCardOrders,
+              height: 110,
+              padding: EdgeInsets.only(top: JdcSpacing.lg),
+            ),
             const SizedBox(height: JdcSpacing.xxl),
 
             // The artboard groups the live queue by the merchant's next step.

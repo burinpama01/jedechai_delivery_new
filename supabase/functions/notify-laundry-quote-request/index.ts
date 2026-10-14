@@ -6,6 +6,7 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { withAdminPrivateConfig } from "../_shared/admin-private-config.ts";
 import {
   corsHeaders,
   errorResponse,
@@ -66,7 +67,7 @@ async function getAdminNotificationConfig(supabaseAdmin) {
     "";
 
   try {
-    const { data, error } = await supabaseAdmin
+    const { data: publicConfig, error } = await supabaseAdmin
       .from("system_config")
       .select(
         "admin_line_enabled, admin_line_recipient_id, admin_telegram_enabled, admin_telegram_chat_id",
@@ -74,6 +75,9 @@ async function getAdminNotificationConfig(supabaseAdmin) {
       .eq("id", 1)
       .maybeSingle();
     if (error) throw error;
+    const data = publicConfig
+      ? await withAdminPrivateConfig(supabaseAdmin, publicConfig)
+      : publicConfig;
 
     return {
       lineEnabled: data?.admin_line_enabled === true,

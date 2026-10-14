@@ -10,6 +10,7 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { withAdminPrivateConfig } from "../_shared/admin-private-config.ts";
 import { corsHeaders, errorResponse, jsonResponse } from "../_shared/admin-auth.ts";
 
 type LineConfig = {
@@ -199,12 +200,13 @@ async function getLineConfig(supabaseAdmin: ReturnType<typeof createClient>): Pr
   const envTo = Deno.env.get("LINE_ADMIN_TO")?.trim() || null;
 
   try {
-    const { data, error } = await supabaseAdmin
+    const { data: publicConfig, error } = await supabaseAdmin
       .from("system_config")
       .select("admin_line_enabled, admin_line_recipient_id")
       .eq("id", 1)
       .maybeSingle();
     if (error) throw error;
+    const data = await withAdminPrivateConfig(supabaseAdmin, publicConfig);
 
     const configuredTo = String(data?.admin_line_recipient_id || "").trim();
     return {

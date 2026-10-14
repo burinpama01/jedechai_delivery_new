@@ -24,6 +24,9 @@ import { renderBroadcastPage } from "./broadcastPage.js";
 import { renderShopStoresPage } from "./shopStoresPage.js";
 import { renderShopOrdersPage } from "./shopOrdersPage.js";
 import { renderAiMenuImportPage } from "./aiMenuImportPage.js";
+import { renderApprovalsPage } from "./approvalsPage.js";
+import { renderAdminTeamPage } from "./adminTeamPage.js";
+import { renderAdminAuditPage } from "./adminAuditPage.js";
 
 export function registerInitialPages(reg) {
   if (typeof reg !== "function") return;
@@ -53,6 +56,9 @@ export function registerInitialPages(reg) {
     ["shop_stores", renderShopStoresPage],
     ["shop_orders", renderShopOrdersPage],
     ["ai_menu_import", renderAiMenuImportPage],
+    ["approvals", renderApprovalsPage],
+    ["admin_team", renderAdminTeamPage],
+    ["admin_audit", renderAdminAuditPage],
   ];
 
   for (const [name, renderer, dispose] of pages) {

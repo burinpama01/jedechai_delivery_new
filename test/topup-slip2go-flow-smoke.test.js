@@ -382,7 +382,7 @@ test("verify-topup-slip maps duplicate manual-review inserts to duplicateSlip", 
 test("verify-topup-slip stores slip evidence for rejected verification requests", () => {
   const source = readFileSync(verifyTopupSlipUrl, "utf8");
   const amountStart = source.indexOf("if (amountMismatch)");
-  const configStart = source.indexOf('const { data: config }', amountStart);
+  const configStart = source.indexOf('const { data: receiverConfig }', amountStart);
   const receiverStart = source.indexOf("receiverMatches(parsed.receiverAccount");
   const transRefStart = source.indexOf("if (!parsed.transRef)", receiverStart);
 

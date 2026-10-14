@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../common/screens/notification_center_screen.dart';
+import '../../../common/services/app_ad_service.dart';
+import '../../../common/widgets/app_ad_widgets.dart';
 import '../../../common/utils/profile_completion_policy.dart';
 import '../../../common/widgets/notification_badge_icon.dart';
 import '../utils/merchant_main_nav_policy.dart';
@@ -38,6 +40,11 @@ class _MerchantMainScreenState extends State<MerchantMainScreen> {
   void initState() {
     super.initState();
     _loadMerchantServiceType();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 1200), () {
+        if (mounted) AppAdPopup.maybeShow(context, AppAdPlacement.merchantPopup);
+      });
+    });
   }
 
   Future<void> _loadMerchantServiceType() async {

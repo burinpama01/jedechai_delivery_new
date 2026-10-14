@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../common/services/wallet_service.dart';
 import '../../../common/services/auth_service.dart';
+import '../../../common/services/app_ad_service.dart';
+import '../../../common/widgets/app_ad_widgets.dart';
 import '../../../theme/jdc_colors.dart';
 import '../../../theme/jdc_layout.dart';
 import 'wallet_topup_screen.dart';
@@ -138,6 +140,11 @@ class _DriverWalletScreenState extends State<DriverWalletScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const AppAdCarousel(
+                        placement: AppAdPlacement.driverCardWallet,
+                        height: 110,
+                        padding: EdgeInsets.only(bottom: JdcSpacing.md),
+                      ),
                       _buildTransactionsSection(jdc),
                     ],
                   ),

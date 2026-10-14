@@ -5225,6 +5225,12 @@ abstract class AppLocalizations {
   /// **'Copy code'**
   String get customerHomeCopyCode;
 
+  /// No description provided for @appAdOpenLinkFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the link'**
+  String get appAdOpenLinkFailed;
+
   /// No description provided for @customerHomeOrderCode.
   ///
   /// In en, this message translates to:

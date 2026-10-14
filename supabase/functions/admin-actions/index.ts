@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import {
-  verifyAdmin,
+  verifyAdminOrStaff,
   corsHeaders,
   jsonResponse,
   errorResponse,
@@ -14,6 +14,16 @@ import {
   maskSecret,
   testBeamConnection,
 } from "../_shared/beam.ts";
+import { ACTION_CATALOG, decideAccess } from "../_shared/admin-permissions.ts";
+import { bannerStoragePath, sanitizeBannerInput } from "../_shared/banner-ads.ts";
+import {
+  createApprovalRequest,
+  guardProfileMutation,
+  runApprovalAction,
+  runTeamAction,
+  writeAudit,
+  type StaffContext,
+} from "./staff.ts";
 
 // Phase 7: Simple in-memory rate limiter (per admin user)
 const _rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -44,6 +54,7 @@ function withCors(res: Response) {
 }
 
 serve(async (req) => {
+  let action = "";
   try {
     if (req.method === "OPTIONS") {
       return withCors(new Response(null, { status: 204, headers: corsHeaders }));
@@ -53,14 +64,14 @@ serve(async (req) => {
       return withCors(errorResponse("Method not allowed", 405));
     }
 
-    // Verify admin authentication
-    const authResult = await verifyAdmin(req);
+    // ทีมแอดมิน: superadmin (role admin) หรือ staff ที่ active — สิทธิ์ราย action ตัดสินด้านล่าง
+    const authResult = await verifyAdminOrStaff(req);
     if (authResult instanceof Response) return withCors(authResult);
 
-    const { adminId, supabaseAdmin } = authResult;
+    const { actorId, access, actorName, supabaseAdmin } = authResult;
 
     // Phase 7: Rate limit check
-    if (!checkRateLimit(adminId)) {
+    if (!checkRateLimit(actorId)) {
       return withCors(errorResponse("Rate limit exceeded. Please wait a moment.", 429));
     }
 
@@ -71,9 +82,43 @@ serve(async (req) => {
       return withCors(errorResponse("Invalid JSON body"));
     }
 
-    const action = body.action as string;
+    action = String(body?.action || "");
     if (!action) return withCors(errorResponse("Missing 'action' field"));
 
+    const ctx: StaffContext = { actorId, access, actorName, supabaseAdmin };
+    const entry = ACTION_CATALOG[action];
+    const decision = decideAccess(access, action);
+
+    if (decision === "deny") {
+      await writeAudit(ctx, action, entry, body, "denied");
+      return withCors(errorResponse("Forbidden: ไม่มีสิทธิ์ทำรายการนี้", 403));
+    }
+    if (decision === "approval") {
+      return withCors(await createApprovalRequest(ctx, action, entry, body));
+    }
+
+    let result: Response;
+    if (entry?.kind === "team") {
+      result = await runTeamAction(ctx, action, body);
+    } else if (entry?.kind === "approval") {
+      result = await runApprovalAction(ctx, action, body, runAction);
+    } else {
+      result = (await guardProfileMutation(supabaseAdmin, action, body, access.tier === "superadmin"))
+        ?? await runAction(supabaseAdmin, body, actorId);
+    }
+    if (entry?.kind !== "read" && entry?.kind !== "approval") {
+      await writeAudit(ctx, action, entry, body, result.ok ? "allowed" : "error");
+    }
+    return withCors(result);
+  } catch (e) {
+    console.error(`admin-actions error [${action}]:`, e);
+    return withCors(errorResponse(e?.message || "Internal error", 500));
+  }
+});
+
+// switch เดิมทั้งหมด — เรียกจากประตูสิทธิ์ และตอนอนุมัติคำขอ (ในนามผู้อนุมัติ)
+async function runAction(supabaseAdmin, body: Record<string, unknown>, adminId: string): Promise<Response> {
+  const action = String(body?.action || "");
     let result: Response;
     switch (action) {
       // ─── Driver / Merchant Approval ───
@@ -322,6 +367,9 @@ serve(async (req) => {
       case "create_banner":
         result = await handleCreateBanner(supabaseAdmin, body);
         break;
+      case "update_banner":
+        result = await handleUpdateBanner(supabaseAdmin, body);
+        break;
       case "toggle_banner":
         result = await handleToggleBanner(supabaseAdmin, body);
         break;
@@ -348,12 +396,8 @@ serve(async (req) => {
         result = errorResponse(`Unknown action: ${action}`);
         break;
     }
-    return withCors(result);
-  } catch (e) {
-    console.error(`admin-actions error [${action}]:`, e);
-    return withCors(errorResponse(e?.message || "Internal error", 500));
-  }
-});
+    return result;
+}
 
 // ─── Handlers ───────────────────────────────────────────
 
@@ -365,7 +409,7 @@ async function handleApproveProfile(supabase, body, role: string) {
   if (role === "merchant") {
     const { data: profile, error: profileErr } = await supabase
       .from("profiles")
-      .select("gp_plan_id, merchant_service_types, gp_rate")
+      .select("gp_plan_id, merchant_service_types, gp_rate, gp_proposal_id, gp_proposal_status")
       .eq("id", id)
       .maybeSingle();
     if (profileErr) return errorResponse(profileErr.message);
@@ -375,7 +419,11 @@ async function handleApproveProfile(supabase, body, role: string) {
       ? profile.merchant_service_types
       : [];
     const isFood = serviceTypes.length === 0 || serviceTypes.includes("food");
-    if (isFood && !profile.gp_plan_id && override_gp !== true) {
+    if (isFood && profile.gp_proposal_id && profile.gp_proposal_status !== "approved") {
+      return jsonResponse({ success: false, error: "gp_proposal_pending",
+        message: "ต้องอนุมัติข้อเสนอ GP และค่าส่งก่อนอนุมัติเปิดร้าน" });
+    }
+    if (isFood && !profile.gp_plan_id && profile.gp_proposal_status !== "approved" && override_gp !== true) {
       // ตอบ 200 เพื่อให้ admin-web อ่าน payload ได้ (callAdminAction throw เมื่อ non-2xx)
       return jsonResponse({
         success: false,
@@ -506,8 +554,8 @@ async function handleDeleteUser(supabase, body) {
     .eq("id", id)
     .maybeSingle();
   if (profileErr) return errorResponse(profileErr.message);
-  if (profile?.role === "admin") {
-    return errorResponse("ไม่อนุญาตให้ลบบัญชีแอดมิน", 403);
+  if (profile?.role === "admin" || profile?.role === "staff") {
+    return errorResponse("บัญชีทีมแอดมินจัดการที่หน้า \"ทีมแอดมิน\" เท่านั้น (นำออกจากทีมก่อน)", 403);
   }
 
   // Delete profile
@@ -2552,24 +2600,38 @@ async function handleManualTopup(supabase, body) {
 
 // ─── Banners ──────────────────────────────────────────
 
+// ฟิลด์ผ่าน sanitizeBannerInput (allowlist + ตรวจตำแหน่ง/การกด/ช่วงเวลา) — ห้าม insert body ดิบ
 async function handleCreateBanner(supabase, body) {
   const { banner_data } = body;
   if (!banner_data) return errorResponse("Missing 'banner_data'");
 
-  const { error } = await supabase.from("banners").insert(banner_data);
-  if (error) {
-    // If column doesn't exist, retry with minimal fields
-    if (error.message?.includes("column") || error.code === "42703") {
-      const { error: retryErr } = await supabase.from("banners").insert({
-        title: banner_data.title || "Banner",
-        image_url: banner_data.image_url,
-        is_active: true,
-        sort_order: 0,
-      });
-      if (retryErr) return errorResponse(retryErr.message);
-    } else {
-      return errorResponse(error.message);
-    }
+  const parsed = sanitizeBannerInput(banner_data, { imageRequired: true });
+  if (!parsed.ok) return errorResponse(parsed.error);
+
+  const { error } = await supabase
+    .from("banners")
+    .insert({ ...parsed.row, is_active: parsed.row.is_active ?? true });
+  if (error) return errorResponse(error.message);
+  return jsonResponse({ success: true });
+}
+
+async function handleUpdateBanner(supabase, body) {
+  const { id, banner_data } = body;
+  if (!id) return errorResponse("Missing 'id'");
+  if (!banner_data) return errorResponse("Missing 'banner_data'");
+
+  const parsed = sanitizeBannerInput(banner_data, { imageRequired: false });
+  if (!parsed.ok) return errorResponse(parsed.error);
+
+  const patch: Record<string, unknown> = { ...parsed.row };
+  if (!patch.image_url) delete patch.image_url; // ไม่ได้เปลี่ยนรูป
+
+  const { data: before } = await supabase.from("banners").select("image_url").eq("id", id).maybeSingle();
+  const { data, error } = await supabase.from("banners").update(patch).eq("id", id).select("id");
+  if (error) return errorResponse(error.message);
+  if (!data?.length) return errorResponse("ไม่พบแบนเนอร์", 404);
+  if (patch.image_url && before?.image_url && before.image_url !== patch.image_url) {
+    await removeBannerImage(supabase, before.image_url);
   }
   return jsonResponse({ success: true });
 }
@@ -2577,17 +2639,29 @@ async function handleCreateBanner(supabase, body) {
 async function handleToggleBanner(supabase, body) {
   const { id, is_active } = body;
   if (!id) return errorResponse("Missing 'id'");
-  const { error } = await supabase.from("banners").update({ is_active }).eq("id", id);
+  if (typeof is_active !== "boolean") return errorResponse("Missing 'is_active'");
+  const { data, error } = await supabase.from("banners").update({ is_active }).eq("id", id).select("id");
   if (error) return errorResponse(error.message);
+  if (!data?.length) return errorResponse("ไม่พบแบนเนอร์", 404);
   return jsonResponse({ success: true });
 }
 
 async function handleDeleteBanner(supabase, body) {
   const { id } = body;
   if (!id) return errorResponse("Missing 'id'");
-  const { error } = await supabase.from("banners").delete().eq("id", id);
+  const { data, error } = await supabase.from("banners").delete().eq("id", id).select("image_url");
   if (error) return errorResponse(error.message);
+  if (!data?.length) return errorResponse("ไม่พบแบนเนอร์", 404);
+  await removeBannerImage(supabase, data[0].image_url);
   return jsonResponse({ success: true });
+}
+
+// ลบไฟล์รูปเก่าใน admin-uploads/banners/ (best-effort — ลบไม่ได้ไม่ทำให้รายการล้ม)
+async function removeBannerImage(supabase, imageUrl) {
+  const path = bannerStoragePath(imageUrl);
+  if (!path) return;
+  const { error } = await supabase.storage.from("admin-uploads").remove([path]);
+  if (error) console.warn("[admin-actions] remove banner image failed:", path, error.message);
 }
 
 // ─── Fetch User Emails ────────────────────────────────

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../common/services/app_ad_service.dart';
+import '../../../common/widgets/app_ad_widgets.dart';
 import '../../../common/widgets/main_navigation_screen.dart';
 import '../../../common/screens/notification_center_screen.dart';
 import 'activity_screen.dart';
@@ -13,11 +15,14 @@ class CustomerMainScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomerMainNavigationScreen(
-      homeScreen: const CustomerHomeScreen(),
-      activityScreen: const ActivityScreen(),
-      notificationScreen: const NotificationCenterScreen(role: 'customer'),
-      accountScreen: const AccountScreen(),
+    return AppAdPopupHost(
+      placement: AppAdPlacement.customerPopup,
+      child: CustomerMainNavigationScreen(
+        homeScreen: const CustomerHomeScreen(),
+        activityScreen: const ActivityScreen(),
+        notificationScreen: const NotificationCenterScreen(role: 'customer'),
+        accountScreen: const AccountScreen(),
+      ),
     );
   }
 }

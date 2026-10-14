@@ -32,6 +32,7 @@ import { wireAssetsBridge } from "./pages/assetsBridge.js";
 import { wireSettingsActionsBridge } from "./pages/settingsActionsBridge.js";
 import { wireReferralsBridge } from "./pages/referralsPage.js";
 import { wireNotificationDeliveriesBridge } from "./pages/notificationDeliveriesPage.js";
+import { wireAdminAccessBridge } from "./services/adminAccess.js";
 
 function _projectHost(url) {
   try {
@@ -96,6 +97,7 @@ wireAssetsBridge();
 wireSettingsActionsBridge();
 wireReferralsBridge();
 wireNotificationDeliveriesBridge();
+wireAdminAccessBridge();
 
 try {
   const reg = globalThis.__adminWebBridge?.registerPage;

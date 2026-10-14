@@ -13,7 +13,8 @@ function _deps() {
   const _upsertSystemConfigKeyValues = _ctx?._upsertSystemConfigKeyValues || globalThis._upsertSystemConfigKeyValues;
   const _fetchSystemConfigKeyValues = _ctx?._fetchSystemConfigKeyValues || globalThis._fetchSystemConfigKeyValues;
 
-  const supabase = _ctx?.supabase || globalThis.supabase;
+  // `supabase` ของ app.legacy.js เป็น `let` (ไม่อยู่บน globalThis) → fallback ไป ctx ที่ settingsPage เก็บไว้
+  const supabase = _ctx?.supabase || globalThis.__adminWebContext?.supabase || globalThis.supabase;
 
   return {
     callAdminAction,
@@ -99,7 +100,8 @@ export async function saveTopupModeSettings(ctx) {
   try {
     // topup_mode สลับผ่าน setTopupMode() เท่านั้น (ตรวจ Beam ฝั่ง server) — ห้ามเขียนทับตรงนี้
     await _upsertSystemConfig({
-      slip2go_receiver_account: document.getElementById('settSlip2goReceiverAccount')?.value?.trim() || null,
+      // '' = ล้างค่า — trigger ใน DB ย้ายค่าลับไป system_config_private (migration 20261008120000)
+      slip2go_receiver_account: document.getElementById('settSlip2goReceiverAccount')?.value?.trim() ?? null,
       slip2go_allow_masked_receiver_account:
         document.getElementById('settSlip2goAllowMaskedReceiver')?.checked === true,
     });
@@ -364,8 +366,8 @@ export async function saveAdminEmail(ctx) {
 
   try {
     await _upsertSystemConfig({
-      admin_notification_email: adminEmail || null,
-      admin_notification_email_cc: adminEmailCC || null,
+      admin_notification_email: adminEmail || '',
+      admin_notification_email_cc: adminEmailCC || '',
     });
 
     showToast('บันทึกอีเมลสำเร็จ!', 'success');
@@ -388,7 +390,7 @@ export async function saveAdminLine(ctx) {
   try {
     await _upsertSystemConfig({
       admin_line_enabled: enabled,
-      admin_line_recipient_id: recipientId || null,
+      admin_line_recipient_id: recipientId || '',
     });
 
     showToast('บันทึก LINE แจ้งเตือนแอดมินสำเร็จ', 'success');
@@ -452,7 +454,7 @@ export async function saveAdminTelegram(ctx) {
   try {
     await _upsertSystemConfig({
       admin_telegram_enabled: enabled,
-      admin_telegram_chat_id: chatId || null,
+      admin_telegram_chat_id: chatId || '',
     });
     showToast('บันทึก Telegram แจ้งเตือนแอดมินสำเร็จ', 'success');
   } catch (e) {

@@ -2,7 +2,6 @@ import 'package:jedechai_delivery_new/utils/debug_logger.dart';
 import 'package:flutter/material.dart';
 
 import '../../../theme/jdc_colors.dart';
-import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
@@ -16,7 +15,8 @@ import '../../../common/services/supabase_service.dart';
 import '../../../common/services/wallet_service.dart';
 import '../../../common/utils/order_code_formatter.dart';
 import '../../../common/utils/role_amount_calculator.dart';
-import '../../../common/widgets/app_network_image.dart';
+import '../../../common/services/app_ad_service.dart';
+import '../../../common/widgets/app_ad_widgets.dart';
 import 'ride/ride_home_screen.dart';
 import 'services/food_home_screen.dart';
 import 'services/restaurant_detail_screen.dart';
@@ -56,10 +56,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
   double _walletBalance = 0;
   Map<String, Map<String, dynamic>> _couponUsageByBookingId = {};
   StreamSubscription? _bookingsStreamSubscription;
-  List<Map<String, dynamic>> _banners = [];
-  int _currentBannerIndex = 0;
-  final PageController _bannerController = PageController();
-  Timer? _bannerTimer;
+  // เพิ่มทุกครั้งที่ดึงลงรีเฟรช → สไลด์โฆษณาโหลดใหม่
+  int _adRefreshSeq = 0;
 
   bool _didCheckReferralRewardDialog = false;
   // ฝากซื้อ: ซ่อนไว้จนกว่าแอดมินจะเปิด shop_enabled
@@ -234,7 +232,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
     _loadWalletSummary();
     _loadActiveBookings();
     _setupBookingsStream();
-    _loadBanners();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAndShowReferralRewardDialogIfAny();
@@ -293,37 +290,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _bookingsStreamSubscription?.cancel();
-    _bannerTimer?.cancel();
-    _bannerController.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadBanners() async {
-    try {
-      final response = await SupabaseService.client
-          .from('banners')
-          .select('*')
-          .eq('is_active', true)
-          .or('page.is.null,page.eq.home')
-          .order('sort_order');
-      if (mounted) {
-        setState(() {
-          _banners = List<Map<String, dynamic>>.from(response);
-        });
-        _bannerTimer?.cancel();
-        if (_banners.length > 1) {
-          _bannerTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-            if (!mounted || _banners.isEmpty) return;
-            final next = (_currentBannerIndex + 1) % _banners.length;
-            _bannerController.animateToPage(next,
-                duration: const Duration(milliseconds: 400),
-                curve: Curves.easeInOut);
-          });
-        }
-      }
-    } catch (e) {
-      debugLog('⚠️ Error loading banners: $e');
-    }
   }
 
   Future<void> _loadUserProfile() async {
@@ -486,10 +453,14 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
                     ],
                     const SizedBox(height: 22),
                     _buildB1RestaurantSection(),
-                    if (_banners.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      _buildPromoBanner(),
-                    ],
+                    AppAdCarousel(
+                      key: ValueKey('ad_home_$_adRefreshSeq'),
+                      placement: AppAdPlacement.customerHome,
+                      height: 150,
+                      title: AppLocalizations.of(context)!
+                          .customerHomePromotions,
+                      padding: const EdgeInsets.only(top: 16),
+                    ),
                   ],
                 ),
               ),
@@ -504,10 +475,15 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
     await Future.wait([
       _loadWalletSummary(),
       _loadActiveBookings(),
-      _loadBanners(),
+      _refreshAds(),
       // ดึงลงเพื่อรีเฟรชต้องเห็นบริการที่แอดมินเพิ่งเปิดด้วย
       _loadShopEnabled(),
     ]);
+  }
+
+  Future<void> _refreshAds() async {
+    AppAdService.invalidate(AppAdPlacement.customerHome);
+    if (mounted) setState(() => _adRefreshSeq++);
   }
 
   // ── Hero header (full-bleed gradient, no rounded corners at top) ─────────
@@ -1075,189 +1051,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen>
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildPromoBanner() {
-    final colorScheme = Theme.of(context).colorScheme;
-    // Hide banner section entirely if no banners
-    if (_banners.isEmpty) return const SizedBox.shrink();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          AppLocalizations.of(context)!.customerHomePromotions,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          height: 150,
-          child: PageView.builder(
-            controller: _bannerController,
-            itemCount: _banners.length,
-            onPageChanged: (i) => setState(() => _currentBannerIndex = i),
-            itemBuilder: (_, i) {
-              final b = _banners[i];
-              final imageUrl = b['image_url'] as String?;
-              final couponCode = b['coupon_code'] as String?;
-              return GestureDetector(
-                onTap: couponCode != null && couponCode.isNotEmpty
-                    ? () =>
-                        _showBannerPromoCode(couponCode, b['title'] as String?)
-                    : null,
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  child: Container(
-                    key: ValueKey('banner_$i'),
-                    margin: const EdgeInsets.only(right: 8),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: imageUrl == null
-                          ? LinearGradient(
-                              colors: [
-                                JdcColors.of(context).brand,
-                                JdcColors.of(context).danger
-                              ],
-                            )
-                          : null,
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: imageUrl != null
-                        ? AppNetworkImage(
-                            imageUrl: imageUrl,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            height: 150,
-                            backgroundColor: JdcColors.of(context).sunken,
-                          )
-                        : Center(
-                            child: Text(
-                              b['title'] ??
-                                  AppLocalizations.of(context)!
-                                      .customerHomePromotions,
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-        if (_banners.length > 1)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                  _banners.length,
-                  (i) => AnimatedContainer(
-                        duration: const Duration(milliseconds: 250),
-                        width: i == _currentBannerIndex ? 20 : 6,
-                        height: 6,
-                        margin: const EdgeInsets.symmetric(horizontal: 3),
-                        decoration: BoxDecoration(
-                          color: i == _currentBannerIndex
-                              ? JdcColors.of(context).cta
-                              : JdcColors.of(context).line,
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      )),
-            ),
-          ),
-      ],
-    );
-  }
-
-  void _showBannerPromoCode(String code, String? title) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(Icons.confirmation_number,
-                color: JdcColors.of(context).cta, size: 28),
-            const SizedBox(width: 8),
-            Expanded(
-                child: Text(
-                    AppLocalizations.of(context)!.customerHomeDiscountCode,
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold))),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (title != null && title.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Text(title,
-                    style: const TextStyle(fontSize: 14, color: Colors.grey)),
-              ),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-              decoration: BoxDecoration(
-                color: JdcColors.of(context).cta.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                    color: JdcColors.of(context).cta.withValues(alpha: 0.3),
-                    style: BorderStyle.solid),
-              ),
-              child: Text(
-                code,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: JdcColors.of(context).cta,
-                  letterSpacing: 2,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(AppLocalizations.of(context)!.customerHomePromoCodeHint,
-                style: const TextStyle(fontSize: 12, color: Colors.grey)),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(AppLocalizations.of(context)!.customerHomeClose),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: code));
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(AppLocalizations.of(context)!
-                      .customerHomeCopiedCode(code)),
-                  backgroundColor: JdcColors.of(context).cta,
-                  duration: const Duration(seconds: 2),
-                ),
-              );
-            },
-            icon: const Icon(Icons.copy, size: 16),
-            label: Text(AppLocalizations.of(context)!.customerHomeCopyCode),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: JdcColors.of(context).cta,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-          ),
-        ],
       ),
     );
   }

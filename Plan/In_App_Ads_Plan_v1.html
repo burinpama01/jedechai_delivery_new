@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>แผนโฆษณาในแอพ v1</title>
+<style>
+:root{--bg:#fafaf7;--card:#fff;--ink:#1f2328;--mute:#5b636d;--line:#e3e1da;--accent:#1f7a4d;--warn:#b54708;--warnbg:#fff4e5;--crit:#b42318;--critbg:#fef3f2}
+@media (prefers-color-scheme:dark){:root{--bg:#15171a;--card:#1d2024;--ink:#e8e6e1;--mute:#a1a7ae;--line:#33373d;--accent:#5cc28d;--warn:#f5a54a;--warnbg:#2b2114;--crit:#f97066;--critbg:#2b1715}}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 system-ui,"Noto Sans Thai",sans-serif}
+main{max-width:920px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:26px;margin:0 0 4px}h2{font-size:19px;margin:32px 0 8px;border-bottom:1px solid var(--line);padding-bottom:4px}
+h3{font-size:16px;margin:18px 0 6px}
+.meta{color:var(--mute);font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:12px 0}
+.crit{background:var(--critbg);border-color:var(--crit)}.warn{background:var(--warnbg);border-color:var(--warn)}
+table{width:100%;border-collapse:collapse;font-size:14px;margin:8px 0}th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{background:var(--card)}code{font-family:ui-monospace,Consolas,monospace;font-size:13px;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+.tw{overflow-x:auto}
+</style>
+</head>
+<body><main>
+<h1>แผนโฆษณาในแอพ (ลูกค้า / คนขับ / ร้านค้า) — v1</h1>
+<p class="meta">2026-10-14 · branch <code>feat/in-app-ads</code> (worktree แยก แตกจาก d50a693) · โปรเจค jedechai_delivery_new</p>
+
+<h2>1. เป้าหมาย</h2>
+<p>แอดมินอัปโหลดรูปโฆษณา/โปรโมท/ชวนเชิญ/โปรโมชั่น แยกตามฝั่ง <b>ลูกค้า · คนขับ · ร้านค้า</b> ได้จาก admin-web พร้อมเปิด/ปิด ตั้งวันเริ่ม-วันจบ และกำหนดว่ากดแล้วทำอะไร</p>
+
+<h2>2. ของเดิมที่มีอยู่</h2>
+<ul>
+<li>ตาราง <code>banners</code> (title, image_url, is_active, sort_order, page, coupon_code) — ใน production มี 1 แถว (ปิดอยู่)</li>
+<li>admin-web Settings → "จัดการ Banner" (อัปโหลด/ซ่อน/ลบ) ผ่าน edge fn <code>admin-actions</code></li>
+<li>ลูกค้า: carousel หน้าแรก (<code>page=home</code>) และหน้าอาหาร (<code>page=food</code>) · กดแล้วโชว์โค้ดคูปอง</li>
+<li>คนขับ/ร้านค้า: <b>ยังไม่มี</b></li>
+</ul>
+<div class="card crit"><b>ช่องโหว่ที่พบระหว่างสำรวจ (critical):</b> policy <code>"Service role full access"</code> ของ <code>banners</code> ใช้กับ role <code>public</code> แบบ <code>USING(true) WITH CHECK(true)</code> + anon มี grant INSERT/UPDATE/DELETE → ใครก็ตามที่มี anon key (อยู่ในแอพ) <b>เพิ่ม/แก้/ลบโฆษณาได้</b> เช่นเอารูปไม่เหมาะสมขึ้นหน้าแรก · แก้ใน migration ของงานนี้</div>
+
+<h2>3. การออกแบบ</h2>
+<h3>3.1 ข้อมูล — ขยายตาราง <code>banners</code> เดิม (ไม่สร้างใหม่)</h3>
+<div class="tw"><table>
+<tr><th>คอลัมน์</th><th>ชนิด</th><th>ความหมาย</th></tr>
+<tr><td><code>page</code> (เดิม)</td><td>text</td><td>ตำแหน่งแสดง (placement) — ดูตาราง 3.2</td></tr>
+<tr><td><code>action_type</code></td><td>text · CHECK none/coupon/url/screen</td><td>กดแล้วทำอะไร (default <code>coupon</code> ถ้ามี coupon_code ไม่งั้น <code>none</code>)</td></tr>
+<tr><td><code>action_value</code></td><td>text</td><td>URL (https เท่านั้น) หรือ key หน้าในแอพ</td></tr>
+<tr><td><code>starts_at</code> / <code>ends_at</code></td><td>timestamptz null</td><td>ช่วงเวลาแสดง (null = ไม่จำกัด)</td></tr>
+<tr><td><code>popup_frequency</code></td><td>text · CHECK once/daily/every_open</td><td>ความถี่ป๊อปอัป (default daily)</td></tr>
+</table></div>
+<p><b>เหตุผลที่ใช้ <code>page</code> แบบมี prefix ต่อฝั่ง</b> (เช่น <code>driver_home</code>) แทนการเพิ่มคอลัมน์ audience: แอพลูกค้าเวอร์ชันเก่าดึง <code>page IS NULL OR page='home'</code> → ค่าใหม่ทั้งหมดจะไม่หลุดไปโชว์ในแอพเก่า</p>
+
+<h3>3.2 ตำแหน่งแสดง (placement)</h3>
+<div class="tw"><table>
+<tr><th>ฝั่ง</th><th>key</th><th>รูปแบบ</th><th>ที่แสดง</th></tr>
+<tr><td rowspan="5">ลูกค้า</td><td><code>home</code></td><td>สไลด์</td><td>หน้าแรก (เดิม)</td></tr>
+<tr><td><code>food</code></td><td>สไลด์</td><td>หน้าสั่งอาหาร (เดิม)</td></tr>
+<tr><td><code>customer_popup</code></td><td>ป๊อปอัป</td><td>ตอนเปิดแอพ</td></tr>
+<tr><td><code>customer_card_activity</code></td><td>การ์ด</td><td>หน้ากิจกรรม/ประวัติออเดอร์</td></tr>
+<tr><td><code>customer_card_wallet</code></td><td>การ์ด</td><td>หน้ากระเป๋าเงิน</td></tr>
+<tr><td rowspan="3">คนขับ</td><td><code>driver_home</code></td><td>สไลด์</td><td>แดชบอร์ด (ใต้ปุ่มลัด)</td></tr>
+<tr><td><code>driver_popup</code></td><td>ป๊อปอัป</td><td>ตอนเปิดแอพ</td></tr>
+<tr><td><code>driver_card_wallet</code></td><td>การ์ด</td><td>หน้ากระเป๋าเงินคนขับ</td></tr>
+<tr><td rowspan="3">ร้านค้า</td><td><code>merchant_home</code></td><td>สไลด์</td><td>แดชบอร์ดร้าน</td></tr>
+<tr><td><code>merchant_popup</code></td><td>ป๊อปอัป</td><td>ตอนเปิดแอพ</td></tr>
+<tr><td><code>merchant_card_orders</code></td><td>การ์ด</td><td>หน้าออเดอร์ร้าน</td></tr>
+</table></div>
+<p class="meta">ค่า <code>ride</code>/<code>parcel</code> เดิมใน admin-web ไม่มีหน้าจอไหนในแอพแสดงจริง → เอาออกจากตัวเลือกใหม่ (แถวเดิมถ้ามียังอยู่)</p>
+
+<h3>3.3 กดแล้วทำอะไร</h3>
+<ul>
+<li><b>none</b> — รูปอย่างเดียว</li>
+<li><b>coupon</b> — dialog โชว์โค้ด + ปุ่มคัดลอก (ของเดิม)</li>
+<li><b>url</b> — เปิดเบราว์เซอร์ภายนอก (<code>url_launcher</code>) รับเฉพาะ <code>https://</code></li>
+<li><b>screen</b> — เปิดหน้าในแอพจากรายการที่กำหนด (allowlist):
+ ลูกค้า: ชวนเพื่อน, คูปองของฉัน, กระเป๋าเงิน, สั่งอาหาร ·
+ คนขับ: ชวนเพื่อน (คนขับ), กระเป๋าเงิน, เติมเงิน, กะงาน, ผลงาน ·
+ ร้านค้า: แพ็กเกจ GP, คูปองร้าน, จัดการเมนู</li>
+</ul>
+
+<h3>3.4 ความปลอดภัย / RLS</h3>
+<ul>
+<li>ลบ policy <code>Service role full access</code> (service role bypass RLS อยู่แล้ว) และ policy อ่านซ้ำ <code>Read active banners</code></li>
+<li>policy อ่านสาธารณะใหม่: <code>is_active AND (starts_at IS NULL OR starts_at&lt;=now()) AND (ends_at IS NULL OR ends_at&gt;now())</code> → ตัดเวลาที่ server ไม่พึ่ง client</li>
+<li>REVOKE INSERT/UPDATE/DELETE/TRUNCATE จาก anon, authenticated (เขียนผ่าน admin-actions ด้วย service role เท่านั้น)</li>
+<li>คง policy <code>Admin full access</code> ไว้ให้ admin-web อ่านแถวที่ปิด/หมดเวลาได้</li>
+<li>edge fn: whitelist ฟิลด์ + validate page/action_type/URL/ช่วงวัน (ไม่ insert body ดิบแบบเดิม) · เพิ่ม action <code>update_banner</code> + สิทธิ์ใน <code>_shared/admin-permissions.ts</code> แล้ว sync ไป admin-web</li>
+</ul>
+
+<h2>4. งานที่ต้องทำ</h2>
+<ol>
+<li><b>DB</b> migration <code>20261014120000_in_app_ads.sql</code> — คอลัมน์ใหม่ + CHECK + RLS/grant ใหม่ (pre-flight กับ prod ก่อน apply, apply ต้องขออนุมัติ)</li>
+<li><b>Edge fn</b> admin-actions — create/update/toggle/delete พร้อม validation · สิทธิ์ <code>update_banner</code></li>
+<li><b>admin-web</b> — หน้า Banner ใหม่: แท็บฝั่ง (ลูกค้า/คนขับ/ร้าน) · เลือกตำแหน่ง · กดแล้วทำอะไร · วันเริ่ม-จบ · ความถี่ป๊อปอัป · แก้ไข/เปิดปิด/ลบ · ป้ายสถานะ "กำลังแสดง/รอเริ่ม/หมดเวลา/ปิด"</li>
+<li><b>Flutter</b> — <code>AppAdService</code> (ดึงตาม placement), widget กลาง <code>AppAdCarousel</code> / <code>AppAdCard</code> / <code>showAppAdPopup</code> + ตัวจัดการการกด · ใส่ใน หน้าแรกลูกค้า, หน้าอาหาร, กิจกรรม, กระเป๋าลูกค้า, แดชบอร์ด+กระเป๋าคนขับ, แดชบอร์ด+ออเดอร์ร้าน, ป๊อปอัปใน main screen ทั้ง 3 ฝั่ง · ความถี่ป๊อปอัปเก็บใน SharedPreferences</li>
+<li><b>ทดสอบ</b> — unit test ตัวกรอง/ความถี่ป๊อปอัป/การ validate URL, test admin-web, <code>flutter analyze</code>, node test ฝั่ง admin-web</li>
+<li><b>Review</b> code_reviewer → แก้ → bump version (app minor, admin-web minor) → commit</li>
+</ol>
+
+<h2>5. ความเสี่ยง / ข้อจำกัด</h2>
+<div class="card warn">
+<ul>
+<li>ยังไม่เก็บสถิติการเห็น/การกด (impression/click) — ทำเป็นเฟสถัดไปได้</li>
+<li>ป๊อปอัปขึ้นเฉพาะตอนเปิดแอพ (main screen สร้างใหม่) ไม่ขึ้นซ้ำตอนสลับแท็บ</li>
+<li>เลขเวอร์ชันแอพ: working tree หลักมี WIP ที่จอง 1.26.0+156 ไว้ → งานนี้ใช้ 1.27.0+157 เพื่อไม่ชน</li>
+<li>การ deploy (migration, edge fn, admin-web, build แอพ) <b>ต้องรออนุมัติ</b> — แผนนี้ทำถึง commit ใน branch แยก</li>
+</ul>
+</div>
+</main></body>
+</html>

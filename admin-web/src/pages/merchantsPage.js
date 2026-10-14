@@ -1,4 +1,5 @@
 import { mountPageTabs, selectPageTab } from './pageTabs.js';
+import { bindProposalActions, proposalStatusLabel } from './merchantGpProposals.js';
 let _ctx = null;
 
 function _deps() {
@@ -55,6 +56,10 @@ export async function renderMerchantsPage(el, ctx) {
     globalThis._gpPlansCache = globalThis._gpPlansCache || [];
   }
   _ctx = ctx || null;
+  if (!el.dataset.gpProposalBound) {
+    bindProposalActions(el, _deps());
+    el.dataset.gpProposalBound = 'true';
+  }
   const { supabase, fetchUserEmails, renderMiniBarChart, fmt, truthyFlag } = _deps();
 
   const [{ data: merchants }] = await Promise.all([
@@ -253,6 +258,7 @@ export function renderMerchantRows(merchants, ctx) {
           <td class="px-4 py-3">
             ${statusBadge(m.approval_status || 'pending')}
             <div class="mt-1">${gpPlanHtml}</div>
+            ${m.gp_proposal_status ? `<div class="text-xs text-indigo-700">${escapeHtml(proposalStatusLabel(m.gp_proposal_status))}</div>` : ''}
             ${isShopOpen
               ? '<span class="ml-1 inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700">ร้านเปิด</span>'
               : '<span class="ml-1 inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-200 text-slate-700">ร้านปิด</span>'}
@@ -278,6 +284,7 @@ export function renderMerchantRows(merchants, ctx) {
                   `
                   : ''}
             <button onclick="editMerchantProfile('${m.id}')" class="px-3 py-1 bg-blue-500 text-white rounded-lg text-xs font-medium hover:bg-blue-600 mr-1">แก้ไข</button>
+            <button type="button" data-gp-proposal-merchant="${merchantIdHtml}" class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-xs font-medium mr-1">ข้อเสนอ GP / ค่าส่ง</button>
             <button onclick="showMerchantOrderManager('${m.id}','${safeName}')" class="px-3 py-1 bg-emerald-500 text-white rounded-lg text-xs font-medium hover:bg-emerald-600 mr-1">ออเดอร์</button>
             <button onclick="navigateTo('menus');window._selectedMerchantId='${m.id}';window._selectedMerchantName='${safeName}';" class="px-3 py-1 bg-purple-500 text-white rounded-lg text-xs font-medium hover:bg-purple-600 mr-1">เมนู</button>
             <button onclick="deleteUser('${m.id}','${safeName}')" class="px-3 py-1 bg-red-100 text-red-600 rounded-lg text-xs font-medium hover:bg-red-200">ลบ</button>
@@ -350,6 +357,10 @@ export async function approveMerchant(id, ctx) {
   if (!confirm('อนุมัติร้านค้านี้?')) return;
   try {
     const result = await callAdminAction({ action: 'approve_merchant', id });
+    if (result?.success === false && result.error === 'gp_proposal_pending') {
+      showToast('ต้องอนุมัติข้อเสนอ GP และค่าส่งก่อนอนุมัติร้านค้า', 'error');
+      return;
+    }
     // G1: ร้านอาหารต้องมีแพ็กเกจ GP ก่อน — ให้แอดมินเลือกว่าจะไปตั้งให้ หรืออนุมัติแบบดีลตรง
     if (result && result.success === false && result.error === 'gp_plan_required') {
       const goSetup = confirm(
@@ -361,12 +372,18 @@ export async function approveMerchant(id, ctx) {
         return;
       }
       if (!confirm('ยืนยันอนุมัติโดยไม่ผูกแพ็กเกจ (ถือเป็นดีลตรง ร้านจะเปลี่ยนแพ็กเกจเองไม่ได้)?')) return;
-      await callAdminAction({ action: 'approve_merchant', id, override_gp: true });
+      const overrideResult = await callAdminAction({ action: 'approve_merchant', id, override_gp: true });
+      if (overrideResult?.success === false) throw new Error(overrideResult.message || overrideResult.error || 'อนุมัติร้านค้าไม่สำเร็จ');
     }
+    else if (result?.success === false) throw new Error(result.message || result.error || 'อนุมัติร้านค้าไม่สำเร็จ');
     showToast('อนุมัติร้านค้าสำเร็จ', 'success');
     refreshCurrentPage();
   } catch (e) {
     const msg = String(e?.message || e);
+    if (msg.includes('gp_proposal_pending')) {
+      showToast('ต้องอนุมัติข้อเสนอ GP และค่าส่งก่อนอนุมัติร้านค้า', 'error');
+      return;
+    }
     if (msg.includes('gp_plan_required')) {
       showToast('ร้านยังไม่ได้เลือกแพ็กเกจ GP — เปิดหน้าแก้ไขร้านเพื่อกำหนดแพ็กเกจก่อนอนุมัติ', 'error');
       return;

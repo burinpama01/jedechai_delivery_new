@@ -299,7 +299,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
     // Check admin role via RLS-protected query
     const { data: profile } = await supabase.from('profiles').select('role, full_name').eq('id', data.user.id).single();
-    if (profile?.role !== 'admin') {
+    // ทีมแอดมิน: superadmin (admin) หรือ staff — สิทธิ์รายหน้าตรวจต่อใน showMainApp
+    if (profile?.role !== 'admin' && profile?.role !== 'staff') {
       await supabaseAuth.auth.signOut();
       _inMemorySession = null;
       throw new Error('บัญชีนี้ไม่มีสิทธิ์ Admin');
@@ -336,7 +337,25 @@ async function logout() {
   document.getElementById('loginScreen').classList.remove('hidden');
 }
 
-function showMainApp() {
+async function showMainApp() {
+  // ทีมแอดมิน: โหลดสิทธิ์ก่อนแสดงหน้า — staff ที่ถูกระงับ/ไม่มีสิทธิ์ ออกจากระบบทันที
+  try {
+    const loadAccess = window.__adminWebBridge?.loadAdminAccess;
+    if (typeof loadAccess === 'function') {
+      const result = await loadAccess({ supabase, role: currentUser?.profile?.role });
+      if (!result?.ok) {
+        showToast(result?.message || 'บัญชีนี้ไม่มีสิทธิ์ Admin', 'error');
+        await logout();
+        return;
+      }
+    } else if (currentUser?.profile?.role !== 'admin') {
+      await logout();
+      return;
+    }
+  } catch (_) {
+    await logout();
+    return;
+  }
   initializeResponsiveShell();
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('mainApp').classList.remove('hidden');
@@ -350,6 +369,7 @@ function showMainApp() {
   } catch (_) {}
   // ลิงก์จากแจ้งเตือน (Telegram/LINE/อีเมล) เปิดตรงหน้าได้: /admin?page=merchants
   // รับเฉพาะชื่อหน้าที่มีเมนูใน sidebar จริง
+  try { window.__adminWebBridge?.applySidebarAccess?.(document); } catch (_) {}
   let startPage = 'dashboard';
   try {
     const requested = new URLSearchParams(window.location.search).get('page') || '';
@@ -382,7 +402,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     const { data: { session } } = await supabaseAuth.auth.getSession();
     if (session) {
       const { data: profile } = await supabase.from('profiles').select('role, full_name').eq('id', session.user.id).single();
-      if (profile?.role === 'admin') {
+      if (profile?.role === 'admin' || profile?.role === 'staff') {
         currentUser = { ...session.user, profile };
         showMainApp();
       }
@@ -402,6 +422,14 @@ document.getElementById('sidebarNav').addEventListener('click', (e) => {
 });
 
 function navigateTo(page) {
+  // ทีมแอดมิน: หน้าที่ไม่มีสิทธิ์ → ไปหน้าแรกที่เปิดได้ (สิทธิ์จริงตรวจที่ server)
+  try {
+    const canView = window.__adminWebBridge?.canViewPage;
+    if (typeof canView === 'function' && !canView(page)) {
+      const links = Array.from(document.querySelectorAll('.sidebar-link[data-page]')).map((l) => l.dataset.page);
+      page = window.__adminWebBridge.firstAllowedPage(links);
+    }
+  } catch (_) {}
   currentPage = page;
   document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
   document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
@@ -3047,13 +3075,14 @@ async function rejectDeletion(id) {
 // Settings Page
 // ============================================
 const DEFAULT_LANDING_CONFIG = Object.freeze({
-  brand_name: 'JDC Delivery',
-  badge_text: 'บริการขนส่งครบวงจรในจังหวัดน่าน',
-  hero_title: 'ส่งไว เรียกง่าย จบในแอปเดียว',
+  brand_name: 'JDC delivery',
+  badge_text: 'เปิดให้บริการแล้วในหลายพื้นที่',
+  // *คำ* = ตัวสีทอง, ขึ้นบรรทัดใหม่ = <br> (landing.html setHeroTitle)
+  hero_title: 'สั่งอาหาร *เรียกรถ*\nส่งพัสดุ ในแอปเดียว',
   hero_subtitle:
-    'JDC Delivery รวมบริการเรียกรถ ส่งอาหาร และพัสดุแบบเรียลไทม์ ให้ลูกค้า คนขับ และร้านค้า ทำงานร่วมกันได้ในแพลตฟอร์มเดียว พร้อมระบบติดตามที่โปร่งใสทุกขั้นตอน',
+    'JDC delivery คือแพลตฟอร์มบริการท้องถิ่นสำหรับคนในพื้นที่ เลือกร้านอาหาร เรียกรถ หรือนัดส่งพัสดุ พร้อมติดตามสถานะเรียลไทม์',
   play_store_url: 'https://play.google.com/store/apps/details?id=com.jedechai.delivery',
-  app_store_url: 'https://apps.apple.com/th/',
+  app_store_url: 'https://apps.apple.com/th/app/jdc-delivery/id6759666672',
   ride_icon: '🛵',
   food_icon: '🍲',
   parcel_icon: '📦',
@@ -3403,7 +3432,8 @@ async function saveTopupModeSettings() {
 
   try {
     await _upsertSystemConfig({
-      slip2go_receiver_account: document.getElementById('settSlip2goReceiverAccount')?.value?.trim() || null,
+      // '' = ล้างค่า — trigger ใน DB ย้ายค่าลับไป system_config_private (migration 20261008120000)
+      slip2go_receiver_account: document.getElementById('settSlip2goReceiverAccount')?.value?.trim() ?? null,
       slip2go_allow_masked_receiver_account: document.getElementById('settSlip2goAllowMaskedReceiver')?.checked === true,
     });
     showToast('บันทึกการตรวจสลิปสำเร็จ', 'success');
@@ -3607,8 +3637,8 @@ async function saveAdminEmail() {
 
   try {
     await _upsertSystemConfig({
-      admin_notification_email: adminEmail || null,
-      admin_notification_email_cc: adminEmailCC || null,
+      admin_notification_email: adminEmail || '',
+      admin_notification_email_cc: adminEmailCC || '',
     });
 
     showToast('บันทึกอีเมลสำเร็จ!', 'success');
@@ -3679,7 +3709,7 @@ async function saveAdminLine() {
   try {
     await _upsertSystemConfig({
       admin_line_enabled: enabled,
-      admin_line_recipient_id: recipientId || null,
+      admin_line_recipient_id: recipientId || '',
     });
     showToast('บันทึก LINE แจ้งเตือนแอดมินสำเร็จ', 'success');
   } catch (e) {
@@ -3734,7 +3764,7 @@ async function saveAdminTelegram() {
   try {
     await _upsertSystemConfig({
       admin_telegram_enabled: enabled,
-      admin_telegram_chat_id: chatId || null,
+      admin_telegram_chat_id: chatId || '',
     });
     showToast('บันทึก Telegram แจ้งเตือนแอดมินสำเร็จ', 'success');
   } catch (e) {
