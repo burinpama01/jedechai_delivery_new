@@ -60,6 +60,33 @@ void main() {
     });
   });
 
+  group('pickDuePopups', () {
+    AppAd popup(String id, String freq) => AppAd.fromMap({
+          'id': id,
+          'image_url': 'https://x/$id.png',
+          'page': 'driver_popup',
+          'popup_frequency': freq,
+        });
+    final now = DateTime(2026, 10, 14, 21, 0);
+
+    test('คืนทุกตัวที่ถึงรอบ ตามลำดับเดิม (หลายรูป)', () {
+      final ads = [popup('a', 'daily'), popup('b', 'daily'), popup('c', 'once')];
+      final due = pickDuePopups(ads, lastShownAt: (_) => null, now: now);
+      expect(due.map((a) => a.id), ['a', 'b', 'c']);
+    });
+
+    test('ตัดเฉพาะตัวที่แสดงไปแล้วในรอบนี้', () {
+      final ads = [popup('a', 'daily'), popup('b', 'daily'), popup('c', 'once')];
+      final shown = {
+        'a': DateTime(2026, 10, 14, 8, 0), // วันนี้แล้ว → ข้าม
+        'c': DateTime(2026, 9, 1), // once → ข้ามตลอด
+      };
+      final due =
+          pickDuePopups(ads, lastShownAt: (id) => shown[id], now: now);
+      expect(due.map((a) => a.id), ['b']);
+    });
+  });
+
   group('AppAd.fromMap', () {
     test('แถวก่อน migration: มีคูปอง = coupon', () {
       final ad = AppAd.fromMap({

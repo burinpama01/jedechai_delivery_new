@@ -316,7 +316,8 @@ class _AppAdCarouselState extends State<AppAdCarousel> {
 }
 
 /// ป๊อปอัปโฆษณาตอนเปิดแอพ — เรียกจาก main screen ของแต่ละฝั่งหลังเฟรมแรก
-/// แสดงไม่เกิน 1 ตัว/ตำแหน่ง/การเปิดแอพ และเคารพความถี่ที่แอดมินตั้ง
+/// รวมทุกตัวที่ถึงรอบไว้ในหน้าต่างเดียว (ปัดซ้าย-ขวา) เปิดครั้งเดียว/ตำแหน่ง/การเปิดแอพ
+/// และนับว่า "แสดงแล้ว" เฉพาะรูปที่ผู้ใช้เห็นจริง — รูปที่ไม่ได้ปัดไปดูจะขึ้นอีกรอบหน้า
 class AppAdPopup {
   AppAdPopup._();
 
@@ -326,30 +327,66 @@ class AppAdPopup {
     if (_shownThisSession.contains(placement)) return;
     _shownThisSession.add(placement);
 
-    final ad = await AppAdService.nextPopup(placement);
-    if (ad == null || !context.mounted) return;
+    final due = await AppAdService.duePopups(placement);
+    if (due.isEmpty || !context.mounted) return;
 
-    // รอรูปโหลดก่อน จะได้ไม่โชว์กรอบว่าง
-    try {
-      await precacheImage(NetworkImage(ad.imageUrl), context)
-          .timeout(const Duration(seconds: 6));
-    } catch (e) {
-      debugLog('⚠️ Ad popup image not ready ($placement): $e');
+    // โหลดรูปให้เสร็จก่อน (ได้ขนาดรูปมาจัดกรอบด้วย) — รูปที่โหลดไม่ได้ตัดทิ้ง
+    final sizes = await Future.wait(
+      due.map((ad) => _resolveImageSize(context, ad.imageUrl)),
+    );
+    if (!context.mounted) return;
+    final ads = <AppAd>[];
+    final ratios = <double>[];
+    for (var i = 0; i < due.length; i++) {
+      final s = sizes[i];
+      if (s == null || s.width <= 0 || s.height <= 0) continue;
+      ads.add(due[i]);
+      ratios.add(s.width / s.height);
+    }
+    if (ads.isEmpty) {
+      debugLog('⚠️ Ad popup images not ready ($placement)');
       return;
     }
-    if (!context.mounted) return;
 
-    // บันทึกว่าแสดงแล้ว หลัง dialog ถูกเปิดจริง (ไม่ใช่ก่อน) — once จะไม่หายไปเงียบ ๆ
-    final dialog = showDialog<bool>(
+    final tapped = await showDialog<AppAd>(
       context: context,
       barrierDismissible: true,
-      builder: (ctx) => _AppAdPopupDialog(ad: ad),
+      builder: (ctx) => _AppAdPopupDialog(
+        ads: ads,
+        aspectRatios: ratios,
+        // บันทึกเมื่อรูปนั้นถูกแสดงจริง (เปิดหน้าแรก / ปัดไปถึง)
+        onSeen: (ad) => AppAdService.markPopupShown(ad.id),
+      ),
     );
-    await AppAdService.markPopupShown(ad.id);
-    final tapped = await dialog;
-    if (tapped == true && context.mounted) {
-      await handleAppAdTap(context, ad);
+    if (tapped != null && context.mounted) {
+      await handleAppAdTap(context, tapped);
     }
+  }
+
+  static Future<Size?> _resolveImageSize(BuildContext context, String url) {
+    final completer = Completer<Size?>();
+    final stream =
+        NetworkImage(url).resolve(createLocalImageConfiguration(context));
+    late final ImageStreamListener listener;
+    listener = ImageStreamListener(
+      (info, _) {
+        if (!completer.isCompleted) {
+          completer.complete(Size(
+              info.image.width.toDouble(), info.image.height.toDouble()));
+        }
+        stream.removeListener(listener);
+      },
+      onError: (e, _) {
+        debugLog('⚠️ Ad popup image failed: $e');
+        if (!completer.isCompleted) completer.complete(null);
+        stream.removeListener(listener);
+      },
+    );
+    stream.addListener(listener);
+    return completer.future.timeout(const Duration(seconds: 8), onTimeout: () {
+      stream.removeListener(listener);
+      return null;
+    });
   }
 }
 
@@ -384,32 +421,67 @@ class _AppAdPopupHostState extends State<AppAdPopupHost> {
   Widget build(BuildContext context) => widget.child;
 }
 
-class _AppAdPopupDialog extends StatelessWidget {
-  const _AppAdPopupDialog({required this.ad});
+class _AppAdPopupDialog extends StatefulWidget {
+  const _AppAdPopupDialog({
+    required this.ads,
+    required this.aspectRatios,
+    required this.onSeen,
+  });
 
-  final AppAd ad;
+  final List<AppAd> ads;
+
+  /// กว้าง/สูง ของแต่ละรูป — ใช้รูปที่สูงสุดกำหนดความสูงกรอบ (รูปอื่นไม่ถูกตัด)
+  final List<double> aspectRatios;
+  final void Function(AppAd ad) onSeen;
+
+  @override
+  State<_AppAdPopupDialog> createState() => _AppAdPopupDialogState();
+}
+
+class _AppAdPopupDialogState extends State<_AppAdPopupDialog> {
+  final PageController _controller = PageController();
+  final Set<String> _seen = {};
+  int _index = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _markSeen(0);
+  }
+
+  void _markSeen(int i) {
+    final ad = widget.ads[i];
+    if (_seen.add(ad.id)) widget.onSeen(ad);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
-    final jdc = JdcColors.of(context);
+    final multi = widget.ads.length > 1;
+    final width = (size.width - JdcSpacing.xxl * 2).clamp(0.0, 420.0);
+    final tallest = widget.aspectRatios.reduce((a, b) => a < b ? a : b);
+    final height = (width / tallest).clamp(0.0, size.height * 0.65);
+
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
       insetPadding: const EdgeInsets.symmetric(
           horizontal: JdcSpacing.xxl, vertical: JdcSpacing.xxxl),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: 420,
-          maxHeight: size.height * 0.75,
-        ),
+      child: SizedBox(
+        width: width,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Align(
               alignment: Alignment.centerRight,
               child: IconButton.filled(
-                onPressed: () => Navigator.of(context).pop(false),
+                onPressed: () => Navigator.of(context).pop(),
                 tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
                 style: IconButton.styleFrom(
                   backgroundColor: Colors.black54,
@@ -419,28 +491,87 @@ class _AppAdPopupDialog extends StatelessWidget {
               ),
             ),
             const SizedBox(height: JdcSpacing.sm),
-            Flexible(
-              child: Semantics(
-                button: ad.isTappable,
-                label: ad.title,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(JdcRadius.sheet),
-                  child: Material(
-                    color: jdc.sunken,
-                    child: InkWell(
-                      onTap: ad.isTappable
-                          ? () => Navigator.of(context).pop(true)
-                          : null,
-                      child: Image.network(
-                        ad.imageUrl,
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            SizedBox(
+              height: height,
+              child: PageView.builder(
+                controller: _controller,
+                itemCount: widget.ads.length,
+                onPageChanged: (i) {
+                  setState(() => _index = i);
+                  _markSeen(i);
+                },
+                itemBuilder: (_, i) {
+                  final ad = widget.ads[i];
+                  return Padding(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: multi ? 4 : 0),
+                    child: Center(
+                      child: Semantics(
+                        button: ad.isTappable,
+                        label: ad.title,
+                        child: ClipRRect(
+                          borderRadius:
+                              BorderRadius.circular(JdcRadius.sheet),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: ad.isTappable
+                                  ? () => Navigator.of(context).pop(ad)
+                                  : null,
+                              child: Image.network(
+                                ad.imageUrl,
+                                fit: BoxFit.contain,
+                                errorBuilder: (_, __, ___) =>
+                                    const SizedBox.shrink(),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            if (multi)
+              Padding(
+                padding: const EdgeInsets.only(top: JdcSpacing.md),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    widget.ads.length,
+                    (i) => GestureDetector(
+                      onTap: () => _controller.animateToPage(i,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        width: i == _index ? 22 : 8,
+                        height: 8,
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        decoration: BoxDecoration(
+                          color: i == _index
+                              ? Colors.white
+                              : Colors.white.withValues(alpha: 0.45),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
+            if (multi && _index < widget.ads.length - 1)
+              Padding(
+                padding: const EdgeInsets.only(top: JdcSpacing.sm),
+                child: TextButton.icon(
+                  onPressed: () => _controller.nextPage(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut),
+                  style: TextButton.styleFrom(foregroundColor: Colors.white),
+                  icon: const Icon(Icons.chevron_right),
+                  label: Text('${_index + 1}/${widget.ads.length}'),
+                ),
+              ),
           ],
         ),
       ),

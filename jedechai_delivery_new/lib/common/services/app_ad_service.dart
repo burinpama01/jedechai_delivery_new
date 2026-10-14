@@ -111,6 +111,19 @@ bool shouldShowAdPopup({
   }
 }
 
+/// คัดป๊อปอัปที่ถึงรอบแสดง (คงลำดับเดิม) — pure, ทดสอบได้
+List<AppAd> pickDuePopups(
+  List<AppAd> ads, {
+  required DateTime? Function(String adId) lastShownAt,
+  required DateTime now,
+}) =>
+    ads
+        .where((ad) => shouldShowAdPopup(
+            frequency: ad.popupFrequency,
+            lastShownAt: lastShownAt(ad.id),
+            now: now))
+        .toList();
+
 class AppAdService {
   AppAdService._();
 
@@ -159,26 +172,25 @@ class AppAdService {
 
   static String _prefKey(String adId) => 'app_ad_popup_shown_$adId';
 
-  /// ป๊อปอัปตัวแรกที่ยังไม่เกินความถี่ (null = ไม่ต้องแสดง)
-  static Future<AppAd?> nextPopup(String placement) async {
+  /// ป๊อปอัปทุกตัวที่ถึงรอบแสดง เรียงตาม sort_order (ว่าง = ไม่ต้องแสดง)
+  static Future<List<AppAd>> duePopups(String placement) async {
+    // ไม่ใช้ cache — เรียกครั้งเดียวตอนเปิดแอพ ต้องได้ชุดล่าสุดที่แอดมินเพิ่งตั้ง
     final ads = await fetch(placement, forceRefresh: true);
-    if (ads.isEmpty) return null;
+    if (ads.isEmpty) return const [];
     try {
       final prefs = await SharedPreferences.getInstance();
-      final now = DateTime.now();
-      for (final ad in ads) {
-        final ms = prefs.getInt(_prefKey(ad.id));
-        final last =
-            ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms);
-        if (shouldShowAdPopup(
-            frequency: ad.popupFrequency, lastShownAt: last, now: now)) {
-          return ad;
-        }
-      }
+      return pickDuePopups(
+        ads,
+        lastShownAt: (id) {
+          final ms = prefs.getInt(_prefKey(id));
+          return ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms);
+        },
+        now: DateTime.now(),
+      );
     } catch (e) {
       debugLog('⚠️ Error reading ad popup state: $e');
+      return const [];
     }
-    return null;
   }
 
   static Future<void> markPopupShown(String adId) async {
