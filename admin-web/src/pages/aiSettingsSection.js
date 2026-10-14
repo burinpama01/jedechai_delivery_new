@@ -47,7 +47,7 @@ let _ctx = null;
 
 function _deps() {
   return {
-    supabase: _ctx?.supabase || globalThis.supabase,
+    supabase: _ctx?.supabase || globalThis.__adminWebContext?.supabase || globalThis.supabase,
     escapeHtml: _ctx?.escapeHtml || globalThis.escapeHtml,
     fmtDate: _ctx?.fmtDate || globalThis.fmtDate,
     showToast: _ctx?.showToast || globalThis.showToast,

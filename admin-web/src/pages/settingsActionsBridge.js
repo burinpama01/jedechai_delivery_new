@@ -13,7 +13,8 @@ function _deps() {
   const _upsertSystemConfigKeyValues = _ctx?._upsertSystemConfigKeyValues || globalThis._upsertSystemConfigKeyValues;
   const _fetchSystemConfigKeyValues = _ctx?._fetchSystemConfigKeyValues || globalThis._fetchSystemConfigKeyValues;
 
-  const supabase = _ctx?.supabase || globalThis.supabase;
+  // `supabase` ของ app.legacy.js เป็น `let` (ไม่อยู่บน globalThis) → fallback ไป ctx ที่ settingsPage เก็บไว้
+  const supabase = _ctx?.supabase || globalThis.__adminWebContext?.supabase || globalThis.supabase;
 
   return {
     callAdminAction,

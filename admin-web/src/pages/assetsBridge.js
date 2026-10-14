@@ -1,13 +1,16 @@
 let _ctx = null;
 
 function _deps() {
-  const supabase = _ctx?.supabase || globalThis.supabase;
-  const showToast = _ctx?.showToast || globalThis.showToast;
+  // app.legacy.js เรียก bridge โดยไม่ส่ง ctx และ `supabase` ของ legacy เป็น `let` (ไม่อยู่บน globalThis)
+  // → ใช้ ctx ที่ settingsPage เก็บไว้ใน __adminWebContext ตอน render
+  const ctx = _ctx || globalThis.__adminWebContext || {};
+  const supabase = ctx.supabase || globalThis.supabase;
+  const showToast = ctx.showToast || globalThis.showToast;
 
-  const escapeHtml = _ctx?.escapeHtml || globalThis.escapeHtml;
+  const escapeHtml = ctx.escapeHtml || globalThis.escapeHtml;
 
-  const normalizeLandingConfig = _ctx?.normalizeLandingConfig || globalThis.normalizeLandingConfig;
-  const _upsertSystemConfig = _ctx?._upsertSystemConfig || globalThis._upsertSystemConfig;
+  const normalizeLandingConfig = ctx.normalizeLandingConfig || globalThis.normalizeLandingConfig;
+  const _upsertSystemConfig = ctx._upsertSystemConfig || globalThis._upsertSystemConfig;
 
   return {
     supabase,
